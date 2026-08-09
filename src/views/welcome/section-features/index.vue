@@ -94,10 +94,12 @@ function setSide(index: number, side: CardSide) {
   sides.value[index] = side
 }
 
-// Pair each ScrollTrigger's controlled card indices with the element whose scroll
-// position gates them: desktop flips the whole row off the <ul>; tablet and
-// mobile flip each grid row off its leading <li>, so both cards in a row flip
-// together.
+/**
+ * Pairs each ScrollTrigger's controlled card indices with the element whose
+ * scroll position gates them: desktop flips the whole row off the `<ul>`;
+ * tablet and mobile flip each grid row off its leading `<li>`, so both cards
+ * in a row flip together.
+ */
 function revealGroups(): { trigger: Element; indices: number[] }[] {
   if (!row.value) return []
   if (width.value === 'desktop') return [{ trigger: row.value, indices: features.map((_, i) => i) }]
