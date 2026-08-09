@@ -4,16 +4,11 @@ const DURATION = 0.15
 const FADE_DURATION = 0.12
 
 /**
- * Vue Transition JS hooks that animate a wrapper's height between tab swaps.
+ * Resizes a panel smoothly as one tab replaces another.
  *
- * Pair `onLeave` + `onEnter` on a `<Transition mode="out-in">` whose direct
- * parent is the `wrapper` element. The wrapper must be `overflow-hidden` so
- * the height clip is clean.
- *
- * Flow:
- * - leave: capture the wrapper's current height, freeze it, fade content out.
- * - enter: measure the new content's `scrollHeight`, tween the wrapper from
- *   the frozen height to the new height, then release back to `auto`.
+ * Pair both hooks on a `<Transition mode="out-in">` inside an
+ * `overflow-hidden` wrapper — `onLeave` freezes the height and only `onEnter`
+ * releases it, so using either alone strands the panel at a fixed size.
  */
 export function tabHeightLeave(wrapper: HTMLElement) {
   return (el: Element, done: () => void) => {

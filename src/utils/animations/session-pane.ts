@@ -5,22 +5,18 @@ const ENTER_DELAY = 0.15
 const LEAVE_DURATION = 0.1
 
 /**
- * Transition between the study-session phases (flashcard → summary). The
- * outgoing flashcard pane is already empty by the time the session completes
- * (the last card swiped out), so the summary simply pops in on top: the
- * leaving pane fades while the entering pane scales up and fades in.
+ * Pops the summary in over the finished flashcard pane.
  *
- * The modal is a fixed size and both panes fill it (`h-full`), so there's no
- * height to animate — just opacity and a scale.
+ * No height to animate — the session window is a fixed size and both panes
+ * fill it.
  */
 export function sessionPaneLeave(el: Element, done: () => void) {
   gsap.to(el, { opacity: 0, duration: LEAVE_DURATION, onComplete: done })
 }
 
 type SessionPaneEnterOptions = {
-  // Skip the pre-enter delay so the incoming pane appears immediately, for
-  // reversible in-session navigation (settings) rather than the terminal
-  // summary pop.
+  // No delay — this is for panes the member can go back from, like settings,
+  // where a beat of blank reads as a stutter rather than a flourish.
   instant?: boolean
   onStart?: () => void
 }

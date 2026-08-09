@@ -7,12 +7,11 @@ const COVER_DURATION = 0.1
 const COVER_DELAY = 0.15
 
 /**
- * Cover-card entrance, driven by a Vue `<transition>` so the hidden state lands
- * before the element is ever painted (no mount-time flash). Pair these as the
- * transition's `@before-enter` and `@enter` hooks.
+ * Raises the cover card into a session that's just opened.
  *
- * `beforeEnter` runs before Vue inserts the element — that's what makes it
- * flash-proof; `enter` rises it in after the modal's pop has settled.
+ * Wire as a transition's `@before-enter` and `@enter`, never imperatively on
+ * mount — hiding the card has to happen before it is ever painted, or it
+ * flashes at full size first.
  */
 export function coverCardBeforeEnter(el: HTMLElement) {
   gsap.set(el, { opacity: 0, y: COVER_RISE })

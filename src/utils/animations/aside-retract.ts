@@ -4,14 +4,12 @@ const DURATION = 0.2
 const EASE = 'power2.inOut'
 
 /**
- * Slides the aside out past the right edge, where the sheet's overflow clips it.
+ * Slides the aside off the right edge and hands its column back.
  *
- * The track it occupies collapses instantly rather than over the tween — a
- * negative margin animated in step with the slide would reflow the sibling tab
- * content on every frame. An opposing `x` cancels the jump that instant
- * collapse would otherwise cause, so only the tween moves anything on screen.
- * Callers are expected to run this while the tab outlet is empty, so the
- * reflow itself is never seen.
+ * Run this while the tab beside it is empty. The column collapses in one step
+ * rather than over the slide — animating it would reflow the neighbouring
+ * content on every frame — and that step is only invisible if there's nothing
+ * there to jump.
  */
 export function retractAside(el: HTMLElement) {
   return new Promise<void>((resolve) => {
@@ -22,12 +20,7 @@ export function retractAside(el: HTMLElement) {
   })
 }
 
-/**
- * Reverse of {@link retractAside} — slides the aside back in, then hands its
- * track back. Restoring the margin shifts the aside left by exactly what
- * dropping the `x` offset shifts it right, so the final swap back into flow
- * costs no visible movement.
- */
+/** Reverse of {@link retractAside} — slides the aside back in and reclaims its column. */
 export function restoreAside(el: HTMLElement) {
   return new Promise<void>((resolve) => {
     gsap.to(el, {

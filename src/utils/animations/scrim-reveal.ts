@@ -4,30 +4,18 @@ const DURATION = 0.32
 const HIDDEN_SCALE = 0.94
 
 type PopScrimRevealOptions = {
-  // Also tween the fields' height, so the panel collapses to the scrim rather
-  // than holding the full height. For narrow layouts, where reserving space for
-  // hidden content costs more than the stable height is worth.
+  // Collapse the panel down to the cover instead of holding the fields' full
+  // height. For narrow layouts, where the reserved space costs more than the
+  // steady height is worth.
   collapse?: boolean
 }
 
 /**
- * Swaps a panel's scrim for the fields beneath it with a bubble pop — the
- * outgoing layer shrinks away while the incoming one overshoots back to full
- * size.
+ * Swaps a panel's cover for the fields beneath it with a bubble pop.
  *
- * The badge's own pill never moves — only its contents ride along with the
- * fields, so the notch in the panel's top edge is permanent and just empties
- * out while the fields are hidden.
- *
- * Both layers stay mounted and share a grid cell, so the panel is always as
- * tall as the taller one. Without `collapse` that's the fields whichever layer
- * is showing, which keeps the panel's height stable; with it the fields tween
- * to zero and the scrim sets the height instead.
- *
- * Inline height/overflow/transform are cleared once the tween lands so the
- * resting state is owned by the caller's classes — otherwise a collapse would
- * survive a resize into a layout that never collapses, and a settled transform
- * would keep trapping the revealed layer's popovers in its stacking context.
+ * Both layers stay mounted in one grid cell, so pass the badge's contents
+ * rather than the badge itself — the notch in the panel's top edge is permanent
+ * and only empties out.
  */
 export function popScrimReveal(
   scrim: HTMLElement,
@@ -54,12 +42,9 @@ export function popScrimReveal(
       scale: 1,
       duration: DURATION,
       ease: 'back.out(1.7)',
-      // A settled `scale: 1` is visually a no-op but not a layout one — any
-      // non-none transform makes the element a containing block for fixed
-      // descendants and a stacking context of its own, which traps the slotted
-      // fields' dropdown menus underneath later siblings. Drop it once landed;
-      // the outgoing layer keeps its inline transform, since that's what's
-      // holding it hidden.
+      // Drop the settled scale, or the fields' dropdowns get trapped. The
+      // outgoing layer keeps its transform — that's what's hiding it.
+      // →[K:settled-transform-traps-overlays]
       clearProps: 'transform'
     },
     DURATION * 0.35

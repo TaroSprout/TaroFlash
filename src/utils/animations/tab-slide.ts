@@ -6,16 +6,14 @@ const LEAVE_DURATION = 0.15
 const SLIDE_X = 48
 
 /**
- * Directional slide for sheet/tablet tab transitions.
+ * Slides a tab in or out, the way drilling into a menu and backing out of it
+ * should feel on a narrow screen.
  *
- * Forward (index → tab): content fades out, new tab slides in from the right.
- * Back   (tab → index):  current tab slides out to the right, content fades in.
+ * Pass the same `direction` ref to both hooks — the enter hook needs the value
+ * as it was before the leave began, so a fresh ref reads the wrong way round.
  *
- * When `wrapper` is provided (sheet layout), the wrapper's height is also
- * animated so the modal resizes smoothly as tab content changes.
- *
- * Pass the same `direction` ref to both leave and enter so the enter hook
- * reads the direction that was set before the leave began.
+ * @param wrapper - Resize this alongside the slide. For the sheet layout,
+ *   where the panel itself has to grow and shrink with its content.
  */
 export function tabSlideLeave(direction: Ref<'forward' | 'back'>, wrapper?: HTMLElement) {
   return (el: Element, done: () => void) => {

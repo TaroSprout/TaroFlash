@@ -5,18 +5,17 @@ const FLIP_DURATION = 0.5
 const FLIP_PERSPECTIVE = 800
 
 /**
- * One beat of the multi-deck cover carousel: holds the card flat, then flips it
- * a half-turn on its Y axis, swapping the displayed cover at the edge-on
- * midpoint via `onMidpoint`. Returns the timeline so the caller can chain the
- * next beat (onComplete) or kill it on stop.
+ * One beat of a deck cover cycling through the covers inside it — a pause,
+ * then a half-turn.
+ *
+ * @param onMidpoint - Swap the displayed cover here, the frame where the card
+ *   is edge-on and the change can't be seen.
  */
 export function cycleCoverCard(el: HTMLElement, onMidpoint: () => void): gsap.core.Timeline {
   const tl = gsap.timeline()
 
-  // Establish the perspective before any rotation. Without it the first
-  // rotateY renders as a flat horizontal squish (scaleX = cos θ) — the jank
-  // only the first flip shows, before GSAP has baked perspective into the
-  // element's inline transform.
+  // Set the perspective before any rotation, never alongside it — the very
+  // first flip renders as a flat squish otherwise.
   tl.set(el, { transformPerspective: FLIP_PERSPECTIVE })
   tl.to(el, { duration: HOLD_DURATION })
   tl.to(el, {

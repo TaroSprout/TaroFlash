@@ -2,13 +2,8 @@ import { gsap } from 'gsap'
 
 const ENTER_SETTLE_DELAY = 0.033
 
-/**
- * Enter tweens settle on an identity transform, which gsap leaves inline as
- * `transform: translate(0px, 0px)`. Visually a no-op, but any non-none
- * transform (or filter) makes the element a containing block for `position:
- * fixed` descendants — so a settled modal captures the popovers inside it and
- * its own `overflow` clips them. Hand the resting state back to CSS instead.
- */
+// Spread into every tween that settles visible, or the modal traps its own
+// popovers. →[K:settled-transform-traps-overlays]
 const CLEAR_TRANSFORM = { clearProps: 'transform' } as const
 
 export function slideUpFadeIn(el: Element, done: () => void) {
@@ -89,10 +84,10 @@ export function recedeModal(el: Element, is_pinned: boolean) {
 /**
  * Restores a modal to full prominence once the modal above it has closed.
  *
- * Clears the filter alongside the transform — a settled `brightness(1)
- * blur(0px)` is as much a containing block as a settled `translate(0, 0)`, so
- * leaving it behind re-traps this modal's popovers the moment a nested modal
- * (an alert, a prompt) has come and gone.
+ * Clear the filter here as well as the transform — a settled brightness traps
+ * popovers exactly like a settled transform does, so an alert opening and
+ * closing over this modal would otherwise break its dropdowns for good.
+ * →[K:settled-transform-traps-overlays]
  */
 export function restoreModal(el: Element, is_pinned: boolean) {
   gsap.to(el, {

@@ -4,23 +4,16 @@ const POP_IN_DURATION = 0.2
 const POP_OUT_DURATION = 0.2
 
 const POP_IN_EVENT = 'deck-pop-in'
-// Safety net for waitForDeckPopIn callers in case the deck grid never mounts
-// or animates the deck in question (e.g. it's off-screen) — bounded so a
-// caller awaiting the signal can never hang indefinitely.
+// Bounds the wait — the deck may be off-screen, or the grid may never mount at
+// all, and neither should hang the caller.
 const POP_IN_SIGNAL_TIMEOUT = 1000
 
 /**
- * Reveal a freshly created deck thumbnail with a playful pop-in. Also
- * broadcasts a `deck-pop-in` event (read by `waitForDeckPopIn`) once the
- * animation completes, keyed off the element's `data-deck-id` attribute.
+ * Pops a newly created deck into the grid, and announces when it has landed so
+ * `waitForDeckPopIn` can resolve.
  *
- * Animates `el`'s first child, not `el` itself: `el` is the transition-group's
- * direct child and carries the deck grid's reactive resting-position
- * transform. GSAP's scale tween and this element's translate would otherwise
- * fight over the same `transform` property (and compose in the wrong
- * direction — scaling the *ancestor* of a translated element scales its
- * offset too). Same reason `liftListItem`/`dropListItem` target the deepest
- * card element instead of a positioned wrapper.
+ * Pass the grid cell — the pop is applied one level in, because the cell is
+ * already carrying its own placement. →[K:settled-transform-traps-overlays]
  */
 export function popDeckIn(el: Element, done: () => void) {
   const target = el.firstElementChild ?? el
@@ -47,10 +40,7 @@ export function popDeckIn(el: Element, done: () => void) {
   )
 }
 
-/**
- * Resolve once the given deck's grid pop-in animation finishes (or after a
- * short timeout if it never fires — the grid may not be mounted).
- */
+/** Resolves once a deck has finished popping in, or shortly after regardless. */
 export function waitForDeckPopIn(id: number): Promise<void> {
   return new Promise((resolve) => {
     const timeout = window.setTimeout(cleanup, POP_IN_SIGNAL_TIMEOUT)
@@ -70,7 +60,7 @@ export function waitForDeckPopIn(id: number): Promise<void> {
   })
 }
 
-/** Shrink a removed deck thumbnail away. Same first-child target as popDeckIn. */
+/** Shrinks a removed deck away. Takes the grid cell, same as `popDeckIn`. */
 export function popDeckOut(el: Element, done: () => void) {
   gsap.to(el.firstElementChild ?? el, {
     scale: 0.5,

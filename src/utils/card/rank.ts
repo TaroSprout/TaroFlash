@@ -1,17 +1,10 @@
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 
 /**
- * The single key generator for card ordering — nothing else in the app, and
- * nothing in Postgres, mints a rank.
+ * The single key generator for card ordering — mint a rank here, nowhere else.
  *
- * A rank is a base62 string ordered by plain byte comparison, so a card's
- * position is decided entirely by its two neighbours: no server round-trip to
- * compute it, no shared counter, and no rebalance pass when a gap runs out of
- * room. That's what lets an offline insert carry a real, mergeable position
- * instead of a placeholder.
- *
- * The column is `text COLLATE "C"` for the same reason — the database's default
- * en_US collation reorders case, and these keys are case-sensitive.
+ * A card's position comes only from its two neighbours, so an insert needs no
+ * round-trip and no rebalance. →[K:card-rank-byte-collation]
  */
 
 /** `null` on either side means "no neighbour": the head or tail of the deck. */
