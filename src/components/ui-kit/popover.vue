@@ -104,10 +104,8 @@ onUnmounted(() => {
 
 const side = computed(() => placement.value.split('-')[0] as 'top' | 'right' | 'bottom' | 'left')
 
-// Teleporting to <body> severs DOM inheritance, so the panel would fall back to
-// the root's depth and identity. Snapshot the trigger's RESOLVED values and
-// restate them on the teleported node. Only when teleported — the in-place path
-// inherits correctly on its own, and restating there would pin a stale value.
+// Teleporting to <body> severs DOM inheritance, so restate the trigger's
+// resolved depth/palette on the teleported node; the in-place path inherits them.
 const inherited_context = computed(() => {
   if (!teleport || !open) return {}
 
@@ -226,10 +224,8 @@ watch(
   display: block;
 }
 
-/* Applied per-piece (arrow here, the slotted panel applies its own) rather
-   than on `.ui-kit-popover` itself — a `filter` on that shared box creates a
-   rendering layer clipped to its own bounds, cutting off the arrow, which is
-   deliberately positioned to poke out past that edge. */
+/* Kept off `.ui-kit-popover` itself — a `filter` there would clip the arrow,
+   which deliberately pokes out past the box's edge. */
 .ui-kit-popover--shadow .ui-kit-popover__arrow-default {
   filter: drop-shadow(var(--drop-shadow-sm));
 }
