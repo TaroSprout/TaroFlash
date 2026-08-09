@@ -33,7 +33,7 @@ Then pull the topic for the area you're in:
 | `src/styles/**`, `src/stores/theme.ts`, palettes               | `corpus/theming/theming.md`        |
 
 [`corpus/map.md`](../../corpus/map.md) is the full index; [`corpus-authoring`](./corpus-authoring.md)
-covers how topics are written. The `archivist` agent owns edits — don't rewrite a topic in passing.
+covers how topics are written. The `corpus-author` agent owns edits — don't rewrite a topic in passing.
 
 **A diff that contradicts a stated invariant is a bug.** A diff that changes one, or exposes a new
-hazard, is the archivist's trigger.
+hazard, is what wakes `corpus-author`.
