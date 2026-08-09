@@ -17,8 +17,10 @@ import { usePressHold } from '@/composables/ui/press-hold'
 import { resolveReorderAnchor } from '@/utils/reorder'
 import { useDeckGrid, type DeckGridCellSize } from './use-deck-grid'
 
-// Touch picks a card up on a press-and-hold (like iOS), so a plain swipe still
-// scrolls the page; a small finger move within the window aborts the hold.
+/**
+ * Touch picks a card up on a press-and-hold (like iOS), so a plain swipe still
+ * scrolls the page; a small finger move within the window aborts the hold.
+ */
 const HOLD_MS = 200
 const HOLD_TOLERANCE = 8
 
@@ -42,10 +44,12 @@ export function useDeckGridReorder(
   const press_hold = usePressHold({ duration: HOLD_MS, tolerance: HOLD_TOLERANCE })
 
   const container_width = ref(0)
-  // container_width starts at 0, so columns/row_count fall back to a single
-  // tall column for one frame — gate the rendered height on this so a refresh
-  // never briefly renders (and lays out scroll restoration against) a page
-  // several times its real height.
+  /**
+   * `container_width` starts at 0, so columns/row_count fall back to a single
+   * tall column for one frame — gate the rendered height on this so a refresh
+   * never briefly renders (and lays out scroll restoration against) a page
+   * several times its real height.
+   */
   const measured = computed(() => container_width.value > 0)
 
   const { cell_width, gap_x, columns, row_count, row_pitch, itemPosition } = useDeckGrid(
