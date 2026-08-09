@@ -23,9 +23,7 @@ const member_store = useMemberStore()
 
 const { subscription, cost, status, description } = useSubscriptionLabels(subscriptionQuery)
 
-// Free vs paid is known instantly from client state; the Stripe payload (cost,
-// renewal, actions) is what we wait on — so it drives the skeleton, not the
-// free/paid identity of the pill.
+// Only the Stripe payload (cost, renewal, actions) drives the skeleton — the free/paid identity is already known from client state.
 const is_paid = computed(() => member_store.plan === 'paid')
 const loading = computed(() => is_paid.value && subscriptionQuery.isLoading.value)
 const errored = computed(() => is_paid.value && !!subscriptionQuery.error.value)

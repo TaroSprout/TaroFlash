@@ -48,10 +48,7 @@ export function useGoogleActions() {
 
   return {
     loading,
-    // Wrapped in computed() rather than passed as the store's plain unwrapped
-    // boolean — a bare `session.hasGoogleIdentity` here is only read once, at
-    // composable-call time, and never updates again once copied into this
-    // returned object.
+    // computed(), not a bare boolean — an unwrapped read here would freeze at composable-call time and never update again.
     hasGoogleIdentity: computed(() => session.hasGoogleIdentity),
     hasPasswordIdentity: computed(() => session.hasPasswordIdentity),
     onConnect,
