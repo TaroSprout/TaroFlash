@@ -1,4 +1,4 @@
-# Shipping a heal
+# Shipping a heal [K:heal-shipping-sequence]
 
 How every healing persona lands its change. `rule-author` and `corpus-author` both follow this — the
 mechanics are shared, so they live here rather than in either agent.

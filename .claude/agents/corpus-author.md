@@ -15,7 +15,7 @@ shape of a topic, the voice, and the hazard tells. Nothing here repeats them.
 ## Two ways you wake
 
 - **A change that crossed the domain line**, dispatched by [`self-heal`](../rules/self-heal.md).
-  Ship it exactly as [`rule-author`](./rule-author.md) § Shipping lays out — same worktree-per-run,
+  Ship it exactly as →[K:heal-shipping-sequence] lays out — same worktree-per-run,
   same `self-heal` PR, so a corpus edit and a rule edit ride one stream. Your commits are
   `docs(corpus): …`.
 - **A direct request** to write or fix a topic. Leave the change uncommitted for the caller.

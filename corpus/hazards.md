@@ -6,8 +6,8 @@ radius: data loss and silent corruption first, design ceilings and footguns last
 
 > **A roll-call, not a store.** Each trap's full text lives in its topic, at the
 > slug named here — `grep -rn '\[K:<slug>\]' corpus/` lands on it. This file
-> restates nothing, so it cannot drift. To add or change a trap, edit the topic;
-> see [corpus-authoring → Hazards](../.claude/rules/corpus-authoring.md#hazards).
+> restates nothing, so it cannot drift. To add or change a trap, edit the topic —
+> →[K:corpus-hazard-authoring].
 
 You don't read this list to work. Each trap is echoed as a `→[K:<slug>]` pointer
 in the directory it bites, so it reaches you when you're standing on it.
