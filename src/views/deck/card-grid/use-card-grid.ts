@@ -17,15 +17,8 @@ export type GridItemPosition = { x: number; y: number }
 
 /**
  * Grid geometry for the deck card grid. Pure arithmetic off the discrete size
- * level — every cell is a uniform, known size, so row pitch and per-card offsets
- * need no DOM measurement and the grid can be window-virtualized by row.
- *
- * @param grid_size       - Active size level (Small / Base / Full).
- * @param container_width - Measured inner width of the scroll container, used to
- *                          derive the column count. Defaults to 0 (skeleton use,
- *                          which only needs `grid_style`).
- * @param item_count      - Total cards on screen, used for row count + per-row
- *                          centering of the trailing partial row.
+ * level — every cell is a uniform, known size, so row pitch and per-card
+ * offsets need no DOM measurement and the grid can be window-virtualized.
  */
 export function useCardGrid(
   grid_size: MaybeRefOrGetter<CardGridSize>,
@@ -52,11 +45,8 @@ export function useCardGrid(
   }))
 
   /**
-   * Absolute (x, y) px offset of the card at `index` within the virtual
-   * viewport. The whole grid is centered on a full row's width, so every row —
-   * including the trailing partial one — shares the same left edge and fills
-   * left-to-right (mirrors the grid's `justify-center`). This is the seam a
-   * future drag-to-reorder layer adds its live offset on top of.
+   * Absolute (x, y) px offset of the card at `index`. Every row, including a
+   * trailing partial one, shares the same centered left edge.
    */
   function itemPosition(index: number): GridItemPosition {
     const cols = columns.value

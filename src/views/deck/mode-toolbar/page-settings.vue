@@ -20,18 +20,12 @@ const { t } = useI18n()
 const { is_page_settings_open, openPageSettings, closePageSettings } = inject(deckViewShellKey)!
 const is_mobile = useMatchMedia('w<md')
 
-// The popover teleports out of the deck view, so its content can't inherit the
-// page's depth. Declare depth 1 explicitly (matching the data-depth stamped on
-// the panel) so the sorting dropdown inside resolves `element` against this
-// floating panel rather than the root page's depth 0 — otherwise it paints
-// element@0 (brown-300), the same colour as the panel, and vanishes.
+// The popover teleports out of the deck view, so its content can't inherit
+// the page's depth — declare it explicitly, matching the panel's data-depth.
 provideDepth(1)
 
-// Below md the mode-toolbar (and this popover) is only CSS-hidden, not
-// unmounted — the mobile footer's own panel drives `is_page_settings_open`
-// there instead. Gating `open` on `!is_mobile` keeps this popover's
-// outside-click listener from ever attaching on mobile, which would otherwise
-// treat every tap inside the footer panel as a click outside and close it.
+// Gated so this popover's outside-click listener never attaches on mobile,
+// where the footer's own panel drives `is_page_settings_open` instead.
 const desktop_open = computed(() => is_page_settings_open.value && !is_mobile.value)
 
 function toggle() {

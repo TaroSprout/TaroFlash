@@ -21,9 +21,8 @@ const front_input = useTemplateRef('front-input')
 
 const focused = ref(false)
 
-// Local editor state is the source of truth while the component is mounted.
-// Initialised from the card prop; later cache updates are ignored so
-// incoming refetches can't clobber what the user has typed.
+// Source of truth while mounted — later cache updates are ignored so a
+// refetch can't clobber what the user has typed.
 const front_text = ref(card.front_text ?? '')
 const back_text = ref(card.back_text ?? '')
 const save_failed = ref(false)
@@ -33,21 +32,16 @@ const { is_selecting } = selection
 
 const { flagWindowBlur, consumeWindowRefocus } = useWindowRefocusGuard()
 
-// On mount a row claims two independent one-shot signals. Focus: a card staged
-// by the toolbar's "new card" intent, or one reached via the grid's "Edit"
-// action, lands the user in the front editor. Grow-in: only a freshly-added card
-// reveals with the height animation — edit-navigation sets no grow target, so
-// scrolling to an existing card focuses it without animating its height. Both
-// claims are gated so ordinary scroll-mounted rows fire neither.
+// Claims its two one-shot signals on mount: focus (front editor) and grow-in
+// (height reveal). Both are gated so an ordinary scroll-mounted row fires
+// neither. →[K:deck-editor-focus-claim]
 onMounted(() => {
   if (claimFocus(card.client_id)) focusEditor()
   if (claimGrow(card.client_id) && list_item_card.value) expandListItemIn(list_item_card.value)
 })
 
-// Persist both sides from local state, not just the edited one: the merge base
-// in the save path is the cached card, so sending a single side would let it
-// clobber the other side with stale cache data. Local refs are the source of
-// truth while mounted, so they carry the complete, current card.
+// Sends both sides, not just the edited one — the save path's merge base is
+// the cached card, so a single side would let it clobber the other with stale data.
 async function onUpdate(side: 'front' | 'back', text: string) {
   if (side === 'front') front_text.value = text
   else back_text.value = text
@@ -62,10 +56,8 @@ async function onUpdate(side: 'front' | 'back', text: string) {
   }
 }
 
-// Autofocusing a freshly-added card is programmatic, not the user landing on
-// it — flag the synchronous focusin so onFocusIn stays silent. The action that
-// added the card owns that sound. queueMicrotask clears the flag after the
-// current turn in case focus() no-ops and focusin never fires.
+// Flags a programmatic autofocus so onFocusIn stays silent — the add action
+// owns that sound. Cleared on the next microtask in case focus() no-ops.
 let programmatic_focus = false
 function focusEditor() {
   if (focused.value) return
@@ -74,27 +66,22 @@ function focusEditor() {
   queueMicrotask(() => (programmatic_focus = false))
 }
 
-// Whether a node lives inside any card in the editor (its own card or another).
-// Lets us tell "focus moved between cards" from "focus entered/left the editor".
+/** Whether a node lives inside any card in the editor, to tell "moved between cards" from "left the editor". */
 function withinAnyCard(node: EventTarget | null) {
   return (node as HTMLElement | null)?.closest?.('[data-testid="list-item-card"]') != null
 }
 
-// Gate the sfx on contenteditable focus so the image button doesn't trigger it.
-// Arriving from another card (or the other side) clicks; arriving from outside
-// every card — i.e. activating a card when none was — slides up.
+// Gated on contenteditable focus so the image button doesn't trigger it.
 function onFocusIn(e: FocusEvent) {
   if (!(e.target as HTMLElement | null)?.isContentEditable) return
 
-  // The browser restoring focus after the window comes back isn't a user
-  // action — stay silent, but still track that we hold focus again.
+  // A window-refocus isn't a user action — stay silent.
   if (consumeWindowRefocus()) {
     focused.value = true
     return
   }
 
-  // Programmatic autofocus (a freshly-added card) isn't a user landing on the
-  // card — stay silent so it doesn't collide with the add action's own sound.
+  // Programmatic autofocus isn't a user landing on the card either.
   if (programmatic_focus) {
     programmatic_focus = false
     focused.value = true
@@ -105,16 +92,13 @@ function onFocusIn(e: FocusEvent) {
   focused.value = true
 }
 
-// When an editor blurs to outside every card, the active card was deselected
-// with nothing new picked up — drop it.
 function onFocusOut(e: FocusEvent) {
   focused.value = list_item_card.value?.contains(e.relatedTarget as Node | null) ?? false
 
   const left_editor = (e.target as HTMLElement | null)?.isContentEditable ?? false
   if (!left_editor) return
 
-  // A window blur (switching apps) blurs the editor without the user choosing
-  // to — flag the round-trip so the matching refocus stays silent, no drop.
+  // A window blur isn't the user leaving the card — flag the round-trip so the matching refocus stays silent.
   if (!document.hasFocus()) return flagWindowBlur()
 
   if (!withinAnyCard(e.relatedTarget)) emitSfx('card_drop')

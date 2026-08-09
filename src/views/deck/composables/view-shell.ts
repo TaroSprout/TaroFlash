@@ -15,23 +15,16 @@ export const deckViewShellKey = Symbol('deckViewShell') as InjectionKey<DeckView
 
 /**
  * UI shell of the deck view: which mode (pane) is active and how the grid
- * renders. Deliberately free of card-data concerns so panes that only switch
- * modes don't have to depend on the whole card-list controller.
+ * renders. Free of card-data concerns so panes that only switch modes don't
+ * depend on the whole card-list controller.
  *
- * Mode changes all funnel through here — `setMode` / `toggleMode` / `exitMode`
- * are the single seam for cross-cutting concerns like unsaved-changes guards.
- * The pane/chrome each mode maps to lives in `deck/modes.ts`.
- *
- * @example
- * const shell = useDeckViewShell()
- * provide(deckViewShellKey, shell)
+ * `setMode` / `toggleMode` / `exitMode` are the single seam every mode change
+ * funnels through. The pane/chrome each mode maps to lives in `deck/modes.ts`.
  */
 export function useDeckViewShell() {
   const mode = ref<CardEditorMode>('view')
 
-  // First-time default: mobile packs the densest grid (`base`); larger viewports
-  // keep the roomier `md`. Read once at init — `useLocalRef` ignores this default
-  // whenever a stored choice exists, so an explicit prior pick is preserved.
+  // First-time default only — `useLocalRef` ignores it once a choice is stored.
   const is_mobile = useMatchMedia('w<md').value
   const grid_size = useLocalRef<CardGridSize>('deck-grid-size', is_mobile ? 'base' : 'md')
   const grid_face = useLocalRef<Exclude<CardSide, 'cover'>>('deck-grid-face', 'front')
@@ -53,11 +46,8 @@ export function useDeckViewShell() {
 
   /**
    * Switch the deck view to `new_mode`, resolving once that pane's enter
-   * transition has finished animating — the mode-stack calls `notifyModeSettled`
-   * from the GSAP completion. Resolves immediately when already in `new_mode`.
-   * `mode` still flips synchronously; only the returned promise is deferred, so
-   * callers that ignore it are unaffected. Plays the shared mode-switch chime
-   * (`ui.select`) on every real switch, so call sites don't each wire their own.
+   * transition finishes (`notifyModeSettled`, from the mode-stack's GSAP
+   * completion). `mode` flips synchronously; only the promise is deferred.
    */
   function setMode(new_mode: CardEditorMode): Promise<void> {
     if (mode.value === new_mode) return Promise.resolve()

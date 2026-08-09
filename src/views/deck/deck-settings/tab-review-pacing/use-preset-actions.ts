@@ -31,18 +31,9 @@ export type PresetActions = {
 export const presetActionsKey: InjectionKey<PresetActions> = Symbol('preset-actions')
 
 /**
- * Preset lifecycle actions for the Review Pacing tab — fork, push, rename, delete.
- *
- * Pull is deck-local and already lives on the fields themselves (per-field reset
- * + reset-all). Push is global: it rewrites the preset every following deck reads
- * from, so it's all-or-nothing and confirmed, never per-field.
- *
- * Preset writes hit the server immediately, so any deck-side bookkeeping they
- * imply is flushed with them — through `persistPacing`, which writes only the
- * pacing sidecar. Everything else on the draft still lands on Save as usual.
- *
- * @example
- * provide(presetActionsKey, usePresetActions(pacing, editor))
+ * Preset lifecycle actions for the Review Pacing tab — fork, push, rename,
+ * delete. Push is global and confirmed, never per-field, since it rewrites
+ * the preset every following deck reads from.
  */
 export function usePresetActions(pacing: PacingFields, editor: DeckEditor): PresetActions {
   const { draft, rebase } = editor

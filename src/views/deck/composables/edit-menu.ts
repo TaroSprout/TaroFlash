@@ -11,14 +11,10 @@ export type CardEditMenu = ReturnType<typeof useCardEditMenu>
 
 /**
  * Shared wiring for the deck view's edit affordance, used by both the desktop
- * deck-hero dropdown and the mobile footer dropdown so their options and actions
- * never drift. `options` covers select / rearrange / appearance (the trigger-only
- * footer prepends its own `edit` entry). `primaryAction`/`startEditing` are the
- * primary edit action — the dock editor below md, desktop edit mode at md+.
+ * deck-hero dropdown and the mobile footer dropdown so their options and
+ * actions never drift.
  *
- * All options disable while rearranging — bulk-select toggles don't work
- * mid-drag, so nothing else in the menu should be reachable either. Stopping
- * happens via the yellow primary button (desktop) or footer button (mobile).
+ * All options disable while rearranging — nothing else in the menu should be reachable mid-drag.
  */
 export function useCardEditMenu() {
   const { t } = useI18n()

@@ -5,13 +5,7 @@ import { cardEditorKey } from './list-controller'
 
 /**
  * Reactive labels + handlers shared by the bulk-actions stack (deck hero
- * overlay + mobile dock). Both surfaces drive the same selection state,
- * so they share the same `select-all` toggling, cancel sfx, and label
- * flipping.
- *
- * @example
- * const { select_all_label, has_selection,
- *         onToggleSelectAll, onCancel } = useBulkActions()
+ * overlay + mobile dock) — both surfaces drive the same selection state.
  */
 export function useBulkActions() {
   const { t } = useI18n()

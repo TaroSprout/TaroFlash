@@ -15,12 +15,8 @@ import {
 
 const { t } = useI18n()
 
-// This section paints its own brown-200/stone-700 panel (class set by the
-// parent, data-depth co-located there) that LIFTS OFF the depth-1 window, so it
-// is one elevation up — depth 2. Declaring it makes the spinbox and select-menu
-// wells inside resolve `below` at depth 2 (brown-300 / grey-800), a step darker
-// than the panel so they read as recessed, instead of the window's depth-1
-// `below` which sits lighter than the panel and reads wrong.
+// This panel lifts one elevation off the depth-1 window, so its wells resolve
+// `below` a step darker than the panel instead of the window's lighter one.
 provideDepth(2)
 
 const {

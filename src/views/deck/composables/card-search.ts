@@ -7,25 +7,10 @@ export type CardSearch = ReturnType<typeof useCardSearch>
 export const cardSearchKey = Symbol('cardSearch') as InjectionKey<CardSearch>
 
 /**
- * In-deck card search UI state. Owns the search bar's visibility, the query
- * text, and the derived display flags. Filtering itself is handled server-side
- * by the `get_cards_in_deck` RPC — this composable just tracks what the user
- * typed and whether the bar is open.
- *
- * `displayed_cards` is a pass-through of the already-filtered `all_cards` from
- * the list controller; `is_loading` and `no_results` reflect the controller's
- * query state while a search is active.
- *
- * @param query_ref   - Shared ref the search bar writes to; also fed into
- *                      `useCardsInDeckInfiniteQuery` as its `search_query` arg.
- * @param all_cards   - The controller's current card list (RPC-filtered).
- * @param is_querying - True while the controller's infinite query is in flight.
- *
- * @example
- * const search_query = ref('')
- * const editor = useCardListController({ ..., search_query })
- * const search = useCardSearch(search_query, editor.list.all_cards, editor.isLoading)
- * provide(cardSearchKey, search)
+ * In-deck card search UI state — the search bar's visibility, the query text,
+ * and the derived display flags. Filtering itself is server-side, via
+ * `get_cards_in_deck`; `displayed_cards` is a pass-through of the already
+ * filtered `all_cards`.
  */
 export function useCardSearch(
   query_ref: Ref<string>,

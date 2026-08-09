@@ -18,36 +18,15 @@ export type CardEntry = {
 
 let next_temp_id = 0
 
-/**
- * Mint a unique negative integer to fill the `Card.id` slot for a temp card.
- *
- * The id is purely a placeholder — branching logic uses `entry.real_id`,
- * never the sign of the id. The negative range is just a convenient
- * "definitely not a real bigserial id" sentinel for diagnostics.
- */
+/** Mint a placeholder id for a temp card — diagnostics only, branching reads `entry.real_id`. */
 function tempPlaceholderId(): number {
   return --next_temp_id
 }
 
 /**
  * Merged read model for the deck-editor card list: persisted cards from the
- * Pinia Colada infinite query, interleaved with client-side temp cards that
- * the user is mid-creating.
- *
- * Every rendered card carries a stable `client_id` used as the v-for key.
- * client_ids survive the temp → persisted transition (seeded on promote,
- * reused when the persisted refetch arrives), so the text-editor stays
- * mounted across the handoff and the user does not lose focus.
- *
- * @param cards_query - The infinite query for the deck's persisted cards.
- * @param deck_id     - Reactive deck id, used when constructing new temp cards.
- *
- * @example
- * const list = useVirtualCardList(cards_query, deck_id)
- * for (const card of list.all_cards.value) {
- *   // card.client_id — stable v-for key
- *   // card.id        — placeholder (negative) until promoted, then real
- * }
+ * infinite query, interleaved with client-side temp cards mid-creation.
+ * →[K:deck-temp-card-handoff]
  */
 export function useVirtualCardList(
   cards_query: CardsQuery,
@@ -55,10 +34,8 @@ export function useVirtualCardList(
 ) {
   const temp_entries = ref<CardEntry[]>([])
 
-  // Persistent client_id for each persisted card so v-for keys stay stable
-  // across refetches. Seeded on promote so a temp's client_id carries over to
-  // its eventual persisted ingest — the only thing keeping the text-editor
-  // mounted across the temp→persisted transition.
+  // Stable client_id per persisted real id, so v-for keys survive a refetch.
+  // →[K:deck-temp-card-handoff]
   const client_id_by_real_id = new Map<number, string>()
 
   /**
@@ -97,9 +74,8 @@ export function useVirtualCardList(
     return set
   })
 
-  // Temps still in flight: not yet promoted, OR promoted but the persisted
-  // refetch hasn't arrived. Once it has, the persisted copy renders in the
-  // temp's place — same client_id, no remount.
+  // Temps not yet promoted, or promoted but the persisted refetch hasn't
+  // landed yet. →[K:deck-temp-card-handoff]
   const live_temps = computed<CardEntry[]>(() =>
     temp_entries.value.filter((e) => e.real_id === null || !persisted_id_set.value.has(e.real_id))
   )
@@ -114,13 +90,8 @@ export function useVirtualCardList(
 
   /**
    * Return a new card list with `entry` inserted at the position implied by
-   * its anchor. Pure — does not mutate `cards`.
-   *
-   * 1. No anchor                          → append to the tail.
-   * 2. Anchor not in the loaded pages     → append to the tail (fallback —
-   *    the user added a card next to one that lives on an unloaded page).
-   * 3. Anchor found                       → insert before or after it,
-   *    according to `entry.side`.
+   * its anchor. Pure — does not mutate `cards`. Falls back to the tail when
+   * there's no anchor, or the anchor lives on a page not yet loaded.
    */
   function withTempInserted(cards: CardWithClientId[], entry: CardEntry): CardWithClientId[] {
     const wrapped: CardWithClientId = { ...entry.card, client_id: entry.client_id }
@@ -187,11 +158,7 @@ export function useVirtualCardList(
 
   /**
    * Build the empty Card record that backs a freshly-staged temp entry.
-   *
-   * No rank: the key is minted against live neighbours at insert time, not at
-   * stage time, so a temp that sits around while the list moves under it still
-   * lands where the user dropped it. An absent rank is also what marks an entry
-   * as un-persisted when neighbours are resolved.
+   * No rank — an absent rank is also what marks an entry as un-persisted.
    */
   function buildEmptyCard(): Card {
     return {
@@ -203,15 +170,10 @@ export function useVirtualCardList(
   }
 
   /**
-   * Stage a new temp card. Resolves an anchor + side from the args (or falls
-   * back to the tail of the persisted list) so the card appears in the right
-   * place in `all_cards` immediately, before any insert RPC has fired.
+   * Stage a new temp card, placed in `all_cards` immediately — before any
+   * insert RPC has fired.
    *
-   * @param left_card_id  - If given, the new card is placed `after` this id.
-   * @param right_card_id - If given (and `left_card_id` is not), the new card
-   *                        is placed `before` this id.
-   * @returns The stable `client_id` of the staged card, so the caller can later
-   *          target it (e.g. to autofocus its editor once it mounts).
+   * @returns The stable `client_id` of the staged card.
    */
   function addCard(left_card_id?: number, right_card_id?: number): string {
     const { anchor_id, side } = resolveAnchor(left_card_id, right_card_id)
@@ -239,11 +201,8 @@ export function useVirtualCardList(
   }
 
   /**
-   * Stage a new temp card at the very top of the deck. Anchors `before` the
-   * first *persisted* card — a real id the insert RPC can resolve, where a
-   * still-unsaved temp's placeholder id can't — and `unshift`s the entry so it
-   * renders above any temps already stacked at the top (repeated "add at top"
-   * clicks each land newest-first). Appends with no anchor on an empty deck.
+   * Stage a new temp card at the very top of the deck, anchored before the
+   * first persisted card so repeated clicks land newest-first.
    *
    * @returns The stable `client_id` of the staged card.
    */
@@ -264,12 +223,8 @@ export function useVirtualCardList(
 
   /**
    * The persisted keys either side of a staged card's slot in the rendered
-   * list, ready to mint its own key from.
-   *
-   * Read at insert time rather than at stage time, and against the rendered
-   * list rather than the entry's anchor — so a run of temps stacked in the same
-   * gap each resolve past one another to real neighbours, in the order the user
-   * sees them.
+   * list. Read against the rendered list, not the entry's anchor, so a run
+   * of temps stacked in the same gap resolve past one another in order.
    */
   function neighbourRanksFor(client_id: string): RankNeighbours {
     const cards = all_cards.value
@@ -290,22 +245,17 @@ export function useVirtualCardList(
   }
 
   /**
-   * Look up the entry with `client_id`. Unlike `findEntryByCardId` the key
-   * survives promotion, so a caller holding one across an in-flight insert can
-   * re-read the entry afterwards — or find it gone, if the insert rolled back.
+   * Look up the entry with `client_id`. Unlike `findEntryByCardId`, the key
+   * survives promotion, so a caller can re-read the entry after an in-flight
+   * insert resolves.
    */
   function findEntryByClientId(client_id: string): CardEntry | undefined {
     return temp_entries.value.find((e) => e.client_id === client_id)
   }
 
   /**
-   * Merge `values` into an entry's own card record.
-   *
-   * An eagerly-created card is promoted in place and never refetched, so the
-   * deck's cached pages don't hold it and `saveCard`'s optimistic patch can't
-   * reach it. Without this its card would stay the empty record it was staged
-   * with — a stale merge base that the mobile editor's one-side-at-a-time saves
-   * would use to clobber the other side.
+   * Merge `values` into an entry's own card record — a promoted temp is never
+   * refetched, so `saveCard`'s optimistic patch can't reach it here.
    */
   function patchTemp(client_id: string, values: Partial<Card>) {
     const entry = findEntryByClientId(client_id)
@@ -336,34 +286,12 @@ export function useVirtualCardList(
   }
 
   /**
-   * Apply the result of a successful INSERT to a staged temp entry. Called
-   * by the mutation layer after `insert_card_at` returns, before the deck
-   * refetch lands.
+   * Syncs a local temp card to the real id the insert returned.
    *
-   * Three things happen:
+   * The row keeps its identity through the swap, so it doesn't remount and
+   * the user can carry on typing in it. →[K:deck-temp-card-handoff]
    *
-   * 1. **Entry stops being a temp.** `real_id` is no longer null, so the
-   *    next save on this card routes to UPDATE instead of INSERT. The card's
-   *    `id` and `rank` are also filled in, and the just-saved text is applied
-   *    so the entry mirrors server state.
-   *
-   * 2. **Client_id is registered against the real id.** When the cache
-   *    refetch eventually returns the same row, `wrapPersisted` will look up
-   *    `client_id_by_real_id.get(real_id)` and find this entry's client_id,
-   *    so the persisted copy inherits the same v-for key.
-   *
-   * 3. **The handoff stays seamless.** Same v-for key across the
-   *    temp → persisted swap means Vue reuses the same DOM nodes — no
-   *    remount, no focus loss while the user keeps typing.
-   *
-   * No-op if no entry matches `temp_id`.
-   *
-   * @param temp_id   - The id the temp had before this INSERT (the negative
-   *                    placeholder originally minted by `addCard`).
-   * @param real_id   - The real id the insert returned.
-   * @param real_rank - The key the card was written with.
-   * @param values    - The text values that were just persisted, applied so
-   *                    the entry's card mirrors what the server now holds.
+   * @param temp_id - The negative placeholder id the temp was minted with.
    */
   function promoteTemp(temp_id: number, real_id: number, real_rank: string, values: Partial<Card>) {
     const entry = findEntryByCardId(temp_id)

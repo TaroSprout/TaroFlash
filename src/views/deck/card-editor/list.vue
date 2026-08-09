@@ -47,8 +47,7 @@ const reorder = useReorderDrag({
   count: () => all_cards.value.length,
   enabled: () => is_above_md.value && !selection.is_selecting.value && can_reorder.value,
   topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
-  // Clean, transform-immune scroll bound that grows as infinite-scroll loads
-  // more rows mid-drag, so auto-scroll past the load threshold keeps going.
+  // Grows as infinite-scroll loads more rows mid-drag, so auto-scroll past the load threshold keeps going.
   maxScroll: () => scroll_margin.value + virtualizer.value.getTotalSize() - window.innerHeight,
   onReorder: reorderCard
 })
@@ -60,8 +59,7 @@ const virtualizer = useWindowVirtualizer(
     overscan: OVERSCAN,
     scrollMargin: scroll_margin.value,
     getItemKey: (i: number) => all_cards.value[i].client_id,
-    // Keep the dragged row in the rendered range even after auto-scroll carries
-    // its slot out of the overscan window — otherwise it unmounts mid-drag.
+    // Keeps the dragged row rendered past the overscan window so it doesn't unmount mid-drag.
     rangeExtractor: (range) => {
       const indexes = defaultRangeExtractor(range)
       const dragging = reorder.dragging_index.value
@@ -71,29 +69,19 @@ const virtualizer = useWindowVirtualizer(
   }))
 )
 
-// The list flows in the page below the sticky toolbar (and, below xl, the
-// hero), so the window virtualizer needs the list's document offset to map
-// page scroll onto row positions. Measure the container, not the list itself:
-// during a mode-swap the list is briefly transformed (it slides into place),
-// which would corrupt its own rect — the container stays in flow.
+// Measures the parent, not the list itself — the list is transformed during
+// a mode-swap, which would corrupt its own rect.
 function measureScrollMargin() {
   const container = list_el.value?.parentElement
   if (!container) return
   scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
-  // scrollMargin flows into the virtualizer's options reactively, but its own
-  // scroll-offset tracking doesn't otherwise know to resync against it — an
-  // explicit measure() keeps the two from racing (see the resize debounce
-  // below for why this can otherwise fire mid-scroll).
+  // Explicit measure() keeps the virtualizer's own scroll-offset tracking from racing scrollMargin.
   virtualizer.value.measure()
 }
 
-// The mobile dock publishing its live height resizes the page body (see
-// mobile-dock-host.vue), which can itself be driven by --edge-safe-padding
-// changing live while the visual viewport resizes during a scroll gesture on
-// mobile Chrome. Observing document.body means that cascade fires this
-// mid-scroll, computing `scroll_margin` from a `window.scrollY` snapshot
-// that's still moving — debounce so a resize burst settles once the scroll
-// (and the cascade it triggered) has actually stopped.
+// Debounced so a resize burst (the mobile dock's live height, cascading from
+// --edge-safe-padding) settles after scroll stops, instead of measuring
+// scroll_margin from a window.scrollY snapshot that's still moving.
 const RESIZE_DEBOUNCE_MS = 120
 let resize_timer: ReturnType<typeof setTimeout> | undefined
 function onBodyResize() {
@@ -101,9 +89,6 @@ function onBodyResize() {
   resize_timer = setTimeout(measureScrollMargin, RESIZE_DEBOUNCE_MS)
 }
 
-// Start a drag and, when it actually begins (gated to md+ / not selecting),
-// lift the grabbed row. The element is held so the matching drop can settle it
-// back — the drop fires from a window pointerup, not a DOM event on the row.
 function onReorderStart(index: number, event: PointerEvent) {
   reorder.start(index, event)
   if (reorder.dragging_index.value === null) return
@@ -112,13 +97,7 @@ function onReorderStart(index: number, event: PointerEvent) {
   if (lifted_row) liftListItem(lifted_row)
 }
 
-/**
- * Map a card's client_id to its row index and scroll it into view — works
- * for cards outside the current virtual-scroll window (the virtualizer
- * computes the offset from the fixed row pitch, no measurement needed).
- * Registered with the controller on mount so `editCard` can reach it without
- * a template-ref chain through the mode-stack's dynamic panes.
- */
+/** Map a card's client_id to its row index and scroll it into view, even outside the current virtual window. */
 function scrollToCard(client_id: string) {
   const index = all_cards.value.findIndex((c) => c.client_id === client_id)
   if (index === -1) return
@@ -127,10 +106,9 @@ function scrollToCard(client_id: string) {
 }
 
 let resize_observer: ResizeObserver | undefined
-// The sticky toolbar (md+) covers the top of the list; its viewport-space
-// bottom is the inset where drag auto-scroll-up should start.
+// Viewport-space bottom of the sticky toolbar (md+) — the inset drag auto-scroll-up starts from.
 let sticky_toolbar: HTMLElement | null = null
-// The row lifted on pickup, held so the drop can settle it back to rest.
+// Held so the matching drop, which fires from a window pointerup, can settle it back.
 let lifted_row: HTMLElement | null = null
 
 onMounted(() => {
