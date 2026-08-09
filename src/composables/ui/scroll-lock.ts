@@ -1,20 +1,11 @@
 import { onUnmounted, toValue, type MaybeRefOrGetter } from 'vue'
 
 /**
- * Locks background scrolling **without mutating `<html>`/`<body>` layout**.
- * Toggling `overflow`/`position` there snaps the page to scroll 0 on iOS Safari,
- * and any layout shift is visible whenever the overlay above is transparent — so
- * instead this cancels scroll-producing events (`wheel`, `touchmove`) on
- * everything outside `container`.
- *
- * Scrolls inside `container` pass through so its own content still scrolls, but
- * are blocked once its scroller reaches the edge the gesture is pushing past, so
- * the scroll never chains back to the page. The lock releases on unmount.
+ * Locks background scrolling without mutating `<html>`/`<body>` layout. The
+ * lock releases on unmount. →[K:scroll-lock-no-layout-mutation]
  *
  * @param container - the element whose scrolling stays live (e.g. the open
  *   modal). Read lazily, so it may resolve after `lock()` is first called.
- * @example
- * const { lock, unlock } = useScrollLock(() => modal_container.value?.$el)
  */
 export function useScrollLock(container: MaybeRefOrGetter<HTMLElement | null | undefined>) {
   let scroll_locked = false
