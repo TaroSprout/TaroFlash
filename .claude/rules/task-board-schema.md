@@ -93,7 +93,7 @@ CASE "Target" WHEN 'MVP' THEN 0 WHEN 'Q3 ''26' THEN 1 WHEN 'Q4 ''26' THEN 2 WHEN
 
 Priority and Target are **orthogonal axes** — Priority answers _in what order_, Target answers _which
 quarter_. Every quarter spans P0→P3. How `/backlog` fills Target (theme-grouped, priority-driven
-overflow) lives in [`ticket-authoring.md` § Priority vs Target](./ticket-authoring.md) and the
+overflow) lives at →[K:ticket-priority-vs-target] and in the
 [`backlog`](../skills/backlog/SKILL.md) skill.
 
 ### `Assignee` — `select` (which model works the ticket in `/work`)
@@ -111,7 +111,7 @@ overflow) lives in [`ticket-authoring.md` § Priority vs Target](./ticket-author
 - **`Blocked By`** / **`Blocks`** — a self-relation **reciprocal pair**: setting `Blocked By` on the
   dependent ticket fills `Blocks` on the blocker automatically. **Write only `Blocked By`.** Each holds
   a JSON array of page URLs, not statuses — judge takeability by reading the blockers' `Status` (see
-  `complete` group above). Usage doctrine: [`ticket-authoring.md` § Dependencies](./ticket-authoring.md).
+  `complete` group above). Usage doctrine: →[K:ticket-dependencies].
 - **`Finished Date`** — `date`, set when work completes.
 - **`ID`** — read-only `auto_increment`. **Never set it.** Tickets are referred to as `#<n>` /
   `TARO-<n>`.

@@ -71,8 +71,8 @@ The board **schema** (data sources, field option lists) lives in
    triage. Fill them here **only when a ticket slipped in after the last `/backlog` sweep and one is
    still unset**, and even then don't invent a Priority in isolation — a lone straggler can't be
    distributed against the board, so leave `Priority` empty and let the next sweep place it unless the
-   user dictates one. Propose values — never apply unasked. If no epic fits, propose a new one per
-   [`ticket-authoring.md` § Epics](../../rules/ticket-authoring.md) rather than force-fitting.
+   user dictates one. Propose values — never apply unasked. If no epic fits, propose a new one
+   (→[K:ticket-new-epic-proposal]) rather than force-fitting.
 
 5. **Checkpoint.** One summary for the whole batch. Per ticket, in product terms: new title, one-line
    intent, proposed fields. Stop for approval.

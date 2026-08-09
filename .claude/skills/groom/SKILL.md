@@ -241,8 +241,8 @@ reach the body. Prefer **bullets over numbered lists** — Notion renumbers orde
 the churn shows up as page-history noise.
 
 **Wire the ordering.** Where a split named siblings that must land in sequence, set **`Blocked By`**
-on each dependent sibling — never `Blocks`, which Notion fills reciprocally on its own (see
-[`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). Siblings emitted with no
+on each dependent sibling — never `Blocks`, which Notion fills reciprocally on its own
+(→[K:ticket-dependencies]). Siblings emitted with no
 dependency are orphans — `/work` will pick up step 3 of 5 with no way to know step 1 must land
 first.
 
