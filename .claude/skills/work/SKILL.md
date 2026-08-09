@@ -77,6 +77,15 @@ tooling, docs) is also done on the orchestrator worktree — branch and commit f
 yours. The only work that leaves it is a **feedback-loop fix**, which lands on the main checkout so
 the user's dev server sees it (§ Review & feedback loop).
 
+`EnterWorktree` succeeding is not evidence your shell followed it — the tool can enter while `Bash`
+still runs in the main checkout, and a `git checkout` from there moves the **user's** tree off
+`master`.
+
+- **Run `pwd` before every git command**, not once at entry, and confirm it's your worktree path.
+- **`git worktree list` is the check** when anything looks off — it names which tree is on which
+  branch, the main checkout included.
+- **Never tell the user their main checkout is untouched** without having run that check.
+
 ### 1. SELECT
 
 ```sql
@@ -161,7 +170,9 @@ d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill w
 whose body opens with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR is stacked.
 `prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, route it through the
 **Review & feedback loop** (below) — an inline main-checkout fix on the PR branch; if it still
-can't pass after real effort, treat the ticket as stuck.
+can't pass after real effort, treat the ticket as stuck. **Never `git checkout` a branch to open its
+PR** — `gh pr create --head <branch>` opens one with nothing checked out, so PR orchestration can't
+move a tree out from under the user.
 e. **HANDOFF** — for each opened, green PR: set the ticket to `Review`, append the PR URL into the
 ticket body via `notion-update-page` (append, don't clobber the body).
 f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), **remove
