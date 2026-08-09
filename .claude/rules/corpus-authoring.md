@@ -93,9 +93,10 @@ the flip-side framing and a link to the deep walkthrough, and the topic's frontm
 ([`knowledge-addressing`](./knowledge-addressing.md)), and nothing else restates it:
 
 - `hazards.md` lists the slug, its topic, and where it's echoed — one line each, no prose to drift.
-- Every trap is **echoed** in the directory it bites, as a one-line `→[K:<slug>]` comment carrying a
-  label and nothing more, so it reaches whoever is standing on it without being read every session.
-  A trap with no directory to echo into is listed in `CLAUDE.md` instead.
+- Every trap is **echoed** in the directory it bites, as a one-line comment naming the trap and then
+  citing it — `// Trap: a pin is presence, not difference →[K:pin-is-presence-not-difference]`. The
+  label is what a reader acts on and is never dropped; the claim behind it stays in the block, so
+  the echo cannot drift. A trap with no directory to echo into is listed in `CLAUDE.md` instead.
 - **Anchor a schema fact in `supabase/schemas/`, never in `supabase/migrations/`** — a migration is
   append-only, so a pointer written into one can never be corrected.
 

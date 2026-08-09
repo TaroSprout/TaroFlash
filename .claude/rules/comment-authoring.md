@@ -52,6 +52,9 @@ Five, each failed on its own. Fail one, rewrite or delete.
 - A restatement of the next line.
 - A library's internal vocabulary where an observable term exists — say what the screen shows.
 - A pointer carrying nothing a human can act on.
+- **A comment that is only a citation.** `→[K:<slug>]` is a suffix to a sentence, never a comment on
+  its own — a reader skimming the diff must get the constraint without leaving the file. Enforced by
+  `scripts/knowledge-lint.mjs`.
 
 ## Pointers
 

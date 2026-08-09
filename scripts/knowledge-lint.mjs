@@ -121,7 +121,7 @@ function collectTokens(path, text) {
     if (fence) continue
 
     for (const match of line.matchAll(TOKEN)) {
-      tokens.push({ path, line: index + 1, slug: match[2], cites: Boolean(match[1]) })
+      tokens.push({ path, line: index + 1, slug: match[2], cites: Boolean(match[1]), text: line })
     }
   }
 
@@ -187,6 +187,37 @@ function checkCitations(tokens, declared, retired, ledgerPath) {
     })
 }
 
+/** A comment line stripped of its markers and every citation — what a human is actually told. */
+function prose(line) {
+  return line
+    .replace(TOKEN, '')
+    .replace(/^\s*(\/\*\*|\/\/|\*\/|\*|#|--)+/, '')
+    .replace(/\*\/\s*$/, '')
+    .replace(/[\s.,;:—-]/g, '')
+}
+
+/**
+ * A citation must ride a sentence a reader can act on without opening the topic.
+ * Its own line is fine only when the line above already carries that sentence.
+ */
+function checkOrphanCitations(root, tokens) {
+  const lines = new Map()
+
+  return tokens
+    .filter((token) => token.cites && !token.path.endsWith('.md') && !prose(token.text))
+    .filter((token) => {
+      if (!lines.has(token.path)) {
+        lines.set(token.path, readFileSync(join(root, token.path), 'utf8').split('\n'))
+      }
+      const previous = lines.get(token.path)[token.line - 2] ?? ''
+      return !/^\s*(\/\/|\*|\/\*)/.test(previous) || !prose(previous)
+    })
+    .map(
+      (token) =>
+        `${token.path}:${token.line} — →[K:${token.slug}] is the whole comment; say what a reader would get wrong`
+    )
+}
+
 function checkLineCaps(root, files, alwaysOn) {
   const breaches = []
   const caps = alwaysOn.line_caps
@@ -246,10 +277,18 @@ export function lintKnowledge(root) {
     ledger.retired,
     slugs.retired_ledger
   )
+  const orphans = checkOrphanCitations(root, tokens)
   const caps = checkLineCaps(root, files, always_on)
 
   return {
-    errors: [...ledger.errors, ...declarations.errors, ...misplaced, ...citations, ...caps.errors],
+    errors: [
+      ...ledger.errors,
+      ...declarations.errors,
+      ...misplaced,
+      ...citations,
+      ...orphans,
+      ...caps.errors
+    ],
     warnings: caps.warnings,
     stats: {
       declared: declarations.declared.size,
