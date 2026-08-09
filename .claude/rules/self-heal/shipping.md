@@ -17,6 +17,8 @@ already held by a sibling's worktree, and that is the failure this sequence avoi
    `docs(<rule-or-skill>): …` from `rule-author`, `docs(corpus): …` from `corpus-author`.
 4. `git push origin HEAD:self-heal`. On rejection, `git fetch origin` and rebase onto
    `origin/self-heal`, then push again — a sibling landed first, which is expected.
-5. Open the PR if `gh pr list --head self-heal --state open` is empty; otherwise the push is enough.
-   **Never merge it** — the user closes that stream.
+5. Open the PR if `gh pr list --head self-heal --state open` is empty, and only then put it in front
+   of the user with `open "<pr-url>"` (macOS `open`; fall back to `gh pr view <n> --web`) — a failure
+   there is skipped silently, the URL still goes in the report. An already-open PR means the push was
+   enough and nothing opens. **Never merge it** — the user closes that stream.
 6. `git worktree remove` your path, then report the PR link.

@@ -97,7 +97,7 @@ If a touched test is red:
 
 Once satisfied, **you** commit — the subagent never does:
 
-- `vp fmt` the new/changed test files, then commit them as `test(<scope>): <summary>`.
+- `vp fmt <path>` the new/changed test files by name, per [`FE-formatting`](../../rules/FE-formatting.md), then commit them as `test(<scope>): <summary>`.
 - If the subagent surfaced a suspected source bug and the user confirmed it, apply and commit the fix as a separate `fix(<scope>):` commit.
 
 Then give the user a short summary: what was covered, any obligations left unmet, and any deferred gaps — you don't need to dump the full report verbatim.

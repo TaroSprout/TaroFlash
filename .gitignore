@@ -42,3 +42,7 @@ coverage
 
 # Type-bucketed schema drift snapshot (scripts/dump-schemas)
 supabase/.schema-snapshot/
+
+# Agent worktrees — git tracks them via .git/info/exclude, which the formatter
+# doesn't read, so a whole-tree `vp fmt` would rewrite files inside a sibling run
+.claude/worktrees/
