@@ -86,6 +86,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The migration gate diffs against the PR's base commit, which a
+          # shallow clone doesn't contain.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:

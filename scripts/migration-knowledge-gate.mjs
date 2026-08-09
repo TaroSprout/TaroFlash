@@ -37,10 +37,19 @@ function parseArgs(argv) {
 }
 
 function addedMigrations(root, base) {
-  const diff = execFileSync('git', ['diff', '--name-status', '--diff-filter=A', `${base}...HEAD`], {
-    cwd: root,
-    encoding: 'utf8'
-  })
+  let diff
+  try {
+    diff = execFileSync('git', ['diff', '--name-status', '--diff-filter=A', `${base}...HEAD`], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+  } catch {
+    // Usually a shallow clone that doesn't contain the base commit — a passing
+    // gate there would be a false negative, so say which ref is missing.
+    throw new Error(
+      `cannot diff against ${base} — it is not in this checkout. A CI job running this gate needs fetch-depth: 0.`
+    )
+  }
 
   return diff
     .split('\n')
