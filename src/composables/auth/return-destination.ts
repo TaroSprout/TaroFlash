@@ -1,7 +1,11 @@
 // Where to send a member after sign-in. →[K:return-destination-open-redirect]
 const RETURN_DESTINATION_KEY = 'auth-return-destination'
 
-// →[K:return-destination-open-redirect]
+/**
+ * Rejects anything that could leave this app — a crafted `?next=` link must
+ * never bounce a member to a lookalike site the moment they sign in.
+ * →[K:return-destination-open-redirect]
+ */
 function isInAppPath(next: unknown): next is string {
   return typeof next === 'string' && /^\/(?![/\\])/.test(next)
 }
