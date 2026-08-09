@@ -22,6 +22,10 @@ import {
 
 const LEDGER_ENTRY = /^\s*[-*]\s*\[K:([A-Za-z0-9_-]+)\]\s*—\s*(.*)$/
 
+const RULE =
+  'A pointer that resolves to nothing, a slug declared twice, or an always-on file over its cap all ' +
+  'cost the reader the knowledge they came for. Fix the pointer, not the check. →[K:knowledge-lint]'
+
 /** Retired slugs and their epitaphs; a malformed entry is an error, not an epitaph. */
 function readLedger(root, ledgerPath) {
   const errors = []
@@ -192,6 +196,7 @@ function main() {
 
   for (const warning of warnings) console.error(`::warning::${warning}`)
   for (const error of errors) console.error(`::error::${error}`)
+  if (errors.length) console.error(`::error::${RULE}`)
 
   console.log(
     `knowledge-lint: ${stats.declared} slugs, ${stats.citations} citations, ` +
