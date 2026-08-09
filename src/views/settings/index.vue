@@ -55,8 +55,7 @@ const active_page_ref = useTemplateRef<{ onChromeBack?: () => boolean }>('active
 const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'phone')
 provide(settingsCloseKey, close)
 
-// account-access is reachable via the aside's edit button (tablet/desktop) or the
-// phone-only index entry — it never appears as a sidebar page-bar icon itself.
+// account-access is reachable only via the aside's edit button or the phone-only index entry, never as a sidebar page-bar icon.
 const pages = computed<Page[]>(() =>
   (Object.keys(PAGE_META) as PageValue[]).map((value) => ({
     value,
@@ -85,8 +84,7 @@ const groups = computed<PagedWindowGroup[]>(() => [
 
 const header_title = computed(() => t('settings.header.title'))
 
-// Open/close sfx live on the modal itself so every callsite (phone launcher,
-// dashboard edit button) sounds identically. Mirrors the deck-settings modal.
+// Open/close sfx live here, not per-callsite, so every launcher sounds identical — mirrors the deck-settings modal.
 onMounted(() => emitSfx('snappy_button_3'))
 onBeforeUnmount(() => emitSfx('pop_up_close'))
 

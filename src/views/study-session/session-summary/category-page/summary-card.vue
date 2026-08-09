@@ -55,7 +55,7 @@ function onMenuSelect(option: DropdownOption) {
   }
 }
 
-// A touch hold opens the corner more-menu; desktop hovers it into view instead.
+/** A touch hold opens the corner more-menu; desktop hovers it into view instead. */
 function onPointerdown(event: PointerEvent) {
   if (is_selecting.value || event.pointerType === 'mouse') return
   options_hold.arm(event, () => dropdown.value?.show())

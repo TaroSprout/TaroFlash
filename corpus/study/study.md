@@ -82,6 +82,12 @@ So the summary at the end isn't the save — by the time you get there, every
 review it lists is already recorded. The end-of-session step only refreshes the
 deck counts so the dashboard reflects your work.
 
+Underneath, each card in the pile carries its own save state, separate from
+whether you got it right: **unreviewed** (not yet rated, or re-served because
+its last save never confirmed), **pending** (rated and advanced past, save in
+flight), **saved** (confirmed durable), or **failed** (given up on, dropped from
+the summary). [K:study-review-durability]
+
 > [!WATCH]
 > Because reviews go one at a time as you rate, closing the tab mid-run loses no
 > _grades_ that have already been confirmed. What's lost is the in-tab progress

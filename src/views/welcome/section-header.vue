@@ -2,9 +2,8 @@
 type SectionHeaderProps = {
   heading: string
   subtitle?: string
-  // Set when the header sits on an accent-filled section (e.g. pricing): text
-  // reads as on-accent and the rule as accent-muted. Otherwise the header sits
-  // on a neutral surface and reads as ink.
+  // True when this header sits on an accent-coloured section, so the text and
+  // rule switch to colours that read against it.
   onAccent?: boolean
 }
 

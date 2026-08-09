@@ -13,8 +13,7 @@ const editor = inject(memberEditorKey)!
 
 onBeforeUnmount(() => audio_player.resetSettings())
 
-// Only the sliders live-preview; the mute toggle is excluded, so previewing
-// always treats audio as unmuted (mute is applied on save via App.vue).
+// Only the sliders live-preview — mute is excluded, so the preview always plays unmuted; mute itself applies on save via App.vue.
 watch(
   () => [
     editor.draft.preferences.audio.interface_sounds,

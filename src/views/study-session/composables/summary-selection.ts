@@ -33,9 +33,11 @@ export function useSummarySelection({
   dropCard,
   closeCategory
 }: UseSummarySelectionOptions) {
-  // The cards on the currently open category page, resolved from the same
-  // session card list the category page itself reads — so a delete/move that
-  // drops a card here disappears there too, no separate refetch.
+  /**
+   * The cards on the currently open category page, resolved from the same
+   * session card list the page itself reads — so a delete/move here disappears
+   * there too, no separate refetch.
+   */
   const category_cards = computed<StudyCard[]>(() => {
     const cat = category.value
     if (!cat) return []
@@ -100,15 +102,13 @@ export function useSummarySelection({
     if (card) await moveCards([card])
   }
 
-  // Selection only makes sense on a category page — leaving one (including
-  // the auto-close below) drops back to the calm, read-only summary.
+  // Leaving a category page drops back to the calm, read-only summary.
   watch(category, () => {
     selection.exitSelection()
     edit.stop()
   })
 
-  // The last card leaving a category (deleted, or moved to another deck) has
-  // nothing left to show — fall back to the summary landing.
+  // The last card leaving a category has nothing left to show — fall back to the summary.
   watch(category_cards, (list) => {
     if (category.value && list.length === 0) closeCategory()
   })

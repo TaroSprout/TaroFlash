@@ -67,18 +67,20 @@ const features: Feature[] = [
   }
 ]
 
-// Tablet and mobile render the cards as a 2-column grid; desktop as one row.
+/** Column count of the tablet/mobile card grid; desktop renders one row instead. */
 const GRID_COLUMNS = 2
 
-// Every card starts on its cover and flips to front when its trigger fires.
+/** Which face each card shows — starts on its cover and flips to front when its trigger fires. */
 const sides = ref<CardSide[]>(features.map(() => 'cover'))
 
 const row = useTemplateRef<HTMLElement>('row')
 
 let teardowns: (() => void)[] = []
 
-// Desktop: single justified row that scroll-flips. Tablet and mobile: a 2×2
-// grid so each row of two flips together on its own trigger.
+/**
+ * Desktop: single justified row that scroll-flips. Tablet and mobile: a 2×2
+ * grid so each row of two flips together on its own trigger.
+ */
 const row_layout = computed(() => {
   if (width.value === 'desktop') return 'flex flex-wrap items-stretch justify-center gap-2'
   return 'grid grid-cols-[auto_auto] justify-center gap-2'
@@ -92,10 +94,12 @@ function setSide(index: number, side: CardSide) {
   sides.value[index] = side
 }
 
-// Pair each ScrollTrigger's controlled card indices with the element whose scroll
-// position gates them: desktop flips the whole row off the <ul>; tablet and
-// mobile flip each grid row off its leading <li>, so both cards in a row flip
-// together.
+/**
+ * Pairs each ScrollTrigger's controlled card indices with the element whose
+ * scroll position gates them: desktop flips the whole row off the `<ul>`;
+ * tablet and mobile flip each grid row off its leading `<li>`, so both cards
+ * in a row flip together.
+ */
 function revealGroups(): { trigger: Element; indices: number[] }[] {
   if (!row.value) return []
   if (width.value === 'desktop') return [{ trigger: row.value, indices: features.map((_, i) => i) }]

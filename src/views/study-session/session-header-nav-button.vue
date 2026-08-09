@@ -2,9 +2,7 @@
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
 
-// The leading (header-start) nav action. Its shape is session-state-driven; the
-// parent decides the mode and routes the single `press`. `minimize` will join
-// here when the session gains a minimized state.
+/** The leading nav action — the parent picks the mode, this only routes `press`. */
 type NavMode = 'close' | 'stop' | 'back'
 
 type SessionHeaderNavButtonProps = {

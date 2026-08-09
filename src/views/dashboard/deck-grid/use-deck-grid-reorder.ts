@@ -17,8 +17,10 @@ import { usePressHold } from '@/composables/ui/press-hold'
 import { resolveReorderAnchor } from '@/utils/reorder'
 import { useDeckGrid, type DeckGridCellSize } from './use-deck-grid'
 
-// Touch picks a card up on a press-and-hold (like iOS), so a plain swipe still
-// scrolls the page; a small finger move within the window aborts the hold.
+/**
+ * Touch picks a card up on a press-and-hold (like iOS), so a plain swipe still
+ * scrolls the page; a small finger move within the window aborts the hold.
+ */
 const HOLD_MS = 200
 const HOLD_TOLERANCE = 8
 
@@ -42,10 +44,12 @@ export function useDeckGridReorder(
   const press_hold = usePressHold({ duration: HOLD_MS, tolerance: HOLD_TOLERANCE })
 
   const container_width = ref(0)
-  // container_width starts at 0, so columns/row_count fall back to a single
-  // tall column for one frame — gate the rendered height on this so a refresh
-  // never briefly renders (and lays out scroll restoration against) a page
-  // several times its real height.
+  /**
+   * `container_width` starts at 0, so columns/row_count fall back to a single
+   * tall column for one frame — gate the rendered height on this so a refresh
+   * never briefly renders (and lays out scroll restoration against) a page
+   * several times its real height.
+   */
   const measured = computed(() => container_width.value > 0)
 
   const { cell_width, gap_x, columns, row_count, row_pitch, itemPosition } = useDeckGrid(
@@ -89,10 +93,12 @@ export function useDeckGridReorder(
     return `translate(${offset.x}px, ${offset.y}px)`
   }
 
-  // Idle iOS-style jiggle: vary phase and tempo per card off its index so the
-  // grid shimmers organically instead of beating in unison. Lighter rotation
-  // than the deck-view card grid — the dashboard shows more cards at once, so
-  // the default amplitude reads as too busy.
+  /**
+   * Idle iOS-style jiggle: varies phase and tempo per card off its index so
+   * the grid shimmers organically instead of beating in unison. Lighter
+   * rotation than the deck-view card grid — the dashboard shows more cards at
+   * once, so the default amplitude reads as too busy.
+   */
   function jiggleStyle(index: number) {
     return {
       '--jiggle-delay': `${-(index % 11) * 47}ms`,
@@ -101,20 +107,24 @@ export function useDeckGridReorder(
     }
   }
 
-  // The card lifted on pickup, held so the matching drop can settle it back —
-  // the drop fires from a window pointerup, not a DOM event on the card.
+  /**
+   * The card lifted on pickup, held so the matching drop can settle it back —
+   * the drop fires from a window pointerup, not a DOM event on the card.
+   */
   let lifted_card: HTMLElement | null = null
 
+  /**
+   * Lift/drop must animate the innermost, transform-free element — the outer
+   * item carries the reactive `itemPosition` translate, and the middle
+   * wrapper carries the reactive drag-offset translate. GSAP caches whichever
+   * transform is on the element it tweens and rewrites the whole thing on
+   * drop, stomping either one (same reason `popDeckIn`/`popDeckOut` target
+   * the innermost child, not the position-carrying wrapper).
+   */
   function beginDrag(index: number, event: PointerEvent) {
     reorder.start(index, event)
     if (reorder.dragging_index.value === null) return
 
-    // Lift/drop must animate the innermost, transform-free element — the
-    // outer item carries the reactive itemPosition translate, and the middle
-    // wrapper carries the reactive drag-offset translate. GSAP caches
-    // whichever transform is on the element it tweens and rewrites the whole
-    // thing on drop, stomping either one (same reason popDeckIn/popDeckOut
-    // target the innermost child, not the position-carrying wrapper).
     const item = (event.target as HTMLElement).closest<HTMLElement>(
       '[data-testid="deck-grid__item"]'
     )
@@ -149,8 +159,7 @@ export function useDeckGridReorder(
     press_hold.cancel()
   })
 
-  // Settle the lifted card back to rest the moment the drag ends (the engine
-  // clears dragging_index on the window pointerup).
+  // Settle the lifted card the moment the engine clears dragging_index.
   watch(
     () => reorder.dragging_index.value,
     (current, previous) => {

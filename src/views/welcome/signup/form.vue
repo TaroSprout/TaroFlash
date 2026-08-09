@@ -32,9 +32,6 @@ const { t } = useI18n()
       >
         {{ t('signup-dialog.google-button') }}
       </ui-button>
-      <!-- <ui-button size="lg" theme="brown" class="w-full!" @press="submitOAuth('apple')">
-        {{ t('signup-dialog.apple') }}
-      </ui-button> -->
     </div>
 
     <ui-divider :label="t('signup-dialog.divider-or')" />

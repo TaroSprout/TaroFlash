@@ -21,7 +21,7 @@ const session = useSessionStore()
 
 const page = defineModel<AccountAccessContentPage>('page', { default: 'menu' })
 
-// Standalone tab context has no modal to close — fall back to returning to the menu.
+/** Closes via the modal when embedded; falls back to the account-access menu in the standalone tab context. */
 function onSuccessClose() {
   if (props.close) props.close()
   else page.value = 'menu'

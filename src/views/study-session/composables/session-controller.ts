@@ -157,8 +157,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     persisted_session.value = {
       deck_ids,
       card_ids: engine.cards.value.map((c) => c.id),
-      // Only durably-saved reviews are persisted, so a card whose save never
-      // confirmed is re-served as unreviewed on resume rather than rebuilt done.
+      // Only durably-saved reviews persist — an unconfirmed save is re-served as unreviewed on resume.
       results: engine.durableResults(),
       completed: engine.state.value === 'summary'
     }
@@ -194,9 +193,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     engine.reviewCard(grade)
   }
 
-  // The session ends the moment the engine reaches `summary` (last card reviewed
-  // or stop button) — flush every deck's queued reviews. Shell derives its own
-  // view from `state`, so there's no onFinished callback to relay results.
+  // The session ends once `state` reaches `summary` — flush every deck's queued reviews.
   watch(
     () => engine.state.value,
     (state) => {

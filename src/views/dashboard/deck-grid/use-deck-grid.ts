@@ -3,8 +3,10 @@ import { cardWidthPx } from '@/utils/card/widths'
 
 export type DeckGridCellSize = 'sm' | 'xs'
 
-// Cell width comes from the shared --card-w-* tokens (the fluid card fills the
-// cell); CELL_ASPECT mirrors --aspect-card.
+/**
+ * Cell width comes from the shared --card-w-* tokens (the fluid card fills
+ * the cell); `CELL_ASPECT` mirrors --aspect-card.
+ */
 const CELL_ASPECT = 8 / 7
 const GAP_X = 12 // gap-x-3
 const GAP_Y = 32 // gap-y-8

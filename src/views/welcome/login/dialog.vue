@@ -14,8 +14,7 @@ const auth = useLoginActions()
 async function onSubmit() {
   const result = await auth.submit()
 
-  // 'invalid' shows inline field errors; 'error' shows the backend message
-  // above the submit button — both keep the dialog open.
+  // Stay open on 'invalid'/'error' so the field or backend message can render — only 'success' closes.
   if (result !== 'success') return
 
   session.onAuthenticated()

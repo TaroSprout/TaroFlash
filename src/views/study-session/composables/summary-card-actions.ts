@@ -46,9 +46,7 @@ export function useSummaryCardActions({ onRemoved }: UseSummaryCardActionsOption
     const source_deck_ids = [
       ...new Set(target.map((card) => card.deck_id).filter((id): id is number => id !== undefined))
     ]
-    // A single-deck selection disables that deck in the picker, same as the
-    // active-card mover; a mixed-deck selection has no "current" deck to
-    // disable.
+    // A mixed-deck selection has no single "current" deck to disable in the picker.
     const current_deck_id = source_deck_ids.length === 1 ? source_deck_ids[0] : undefined
 
     async function move(target_deck_id: number) {

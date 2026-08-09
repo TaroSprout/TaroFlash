@@ -10,11 +10,11 @@ import { usePressHold } from '@/composables/ui/press-hold'
 
 type DeckGridItemProps = {
   deck: Deck
-  // the grid is in drag-to-reorder mode: the card is a drag handle, not tappable
+  /** The grid is in drag-to-reorder mode: the card is a drag handle, not tappable. */
   rearranging?: boolean
-  // this card is the one currently being dragged — opts out of the idle jiggle
+  /** This card is the one currently being dragged — opts out of the idle jiggle. */
   dragging?: boolean
-  // downgrade-grace lock (rank-recomputed by the grid) — dims + lock-badges the deck
+  /** Downgrade-grace lock, rank-recomputed by the grid — dims and lock-badges the deck. */
   locked?: boolean
 }
 
@@ -41,9 +41,11 @@ function onPress() {
   emit('press')
 }
 
-// A touch hold opens the corner options menu; a plain tap still flows through
-// the click path to `press`. In rearrange mode the grid owns pointerdown (drag
-// pickup), and mouse holds stay inert — desktop opens the menu from the button.
+/**
+ * A touch hold opens the corner options menu; a plain tap still flows through
+ * the click path to `press`. In rearrange mode the grid owns pointerdown (drag
+ * pickup), and mouse holds stay inert — desktop opens the menu from the button.
+ */
 function onPointerdown(event: PointerEvent) {
   if (rearranging || event.pointerType === 'mouse') return
   options_hold.arm(event, () => dropdown.value?.show())
@@ -69,10 +71,7 @@ function onOptionSelect(option: DropdownOption) {
     >
       <template #corner-action>
         <DeckGridDeleteButton v-if="rearranging" :deck="deck" @pointerdown.stop />
-        <!-- dropdown-button drops on* attrs in trigger-only mode (inheritAttrs:
-             false + attr partitioning), so .stop must live on a wrapper or the
-             gear's events reach ui-tappable (navigate) and the hold recognizer -->
-        <div v-else @pointerdown.stop @click.stop>
+        <div v-else data-testid="deck-grid-item__options-stop" @pointerdown.stop @click.stop>
           <ui-dropdown-button
             ref="dropdown"
             data-testid="dashboard__deck-options-button"

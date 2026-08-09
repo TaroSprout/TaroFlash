@@ -25,6 +25,11 @@ Then in CSS: `@media (...) { [data-mobile-below-width="md"] { … } }`. Browser 
 
 Memoizing the class function to return the same string reference does **not** help — Vue still patches class on every re-render the moment any tracked dep (matchMedia, etc.) fires. The fix is to remove the reactive binding entirely from the scrolling element, not to make it cheaper.
 
+## Sticky elements lag during scroll
+
+A `position: sticky` bar lags behind scroll in iOS standalone (home-screen) mode unless pinned to
+its own compositor layer with `transform: translateZ(0)`.
+
 ## Audio
 
 **A seek set on load is silently dropped.** iOS ignores `audio.currentTime` when there's no user gesture and the media isn't seekable yet — the element stays at 0 while a JS `current_time` ref optimistically jumps ahead, so playback starts from the beginning with the UI stranded. Defer the seek to a pending value applied **inside `play()`**, i.e. within the tap gesture; a manual seek clears the pending value.

@@ -1,15 +1,19 @@
 import { computed, inject, provide, type ComputedRef, type InjectionKey } from 'vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-// Width drives the responsive layout across the welcome page on two boundaries:
-// `desktop` at/above `xl`, `tablet` between `sm` and `xl`, `mobile` below `sm`.
-// `desktop` starts at `xl` so the four-card feature row only unwraps once it
-// actually fits. Consumers that only split desktop vs not compare against
-// `'desktop'`.
+/**
+ * The welcome page's responsive width tier, split at two boundaries: `desktop`
+ * at/above `xl`, `tablet` between `sm` and `xl`, `mobile` below `sm`. `desktop`
+ * starts at `xl` so the four-card feature row only unwraps once it actually
+ * fits — a consumer that only cares desktop vs not compares against `'desktop'`.
+ */
 export type WelcomeWidth = 'mobile' | 'tablet' | 'desktop'
 
-// Height is orthogonal to width — right now it only governs vertical chrome
-// (splash-nav visibility + which actions variant shows). `medium` is reserved.
+/**
+ * The welcome page's responsive height tier, orthogonal to width — it only
+ * governs vertical chrome (splash-nav visibility, which actions variant shows).
+ * `medium` is reserved.
+ */
 export type WelcomeHeight = 'short' | 'medium' | 'tall'
 
 export const welcomeWidthKey: InjectionKey<ComputedRef<WelcomeWidth>> = Symbol('welcome-width')

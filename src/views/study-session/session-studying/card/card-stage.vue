@@ -44,8 +44,7 @@ const { current_cover } = useCoverCarousel(
 
 const preview_appearance = computed(() => resolution.appearanceFor(next_card.value?.deck_id))
 
-// While loading nothing renders in the stage — the cover card rises in (via the
-// transition) once data lands. No separate skeleton: it's just the cover card.
+/** No separate loading skeleton — while loading, nothing renders and the cover card rises in once data lands. */
 const card_view = computed<'loading' | 'edit' | 'read'>(() => {
   if (loading.value) return 'loading'
   if (editing.value) return 'edit'
@@ -61,9 +60,7 @@ function onDragRating(grade: Grade | null) {
   primed_grade.value = grade
 }
 
-// Only the cover card rises in (the modal-open intro). Subsequent cards mount
-// on their starting side, so their enter is a no-op; the before-enter runs
-// before Vue paints the element, which is what keeps the rise flash-free.
+/** Only the cover card rises in; subsequent cards mount on their starting side, so their enter is a no-op. */
 let cover_tween: gsap.core.Tween | undefined
 
 function onCardBeforeEnter(el: Element) {
@@ -75,9 +72,11 @@ function onCardEnter(el: Element, done: () => void) {
   cover_tween = coverCardEnter(el as HTMLElement, done)
 }
 
-// A leave fires when a card is replaced mid-rise; a modal close instead tears
-// the subtree down with no leave hook — so kill the rise tween on unmount too,
-// or a spam close leaves it running (stray slide_up + work on a detached node).
+/**
+ * A leave fires when a card is replaced mid-rise; a modal close instead tears
+ * the subtree down with no leave hook — so kill the rise tween on unmount too,
+ * or a spam close leaves it running (stray slide_up + work on a detached node).
+ */
 function onCardLeave(_el: Element, done: () => void) {
   cover_tween?.kill()
   done()

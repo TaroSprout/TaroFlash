@@ -196,9 +196,7 @@ export function usePasswordActions() {
   watch(current_password, () => clearOnInput('current_password'))
   watch(code, () => clearOnInput('code'))
 
-  // Plain object of refs, not reactive() — a consumer destructuring this
-  // (`const { password } = usePasswordActions()`) needs the actual Ref object
-  // to stay reactive; reactive() would unwrap it to a frozen snapshot value.
+  // Returns plain refs, not reactive() — reactive() would unwrap them, so a caller destructuring this loses reactivity.
   return {
     password,
     confirm_password,

@@ -10,7 +10,7 @@ type DeckGridSkeletonProps = {
 
 const { count = 12 } = defineProps<DeckGridSkeletonProps>()
 
-// Mirrors the real grid's per-breakpoint cell width (use-deck-grid CELL_WIDTH).
+// Mirrors the real grid's per-breakpoint cell width (use-deck-grid.ts cardWidthPx).
 const is_md = useMatchMedia('w>=md')
 const card_width = computed(() => (is_md.value ? 'w-(--card-w-sm)' : 'w-(--card-w-xs)'))
 </script>

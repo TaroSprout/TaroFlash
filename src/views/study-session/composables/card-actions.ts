@@ -15,13 +15,6 @@ type UseActiveCardActionsOptions = {
  * another deck. Reuses the card domain's shared prompts (`useCardPrompts`) and
  * write seam (`useCardMutations`), then calls `onRemoved` so the session queue
  * drops the card and advances.
- *
- * @example
- * const { onDelete, onMove } = useActiveCardActions({
- *   active_card,
- *   deck_id: () => deck.id,
- *   onRemoved: dropCard
- * })
  */
 export function useActiveCardActions({
   active_card,
