@@ -153,6 +153,8 @@ Other backlog epics (P1–P3, mostly unbuilt): Power-Ups, Paperclips, Shop, Metr
 
 ## Conventions (`.claude/rules/`, auto-loaded by path glob)
 
-`architecture` (feature-colocation + api pattern) · `code-style` · `FE-formatting` · `vue-props` · `vue-script-order` · `vue-templates` · `composables` · `css` · `theming` · `animations` · `server-state` (Pinia Colada) · `skeleton-loading` · `study-session-architecture` · `supabase` · `i18n` · `safari-gotchas` · `testing` / `testing-composables` / `testing-pinia`.
+`architecture` (feature-colocation + api pattern) · `code-style` · `FE-formatting` · `vue-props` · `vue-script-order` · `vue-templates` · `composables` · `css` · `theming` · `animations` · `server-state` (Pinia Colada) · `skeleton-loading` · `study-session-architecture` · `supabase` · `i18n` · `safari-gotchas` · `test-authoring`.
+
+Writing anything is governed by the `*-authoring` spec family — `authoring` (the five shared principles) plus `rule-`, `ticket-`, `corpus-`, `test-`, `commit-`, and `response-authoring`. A rule's long-form walkthroughs nest as spokes at `.claude/rules/<rule>/<spoke>.md`.
 
 > All user-facing strings use i18n (`t('...')`, `src/locales/en-us.json`). Rules carry frontmatter (`paths`) scoping them to globs.

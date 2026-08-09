@@ -7,7 +7,7 @@ paths:
   - '.claude/rules/task-board-schema.md'
 ---
 
-# Ticket Authoring
+# Ticket authoring
 
 **Owns what a ticket looks like** — body shape, brevity, voice, and which stage fills each field.
 `/triage` and `/groom` declare their own routing and lanes, never their own templates or voice
@@ -95,7 +95,7 @@ filepaths, symbols, or SQL. This is the list the reviewer checks off and the imp
 so keep it skimmable. The technical encoding each one rides on — the seam, mechanism, or reuse
 pointer — lives on a companion line in `## Tech details`, not here.
 
-Five gates on every AC:
+Four gates on every AC, on top of [`authoring`](./authoring.md):
 
 - **Independently failable.** "The menu shows the new option" can't fail separately from the feature
   existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
@@ -105,11 +105,11 @@ Five gates on every AC:
   an AC. And an AC pins the _design_ decision (placement, host, copy, states, behaviour), never the
   _implementation_ (which composable, how it's wired) — that rides a companion line in
   `## Tech details`.
-- A hedge in an AC is an unresolved decision: route the ticket to `Needs More Info` rather than
-  writing the fork into the criterion.
+- **A hedge routes, it never writes.** The ticket goes to `Needs More Info`; the fork never lands in
+  the criterion.
 
-Apply the delete-test per clause — a clause whose removal leaves no criterion ambiguous or unfailable
-is cut.
+The delete-test applies **per clause** here, not per line — a clause whose removal leaves no
+criterion ambiguous or unfailable is cut.
 
 > **Bloated** (a "Decisions" bullet restating an AC): _Optimistic advance stays; only the commit is
 > gated — the card flies away instantly, tracked by a per-card pending/saved/failed status. Rejected:
