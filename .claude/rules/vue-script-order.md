@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-08T00:00:00Z
+paths:
+  - 'src/**/*.vue'
+---
+
 # Vue `<script setup>` ordering
 
 Declarations live in fixed top-to-bottom order. No mid-file `ref` / `computed` / `function` definitions sprinkled near their first use.

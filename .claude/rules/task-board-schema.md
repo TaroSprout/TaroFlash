@@ -1,3 +1,13 @@
+---
+lastUpdated: 2026-08-08T00:00:00Z
+# Board vocabulary is dead weight in a code session — scoped so it loads only for board work.
+# Skills and the ticket-author agent pull it by name when the user asks for a ticket.
+paths:
+  - '.claude/skills/{triage,groom,backlog}/**'
+  - '.claude/agents/ticket-author.md'
+  - '.claude/rules/ticket-authoring.md'
+---
+
 # Task Board Schema
 
 **The single source of truth for the board's shape** — data sources, the MCP server, and every field
@@ -23,7 +33,7 @@ constants; change a field here once and every consumer follows.
 
 **Three hard limits of the Notion MCP.** `status`-type fields are special-cased: `notion-update-data-source`
 **cannot** add, rename or recolor `Status` options — only the user can, in the Notion UI (renaming
-preserves row mappings). `select`/`multi_select` options *are* editable. There is **no archive or
+preserves row mappings). `select`/`multi_select` options _are_ editable. There is **no archive or
 delete tool** — `notion-move-pages` only re-parents, so retiring a row means the user deletes it in the
 UI. Page titles, properties and body content are all editable via `notion-update-page`.
 

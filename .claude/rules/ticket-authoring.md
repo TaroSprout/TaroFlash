@@ -1,3 +1,13 @@
+---
+lastUpdated: 2026-08-08T00:00:00Z
+# Board vocabulary is dead weight in a code session — scoped so it loads only for board work.
+# Skills and the ticket-author agent pull it by name when the user asks for a ticket.
+paths:
+  - '.claude/skills/{triage,groom,backlog}/**'
+  - '.claude/agents/ticket-author.md'
+  - '.claude/rules/task-board-schema.md'
+---
+
 # Ticket Authoring
 
 **The single source of truth for what a ticket looks like.** Body shape, brevity, voice, and which
