@@ -14,12 +14,10 @@ export function outsetSideFor(notchSide: NotchSide): OutsetSide {
 }
 
 /**
- * Compute the CSS `mask` shorthand for `ui-kit/tag-button`. The mask composes
- * three layers (notch strip, outset strip, middle base rectangle) so a single
- * background color paints the full tag silhouette — concave notch on one side,
- * convex point on the other.
+ * Cuts a tag button into its luggage-label shape — a bite out of one end, a
+ * point on the other — so one flat colour paints the whole silhouette.
  *
- * Returned string is suitable for both `mask` and `-webkit-mask`.
+ * Set the result on both `mask` and `-webkit-mask`.
  */
 export function buildTagButtonMask(params: TagButtonMaskParams): string {
   const { notchSide, notchDepth: n, outsetDepth: o, apexRadius: k, cornerRadius: cr } = params

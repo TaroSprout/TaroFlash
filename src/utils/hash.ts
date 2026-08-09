@@ -1,12 +1,9 @@
 /**
- * SHA-256 hex digest of a file's raw bytes.
+ * A file's fingerprint, taken from its bytes alone — so the same picture used
+ * on ten cards is stored once, whatever it was named on the way in.
  *
- * Used to content-address uploads: identical bytes produce an identical hash,
- * so the same image reused across cards (or as a deck background) maps to a
- * single storage object instead of one copy per use.
- *
- * Reads bytes via FileReader rather than `file.arrayBuffer()` for environment
- * portability (jsdom's File predates `arrayBuffer`).
+ * Reads through `FileReader` rather than the shorter modern call, which the
+ * test environment's `File` doesn't have.
  */
 export async function hashFile(file: File): Promise<string> {
   const bytes = await readArrayBuffer(file)

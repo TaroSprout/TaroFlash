@@ -12,14 +12,11 @@ export type CoverPattern = {
 }
 
 /**
- * Single source of truth for cover background patterns. Each key has a matching
- * `--bgx-<key>` image var (src/styles/main.css `@theme static`) and an SVG in
- * `assets/backgrounds/`. `satisfies Record<DeckCoverPattern, …>` keeps this in
- * lockstep with the global union — adding a union member without an entry here
- * (or vice-versa) is a compile error.
+ * Every pattern a deck cover can wear.
  *
- * To add a pattern: drop the SVG, add a `--bgx-<key>` var, extend the
- * `DeckCoverPattern` union, and add one entry here.
+ * A new one needs four things in step: the SVG in `assets/backgrounds/`, a
+ * `--bgx-<key>` variable in `main.css`, a member of the `DeckCoverPattern`
+ * union, and an entry here. The type catches the last two, not the first two.
  */
 export const COVER_PATTERNS = {
   'diagonal-stripes': {

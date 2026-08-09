@@ -1,12 +1,10 @@
 import type { CardIndexEntry } from '@/api/cards'
 import { cleanTerm, type DisplayWord } from '@/utils/transcript'
 
-// A run of transcript words whose joined text matches a card front. `lo`/`hi`
-// are global word indices (the same space as WordRange), so a match drops
-// straight into the selection machinery. `deck_ids` are the decks already
-// holding this term, which drive the term panel's add-button state. `palette`
-// colours the highlight after the reader joins the owning deck's cover — the
-// matcher itself leaves it unset.
+// A stretch of the transcript that says one of the member's cards. `lo`/`hi`
+// share the numbering `WordRange` uses, so a match is a selection as it
+// stands. The matcher leaves `palette` unset — the reader fills it in from the
+// owning deck's cover.
 export type CardMatch = {
   lo: number
   hi: number
@@ -15,17 +13,17 @@ export type CardMatch = {
   palette?: PaletteName
 }
 
-// Normalized card front → the decks holding it. Built once per index, then
-// shared by the matcher, the per-word lookup, and term→deck queries.
+// Build this once and share it — the matcher, the per-word lookup, and the
+// term panel all read the same map.
 export type CardTermMap = Map<string, number[]>
 
-// No real card front spans more words than this, so the inner scan never grows a
-// candidate span unbounded — a safety cap on the worst case, not a content rule.
+// A ceiling on the scan, not a limit on what a card may say — no real card
+// front runs this long.
 const MAX_SPAN_WORDS = 16
 
 /**
- * Collapse the raw index to normalized-term → decks, merging case/punctuation
- * variants ("Cat" + "cat") into one entry so every consumer keys off one form.
+ * Folds the card index down to one entry per term, so "Cat" and "cat," are the
+ * same card as far as everything downstream is concerned.
  */
 export function buildCardTermMap(index: CardIndexEntry[]): CardTermMap {
   const map: CardTermMap = new Map()
@@ -46,13 +44,8 @@ export function decksForTerm(terms: CardTermMap, term: string): number[] {
 }
 
 /**
- * Find every card front that appears verbatim as a run of transcript words,
- * resolved leftmost-longest and non-overlapping. Word-spans and the map's keys
- * are normalized the same way (see `normalizeForMatch`) so casing and
- * surrounding punctuation never block a match.
- *
- * @example
- * const matches = matchCardsInWords(flatWords, buildCardTermMap(cardIndex))
+ * Finds every card front spoken in the transcript, preferring the longest
+ * phrase at each point and never overlapping two matches.
  */
 export function matchCardsInWords(words: DisplayWord[], terms: CardTermMap): CardMatch[] {
   if (terms.size === 0) return []
@@ -80,8 +73,8 @@ export function matchCardsInWords(words: DisplayWord[], terms: CardTermMap): Car
 }
 
 /**
- * Index matches by every word they cover, so a word component (or a tap handler)
- * can resolve "is this word in a match, and which one" in O(1).
+ * Indexes matches by each word they cover, so a tapped word can name its match
+ * without searching.
  */
 export function matchesByWord(matches: CardMatch[]): Map<number, CardMatch> {
   const map = new Map<number, CardMatch>()
@@ -92,9 +85,9 @@ export function matchesByWord(matches: CardMatch[]): Map<number, CardMatch> {
 }
 
 /**
- * Reduce a card front or a joined word-span to its comparable form: surrounding
- * punctuation stripped (matching `cleanTerm`), inner whitespace collapsed, and
- * case folded. Returns '' for punctuation-only input.
+ * Reduces a card front or a run of spoken words to the form the two are
+ * compared in. Both sides must come through here, or casing and stray
+ * punctuation block matches that should land. Punctuation alone yields `''`.
  */
 export function normalizeForMatch(text: string): string {
   return cleanTerm(text).replace(/\s+/g, ' ').toLowerCase()
@@ -110,9 +103,7 @@ function maxKeyLength(terms: CardTermMap): number {
   return max
 }
 
-// From word `start`, grow the span one word at a time and keep the longest span
-// whose normalized text is a known term. Stops once the span outgrows the
-// longest term (no longer one can match) or hits the span-word cap.
+// Grows the span a word at a time, keeping the longest that names a card.
 function longestMatchFrom(
   words: DisplayWord[],
   start: number,

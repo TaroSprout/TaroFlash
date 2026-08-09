@@ -1,8 +1,7 @@
 import { type CardBase } from '@type/card'
 
-// Allow-list of upsert-safe columns. Keeps non-column fields (e.g. `review`,
-// which persists through its own RPC) and runtime-only state (e.g. study
-// session `preview`/`state`) from leaking into the upsert body.
+// An allow-list, not a convenience — a card carries fields that aren't columns
+// at all, and a study session hangs more on it that must never be saved.
 const CARD_UPSERT_COLUMNS = [
   'id',
   'deck_id',

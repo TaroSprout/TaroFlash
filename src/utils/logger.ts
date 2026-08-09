@@ -63,7 +63,6 @@ class LoggerClass {
       }
     ]
 
-    // find the index of the level
     const index = Object.values(LogTypes).findIndex((l) => l === level)
 
     if (index <= this.logLevel) {
@@ -83,13 +82,8 @@ class LoggerClass {
         if (match?.[1]) {
           let url = match[1]
 
-          // Remove protocol + host
           url = url.replace(/^https?:\/\/[^/]+\/?/, '')
-
-          // Remove query params
           url = url.replace(/\?.*?(?=:)/, '')
-
-          // Remove webpack://customer-flows/.
           url = url.replace(/^webpack:\/\/customer-flows\/\./, '')
 
           return url

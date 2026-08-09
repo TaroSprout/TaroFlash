@@ -1,9 +1,9 @@
 export type CardWidthToken = 'full' | 'md' | 'sm' | 'xs' | '2xs'
 
 /**
- * Resolve a `--card-w-<token>` width token to its px number. Single source of
- * truth for card widths lives in main.css; use this where layout math needs
- * the number (e.g. grid cell geometry) instead of mirroring the px value.
+ * Reads a card width from the stylesheet, for the layout maths that needs the
+ * number. Call this rather than copying the value — the stylesheet is where a
+ * card width is actually decided.
  */
 export function cardWidthPx(token: CardWidthToken): number {
   const root_styles = getComputedStyle(document.documentElement)

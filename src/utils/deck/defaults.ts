@@ -1,8 +1,7 @@
 /**
- * Single source of truth for deck-shaped defaults: settings, study config,
- * card attributes, and the UI bounds the deck-settings forms apply on top.
- * Both the editor (when staging a fresh deck) and the runtime study-session
- * core (when filling missing fields on a loaded deck) read from here.
+ * What a deck's settings are when nobody has chosen. Read them here whether
+ * you're creating a deck or filling gaps in a loaded one — the two drifting
+ * apart is how a deck studies differently from how its settings screen reads.
  */
 
 import { randomCoverConfig } from '@/utils/cover'
@@ -28,9 +27,8 @@ export const CARD_ATTRIBUTES_DEFAULTS: Required<
 }
 
 /**
- * UI bounds for the daily-limit spinboxes in tab-review-pacing. Unbounded above
- * on purpose — decks grow, so a limit is allowed to exceed the current card
- * count. `null` on the model means "no cap" (the "all" pill is active).
+ * Bounds for the daily-limit steppers. Deliberately open-ended upward — decks
+ * grow, so a limit above today's card count is a reasonable thing to set.
  */
 export const DAILY_LIMIT_BOUNDS = {
   step: 5,
@@ -38,10 +36,7 @@ export const DAILY_LIMIT_BOUNDS = {
   min: 0
 } as const
 
-/**
- * Merge a `Partial<DeckConfig>` over `DECK_CONFIG_DEFAULTS`, ignoring keys
- * whose override value is `undefined` so they don't leak past the default.
- */
+/** Fills a deck's unset settings in from the defaults above. */
 export function withDeckConfigDefaults(partial?: Partial<DeckConfig>): Required<DeckConfig> {
   const out = { ...DECK_CONFIG_DEFAULTS }
   if (!partial) return out

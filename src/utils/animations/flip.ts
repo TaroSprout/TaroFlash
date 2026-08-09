@@ -1,8 +1,6 @@
 import { gsap } from 'gsap'
 
-// The card flip (src/components/card/index.vue delegates here), generalised so
-// the rotation axis can be chosen: 'y' flips horizontally (the card), 'x'
-// vertically.
+// Turning a card over. `y` turns it left-to-right, `x` top-to-bottom.
 type FlipAxis = 'x' | 'y'
 
 const ROTATE = { x: 'rotateX', y: 'rotateY' } as const
@@ -17,8 +15,8 @@ export function flipEnter(el: Element, axis: FlipAxis, done: () => void) {
       scale: 1,
       duration: 0.2,
       ease: 'back.out(2)',
-      // The resting state is identity, so drop GSAP's inline transform on
-      // completion — otherwise it shadows CSS hover transforms (e.g. scale).
+      // Drop the inline transform once landed, or it shadows the card's CSS
+      // hover effects. →[K:settled-transform-traps-overlays]
       clearProps: 'transform',
       onComplete: done
     }

@@ -1,16 +1,16 @@
 export type LearningStepsKey = '10m' | '1hr' | '1d' | '1m-10m' | '1m-10m-1d'
 export type RelearningStepsKey = '10m' | '1hr' | '1d' | '1m-10m'
 
-// ts-fsrs' own default maximum_interval (~100 years) — the "uncapped" value a
-// null/0 max_interval resolves to before it reaches the scheduler.
+// What "no ceiling" resolves to before it reaches the scheduler — roughly a
+// hundred years, which is the scheduler's own idea of unlimited.
 export const FSRS_MAX_INTERVAL = 36500
 
-// Mirrors the system preset's leech_threshold default — only a defensive
-// fallback for when a resolved deck value is somehow absent.
+// A fallback only. The system preset carries the real value; if you're reading
+// this one, something upstream failed to resolve.
 export const DEFAULT_LEECH_THRESHOLD = 8
 
-// Percentages. Below 70 the scheduler thrashes; above 97 intervals collapse to
-// near-daily, so FSRS itself treats the range outside these as unusable.
+// Don't widen these. Below 70 the scheduler thrashes; above 97 every card
+// comes back near-daily. The scheduler itself rejects the range outside.
 export const DESIRED_RETENTION_BOUNDS = { min: 70, max: 97, step: 1 } as const
 
 export const LEECH_THRESHOLD_BOUNDS = { min: 1, max: 99, step: 1 } as const
