@@ -15,16 +15,20 @@ const member = useMemberStore()
 
 useResumeStudySession()
 
-// The skeleton overlay masks the real route while it's mid-transition, and also
-// for the whole time a member is pending-deletion — so their account/profile
-// never paints behind the restore dialog. Same visual state as a cold load.
+/**
+ * Masks the real route while it's mid-transition, and also for the whole
+ * time a member is pending-deletion — so their account/profile never paints
+ * behind the restore dialog. Same visual state as a cold load.
+ */
 const show_skeleton = computed(() => show_skeleton_overlay.value || member.pending_deletion)
 
-// A suspended (pending-deletion) member is admitted to the shell and sees the
-// route skeleton — the checkpoint no longer diverts them to welcome. The
-// restore dialog opens over that skeleton once the member row confirms the
-// pending state. `immediate` so a cold load on an already-suspended member
-// still fires when the row resolves.
+/**
+ * A suspended (pending-deletion) member is admitted to the shell and sees
+ * the route skeleton — the checkpoint no longer diverts them to welcome.
+ * The restore dialog opens over that skeleton once the member row confirms
+ * the pending state. `immediate` so a cold load on an already-suspended
+ * member still fires when the row resolves.
+ */
 watch(
   () => member.pending_deletion,
   (pending) => {

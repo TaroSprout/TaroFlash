@@ -14,24 +14,29 @@ const Dashboard = () => import('@/views/dashboard/index.vue')
 const DeckView = () => import('@/views/deck/deck-view.vue')
 const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
 
-// Each screen declares which checkpoint policies apply; the single beforeEach
-// below reads this rather than hardcoding exceptions per route.
 declare module 'vue-router' {
+  /**
+   * Per-route checkpoint policies the single `beforeEach` below reads,
+   * instead of hardcoding exceptions per route.
+   */
   interface RouteMeta {
-    // Signed-in-only: a signed-out visitor is bounced to sign-in.
+    /** Signed-in-only: a signed-out visitor is bounced to sign-in. */
     requiresAuth?: boolean
-    // Marketing/auth surface: a signed-in visitor is sent into the app.
+    /** Marketing/auth surface: a signed-in visitor is sent into the app. */
     guestOnly?: boolean
-    // Gated screen: the named useCan capability must be true to enter.
+    /** Gated screen: the named `useCan` capability must be true to enter. */
     capability?: 'useAudioReader'
   }
 }
 
-// Resolves the member row before the capability check reads any field off it.
-// The store is a projection of a query App.vue starts reactively and nothing
-// awaits, so a direct URL hit can otherwise read an empty role mid-restore.
-// Colada dedupes, so this joins the in-flight fetch rather than issuing a
-// second one.
+/**
+ * Resolves the member row before the capability check reads any field off it.
+ *
+ * The store is a projection of a query App.vue starts reactively and nothing
+ * awaits, so a direct URL hit can otherwise read an empty role mid-restore.
+ * Colada dedupes, so this joins the in-flight fetch rather than issuing a
+ * second one.
+ */
 async function resolveMember() {
   const id = useSessionStore().user?.id
   if (id) await prefetchMemberById(id).catch(() => {})
@@ -41,9 +46,11 @@ async function resolveMember() {
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  // The app scrolls the page (not inner containers), so reset to the top on each
-  // navigation — including chapter-to-chapter param changes — and restore the
-  // saved position on back/forward.
+  /**
+   * The app scrolls the page, not inner containers, so reset to the top on
+   * each navigation — including chapter-to-chapter param changes — and
+   * restore the saved position on back/forward.
+   */
   scrollBehavior(_to, _from, savedPosition) {
     return savedPosition ?? { top: 0 }
   },
@@ -100,29 +107,26 @@ const router = createRouter({
   ]
 })
 
-// The single auth checkpoint every navigation passes through. Reads each route's
-// declared policies and runs them in a fixed order — auth, then guestOnly, then
-// capability — with the first failure winning. Identity resolves once via the
-// session store's memoized ensureResolved(); only the capability branch pays for
-// the member row.
+/**
+ * The single auth checkpoint every navigation passes through — each route's
+ * declared policies run in turn, first failure wins. Identity resolves once
+ * via the session store's memoized `ensureResolved()`; only the capability
+ * check pays for the member row.
+ */
 router.beforeEach(async (to) => {
   const session = useSessionStore()
 
-  // 1. auth — a signed-in-only screen reached while signed out sends the visitor
-  //    to sign-in, carrying where they were headed so it survives the round trip.
+  // Signed-in-only screen reached while signed out: bounce to sign-in, carrying where they were headed so it survives the round trip.
   if (to.meta.requiresAuth && !(await session.ensureResolved())) {
     return { name: 'welcome', query: { next: to.fullPath } }
   }
 
-  // 2. guestOnly — a marketing/auth page reloaded while signed in jumps to the
-  //    app. Skipped on a password-recovery link (whose redirect lands on
-  //    /welcome) so the reset dialog there stays reachable.
+  // Marketing/auth page reloaded while signed in: jump to the app — skipped on a password-recovery link so the reset dialog on /welcome stays reachable.
   if (to.meta.guestOnly && !isPasswordRecoveryUrl() && (await session.ensureResolved())) {
     return { name: 'dashboard' }
   }
 
-  // 3. capability — a gated screen checks the member is allowed in, once the row
-  //    has resolved. Reuses the single admin rule in useCan; no second copy.
+  // Gated screen: resolve the member row, then defer to useCan's single admin rule.
   if (to.meta.capability) {
     await resolveMember()
     if (!useCan()[to.meta.capability].value) return { name: 'dashboard' }
