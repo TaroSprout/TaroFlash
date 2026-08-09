@@ -12,7 +12,7 @@ Run that once per clone (it's a local git setting, not carried in the repo).
 
 Runs [the Archivist agent](../.claude/agents/archivist.md) after each commit to
 keep the [`corpus/`](../corpus/) domain-knowledge docs honest. See
-[`corpus/CONTRIBUTING.md`](../corpus/CONTRIBUTING.md) for what the corpus and the
+[`corpus-authoring`](../.claude/rules/corpus-authoring.md) for what the corpus and the
 Archivist are.
 
 **How it works**

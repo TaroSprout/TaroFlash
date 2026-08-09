@@ -5,7 +5,7 @@ somewhere the obvious assumption is quietly wrong and it costs you.
 
 > **Generated — do not hand-edit.** Built from every topic with `hazard: true` in
 > its frontmatter. To add or change an entry, edit the topic; to review before
-> touching an area, read this. See [CONTRIBUTING → Hazards](./CONTRIBUTING.md#hazards).
+> touching an area, read this. See [corpus-authoring → Hazards](../.claude/rules/corpus-authoring.md#hazards).
 
 Roughly ordered by blast radius — data loss and silent corruption first, design
 ceilings and footguns last.

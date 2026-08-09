@@ -2,7 +2,7 @@
 
 Root index of every topic. One line each: `[[id]] — hook`. ⚠️ marks a topic that
 documents a [system hole](./hazards.md).
-See [CONTRIBUTING](./CONTRIBUTING.md) for how the corpus works.
+See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus works.
 
 ## authz
 
