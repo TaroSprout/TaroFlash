@@ -9,8 +9,7 @@ export function useUpsertPresetMutation() {
     mutation: ({ id, ...preset }: UpsertPresetVars) =>
       id ? updatePreset({ id, ...preset }) : createPreset(preset),
     onSettled: () => {
-      // Editing a preset re-paces every deck following it, so the decks' BE-resolved
-      // pacing values are stale too — not just the preset list.
+      // Editing a preset re-paces every deck following it, not just the preset list.
       queryCache.invalidateQueries({ key: ['review-pacing-presets'] })
       queryCache.invalidateQueries({ key: ['decks'] })
     }

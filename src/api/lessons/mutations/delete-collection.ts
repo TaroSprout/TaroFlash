@@ -8,8 +8,7 @@ export function useDeleteLessonCollectionMutation() {
     mutation: (id: number) => deleteLessonCollection(id),
     onSettled: (_data, error, id) => {
       queryCache.invalidateQueries({ key: ['lesson-collections'] })
-      // On success the collection (and its lessons, via cascade) are gone — drop
-      // the cached detail + lesson-list entries without a refetch that would 404.
+      // Forget them rather than reload them — the collection and its chapters are gone.
       if (!error) {
         queryCache.invalidateQueries({ key: ['lesson-collection', id] }, false)
         queryCache.invalidateQueries({ key: ['lessons', id] }, false)

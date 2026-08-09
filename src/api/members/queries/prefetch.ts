@@ -7,8 +7,7 @@ export function prefetchMemberById(id: string) {
     key: ['member', id],
     query: () => fetchMemberById(id)
   })
-  // refresh(), not fetch() — fetch() unconditionally aborts and restarts any
-  // in-flight request, which doubles this exact fetch when the member store's
-  // own reactive query (mounted at the app root) already started it.
+  // `refresh`, never `fetch` — `fetch` restarts a request already in flight, and
+  // the member store starts this exact one at app start.
   return cache.refresh(entry)
 }

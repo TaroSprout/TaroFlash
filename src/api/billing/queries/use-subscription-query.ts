@@ -2,12 +2,8 @@ import { useQuery } from '@pinia/colada'
 import { getSubscription } from '../db'
 
 /**
- * Fetches the caller's current Stripe subscription (plan, status, renewal
- * date, default payment method) along with the upcoming invoice preview.
- * Returns `{ subscription: null, upcoming: null }` for free-plan members
- * with no Stripe record.
- *
- * Invalidated by any `['billing', ...]` mutation.
+ * The member's plan and what they'll be charged next. Both come back `null`
+ * for someone on the free plan, who has never been billed.
  */
 export function useSubscriptionQuery() {
   return useQuery({

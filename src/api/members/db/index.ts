@@ -1,12 +1,9 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-// Explicit column list, not `select('*')` — `members` also holds
-// stripe_customer_id/stripe_subscription_id, which are server-only
-// (webhook + edge functions via the service-role client) and have no
-// business shipping to the browser in the fetch response.
-// `delete_at` has to be here: it's what tells the app the account is pending
-// deletion, and without it the whole divert-to-pending flow silently no-ops.
+// Listed out rather than everything: the row also holds billing identifiers that
+// have no business reaching the browser. `delete_at` must stay — it is the only
+// thing telling the app an account is pending deletion.
 const MEMBER_COLUMNS =
   'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, delete_at, plans(deck_limit, cards_per_deck_limit)' as const
 
@@ -18,26 +15,20 @@ export async function fetchMemberById(id: string): Promise<Member | null> {
     .single()
 
   if (error) {
-    // PGRST116 = `.single()` found zero rows — RLS is filtering this id out,
-    // not a fetch failure. That's an expected "not visible" outcome, so it
-    // resolves to null rather than surfacing as an error.
+    // No rows means this account isn't visible to the caller, not that the read failed.
     if (error.code === 'PGRST116') return null
 
     logger.error(error.message)
     throw error
   }
 
-  // supabase-js can't infer the `plans` embed as a single object without
-  // generated Database types (it defaults nested relations to arrays) — it
-  // is one at runtime, since `plan` is a FK on this table.
+  // The plan comes back as one object; the client library can only guess a list.
   return data as unknown as Member
 }
 
 /**
- * Patches an existing member row. Every member row is auto-created by the
- * signup trigger, so this is always an update, never a real insert — a
- * `.upsert()` here would fail on any payload that omits a NOT NULL column
- * (Postgres validates the INSERT tuple before it resolves the conflict).
+ * Changes part of an existing member. Signup always creates the row, so this
+ * never has to make one — and can't, since a partial payload wouldn't be valid.
  */
 export async function upsertMember({ id, ...updates }: Member): Promise<void> {
   const { error } = await supabase.from('members').update(updates).eq('id', id)

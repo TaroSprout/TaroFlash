@@ -2,15 +2,10 @@ import type { useQueryCache } from '@pinia/colada'
 
 type QueryCache = ReturnType<typeof useQueryCache>
 
-// A write flags every affected deck's data as out of date, but only
-// re-downloads the deck on screen. `refetch_inactive: true` re-downloads the
-// off-screen ones too, so a deck you're not looking at (after moving cards out
-// of it) is already right when you open it, rather than showing the old list
-// for a beat first.
 type InvalidateOptions = {
+  // Reload decks you aren't looking at as well, so one you open next is already right.
   refetch_inactive?: boolean
-  // Set false when the write's row is already correct on screen, so only the
-  // deck's counts need re-reading and the card list can be left alone.
+  // False when the row on screen is already correct and only the counts moved.
   card_pages?: boolean
 }
 
@@ -31,18 +26,13 @@ export function invalidateDeck(
   if (card_pages) queryCache.invalidateQueries({ key: ['cards', deck_id] })
 }
 
-// `exact` on the deck list: keys match by prefix, so a bare `['decks']` also
-// catches `['decks', 'count']` — how many decks the member owns, which adding
-// or removing a *card* can never change. Without it every card write re-counts
-// the member's decks for nothing.
+// `exact` keeps this off the deck *count*, which no card write can ever change.
 export function invalidateAllCardCounts(queryCache: QueryCache) {
   queryCache.invalidateQueries({ key: ['cards', 'count'] })
   queryCache.invalidateQueries({ key: ['decks'], exact: true })
 }
 
-// The member-wide card index (front text → decks) drifts whenever a card is
-// created, deleted, has its front edited, or moves decks. Marks the query stale;
-// it only refetches while a lesson is actually mounted.
+// Marks the index stale. It only reloads while a lesson is open to use it.
 export function invalidateCardIndex(queryCache: QueryCache) {
   queryCache.invalidateQueries({ key: ['cards', 'index'] })
 }

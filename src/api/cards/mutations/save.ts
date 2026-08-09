@@ -11,10 +11,8 @@ type SaveCardVars = {
 }
 
 /**
- * Optimistically merge `values` into the matching card across ALL of the deck's
- * cached views (default sort, any active filter, any active sort). Uses a key
- * prefix so the patch lands regardless of which sort_by / query is currently
- * active in the cache.
+ * Writes an edit straight into the card wherever it's already been loaded —
+ * every sort and every search the member has looked at, not just the one on screen.
  */
 function patchCardInDeckCache(queryCache: QueryCache, card: Card, values: Partial<Card>) {
   if (card.deck_id === undefined || card.id === undefined) return
@@ -32,14 +30,10 @@ function patchCardInDeckCache(queryCache: QueryCache, card: Card, values: Partia
 }
 
 /**
- * Debounce is keyed by card id so concurrent edits to different cards don't
- * supersede each other. Superseded calls resolve with undefined.
+ * Saves an edited card, one save per card no matter how fast the typing.
  *
- * `onMutate` optimistically patches the cached card synchronously (before the
- * debounce fires) so view mode and the next save's merge base reflect the edit
- * immediately. This is a local cache write, not a refetch — it can't fight the
- * component-owned editor state the way a self-triggered `invalidate` would.
- * Bulk ops (delete, move, deck change) still invalidate explicitly.
+ * The edit lands in the loaded copy straight away rather than being re-fetched,
+ * so it can't fight the editor the member is still typing in.
  */
 export function useSaveCardMutation() {
   const queryCache = useQueryCache()

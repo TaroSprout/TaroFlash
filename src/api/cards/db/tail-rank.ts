@@ -2,11 +2,10 @@ import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
 /**
- * The highest rank in a deck, or `null` when it's empty.
+ * The position of a deck's last card, or `null` when it has none.
  *
- * Any write that appends to a deck the caller doesn't have loaded needs this —
- * the client computes keys from neighbours, and "append" means the neighbour is
- * whatever currently sits last.
+ * Needed to add to the end of a deck the caller hasn't loaded — a new position
+ * is worked out from its neighbours, and here that neighbour is whatever is last.
  */
 export async function fetchDeckTailRank(deck_id: number): Promise<string | null> {
   const { data, error } = await supabase

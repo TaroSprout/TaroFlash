@@ -20,15 +20,12 @@ export type StartLessonArgs = {
   title: string
   audio_path: string
   script: TranscriptScript
-  // Ordered transcription slices for a long upload. Empty/omitted for a short
-  // file — the server then transcribes audio_path as a single chunk.
+  // Slices of a long upload, in order. Omitted for a short file, which goes whole.
   chunks?: LessonChunk[]
 }
 
-// The edge functions return a JSON body `{ code }` on failure (e.g.
-// 'output_truncated', 'file_too_large'). supabase-js surfaces non-2xx as a
-// FunctionsHttpError carrying the Response on `.context`; this re-throws a typed
-// error so the FE can switch on the code rather than parse a raw message.
+// Carries the server's own name for what went wrong, so the screen can react to
+// it rather than pick a message apart.
 export class EdgeFunctionError extends Error {
   constructor(public code: string) {
     super(code)
@@ -68,17 +65,17 @@ export function translateTerm(args: TranslateTermArgs): Promise<TranslationResul
   return invokeEdge<TranslationResult>('translate-term', args)
 }
 
-// Kick off async transcription: the edge function creates the lesson row in a
-// `processing` state and returns it immediately (202) while a background worker
-// fills the transcript. The FE polls the row for the result.
+/**
+ * Starts transcribing an upload. Comes back with the lesson right away, still
+ * empty — the transcript arrives later, and the screen watches for it.
+ */
 export function startLessonTranscription(args: StartLessonArgs): Promise<Lesson> {
   return invokeEdge<{ lesson: Lesson }>('transcribe-lesson', { action: 'start', ...args }).then(
     (data) => data.lesson
   )
 }
 
-// Re-run transcription for a lesson that previously failed. The audio is still in
-// storage, so this just resets the row to `processing` and restarts the worker.
+/** Transcribes a failed lesson again. The audio is still stored, so nothing is re-uploaded. */
 export function retryLessonTranscription(lesson_id: number): Promise<Lesson> {
   return invokeEdge<{ lesson: Lesson }>('transcribe-lesson', {
     action: 'retry',

@@ -3,13 +3,12 @@ import logger from '@/utils/logger'
 
 export type MoveCardParams = {
   card_id: number
-  // Position key for the card's new slot, from `@/utils/card/rank`.
   rank: string
 }
 
 /**
- * Reposition a card within its deck. Writing the new key *is* the move — no
- * anchor to resolve, no neighbours to shift, no rebalance to trigger.
+ * Moves a card within its deck. Writing its new position *is* the move — no
+ * neighbours shift, and nothing is renumbered.
  */
 export async function moveCard({ card_id, rank }: MoveCardParams): Promise<void> {
   const { error } = await supabase.from('cards').update({ rank }).eq('id', card_id)

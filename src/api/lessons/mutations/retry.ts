@@ -3,16 +3,11 @@ import { retryLessonTranscription } from '../db/ai'
 
 export type RetryLessonVars = {
   id: number
-  // The collection the lesson lives in — carried so onSettled can invalidate its
-  // list without the caller owning invalidation.
+  // Carried so the caller never has to reload the collection itself.
   collection_id: number
 }
 
-/**
- * Re-run transcription for a lesson that failed. The audio is still in storage,
- * so this resets the row to `processing` and restarts the background worker; the
- * collection view's poll picks up the result.
- */
+/** Transcribes a failed chapter again. The audio is still stored, so nothing is re-uploaded. */
 export function useRetryLessonMutation() {
   const queryCache = useQueryCache()
 

@@ -1,5 +1,4 @@
-// Minimal Stripe shapes — the frontend only reads the fields the UI needs.
-// Shipping the full `@stripe/stripe` SDK types would add ~1MB of dead weight.
+// Only the fields the screen reads. The full vendor types weigh about 1 MB.
 
 export type StripePrice = {
   id: string

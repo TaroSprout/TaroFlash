@@ -2,9 +2,8 @@ import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
 /**
- * Fetches cards by explicit id, ignoring due-ness. Used to rebuild a session's
- * locked queue on refresh-resume without pulling in newly-due cards the way
- * the due-cards RPC would.
+ * Named cards, whether or not they're due. A resumed session rebuilds the pile
+ * it had, not the pile it would get today.
  */
 export async function fetchCardsByIds(card_ids: number[]): Promise<Card[]> {
   if (!card_ids.length) return []

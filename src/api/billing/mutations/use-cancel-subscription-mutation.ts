@@ -2,11 +2,8 @@ import { useMutation, useQueryCache } from '@pinia/colada'
 import { cancelSubscription } from '../db'
 
 /**
- * Cancels the caller's subscription. Pass `atPeriodEnd: true` for a soft
- * cancel (plan stays active until the current period ends, user can still
- * call resume); `false` cancels immediately.
- *
- * Invalidates all billing queries and the member profile.
+ * Cancels the member's plan. `atPeriodEnd: true` lets it run to the end of what
+ * they've paid for and can still be called off; `false` ends it on the spot.
  */
 export function useCancelSubscriptionMutation() {
   const queryCache = useQueryCache()

@@ -2,8 +2,7 @@ import { supabase } from '@/supabase-client'
 import { useMemberStore } from '@/stores/member'
 import logger from '@/utils/logger'
 
-// One distinct card front + the decks that hold it. The matcher normalizes
-// `term` at build time, so this stays the raw value the RPC returns.
+// `term` stays exactly as stored — the matcher does its own normalising.
 export type CardIndexEntry = {
   term: string
   deck_ids: number[]
@@ -24,9 +23,8 @@ export async function fetchMemberCardIndex(): Promise<CardIndexEntry[]> {
   return entries
 }
 
-// Payload instrumentation: the fetch-all index is only viable while the
-// response stays small. Log term count + serialized size so we can spot when a
-// power user crosses the line and we need server-side per-lesson matching.
+// Fetching every term at once only works while the answer stays small — this is
+// the early warning that someone's collection has outgrown it.
 function trackIndexPayload(entries: CardIndexEntry[]) {
   const bytes = new Blob([JSON.stringify(entries)]).size
   logger.info(`[card-index] ${entries.length} terms, ${(bytes / 1024).toFixed(1)} KiB`)

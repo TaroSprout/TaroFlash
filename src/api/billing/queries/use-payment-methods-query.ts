@@ -1,11 +1,7 @@
 import { useQuery } from '@pinia/colada'
 import { listPaymentMethods } from '../db'
 
-/**
- * Lists all card payment methods attached to the caller's Stripe customer,
- * plus the id of the current default (used to badge the row and hide the
- * "make default" action on it).
- */
+/** The member's saved cards, and which of them is the one that gets charged. */
 export function usePaymentMethodsQuery() {
   return useQuery({
     key: ['billing', 'payment-methods'],

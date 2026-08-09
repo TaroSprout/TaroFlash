@@ -14,12 +14,10 @@ export type BulkInsertCardsParams = {
 }
 
 /**
- * Append a batch of cards to a deck, in the order given.
+ * Adds a batch of cards to the end of a deck, in the order given.
  *
- * The `bulk_insert_cards_in_deck` RPC this replaces existed to hand out ranks;
- * with keys minted up front it's a plain multi-row insert. The cap trigger on
- * `cards` sees the whole batch as one statement, so a batch that would overshoot
- * is rejected as a unit rather than filling up to the cap and stopping.
+ * A batch that would take the deck over its card limit is refused whole — it
+ * never fills up to the limit and stops part-way.
  */
 export async function bulkInsertCardsInDeck({
   deck_id,
