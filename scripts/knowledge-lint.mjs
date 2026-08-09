@@ -28,6 +28,8 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const LEDGER_ENTRY = /^\s*[-*]\s*\[K:([A-Za-z0-9_-]+)\]\s*—\s*(.*)$/
 // A rule carrying `paths:` frontmatter is path-triggered, not always-on.
 const SCOPED_FRONTMATTER = /^---\r?\n[\s\S]*?^paths:/m
+// Opens or closes a markdown code fence; group 2 is the info string a close can't have.
+const FENCE = /^ {0,3}(`{3,}|~{3,})[ \t]*(.*)$/
 
 function expandBraces(glob) {
   const match = /\{([^{}]*)\}/.exec(glob)
@@ -94,11 +96,30 @@ function countLines(text) {
   return lines.at(-1) === '' ? lines.length - 1 : lines.length
 }
 
-/** Every `[K:…]` token in a file, tagged as citation or declaration. */
+/** Every `[K:…]` token in a file, tagged as citation or declaration. Markdown fences are skipped — a token inside one is an example, not a live pointer. */
 function collectTokens(path, text) {
   const tokens = []
+  const markdown = path.endsWith('.md')
+  let fence = null
 
   for (const [index, line] of text.split('\n').entries()) {
+    const marker = markdown && FENCE.exec(line)
+
+    if (marker && !fence) {
+      fence = marker[1]
+      continue
+    }
+    if (
+      marker &&
+      marker[1][0] === fence[0] &&
+      marker[1].length >= fence.length &&
+      !marker[2].trim()
+    ) {
+      fence = null
+      continue
+    }
+    if (fence) continue
+
     for (const match of line.matchAll(TOKEN)) {
       tokens.push({ path, line: index + 1, slug: match[2], cites: Boolean(match[1]) })
     }

@@ -99,6 +99,76 @@ describe('lintKnowledge — citations', () => {
   })
 })
 
+describe('lintKnowledge — fenced code blocks', () => {
+  test('a citation inside a fenced block is not an error', () => {
+    const root = makeRoot({
+      '.claude/rules/foo.md': '```ts\n// →[K:example-only] shown, not cited\n```\n'
+    })
+
+    const { errors, stats } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(stats.citations).toBe(0)
+  })
+
+  test('a citation after the fence closes still errors', () => {
+    const root = makeRoot({
+      '.claude/rules/foo.md': '```ts\n→[K:example-only]\n```\n\nSee →[K:live-slug].\n'
+    })
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([expect.stringContaining('.claude/rules/foo.md:5')])
+    expect(errors[0]).toMatch(/live-slug/)
+    expect(errors[0]).toMatch(/resolves to no declaration/)
+  })
+
+  test('a declaration inside a fenced block is not collected', () => {
+    const root = makeRoot({
+      '.claude/rules/foo.md': '```md\n[K:fenced-decl] looks like a declaration.\n```\n',
+      '.claude/rules/bar.md': 'Cite it: →[K:fenced-decl].\n'
+    })
+
+    const { errors, stats } = lintKnowledge(root)
+
+    expect(stats.declared).toBe(0)
+    expect(errors).toEqual([expect.stringContaining('resolves to no declaration')])
+  })
+
+  test('a tilde fence and a bare fence both open a skipped region', () => {
+    const root = makeRoot({
+      '.claude/rules/foo.md': '~~~\n→[K:tilde-example]\n~~~\n```\n→[K:bare-example]\n```\n'
+    })
+
+    const { errors, stats } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(stats.citations).toBe(0)
+  })
+
+  test('an unterminated fence swallows the rest of the file rather than throwing', () => {
+    const root = makeRoot({
+      '.claude/rules/foo.md': 'Intro.\n\n```ts\n→[K:never-closed]\n'
+    })
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+  })
+
+  test('a citation in real source is still checked, fence-looking lines and all', () => {
+    const root = makeRoot({
+      'src/foo.ts': 'const md = ````\n// →[K:real-source] still a live pointer\n'
+    })
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([expect.stringContaining('src/foo.ts:2')])
+    expect(errors[0]).toMatch(/real-source/)
+    expect(errors[0]).toMatch(/resolves to no declaration/)
+  })
+})
+
 describe('lintKnowledge — declarations', () => {
   test('the same slug declared in two knowledge files errors naming both sites', () => {
     const root = makeRoot({

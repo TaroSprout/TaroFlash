@@ -1,0 +1,67 @@
+---
+lastUpdated: 2026-08-08T00:00:00Z
+paths:
+  - 'src/**'
+  - 'supabase/**/*.ts'
+  - 'scripts/**'
+---
+
+# Comment authoring
+
+**The single source of truth for how a comment is written** — where it may sit, what shape that
+position gives it, and what it links out to instead of explaining. Reaches you on any code write. If
+a comment rule isn't stated here, it doesn't exist. Shared principles: [`authoring`](./authoring.md).
+
+A comment names the constraint a reader would otherwise violate, in a sentence they can act on. Most
+code needs none — a clear name beats a comment.
+
+## Position sets the shape
+
+| Where it sits           | Format             | What it carries                                                                     |
+| ----------------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| Above a named symbol    | JSDoc `/** */`     | what the thing is; `@param` only where a parameter's name doesn't carry its meaning |
+| At a line inside a body | a single `//` line | what you'd break                                                                    |
+| Top of a file           | one or two lines   | what lives here — only where the filename and its exports don't already carry it    |
+| Inside `<template>`     | none, ever         | improve the `data-testid`, slot, and component names instead                        |
+
+In `<style>`, a comment above a selector is a symbol doc; one inside a declaration block follows the
+in-body rule.
+
+**There is no line cap.** Length follows position — a comment that outgrows its position's shape is
+a missing knowledge entry, not a longer comment.
+
+## Gates
+
+Five, each failed on its own. Fail one, rewrite or delete.
+
+- **A competent stranger would otherwise get it wrong.** If they wouldn't, delete it.
+- **It prescribes rather than narrates** — what to do or not do, never what the code does.
+- **The opener completes the symbol's name, at that symbol's own altitude.** Never restate the name,
+  never zoom out past it, never justify it.
+- **It lands for a reader who doesn't know the system.** Plain words and concrete nouns first; a
+  technical term is earned by being grounded, never led with.
+- **Everything past the first idea is load-bearing.** Cut whatever the first idea already bought.
+
+## Never
+
+- A numbered walkthrough (`Three things happen:`).
+- An `@example` block.
+- `@param` restating a type.
+- A section banner (`// ---- state ----`).
+- Prose above a self-describing union.
+- A restatement of the next line.
+- A library's internal vocabulary where an observable term exists — say what the screen shows.
+- A pointer carrying nothing a human can act on.
+
+## Pointers
+
+- Depth lives in a knowledge entry, cited inline as an arrow slug after the readable sentence — see
+  [`knowledge-addressing`](./knowledge-addressing.md).
+- **A comment that wants to grow past its position's shape is the trigger to write that entry**, not
+  a reason to keep typing.
+- The readable sentence is never optional. A pointer replaces the explanation, never the knowledge —
+  someone skimming a diff gets the constraint without leaving the file.
+
+## Spokes
+
+- [`examples`](./comment-authoring/examples.md) — the five bad/good pairs the gates were cut from

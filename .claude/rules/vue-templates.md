@@ -27,19 +27,3 @@ Purely decorative or `aria-hidden` elements (spacers, etc.) don't need one. Ever
 Interactive selection / active state on ui-kit primitives uses `:data-active="<bool>"` — toggle, spinbox pill, align-picker cells, tab-bar tabs, etc. CSS variants hook off it via `data-[active=true]:...` / `data-[active=false]:hover:...`. Tests assert on `attributes('data-active')`.
 
 Don't introduce parallel attrs (`data-checked`, `data-selected`, `data-on`) for the same concept — even when the underlying element is a checkbox-like control, the wrapper exposes `data-active` so callers and tests see one shape across the kit. If a deeper input element needs its own native `:checked` attr, that's fine — wrappers still surface `data-active` on the root.
-
-## No HTML comments in templates
-
-Do not add comments inside `<template>` markup. If a block needs explanation, improve its naming instead — better `data-testid` values, slot names, or component names make structure self-documenting.
-
-```html
-<!-- Bad -->
-<!-- wrapper needed for transition group -->
-<div>...</div>
-
-<!-- OK: a genuine browser-compat or non-obvious workaround -->
-<!-- empty text node prevents Safari focus bug -->
-<span></span>
-```
-
-Script-block comments (`// ...`) are fine.
