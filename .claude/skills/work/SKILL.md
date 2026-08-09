@@ -42,7 +42,7 @@ stays live for your review feedback (§ Review & feedback loop).
 ## Blockers — a ticket is not takeable just because it's in the lane
 
 `/groom` wires ordering between split siblings on the Task Board's **`Blocked By`** self-relation
-(see [`ticket-authoring.md`](../../rules/ticket-authoring.md) § Dependencies). A ticket with an
+(→[K:ticket-dependencies]). A ticket with an
 **open blocker** is not work — its foundation hasn't landed, and working it produces a PR against
 code that's about to change.
 

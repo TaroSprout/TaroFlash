@@ -46,7 +46,7 @@ Capture leaves them empty (bar an obvious `Type`/`Epic` or a user-dictated value
 them; `/triage` and `/groom` fill only stragglers a sweep hasn't reached yet. Priority especially is
 never a per-ticket call — it's a comparative call across the whole board, which only `/backlog` can see.
 
-## Priority vs Target — two axes, don't collapse them
+## Priority vs Target — two axes, don't collapse them [K:ticket-priority-vs-target]
 
 `Priority` answers **in what order** (urgency). `Target` answers **which quarter** it ships in. They
 are orthogonal — every quarter spans `P0`→`P3`, so a quarter never collapses into a single priority
@@ -164,7 +164,7 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   copy says, how a layout should look — record as open. `/groom` settles them with the user.
 - New user-facing text → note that locale keys are needed (`src/locales/en-us.json`), see
   [`i18n`](./i18n.md).
-- **Copy carries its signed-off wording.** Per CLAUDE.md's sign-off rule, any new or changed
+- **Copy carries its signed-off wording.** →[K:user-copy-signoff] — any new or changed
   user-facing string appears in the AC as its exact final wording. Reused copy is stated as reused
   (same wording, its own key — keys aren't shared across features). A ticket with undecided copy is
   not `Groomed`.
@@ -210,7 +210,7 @@ it's still fog where you know — that's the half that tells the next session wh
 here. One line + why. If an existing ticket turns out to sit here, move it to `Won't Do` and leave
 the line.
 
-### New epics
+### New epics [K:ticket-new-epic-proposal]
 
 Propose first, never create silently. Give a one-line scope, not a full spec. Set the icon to a
 Notion built-in via its hosted SVG — `https://www.notion.so/icons/<name>_<color>.svg` (colours:
@@ -220,7 +220,7 @@ URL. **Validate the name resolves first** — `curl -s -o /dev/null -w '%{http_c
 https://www.notion.so/icons/<name>_<color>.svg` must be `200`; an unknown name is accepted silently
 and renders blank (`gear_gray` ✓, `settings_gray` ✗).
 
-## Dependencies
+## Dependencies [K:ticket-dependencies]
 
 When a ticket must land before another can start — most often after `/groom` splits one ticket into
 several — record it on the Task Board's **`Blocked By`** self-relation, not as a line in the body. A

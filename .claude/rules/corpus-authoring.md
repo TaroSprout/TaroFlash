@@ -81,7 +81,7 @@ Diagram only what a picture beats a sentence at — flow, structure, blast radiu
 author it as text (Mermaid, or an HTML table) so it stays diffable. One load-bearing diagram beats
 three decorative ones; zero is the common case.
 
-## Hazards
+## Hazards [K:corpus-hazard-authoring]
 
 A hazard is a place where the obvious assumption is quietly wrong and it costs you — a different
 class of thing than a fact, given elevated treatment so nobody misses it. It gets a **hazard block**

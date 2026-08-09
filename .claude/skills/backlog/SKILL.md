@@ -63,8 +63,8 @@ classifications are stale, not on the routine "I added a few tickets" run.
 3. **Type** — `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the
    deliverable is a decision. Fill every ticket.
 
-4. **Epic** — match the Epic Board. If nothing fits, **propose a new epic** per
-   [`ticket-authoring.md` § Epics](../../rules/ticket-authoring.md) rather than force-fit — never
+4. **Epic** — match the Epic Board. If nothing fits, **propose a new epic**
+   (→[K:ticket-new-epic-proposal]) rather than force-fit — never
    create one silently. The epic is the unit `Target` groups by, so every ticket needs one.
 
 5. **Priority — a board-wide urgency call.** `⇞P0` · `↑P1` · `↓P2` · `⇟P3`, judged comparatively

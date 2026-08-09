@@ -150,7 +150,7 @@ Two sections. Nothing else — no per-lens headings, no assumptions, no methodol
 ## Heuristics
 
 - Audit is **non-destructive**. Read-only tools + subagent dispatch; no formatters, lints, or tests, and no edits by any agent.
-- Cite overlapping project rules by name in the fix ("see `architecture.md` — provide/inject section").
+- Cite overlapping project rules by file in the fix ("see `architecture/provide-inject.md`").
 - Cap the fix list at ~12 findings; group similar ones on a single line and recommend a `--context` focus for the next pass.
 - Brevity > completeness, everywhere — including the reframe. The report is a bird's-eye view, not a record of the analysis; the depth went into producing the verdict, not into narrating it.
 - Be specific about locations: `src/components/foo.vue:42` beats "the foo component".
