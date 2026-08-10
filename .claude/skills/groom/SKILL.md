@@ -225,6 +225,11 @@ Only answerable once the design has resolved:
 - **Newly exposed fog** — a resolved decision routinely exposes adjacent questions. Sharp enough to
   phrase → a new ticket. Not sharp enough → the epic's `## Not yet specified`. Never invented into
   a ticket to look thorough.
+  - **Before proposing a new ticket, search the board by more than topic words.** A ticket is
+    routinely named for the surface it lives on ("Update Welcome Page Footer"), not the topic
+    buried inside it ("privacy policy"). A keyword search that misses a ticket by that name and
+    then tells the user none exists is a false negative, not a clean board — broaden the search
+    (surface/page names, the epic's sibling tickets) or ask the user before proposing a new one.
 
 ### 5. WRITE
 
