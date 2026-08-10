@@ -17,6 +17,10 @@ let script_injected = false
  * Loads Plausible's per-site script once, queuing any `plausible()` calls
  * made before it finishes loading, then turns off autocapture so only the
  * explicit `trackPageview()` calls below ever count a visit.
+ *
+ * The queue has to be the global `window.plausible` — that name is where the
+ * vendor script looks when it lands, and anything it doesn't find there is
+ * dropped rather than sent. Keep it a global even though nothing else reads it.
  */
 function ensureScriptLoaded(site_id: string) {
   if (script_injected) return

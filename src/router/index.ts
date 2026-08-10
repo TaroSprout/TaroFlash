@@ -4,7 +4,7 @@ import { useMemberStore } from '@/stores/member'
 import { useCan } from '@/composables/can'
 import { isPasswordRecoveryUrl } from '@/api/session'
 import { prefetchMemberById } from '@/api/members'
-import { trackPageview } from '@/utils/analytics/plausible'
+import { useTracking } from '@/composables/tracking'
 import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 const WelcomeView = () => import('@/views/welcome/index.vue')
@@ -137,6 +137,8 @@ router.beforeEach(async (to) => {
     if (!useCan()[to.meta.capability].value) return { name: 'dashboard' }
   }
 })
+
+const { trackPageview } = useTracking()
 
 // Fires after navigation settles, so only pages actually reached are counted.
 router.afterEach((to) => {
