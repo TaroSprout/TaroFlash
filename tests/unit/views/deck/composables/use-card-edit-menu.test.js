@@ -54,7 +54,7 @@ function withSetup(composable, { provide } = {}) {
 function makeEditor({ deck_id = 1 } = {}) {
   return {
     deck_id,
-    actions: { onSelectCard: vi.fn() }
+    actions: { onSelectCard: vi.fn(), onExportCards: vi.fn() }
   }
 }
 
@@ -97,27 +97,29 @@ afterEach(() => {
 // ── options shape ─────────────────────────────────────────────────────────────
 
 describe('useCardEditMenu — options', () => {
-  test('returns three options: select, rearrange, appearance', () => {
+  test('returns four options: select, rearrange, export, appearance', () => {
     ;({ app } = setup())
     // (app assigned above via destructuring — result unused here)
     const [result] = withSetup(() => useCardEditMenu())
-    expect(result.options.value).toHaveLength(3)
+    expect(result.options.value).toHaveLength(4)
     expect(result.options.value[0].value).toBe('select')
     expect(result.options.value[1].value).toBe('rearrange')
-    expect(result.options.value[2].value).toBe('appearance')
+    expect(result.options.value[2].value).toBe('export')
+    expect(result.options.value[3].value).toBe('appearance')
   })
 
-  test('all three options have disabled:true when is_rearranging [obligation]', () => {
+  test('all four options have disabled:true when is_rearranging [obligation]', () => {
     const shell = makeShell({ is_rearranging: true })
     const r = setup({ shell })
     app = r.app
-    for (const value of ['select', 'rearrange', 'appearance']) {
+    for (const value of ['select', 'rearrange', 'export', 'appearance']) {
       const opt = r.result.options.value.find((o) => o.value === value)
       expect(opt.disabled).toBe(true)
     }
   })
 
-  test('none of the three options are disabled when not rearranging [obligation]', () => {
+  test('none of select/rearrange/appearance are disabled when not rearranging and the deck has cards [obligation]', () => {
+    mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 3 }) })
     const shell = makeShell({ is_rearranging: false })
     const r = setup({ shell })
     app = r.app
@@ -125,6 +127,30 @@ describe('useCardEditMenu — options', () => {
       const opt = r.result.options.value.find((o) => o.value === value)
       expect(opt.disabled).toBeFalsy()
     }
+  })
+
+  test('export has icon card-lift', () => {
+    const r = setup()
+    app = r.app
+    const opt = r.result.options.value.find((o) => o.value === 'export')
+    expect(opt.icon).toBe('card-lift')
+  })
+
+  test('export is disabled when the deck has zero cards [obligation]', () => {
+    mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 0 }) })
+    const r = setup()
+    app = r.app
+    const opt = r.result.options.value.find((o) => o.value === 'export')
+    expect(opt.disabled).toBe(true)
+  })
+
+  test('export is enabled when the deck has cards and is not rearranging [obligation]', () => {
+    mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 5 }) })
+    const shell = makeShell({ is_rearranging: false })
+    const r = setup({ shell })
+    app = r.app
+    const opt = r.result.options.value.find((o) => o.value === 'export')
+    expect(opt.disabled).toBe(false)
   })
 
   test('is_rearranging computed reflects shell.is_rearranging', () => {
@@ -229,6 +255,14 @@ describe('useCardEditMenu — onSelect [obligation]', () => {
     app = r.app
     r.result.onSelect({ value: 'edit' })
     expect(shell.toggleMode).toHaveBeenCalledWith('edit')
+  })
+
+  test('onSelect({value:"export"}) calls editor.actions.onExportCards [obligation]', () => {
+    const editor = makeEditor()
+    const r = setup({ editor })
+    app = r.app
+    r.result.onSelect({ value: 'export' })
+    expect(editor.actions.onExportCards).toHaveBeenCalledOnce()
   })
 
   test('onSelect({value:"appearance"}) opens settings modal with the deck [obligation]', () => {

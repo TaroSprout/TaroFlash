@@ -2,24 +2,37 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
-const { modalOpenMock, alertWarnMock, emitSfxMock } = vi.hoisted(() => ({
+const { modalOpenMock, alertWarnMock, emitSfxMock, mockT } = vi.hoisted(() => ({
   modalOpenMock: vi.fn(),
   alertWarnMock: vi.fn(),
-  emitSfxMock: vi.fn()
+  emitSfxMock: vi.fn(),
+  mockT: vi.fn((key) => key)
 }))
 
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
 
+const { mockUseAllCardsInDeckQuery, mockDownloadTextFile, mockCardsToCsv } = vi.hoisted(() => ({
+  mockUseAllCardsInDeckQuery: vi.fn(),
+  mockDownloadTextFile: vi.fn(),
+  mockCardsToCsv: vi.fn(() => 'csv-body')
+}))
+
 vi.mock('vue-i18n', () => ({
-  useI18n: () => ({ t: (key) => key })
+  useI18n: () => ({ t: mockT })
 }))
 vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: alertWarnMock }) }))
 vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }))
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
+vi.mock('@/api/cards', () => ({ useAllCardsInDeckQuery: mockUseAllCardsInDeckQuery }))
+vi.mock('@/utils/download', () => ({ downloadTextFile: mockDownloadTextFile }))
+vi.mock('@/utils/card/csv', () => ({
+  cardsToCsv: mockCardsToCsv,
+  deckExportFilename: (title) => `${title ?? 'deck'}.csv`
+}))
 
 import { useCardActions } from '@/views/deck/composables/actions'
 
@@ -63,8 +76,12 @@ function makeMutations() {
   }
 }
 
-function makeDeckQuery() {
-  return { refetch: vi.fn().mockResolvedValue(undefined) }
+function makeDeckQuery({ title } = {}) {
+  return { refetch: vi.fn().mockResolvedValue(undefined), data: ref(title ? { title } : null) }
+}
+
+function makeAllCardsQuery(cards = []) {
+  return { refetch: vi.fn().mockResolvedValue({ status: 'success', data: cards }) }
 }
 
 function makeShell(opts = {}) {
@@ -77,6 +94,8 @@ function makeActions(opts = {}) {
   const mutations = opts.mutations ?? makeMutations()
   const deck_query = opts.deck_query ?? makeDeckQuery()
   const shell = opts.shell ?? makeShell()
+  const all_cards_query = opts.all_cards_query ?? makeAllCardsQuery()
+  mockUseAllCardsInDeckQuery.mockReturnValue(all_cards_query)
   const actions = useCardActions({
     list,
     selection,
@@ -85,7 +104,7 @@ function makeActions(opts = {}) {
     deck_id: opts.deck_id ?? 10,
     shell
   })
-  return { actions, list, selection, mutations, deck_query, shell }
+  return { actions, list, selection, mutations, deck_query, shell, all_cards_query }
 }
 
 describe('useCardActions', () => {
@@ -94,6 +113,11 @@ describe('useCardActions', () => {
     alertWarnMock.mockReset()
     emitSfxMock.mockReset()
     mockNotice.error.mockReset()
+    mockNotice.success.mockReset()
+    mockT.mockClear()
+    mockDownloadTextFile.mockReset()
+    mockCardsToCsv.mockReset().mockReturnValue('csv-body')
+    mockUseAllCardsInDeckQuery.mockReset()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -379,6 +403,92 @@ describe('useCardActions', () => {
       actions.onCancelSelection()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
       expect(emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
+    })
+  })
+
+  // ── onExportCards / onExportSelection ────────────────────────────────────
+
+  describe('onExportCards', () => {
+    test('fetches the whole deck via the all-cards query, ignoring the current selection [obligation]', async () => {
+      const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
+      const all_cards_query = makeAllCardsQuery(cards)
+      const selection = makeSelection({ selected_ids: [1] })
+      const { actions } = makeActions({ all_cards_query, selection })
+
+      await actions.onExportCards()
+
+      expect(all_cards_query.refetch).toHaveBeenCalledOnce()
+      expect(mockCardsToCsv).toHaveBeenCalledWith(cards)
+    })
+
+    test('downloads with the deck-title filename and toasts the real exported count [obligation]', async () => {
+      const cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
+      const deck_query = makeDeckQuery({ title: 'My Deck' })
+      const { actions } = makeActions({ all_cards_query: makeAllCardsQuery(cards), deck_query })
+
+      await actions.onExportCards()
+
+      expect(mockDownloadTextFile).toHaveBeenCalledWith('My Deck.csv', 'csv-body')
+      expect(mockT).toHaveBeenCalledWith('toast.success.cards-exported', { count: 3 })
+      expect(mockNotice.success).toHaveBeenCalledWith('toast.success.cards-exported')
+    })
+
+    test('is a no-op on an empty deck: no download, no toast [obligation]', async () => {
+      const { actions } = makeActions({ all_cards_query: makeAllCardsQuery([]) })
+
+      await actions.onExportCards()
+
+      expect(mockDownloadTextFile).not.toHaveBeenCalled()
+      expect(mockNotice.success).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('onExportSelection', () => {
+    test('normal mode exports exactly filterSelected(persisted_cards), without hitting the all-cards fetch [obligation]', async () => {
+      const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
+      const selection = makeSelection({ selected_ids: [1, 3] })
+      const all_cards_query = makeAllCardsQuery(persisted)
+      const { actions } = makeActions({ list: makeList({ persisted }), selection, all_cards_query })
+
+      await actions.onExportSelection()
+
+      expect(all_cards_query.refetch).not.toHaveBeenCalled()
+      expect(mockCardsToCsv).toHaveBeenCalledWith([persisted[0], persisted[2]])
+    })
+
+    test('select-all mode fetches the whole deck and filters out only the deselected ids [obligation]', async () => {
+      const all_cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
+      const selection = makeSelection({ select_all: true, deselected: [2] })
+      const all_cards_query = makeAllCardsQuery(all_cards)
+      const { actions } = makeActions({ selection, all_cards_query })
+
+      await actions.onExportSelection()
+
+      expect(all_cards_query.refetch).toHaveBeenCalledOnce()
+      expect(mockCardsToCsv).toHaveBeenCalledWith([all_cards[0], all_cards[2]])
+    })
+
+    test('select-all mode with everything deselected is a no-op: no download, no toast [obligation]', async () => {
+      const all_cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
+      const selection = makeSelection({ select_all: true, deselected: [1, 2] })
+      const { actions } = makeActions({ selection, all_cards_query: makeAllCardsQuery(all_cards) })
+
+      await actions.onExportSelection()
+
+      expect(mockDownloadTextFile).not.toHaveBeenCalled()
+      expect(mockNotice.success).not.toHaveBeenCalled()
+    })
+
+    test('toasts the real exported count, not the nominal selected_count, when they diverge [obligation]', async () => {
+      // makeSelection's selected_count sentinel for select-all is 9999 — the real
+      // resolved list after filtering deselected ids is only 2 cards.
+      const all_cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
+      const selection = makeSelection({ select_all: true, deselected: [3] })
+      const { actions } = makeActions({ selection, all_cards_query: makeAllCardsQuery(all_cards) })
+
+      await actions.onExportSelection()
+
+      expect(mockT).toHaveBeenCalledWith('toast.success.cards-exported', { count: 2 })
     })
   })
 })
