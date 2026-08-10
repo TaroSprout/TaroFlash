@@ -17,3 +17,7 @@ on.
 5. **Force-push only your own feature branch**, and only with `--force-with-lease`. Never `master`.
 6. **Prefix PR comments with `🤖 Claude:`.** Comments post under my account, so without it I can't
    tell your replies from my own.
+7. **Never bare `git stash` / `git stash pop`.** The stack is shared across every worktree and
+   session, so a pop can take another session's entry. Prefer a temporary WIP commit; if you must
+   stash, tag it uniquely (`git stash push -u -m "<tag>"`) and restore by SHA
+   (`git stash apply <sha>`, never `pop`).

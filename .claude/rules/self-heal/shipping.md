@@ -1,6 +1,6 @@
 # Shipping a heal [K:heal-shipping-sequence]
 
-How every healing persona lands its change. `rule-author` and `corpus-author` both follow this — the
+How every healing persona lands its change. `harness-author` and `corpus-author` both follow this — the
 mechanics are shared, so they live here rather than in either agent.
 
 **Every heal lands on the one living `self-heal` PR**, in a worktree you create and remove inside
@@ -14,7 +14,7 @@ already held by a sibling's worktree, and that is the failure this sequence avoi
    `origin/master` when that ref doesn't exist yet.
 2. Write the change there. `node scripts/knowledge-lint.mjs` must pass before you commit.
 3. Stage explicit pathspecs, never `git add -A`. **One commit per lesson**, conventional —
-   `docs(<rule-or-skill>): …` from `rule-author`, `docs(corpus): …` from `corpus-author`.
+   `docs(<rule-or-skill>): …` from `harness-author`, `docs(corpus): …` from `corpus-author`.
 4. `git push origin HEAD:self-heal`. On rejection, `git fetch origin` and rebase onto
    `origin/self-heal`, then push again — a sibling landed first, which is expected.
 5. Open the PR if `gh pr list --head self-heal --state open` is empty, and only then put it in front

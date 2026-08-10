@@ -130,15 +130,18 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
   **not** `git checkout -b`, which orphans the auto-created `worktree-agent-<id>` branch as junk —
   implement to the acceptance criteria, and follow `.claude/rules/*` — name `comment-authoring` in
   the prompt, since verbose subagent comments are a recurring review complaint.
-- **It does the work itself — it spawns no agents of its own.** State this in the prompt. A
-  depth-two agent reports to nobody the orchestrator can hear, so its output is uncollected while
-  its parent blocks waiting for it.
+- **It does the work itself — `update-tests` is the one agent it's allowed to spawn.** State this in
+  the prompt: no other subagents, ever — a depth-two agent reports to nobody the orchestrator can
+  hear. `update-tests` is exempted because the subagent stays live and waits on it in the same turn
+  (next bullet), never returning early to report that it's waiting.
 - **Commit in batches of ~5 files, never one commit at the end.** A subagent that stalls mid-ticket
   then costs one batch instead of everything it did.
 - **Irreversible or cross-ticket-critical work goes first**, named in the prompt, so partial work
   still carries it.
-- **Partial and committed beats complete and parked.** A subagent out of road pushes what it has and
-  names what it never reached.
+- **Partial and committed beats complete and parked — including the report.** A subagent out of road
+  pushes what it has, names what it never reached, and always finishes its turn with a report, even
+  when a gate is red or `update-tests`'s child never reported back. Waiting on a child is not a
+  stopping point.
 - **Tests via `update-tests`, not the full suite.** After implementing, the subagent invokes the
   **`update-tests`** skill to cover its own change, then runs **`vp check`** (format + lint +
   type-check) green. It does **not** run the full `vp test` suite — parallel subagents each running
@@ -151,7 +154,9 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
   outside its worktree, which is the shared/main checkout a human may be editing live. If it ever
   notices a change landed on the shared checkout, it must **stop and report it — never
   `git checkout` / `git restore` / revert the file**, since a blind revert-to-HEAD can wipe the
-  human's uncommitted work.
+  human's uncommitted work. A worktree-isolated subagent hitting a dirty tree is exactly the actor
+  most likely to reach for `git stash` — name the ban on bare `git stash` / `git stash pop`
+  ([`git-workflow`](../../rules/git-workflow.md)) in the prompt explicitly.
 - It **reports back** to the orchestrator: branch name, a summary of what changed, the file paths it
   touched, whether `update-tests` + `vp check` passed, and any unresolved failure or unmet acceptance
   criterion.
@@ -269,6 +274,9 @@ ticket PR. Specific to this skill:
   for its change (golden "no tests" rule suspended there); no subagent runs the full `vp test` suite —
   CI is the gate the orchestrator watches. In the **Review & feedback loop the rule is back on**: don't
   touch tests until the user asks, then one consolidated `update-tests` pass over all the review edits.
+- **A subagent that returns saying only it's waiting on `update-tests` didn't finish its turn.**
+  Resume it with an explicit directive to stop waiting/polling, finish the ticket, and report —
+  including red results — rather than re-dispatching it or waiting yourself.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
 - Self-heal is **dispatched, never written inline** (§ Self-heal). The subagent ships to the shared
   `self-heal` PR, never merged — a rule fix rides its own stream, never a ticket branch.

@@ -148,12 +148,16 @@ Leave `Status` alone. Grooming doesn't claim.
 Read the code the ticket touches. Then go further than `/triage` did, because decisions rest on
 facts:
 
-- **Verify claims against source, not recall.** Library API surface, version behaviour, and history
-  are the three things most often misremembered. Read the installed types (`node_modules/`, the Deno
-  cache), the lockfile, `git log -S`/`-L`, the actual policy or migration. Cheap to check, expensive
-  to get wrong.
-- **Label every fact** as `CONFIRMED (verified against <source>)` or `ASSUMED`. Anything that moves
-  money, touches auth, or crosses a system boundary must be `CONFIRMED` before it lands in the body.
+- **Verify every claim against source, not recall — including the mundane ones.** Library API
+  surface and version history are the obvious traps; "does this trigger still exist", "what does
+  this column read/write", "what does this component do at this breakpoint" are the ones that
+  actually get skipped. Read the installed types (`node_modules/`, the Deno cache), the lockfile,
+  `git log -S`/`-L`, the actual policy or migration. Cheap to check, expensive to get wrong.
+- **A subagent's report is not source.** Open the file an Explore agent's finding points to yourself
+  before asserting it as fact.
+- **Label every fact spoken to the user, not just what lands in the body**, as
+  `CONFIRMED (verified against <source>)` or `ASSUMED` — a claim in the checkpoint or the
+  back-and-forth steers a decision before any AC is written.
 - **Trace the failure modes.** For anything spanning two systems with no shared transaction, work
   out what breaks if one side succeeds and the other doesn't — the ordering is usually the decision.
 
@@ -302,7 +306,7 @@ it without guessing. Test it by asking:
 - Does any clause survive the delete-test — rationale, plumbing, or a restatement of another AC? Cut it.
 - Is `## Open questions` gone, and every fork it held now a concrete AC?
 - Is a rejected path recorded as a negative AC, so no one re-proposes it?
-- Is the prior art a `## Tech details` clause ("built from X"), and is any money/auth/boundary fact `CONFIRMED`?
+- Is the prior art a `## Tech details` clause ("built from X"), and is every factual claim in the body `CONFIRMED`, not `ASSUMED`?
 - If this was a split: is **every** sibling independently verifiable — a concrete standalone check
   named in its ACs — and can `/work` tell which must land first without reading all of them?
 - For every UI element: are placement, host/slot, trigger, label/icon, and states decided — or would
