@@ -59,7 +59,3 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 
 - [[data-flow]] — server data is a named cache; a write owns marking its own data stale ⚠️
 - [[layering]] — a finished animation still traps the popovers inside it ⚠️
-
-## ui
-
-- [[mobile-dock]] — the floating bar owns its own height tween; a second one nested inside fights it ⚠️
