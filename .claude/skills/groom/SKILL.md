@@ -151,16 +151,13 @@ facts:
 - **Verify every claim against source, not recall — including the mundane ones.** Library API
   surface and version history are the obvious traps; "does this trigger still exist", "what does
   this column read/write", "what does this component do at this breakpoint" are the ones that
-  actually get skipped, because they don't _feel_ risky. Read the installed types (`node_modules/`,
-  the Deno cache), the lockfile, `git log -S`/`-L`, the actual policy or migration. Cheap to check,
-  expensive to get wrong.
-- **A subagent's report is not source.** Relaying an Explore agent's finding as established fact
-  carries its possible error forward — open the file it points to yourself before asserting it.
+  actually get skipped. Read the installed types (`node_modules/`, the Deno cache), the lockfile,
+  `git log -S`/`-L`, the actual policy or migration. Cheap to check, expensive to get wrong.
+- **A subagent's report is not source.** Open the file an Explore agent's finding points to yourself
+  before asserting it as fact.
 - **Label every fact spoken to the user, not just what lands in the body**, as
-  `CONFIRMED (verified against <source>)` or `ASSUMED`. A claim said in the checkpoint or the
-  back-and-forth steers a decision before any AC is written. This isn't risk-tiered to money/auth/
-  boundary facts — that framing licenses guessing at everything else, which is where the wrong
-  claims actually come from.
+  `CONFIRMED (verified against <source>)` or `ASSUMED` — a claim in the checkpoint or the
+  back-and-forth steers a decision before any AC is written.
 - **Trace the failure modes.** For anything spanning two systems with no shared transaction, work
   out what breaks if one side succeeds and the other doesn't — the ordering is usually the decision.
 

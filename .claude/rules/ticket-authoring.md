@@ -98,7 +98,7 @@ Five gates on every AC, on top of [`authoring`](./authoring.md):
 
 - **An enumerated failure set names its catch-all.** When ACs list the specific ways something can
   fail (parse errors, validation, rejected input), add one AC for the case that fits none of the
-  named ones — with its own signed-off copy, never left implicit in the enumerated set.
+  named ones, with its own signed-off copy.
 - **Independently failable.** "The menu shows the new option" can't fail separately from the feature
   existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
   rejected path counts too, as a negative: "no cross-session outbox is added".
