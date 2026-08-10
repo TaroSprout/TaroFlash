@@ -31,3 +31,12 @@ Prefer a **simultaneous** swap (entering and leaving panes overlapping) over `ou
 When something must happen _after_ a transition, make the state-transition function `async` and resolve it from the real GSAP completion, then `await` it. Keep the synchronous effect synchronous — only the returned promise is deferred, so non-awaiting callers are unaffected.
 
 Don't suppress native browser behaviour to dodge a mid-animation glitch (e.g. `focus({ preventScroll: true })` to avoid a scroll jump). Sequence the work after the animation settles so it reads final positions instead.
+
+# Nested height animations
+
+A container already driven by its own height tween (e.g. `useAnimatedHeight`) owns that height
+entirely. Don't nest a second height/size transition — an accordion `<Transition>`, another
+`useAnimatedHeight` — inside it: the two run concurrently at different durations and easings and
+visibly fight, and the outer tween keeps chasing a moving target because its `ResizeObserver` fires
+on every frame of the inner one. Change the DOM in one step (`v-if`, no transition) and let the
+container's own tween carry the resize. [K:no-nested-height-animation]
