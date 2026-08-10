@@ -145,9 +145,9 @@ function mount({
 const editBtn = (w) => w.find('[data-testid="overview-panel__settings-button"]')
 const studyBtn = (w) => w.find('[data-testid="study-button-stub"]')
 const optionBtns = (w) => w.findAll('[data-testid="dropdown-button__option"]')
-// options[0]=select, options[1]=rearrange, options[2]=export, options[3]=appearance
+// options[0]=select, options[1]=rearrange, options[2]=import, options[3]=export, options[4]=appearance
 const selectBtn = (w) => optionBtns(w)[0]
-const appearanceBtn = (w) => optionBtns(w)[3]
+const appearanceBtn = (w) => optionBtns(w)[4]
 
 describe('deck-hero/actions', () => {
   beforeEach(() => {
@@ -227,9 +227,9 @@ describe('deck-hero/actions', () => {
     expect(editBtn(wrapper).exists()).toBe(true)
   })
 
-  test('four dropdown options are rendered (select, rearrange, export, appearance)', () => {
+  test('five dropdown options are rendered (select, rearrange, import, export, appearance)', () => {
     const wrapper = mount({ editor: makeEditor() })
-    expect(optionBtns(wrapper)).toHaveLength(4)
+    expect(optionBtns(wrapper)).toHaveLength(5)
   })
 
   test('clicking select-cards calls actions.onSelectCard with no args', async () => {
@@ -256,9 +256,9 @@ describe('deck-hero/actions', () => {
     })
   })
 
-  test('appearance option is the fourth dropdown option (icon align-horizontal-frame) [obligation]', () => {
+  test('appearance option is the last dropdown option (icon align-horizontal-frame) [obligation]', () => {
     const wrapper = mount({ editor: makeEditor() })
-    expect(optionBtns(wrapper)[3].exists()).toBe(true)
+    expect(optionBtns(wrapper)[4].exists()).toBe(true)
   })
 
   test('clicking appearance when no editor is injected still opens the settings modal [obligation]', async () => {

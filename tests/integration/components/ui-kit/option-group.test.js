@@ -147,4 +147,34 @@ describe('UiOptionGroup', () => {
     expect(root.classes()).toContain('flex')
     expect(root.classes()).toContain('w-full')
   })
+
+  // ── Disabled option [obligation] ──────────────────────────────────────────
+
+  describe('disabled option', () => {
+    const OPTIONS_WITH_DISABLED = [
+      { value: 'simple', label: 'Simple' },
+      { value: 'advanced', label: 'Advanced', disabled: true }
+    ]
+
+    test('renders the native disabled attribute on a disabled option [obligation]', () => {
+      const wrapper = mountOptionGroup({ options: OPTIONS_WITH_DISABLED, value: 'simple' })
+      const opts = getOptions(wrapper)
+      expect(opts[1].attributes('disabled')).toBeDefined()
+      expect(opts[0].attributes('disabled')).toBeUndefined()
+    })
+
+    test('tapping a disabled option emits no update:value [obligation]', async () => {
+      const wrapper = mountOptionGroup({ options: OPTIONS_WITH_DISABLED, value: 'simple' })
+      await getOptions(wrapper)[1].trigger('click')
+      await flushPromises()
+      expect(wrapper.emitted('update:value')).toBeUndefined()
+    })
+
+    test('tapping a disabled option plays no sfx [obligation]', async () => {
+      const wrapper = mountOptionGroup({ options: OPTIONS_WITH_DISABLED, value: 'simple' })
+      await getOptions(wrapper)[1].trigger('click')
+      await flushPromises()
+      expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+  })
 })

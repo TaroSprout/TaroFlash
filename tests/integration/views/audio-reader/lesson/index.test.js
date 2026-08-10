@@ -220,6 +220,7 @@ const CrossfadeResizeStub = defineComponent({
 import LessonView from '@/views/audio-reader/lesson/index.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
+import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -270,6 +271,7 @@ beforeEach(() => {
   transcriptResumeMock.mockClear()
   playerRef.seek.mockClear()
   playerRef.play.mockClear()
+  useMobileDock().height_claims.value = 0
   // Fire rAF callbacks synchronously so show_term_in_dock_deferred flips
   // in the same tick as nextTick() — avoids the one-frame lag in tests.
   vi.stubGlobal('requestAnimationFrame', (cb) => cb())
@@ -616,6 +618,20 @@ describe('LessonView', () => {
 
       await crossfade.vm.$emit('swap-end')
       expect(not_swapping()).toBe(true)
+    })
+
+    test('swap-start/swap-end claim and release the mobile dock height alongside the local swapping flag [obligation]', async () => {
+      const wrapper = mountView()
+      await nextTick()
+      const { height_claims } = useMobileDock()
+      expect(height_claims.value).toBe(0)
+
+      const crossfade = wrapper.findComponent({ name: 'CrossfadeResize' })
+      await crossfade.vm.$emit('swap-start')
+      expect(height_claims.value).toBe(1)
+
+      await crossfade.vm.$emit('swap-end')
+      expect(height_claims.value).toBe(0)
     })
 
     test('follow_direction prop matches transcript follow_direction [obligation]', async () => {

@@ -69,7 +69,7 @@ function makeMobileEditor({ openNewCard } = {}) {
   return { openNewCard: openNewCard ?? vi.fn() }
 }
 
-function mount({ editor, mobileEditor, isCompact = false, isMobile = false } = {}) {
+function mount({ editor, mobileEditor, isCompact = false, isMobile = false, props = {} } = {}) {
   // isCompact drives w<sm (base vs md skeleton size); isMobile drives w<md
   // (desktop mode-stack vs mobile editor for the create button).
   matchMediaMock.mockImplementation((token) => {
@@ -78,6 +78,7 @@ function mount({ editor, mobileEditor, isCompact = false, isMobile = false } = {
     return ref(false)
   })
   return shallowMount(CardGridEmpty, {
+    props,
     global: {
       provide: {
         [cardEditorKey]: editor ?? makeEditor(),
@@ -206,5 +207,40 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
   test('calls useMatchMedia with the "w<sm" token to detect compact layout', () => {
     mount()
     expect(matchMediaMock).toHaveBeenCalledWith('w<sm')
+  })
+
+  // ── New prop surface (icon/message/show_button/size) [obligation] ────────
+
+  test('defaults are unchanged: card-deck icon, default heading, create button shown, viewport-derived size', () => {
+    const wrapper = mount()
+    expect(wrapper.find('[data-testid="ui-icon-stub"]').attributes('data-src')).toBe('card-deck')
+    expect(wrapper.find('[data-testid="card-grid-empty__create-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').attributes('data-size')).toBe(
+      'md'
+    )
+  })
+
+  test('renders the icon the import pane asks for', () => {
+    const wrapper = mount({ props: { icon: 'card-place' } })
+    expect(wrapper.find('[data-testid="ui-icon-stub"]').attributes('data-src')).toBe('card-place')
+  })
+
+  test('renders the message the import pane asks for, instead of the default heading', () => {
+    const wrapper = mount({ props: { message: 'Nothing imported yet' } })
+    expect(wrapper.find('[data-testid="card-grid-empty__message"]').text()).toBe(
+      'Nothing imported yet'
+    )
+  })
+
+  test('show_button=false omits the create button entirely', () => {
+    const wrapper = mount({ props: { show_button: false } })
+    expect(wrapper.find('[data-testid="card-grid-empty__create-button"]').exists()).toBe(false)
+  })
+
+  test('an explicit size overrides the viewport-derived skeleton size', () => {
+    const wrapper = mount({ props: { size: 'base' }, isCompact: false })
+    expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').attributes('data-size')).toBe(
+      'base'
+    )
   })
 })

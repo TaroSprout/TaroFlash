@@ -173,7 +173,9 @@ describe('lintKnowledge — declarations', () => {
   test('the same slug declared in two knowledge files errors naming both sites', () => {
     const root = makeRoot({
       '.claude/rules/a.md': '[K:dup-slug] first declaration.\n',
-      '.claude/rules/b.md': '[K:dup-slug] second declaration.\n'
+      '.claude/rules/b.md': '[K:dup-slug] second declaration.\n',
+      // Cited, so the double declaration is the only thing this asserts on.
+      'src/foo.ts': 'const x = 1 // →[K:dup-slug]\n'
     })
 
     const { errors } = lintKnowledge(root)
@@ -272,7 +274,9 @@ describe('lintKnowledge — retired-slug ledger', () => {
 
   test('a root with no retired-ledger file lints cleanly', () => {
     const root = makeRoot({
-      '.claude/rules/foo.md': '[K:some-slug] declared normally.\n'
+      '.claude/rules/foo.md': '[K:some-slug] declared normally.\n',
+      // Cited, so the missing ledger is the only thing this asserts on.
+      'src/foo.ts': 'const x = 1 // →[K:some-slug]\n'
     })
 
     const { errors, stats } = lintKnowledge(root)

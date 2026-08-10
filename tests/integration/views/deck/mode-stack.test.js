@@ -2,6 +2,11 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 
+const { isMobileRef } = vi.hoisted(() => ({ isMobileRef: { value: false } }))
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: () => isMobileRef
+}))
+
 vi.mock('@/utils/animations/deck-view/card-overlay', () => ({
   captureModeSwitch: vi.fn(() => ({ from_y: 0, settle_y: 0, stack_top: 0 })),
   distanceToViewportBottom: vi.fn(() => 0),
@@ -22,12 +27,12 @@ vi.mock('@/views/deck/modes.ts', async () => {
     defineComponent({ name, setup: () => () => h('div', { 'data-testid': testid }) })
   const CardGrid = makePane('CardGrid', 'card-grid-stub')
   const CardEditor = makePane('CardEditor', 'card-editor-stub')
-  const CardImporter = makePane('CardImporter', 'card-importer-stub')
+  const CardImportPane = makePane('CardImportPane', 'card-import-pane-stub')
   return {
     DECK_MODES: {
       view: { pane: CardGrid },
       edit: { pane: CardEditor },
-      'import-export': { pane: CardImporter }
+      import: { pane: CardImportPane }
     }
   }
 })
@@ -56,6 +61,7 @@ function mount(shell = makeShell()) {
 describe('ModeStack', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    isMobileRef.value = false
   })
 
   test('renders the mode-stack root as a positioned container', () => {
@@ -73,7 +79,7 @@ describe('ModeStack', () => {
     const wrapper = mount(makeShell('view'))
     expect(gridDisplay(wrapper)).not.toBe('none')
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(false)
-    expect(wrapper.findComponent({ name: 'CardImporter' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'CardImportPane' }).exists()).toBe(false)
   })
 
   test('mounts the card-editor and hides (not unmounts) the grid in edit mode', () => {
@@ -81,12 +87,12 @@ describe('ModeStack', () => {
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(true)
     expect(wrapper.findComponent({ name: 'CardGrid' }).exists()).toBe(true)
     expect(gridDisplay(wrapper)).toBe('none')
-    expect(wrapper.findComponent({ name: 'CardImporter' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'CardImportPane' }).exists()).toBe(false)
   })
 
-  test('mounts the card-importer and hides the grid in import-export mode', () => {
-    const wrapper = mount(makeShell('import-export'))
-    expect(wrapper.findComponent({ name: 'CardImporter' }).exists()).toBe(true)
+  test('mounts the import pane and hides the grid in import mode', () => {
+    const wrapper = mount(makeShell('import'))
+    expect(wrapper.findComponent({ name: 'CardImportPane' }).exists()).toBe(true)
     expect(gridDisplay(wrapper)).toBe('none')
     expect(wrapper.findComponent({ name: 'CardEditor' }).exists()).toBe(false)
   })
@@ -169,5 +175,66 @@ describe('ModeStack', () => {
 
     expect(wrapper.classes()).not.toContain('overflow-hidden')
     expect(wrapper.attributes('style') ?? '').not.toContain('min-height')
+  })
+
+  // ── below md: crossfade, never a clip/min-height transition [obligation] ──
+
+  describe('below md (mobile crossfade) [obligation]', () => {
+    test('a mode flip below md applies neither overflow-hidden nor min-height [obligation]', async () => {
+      isMobileRef.value = true
+      const shell = makeShell('view')
+      const wrapper = mount(shell)
+
+      shell.mode.value = 'edit'
+      shell.is_view.value = false
+      await nextTick()
+      await nextTick()
+
+      expect(wrapper.classes()).not.toContain('overflow-hidden')
+      expect(wrapper.attributes('style') ?? '').not.toContain('min-height')
+    })
+
+    test('slideOverlayUp is never called below md — the overlay crossfades instead [obligation]', async () => {
+      isMobileRef.value = true
+      const shell = makeShell('view')
+      mount(shell)
+
+      shell.mode.value = 'edit'
+      shell.is_view.value = false
+      await nextTick()
+      await nextTick()
+
+      expect(slideOverlayUp).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('at md and above (desktop slide) [obligation]', () => {
+    test('a mode flip at md+ applies overflow-hidden while the overlay slides in [obligation]', async () => {
+      isMobileRef.value = false
+      const shell = makeShell('view')
+      const wrapper = mount(shell)
+
+      slideOverlayUp.mockImplementationOnce(() => {}) // hold the slide open mid-flight
+
+      shell.mode.value = 'edit'
+      shell.is_view.value = false
+      await nextTick()
+      await nextTick()
+
+      expect(wrapper.classes()).toContain('overflow-hidden')
+    })
+
+    test('slideOverlayUp drives the overlay in at md and above [obligation]', async () => {
+      isMobileRef.value = false
+      const shell = makeShell('view')
+      mount(shell)
+
+      shell.mode.value = 'edit'
+      shell.is_view.value = false
+      await nextTick()
+      await nextTick()
+
+      expect(slideOverlayUp).toHaveBeenCalled()
+    })
   })
 })
