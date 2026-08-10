@@ -5,6 +5,7 @@ import { card } from '@tests/fixtures/card'
 
 const {
   cardsInfiniteQueryMock,
+  allCardsRefetchMock,
   deckQueryMock,
   insertCardMock,
   saveCardMock,
@@ -22,6 +23,7 @@ const {
   handleLimitErrorMock
 } = vi.hoisted(() => ({
   cardsInfiniteQueryMock: vi.fn(),
+  allCardsRefetchMock: vi.fn().mockResolvedValue({ data: [] }),
   deckQueryMock: vi.fn(),
   insertCardMock: vi.fn(),
   saveCardMock: vi.fn(),
@@ -41,6 +43,7 @@ const {
 
 vi.mock('@/api/cards', () => ({
   useCardsInDeckInfiniteQuery: cardsInfiniteQueryMock,
+  useAllCardsInDeckQuery: () => ({ refetch: allCardsRefetchMock }),
   useInsertCardMutation: () => ({ mutate: insertCardMock, mutateAsync: insertCardMock }),
   useSaveCardMutation: () => ({ mutate: saveCardMock, mutateAsync: saveCardMock }),
   useDeleteCardsMutation: () => ({ mutate: deleteCardsMock, mutateAsync: deleteCardsMock }),
