@@ -74,6 +74,16 @@ If a run finds every candidate blocked, say so and stop rather than reaching fur
 for something unrelated. Under the default check two siblings of one split are never both takeable —
 the `Blocked By` relation means one waits, and a chain is worked a link at a time.
 
+### A prose `## Blocked on` section is a different blocker — ask, don't judge around it
+
+`Blocked By` (above) is Notion's structured ticket-to-ticket relation. Separately, a groomed
+ticket's **body** can carry a free-text `## Blocked on` section recording an **external** blocker —
+an account to provision, a domain to add, a secret to set in Doppler — something no subagent can
+resolve. Finding one at SELECT or CLAIM time means **stop and ask the user before dispatching that
+ticket's subagent**, even when the code work looks doable around it (e.g. behind an env gate). The
+orchestrator judging "doable anyway" is a guess about a blocker it can't see the state of; only the
+user knows whether it's actually cleared.
+
 ## Procedure
 
 ### 0. ORCHESTRATOR WORKTREE — always
@@ -272,6 +282,9 @@ ticket PR. Specific to this skill:
   alone doesn't make a ticket takeable either.
 - Never work an `On Hold` or `Assignee = Me` ticket (the user's hands-off, and not in `Ready`
   anyway).
+- **A ticket body carrying a prose `## Blocked on` section pauses for the user's go-ahead before
+  dispatch** — never judged as workable around (e.g. "doable behind an env gate") on the
+  orchestrator's own read.
 - **Tests: suspended only for the initial build.** Each initial-build subagent invokes `update-tests`
   for its change (golden "no tests" rule suspended there); no subagent runs the full `vp test` suite —
   CI is the gate the orchestrator watches. In the **Review & feedback loop the rule is back on**: don't
