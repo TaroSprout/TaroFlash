@@ -61,7 +61,8 @@ function makeEditor({
   exitSelection = vi.fn(),
   onCancelSelection = vi.fn(),
   onMoveCards = vi.fn(),
-  onDeleteCards = vi.fn()
+  onDeleteCards = vi.fn(),
+  onExportSelection = vi.fn()
 } = {}) {
   return {
     selection: {
@@ -71,7 +72,7 @@ function makeEditor({
       toggleSelectAll,
       exitSelection
     },
-    actions: { onCancelSelection, onMoveCards, onDeleteCards }
+    actions: { onCancelSelection, onMoveCards, onDeleteCards, onExportSelection }
   }
 }
 
@@ -91,6 +92,7 @@ const cancelBtn = (w) => w.find('[data-testid="bulk-actions__cancel"]')
 const countTag = (w) => w.find('[data-testid="bulk-actions__count"]')
 const selectAllEntry = (w) => w.find('[data-testid="nav-entry-select-all"]')
 const moveEntry = (w) => w.find('[data-testid="nav-entry-move"]')
+const exportEntry = (w) => w.find('[data-testid="nav-entry-export"]')
 const deleteBtn = (w) => w.find('[data-testid="bulk-actions__delete"]')
 
 describe('deck-hero/bulk-actions', () => {
@@ -145,6 +147,19 @@ describe('deck-hero/bulk-actions', () => {
     const { wrapper, editor } = mount(makeEditor({ selected_count: 1 }))
     await moveEntry(wrapper).trigger('click')
     expect(editor.actions.onMoveCards).toHaveBeenCalledOnce()
+  })
+
+  test('nav entries include export directly after move [obligation]', () => {
+    const { wrapper } = mount(makeEditor({ selected_count: 1 }))
+    const entries = wrapper.findAll('[data-testid^="nav-entry-"]')
+    const values = entries.map((e) => e.attributes('data-testid').replace('nav-entry-', ''))
+    expect(values.indexOf('export')).toBe(values.indexOf('move') + 1)
+  })
+
+  test('navigating export calls actions.onExportSelection [obligation]', async () => {
+    const { wrapper, editor } = mount(makeEditor({ selected_count: 1 }))
+    await exportEntry(wrapper).trigger('click')
+    expect(editor.actions.onExportSelection).toHaveBeenCalledOnce()
   })
 
   test('clicking delete calls actions.onDeleteCards', async () => {

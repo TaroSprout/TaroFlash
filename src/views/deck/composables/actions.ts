@@ -3,7 +3,10 @@ import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
+import { useAllCardsInDeckQuery } from '@/api/cards'
 import type { useDeckQuery } from '@/api/decks'
+import { cardsToCsv, deckExportFilename } from '@/utils/card/csv'
+import { downloadTextFile } from '@/utils/download'
 import type { VirtualCardList } from './virtual-list'
 import type { DeckViewShell } from './view-shell'
 
@@ -15,7 +18,7 @@ type Args = {
   list: VirtualCardList
   selection: CardSelection
   mutations: CardMutations
-  deck_query: Pick<DeckQuery, 'refetch'>
+  deck_query: Pick<DeckQuery, 'refetch' | 'data'>
   deck_id: number
   shell: Pick<DeckViewShell, 'exitMode'>
 }
@@ -29,6 +32,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   const { t } = useI18n()
   const notice = useNoticeStore()
   const { confirmDelete, openMoveModal } = useCardPrompts()
+  const all_cards_query = useAllCardsInDeckQuery(() => deck_id)
 
   /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
@@ -122,5 +126,57 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     selection.exitSelection()
   }
 
-  return { onDeleteCards, onSelectCard, onMoveCards, onCancel, onCancelSelection }
+  /** Every card in the deck, in rank order — bypasses the grid's pagination. */
+  async function resolveAllCards(): Promise<Card[]> {
+    const result = await all_cards_query.refetch()
+    return result.status === 'success' ? result.data : []
+  }
+
+  /** Download `cards` as CSV and toast the count. No-op on an empty result. */
+  function exportCards(cards: Card[]) {
+    if (cards.length === 0) return
+
+    const filename = deckExportFilename(deck_query.data.value?.title)
+    const csv = cardsToCsv(cards)
+
+    downloadTextFile(filename, csv)
+    notice.success(t('toast.success.cards-exported', { count: cards.length }))
+  }
+
+  /** Exports the whole deck, whatever happens to be selected. */
+  async function onExportCards() {
+    const cards = await resolveAllCards()
+
+    exportCards(cards)
+  }
+
+  /**
+   * Exports the picked cards.
+   *
+   * Under "select all" the pick is held as exclusions, so it covers cards the
+   * grid never loaded — that case reads the deck in full before filtering.
+   */
+  async function onExportSelection() {
+    if (!selection.select_all_mode.value) {
+      const picked = selection.filterSelected(list.persisted_cards.value)
+
+      exportCards(picked)
+      return
+    }
+
+    const all = await resolveAllCards()
+    const picked = all.filter((card) => card.id !== undefined && selection.isCardSelected(card.id))
+
+    exportCards(picked)
+  }
+
+  return {
+    onDeleteCards,
+    onSelectCard,
+    onMoveCards,
+    onCancel,
+    onCancelSelection,
+    onExportCards,
+    onExportSelection
+  }
 }

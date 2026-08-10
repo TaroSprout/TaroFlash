@@ -4,7 +4,7 @@ domain: architecture
 status: current
 hazard: true
 related: [permissions, cards]
-updated: 2026-07-23
+updated: 2026-08-10
 ---
 
 # Data flow
@@ -52,6 +52,15 @@ copy to fall out of sync with.
 
 Every read is asked for under a stable name — "the dashboard's decks," "this
 deck's cards." The answer is filed under that name.
+
+> [!HAZARD] [K:postgrest-max-rows-truncates-silently] **The server caps how many rows any single read can return, and past that cap it simply stops — no error, no flag, nothing to say the answer is short.**
+> A read written and tested against a small dataset carries that assumption
+> straight into production: it looks complete because it always has been,
+> right up until whatever it's reading crosses the cap. Then it comes back
+> quietly incomplete, and the cache files the short answer under the same name
+> as a complete one — nothing downstream can tell the difference. The only fix
+> is on the caller: page through the source until it runs dry, never trust one
+> request to be the whole thing.
 
 Ask twice and the second ask is instant: the cache already has it. That's the
 whole point of the copy.

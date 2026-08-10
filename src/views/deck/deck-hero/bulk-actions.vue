@@ -29,12 +29,18 @@ const nav_entries = computed<OptionsPanelEntry[]>(() => [
     value: 'move',
     label: t('deck-view.bulk-actions.move-deck'),
     trailingIcon: 'move-item'
+  },
+  {
+    value: 'export',
+    label: t('deck-view.bulk-actions.export-selected'),
+    trailingIcon: 'card-lift'
   }
 ])
 
 function onSelect(value: string) {
   if (value === 'select-all') onToggleSelectAll()
   else if (value === 'move') actions.onMoveCards()
+  else if (value === 'export') actions.onExportSelection()
 }
 </script>
 
