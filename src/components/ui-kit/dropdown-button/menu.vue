@@ -14,9 +14,13 @@ type DropdownMenuProps = {
   // then paints --color-element at the SAME value as its neutral button, and its
   // seam (outline-surface) reads the surface the menu floats over.
   depth?: number
+  // Paint the menu as a floating surface instead of matching its trigger. Set it
+  // where the trigger sits on a raised surface but the menu opens out over the
+  // page, so matching the trigger would land the menu on the page's own colour.
+  float?: boolean
 }
 
-const { options = [], size, depth } = defineProps<DropdownMenuProps>()
+const { options = [], size, depth, float = false } = defineProps<DropdownMenuProps>()
 
 const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
@@ -43,8 +47,11 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
 
 <template>
   <div
-    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) bg-element p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) text-on-element outline-1 outline-surface"
-    :class="`ui-kit-btn-tokens--${size}`"
+    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) outline-1"
+    :class="[
+      `ui-kit-btn-tokens--${size}`,
+      float ? 'bg-float text-ink outline-float-line' : 'bg-element text-on-element outline-surface'
+    ]"
     :data-depth="depth"
     data-testid="dropdown-button__menu"
   >
