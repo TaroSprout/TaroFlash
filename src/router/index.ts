@@ -4,6 +4,7 @@ import { useMemberStore } from '@/stores/member'
 import { useCan } from '@/composables/can'
 import { isPasswordRecoveryUrl } from '@/api/session'
 import { prefetchMemberById } from '@/api/members'
+import { useTracking } from '@/composables/tracking'
 import AuthenticatedView from '@/views/app-shell/authenticated.vue'
 
 const WelcomeView = () => import('@/views/welcome/index.vue')
@@ -26,6 +27,8 @@ declare module 'vue-router' {
     guestOnly?: boolean
     /** Gated screen: the named `useCan` capability must be true to enter. */
     capability?: 'useAudioReader'
+    /** Public marketing page: counted as a Plausible pageview. */
+    marketing?: boolean
   }
 }
 
@@ -59,17 +62,19 @@ const router = createRouter({
       path: '/welcome',
       name: 'welcome',
       component: WelcomeView,
-      meta: { guestOnly: true }
+      meta: { guestOnly: true, marketing: true }
     },
     {
       path: '/privacy',
       name: 'privacy-policy',
-      component: PrivacyPolicyView
+      component: PrivacyPolicyView,
+      meta: { marketing: true }
     },
     {
       path: '/terms',
       name: 'terms-of-service',
-      component: TermsOfServiceView
+      component: TermsOfServiceView,
+      meta: { marketing: true }
     },
     {
       path: '/auth/callback',
@@ -131,6 +136,13 @@ router.beforeEach(async (to) => {
     await resolveMember()
     if (!useCan()[to.meta.capability].value) return { name: 'dashboard' }
   }
+})
+
+const { trackPageview } = useTracking()
+
+// Fires after navigation settles, so only pages actually reached are counted.
+router.afterEach((to) => {
+  if (to.meta.marketing) trackPageview()
 })
 
 export default router

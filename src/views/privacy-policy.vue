@@ -80,6 +80,7 @@ const { t } = useI18n()
       <ul class="list-disc list-inside ml-4 space-y-1">
         <li>{{ t('privacy-policy.section-4.item-1') }}</li>
         <li>{{ t('privacy-policy.section-4.item-2') }}</li>
+        <li>{{ t('privacy-policy.section-4.item-3') }}</li>
       </ul>
       <p class="leading-relaxed">{{ t('privacy-policy.section-4.footer') }}</p>
     </section>
