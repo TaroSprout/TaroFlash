@@ -7,7 +7,7 @@ function makeCard(overrides = {}) {
 }
 
 describe('cardsToCsv', () => {
-  test('starts with the two Anki header lines [obligation]', () => {
+  test('starts with the two importer header lines [obligation]', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'a', back_text: 'b' })])
     const lines = csv.split('\r\n')
     expect(lines[0]).toBe('#separator:comma')

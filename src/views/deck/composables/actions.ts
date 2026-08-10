@@ -136,28 +136,38 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   function exportCards(cards: Card[]) {
     if (cards.length === 0) return
 
-    downloadTextFile(deckExportFilename(deck_query.data.value?.title), cardsToCsv(cards))
+    const filename = deckExportFilename(deck_query.data.value?.title)
+    const csv = cardsToCsv(cards)
+
+    downloadTextFile(filename, csv)
     notice.success(t('toast.success.cards-exported', { count: cards.length }))
   }
 
-  /** Deck-hero "Export cards": the whole deck, ignoring any selection. */
+  /** Exports the whole deck, whatever happens to be selected. */
   async function onExportCards() {
-    exportCards(await resolveAllCards())
+    const cards = await resolveAllCards()
+
+    exportCards(cards)
   }
 
   /**
-   * Bulk-panel "Export selected". Loaded cards resolve directly from the
-   * grid; select-all mode reads the whole deck first since the exclusions it
-   * tracks can reach cards on pages that were never scrolled into view.
+   * Exports the picked cards.
+   *
+   * Under "select all" the pick is held as exclusions, so it covers cards the
+   * grid never loaded — that case reads the deck in full before filtering.
    */
   async function onExportSelection() {
-    if (selection.select_all_mode.value) {
-      const all = await resolveAllCards()
-      exportCards(all.filter((card) => card.id !== undefined && selection.isCardSelected(card.id)))
+    if (!selection.select_all_mode.value) {
+      const picked = selection.filterSelected(list.persisted_cards.value)
+
+      exportCards(picked)
       return
     }
 
-    exportCards(selection.filterSelected(list.persisted_cards.value))
+    const all = await resolveAllCards()
+    const picked = all.filter((card) => card.id !== undefined && selection.isCardSelected(card.id))
+
+    exportCards(picked)
   }
 
   return {
