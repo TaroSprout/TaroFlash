@@ -237,6 +237,9 @@ handled the same way:
 4. **Answer the thread.** If the feedback came on the PR, reply prefixed `🤖 Claude:` so the user can
    tell your replies from their own; feedback given in chat is answered in chat. Leave the ticket in
    `Review`.
+5. **Dispatch self-heal for this round before starting the next PR** (§ Self-heal) — every standing
+   preference the user just stated, not only the ones about claim/handoff/review mechanics. A round
+   that only fixes the diff and moves on is the failure mode this step exists to close.
 
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself** — that stays the
 user's call, exactly as at first handoff.
