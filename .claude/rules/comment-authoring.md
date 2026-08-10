@@ -27,6 +27,9 @@ code needs none — a clear name beats a comment.
 In `<style>`, a comment above a selector is a symbol doc; one inside a declaration block follows the
 in-body rule.
 
+**A body comment sits trailing on the line it annotates, wrapping above only when it doesn't fit
+there.** Above-the-line is the fallback shape, not the default.
+
 **There is no line cap.** Length follows position — a comment that outgrows its position's shape is
 a missing knowledge entry, not a longer comment.
 
