@@ -94,8 +94,11 @@ filepaths, symbols, or SQL. This is the list the reviewer checks off and the imp
 so keep it skimmable. The technical encoding each one rides on — the seam, mechanism, or reuse
 pointer — lives on a companion line in `## Tech details`, not here.
 
-Four gates on every AC, on top of [`authoring`](./authoring.md):
+Five gates on every AC, on top of [`authoring`](./authoring.md):
 
+- **An enumerated failure set names its catch-all.** When ACs list the specific ways something can
+  fail (parse errors, validation, rejected input), add one AC for the case that fits none of the
+  named ones, with its own signed-off copy.
 - **Independently failable.** "The menu shows the new option" can't fail separately from the feature
   existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
   rejected path counts too, as a negative: "no cross-session outbox is added".

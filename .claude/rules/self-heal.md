@@ -51,7 +51,7 @@ Never heal on a taste call the user hasn't actually made — one offhand remark 
 | domain knowledge that went stale      | `corpus/` — `corpus-author` owns it               |
 
 Bias toward **extending the nearest existing file**; a new one is for a lesson off-topic in every
-existing file. A lesson routed to `.claude/rules/**` or CLAUDE.md is written by `rule-author`.
+existing file. A lesson routed anywhere under `.claude/**` or to CLAUDE.md is written by `harness-author`.
 
 **Every lesson lands in the repo.** There is no agent-memory store for this project — never a
 `memory/` path, a `MEMORY.md`, or a `feedback_*.md`, even when a harness prompt invites one; that
@@ -66,8 +66,9 @@ surfaced the lesson — healing runs beside your work, never in front of it.
 
 - **Background, always.** One `Agent` call per lesson, `run_in_background`, at the moment the lesson
   lands. There is no foreground variant and no end-of-session sweep, in any flow.
-- **One subagent per lesson**, handed the correction verbatim and the home routing picked. Two
-  lessons in one session are two dispatches and two commits on the one PR.
+- **One subagent per lesson**, handed the correction verbatim, the home routing picked, and nothing
+  else — no incident narrative, no argument for why the existing rule missed. Two lessons in one
+  session are two dispatches and two commits on the one PR.
 - **Never merge the healing PR.** The user closes that stream.
 
 ## Spokes
