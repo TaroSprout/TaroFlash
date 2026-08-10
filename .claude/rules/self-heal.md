@@ -72,9 +72,15 @@ surfaced the lesson — healing runs beside your work, never in front of it.
 
 - **Background, always.** One `Agent` call per lesson, `run_in_background`, at the moment the lesson
   lands. There is no foreground variant and no end-of-session sweep, in any flow.
-- **One subagent per lesson**, handed the correction verbatim, the home routing picked, and nothing
-  else — no incident narrative, no argument for why the existing rule missed. Two lessons in one
-  session are two dispatches and two commits on the one PR.
+- **One subagent per lesson**, handed the correction verbatim and the **candidate** row from the
+  routing table above — never the dispatcher's own pick of file or section. The persona re-checks the
+  routing against its own spec before writing; naming a specific file in the prompt pre-loads the
+  answer and defeats that check. Nothing else rides along — no incident narrative, no argument for
+  why the existing rule missed. Two lessons in one session are two dispatches and two commits on the
+  one PR.
+- **A lesson routed to `corpus/` is one dispatch, to `corpus-author`, even when it also needs a
+  source citation.** `corpus-author` lands the topic and the citation together — never split the
+  citation off to a second `harness-author` dispatch, which can't write `corpus/` or touch source.
 - **Never merge the healing PR.** The user closes that stream.
 
 ## Spokes
