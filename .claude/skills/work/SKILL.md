@@ -151,7 +151,10 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
   outside its worktree, which is the shared/main checkout a human may be editing live. If it ever
   notices a change landed on the shared checkout, it must **stop and report it — never
   `git checkout` / `git restore` / revert the file**, since a blind revert-to-HEAD can wipe the
-  human's uncommitted work.
+  human's uncommitted work. A worktree-isolated subagent hitting a dirty tree is exactly the actor
+  most likely to reach for `git stash` — name the ban on bare `git stash` / `git stash pop`
+  ([`git-workflow`](../../rules/git-workflow.md)) in the prompt explicitly, since the stack it would
+  hit is shared across every sibling worktree.
 - It **reports back** to the orchestrator: branch name, a summary of what changed, the file paths it
   touched, whether `update-tests` + `vp check` passed, and any unresolved failure or unmet acceptance
   criterion.
