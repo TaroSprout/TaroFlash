@@ -3,8 +3,11 @@ import Thumbnail from './thumbnail.vue'
 import DeckDetails from './details.vue'
 import Actions from './actions.vue'
 import BulkActions from './bulk-actions.vue'
-import { inject } from 'vue'
+import ImportPanel from './import-panel.vue'
+import ModeImport from '@/views/deck/mode-toolbar/mode-import.vue'
+import { computed, inject } from 'vue'
 import { cardEditorKey } from '@/views/deck/composables'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { defaultEnter, defaultLeave, bulkEnter, bulkLeave } from '@/utils/animations/actions-swap'
 
@@ -17,11 +20,17 @@ type DeckHeroProps = {
 const { deck, hideActions = false } = defineProps<DeckHeroProps>()
 
 const editor = inject(cardEditorKey, null)
+const shell = inject(deckViewShellKey, null)
 const is_selecting = editor?.selection.is_selecting
 // The hero is only sticky from xl up (see deck/index.vue) — below that the
 // bulk-actions overlay has nothing stable to float above, so bulk-select
 // there is handled elsewhere (mobile dock below md, mode-view between).
 const is_desktop = useMatchMedia('w>=xl')
+
+const panel = computed(() => {
+  if (shell?.mode.value === 'import') return 'import'
+  return is_desktop.value && is_selecting?.value ? 'bulk-actions' : 'actions'
+})
 </script>
 
 <template>
@@ -37,6 +46,10 @@ const is_desktop = useMatchMedia('w>=xl')
     >
       <deck-details :deck="deck" />
 
+      <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
+        <mode-import v-if="panel === 'import'" class="max-md:hidden" />
+      </Transition>
+
       <div
         v-if="!hideActions"
         data-testid="deck-hero__actions-wrap"
@@ -44,7 +57,7 @@ const is_desktop = useMatchMedia('w>=xl')
       >
         <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
           <actions
-            v-if="!is_desktop || !is_selecting"
+            v-if="panel === 'actions'"
             class="col-start-1 row-start-1"
             :deck="deck"
             :is-selecting="!!is_selecting"
@@ -52,7 +65,11 @@ const is_desktop = useMatchMedia('w>=xl')
         </Transition>
 
         <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
-          <bulk-actions v-if="is_desktop && is_selecting" class="col-start-1 row-start-1" />
+          <bulk-actions v-if="panel === 'bulk-actions'" class="col-start-1 row-start-1" />
+        </Transition>
+
+        <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
+          <import-panel v-if="panel === 'import'" class="col-start-1 row-start-1 max-md:hidden" />
         </Transition>
       </div>
     </div>

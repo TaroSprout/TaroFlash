@@ -2,6 +2,7 @@ import { computed, ref, type InjectionKey } from 'vue'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
+import type { SoundKey } from '@/sfx/config'
 
 export type DeckViewShell = ReturnType<typeof useDeckViewShell>
 
@@ -49,10 +50,10 @@ export function useDeckViewShell() {
    * transition finishes (`notifyModeSettled`, from the mode-stack's GSAP
    * completion). `mode` flips synchronously; only the promise is deferred.
    */
-  function setMode(new_mode: CardEditorMode): Promise<void> {
+  function setMode(new_mode: CardEditorMode, chime: SoundKey = 'select'): Promise<void> {
     if (mode.value === new_mode) return Promise.resolve()
 
-    emitSfx('select')
+    emitSfx(chime)
 
     // Reordering only applies to the base grid; leaving the view drops it.
     if (new_mode !== 'view') is_rearranging.value = false
@@ -83,8 +84,8 @@ export function useDeckViewShell() {
   }
 
   /** Leave the current mode back to the base view. */
-  function exitMode() {
-    return setMode('view')
+  function exitMode(chime?: SoundKey) {
+    return setMode('view', chime)
   }
 
   /** Set the card render size for the deck grid (Small / Base / Full). */
