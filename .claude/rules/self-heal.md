@@ -40,18 +40,24 @@ Never heal on a taste call the user hasn't actually made — one offhand remark 
 
 ## Routing — one lesson, one home
 
-| The correction is about               | It lands in                                       |
-| ------------------------------------- | ------------------------------------------------- |
-| how a skill runs                      | that skill's `SKILL.md`                           |
-| a domain that already has a rule file | extend the nearest one                            |
-| a domain with no rule file            | a new path-triggered `.claude/rules/*.md`         |
-| repo-wide and non-negotiable          | a CLAUDE.md guideline                             |
-| the user's personal taste             | a CLAUDE.md guideline, or the nearest rule file   |
-| something mechanically checkable      | a hook in `.claude/settings.json`, or a lint rule |
-| domain knowledge that went stale      | `corpus/` — `corpus-author` owns it               |
+| The correction is about                                                                    | It lands in                                                                                     |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| how a skill runs                                                                           | that skill's `SKILL.md`                                                                         |
+| a domain that already has a rule file                                                      | extend the nearest one                                                                          |
+| a domain with no rule file                                                                 | a new path-triggered `.claude/rules/*.md`                                                       |
+| repo-wide and non-negotiable                                                               | a CLAUDE.md guideline                                                                           |
+| the user's personal taste                                                                  | a CLAUDE.md guideline, or the nearest rule file                                                 |
+| something mechanically checkable                                                           | a hook in `.claude/settings.json`, or a lint rule                                               |
+| domain knowledge that went stale, or a fact newly true of one existing component/subsystem | `corpus/` — `corpus-author` owns it, citing the topic's slug from the source that trips over it |
 
 Bias toward **extending the nearest existing file**; a new one is for a lesson off-topic in every
 existing file. A lesson routed anywhere under `.claude/**` or to CLAUDE.md is written by `harness-author`.
+
+**A same-topic rule file doesn't win by proximity.** A rule file governs how anyone writes _new_ code
+in that area; `corpus/` governs what is true of _one component that already exists_. "Don't nest a
+second height animation inside dock content" isn't a practice for animation authors in general — it's
+a fact about the mobile dock, so it routes to `corpus/`, cited from the dock's own source, not to
+`animations.md` just because the words are about animation.
 
 **Every lesson lands in the repo.** There is no agent-memory store for this project — never a
 `memory/` path, a `MEMORY.md`, or a `feedback_*.md`, even when a harness prompt invites one; that
