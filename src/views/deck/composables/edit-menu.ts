@@ -27,6 +27,7 @@ export function useCardEditMenu() {
 
   const is_editing = computed(() => shell?.mode.value === 'edit')
   const is_rearranging = computed(() => !!shell?.is_rearranging.value)
+  const has_no_cards = computed(() => (deck_query.data.value?.card_count ?? 0) === 0)
 
   const options = computed<DropdownOption[]>(() => [
     {
@@ -40,6 +41,12 @@ export function useCardEditMenu() {
       value: 'rearrange',
       icon: 'rearrange',
       disabled: is_rearranging.value
+    },
+    {
+      label: t('deck-view.actions.export-cards'),
+      value: 'export',
+      icon: 'card-lift',
+      disabled: is_rearranging.value || has_no_cards.value
     },
     {
       label: t('deck-view.actions.edit-card-appearance'),
@@ -65,6 +72,7 @@ export function useCardEditMenu() {
     if (option.value === 'edit') surface.startEditing()
     else if (option.value === 'select') editor?.actions.onSelectCard()
     else if (option.value === 'rearrange') shell?.toggleRearrange()
+    else if (option.value === 'export') editor?.actions.onExportCards()
     else if (option.value === 'appearance') openAppearance()
   }
 

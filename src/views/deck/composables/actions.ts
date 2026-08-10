@@ -3,7 +3,10 @@ import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
+import { useAllCardsInDeckQuery } from '@/api/cards'
 import type { useDeckQuery } from '@/api/decks'
+import { cardsToCsv, deckExportFilename } from '@/utils/card/csv'
+import { downloadTextFile } from '@/utils/download'
 import type { VirtualCardList } from './virtual-list'
 import type { DeckViewShell } from './view-shell'
 
@@ -15,7 +18,7 @@ type Args = {
   list: VirtualCardList
   selection: CardSelection
   mutations: CardMutations
-  deck_query: Pick<DeckQuery, 'refetch'>
+  deck_query: Pick<DeckQuery, 'refetch' | 'data'>
   deck_id: number
   shell: Pick<DeckViewShell, 'exitMode'>
 }
@@ -29,6 +32,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   const { t } = useI18n()
   const notice = useNoticeStore()
   const { confirmDelete, openMoveModal } = useCardPrompts()
+  const all_cards_query = useAllCardsInDeckQuery(() => deck_id)
 
   /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
@@ -122,5 +126,47 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     selection.exitSelection()
   }
 
-  return { onDeleteCards, onSelectCard, onMoveCards, onCancel, onCancelSelection }
+  /** Every card in the deck, in rank order — bypasses the grid's pagination. */
+  async function resolveAllCards(): Promise<Card[]> {
+    const result = await all_cards_query.refetch()
+    return result.status === 'success' ? result.data : []
+  }
+
+  /** Download `cards` as CSV and toast the count. No-op on an empty result. */
+  function exportCards(cards: Card[]) {
+    if (cards.length === 0) return
+
+    downloadTextFile(deckExportFilename(deck_query.data.value?.title), cardsToCsv(cards))
+    notice.success(t('toast.success.cards-exported', { count: cards.length }))
+  }
+
+  /** Deck-hero "Export cards": the whole deck, ignoring any selection. */
+  async function onExportCards() {
+    exportCards(await resolveAllCards())
+  }
+
+  /**
+   * Bulk-panel "Export selected". Loaded cards resolve directly from the
+   * grid; select-all mode reads the whole deck first since the exclusions it
+   * tracks can reach cards on pages that were never scrolled into view.
+   */
+  async function onExportSelection() {
+    if (selection.select_all_mode.value) {
+      const all = await resolveAllCards()
+      exportCards(all.filter((card) => card.id !== undefined && selection.isCardSelected(card.id)))
+      return
+    }
+
+    exportCards(selection.filterSelected(list.persisted_cards.value))
+  }
+
+  return {
+    onDeleteCards,
+    onSelectCard,
+    onMoveCards,
+    onCancel,
+    onCancelSelection,
+    onExportCards,
+    onExportSelection
+  }
 }
