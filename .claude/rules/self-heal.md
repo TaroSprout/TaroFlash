@@ -66,10 +66,9 @@ surfaced the lesson — healing runs beside your work, never in front of it.
 
 - **Background, always.** One `Agent` call per lesson, `run_in_background`, at the moment the lesson
   lands. There is no foreground variant and no end-of-session sweep, in any flow.
-- **One subagent per lesson**, handed the correction verbatim and the home routing picked. Two
-  lessons in one session are two dispatches and two commits on the one PR.
-- **The brief carries the correction and the routing, never your reasoning.** No incident narrative,
-  no argument for why the existing rule missed — the persona echoes what it's handed.
+- **One subagent per lesson**, handed the correction verbatim, the home routing picked, and nothing
+  else — no incident narrative, no argument for why the existing rule missed. Two lessons in one
+  session are two dispatches and two commits on the one PR.
 - **Never merge the healing PR.** The user closes that stream.
 
 ## Spokes
