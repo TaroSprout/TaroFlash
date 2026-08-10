@@ -69,6 +69,9 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
   [`knowledge-addressing`](./knowledge-addressing.md).
 - **A comment that wants to grow past its position's shape is the trigger to write that entry**, not
   a reason to keep typing.
+- **A reviewer's inline "why does this work this way?" is the same trigger, not an invitation to
+  answer in place.** The answer goes in the PR reply, which carries no length limit; what lands back
+  in the code is still just the sentence plus the citation.
 - The readable sentence is never optional. A pointer replaces the explanation, never the knowledge —
   someone skimming a diff gets the constraint without leaving the file.
 
