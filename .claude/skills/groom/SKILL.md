@@ -171,7 +171,8 @@ terms**, not a technical brief. Keep it scannable; the detail arrives as the use
   silently assume: naming, UX choices, edge-case handling, scope boundaries, which pattern to
   follow. Phrase each as the choice a user would recognise where it has one; one line, with a
   recommendation. **Surface them — never bake them in.** Hold the filepaths and symbols until the
-  decision is actually opened.
+  decision is actually opened. **A checkpoint built entirely of mechanism questions is incomplete
+  for a user-facing ticket** — include at least one on what it looks like, not just how it works.
 - **Pushback surface** — anything in the spec that looks like a hole, is ambiguous, seems
   unnecessary, or that you would do differently. One line each; make it easy to cut or redirect
   scope.
