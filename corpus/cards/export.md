@@ -17,10 +17,13 @@ it, rather than leaving the reader to guess.
 
 ## Two directive lines, then one row per card [K:card-export-csv-format]
 
-The file opens with two lines, `#separator:comma` and `#html:false`, that an
+The file opens with two lines, `#separator:,` and `#html:false`, that an
 importer reads as `#key:value` settings — so nobody using it is ever asked to
-pick a separator by hand. After those, one row per card follows in the deck's
-own order, front then back.
+pick a separator by hand. The separator is written as the literal character,
+not its name (`comma`): a spreadsheet sniffing the first line for a delimiter
+needs an actual comma there, or it falls back to fixed-width guessing and
+slices every row at the wrong columns. After those, one row per card follows
+in the deck's own order, front then back.
 
 The file is otherwise plain CSV (RFC 4180): a comma would start a new column
 and a line break would start a new row, so any field carrying either is

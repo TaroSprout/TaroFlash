@@ -1,5 +1,6 @@
-// Directives an importer reads, so nobody is asked to pick a separator. →[K:card-export-csv-format]
-const HEADER_LINES = ['#separator:comma', '#html:false']
+// Directives an importer reads, so nobody is asked to pick a separator. The separator is written as
+// the character rather than its name so a spreadsheet can detect it too. →[K:card-export-csv-format]
+const HEADER_LINES = ['#separator:,', '#html:false']
 
 /** A single CSV field, quoted only when it has to be. →[K:card-export-csv-format] */
 function escapeCsvField(value: string): string {

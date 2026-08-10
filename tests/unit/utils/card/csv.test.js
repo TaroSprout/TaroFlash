@@ -10,7 +10,7 @@ describe('cardsToCsv', () => {
   test('starts with the two importer header lines [obligation]', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'a', back_text: 'b' })])
     const lines = csv.split('\r\n')
-    expect(lines[0]).toBe('#separator:comma')
+    expect(lines[0]).toBe('#separator:,')
     expect(lines[1]).toBe('#html:false')
   })
 
@@ -66,7 +66,7 @@ describe('cardsToCsv', () => {
   })
 
   test('an empty card list produces just the two header lines', () => {
-    expect(cardsToCsv([])).toBe('#separator:comma\r\n#html:false')
+    expect(cardsToCsv([])).toBe('#separator:,\r\n#html:false')
   })
 })
 
