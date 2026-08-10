@@ -13,7 +13,7 @@ lastUpdated: 2026-08-01T20:00:00Z
 
 ## What this skill does
 
-Pulls groomed, user-promoted tickets off the board, works them **autonomously in parallel**, and
+Pulls groomed tickets off the board, works them **autonomously in parallel**, and
 lands each at an **open PR** for your review. It never merges and never marks a ticket `Done` — you
 close the loop.
 
@@ -22,8 +22,7 @@ out one worktree-isolated subagent per ticket, then organizes the branches they 
 CI-green PRs. The orchestrator never edits ticket code itself — subagents do. After the PRs open it
 stays live for your review feedback (§ Review & feedback loop).
 
-- **Source lane** — `Ready` (you promote `Groomed` → `Ready` yourself; that promotion is the human
-  gate this skill trusts).
+- **Source lane** — `Ready` (`/groom` lands tickets there itself, after its review loop).
 - **Model** — each ticket's `Assignee` (`Fable` / `Opus` / `Sonnet`), one subagent pinned to it.
 - **Tests** — the golden "no tests" rule is **suspended here**: each subagent runs the `update-tests`
   skill to cover its own change. The orchestrator never authors ticket code or tests.
@@ -34,7 +33,7 @@ stays live for your review feedback (§ Review & feedback loop).
   constants (fields, options, relations) live in
   [`task-board-schema.md`](../../rules/task-board-schema.md).
 - `Status` lanes this skill uses: pulls from `Ready`; claims to `In Progress`; lands at `Review`;
-  parks stuck work at `Blocked`. Never sets `Done` / `Duplicate` / `Groomed`.
+  parks stuck work at `Blocked`. Never sets `Done` / `Duplicate`.
 - `Assignee`: `Fable` · `Opus` · `Sonnet` — the model each subagent is pinned to. **`Assignee = Me`
   and `Status = On Hold` are both hands-off** (user-owned) and never eligible.
 - Status and field writes are plain `notion-update-page` property writes — no transition step.

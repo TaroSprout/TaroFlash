@@ -29,16 +29,15 @@ authoring: what a cut sets, what each stage owns, and the two-axis Priority/Targ
 | Field      | Value when cutting                                                                                                         |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `Status`   | **`Backlog`**, always — a new ticket is un-triaged by definition                                                           |
-| `Assignee` | **empty** — triage/groom set it (`Opus`/`Sonnet`) at `Groomed`, never at cut                                               |
+| `Assignee` | **empty** — triage/groom set it (`Opus`/`Sonnet`) at `Ready`, never at cut                                                 |
 | `Type`     | `Bug` broken · `Task` defined change · `Story` user-facing capability · `Spike` the deliverable is a decision, not shipped |
 | `Priority` | **empty** at cut time — a `/backlog` decision. Set only when the user explicitly dictates one                              |
 | `Target`   | **empty** at cut time — a `/backlog` decision, not a capture one                                                           |
 | `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
-Never write `Groomed` or `Ready` — those assert the ticket is executable, which is never true at
-capture time. Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own
-hands-off marker. Leave `Priority` and `Assignee` untouched unless the user explicitly asks for a
-value.
+Never write `Ready` — it asserts the ticket is executable, which is never true at capture time. Never
+write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own hands-off marker. Leave
+`Priority` and `Assignee` untouched unless the user explicitly asks for a value.
 
 **The classification fields have an owner: `/backlog`.** `Type`, `Epic`, `Target`, and `Priority` are
 the portfolio pass's to set — it sees the whole Backlog at once and distributes them comparatively.
@@ -166,8 +165,8 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   [`i18n`](./i18n.md).
 - **Copy carries its signed-off wording.** →[K:user-copy-signoff] — any new or changed
   user-facing string appears in the AC as its exact final wording. Reused copy is stated as reused
-  (same wording, its own key — keys aren't shared across features). A ticket with undecided copy is
-  not `Groomed`.
+  (same wording, its own key — keys aren't shared across features). A ticket with undecided copy does
+  not reach `Ready`.
 
 ## Epics
 
