@@ -39,8 +39,8 @@ delete every citation. Re-declaring or citing a retired slug fails the check.
 
 `pnpm knowledge:check` (`scripts/knowledge-lint.mjs`) runs on every PR as its own CI job — always,
 never behind a paths filter, so a run that never happened is visible rather than silent. It fails on
-an unresolvable citation, a slug declared twice, a stray declaration, a malformed ledger entry, and
-a breached line cap.
+an unresolvable citation, a slug declared twice, a stray declaration, a malformed ledger entry, a
+slug declared but never cited from anywhere, and a breached line cap.
 
 `.claude/knowledge-lint.json` is the **single declared place** for the always-on file list, the
 caps, and the scan scope. Always-on = the `always_on.include` globs minus any file carrying `paths:`
@@ -49,6 +49,11 @@ frontmatter, since a `paths:` rule is path-triggered rather than loaded every se
 - `slugs.exempt` skips the citation scan. `supabase/migrations/**` is exempt because migrations are
   append-only, so a pointer written into one can never be corrected; `tests/unit/scripts/**` is
   exempt because the checker's own fixtures contain literal tokens. Nothing else earns a place there.
+- `slugs.citation_exempt` names specific slugs allowed to carry zero inbound references — a heading
+  anchor in a document a reader arrives at directly (a `reachability.roots` entry), not a fact meant
+  to be pointed at from elsewhere. Minting a slug and never citing it is otherwise a failure: a slug
+  nobody points at cost nothing to declare and gives the next reader nothing to find, so it earns its
+  keep or it's dropped — grep the file, delete the declaration.
 - Caps are `line_caps` — 80 lines for `CLAUDE.md`, 250 for the always-on total. A starting
   calibration, not a measured figure.
 - `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,

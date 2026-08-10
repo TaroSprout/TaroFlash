@@ -242,8 +242,11 @@ handled the same way:
    untouched while they reshape the code. Do **not** run `update-tests` per fix. When the user says
    they're ready for tests, run **one** consolidated `update-tests` pass over everything the review
    changed. (A user "put tests on hold" mid-review just confirms this default; honour it immediately.)
-3. **Check, push, watch green.** Run `vp check`, push to the PR branch, and let CI run (via
-   `prepare-pr` or directly). A PR isn't done until CI is green again — no local full-suite run.
+3. **Batch the gate and the push — don't run either per item.** A review round is commonly many
+   small pieces of feedback in a row; apply and commit each as it comes, but hold `vp check` and the
+   push until the user signals the round is done (they stop, or say so explicitly), then run
+   `vp check` once and push once for the whole batch. A PR isn't done until CI is green again — no
+   local full-suite run.
 4. **Answer the thread.** If the feedback came on the PR, reply prefixed `🤖 Claude:` so the user can
    tell your replies from their own; feedback given in chat is answered in chat. Leave the ticket in
    `Review`.
