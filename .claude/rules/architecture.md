@@ -38,3 +38,4 @@ Read the relevant one before editing:
 - **Adding helpers, defaults, formatters, validators** → [`utils`](./architecture/utils.md)
 - **Shared editor state across nested components / modals** → [`provide-inject`](./architecture/provide-inject.md)
 - **Touching `src/components/ui-kit/` or `src/components/layout-kit/`** → [`ui-kit`](./architecture/ui-kit.md)
+- **Wiring a third-party analytics/tracking SDK** → [`vendor-chokepoint`](./architecture/vendor-chokepoint.md)
