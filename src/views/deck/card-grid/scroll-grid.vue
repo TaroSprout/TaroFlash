@@ -3,18 +3,10 @@ import GridItem from './grid-item.vue'
 import { useCardGrid } from './use-card-grid'
 import { cardEditorKey, cardSearchKey, type CardWithClientId } from '@/views/deck/composables'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
-import {
-  computed,
-  inject,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  useTemplateRef,
-  watch
-} from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
+import { useParentScrollMargin } from '@/composables/ui/parent-scroll-margin'
 import { useReorderDrag } from '@/composables/use-reorder-drag'
 import { usePressHold } from '@/composables/ui/press-hold'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
@@ -39,10 +31,13 @@ const reorder_hold = usePressHold({ duration: HOLD_MS, tolerance: HOLD_TOLERANCE
 
 const grid_el = useTemplateRef<HTMLElement>('grid_el')
 const sentinel = useTemplateRef<HTMLElement>('sentinel')
-const container_width = ref(0)
-const scroll_margin = ref(0)
-// Gates the rendered height so the single-tall-column fallback frame never paints.
-const measured = ref(false)
+
+const {
+  scroll_margin,
+  container_width,
+  measured,
+  measure: measureLayout
+} = useParentScrollMargin(grid_el, { onMeasure: () => virtualizer.value.measure() })
 
 const { cell_width, gap, columns, row_count, row_pitch, itemPosition } = useCardGrid(
   grid_size,
@@ -107,34 +102,11 @@ const visible_items = computed(() => {
   return items
 })
 
-let resize_observer: ResizeObserver | undefined
 // Viewport-space bottom of the sticky toolbar (md+) — the inset drag auto-scroll-up starts from.
 let sticky_toolbar: HTMLElement | null = null
 // Held so the matching drop, which fires from a window pointerup rather than
 // a DOM event on the card, can settle it back.
 let lifted_card: HTMLElement | null = null
-
-// Measures the parent, not the grid pane itself — the pane is transformed
-// during a mode-swap, which would corrupt its own rect.
-function measureLayout() {
-  const container = grid_el.value?.parentElement
-  if (!container) return
-  container_width.value = container.clientWidth
-  scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
-  measured.value = true
-  // Explicit measure() keeps the virtualizer's own scroll-offset tracking from racing scrollMargin.
-  virtualizer.value.measure()
-}
-
-// Debounced so a resize burst (the mobile dock's live height, cascading from
-// --edge-safe-padding) settles after scroll stops, instead of measuring
-// scroll_margin from a window.scrollY snapshot that's still moving.
-const RESIZE_DEBOUNCE_MS = 120
-let resize_timer: ReturnType<typeof setTimeout> | undefined
-function onBodyResize() {
-  clearTimeout(resize_timer)
-  resize_timer = setTimeout(measureLayout, RESIZE_DEBOUNCE_MS)
-}
 
 /** The reorder engine's live gap-shift offset (px) for the card at `index`, on top of its resting slot. */
 function dragTransform(index: number) {
@@ -167,17 +139,10 @@ function onItemPointerdown(index: number, event: PointerEvent) {
 }
 
 onMounted(() => {
-  measureLayout()
   sticky_toolbar = document.querySelector('[data-testid="deck-view__toolbar"]')
-  resize_observer = new ResizeObserver(onBodyResize)
-  resize_observer.observe(document.body)
 })
 
-onBeforeUnmount(() => {
-  clearTimeout(resize_timer)
-  resize_observer?.disconnect()
-  reorder_hold.cancel()
-})
+onBeforeUnmount(() => reorder_hold.cancel())
 
 observeSentinel(sentinel)
 

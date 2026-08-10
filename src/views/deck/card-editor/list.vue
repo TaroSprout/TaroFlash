@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import ListItem from './list-item.vue'
+import { CARD_LIST_ROW_PITCH } from './row-pitch'
 import {
   inject,
   useTemplateRef,
   computed,
-  ref,
   watch,
   watchEffect,
   onMounted,
@@ -14,13 +14,13 @@ import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
 import { cardEditorKey } from '@/views/deck/composables'
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
+import { useParentScrollMargin } from '@/composables/ui/parent-scroll-margin'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useReorderDrag } from '@/composables/use-reorder-drag'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
 const { t } = useI18n()
 
-const ROW_PITCH = 407
 const LOAD_MORE_THRESHOLD = 5
 const OVERSCAN = 3
 
@@ -37,13 +37,16 @@ const {
 const { all_cards } = list
 
 const list_el = useTemplateRef<HTMLElement>('list_el')
-const scroll_margin = ref(0)
 const is_above_md = useMatchMedia('w>=md')
+
+const { scroll_margin } = useParentScrollMargin(list_el, {
+  onMeasure: () => virtualizer.value.measure()
+})
 
 usePinScrollWhileTyping(() => list_el.value)
 
 const reorder = useReorderDrag({
-  pitch: ROW_PITCH,
+  pitch: CARD_LIST_ROW_PITCH,
   count: () => all_cards.value.length,
   enabled: () => is_above_md.value && !selection.is_selecting.value && can_reorder.value,
   topInset: () => sticky_toolbar?.getBoundingClientRect().bottom ?? 0,
@@ -55,7 +58,7 @@ const reorder = useReorderDrag({
 const virtualizer = useWindowVirtualizer(
   computed(() => ({
     count: all_cards.value.length,
-    estimateSize: () => ROW_PITCH,
+    estimateSize: () => CARD_LIST_ROW_PITCH,
     overscan: OVERSCAN,
     scrollMargin: scroll_margin.value,
     getItemKey: (i: number) => all_cards.value[i].client_id,
@@ -68,26 +71,6 @@ const virtualizer = useWindowVirtualizer(
     }
   }))
 )
-
-// Measures the parent, not the list itself — the list is transformed during
-// a mode-swap, which would corrupt its own rect.
-function measureScrollMargin() {
-  const container = list_el.value?.parentElement
-  if (!container) return
-  scroll_margin.value = container.getBoundingClientRect().top + window.scrollY
-  // Explicit measure() keeps the virtualizer's own scroll-offset tracking from racing scrollMargin.
-  virtualizer.value.measure()
-}
-
-// Debounced so a resize burst (the mobile dock's live height, cascading from
-// --edge-safe-padding) settles after scroll stops, instead of measuring
-// scroll_margin from a window.scrollY snapshot that's still moving.
-const RESIZE_DEBOUNCE_MS = 120
-let resize_timer: ReturnType<typeof setTimeout> | undefined
-function onBodyResize() {
-  clearTimeout(resize_timer)
-  resize_timer = setTimeout(measureScrollMargin, RESIZE_DEBOUNCE_MS)
-}
 
 function onReorderStart(index: number, event: PointerEvent) {
   reorder.start(index, event)
@@ -105,25 +88,17 @@ function scrollToCard(client_id: string) {
   virtualizer.value.scrollToIndex(index, { align: 'center' })
 }
 
-let resize_observer: ResizeObserver | undefined
 // Viewport-space bottom of the sticky toolbar (md+) — the inset drag auto-scroll-up starts from.
 let sticky_toolbar: HTMLElement | null = null
 // Held so the matching drop, which fires from a window pointerup, can settle it back.
 let lifted_row: HTMLElement | null = null
 
 onMounted(() => {
-  measureScrollMargin()
   sticky_toolbar = document.querySelector('[data-testid="deck-view__toolbar"]')
-  resize_observer = new ResizeObserver(onBodyResize)
-  resize_observer.observe(document.body)
   registerScroller({ scrollToCard })
 })
 
-onBeforeUnmount(() => {
-  clearTimeout(resize_timer)
-  resize_observer?.disconnect()
-  registerScroller(null)
-})
+onBeforeUnmount(() => registerScroller(null))
 
 watchEffect(() => {
   const items = virtualizer.value.getVirtualItems()
