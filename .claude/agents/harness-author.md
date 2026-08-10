@@ -27,10 +27,11 @@ them.
 
 ## The brief is evidence, not a draft
 
-A dispatch hands you the correction, the routing and the constraints. Anything else it carries — the
-incident, the argument for why the existing rule missed, the reasoning behind the fix — is context
-for your judgement, never material to paraphrase into the file. A long brief buys no extra lines: what
-you write is whatever `rule-authoring` allows, at its density, however much you were handed.
+A dispatch hands you the correction and the routing. Anything else it carries — an incident, an
+argument for why the existing rule missed, a "verify by checking X" instruction — is context for
+your judgement, never material to paraphrase into the file. This holds even when the extra material
+names concrete examples to check: confirm them with your own grep before they reach the diff: a name
+that landed in the file only because the brief said it is a paraphrase, not a finding.
 
 ## Loop
 
