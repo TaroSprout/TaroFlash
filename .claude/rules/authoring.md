@@ -38,3 +38,7 @@ specific to their artifact and link here for these five; none of them restates o
   - Bad: a comment says a display count "can drift" from the enforced limit → reported as a known
     pricing-page defect, unconfirmed.
   - Good: read the enforced limit from the current migration state before claiming the two disagree.
+  - Bad: a locale key names a feature (`roadmap.item.card-audio`, "Card Audio Upload") → reported as
+    shipped, because copy exists for it.
+  - Good: read the code that gates or renders the feature (a `done` flag, a `can_` check, a route)
+    before claiming it ships — authored copy proves a string was written, nothing about the feature.
