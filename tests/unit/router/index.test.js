@@ -15,13 +15,15 @@ const {
   mockMemberStore,
   mockUseCan,
   mockPrefetchMemberById,
-  mockIsPasswordRecoveryUrl
+  mockIsPasswordRecoveryUrl,
+  mockTrackPageview
 } = vi.hoisted(() => ({
   mockSessionStore: { ensureResolved: vi.fn() },
   mockMemberStore: {},
   mockUseCan: vi.fn(),
   mockPrefetchMemberById: vi.fn(),
-  mockIsPasswordRecoveryUrl: vi.fn()
+  mockIsPasswordRecoveryUrl: vi.fn(),
+  mockTrackPageview: vi.fn()
 }))
 
 vi.mock('@/stores/session', () => ({
@@ -44,11 +46,16 @@ vi.mock('@/api/members', () => ({
   prefetchMemberById: mockPrefetchMemberById
 }))
 
+vi.mock('@/utils/analytics/plausible', () => ({
+  trackPageview: mockTrackPageview
+}))
+
 // Not under test here; avoids pulling in the real view (and its own composable
 // tree) just to resolve the route table.
 vi.mock('@/views/app-shell/authenticated.vue', () => ({ default: {} }))
 
 const guardHolder = vi.hoisted(() => ({ current: undefined }))
+const afterEachHolder = vi.hoisted(() => ({ current: undefined }))
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal()
@@ -60,6 +67,11 @@ vi.mock('vue-router', async (importOriginal) => {
       instance.beforeEach = (guard) => {
         guardHolder.current = guard
         return originalBeforeEach(guard)
+      }
+      const originalAfterEach = instance.afterEach.bind(instance)
+      instance.afterEach = (hook) => {
+        afterEachHolder.current = hook
+        return originalAfterEach(hook)
       }
       return instance
     }
@@ -84,6 +96,7 @@ beforeEach(() => {
   mockUseCan.mockReset().mockReturnValue({ useAudioReader: { value: true } })
   mockPrefetchMemberById.mockReset().mockResolvedValue(undefined)
   mockIsPasswordRecoveryUrl.mockReset().mockReturnValue(false)
+  mockTrackPageview.mockReset()
 })
 
 describe('router — the single auth checkpoint', () => {
@@ -251,6 +264,38 @@ describe('router — the single auth checkpoint', () => {
       })
       expect(mockUseCan).not.toHaveBeenCalled()
       expect(mockPrefetchMemberById).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── marketing pageview tracking ─────────────────────────────────────────────
+
+  describe('marketing pageview tracking', () => {
+    test('registers exactly one afterEach hook', () => {
+      expect(typeof afterEachHolder.current).toBe('function')
+    })
+
+    test.each([['/welcome'], ['/privacy'], ['/terms']])(
+      '%s is marked marketing and counts a pageview [obligation]',
+      (path) => {
+        const to = resolveTo(path)
+
+        afterEachHolder.current(to)
+
+        expect(mockTrackPageview).toHaveBeenCalledTimes(1)
+      }
+    )
+
+    test.each([
+      ['/dashboard'],
+      ['/deck/123'],
+      ['/audio-reader/collection/1/lesson/2'],
+      ['/auth/callback']
+    ])('%s is not marked marketing and does not count a pageview [obligation]', (path) => {
+      const to = resolveTo(path)
+
+      afterEachHolder.current(to)
+
+      expect(mockTrackPageview).not.toHaveBeenCalled()
     })
   })
 })
