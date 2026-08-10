@@ -13,6 +13,8 @@ import {
   cancelOverlayAnimation,
   type ModeSwitchViewport
 } from '@/utils/animations/deck-view/card-overlay'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
+import { useMatchMedia } from '@/composables/ui/media-query'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 type ModeStackProps = {
@@ -22,6 +24,10 @@ type ModeStackProps = {
 const { sticky_header = null } = defineProps<ModeStackProps>()
 
 const shell = inject(deckViewShellKey)!
+
+// The overlay travels up from below the fold on a wide screen. There is no fold
+// to travel from on a phone, where the pane fills the width, so it crossfades.
+const is_mobile = useMatchMedia('w<md')
 
 const stack = useTemplateRef<HTMLElement>('stack')
 // A Set, not a counter — delete is idempotent, so an interrupted transition can't unbalance it.
@@ -36,7 +42,9 @@ let viewport: ModeSwitchViewport = { from_y: 0, settle_y: 0, stack_top: 0 }
 const overlay_pane = computed(() =>
   shell.is_view.value ? null : DECK_MODES[shell.mode.value].pane
 )
-const is_transitioning = computed(() => switch_pending.value || sliding_panes.value.size > 0)
+const is_transitioning = computed(
+  () => !is_mobile.value && (switch_pending.value || sliding_panes.value.size > 0)
+)
 const clip_style = computed(() =>
   is_transitioning.value ? { minHeight: `${clip_min_height.value}px` } : undefined
 )
@@ -57,21 +65,34 @@ function onGridLeave(el: Element, done: () => void) {
 // slides — released at rest so card menus can overflow normally.
 function onOverlayBeforeEnter(el: Element) {
   switch_pending.value = false
+  if (is_mobile.value) return
+
   sliding_panes.value.add(el)
   primeOverlayBelow(el, viewport)
 }
 
+function onOverlayEnter(el: Element, done: () => void) {
+  if (is_mobile.value) return fadeEnter(el, done)
+
+  slideOverlayUp(el, done)
+}
+
 function onOverlayAfterEnter(el: Element) {
-  settleOverlay(el)
-  sliding_panes.value.delete(el)
+  if (!is_mobile.value) {
+    settleOverlay(el)
+    sliding_panes.value.delete(el)
+  }
+
   shell.notifyModeSettled()
 }
 
 function onOverlayBeforeLeave(el: Element) {
-  sliding_panes.value.add(el)
+  if (!is_mobile.value) sliding_panes.value.add(el)
 }
 
 function onOverlayLeave(el: Element, done: () => void) {
+  if (is_mobile.value) return fadeLeave(el, done)
+
   slideOverlayDown(el, viewport, done)
 }
 
@@ -117,7 +138,7 @@ watch(
     <Transition
       :css="false"
       @before-enter="onOverlayBeforeEnter"
-      @enter="slideOverlayUp"
+      @enter="onOverlayEnter"
       @after-enter="onOverlayAfterEnter"
       @enter-cancelled="onOverlayCancelled"
       @before-leave="onOverlayBeforeLeave"

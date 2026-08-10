@@ -40,6 +40,9 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
+  // Paints the menu as a floating surface rather than matching the trigger's own
+  // colour. For a trigger on a raised surface whose menu opens out over the page.
+  floatMenu?: boolean
   // Renders only the trigger button, with no primary-action label beside it.
   triggerOnly?: boolean
   // Disables the primary action only — the caret stays live so the menu can
@@ -71,6 +74,7 @@ const {
   openOnTrigger = false,
   hideTrigger = false,
   shadow = false,
+  floatMenu = false,
   triggerOnly = false,
   primaryDisabled = false,
   disabled = false
@@ -245,7 +249,13 @@ function onMenuSelect(option: DropdownOption) {
       </ui-button>
     </template>
 
-    <dropdown-menu :options="options" :size="size" :depth="ambient_depth" @select="onMenuSelect">
+    <dropdown-menu
+      :options="options"
+      :size="size"
+      :depth="ambient_depth"
+      :float="floatMenu"
+      @select="onMenuSelect"
+    >
       <template v-if="$slots.panel" #default>
         <slot name="panel" :close="close" />
       </template>

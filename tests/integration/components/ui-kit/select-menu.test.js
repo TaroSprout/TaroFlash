@@ -1,6 +1,10 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
+
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 
 // ── Stub ────────────────────────────────────────────────────────────────────
@@ -32,6 +36,10 @@ const UiDropdownButtonStub = defineComponent({
           h('button', {
             'data-testid': 'fire-select',
             onClick: () => emit('select', props.options[0])
+          }),
+          h('button', {
+            'data-testid': 'fire-select-alt',
+            onClick: () => emit('select', props.options[1])
           })
         ]
       )
@@ -55,6 +63,10 @@ function mountSelectMenu(props = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('UiSelectMenu', () => {
+  beforeEach(() => {
+    mockEmitSfx.mockClear()
+  })
+
   test('renders the root with ui-select-menu testid', () => {
     const wrapper = mountSelectMenu()
     expect(wrapper.find('[data-testid="ui-select-menu"]').exists()).toBe(true)
@@ -94,6 +106,20 @@ describe('UiSelectMenu', () => {
     await wrapper.find('[data-testid="fire-select"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
     expect(wrapper.emitted('update:modelValue')[0]).toEqual(['default'])
+  })
+
+  // ── Sfx [obligation] ──────────────────────────────────────────────────────
+
+  test('picking a different option plays select [obligation]', async () => {
+    const wrapper = mountSelectMenu({ modelValue: 'default' })
+    await wrapper.find('[data-testid="fire-select-alt"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+  })
+
+  test('picking the already-selected option plays digi_powerdown [obligation]', async () => {
+    const wrapper = mountSelectMenu({ modelValue: 'default' })
+    await wrapper.find('[data-testid="fire-select"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
   })
 
   test('extra attrs (e.g. data-theme) fall through to the dropdown button', () => {

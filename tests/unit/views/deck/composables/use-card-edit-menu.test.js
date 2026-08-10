@@ -63,7 +63,8 @@ function makeShell({ mode = 'view', is_rearranging = false } = {}) {
     mode: ref(mode),
     is_rearranging: ref(is_rearranging),
     toggleMode: vi.fn(),
-    toggleRearrange: vi.fn()
+    toggleRearrange: vi.fn(),
+    setMode: vi.fn()
   }
 }
 
@@ -97,25 +98,35 @@ afterEach(() => {
 // ── options shape ─────────────────────────────────────────────────────────────
 
 describe('useCardEditMenu — options', () => {
-  test('returns four options: select, rearrange, export, appearance', () => {
+  test('returns five options: select, rearrange, import, export, appearance', () => {
     ;({ app } = setup())
     // (app assigned above via destructuring — result unused here)
     const [result] = withSetup(() => useCardEditMenu())
-    expect(result.options.value).toHaveLength(4)
+    expect(result.options.value).toHaveLength(5)
     expect(result.options.value[0].value).toBe('select')
     expect(result.options.value[1].value).toBe('rearrange')
-    expect(result.options.value[2].value).toBe('export')
-    expect(result.options.value[3].value).toBe('appearance')
+    expect(result.options.value[2].value).toBe('import')
+    expect(result.options.value[3].value).toBe('export')
+    expect(result.options.value[4].value).toBe('appearance')
   })
 
-  test('all four options have disabled:true when is_rearranging [obligation]', () => {
+  test('all five options have disabled:true when is_rearranging [obligation]', () => {
     const shell = makeShell({ is_rearranging: true })
     const r = setup({ shell })
     app = r.app
-    for (const value of ['select', 'rearrange', 'export', 'appearance']) {
+    for (const value of ['select', 'rearrange', 'import', 'export', 'appearance']) {
       const opt = r.result.options.value.find((o) => o.value === value)
       expect(opt.disabled).toBe(true)
     }
+  })
+
+  test('import has icon card-place and is never disabled by the deck being empty', () => {
+    mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 0 }) })
+    const r = setup()
+    app = r.app
+    const opt = r.result.options.value.find((o) => o.value === 'import')
+    expect(opt.icon).toBe('card-place')
+    expect(opt.disabled).toBe(false)
   })
 
   test('none of select/rearrange/appearance are disabled when not rearranging and the deck has cards [obligation]', () => {
@@ -255,6 +266,14 @@ describe('useCardEditMenu — onSelect [obligation]', () => {
     app = r.app
     r.result.onSelect({ value: 'edit' })
     expect(shell.toggleMode).toHaveBeenCalledWith('edit')
+  })
+
+  test('onSelect({value:"import"}) calls shell.setMode("import") [obligation]', () => {
+    const shell = makeShell()
+    const r = setup({ shell })
+    app = r.app
+    r.result.onSelect({ value: 'import' })
+    expect(shell.setMode).toHaveBeenCalledWith('import')
   })
 
   test('onSelect({value:"export"}) calls editor.actions.onExportCards [obligation]', () => {

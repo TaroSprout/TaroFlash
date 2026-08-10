@@ -15,31 +15,41 @@ const ChildStub = (name) =>
     name,
     props: ['isSelecting'],
     inheritAttrs: false,
-    setup() {
-      return () => h('div', { 'data-testid': `${name.toLowerCase()}-stub` })
+    setup(_p, { attrs }) {
+      return () => h('div', { ...attrs, 'data-testid': `${name.toLowerCase()}-stub` })
     }
   })
 
 import DeckHero from '@/views/deck/deck-hero/index.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 
 function makeEditor({ is_selecting = false } = {}) {
   return { selection: { is_selecting: ref(is_selecting) } }
 }
 
-function mount({ editor, hideActions, is_desktop = true } = {}) {
+function makeShell(mode = 'view') {
+  return { mode: ref(mode) }
+}
+
+function mount({ editor, shell, hideActions, is_desktop = true } = {}) {
   mockUseMatchMedia.mockReturnValue(ref(is_desktop))
   const props = { deck: { id: 1, title: 'd', card_count: 10 } }
   if (hideActions !== undefined) props.hideActions = hideActions
+  const provide = {}
+  if (editor !== undefined) provide[cardEditorKey] = editor
+  if (shell !== undefined) provide[deckViewShellKey] = shell
   return shallowMount(DeckHero, {
     props,
     global: {
-      provide: editor === undefined ? {} : { [cardEditorKey]: editor },
+      provide,
       stubs: {
         Thumbnail: ChildStub('Thumbnail'),
         DeckDetails: ChildStub('DeckDetails'),
         Actions: ChildStub('Actions'),
-        BulkActions: ChildStub('BulkActions')
+        BulkActions: ChildStub('BulkActions'),
+        ImportPanel: ChildStub('ImportPanel'),
+        ModeImport: ChildStub('ModeImport')
       }
     }
   })
@@ -125,5 +135,47 @@ describe('deck-hero/index', () => {
     expect(wrapper.find('[data-testid="deck-hero__actions-wrap"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
+  })
+
+  // ── panel selection: exactly one of actions / bulk-actions / import-panel [obligation] ──
+
+  test('renders the import panel and hides actions when shell.mode is import [obligation]', () => {
+    const wrapper = mount({ shell: makeShell('import') })
+    expect(wrapper.find('[data-testid="importpanel-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
+  })
+
+  test('import mode wins over bulk-select: import panel shown, bulk-actions hidden [obligation]', () => {
+    const wrapper = mount({
+      editor: makeEditor({ is_selecting: true }),
+      shell: makeShell('import'),
+      is_desktop: true
+    })
+    expect(wrapper.find('[data-testid="importpanel-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
+  })
+
+  test('falls back to default actions when shell.mode is view (no import panel) [obligation]', () => {
+    const wrapper = mount({ shell: makeShell('view') })
+    expect(wrapper.find('[data-testid="importpanel-stub"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(true)
+  })
+
+  test('the import panel is hidden below md [obligation]', () => {
+    const wrapper = mount({ shell: makeShell('import') })
+    expect(wrapper.find('[data-testid="importpanel-stub"]').classes()).toContain('max-md:hidden')
+  })
+
+  test('renders the import toolbar (mode-import) above the actions panel, hidden below md [obligation]', () => {
+    const wrapper = mount({ shell: makeShell('import') })
+    expect(wrapper.find('[data-testid="modeimport-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="modeimport-stub"]').classes()).toContain('max-md:hidden')
+  })
+
+  test('does not render the import toolbar when shell.mode is view [obligation]', () => {
+    const wrapper = mount({ shell: makeShell('view') })
+    expect(wrapper.find('[data-testid="modeimport-stub"]').exists()).toBe(false)
   })
 })

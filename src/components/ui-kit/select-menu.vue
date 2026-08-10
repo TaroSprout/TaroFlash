@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
+import { emitSfx } from '@/sfx/bus'
 
 defineOptions({ inheritAttrs: false })
 
@@ -25,7 +26,10 @@ const emit = defineEmits<{
 const current_label = computed(() => options.find((o) => o.value === modelValue)?.label ?? '')
 
 function onSelect(option: DropdownOption) {
-  emit('update:modelValue', option.value as T)
+  const value = option.value as T
+
+  emitSfx(value === modelValue ? 'digi_powerdown' : 'select')
+  emit('update:modelValue', value)
 }
 </script>
 

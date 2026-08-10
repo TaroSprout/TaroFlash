@@ -65,7 +65,7 @@ type PacingOverrides = Partial<{
   max_interval: number | null
 }>
 
-type CardEditorMode = 'view' | 'edit' | 'import-export'
+type CardEditorMode = 'view' | 'edit' | 'import'
 
 /**
  * Which face a card opens on. `random` is rolled per card at study time, not

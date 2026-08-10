@@ -24,7 +24,7 @@ vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 
 // card-face-uploader (reached statically via mode-stack → list-item-card) now
 // imports useCan, which pulls useMemberDeckCountQuery from this barrel. The
-// edit/import-export panes (mode-stack → modes.ts) are also statically bundled
+// edit/import panes (mode-stack → modes.ts) are also statically bundled
 // now (no more defineAsyncComponent boundary), so their own deck/actions and
 // deck/editor composables pull useUpsertDeckMutation and useDeleteDeckMutation
 // from this same barrel too — the mock must expose all of it or ESM linking of
@@ -50,6 +50,18 @@ vi.mock('@/views/deck/composables/card-search', () => ({
 }))
 vi.mock('@/views/deck/composables/card-sort', () => ({
   useCardSort: useCardSortMock
+}))
+// deck-view now provides useCardImport too — it pulls a Pinia mutation, which
+// this shallow-mount test never wires up, so stub the whole submodule.
+const { hasCardsRef } = vi.hoisted(() => ({ hasCardsRef: { value: false } }))
+vi.mock('@/views/deck/composables/card-import', () => ({
+  cardImportKey: Symbol('cardImport'),
+  useCardImport: () => ({
+    cards: ref([]),
+    is_expanded: ref(true),
+    importing: ref(false),
+    has_cards: hasCardsRef
+  })
 }))
 
 import DeckView from '@/views/deck/deck-view.vue'
@@ -142,8 +154,10 @@ function mount({
   mode = 'view',
   editorOpts = {},
   searchOpts = {},
-  withHideActionsCheck = false
+  withHideActionsCheck = false,
+  hasCards = false
 } = {}) {
+  hasCardsRef.value = hasCards
   useDeckQueryMock.mockReturnValue(makeDeckQuery(deck))
   useDeckViewShellMock.mockReturnValue(makeShell(mode))
   useCardListControllerMock.mockReturnValue(makeEditor(editorOpts))
@@ -178,6 +192,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     useDeckViewShellMock.mockReset()
     useCardSortMock.mockReset()
     useCardSearchMock.mockReset()
+    hasCardsRef.value = false
   })
 
   test('renders the deck-hero when the deck query has data', () => {
@@ -246,9 +261,9 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     const edit = mount({ mode: 'edit' })
     expect(edit.find('[data-testid="deck-view__main"]').attributes('data-mode')).toBe('edit')
 
-    const importExport = mount({ mode: 'import-export' })
-    expect(importExport.find('[data-testid="deck-view__main"]').attributes('data-mode')).toBe(
-      'import-export'
+    const importMode = mount({ mode: 'import' })
+    expect(importMode.find('[data-testid="deck-view__main"]').attributes('data-mode')).toBe(
+      'import'
     )
   })
 
@@ -285,8 +300,34 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(backing.attributes('aria-hidden')).toBe('true')
   })
 
+  // ── import mode: sticky toolbar hidden, layout branches on has_cards [obligation] ──
+
+  test('hides the sticky toolbar entirely in import mode [obligation]', () => {
+    const wrapper = mount({ mode: 'import' })
+    expect(wrapper.find('[data-testid="deck-view__toolbar"]').exists()).toBe(false)
+  })
+
+  test('the toolbar renders again outside import mode', () => {
+    const wrapper = mount({ mode: 'view' })
+    expect(wrapper.find('[data-testid="deck-view__toolbar"]').exists()).toBe(true)
+  })
+
+  test('import mode with no cards fills the viewport, no bottom padding [obligation]', () => {
+    const wrapper = mount({ mode: 'import', hasCards: false })
+    const main = wrapper.find('[data-testid="deck-view__main"]')
+    expect(main.classes()).toContain('xl:h-[calc(100dvh-var(--nav-height))]')
+    expect(main.classes().some((c) => c.startsWith('pb-'))).toBe(false)
+  })
+
+  test('import mode with cards parsed switches to the padded scrolling branch [obligation]', () => {
+    const wrapper = mount({ mode: 'import', hasCards: true, editorOpts: { cards: [{ id: 1 }] } })
+    const main = wrapper.find('[data-testid="deck-view__main"]')
+    expect(main.classes().some((c) => c.startsWith('pb-'))).toBe(true)
+    expect(main.classes()).not.toContain('xl:h-[calc(100dvh-var(--nav-height))]')
+  })
+
   test('renders the page scroll-bar tracking the document in every mode', () => {
-    for (const mode of ['view', 'edit', 'import-export']) {
+    for (const mode of ['view', 'edit', 'import']) {
       const wrapper = mount({ mode, editorOpts: { cards: [{ id: 1 }] } })
       const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
       expect(bar.exists()).toBe(true)

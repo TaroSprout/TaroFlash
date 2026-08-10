@@ -43,6 +43,12 @@ export function useCardEditMenu() {
       disabled: is_rearranging.value
     },
     {
+      label: t('deck-view.actions.import-cards'),
+      value: 'import',
+      icon: 'card-place',
+      disabled: is_rearranging.value
+    },
+    {
       label: t('deck-view.actions.export-cards'),
       value: 'export',
       icon: 'card-lift',
@@ -72,6 +78,7 @@ export function useCardEditMenu() {
     if (option.value === 'edit') surface.startEditing()
     else if (option.value === 'select') editor?.actions.onSelectCard()
     else if (option.value === 'rearrange') shell?.toggleRearrange()
+    else if (option.value === 'import') shell?.setMode('import')
     else if (option.value === 'export') editor?.actions.onExportCards()
     else if (option.value === 'appearance') openAppearance()
   }

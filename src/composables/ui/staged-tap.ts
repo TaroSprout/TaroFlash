@@ -30,7 +30,7 @@ export interface TapCallOptions {
   preAudio?: SfxKey
   /** Primary click-feedback sound; fires immediately on fine, at the action phase on coarse. */
   audio?: SfxKey
-  /** Options forwarded to emitSfx for the main audio key (blocking, debounce). */
+  /** Options forwarded to emitSfx for the main audio key (volume, debounce, bus). */
   audioOpts?: PlayOptions
   /** Coarse only — fires after the animation completes. */
   postAudio?: SfxKey

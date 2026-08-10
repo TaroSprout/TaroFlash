@@ -69,6 +69,24 @@ describe('DropdownMenu', () => {
     })
   })
 
+  // ── float prop [obligation] ───────────────────────────────────────────────
+
+  describe('float prop [obligation]', () => {
+    test('defaults to the element surface classes when float is omitted [obligation]', () => {
+      const wrapper = mountMenu()
+      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
+      expect(menu.classes()).toContain('bg-element')
+      expect(menu.classes()).not.toContain('bg-float')
+    })
+
+    test('switches to the float surface classes when float is true [obligation]', () => {
+      const wrapper = mountMenu({ float: true })
+      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
+      expect(menu.classes()).toContain('bg-float')
+      expect(menu.classes()).not.toContain('bg-element')
+    })
+  })
+
   // ── option rendering ──────────────────────────────────────────────────────
 
   describe('option rendering', () => {

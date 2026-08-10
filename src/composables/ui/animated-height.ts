@@ -13,7 +13,7 @@ const DURATION = 0.2
  * crossfade swap drives its own height tween, so this stays out of its way and
  * just keeps its baseline in sync). The first observed size and any change while
  * inactive are recorded silently, so the next active change starts from the right
- * baseline.
+ * baseline. →[K:dock-height-single-owner]
  *
  * @param wrapper - the element whose height is animated (must tolerate `overflow: hidden`).
  * @param content - the in-flow element whose natural height is the target.

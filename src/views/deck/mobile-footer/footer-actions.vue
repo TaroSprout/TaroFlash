@@ -66,6 +66,7 @@ const edit_options = computed<DropdownOption[]>(() => [
     <ui-dropdown-button
       data-testid="deck-footer-actions__edit-menu"
       trigger-only
+      float-menu
       trigger-icon="pencil"
       variant="ghost"
       size="lg"

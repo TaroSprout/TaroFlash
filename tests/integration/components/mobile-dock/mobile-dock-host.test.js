@@ -42,9 +42,10 @@ function mountHost() {
 
 beforeEach(() => {
   // Reset module-level singleton state between tests.
-  const { el, breakpoint } = useMobileDock()
+  const { el, breakpoint, height_claims } = useMobileDock()
   el.value = null
   breakpoint.value = 'xl'
+  height_claims.value = 0
   mockIsKeyboardOpen.value = false
   resetResponsive()
 
@@ -217,6 +218,38 @@ describe('MobileDockHost', () => {
       await nextTick()
 
       expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).toBe('0px')
+    })
+  })
+
+  describe('height claim [obligation]', () => {
+    test('while a claim is held, the content wrapper inline height/overflow are cleared [obligation]', async () => {
+      mountHost()
+      const wrapper_el = document.querySelector('[data-testid="mobile-dock-host__content-wrapper"]')
+      wrapper_el.style.height = '40px'
+      wrapper_el.style.overflow = 'hidden'
+
+      const { claimHeight } = useMobileDock()
+      claimHeight()
+      await nextTick()
+
+      expect(wrapper_el.style.height).toBe('')
+      expect(wrapper_el.style.overflow).toBe('')
+    })
+
+    test('--mobile-dock-height is republished when the claim count returns to zero [obligation]', async () => {
+      setBelowMd(true)
+      mountHost()
+      const { claimHeight, releaseHeight } = useMobileDock()
+
+      claimHeight()
+      await nextTick()
+
+      const setPropertySpy = vi.spyOn(document.documentElement.style, 'setProperty')
+
+      releaseHeight()
+      await nextTick()
+
+      expect(setPropertySpy).toHaveBeenCalledWith('--mobile-dock-height', expect.any(String))
     })
   })
 })

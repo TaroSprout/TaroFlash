@@ -95,10 +95,10 @@ describe('useDeckViewShell', () => {
     expect(shell.is_view.value).toBe(false)
   })
 
-  test('setMode to import-export sets mode correctly', () => {
+  test('setMode to import sets mode correctly', () => {
     const shell = useDeckViewShell()
-    shell.setMode('import-export')
-    expect(shell.mode.value).toBe('import-export')
+    shell.setMode('import')
+    expect(shell.mode.value).toBe('import')
     expect(shell.is_view.value).toBe(false)
   })
 
@@ -141,6 +141,32 @@ describe('useDeckViewShell', () => {
     expect(emitSfxMock).not.toHaveBeenCalled()
   })
 
+  test('setMode plays an explicit chime when one is passed [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setMode('edit', 'digi_powerdown')
+    expect(emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
+  })
+
+  test('exitMode forwards its chime argument to setMode [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setMode('edit')
+    emitSfxMock.mockClear()
+
+    shell.exitMode('digi_powerdown')
+
+    expect(emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
+  })
+
+  test('exitMode defaults to the select chime when no chime is passed [obligation]', () => {
+    const shell = useDeckViewShell()
+    shell.setMode('edit')
+    emitSfxMock.mockClear()
+
+    shell.exitMode()
+
+    expect(emitSfxMock).toHaveBeenCalledWith('select')
+  })
+
   test('notifyModeSettled resolves all pending setMode promises [obligation]', async () => {
     const shell = useDeckViewShell()
     // Two sequential setMode calls before settling
@@ -177,8 +203,8 @@ describe('useDeckViewShell', () => {
   test('toggleMode switches between two non-view modes without going through view first', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
-    shell.toggleMode('import-export')
-    expect(shell.mode.value).toBe('import-export')
+    shell.toggleMode('import')
+    expect(shell.mode.value).toBe('import')
   })
 
   test('toggleMode returns a Promise (propagates setMode return value) [obligation]', () => {
@@ -198,7 +224,7 @@ describe('useDeckViewShell', () => {
 
   test('exitMode sets is_view back to true', () => {
     const shell = useDeckViewShell()
-    shell.setMode('import-export')
+    shell.setMode('import')
     shell.exitMode()
     expect(shell.is_view.value).toBe(true)
   })
@@ -292,7 +318,7 @@ describe('useDeckViewShell', () => {
   test('setMode to a non-edit mode does not force sort_by [obligation]', () => {
     const shell = useDeckViewShell()
     shell.setSortBy('difficulty')
-    shell.setMode('import-export')
+    shell.setMode('import')
     expect(shell.sort_by.value).toBe('difficulty')
   })
 

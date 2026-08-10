@@ -15,7 +15,9 @@ import DeckMobileFooter from './mobile-footer/index.vue'
 import { useDeckQuery } from '@/api/decks'
 import {
   cardEditorKey,
+  cardImportKey,
   cardSearchKey,
+  useCardImport,
   useCardListController,
   useCardSearch,
   useEditorBreakpointSync
@@ -56,6 +58,9 @@ provide(cardEditorKey, editor)
 const search = useCardSearch(search_query, editor.list.all_cards, editor.isLoading)
 provide(cardSearchKey, search)
 
+const card_import = useCardImport({ editor, shell })
+provide(cardImportKey, card_import)
+
 const mobile_editor = useMobileCardEditor(editor)
 provide(mobileCardEditorKey, mobile_editor)
 
@@ -66,6 +71,13 @@ const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (search.is_active.value) return 'ready'
   return editor.isLoading.value ? 'loading' : 'empty'
 })
+
+// Both empty states stand a full screen tall, so the column carries no bottom
+// padding under them — added to the height it already has, it scrolls the page.
+const fills_viewport = computed(
+  () =>
+    view_state.value === 'empty' || (shell.mode.value === 'import' && !card_import.has_cards.value)
+)
 
 const show_skeleton = computed(() => !deck.value)
 </script>
@@ -90,12 +102,13 @@ const show_skeleton = computed(() => !deck.value)
           :data-mode="shell.mode.value"
           class="relative w-full"
           :class="
-            view_state === 'empty'
+            fills_viewport
               ? 'xl:flex xl:flex-col xl:h-[calc(100dvh-var(--nav-height))]'
               : 'pb-[calc(1rem+var(--mobile-dock-height,0px))]'
           "
         >
           <div
+            v-if="shell.mode.value !== 'import'"
             ref="toolbar"
             data-testid="deck-view__toolbar"
             class="sticky top-(--nav-height) z-20 max-md:hidden"

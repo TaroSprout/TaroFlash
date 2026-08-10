@@ -135,4 +135,9 @@ describe('mobile-footer/footer-actions', () => {
     const wrapper = mountFooterActions()
     expect(wrapper.find('[data-testid="deck-footer-actions__edit-menu"]').exists()).toBe(true)
   })
+
+  test('the edit-menu dropdown opens as a floating menu [obligation]', () => {
+    const wrapper = mountFooterActions()
+    expect(wrapper.findComponent({ name: 'UiDropdownButton' }).props('floatMenu')).toBe(true)
+  })
 })

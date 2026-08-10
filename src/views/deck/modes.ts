@@ -1,7 +1,7 @@
 import type { Component } from 'vue'
 import CardGrid from './card-grid/scroll-grid.vue'
 import CardEditor from './card-editor/index.vue'
-import CardImporter from './card-importer.vue'
+import CardImportPane from './card-import/pane.vue'
 
 type DeckModeConfig = {
   pane: Component
@@ -18,7 +18,7 @@ export const DECK_MODES = {
   edit: {
     pane: CardEditor
   },
-  'import-export': {
-    pane: CardImporter
+  import: {
+    pane: CardImportPane
   }
 } satisfies Record<CardEditorMode, DeckModeConfig>
