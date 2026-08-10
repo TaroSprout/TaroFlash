@@ -31,8 +31,8 @@ constants; change a field here once and every consumer follows.
   icon + field defaults): `template_id: 3af0953c224c800d984cf0b443d67d20`
 
 **Three hard limits of the Notion MCP.** `status`-type fields are special-cased: `notion-update-data-source`
-**cannot** add, rename or recolor `Status` options — only the user can, in the Notion UI (renaming
-preserves row mappings). `select`/`multi_select` options _are_ editable. There is **no archive or
+**cannot** add, rename, recolor, or delete `Status` options — only the user can, in the Notion UI
+(renaming preserves row mappings). `select`/`multi_select` options _are_ editable. There is **no archive or
 delete tool** — `notion-move-pages` only re-parents, so retiring a row means the user deletes it in the
 UI. Page titles, properties and body content are all editable via `notion-update-page`.
 
@@ -48,15 +48,14 @@ lag row writes.
 
 ### `Status` — a `status`-type field (grouped)
 
-`On Hold` · `Backlog` · `Needs More Info` · `Groomed` · `Ready` · `In Progress` · `Blocked` ·
+`On Hold` · `Backlog` · `Needs More Info` · `Ready` · `In Progress` · `Blocked` ·
 `Review` · `Duplicate` · `Won't Do` · `Done`. A plain property write — set it directly.
 
 - **`complete` group** = `Done` · `Won't Do` · `Duplicate`. A `Blocked By` blocker is cleared only
   when its status is in this group.
 - **`On Hold` = hands-off** (user-owned), same as `Assignee = Me`.
-- Lane ownership by stage: `/triage` → `Needs More Info`; `/groom` → `Groomed`; the user promotes
-  `Groomed` → `Ready`; `/work` claims `Ready` → `In Progress` → `Review`. New tickets
-  are `Backlog`.
+- Lane ownership by stage: `/triage` → `Needs More Info`; `/groom` → `Ready`; `/work` claims
+  `Ready` → `In Progress` → `Review`. New tickets are `Backlog`.
 
 ### `Priority` — `select` (a ticket's urgency)
 
@@ -103,7 +102,7 @@ overflow) lives at →[K:ticket-priority-vs-target] and in the
 - **`Me` = hands-off** — the user works it themselves; `/triage`, `/backlog`, and `/work` leave it
   alone (same meaning as `Status = On Hold`).
 - **`Fable` is the user's to assign**, never an agent's pick. `/groom` sets `Opus` or `Sonnet` when a
-  ticket reaches `Groomed`.
+  ticket reaches `Ready`.
 
 ### Relations & system fields
 

@@ -30,6 +30,15 @@ specific to their artifact and link here for these five; none of them restates o
   - Bad: `Retries the save appropriately and handles failures.`
   - Good: `Retries the save 3× at 0.5s / 1s / 2s, then marks it failed.`
 - **Label a guess.** State what you verified plainly. Anything unverified is marked as such, at the
-  point of the claim — never smuggled in beside confirmed facts.
+  point of the claim — never smuggled in beside confirmed facts. A comment or code hedging that
+  something _can_ happen is not evidence it _has_ — don't upgrade a hedge into a finding without
+  confirming the live value.
   - Bad: `The dashboard refetches because the key includes the member id.`
   - Good: `⚠️ Hunch — not code-confirmed: the refetch likely comes from the member id in the key.`
+  - Bad: a comment says a display count "can drift" from the enforced limit → reported as a known
+    pricing-page defect, unconfirmed.
+  - Good: read the enforced limit from the current migration state before claiming the two disagree.
+  - Bad: a locale key names a feature (`roadmap.item.card-audio`, "Card Audio Upload") → reported as
+    shipped, because copy exists for it.
+  - Good: read the code that gates or renders the feature (a `done` flag, a `can_` check, a route)
+    before claiming it ships — authored copy proves a string was written, nothing about the feature.

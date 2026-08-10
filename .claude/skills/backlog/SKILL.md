@@ -78,7 +78,7 @@ classifications are stale, not on the routine "I added a few tickets" run.
    [`task-board-schema.md`](../../rules/task-board-schema.md)). Assign by **epic**, not per ticket:
    - **`MVP` stays `MVP`.** It's the launch-scope set; don't reband an MVP ticket unless it's clearly
      not launch-gating. The current quarter (`Q3 '26`) is mostly consumed by MVP — keep it **lean**,
-     pulling in only a few genuinely high-value or already-in-flight (`Ready`/`Groomed`/`In Progress`)
+     pulling in only a few genuinely high-value or already-in-flight (`Ready`/`In Progress`)
      tickets alongside it.
    - **Give each epic a home quarter** by its strategic weight: launch-adjacent epics land in the
      current/next quarter, secondary or deferred epics in the furthest planned one. An epic's tickets

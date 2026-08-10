@@ -1,6 +1,6 @@
 ---
 name: groom
-description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Groomed` for the user to promote to `Ready`. Owns splitting work into the smallest independently-verifiable tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Ready`, then waits for the user's review comments. Owns splitting work into the smallest independently-verifiable tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
 allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
@@ -16,16 +16,16 @@ because it carries unresolved design decisions. Groom **resolves them with the u
 what was decided and why, and lands the ticket executable.
 
 ```
-Needs More Info ──/groom──┬──► Groomed            (decisions resolved, model assigned)
+Needs More Info ──/groom──┬──► Ready              (decisions resolved, model assigned)
                           ├──► split into N tickets
                           ├──► On Hold            (turned out to need product input, or premature)
                           └──► stays put          (blocked on an external fact)
 ```
 
-`Groomed` is **not** the finish line — it opens the user's review. Expect the user to leave inline
-comments on the ticket and ping you to read them; folding those into the ticket is part of every
-grooming session (§7). The true end is promotion to `Ready` — the lane `/work` pulls from — which is
-the user's own gate. Groom never sets `Ready` on its own; do it only if the user explicitly asks.
+Landing `Ready` is the finish line, but it opens the user's review first. Expect the user to leave
+inline comments on the ticket and ping you to read them; folding those into the ticket is part of
+every grooming session (§7). If the user leaves no review, the session is done — `Ready` is where
+`/work` pulls from.
 
 One ticket at a time, conversationally. This is the opposite of `/triage`'s batching — depth is
 the whole point.
@@ -80,7 +80,7 @@ an invitation to redesign.
 
 For every new or changed user-facing string, **pause** and present **at least 3 reasonably-varied
 options per line**; only the user's chosen wording lands, verbatim, in the AC. Reused copy is stated
-as reused. Undecided copy keeps the ticket out of `Groomed`.
+as reused. Undecided copy keeps the ticket out of `Ready`.
 
 ## Board constants
 
@@ -89,8 +89,8 @@ The board **schema** — data sources, every field and its option list — lives
 voice** live in [`ticket-authoring.md`](../../rules/ticket-authoring.md). Read both before writing
 anything to the board. This skill declares only its lanes and its own passes.
 
-- Lanes: pulls from `Needs More Info`; lands at `Groomed`; may park at `On Hold`. Never sets `Ready`
-  / `In Progress` / `Review` / `Done` / `Blocked` — promoting `Groomed` → `Ready` is the user's gate.
+- Lanes: pulls from `Needs More Info`; lands at `Ready`; may park at `On Hold`. Never sets
+  `In Progress` / `Review` / `Done` / `Blocked`.
 - **Retype to `Spike`** when grooming reveals the deliverable is a decision or recommendation rather
   than shipped behaviour — and drop the now-redundant `"Spike:"` title prefix.
 
@@ -171,7 +171,8 @@ terms**, not a technical brief. Keep it scannable; the detail arrives as the use
   silently assume: naming, UX choices, edge-case handling, scope boundaries, which pattern to
   follow. Phrase each as the choice a user would recognise where it has one; one line, with a
   recommendation. **Surface them — never bake them in.** Hold the filepaths and symbols until the
-  decision is actually opened.
+  decision is actually opened. **A checkpoint built entirely of mechanism questions is incomplete
+  for a user-facing ticket** — include at least one on what it looks like, not just how it works.
 - **Pushback surface** — anything in the spec that looks like a hole, is ambiguous, seems
   unnecessary, or that you would do differently. One line each; make it easy to cut or redirect
   scope.
@@ -250,20 +251,19 @@ first.
 restatement), add any approved fog to `## Not yet specified`, delete the fog bullet that this
 session **graduated** into a ticket, and add any approved `## Out of scope` ruling.
 
-Then set `Status = Groomed` **and an `Assignee`** — the ticket is fully resolved and waiting for the
-user to promote it into `Ready`, the lane `/work` pulls from.
+Then set `Status = Ready` **and an `Assignee`** — the ticket is fully resolved and lands directly in
+the lane `/work` pulls from.
 
 - **`Assignee` is mandatory and is `Opus` or `Sonnet` only** — pick by fit: `Opus` for
   architectural, cross-cutting, ambiguous, or security/backend-sensitive work; `Sonnet` for
   well-scoped feature/bug work with a clear spec. **Never set `Fable`** — the user downgrades to
   Fable himself when he wants it. Never leave `Assignee` empty or `Me`. `/work` pins each subagent to
   this model.
-- A ticket still carrying an unmade design or taste call does **not** reach `Groomed`, even labelled
+- A ticket still carrying an unmade design or taste call does **not** reach `Ready`, even labelled
   "decide during pairing" — that is what `Needs More Info` is for, and this pass exists to settle it.
-  The only thing that may ride into `Groomed` is a decision genuinely blocked on an external fact
+  The only thing that may ride into `Ready` is a decision genuinely blocked on an external fact
   (§4), recorded under `## Blocked on`; if the ticket cannot land without that fact, it stays in
   `Needs More Info`.
-- **Never set `Ready`** — promoting `Groomed` → `Ready` is the user's own review gate, not groom's.
 
 Also sweep for **copy that the change makes false** — existing `src/locales/en-us.json` strings
 asserting the old behaviour ("this cannot be undone"). List them in the body as required edits.
@@ -276,8 +276,8 @@ on the epic. No prose.
 
 ### 7. RESOLVE COMMENTS — the review loop
 
-Landing `Groomed` starts the user's review; it does not end the session. The user leaves inline
-comments on the ticket and pings you to read them — expect this on every groom. When pinged:
+Landing `Ready` opens the user's review, but the session isn't waiting on it — if the user leaves no
+comments, grooming is done. When the user does leave inline comments and pings you to read them:
 
 - Read every open discussion with `notion-get-comments` (`include_all_blocks: true`, unresolved
   only) so you see comments anchored to specific ACs, not just page-level ones.
@@ -286,8 +286,8 @@ comments on the ticket and pings you to read them — expect this on every groom
   new one, or add an AC; a taste/design fork still goes back to the user, never baked.
 - Fold each resolution into the body (ACs + companion `## Tech details`) and update the epic if the
   decision shifted a `## Decisions so far` gist or exposed fresh fog.
-- Loop until the user is satisfied. The session ends when **the user** promotes the ticket to
-  `Ready` — not when you wrote `Groomed`.
+- Loop until the user is satisfied, or stops commenting — either ends the session; the ticket stays
+  in `Ready` throughout.
 
 The self-heal reflex still applies here: a comment that reveals a miss in how this pass runs heals
 the skill (§ Self-heal), separate from the ticket edit.

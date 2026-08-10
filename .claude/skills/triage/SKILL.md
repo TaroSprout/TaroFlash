@@ -90,7 +90,7 @@ the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
 ## Guardrails
 
 - Only ever touch the Task Board named in the rule — never a backup or duplicate.
-- Every ticket ends in `Needs More Info`. Never route to `Groomed`/`Ready`/`On Hold` or set
+- Every ticket ends in `Needs More Info`. Never route to `Ready`/`On Hold` or set
   `In Progress`/`Review`/`Done`.
 - Propose `Epic`/`Type`/`Priority`/`Target`, never apply unasked.
 - Don't touch tests. Don't write code — this skill reads Notion (and lightly, code) and writes

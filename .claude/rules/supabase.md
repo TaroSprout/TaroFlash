@@ -80,6 +80,10 @@ Also untracked, so still hand-written: DML (storage bucket inserts, `cron.schedu
 
 ## Migration workflow
 
+- **Migrations are an ordered log, not a set of facts.** The live value of any seeded/updated row is
+  set by the _last_ migration that writes it — grep, sort by timestamp, and read to the end before
+  quoting a value. Never assert a DB value (a plan limit, a default, a seeded row) from the first
+  matching migration.
 - `supabase migration up --local` immediately after writing — catches errors while the context is fresh. Never `supabase db reset`.
 - **Editing a migration is fair game until it ships.** If it hasn't been deployed and hasn't merged to `master`, rewrite it in place — all-local work is free game. Once it's on `master` or deployed anywhere, it's immutable: write a new timestamped migration instead. Check with `supabase migration list --local` and `git log master -- <file>`.
 - To rewrite an applied branch-local migration before PR: `supabase migration repair --status reverted --local <version>` → edit → `migration up --include-all`. Don't do this for anything already shipped.
