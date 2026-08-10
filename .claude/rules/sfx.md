@@ -23,7 +23,7 @@ Keys routed through staged-tap: `press`, `tap_pre`, `tap_post`. The directive ha
 
 A sound that should play for **every** instance of an action belongs in the single function that performs it — a store action, a mutation, a mode setter — not wired at each call site, where copies drift and double up. The deck mode-switch chime lives in `setMode`, and the per-call-site duplicates were deleted.
 
-Use `{ blocking: true }` when the sound must suppress a follow-on automatic one (the add chime blocks the `slide_up` that focusing fires).
+`PlayOptions` (`src/sfx/player.ts`) is `{ volume?, debounce?, bus? }` — there is no option that suppresses a follow-on sound. When a caller needs a different cue for the same seam-owned transition, give the seam function an optional sound parameter defaulting to its usual cue (`setMode(mode, chime = 'select')`) and have the caller pass its own — never fire a second sound alongside the seam's.
 
 Centralise only for genuine instances of _that_ action — don't fold in unrelated uses of the same key.
 
