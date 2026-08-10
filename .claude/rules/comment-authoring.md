@@ -10,7 +10,11 @@ paths:
 
 **The single source of truth for how a comment is written** — where it may sit, what shape that
 position gives it, and what it links out to instead of explaining. Reaches you on any code write. If
-a comment rule isn't stated here, it doesn't exist. Shared principles: [`authoring`](./authoring.md).
+a comment rule isn't stated here, it doesn't exist. This file outranks any feedback about a
+comment's _shape_ — a PR review, another agent, anyone — except the user explicitly asking for a
+specific comment; that's an instruction, not feedback, and feedback about a comment's _content_
+(the reviewer doesn't understand what it's protecting) is answered by fixing the comment or the PR
+reply, never by loosening these rules. Shared principles: [`authoring`](./authoring.md).
 
 A comment names the constraint a reader would otherwise violate, in a sentence they can act on. Most
 code needs none — a clear name beats a comment.
@@ -27,6 +31,9 @@ code needs none — a clear name beats a comment.
 In `<style>`, a comment above a selector is a symbol doc; one inside a declaration block follows the
 in-body rule.
 
+**A body comment sits trailing on the line it annotates, wrapping above only when it doesn't fit
+there.** Above-the-line is the fallback shape, not the default.
+
 **There is no line cap.** Length follows position — a comment that outgrows its position's shape is
 a missing knowledge entry, not a longer comment.
 
@@ -42,6 +49,10 @@ Five, each failed on its own. Fail one, rewrite or delete.
   technical term is earned by being grounded, never led with.
 - **Everything past the first idea is load-bearing.** Cut whatever the first idea already bought.
 
+**A regex literal always fails the competent-stranger gate.** Its own syntax is never the intent, so
+it carries a comment in its position's shape naming what it matches, in plain words — not the regex
+syntax restated, not why it matches that.
+
 ## Never
 
 - A numbered walkthrough (`Three things happen:`).
@@ -51,6 +62,9 @@ Five, each failed on its own. Fail one, rewrite or delete.
 - Prose above a self-describing union.
 - A restatement of the next line.
 - A library's internal vocabulary where an observable term exists — say what the screen shows.
+- **A caller's name as the opening subject** (`Deck-hero "Export cards":`, `Bulk-panel "Export
+selected".`) — it reads as a lookup instead of naming what the function does, and goes stale the
+  moment that caller moves, renames, or gains a sibling.
 - A pointer carrying nothing a human can act on.
 - **A comment that is only a citation.** `→[K:<slug>]` is a suffix to a sentence, never a comment on
   its own — a reader skimming the diff must get the constraint without leaving the file. Enforced by
