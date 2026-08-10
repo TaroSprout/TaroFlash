@@ -128,6 +128,12 @@ export function collectTokens(path, text) {
   return tokens
 }
 
+/** Whether a path is in the citation scan scope — matches `cite_in` and isn't `exempt`. */
+export function isCitable(path, config) {
+  const { slugs } = config
+  return matchesAny(path, slugs.cite_in) && !matchesAny(path, slugs.exempt)
+}
+
 /**
  * Every live token in the repo, with the file lists the callers work from.
  *
@@ -138,9 +144,7 @@ export function scanTokens(root, config) {
   const { slugs } = config
   const files = listFiles(root)
 
-  const cited = files.filter(
-    (path) => matchesAny(path, slugs.cite_in) && !matchesAny(path, slugs.exempt)
-  )
+  const cited = files.filter((path) => isCitable(path, config))
   const tokens = cited
     .filter((path) => path !== slugs.retired_ledger)
     .flatMap((path) => collectTokens(path, readFileSync(join(root, path), 'utf8')))

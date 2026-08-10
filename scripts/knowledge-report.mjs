@@ -12,7 +12,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { collectTokens } from './knowledge/scan.mjs'
+import { collectTokens, isCitable, readConfig } from './knowledge/scan.mjs'
 import { knowledgeGraph } from './knowledge/graph.mjs'
 
 export const MARKER = '<!-- knowledge-report -->'
@@ -39,10 +39,10 @@ function readChangedFiles(path) {
 }
 
 /** Citations sitting in the code this change touched, grouped by the slug they point at. */
-function citedByChangedCode(root, changed, references) {
+function citedByChangedCode(root, changed, references, config) {
   const cited = new Map()
 
-  for (const path of changed.filter((file) => !file.endsWith('.md'))) {
+  for (const path of changed.filter((file) => !file.endsWith('.md') && isCitable(file, config))) {
     const absolute = join(root, path)
     if (!existsSync(absolute)) continue
 
@@ -64,12 +64,13 @@ function countsOf(graph) {
 }
 
 export function buildReport({ head, base, changed }) {
+  const config = readConfig(head)
   const headGraph = knowledgeGraph(head)
   const baseGraph = base ? knowledgeGraph(base) : { references: new Map(), unreachable: [] }
   const baseCounts = countsOf(baseGraph)
   const baseUnreachable = new Set(baseGraph.unreachable)
 
-  const cited = citedByChangedCode(head, changed, headGraph.references)
+  const cited = citedByChangedCode(head, changed, headGraph.references, config)
   const dropped = [...headGraph.references]
     .filter(([slug, entry]) => entry.citedBy.length === 0 && (baseCounts.get(slug) ?? 0) > 0)
     .map(([slug, entry]) => `\`[K:${slug}]\` — declared in \`${entry.declaredIn}\``)

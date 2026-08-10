@@ -29,7 +29,7 @@ const CONFIG = {
       'supabase/**/*.{sql,ts}',
       '.github/**/*.yml'
     ],
-    exempt: ['supabase/migrations/**']
+    exempt: ['supabase/migrations/**', 'tests/unit/scripts/**']
   }
 }
 
@@ -161,6 +161,22 @@ describe('buildReport — knowledge cited by changed code', () => {
     })
 
     const report = buildReport({ head, base: undefined, changed: ['CLAUDE.md'] })
+
+    expect(report).toBe('')
+  })
+
+  test('a changed file matching slugs.exempt is not scanned, even carrying real-looking citations', () => {
+    const head = makeRoot({
+      'CLAUDE.md': '[K:fixture-slug] declared here.\n',
+      'tests/unit/scripts/knowledge-lint.test.js':
+        '// →[K:fixture-slug] a checker fixture, not a real cite\n'
+    })
+
+    const report = buildReport({
+      head,
+      base: undefined,
+      changed: ['tests/unit/scripts/knowledge-lint.test.js']
+    })
 
     expect(report).toBe('')
   })
