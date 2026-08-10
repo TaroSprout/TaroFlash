@@ -11,6 +11,7 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 ## cards
 
 - [[cards]] — front/back units; app-minted sort key; duplicates flagged not blocked ⚠️
+- [[card-export]] — a deck leaves as a directive-carrying CSV file, front then back, no notes or media
 
 ## decks
 

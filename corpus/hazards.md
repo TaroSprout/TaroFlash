@@ -25,6 +25,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:media-lifetime-follows-notes]             | [[media]]              | `src/api/media/`                           |
 | →[K:client-owns-the-schedule]                 | [[scheduling]]         | `src/views/study-session/`                 |
 | →[K:silent-stale-cache]                       | [[data-flow]]          | `src/api/reviews/mutations/`               |
+| →[K:postgrest-max-rows-truncates-silently]    | [[data-flow]]          | `src/api/**`                               |
 | →[K:pin-is-presence-not-difference]           | [[pacing]]             | `src/api/review-pacing/`                   |
 | →[K:closed-color-set-fails-bare]              | [[theming]]            | `src/utils/palette/`                       |
 | →[K:public-is-read-only]                      | [[decks]]              | `src/api/decks/`                           |
