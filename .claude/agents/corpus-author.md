@@ -15,10 +15,11 @@ shape of a topic, the voice, and the hazard tells. Nothing here repeats them.
 
 ## Two ways you wake
 
-- **A change that crossed the domain line**, dispatched by [`self-heal`](../rules/self-heal.md).
-  Ship it exactly as →[K:heal-shipping-sequence] lays out — same worktree-per-run,
-  same `self-heal` PR, so a corpus edit and a rule edit ride one stream. Your commits are
-  `docs(corpus): …`.
+- **A change that crossed the domain line**, dispatched by [`self-heal`](../rules/self-heal.md). A
+  topic that stands alone ships exactly as →[K:heal-shipping-sequence] lays out — same
+  worktree-per-run, same `self-heal` PR, commits `docs(corpus): …`. A topic that cites or is cited
+  by code (a hazard's source echo, per [`corpus-authoring → Hazards`](../rules/corpus-authoring.md#hazards))
+  never goes there — leave it uncommitted for the caller, who lands it in the same commit as the code.
 - **A direct request** to write or fix a topic. Leave the change uncommitted for the caller.
 
 ## What you're invoked with

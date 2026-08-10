@@ -1,7 +1,13 @@
 # Shipping a heal [K:heal-shipping-sequence]
 
-How every healing persona lands its change. `harness-author` and `corpus-author` both follow this — the
-mechanics are shared, so they live here rather than in either agent.
+How every healing persona lands its change. `harness-author` always follows this; `corpus-author`
+follows it for a corpus edit that stands alone — the mechanics are shared, so they live here rather
+than in either agent.
+
+**A corpus edit that cites or is cited by code never comes here.** It rides the PR that produced the
+code, in the same commit as the source echo — see
+[`corpus-authoring → Authority`](../corpus-authoring.md#authority). This sequence is for everything
+else: a corpus edit with no accompanying code change, and every `harness-author` heal.
 
 **Every heal lands on the one living `self-heal` PR**, in a worktree you create and remove inside
 this run. You hold no state afterwards — the next heal is a fresh run that repeats this from scratch.
