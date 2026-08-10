@@ -42,6 +42,10 @@ Five, each failed on its own. Fail one, rewrite or delete.
   technical term is earned by being grounded, never led with.
 - **Everything past the first idea is load-bearing.** Cut whatever the first idea already bought.
 
+**A regex literal always fails the competent-stranger gate.** Its own syntax is never the intent, so
+it carries a comment in its position's shape naming what it matches, in plain words — not the regex
+syntax restated, not why it matches that.
+
 ## Never
 
 - A numbered walkthrough (`Three things happen:`).
@@ -51,6 +55,9 @@ Five, each failed on its own. Fail one, rewrite or delete.
 - Prose above a self-describing union.
 - A restatement of the next line.
 - A library's internal vocabulary where an observable term exists — say what the screen shows.
+- **A caller's name as the opening subject** (`Deck-hero "Export cards":`, `Bulk-panel "Export
+selected".`) — it reads as a lookup instead of naming what the function does, and goes stale the
+  moment that caller moves, renames, or gains a sibling.
 - A pointer carrying nothing a human can act on.
 - **A comment that is only a citation.** `→[K:<slug>]` is a suffix to a sentence, never a comment on
   its own — a reader skimming the diff must get the constraint without leaving the file. Enforced by

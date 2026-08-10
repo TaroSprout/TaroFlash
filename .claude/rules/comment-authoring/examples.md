@@ -1,6 +1,6 @@
 # Comment examples
 
-Five pairs, one per gate. The rules they encode live in
+One or more pairs per gate. The rules they encode live in
 [`comment-authoring`](../comment-authoring.md).
 
 ## Everything past the first idea is load-bearing
@@ -39,6 +39,18 @@ onAccent?: boolean
  * @param total_card_count - Persisted card count for the deck, passed in so
  *   this stays independent of the decks query.
  */
+```
+
+`deck-hero.vue`
+
+```typescript
+// Bad — opens on the caller's name, not what the function does
+/** Deck-hero "Export cards": the whole deck, ignoring any selection. */
+async function onExportCards() { … }
+
+// Good
+/** Exports the whole deck, whatever happens to be selected. */
+async function onExportCards() { … }
 ```
 
 ## Name the operation, not a consequence at one call site
