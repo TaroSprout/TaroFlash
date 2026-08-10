@@ -42,8 +42,11 @@ const payload = buildCardPayload({ ...card, ...values })
 saveCard(payload)
 ```
 
-## No vendor or competitor names in code
+## Name an interop target by its format, never a product we don't call
 
-Never name a third-party product in an identifier, comment, file, or string — including a format
-this codebase merely produces for that product to read. Name the format or role instead: an export
-this app hands off to another app is "an importer's format", not that importer's brand name.
+A dependency this codebase imports and invokes is named plainly — `stripe-webhook`,
+`STRIPE_SECRET_KEY`, `supabase/functions/` are correct, because that is the product's own name for
+code that calls it. The ban is narrower: never name a product this codebase merely **reads or writes
+a format for** — one whose format we interoperate with or compete against, without calling its
+code. An export this app hands off to another app is "an importer's format", not that importer's
+brand name.
