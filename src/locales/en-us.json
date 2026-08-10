@@ -858,6 +858,7 @@
   "privacy-policy.section-4.content-2": "User data is shared only with the following service providers, solely to operate the app:",
   "privacy-policy.section-4.item-1": "Supabase — authentication, database, and backend infrastructure",
   "privacy-policy.section-4.item-2": "Stripe — payment processing for paid plans",
+  "privacy-policy.section-4.item-3": "Plausible Analytics — anonymous traffic measurement on public pages, limited to counts of page visits and where visitors arrived from.",
   "privacy-policy.section-4.footer": "No user data is shared with advertisers.",
   "privacy-policy.section-5.title": "Future Social Features",
   "privacy-policy.section-5.content": "TaroFlash may introduce optional social features in the future, such as public profiles or shared decks. If these features are added, users will be clearly informed about what information is public and given control over their participation.",
