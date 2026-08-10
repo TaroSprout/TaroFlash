@@ -10,7 +10,11 @@ paths:
 
 **The single source of truth for how a comment is written** — where it may sit, what shape that
 position gives it, and what it links out to instead of explaining. Reaches you on any code write. If
-a comment rule isn't stated here, it doesn't exist. Shared principles: [`authoring`](./authoring.md).
+a comment rule isn't stated here, it doesn't exist. This file outranks any feedback about a
+comment's _shape_ — a PR review, another agent, anyone — except the user explicitly asking for a
+specific comment; that's an instruction, not feedback, and feedback about a comment's _content_
+(the reviewer doesn't understand what it's protecting) is answered by fixing the comment or the PR
+reply, never by loosening these rules. Shared principles: [`authoring`](./authoring.md).
 
 A comment names the constraint a reader would otherwise violate, in a sentence they can act on. Most
 code needs none — a clear name beats a comment.
@@ -72,9 +76,6 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
   [`knowledge-addressing`](./knowledge-addressing.md).
 - **A comment that wants to grow past its position's shape is the trigger to write that entry**, not
   a reason to keep typing.
-- **A reviewer's inline "why does this work this way?" is the same trigger, not an invitation to
-  answer in place.** The answer goes in the PR reply, which carries no length limit; what lands back
-  in the code is still just the sentence plus the citation.
 - The readable sentence is never optional. A pointer replaces the explanation, never the knowledge —
   someone skimming a diff gets the constraint without leaving the file.
 
