@@ -53,7 +53,7 @@ const { restored } = useReaderProgress(collection_id, lesson_id, player)
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
-const { el: dock_el } = useMobileDock()
+const { el: dock_el, claimHeight, releaseHeight } = useMobileDock()
 const is_desktop = useMatchMedia('w>=xl')
 
 const footer_swap = useTemplateRef<{ $el: HTMLElement }>('footer_swap')
@@ -159,13 +159,15 @@ function reclearSelection() {
 }
 
 // The crossfade owns the footer height while a pane swap is in flight, so the
-// content-driven height animation stands down between swap-start and swap-end.
+// content-driven height animation stands down between swap-start and swap-end. →[K:dock-height-single-owner]
 function onSwapStart() {
   swapping = true
+  claimHeight()
 }
 
 function onSwapEnd() {
   swapping = false
+  releaseHeight()
 }
 
 // Track whichever pane is mounted: the term card swelling as its definition loads,

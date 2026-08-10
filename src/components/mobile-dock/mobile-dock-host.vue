@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
+import { gsap } from 'gsap'
 import { useMobileDock } from './use-mobile-dock'
 import { useKeyboardOpen } from '@/composables/ui/keyboard'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 
-const { el, breakpoint } = useMobileDock()
+const { el, breakpoint, height_claims } = useMobileDock()
 
 // The dock is a bar floating over the page it docks to.
 const ambient_depth = useAmbientDepth()
@@ -30,13 +31,30 @@ function publishHeight() {
 }
 
 // Tiny, cheap footer content — a real height tween is safe here, unlike the transcript case.
+// Stands down while content inside claims the height, so only one tween ever runs. →[K:dock-height-single-owner]
 useAnimatedHeight(
   content_wrapper,
   content,
-  () => is_mobile.value && !is_keyboard_open.value,
+  () => is_mobile.value && !is_keyboard_open.value && height_claims.value === 0,
   publishHeight,
   true
 )
+
+/**
+ * Hand the bar's height back to the browser for the length of a claim.
+ *
+ * The height tween leaves an inline height behind, which would hold the bar at
+ * whatever it last measured while the claimed animation resizes the content
+ * underneath it. Cleared, the bar sizes to its content and follows along.
+ */
+function releaseHeightControl() {
+  const wrapper = content_wrapper.value
+  if (!wrapper) return
+
+  gsap.killTweensOf(wrapper)
+  wrapper.style.height = ''
+  wrapper.style.overflow = ''
+}
 
 onMounted(() => {
   el.value = bar.value
@@ -47,7 +65,11 @@ onBeforeUnmount(() => {
   document.documentElement.style.removeProperty('--mobile-dock-height')
 })
 
-watch([is_mobile, is_keyboard_open], publishHeight, { flush: 'post' })
+watch(height_claims, (claims) => {
+  if (claims > 0) releaseHeightControl()
+})
+
+watch([is_mobile, is_keyboard_open, height_claims], publishHeight, { flush: 'post' })
 </script>
 
 <template>
