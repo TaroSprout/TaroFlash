@@ -38,8 +38,11 @@ concept, or a newly-exposed hazard. The altitude _is_ the churn control; there i
 - **Never** — reword correct prose for taste, restructure for its own sake, add examples, or
   document implementation detail.
 
-A large real change (a new domain area, a topic splitting in two) lands **isolated**: its own commit,
-scoped to `corpus/`, never mixed into a code commit, so the user takes or drops it as one unit.
+**A corpus edit that cites or is cited by code lands in the same commit as that code.** A hazard's
+declaration in `corpus/` and its echo in `src/` (see Hazards below) are two halves of one atomic
+change — `knowledge-lint` fails either half alone, so splitting them across commits produces a
+commit that cannot pass CI on its own. Only a corpus edit with **no** accompanying code change —
+correcting a stale topic, splitting a topic on its own — lands as its own commit.
 
 ## Shape
 
