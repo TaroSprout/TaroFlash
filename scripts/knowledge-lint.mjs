@@ -23,8 +23,9 @@ import {
 const LEDGER_ENTRY = /^\s*[-*]\s*\[K:([A-Za-z0-9_-]+)\]\s*—\s*(.*)$/
 
 const RULE =
-  'A pointer that resolves to nothing, a slug declared twice, or an always-on file over its cap all ' +
-  'cost the reader the knowledge they came for. Fix the pointer, not the check. →[K:knowledge-lint]'
+  'A pointer that resolves to nothing, a slug declared twice, a slug nobody cites, or an always-on ' +
+  'file over its cap all cost the reader the knowledge they came for. Fix the pointer, not the ' +
+  'check. →[K:knowledge-lint]'
 
 /** Retired slugs and their epitaphs; a malformed entry is an error, not an epitaph. */
 function readLedger(root, ledgerPath) {
@@ -71,6 +72,15 @@ function checkDeclarations(tokens, retired, ledgerPath) {
   }
 
   return { declared, errors }
+}
+
+/** A slug minted and never pointed at again — free to declare, so it costs nothing to leave dead. */
+function checkUncitedDeclarations(tokens, declared, exempt) {
+  const cited = new Set(tokens.filter((token) => token.cites).map((token) => token.slug))
+
+  return [...declared]
+    .filter(([slug]) => !cited.has(slug) && !exempt.includes(slug))
+    .map(([slug, at]) => `${at} — [K:${slug}] is declared but never cited from anywhere`)
 }
 
 function checkCitations(tokens, declared, retired, ledgerPath) {
@@ -168,6 +178,11 @@ export function lintKnowledge(root) {
     ledger.retired,
     slugs.retired_ledger
   )
+  const uncited = checkUncitedDeclarations(
+    tokens,
+    declarations.declared,
+    slugs.citation_exempt ?? []
+  )
   const orphans = checkOrphanCitations(root, tokens)
   const caps = checkLineCaps(root, files, always_on)
 
@@ -177,6 +192,7 @@ export function lintKnowledge(root) {
       ...declarations.errors,
       ...misplaced,
       ...citations,
+      ...uncited,
       ...orphans,
       ...caps.errors
     ],

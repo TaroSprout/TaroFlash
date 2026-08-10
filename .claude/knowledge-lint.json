@@ -36,6 +36,12 @@
       "supabase/**/*.{sql,ts}",
       ".github/**/*.yml"
     ],
-    "exempt": ["supabase/migrations/**", "tests/unit/scripts/**"]
+    "exempt": ["supabase/migrations/**", "tests/unit/scripts/**"],
+    "citation_exempt": [
+      "knowledge-slug-format",
+      "knowledge-declaration-sites",
+      "knowledge-slug-retirement",
+      "knowledge-pr-digest"
+    ]
   }
 }
