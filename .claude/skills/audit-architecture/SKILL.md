@@ -138,7 +138,7 @@ Two sections. Nothing else — no per-lens headings, no assumptions, no methodol
 3. M `foo.vue:42` — payload built inline pre-save. → `src/utils/foo/payload.ts`.
 ```
 
-- **Architecture:** four labeled lines max. `Now` is a one-line shape sketch (arrows fine); `Verdict` names the call + blast radius; `Changes` is the delta list; `Keeps` names what survives so the user knows the scope is bounded. If the verdict is **keep**, `Changes`/`Keeps` collapse to one line.
+- **Architecture:** four labeled lines max. `Now` is a one-line shape sketch (arrows fine); `Verdict` names the call + blast radius; `Changes` is the delta list; `Keeps` names what survives so the user knows the scope is bounded. If the verdict is **keep**, `Changes`/`Keeps` collapse to one line. If the user asks to see the shape, or a prose pass at explaining it hasn't landed, switch to an actual diagram (mermaid `graph` or an ASCII box-and-arrow sketch) instead of writing more prose — don't re-explain the same structure in different words a third time.
 - **Fixes:** one ranked list, H before M, each one line in the finding format. Cap ~12. If lens coverage found nothing above `L`, say so in one line.
 
 ## When NOT to invoke
