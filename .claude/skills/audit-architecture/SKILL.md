@@ -123,23 +123,23 @@ Two sections. Nothing else — no per-lens headings, no assumptions, no methodol
 
 ## Architecture
 
-**Now:** modal root → 3 tab components, each owning a local draft ref; watchers sync them; `tab-study` fires the commit. API via `src/api/decks/mutations`.
+**Now:** each settings tab keeps its own copy of the edit, kept in sync by watchers; only the study tab knows how to save.
 
-**Verdict — reshape:** one provided draft composable owns draft + dirty + commit; tabs become pure field groups. Blast radius 5 files, no API change.
+**Verdict — reshape:** one shared draft owns the edit, its dirty state, and the save; tabs just show fields. Blast radius 5 files, no API change.
 
-**Changes:** 3 tab-local refs → 1 provided draft · commit moves out of `tab-study` (fixes silent edit loss) · `settings-modal-state` → `deck-draft`.
+**Changes:** 3 separate edit copies → 1 shared draft · saving moves off the study tab (fixes silent edit loss) · the settings state is renamed to describe a deck draft, not a modal.
 
-**Keeps:** api layer, modal shell, per-tab file split.
+**Keeps:** how decks are saved to the server, the modal shell, one file per tab.
 
 ## Fixes
 
-1. H Consolidate 3 draft refs → provided `useDeckDraft` (`tab-*.vue`) — see `architecture.md`.
-2. H `tab-study.vue:88` — commit owned by one tab; closing elsewhere drops edits. → move to the draft composable.
+1. H [resolved by verdict] Consolidate the 3 separate edit copies into the shared draft (`tab-*.vue`) — see `architecture.md`.
+2. H [resolved by verdict] `tab-study.vue:88` — saving is owned by one tab; closing elsewhere drops edits. → move to the shared draft.
 3. M `foo.vue:42` — payload built inline pre-save. → `src/utils/foo/payload.ts`.
 ```
 
-- **Architecture:** four labeled lines max. `Now` is a one-line shape sketch (arrows fine); `Verdict` names the call + blast radius; `Changes` is the delta list; `Keeps` names what survives so the user knows the scope is bounded. If the verdict is **keep**, `Changes`/`Keeps` collapse to one line. If the user asks to see the shape, or a prose pass at explaining it hasn't landed, switch to an actual diagram (mermaid `graph` or an ASCII box-and-arrow sketch) instead of writing more prose — don't re-explain the same structure in different words a third time.
-- **Fixes:** one ranked list, H before M, each one line in the finding format. Cap ~12. If lens coverage found nothing above `L`, say so in one line.
+- **Architecture:** four labeled lines max, in **product/domain terms — what the user's action does, not the file/token/attribute names that implement it.** `Now` is a one-line shape sketch (arrows fine); `Verdict` names the call + blast radius; `Changes` is the delta list; `Keeps` names what survives so the user knows the scope is bounded. If the verdict is **keep**, `Changes`/`Keeps` collapse to one line. If the user asks to see the shape, or a prose pass at explaining it hasn't landed, switch to an actual diagram (mermaid `graph` or an ASCII box-and-arrow sketch) instead of writing more prose — don't re-explain the same structure in different words a third time. Subsystem vocabulary (component names, composable names, token names) is fine inside a `Fixes` line, which cites a location — never inside `Architecture`.
+- **Fixes:** one ranked list, H before M, each one line in the finding format. Mark a line `[resolved by verdict]` when the reshape in `Architecture` already fixes it — the reader needs to know which findings the verdict covers versus which are independent of it before picking. Cap ~12. If lens coverage found nothing above `L`, say so in one line.
 
 ## When NOT to invoke
 
