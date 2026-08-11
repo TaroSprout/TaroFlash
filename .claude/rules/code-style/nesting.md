@@ -1,6 +1,11 @@
 # At most one level of nesting
 
-Don't nest more than one `if` / `for` / `try`. When a path forks, invert the condition and return early instead of pushing the main path inside an `if`.
+**`max-depth` in `vite.config.ts`'s `lint.rules` enforces this** — `vp lint` warns past depth 2.
+Still `warn`, not `error`: 14 pre-existing sites haven't been cleared, and this rule's owner can't
+touch source to clear them.
+
+When a path forks, invert the condition and return early instead of pushing the main path inside an
+`if`.
 
 ```ts
 // Good — orchestrator routes; each branch is its own one-job function
