@@ -10,7 +10,7 @@ const emit = defineEmits<{
 <template>
   <div
     data-testid="phone"
-    data-station="float"
+    data-station="window"
     class="absolute top-7 right-0 pointer-events-auto w-60 aspect-120/179 bg-surface bevel-sm rounded-16 group/phone z-10"
   >
     <ui-button

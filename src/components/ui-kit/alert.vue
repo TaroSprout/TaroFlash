@@ -50,7 +50,7 @@ function onKeydown(e: KeyboardEvent) {
 <template>
   <div
     data-testid="ui-kit-alert"
-    data-station="window"
+    data-station="float"
     class="rounded-2 shadow-lg max-xs:mx-4 max-xs:w-auto max-xs:max-w-full flex w-115 max-w-115 flex-col bg-surface"
   >
     <div data-testid="ui-kit-alert__body" class="flex flex-col gap-2 p-10">

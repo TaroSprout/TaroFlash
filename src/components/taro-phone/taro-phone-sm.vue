@@ -12,7 +12,7 @@ const store = useTaroPhoneStore()
   <div
     @click="emit('open')"
     data-testid="phone"
-    data-station="float"
+    data-station="window"
     class="absolute top-0 right-0 w-16.25 h-22 bg-surface rounded-4.5 shadow-xs rotate-6 cursor-pointer p-2 pb-1 mt-3 flex flex-col gap-1 items-center scale-75 pointer-events-auto"
   >
     <div
