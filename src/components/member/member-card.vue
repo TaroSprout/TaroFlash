@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isoNow, formatShortDate } from '@/utils/date'
 import { memberCoverBindings } from './cover'
-import { provideDepth } from '@/composables/ui/depth'
 import AvatarImage from './avatar-image.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 
@@ -28,16 +27,13 @@ const created_on = computed(() => formatShortDate(createdAt, locale.value))
 
 const body_bindings = computed(() => memberCoverBindings(cover))
 
-// The card's fixed panel isn't itself depth-ramped, but children on it (the avatar-edit
-// button) still need to resolve to brown-50, not the depth-0 brown-300 they'd fall through to.
-provideDepth(1)
 </script>
 
 <template>
   <div
     data-testid="member-card"
-    data-depth="1"
-    class="bg-panel rounded-8 border-panel flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
+    data-station="panel"
+    class="bg-surface rounded-8 border-surface flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
   >
     <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-4 pb-1">
       <h1
@@ -56,7 +52,7 @@ provideDepth(1)
     >
       <div data-testid="member-card__avatar" class="flex h-full flex-col justify-center">
         <div class="relative">
-          <div class="bg-mat rounded-19 border-panel h-50 w-50 overflow-hidden border-10">
+          <div class="bg-mat rounded-19 border-surface h-50 w-50 overflow-hidden border-10">
             <avatar-image :avatar="cover?.avatar" class="h-full w-full" />
           </div>
 
@@ -75,7 +71,7 @@ provideDepth(1)
         </div>
       </div>
 
-      <div data-testid="member-card__comment" class="bg-panel rounded-4 w-full px-2 py-3">
+      <div data-testid="member-card__comment" class="bg-surface rounded-4 w-full px-2 py-3">
         <p class="text-ink flex h-[3lh] items-center justify-center text-center">
           <q class="min-w-0 wrap-break-word">{{
             cardComment || t('member-card.description-fallback')

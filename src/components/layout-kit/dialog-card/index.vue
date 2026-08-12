@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
 import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
 import UiButton from '@/components/ui-kit/button.vue'
-import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 import type { SfxOptions } from '@/sfx/directive'
 
 export type DialogCardSize = 'sm' | 'md' | 'lg'
@@ -82,10 +81,6 @@ const slots = defineSlots<{
 
 const { t } = useI18n()
 
-/** Always floats over the surface that opened it. */
-const ambient_depth = useAmbientDepth()
-const depth = provideDepth(() => nextDepth(ambient_depth.value))
-
 const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
 /** Called from the template, not a `computed` — `slots.toolbar` isn't reactive. →[K:dialog-card-toolbar-slot-reactivity] */
 function gridRowsClass() {
@@ -123,7 +118,7 @@ defineExpose({ viewport })
 <template>
   <div
     data-testid="dialog-card"
-    :data-depth="depth"
+    data-station="window"
     class="content-grid relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
     :class="[
       SIZE_CLASSES[size],
