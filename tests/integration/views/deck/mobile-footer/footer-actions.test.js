@@ -131,13 +131,10 @@ describe('mobile-footer/footer-actions', () => {
 
   // ── edit menu ───────────────────────────────────────────────────────────────
 
+  // A menu is a float surface wherever it opens from, so there is no per-call-site
+  // opt-in left to assert here — dropdown-button/menu.test.js owns that obligation.
   test('renders the edit-menu dropdown', () => {
     const wrapper = mountFooterActions()
     expect(wrapper.find('[data-testid="deck-footer-actions__edit-menu"]').exists()).toBe(true)
-  })
-
-  test('the edit-menu dropdown opens as a floating menu [obligation]', () => {
-    const wrapper = mountFooterActions()
-    expect(wrapper.findComponent({ name: 'UiDropdownButton' }).props('floatMenu')).toBe(true)
   })
 })

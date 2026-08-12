@@ -97,14 +97,14 @@ describe('NewDeckCard', () => {
     test('does not apply the disabled visual classes by default', () => {
       const wrapper = mount()
       const root = wrapper.find('[data-testid="new-deck-card"]')
-      expect(root.classes()).not.toContain('opacity-50')
+      expect(root.classes()).not.toContain('opacity-disabled')
       expect(root.classes()).not.toContain('pointer-events-none')
     })
 
     test('applies opacity and pointer-events-none classes while loading', () => {
       const wrapper = mount({ loading: true })
       const root = wrapper.find('[data-testid="new-deck-card"]')
-      expect(root.classes()).toContain('opacity-50')
+      expect(root.classes()).toContain('opacity-disabled')
       expect(root.classes()).toContain('pointer-events-none')
     })
   })
