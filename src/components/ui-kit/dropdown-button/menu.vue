@@ -9,18 +9,9 @@ import type { DropdownOption } from './types'
 type DropdownMenuProps = {
   options?: DropdownOption[]
   size: NonNullable<ButtonProps['size']>
-  // Depth of the trigger this menu belongs to. The menu is teleported and can't
-  // inherit the trigger's depth context, so it's passed explicitly — the menu
-  // then paints --color-element at the SAME value as its neutral button, and its
-  // seam (outline-surface) reads the surface the menu floats over.
-  depth?: number
-  // Paint the menu as a floating surface instead of matching its trigger. Set it
-  // where the trigger sits on a raised surface but the menu opens out over the
-  // page, so matching the trigger would land the menu on the page's own colour.
-  float?: boolean
 }
 
-const { options = [], size, depth, float = false } = defineProps<DropdownMenuProps>()
+const { options = [], size } = defineProps<DropdownMenuProps>()
 
 const emit = defineEmits<{
   (e: 'select', option: DropdownOption): void
@@ -47,12 +38,9 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
 
 <template>
   <div
-    class="flex flex-col overflow-hidden rounded-(--btn-border-radius) p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) outline-1"
-    :class="[
-      `ui-kit-btn-tokens--${size}`,
-      float ? 'bg-float text-ink outline-float-line' : 'bg-element text-on-element outline-surface'
-    ]"
-    :data-depth="depth"
+    class="bg-surface text-ink outline-line flex flex-col overflow-hidden rounded-(--btn-border-radius) p-1.5 text-(length:--btn-font-size) leading-(--btn-font-size--line-height) outline-1"
+    :class="`ui-kit-btn-tokens--${size}`"
+    data-station="float"
     data-testid="dropdown-button__menu"
   >
     <slot>
@@ -67,7 +55,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         <button
           type="button"
           :disabled="option.disabled"
-          class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap data-[active=true]:bg-element-strong data-[active=true]:text-on-element disabled:cursor-default disabled:opacity-40"
+          class="group/option relative flex w-full cursor-pointer items-center gap-(--btn-gap) overflow-hidden rounded-[calc(var(--btn-border-radius)-6px)] py-(--btn-padding-y) px-[calc(var(--btn-padding-x)-6px)] text-start whitespace-nowrap data-[active=true]:bg-raised-tint data-[active=true]:text-ink disabled:cursor-default disabled:opacity-disabled"
           :data-active="option.selected || null"
           :data-tapping="tapping_value === option.value || null"
           data-testid="dropdown-button__option"
@@ -76,7 +64,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
         >
           <div
             aria-hidden="true"
-            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--color-element-pattern)] animation-safe:bgx-slide group-hover/option:block group-data-[tapping=true]/option:block"
+            class="pointer-events-none absolute inset-0 hidden bgx-diagonal-stripes bgx-color-[var(--color-raised-pattern)] animation-safe:bgx-slide group-hover/option:block group-data-[tapping=true]/option:block"
           ></div>
           <ui-icon
             v-if="option.icon"
