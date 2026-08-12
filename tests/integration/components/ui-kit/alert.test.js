@@ -127,9 +127,9 @@ describe('UiAlert — arrow-key focus nav', () => {
 // ── station [obligation] ────────────────────────────────────────────────────
 
 describe('UiAlert — station [obligation]', () => {
-  test('stamps the constant data-station="window" [obligation]', () => {
+  test('stamps the constant data-station="float" [obligation]', () => {
     const { wrapper } = makeWrapper()
-    expect(wrapper.find('[data-testid="ui-kit-alert"]').attributes('data-station')).toBe('window')
+    expect(wrapper.find('[data-testid="ui-kit-alert"]').attributes('data-station')).toBe('float')
   })
 })
 

@@ -30,8 +30,8 @@ describe('TaroPhoneBase', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
-  test('stamps the constant data-station="float" [obligation]', () => {
+  test('stamps the constant data-station="window" [obligation]', () => {
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('float')
+    expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('window')
   })
 })
