@@ -176,6 +176,15 @@ describe('UiPrompt — message', () => {
   })
 })
 
+// ── station [obligation] ────────────────────────────────────────────────────
+
+describe('UiPrompt — station [obligation]', () => {
+  test('stamps the constant data-station="window" [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="ui-kit-prompt"]').attributes('data-station')).toBe('window')
+  })
+})
+
 // ── cancel ────────────────────────────────────────────────────────────────────
 
 describe('UiPrompt — cancel', () => {

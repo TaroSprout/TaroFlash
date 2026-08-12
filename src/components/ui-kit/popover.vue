@@ -105,17 +105,14 @@ onUnmounted(() => {
 const side = computed(() => placement.value.split('-')[0] as 'top' | 'right' | 'bottom' | 'left')
 
 // Teleporting to <body> severs DOM inheritance, so restate the trigger's
-// resolved depth/palette on the teleported node; the in-place path inherits them.
+// resolved palette on the teleported node; the in-place path inherits it.
 const inherited_context = computed(() => {
   if (!teleport || !open) return {}
 
   const trigger = triggerRef.value
   if (!trigger) return {}
 
-  return {
-    'data-depth': trigger.closest<HTMLElement>('[data-depth]')?.dataset.depth,
-    'data-palette': trigger.closest<HTMLElement>('[data-palette]')?.dataset.palette
-  }
+  return { 'data-palette': trigger.closest<HTMLElement>('[data-palette]')?.dataset.palette }
 })
 
 const staticSideMap = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const

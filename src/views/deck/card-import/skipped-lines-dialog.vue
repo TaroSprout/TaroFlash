@@ -26,11 +26,11 @@ const { t } = useI18n()
         v-for="line in lines"
         :key="line.line"
         data-testid="skipped-lines-dialog__line"
-        class="flex items-start gap-3 rounded-4 bg-below px-3 py-2"
+        class="flex items-start gap-3 rounded-4 bg-well px-3 py-2"
       >
         <span
           data-testid="skipped-lines-dialog__line-number"
-          class="shrink-0 rounded-2 bg-element px-1.5 py-0.5 text-xs text-on-element"
+          class="shrink-0 rounded-2 bg-raised px-1.5 py-0.5 text-xs text-ink"
         >
           {{ line.line }}
         </span>

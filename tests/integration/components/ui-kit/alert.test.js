@@ -89,6 +89,50 @@ describe('UiAlert — request-close dismissal [obligation]', () => {
   })
 })
 
+// ── arrow-key focus nav ────────────────────────────────────────────────────
+
+describe('UiAlert — arrow-key focus nav', () => {
+  test('ArrowRight moves focus from cancel to confirm', async () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Delete it' })
+    cancelButton(wrapper).element.focus()
+
+    await wrapper
+      .find('[data-testid="ui-kit-alert__actions"]')
+      .trigger('keydown', { key: 'ArrowRight' })
+
+    expect(document.activeElement).toBe(confirmButton(wrapper).element)
+  })
+
+  test('ArrowLeft moves focus from confirm to cancel', async () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Delete it' })
+    confirmButton(wrapper).element.focus()
+
+    await wrapper
+      .find('[data-testid="ui-kit-alert__actions"]')
+      .trigger('keydown', { key: 'ArrowLeft' })
+
+    expect(document.activeElement).toBe(cancelButton(wrapper).element)
+  })
+
+  test('other keys do not move focus [obligation]', async () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Delete it' })
+    cancelButton(wrapper).element.focus()
+
+    await wrapper.find('[data-testid="ui-kit-alert__actions"]').trigger('keydown', { key: 'Tab' })
+
+    expect(document.activeElement).toBe(cancelButton(wrapper).element)
+  })
+})
+
+// ── station [obligation] ────────────────────────────────────────────────────
+
+describe('UiAlert — station [obligation]', () => {
+  test('stamps the constant data-station="float" [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="ui-kit-alert"]').attributes('data-station')).toBe('float')
+  })
+})
+
 // ── mobile layout utilities ───────────────────────────────────────────────────
 
 describe('UiAlert — mobile layout', () => {

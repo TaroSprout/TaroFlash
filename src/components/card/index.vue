@@ -221,8 +221,8 @@ function onLeave(el: Element, done: () => void) {
     container-type: inline-size;
     perspective: 600px;
 
-    --card-bg-color: var(--color-white);
-    --card-text-color: var(--color-brown-700);
+    --card-bg-color: var(--color-card);
+    --card-text-color: var(--color-on-card);
     --card-text-color--placeholder: var(--color-brown-500);
 
     aspect-ratio: var(--aspect-card);
@@ -260,12 +260,6 @@ function onLeave(el: Element, done: () => void) {
    empty card — hide it while an upload/removal is in flight. */
 .card-container[data-loading] {
   --text-editor-placeholder-display: none;
-}
-
-[data-mode='dark'] .card-container {
-  --card-bg-color: var(--color-stone-700);
-  --card-text-color: var(--color-brown-100);
-  --card-text-color--placeholder: var(--color-brown-500);
 }
 
 .card-shimmer {

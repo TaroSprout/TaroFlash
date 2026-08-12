@@ -67,7 +67,7 @@ const nav_mode = computed<'close' | 'stop' | 'back'>(() => {
 const bgx_class = computed(() =>
   active_page.value === 'settings'
     ? ''
-    : 'bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-element-pattern)'
+    : 'bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-raised-pattern)'
 )
 
 const title = computed(() => {

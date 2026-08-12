@@ -5,13 +5,8 @@ import { useMobileDock } from './use-mobile-dock'
 import { useKeyboardOpen } from '@/composables/ui/keyboard'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 
 const { el, breakpoint, height_claims } = useMobileDock()
-
-// The dock is a bar floating over the page it docks to.
-const ambient_depth = useAmbientDepth()
-const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const { is_open: is_keyboard_open } = useKeyboardOpen()
 const is_mobile = computed(() => useMatchMedia(`w<${breakpoint.value}`).value)
@@ -77,8 +72,8 @@ watch([is_mobile, is_keyboard_open, height_claims], publishHeight, { flush: 'pos
     v-show="is_mobile && !is_keyboard_open"
     ref="bar"
     data-testid="mobile-dock-host"
-    :data-depth="depth"
-    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] max-sm:[--dock-pb:calc(0.5rem+var(--edge-safe-padding))] ring-1 ring-below"
+    data-station="panel"
+    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] max-sm:[--dock-pb:calc(0.5rem+var(--edge-safe-padding))] ring-1 ring-line"
   >
     <div
       mobile-dock-above

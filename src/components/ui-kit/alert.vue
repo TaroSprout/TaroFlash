@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { TYPE_SFX, type SoundKey } from '@/sfx/config'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn, useModalRequestClose } from '@/composables/modal'
-import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 
 export type AlertType = 'warn' | 'info'
 
@@ -20,10 +19,6 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio, type } = de
 }>()
 
 const { t } = useI18n()
-
-// An alert is a modal: it floats one step above whatever opened it.
-const ambient_depth = useAmbientDepth()
-const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const cancel_btn = useTemplateRef('cancel_btn')
 const confirm_btn = useTemplateRef('confirm_btn')
@@ -55,8 +50,8 @@ function onKeydown(e: KeyboardEvent) {
 <template>
   <div
     data-testid="ui-kit-alert"
-    :data-depth="depth"
-    class="rounded-2 shadow-lg max-xs:mx-4 max-xs:w-auto max-xs:max-w-full flex w-115 max-w-115 flex-col bg-float"
+    data-station="float"
+    class="rounded-2 shadow-lg max-xs:mx-4 max-xs:w-auto max-xs:max-w-full flex w-115 max-w-115 flex-col bg-surface"
   >
     <div data-testid="ui-kit-alert__body" class="flex flex-col gap-2 p-10">
       <h1 class="text-ink text-3xl">{{ title ?? t('ui-kit.alert.title-default') }}</h1>
@@ -65,7 +60,7 @@ function onKeydown(e: KeyboardEvent) {
 
     <div
       data-testid="ui-kit-alert__actions"
-      class="border-float-line divide-float-line max-xs:flex-col max-xs:divide-x-0 max-xs:divide-y flex w-full divide-x border-t"
+      class="border-line divide-line max-xs:flex-col max-xs:divide-x-0 max-xs:divide-y flex w-full divide-x border-t"
       @keydown="onKeydown"
     >
       <button
@@ -133,7 +128,7 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .ui-kit-alert__cancel .ui-kit-alert__hover-effect {
-  background-color: var(--color-element-pattern);
+  background-color: var(--color-raised-pattern);
   color: var(--color-ink-muted);
 }
 
@@ -155,7 +150,7 @@ function onKeydown(e: KeyboardEvent) {
   height: 100%;
   width: 100%;
 
-  background-color: var(--color-float);
+  background-color: var(--color-surface);
   border-radius: var(--radius-1_5);
 }
 </style>

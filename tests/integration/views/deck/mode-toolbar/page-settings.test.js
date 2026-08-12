@@ -116,6 +116,13 @@ describe('PageSettings (mode-toolbar)', () => {
     expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 
+  test('the panel stamps the constant data-station="float" [obligation]', () => {
+    const { wrapper } = mountPageSettings()
+    expect(wrapper.find('[data-testid="page-settings__panel"]').attributes('data-station')).toBe(
+      'float'
+    )
+  })
+
   // ── desktop_open gating [obligation] ───────────────────────────────────────
   // Regression: the desktop popover is only CSS-hidden below `md`, still
   // mounted — so its own `open` prop must be false on mobile even when the

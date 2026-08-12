@@ -87,7 +87,7 @@ const { t } = useI18n()
           v-if="submitError"
           data-testid="login-dialog__error"
           data-palette="danger"
-          class="text-base text-(--color-accent) text-center"
+          class="text-base text-(--color-accent-text) text-center"
         >
           {{ submitError }}
         </p>

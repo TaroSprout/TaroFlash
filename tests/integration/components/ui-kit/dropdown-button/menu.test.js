@@ -49,41 +49,16 @@ function mountMenu(props = {}) {
 describe('DropdownMenu', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  // ── depth prop ─────────────────────────────────────────────────────────────
-  // The menu is teleported and can't inherit the trigger's ambient depth, so
-  // the trigger passes it explicitly.
+  // ── station [obligation] ──────────────────────────────────────────────────
+  // A dropdown menu is always a float station regardless of where its trigger
+  // sits — it no longer takes a depth/float prop.
 
-  describe('depth prop', () => {
-    test('data-depth is unset when depth is omitted', () => {
+  describe('station [obligation]', () => {
+    test('always stamps data-station="float", unconditionally [obligation]', () => {
       const wrapper = mountMenu()
-      expect(
-        wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-depth')
-      ).toBeUndefined()
-    })
-
-    test('data-depth reflects an explicit depth prop', () => {
-      const wrapper = mountMenu({ depth: 2 })
-      expect(wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-depth')).toBe(
-        '2'
+      expect(wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-station')).toBe(
+        'float'
       )
-    })
-  })
-
-  // ── float prop [obligation] ───────────────────────────────────────────────
-
-  describe('float prop [obligation]', () => {
-    test('defaults to the element surface classes when float is omitted [obligation]', () => {
-      const wrapper = mountMenu()
-      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
-      expect(menu.classes()).toContain('bg-element')
-      expect(menu.classes()).not.toContain('bg-float')
-    })
-
-    test('switches to the float surface classes when float is true [obligation]', () => {
-      const wrapper = mountMenu({ float: true })
-      const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
-      expect(menu.classes()).toContain('bg-float')
-      expect(menu.classes()).not.toContain('bg-element')
     })
   })
 
@@ -195,6 +170,17 @@ describe('DropdownMenu', () => {
       const options = wrapper.findAll('[data-testid="dropdown-button__option"]')
       expect(options[0].attributes('data-active')).toBe('true')
       expect(options[1].attributes('data-active')).toBeUndefined()
+    })
+
+    test('selected option reads lighter than its siblings via bg-raised-tint [obligation]', () => {
+      const wrapper = mountMenu({
+        options: [
+          { value: 'copy', label: 'Copy', selected: true },
+          { value: 'delete', label: 'Delete' }
+        ]
+      })
+      const options = wrapper.findAll('[data-testid="dropdown-button__option"]')
+      expect(options[0].classes()).toContain('data-[active=true]:bg-raised-tint')
     })
 
     test('data-tapping is unset before any tap [obligation]', () => {

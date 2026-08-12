@@ -7,7 +7,6 @@ import {
   WINDOW_HEADER_FILL_CLASS,
   type WindowHeaderBorder
 } from './surface'
-import { nextDepth, provideDepth, useAmbientDepth } from '@/composables/ui/depth'
 import UiButton from '@/components/ui-kit/button.vue'
 
 type WindowPatternConfig = {
@@ -38,10 +37,6 @@ const {
 } = defineProps<AppWindowProps>()
 
 const { t } = useI18n()
-
-/** A raised surface, one step above whatever it opened over; the sidebar recess beside it reads --color-below off this same depth. */
-const ambient_depth = useAmbientDepth()
-const depth = provideDepth(() => nextDepth(ambient_depth.value))
 
 const slots = defineSlots<{
   sidebar(): any
@@ -94,7 +89,7 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
 
     <div
       data-testid="app-window-container"
-      :data-depth="depth"
+      data-station="window"
       class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none bevel-lg mobile-modal:bevel-sheet"
     >
       <slot name="sidebar"></slot>

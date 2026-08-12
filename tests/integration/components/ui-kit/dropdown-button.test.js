@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -435,14 +434,14 @@ describe('UiDropdownButton', () => {
     const wrapper = mountDropdown({ variant: 'ghost' })
     await trigger(wrapper).trigger('click')
     expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
-    expect(mainButton(wrapper).attributes('style')).toContain('var(--color-element)')
+    expect(mainButton(wrapper).attributes('style')).toContain('var(--color-raised)')
   })
 
   test('outline variant: main button gets --btn-bg-color style when menu is open [obligation]', async () => {
     const wrapper = mountDropdown({ variant: 'outline' })
     await trigger(wrapper).trigger('click')
     expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
-    expect(mainButton(wrapper).attributes('style')).toContain('var(--color-element)')
+    expect(mainButton(wrapper).attributes('style')).toContain('var(--color-raised)')
   })
 
   test('solid variant: main button does NOT get --btn-bg-color style when menu is open [obligation]', async () => {
@@ -474,23 +473,25 @@ describe('UiDropdownButton', () => {
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  // ── ambient depth forwarded to the menu [obligation] ────────────────────────
-  // The menu is teleported and can't inherit the trigger's ambient depth
-  // through the DOM, so the trigger passes its own ambient depth explicitly —
-  // the menu paints at the SAME depth as the trigger button, not a stepped one.
+  // ── menu station is always float [obligation] ───────────────────────────────
+  // A menu is always a float station regardless of what surface its trigger
+  // sits inside — it no longer takes a depth/float prop from the trigger.
 
-  test('the menu receives the ambient depth (0) when no ancestor provides one [obligation]', async () => {
+  test('the menu carries data-station="float" regardless of ambient surface [obligation]', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
-    expect(menu(wrapper).attributes('data-depth')).toBe('0')
+    expect(menu(wrapper).attributes('data-station')).toBe('float')
   })
 
-  test('the menu receives an ancestor-provided ambient depth [obligation]', async () => {
+  test('the menu still carries data-station="float" when mounted inside a stationed ancestor [obligation]', async () => {
     const Parent = defineComponent({
       setup() {
-        provideDepth(1)
         return () =>
-          h(UiDropdownButton, { options: DEFAULT_OPTIONS }, { default: () => 'Edit Cards' })
+          h(
+            'div',
+            { 'data-station': 'window' },
+            h(UiDropdownButton, { options: DEFAULT_OPTIONS }, { default: () => 'Edit Cards' })
+          )
       }
     })
     // `mount`, not `shallowMount` — UiDropdownButton is Parent's direct
@@ -510,7 +511,7 @@ describe('UiDropdownButton', () => {
     })
 
     await trigger(wrapper).trigger('click')
-    expect(menu(wrapper).attributes('data-depth')).toBe('1')
+    expect(menu(wrapper).attributes('data-station')).toBe('float')
   })
 
   // ── shadow prop forwarded to popover [obligation] ─────────────────────────

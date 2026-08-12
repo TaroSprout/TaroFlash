@@ -58,4 +58,12 @@ describe('DashboardTipCard', () => {
     const tape = wrapper.findComponent({ name: 'UiTape' })
     expect(tape.props('label')).toBe(wrapper.vm.$t('dashboard.tip-card.tape-label'))
   })
+
+  test('stamps the constant data-station="float" [obligation]', () => {
+    Math.random.mockReturnValue(0)
+    const wrapper = shallowMount(DashboardTipCard)
+    expect(wrapper.find('[data-testid="dashboard-tip-card"]').attributes('data-station')).toBe(
+      'float'
+    )
+  })
 })

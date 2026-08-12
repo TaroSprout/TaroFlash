@@ -116,12 +116,12 @@ describe('UiTooltip', () => {
   })
 
   describe('overlay chrome — always renders, never accent [obligation]', () => {
-    test('popover carries data-depth="overlay" and no data-palette regardless of trigger attrs [obligation]', async () => {
+    test('popover carries data-station="float" and no data-palette regardless of trigger attrs [obligation]', async () => {
       const wrapper = mountTooltip({}, {}, { 'data-palette': 'danger' })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
       const popover = document.body.querySelector('[data-testid="ui-tooltip"]')
-      expect(popover.getAttribute('data-depth')).toBe('overlay')
+      expect(popover.getAttribute('data-station')).toBe('float')
       expect(popover.getAttribute('data-palette')).toBeNull()
       wrapper.unmount()
     })

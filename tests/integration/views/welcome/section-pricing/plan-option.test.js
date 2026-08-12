@@ -46,6 +46,11 @@ describe('PlanOption — structure', () => {
     expect(wrapper.find('[data-testid="plan-option__name"]').text()).toBe('Deck Builder')
   })
 
+  test('stamps the constant data-station="panel" [obligation]', () => {
+    const wrapper = mountOption()
+    expect(wrapper.find('[data-testid="plan-option"]').attributes('data-station')).toBe('panel')
+  })
+
   test('renders the price as raw html (v-html)', () => {
     const wrapper = mountOption({ price: '$8<span>/month</span>' })
     const price = wrapper.find('[data-testid="plan-option__price"]')

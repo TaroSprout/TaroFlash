@@ -104,6 +104,13 @@ describe('SectionRoadmap', () => {
     expect(panel.props('interactive')).toBe(false)
   })
 
+  test('stamps the constant data-station="panel" [obligation]', () => {
+    const wrapper = mountRoadmap()
+    expect(wrapper.find('[data-testid="welcome-roadmap__panel"]').attributes('data-station')).toBe(
+      'panel'
+    )
+  })
+
   // ── Item count ────────────────────────────────────────────────────────────
 
   test('renders 9 roadmap items', () => {

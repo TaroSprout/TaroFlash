@@ -1,7 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
-import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -50,46 +48,27 @@ function mountCaretRealTransition(props = {}) {
   })
 }
 
-// Wraps DropdownCaret in a parent that provides an ambient ui/depth, so tests
-// can assert the identity caret stamps one step above whatever surface it's on.
-function mountCaretAtAmbientDepth(ambient_depth, props = {}) {
-  const Parent = defineComponent({
-    setup() {
-      provideDepth(ambient_depth)
-      return () => h(DropdownCaret, { open: false, ...props })
-    }
-  })
-  return mount(Parent, { global: { directives: { sfx: {} } } })
-}
-
 describe('DropdownCaret', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  // ── neutral / depth ───────────────────────────────────────────────────────
-  // An identity caret (neutral=false, the default) is one step above the
-  // ambient depth; a neutral caret carries no data-depth (it's a companion of
-  // its button, not a stepped surface).
+  // ── neutral fill [obligation] ────────────────────────────────────────────
+  // The split-button pair reads as two-tone: a neutral caret is the darker
+  // companion of the (lighter) button beside it, an identity caret rings
+  // itself in the accent instead.
 
-  describe('neutral / depth', () => {
-    test('data-depth is one step above the ambient depth by default (identity caret)', () => {
-      const wrapper = mountCaret()
-      expect(
-        wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-depth')
-      ).toBe('1')
-    })
-
-    test('data-depth steps above an ancestor-provided ambient depth', () => {
-      const wrapper = mountCaretAtAmbientDepth(1)
-      expect(
-        wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-depth')
-      ).toBe('2')
-    })
-
-    test('neutral=true omits data-depth entirely', () => {
+  describe('neutral fill [obligation]', () => {
+    test('neutral=true carries bg-raised-shade, the darker companion fill [obligation]', () => {
       const wrapper = mountCaret({ neutral: true })
-      expect(
-        wrapper.find('[data-testid="dropdown-button__trigger"]').attributes('data-depth')
-      ).toBeUndefined()
+      expect(wrapper.find('[data-testid="dropdown-button__trigger"]').classes()).toContain(
+        'bg-raised-shade'
+      )
+    })
+
+    test('neutral=false (identity caret) carries bg-raised-tint instead [obligation]', () => {
+      const wrapper = mountCaret({ neutral: false })
+      const trigger = wrapper.find('[data-testid="dropdown-button__trigger"]')
+      expect(trigger.classes()).toContain('bg-raised-tint')
+      expect(trigger.classes()).not.toContain('bg-raised-shade')
     })
   })
 

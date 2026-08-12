@@ -29,4 +29,9 @@ describe('TaroPhoneBase', () => {
     await wrapper.find('[data-testid="phone"] button').trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
+
+  test('stamps the constant data-station="window" [obligation]', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('window')
+  })
 })

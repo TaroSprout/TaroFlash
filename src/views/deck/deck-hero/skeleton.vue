@@ -14,9 +14,9 @@ import { SKELETON_COVER } from '@/utils/cover'
       data-testid="deck-hero-skeleton__details"
       class="flex flex-col items-center gap-2 md:items-start"
     >
-      <div class="h-4 w-64 rounded-2 bg-element"></div>
-      <div class="h-4 w-52 rounded-2 bg-element"></div>
-      <div class="h-4 w-24 rounded-2 bg-element"></div>
+      <div class="h-4 w-64 rounded-2 bg-skeleton"></div>
+      <div class="h-4 w-52 rounded-2 bg-skeleton"></div>
+      <div class="h-4 w-24 rounded-2 bg-skeleton"></div>
     </div>
   </div>
 </template>

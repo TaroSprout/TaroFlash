@@ -126,23 +126,16 @@ describe('DropdownButton', () => {
     expect(popover(wrapper).attributes('data-active')).toBe('false')
   })
 
-  // ── floatMenu [obligation] ────────────────────────────────────────────────
+  // ── menu station [obligation] ────────────────────────────────────────────
+  // The menu is always a float station, whether or not the trigger sits
+  // inside a stationed ancestor — there is no depth/float prop to forward.
 
-  test('floatMenu forwards to the menu, switching it to the float surface [obligation]', async () => {
-    const wrapper = mountDropdown({ floatMenu: true, options: [{ value: 'a', label: 'Option A' }] })
-    await caretTrigger(wrapper).trigger('click')
-
-    const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
-    expect(menu.classes()).toContain('bg-float')
-  })
-
-  test('floatMenu omitted keeps the menu on the default element surface [obligation]', async () => {
+  test('the opened menu carries data-station="float" [obligation]', async () => {
     const wrapper = mountDropdown({ options: [{ value: 'a', label: 'Option A' }] })
     await caretTrigger(wrapper).trigger('click')
 
     const menu = wrapper.find('[data-testid="dropdown-button__menu"]')
-    expect(menu.classes()).toContain('bg-element')
-    expect(menu.classes()).not.toContain('bg-float')
+    expect(menu.attributes('data-station')).toBe('float')
   })
 
   // ── @close from the popover ──────────────────────────────────────────────

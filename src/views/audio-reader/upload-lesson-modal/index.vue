@@ -134,7 +134,7 @@ function errorKeyFor(error: unknown): string {
         v-if="error_key"
         data-testid="upload-lesson__error"
         data-palette="danger"
-        class="text-sm text-(--color-accent)"
+        class="text-sm text-(--color-accent-text)"
       >
         {{ t(error_key) }}
       </p>

@@ -8,12 +8,9 @@
     <div v-if="$slots.left" data-testid="mode-toolbar__left" class="flex gap-1.5 self-stretch">
       <slot name="left"></slot>
     </div>
-    <div v-else class="w-3.75 aspect-square bg-element rounded-full"></div>
+    <div v-else class="w-3.75 aspect-square bg-raised rounded-full"></div>
 
-    <span
-      data-testid="mode-toolbar__divider"
-      class="border-b-2 border-dashed border-element"
-    ></span>
+    <span data-testid="mode-toolbar__divider" class="border-b-2 border-dashed border-raised"></span>
 
     <div v-if="$slots.right" data-testid="mode-toolbar__right" class="flex gap-1.5 self-stretch">
       <slot name="right"></slot>

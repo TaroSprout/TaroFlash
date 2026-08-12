@@ -157,12 +157,12 @@ function onLeave(el: Element, done: () => void) {
   height: var(--btn-height);
 }
 
-/* The expanded field is a WELL — one step below its surface — mirroring
-   ui-input: --color-below fill, a focus ring in --color-accent. The container
+/* The expanded field is a WELL — a recess cut into its surface — mirroring
+   ui-input: --color-well fill, a focus ring in --color-accent. The container
    carries data-palette="info", so --color-accent is the blue info identity
    (self-scoped, no ancestor leak), matching the input's ring. */
 .search-bar[data-expanded='true'] {
-  background-color: var(--color-below);
+  background-color: var(--color-well);
   outline: 1px solid transparent;
   transition: outline-color 60ms ease-in-out;
 }

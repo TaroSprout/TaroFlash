@@ -39,6 +39,11 @@ describe('MemberCard', () => {
     expect(wrapper.find('[data-testid="member-card"]').exists()).toBe(true)
   })
 
+  test('stamps the constant data-station="panel" [obligation]', () => {
+    const wrapper = mountCard()
+    expect(wrapper.find('[data-testid="member-card"]').attributes('data-station')).toBe('panel')
+  })
+
   test('applies cover-derived data-palette on the body', () => {
     const wrapper = mountCard({
       cover: { palette: 'red', pattern: 'wave' }

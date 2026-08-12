@@ -129,9 +129,9 @@ watch(drag_depth, (now, was) => {
   width: 100%;
   padding: 24px 16px;
 
-  border: 3px dashed var(--color-element-strong);
+  border: 3px dashed var(--color-raised-shade);
   border-radius: var(--radius-4);
-  background-color: var(--color-below);
+  background-color: var(--color-well);
   color: var(--color-ink-muted);
 
   text-align: center;
@@ -168,7 +168,7 @@ watch(drag_depth, (now, was) => {
 /* A file held over the zone fills it in, so the drop target reads as live
    without the prompt changing under the pointer. */
 .card-import-drop-zone[data-active] {
-  background-color: color-mix(in srgb, var(--color-blue-500) 15%, var(--color-below));
+  background-color: color-mix(in srgb, var(--color-blue-500) 15%, var(--color-well));
 }
 
 .card-import-drop-zone[data-error] {

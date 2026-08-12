@@ -4,7 +4,6 @@ import UiPopover from '@/components/ui-kit/popover.vue'
 import PageSettingsPanel from './page-settings-panel.vue'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { provideDepth } from '@/composables/ui/depth'
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ButtonProps } from '@/components/ui-kit/button.vue'
@@ -19,10 +18,6 @@ const { t } = useI18n()
 
 const { is_page_settings_open, openPageSettings, closePageSettings } = inject(deckViewShellKey)!
 const is_mobile = useMatchMedia('w<md')
-
-// The popover teleports out of the deck view, so its content can't inherit
-// the page's depth — declare it explicitly, matching the panel's data-depth.
-provideDepth(1)
 
 // Gated so this popover's outside-click listener never attaches on mobile,
 // where the footer's own panel drives `is_page_settings_open` instead.
@@ -61,7 +56,7 @@ function toggle() {
 
     <div
       data-testid="page-settings__panel"
-      data-depth="1"
+      data-station="float"
       class="rounded-7 bg-surface p-4 bevel-drop-sm"
     >
       <page-settings-panel />
@@ -69,7 +64,7 @@ function toggle() {
 
     <template #arrow>
       <div
-        data-depth="1"
+        data-station="float"
         class="ui-kit-popover__arrow-default [--popover-arrow-color:var(--color-surface)]"
       />
     </template>

@@ -1,7 +1,7 @@
 /* Web font URL lives in `src/styles/fonts.ts` and is injected by `main.ts`. */
 
 @import 'tailwindcss';
-@import '@/styles/depth.css';
+@import '@/styles/stations.css';
 @import '@/styles/palettes.gen.css';
 @import '@/styles/custom-styles.css';
 @import '@/styles/custom-variants.css';
@@ -27,19 +27,26 @@
   --color-blue-400: #6cbfd5;
 
   /* Two dark neutral families with distinct jobs:
-     - grey  = SURFACES (containers: page, window, panels) — the depth ramp
-     - stone = ELEMENTS (raised neutral things resting on a surface: buttons,
-       chips) + the flashcard exception
+     - grey  = SURFACES (containers: page, window, panels)
+     - stone = RAISED things resting on a surface (buttons, chips) + the
+       flashcard exception
      They read differently despite close lightness: grey is flat-neutral, stone
-     carries a little blue. */
+     carries a little blue.
+     grey-500 and lighter are the cool counterpart to the brown light steps, for
+     a foreground that shouldn't pick up the warm tint. */
   --color-grey-900: #1c1c1c;
   --color-grey-850: #232323;
   --color-grey-800: #292929;
   --color-grey-700: #4f4f4f;
+  --color-grey-500: #959595;
+  --color-grey-400: #b2b2b2;
+  --color-grey-300: #d2d2d2;
 
   --color-stone-900: #1e1f1f;
+  --color-stone-850: #232425;
   --color-stone-800: #292c2e;
   --color-stone-700: #393e40;
+  --color-stone-650: #464c4e;
 
   --color-green-800: #467d60;
   --color-green-600: #6f9b80;
@@ -73,67 +80,50 @@
   --color-brown-800: #4a3b30;
   --color-brown-700: #744e2a;
   --color-brown-500: #b8b1a9;
+  --color-brown-450: #cfbeb0;
+  --color-brown-400: #d9cfc4;
   --color-brown-300: #e7e0d5;
   --color-brown-200: #ede9df;
   --color-brown-100: #f3f1ea;
   --color-brown-50: #f9f8f5;
 
-  /* Neutral role slots. Registering them here is what makes bg-surface,
-     bg-below, bg-panel, bg-float, bg-overlay, text-ink, text-ink-muted and the
-     ring-/outline-/border-below utilities resolve as Tailwind colour utilities.
+  /* The ten neutral roles every surface station answers. Registering them here
+     is what makes bg-surface, bg-well, bg-raised, text-ink, border-line and
+     friends resolve as Tailwind colour utilities.
 
-     These values are the depth-0 light defaults. src/styles/depth.css
-     overrides them per data-depth x data-mode; identity roles (--color-accent
-     and friends) are owned by data-palette and live in palettes.gen.css. */
+     These values are the `page` light rendition. src/styles/stations.css
+     re-authors all ten per station x mode; identity roles (--color-accent and
+     friends) are owned by data-palette and live in palettes.gen.css. */
   --color-surface: var(--color-brown-100);
-  --color-below: var(--color-brown-50);
-  --color-panel: var(--color-brown-200);
-  --color-float: var(--color-brown-50);
-  --color-overlay: var(--color-white);
+  --color-well: var(--color-white);
+  --color-raised: var(--color-brown-300);
+  --color-raised-tint: var(--color-brown-200);
+  --color-raised-shade: var(--color-brown-400);
+  --color-line: var(--color-brown-300);
   --color-ink: var(--color-brown-700);
   --color-ink-muted: var(--color-brown-500);
-
-  /* Hairline that reads ON a float surface (dialog borders, action dividers).
-     --color-below is the depth-ramp's "one step down", which assumes the
-     surface above it is --color-surface; on a float it lands LIGHTER than the
-     thing it divides and disappears. Fixed per mode like --color-float itself,
-     never depth-derived. Dark rendition (stone-900) is in depth.css. */
-  --color-float-line: var(--color-brown-300);
-
-  /* Raised neutral element resting on a surface (non-accent buttons, chips).
-     Stone family in dark. Depth-relative — overridden per depth in depth.css. */
-  --color-element: var(--color-brown-300);
-  --color-on-element: var(--color-brown-700);
-
-  /* One ramp step firmer than --color-element — the darker companion in a
-     two-tone neutral control (a menu's selected-row highlight). Depth-relative,
-     tracks --color-element one step down. Overridden in depth.css. */
-  --color-element-strong: var(--color-brown-500);
-
-  /* The lighter companion — a subtle adjacent neutral for two-tone control
-     segmentation (the dropdown caret against its button). Fixed brown-200 in
-     light so it reads as ONE step off the button at every depth (lighter than a
-     depth-0 button, darker than a depth-1 one); stone-900 in dark, set in
-     depth.css. "soft"/"strong" name the LIGHT renditions. */
-  --color-element-soft: var(--color-brown-200);
+  --color-skeleton: var(--color-brown-300);
+  --color-skeleton-sheen: var(--color-brown-50);
 
   /* bgx texture on a NEUTRAL surface (neutral buttons, tap-sweeps, chrome
      dot-grids) — the neutral analog of --color-accent-pattern. A neutral surface
      is already a light tone, so unlike the accent sheen this reads DARKER than
-     the surface in light and LIGHTER in dark. Flat brown-500 at every light depth
-     (a neutral surface is light enough that it reads even at depth 1); a lighter
-     warm blanket tint in dark, set in depth.css. Unlike --color-element-strong
-     (whose dark rendition goes darker, for a legible caret) this stays a soft
-     texture in both modes. */
-  --color-element-pattern: var(--color-brown-500);
+     the surface in light and LIGHTER in dark. Flat across stations; the dark
+     rendition is in stations.css. */
+  --color-raised-pattern: var(--color-brown-500);
 
-  /* The flashcard surface — a fixed exception, not depth-derived. */
+  /* The flashcard surface and the text on it — a fixed exception, the same on
+     every station because the card carries its own identity. */
   --color-card: var(--color-white);
+  --color-on-card: var(--color-brown-700);
 
-  /* Media backdrop for user avatars. FIXED, not depth-relative: avatar images
-     are colour-tuned to read against it, so it must be identical at every depth
-     and location — one tuning pass for light, one for dark. Dark in depth.css. */
+  /* Media backdrop for user avatars. FIXED, not station-relative: avatar images
+     are colour-tuned to read against it, so it must be identical everywhere —
+     one tuning pass for light, one for dark. Dark in stations.css. */
   --color-mat: var(--color-brown-200);
+
+  /* The single fade every unavailable control wears. */
+  --opacity-disabled: 40%;
 
   /* Identity role slots — owned by data-palette, overridden per identity in
      src/styles/palettes.gen.css. Defaults are the `blue` light rendition,
@@ -141,9 +131,12 @@
   --color-accent: var(--color-blue-500);
   --color-accent-muted: var(--color-blue-400);
   --color-on-accent: var(--color-brown-100);
+  /* The palette's hue darkened until it reads as TEXT on a neutral surface —
+     --color-accent is tuned as a fill and goes illegible at body size. */
+  --color-accent-text: var(--color-blue-650);
   /* bgx texture on an accent surface — a soft sheen (see PaletteRendition.pattern).
-     This is the light blanket default (brown-100); dark blanket is stone-700 in
-     depth.css; a palette overrides either via palettes.gen.css. */
+     This is the light blanket default (brown-100); dark blanket is brown-300 in
+     stations.css; a palette overrides either via palettes.gen.css. */
   --color-accent-pattern: var(--color-brown-100);
 
   --radius-0_5: --spacing(0.5); /* 2px */

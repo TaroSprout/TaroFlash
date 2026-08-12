@@ -54,7 +54,7 @@ async function onSubmit() {
         v-if="error_key"
         data-testid="collection-create__error"
         data-palette="danger"
-        class="text-sm text-(--color-accent)"
+        class="text-sm text-(--color-accent-text)"
       >
         {{ t(error_key) }}
       </p>

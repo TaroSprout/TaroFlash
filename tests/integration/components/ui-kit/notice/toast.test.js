@@ -91,6 +91,13 @@ describe('ToastNotice', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(true)
   })
 
+  test('stamps the constant data-station="float" [obligation]', async () => {
+    const wrapper = await mountToast(makeNotice({}))
+    expect(wrapper.find('[data-testid="ui-kit-notice-toast"]').attributes('data-station')).toBe(
+      'float'
+    )
+  })
+
   test('close button is entirely omitted when notice.closable is false [obligation]', async () => {
     const wrapper = await mountToast(makeNotice({ closable: false }))
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(false)

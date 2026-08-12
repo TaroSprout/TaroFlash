@@ -2,9 +2,9 @@
  * Palette layer of the theming system.
  *
  * `data-palette` owns the accent roles (--color-accent, --color-accent-muted,
- * --color-on-accent). They are disjoint from the neutral roles owned by
- * `data-depth` (see src/styles/depth.css), so the two axes compose without any
- * precedence rules.
+ * --color-on-accent, --color-accent-text). They are disjoint from the neutral
+ * roles owned by `data-station` (see src/styles/stations.css), so the two axes
+ * compose without any precedence rules.
  *
  * A palette is ONE name that resolves BOTH renditions — `green` knows what it
  * looks like in light and in dark. That is what retires the paired
@@ -21,7 +21,14 @@ type ColorToken =
   | 'blue-500'
   | 'blue-400'
   | 'stone-900'
+  | 'stone-850'
+  | 'stone-800'
   | 'stone-700'
+  | 'stone-650'
+  | 'grey-900'
+  | 'grey-850'
+  | 'grey-800'
+  | 'grey-700'
   | 'green-800'
   | 'green-600'
   | 'green-500'
@@ -48,6 +55,8 @@ type ColorToken =
   | 'brown-800'
   | 'brown-700'
   | 'brown-500'
+  | 'brown-450'
+  | 'brown-400'
   | 'brown-300'
   | 'brown-200'
   | 'brown-100'
@@ -70,6 +79,12 @@ type PaletteRendition = {
   accentMuted: ColorToken
   /** Text/icon colour that sits legibly on `accent`. */
   onAccent: ColorToken
+  /**
+   * The hue darkened until it reads as TEXT on a neutral surface. `accent` is
+   * tuned as a fill and goes illegible at body size, so a coloured label,
+   * link or count takes this instead.
+   */
+  accentText: ColorToken
   /**
    * bgx texture colour for this palette's accent surface (covers, accent
    * buttons) — a SOFT sheen, not a legible foreground, so it is NOT `onAccent`

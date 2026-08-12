@@ -14,7 +14,7 @@ export type ButtonProps = {
   // Neutral chrome opt-in. A solid button defaults to the ACCENT (a solid
   // button is an action), so a raised NEUTRAL button — the important case the
   // theming refactor unlocks — is requested explicitly: it renders the
-  // `element` / `on-element` chrome roles instead of any identity colour.
+  // `raised` / `ink` chrome roles instead of any identity colour.
   neutral?: boolean
   inverted?: boolean
   iconOnly?: boolean
@@ -159,17 +159,17 @@ function onClick(e: MouseEvent) {
       :class="{
         'flex items-center justify-center': loading,
         // Loading fills the button with its own rest colour — a neutral button
-        // is --color-element, everything else the accent.
-        'bg-(--color-element)': loading && neutral && !inverted,
+        // is --color-raised, everything else the accent.
+        'bg-(--color-raised)': loading && neutral && !inverted,
         'bg-(--color-accent)': loading && !(neutral && !inverted),
         hidden: !loading,
         'group-hover/btn:block group-data-[active=true]/btn:block':
           !loading && !disabled && fancyHover && variant !== 'ghost',
         // accent solid + ghost sweep the default accent sheen (--color-accent-
-        // pattern). A NEUTRAL button's fill is --color-element, so it sweeps the
-        // neutral analog instead — element over element would be invisible.
+        // pattern). A NEUTRAL button's fill is --color-raised, so it sweeps the
+        // neutral analog instead — raised over raised would be invisible.
         // inverted is a light button, so its shimmer is the accent colour itself.
-        'bgx-color-[var(--color-element-pattern)]': neutral && !inverted,
+        'bgx-color-[var(--color-raised-pattern)]': neutral && !inverted,
         'bgx-color-[var(--color-accent)]': inverted,
         // Ghost has no surface, so only the coarse quiet tap sweeps it (the
         // accent fill is added to the button root, behind the content).
@@ -307,16 +307,16 @@ function onClick(e: MouseEvent) {
    nested under them. →[K:theming-palette-identity] */
 
 .ui-kit-btn--neutral.ui-kit-btn--solid {
-  --btn-bg-color: var(--color-element);
-  --btn-text-color: var(--color-on-element);
-  --btn-outline-color: var(--color-element);
+  --btn-bg-color: var(--color-raised);
+  --btn-text-color: var(--color-ink);
+  --btn-outline-color: var(--color-raised);
 }
 .ui-kit-btn--neutral.ui-kit-btn--ghost {
   --btn-text-color: var(--color-ink);
 }
 .ui-kit-btn--neutral.ui-kit-btn--outline {
-  --btn-text-color: var(--color-on-element);
-  --btn-outline-color: var(--color-element);
+  --btn-text-color: var(--color-ink);
+  --btn-outline-color: var(--color-raised);
 }
 
 /* Inverted: a light neutral button sitting ON an accent-colored region — bg is

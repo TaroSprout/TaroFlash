@@ -28,7 +28,7 @@ const {
   animate = 'quiet',
   sfx = {},
   triggerAt,
-  bgx_color = 'var(--color-element-pattern)',
+  bgx_color = 'var(--color-raised-pattern)',
   bgx = true,
   active_on_hover = false,
   active = false

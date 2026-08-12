@@ -15,6 +15,15 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     ).toBe(true)
   })
 
+  test('the polaroid placeholder stamps the constant data-station="float" [obligation]', () => {
+    const wrapper = mount(DashboardActionsPanelSkeleton)
+    expect(
+      wrapper
+        .find('[data-testid="dashboard-actions-panel-skeleton__polaroid"]')
+        .attributes('data-station')
+    ).toBe('float')
+  })
+
   test('renders inside the shared shell header and body wrappers', () => {
     const wrapper = mount(DashboardActionsPanelSkeleton)
     expect(wrapper.find('[data-testid="dashboard-actions-panel-shell__header"]').exists()).toBe(

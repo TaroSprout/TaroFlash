@@ -89,10 +89,10 @@ function onInput() {
   color: var(--color-ink);
 }
 
-/* One step below whatever surface it sits on — a real depth well, not the old
-   `data-theme="brown-100"` fake that overwrote the real identity underneath. */
+/* A recess cut into whatever surface it sits on — never a hardcoded fill, which
+   would overwrite the identity underneath. */
 .ui-kit-textarea {
-  background-color: var(--color-below);
+  background-color: var(--color-well);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;

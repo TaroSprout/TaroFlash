@@ -100,6 +100,13 @@ describe('NoticePanel', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
   })
 
+  test('stamps the constant data-station="float" [obligation]', async () => {
+    const wrapper = await mountPanel(makeNotice({}))
+    expect(wrapper.find('[data-testid="ui-kit-notice-panel"]').attributes('data-station')).toBe(
+      'float'
+    )
+  })
+
   test('close button still renders on a coarse pointer (regression guard)', async () => {
     coarseRef.value = true
     const wrapper = await mountPanel(makeNotice({ closable: true }))

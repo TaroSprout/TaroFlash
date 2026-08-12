@@ -25,7 +25,7 @@ const { t } = useI18n()
 
       <p
         data-testid="welcome-pricing__footnote"
-        class="text-(--color-on-accent) text-center text-lg whitespace-normal xs:whitespace-pre-line *:[span]:bg-(--color-on-accent) *:[span]:text-(--color-accent) *:[span]:px-1 *:[span]:py-0.5 *:[span]:rounded-1.5 *:[span]:inline-block px-1"
+        class="text-(--color-on-accent) text-center text-lg whitespace-normal xs:whitespace-pre-line *:[span]:bg-(--color-on-accent) *:[span]:text-(--color-accent-text) *:[span]:px-1 *:[span]:py-0.5 *:[span]:rounded-1.5 *:[span]:inline-block px-1"
         v-html="t('welcome-view.pricing.footnote')"
       ></p>
     </div>

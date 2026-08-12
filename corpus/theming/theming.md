@@ -25,8 +25,8 @@ The three switches:
 
 1. **mode** — light or dark.
 2. **palette** — which accent color this member picked.
-3. **depth** — how raised a thing is: the flat page, a panel lifted off it, a
-   dialog floating above.
+3. **station** — what kind of surface something is: the page, a panel, a
+   window, or floating chrome. See [[surface-stations]].
 
 > [!HAZARD] [K:closed-color-set-fails-bare] **The set of colors is closed — and a color that isn't in it resolves to nothing at all, with no error.**
 > The app deliberately wipes every stock color its styling toolkit ships with,
@@ -63,12 +63,13 @@ one wins" rules:
   or a dark one. It's set once at the top of the page.
 - **palette** owns the **accent** roles only — the identity color and the few
   slots that ride on it.
-- **depth** owns the **neutral chrome** roles — the surfaces, panels, and the
-  raised neutral elements resting on them. A thing's depth is how lifted it is,
-  and the neutral tones step to match.
+- **station** owns the **neutral chrome** roles — the surfaces, panels, and the
+  raised neutral elements resting on them. Each station hand-authors its own
+  set, with nothing computed from another →[K:surface-stations-hand-authored].
 
-Because accent and neutral roles are disjoint, palette and depth never contend:
-a member's chosen accent and a panel's lift are answered by different slots.
+Because accent and neutral roles are disjoint, palette and station never
+contend: a member's chosen accent and a panel's neutral tone are answered by
+different slots.
 
 ## The palette a member picks
 
@@ -115,7 +116,7 @@ visible.
 ## What this isn't
 
 - **Not the shade list.** Which exact hues exist, and how the root reset and the
-  per-mode / per-depth selectors are wired, is styling detail — the reference
+  per-mode / per-station selectors are wired, is styling detail — the reference
   docs cover the mechanics.
 - **Not mode persistence.** How a member's light/dark choice is remembered and
   applied to the page is app plumbing, not a theming truth.
@@ -124,4 +125,4 @@ visible.
 
 ## Related
 
-No sibling topics yet.
+- [[surface-stations]] — the four stations the `station` switch chooses between.

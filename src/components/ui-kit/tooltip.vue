@@ -3,8 +3,6 @@ import { computed, ref, useTemplateRef, watch, onBeforeUnmount } from 'vue'
 import { useFloating, flip, autoUpdate, offset, type Placement } from '@floating-ui/vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 
-// Tooltips are context-independent overlay chrome — `data-depth="overlay"`
-// keeps them off the depth ramp entirely, fixed per mode (src/styles/depth.css).
 const {
   text,
   position = 'top',
@@ -100,11 +98,11 @@ function onPointerLeave(e: PointerEvent) {
       <div
         ref="ui-tooltip"
         data-testid="ui-tooltip"
-        data-depth="overlay"
+        data-station="float"
         :data-multiline="is_multiline"
         :style="{ ...floatingStyles, maxWidth: `${max_chars}ch` }"
         class="ui-tooltip ui-tooltip--visible rounded-4 text-sm text-center pointer-events-none z-102 select-none"
-        :class="[is_multiline ? 'py-3 px-3' : 'py-1.5 px-2', 'bg-overlay text-ink']"
+        :class="[is_multiline ? 'py-3 px-3' : 'py-1.5 px-2', 'bg-surface text-ink']"
       >
         <slot name="tooltip">{{ text }}</slot>
       </div>

@@ -68,6 +68,12 @@ describe('LessonCard', () => {
     ).toBe('processing')
   })
 
+  test('stamps the constant data-station="panel" [obligation]', () => {
+    expect(mountCard(ready).find('[data-testid="lesson-card"]').attributes('data-station')).toBe(
+      'panel'
+    )
+  })
+
   describe('ready', () => {
     test('shows the date and a music-note icon, and the open button is enabled', () => {
       const w = mountCard(ready)

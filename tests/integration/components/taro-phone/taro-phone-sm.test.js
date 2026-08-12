@@ -32,3 +32,10 @@ describe('TaroPhoneSm — open', () => {
     expect(wrapper.emitted('open')).toHaveLength(1)
   })
 })
+
+describe('TaroPhoneSm — station [obligation]', () => {
+  test('stamps the constant data-station="window" [obligation]', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('window')
+  })
+})

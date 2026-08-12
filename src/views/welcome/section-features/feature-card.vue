@@ -78,7 +78,7 @@ const description_size = computed(() => DESCRIPTION_SIZE[size.value])
       <div
         data-testid="feature-card__face"
         :data-size-tier="size"
-        class="grid content-center size-full rounded-(--face-radius) p-(--face-padding) bg-card text-center"
+        class="grid content-center size-full rounded-(--face-radius) p-(--face-padding) bg-card text-on-card text-center"
         :class="face_rows"
       >
         <ui-icon

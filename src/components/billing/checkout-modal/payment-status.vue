@@ -19,7 +19,7 @@ const { t } = useI18n()
     v-else-if="status === 'error'"
     data-testid="checkout__error"
     data-palette="danger"
-    class="py-10 text-center text-(--color-accent)"
+    class="py-10 text-center text-(--color-accent-text)"
   >
     {{ t('billing.checkout.error') }}
   </p>

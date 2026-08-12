@@ -1,0 +1,137 @@
+/* The neutral roles for each `data-station`, hand-authored per station with nothing derived
+ * between them →[K:surface-stations-hand-authored]. */
+
+:root {
+  --shadow-color: rgba(0, 0, 0, 0.25);
+}
+
+:root[data-mode='dark'] {
+  --shadow-color: rgba(0, 0, 0, 1);
+
+  /* Default accent (no data-palette) is the blue identity — mirror its dark
+     rendition so an un-palette'd accent reads blue-650 in dark, not the light
+     blue-500 the @theme base declares. Identity call sites override via
+     data-palette; this is only the fallback. */
+  --color-accent: var(--color-blue-650);
+  --color-accent-muted: var(--color-blue-500);
+  --color-accent-text: var(--color-blue-500);
+  --color-accent-pattern: var(--color-brown-300);
+
+  /* The pattern goes the OTHER way in dark: a lighter warm tint over the dark
+     neutral, so the texture still reads. */
+  --color-raised-pattern: var(--color-brown-300);
+
+  --color-card: var(--color-stone-700);
+  --color-on-card: var(--color-brown-100);
+  --color-mat: var(--color-stone-900);
+}
+
+/* Light lives in main.css @theme, so unattributed content behaves as `page`. */
+[data-station='page'] {
+  --color-surface: var(--color-brown-100);
+  --color-well: var(--color-white);
+  --color-raised: var(--color-brown-300);
+  --color-raised-tint: var(--color-brown-200);
+  --color-raised-shade: var(--color-brown-400);
+  --color-line: var(--color-brown-300);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-300);
+  --color-skeleton-sheen: var(--color-brown-50);
+}
+
+:root[data-mode='dark'],
+[data-mode='dark'] [data-station='page'],
+[data-mode='dark'][data-station='page'] {
+  --color-surface: var(--color-grey-900);
+  --color-well: var(--color-stone-800);
+  --color-raised: var(--color-stone-700);
+  --color-raised-tint: var(--color-stone-800);
+  --color-raised-shade: var(--color-stone-650);
+  --color-line: var(--color-grey-700);
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-stone-850);
+  --color-skeleton-sheen: var(--color-stone-800);
+}
+
+[data-station='panel'] {
+  --color-surface: var(--color-brown-200);
+  --color-well: var(--color-brown-50);
+  --color-raised: var(--color-brown-100);
+  --color-raised-tint: var(--color-brown-50);
+  --color-raised-shade: var(--color-brown-300);
+  --color-line: var(--color-brown-400);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-300);
+  --color-skeleton-sheen: var(--color-brown-50);
+}
+
+[data-mode='dark'] [data-station='panel'],
+[data-mode='dark'][data-station='panel'] {
+  --color-surface: var(--color-grey-850);
+  --color-well: var(--color-grey-900);
+  --color-raised: var(--color-stone-800);
+  --color-raised-tint: var(--color-grey-900);
+  --color-raised-shade: var(--color-stone-700);
+  --color-line: var(--color-black);
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-grey-900);
+  --color-skeleton-sheen: var(--color-grey-800);
+}
+
+[data-station='window'] {
+  --color-surface: var(--color-brown-300);
+  --color-well: var(--color-brown-100);
+  --color-raised: var(--color-brown-100);
+  --color-raised-tint: var(--color-brown-50);
+  --color-raised-shade: var(--color-brown-200);
+  --color-line: var(--color-brown-400);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-200);
+  --color-skeleton-sheen: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-station='window'],
+[data-mode='dark'][data-station='window'] {
+  --color-surface: var(--color-grey-800);
+  --color-well: var(--color-grey-900);
+  --color-raised: var(--color-stone-700);
+  --color-raised-tint: var(--color-stone-850);
+  --color-raised-shade: var(--color-stone-650);
+  --color-line: var(--color-grey-900);
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-stone-900);
+  --color-skeleton-sheen: var(--color-stone-800);
+}
+
+[data-station='float'] {
+  --color-surface: var(--color-brown-50);
+  --color-well: var(--color-brown-200);
+  --color-raised: var(--color-brown-300);
+  --color-raised-tint: var(--color-brown-200);
+  --color-raised-shade: var(--color-brown-400);
+  --color-line: var(--color-brown-300);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-200);
+  --color-skeleton-sheen: var(--color-brown-50);
+}
+
+[data-mode='dark'] [data-station='float'],
+[data-mode='dark'][data-station='float'] {
+  --color-surface: var(--color-black);
+  --color-well: var(--color-stone-850);
+  --color-raised: var(--color-stone-800);
+  --color-raised-tint: var(--color-stone-850);
+  --color-raised-shade: var(--color-stone-700);
+  --color-line: var(--color-stone-800);
+  --color-ink: var(--color-brown-300);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-stone-900);
+  --color-skeleton-sheen: var(--color-stone-800);
+}

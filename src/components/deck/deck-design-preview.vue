@@ -47,7 +47,7 @@ function cycleSide() {
       :card_attributes="card_attributes"
       :cover_editing="cover_editing"
       :cover_image="cover_image"
-      face_classes="border-t border-l border-below"
+      face_classes="border-t border-l border-well"
       @click="cycleSide"
     />
   </div>

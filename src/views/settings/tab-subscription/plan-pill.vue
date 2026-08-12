@@ -46,7 +46,7 @@ defineSlots<{
             <span
               v-if="status"
               data-testid="plan-pill__status"
-              class="rounded-2 bg-brown-100 px-2 py-0.5 text-(--color-accent)"
+              class="rounded-2 bg-brown-100 px-2 py-0.5 text-(--color-accent-text)"
             >
               {{ status }}
             </span>

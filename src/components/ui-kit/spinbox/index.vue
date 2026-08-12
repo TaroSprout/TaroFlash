@@ -88,7 +88,7 @@ function increment() {
 
     <div
       data-testid="ui-kit-spinbox"
-      class="inline-flex items-center bg-below rounded-4 p-1 gap-0.5"
+      class="inline-flex items-center bg-well rounded-4 p-1 gap-0.5"
     >
       <spinbox-button
         data-testid="ui-kit-spinbox__decrement"

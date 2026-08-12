@@ -56,7 +56,7 @@ const { t } = useI18n()
         v-if="submitError"
         data-testid="forgot-password-modal__error"
         data-palette="danger"
-        class="text-base text-(--color-accent) text-center"
+        class="text-base text-(--color-accent-text) text-center"
       >
         {{ submitError }}
       </p>

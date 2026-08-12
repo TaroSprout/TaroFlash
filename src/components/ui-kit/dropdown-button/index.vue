@@ -16,7 +16,6 @@ import UiButton, { type ButtonProps } from '../button.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import DropdownCaret from './caret.vue'
 import DropdownMenu from './menu.vue'
-import { useAmbientDepth } from '@/composables/ui/depth'
 import { emitSfx } from '@/sfx/bus'
 import type { DropdownOption } from './types'
 
@@ -40,9 +39,6 @@ type DropdownButtonProps = Pick<
   openOnTrigger?: boolean
   hideTrigger?: boolean
   shadow?: boolean
-  // Paints the menu as a floating surface rather than matching the trigger's own
-  // colour. For a trigger on a raised surface whose menu opens out over the page.
-  floatMenu?: boolean
   // Renders only the trigger button, with no primary-action label beside it.
   triggerOnly?: boolean
   // Disables the primary action only — the caret stays live so the menu can
@@ -74,7 +70,6 @@ const {
   openOnTrigger = false,
   hideTrigger = false,
   shadow = false,
-  floatMenu = false,
   triggerOnly = false,
   primaryDisabled = false,
   disabled = false
@@ -91,7 +86,6 @@ const slots = defineSlots<{
 }>()
 
 const attrs = useAttrs()
-const ambient_depth = useAmbientDepth()
 
 const popover_open = ref(false)
 
@@ -119,11 +113,11 @@ const button_attrs = computed(() =>
 // open the menu — otherwise the caret is the only trigger.
 const show_trigger = computed(() => !hideTrigger || !openOnTrigger)
 
-// Ghost/outline variants get an explicit fill while open, matching the menu's
-// background, so the two read as one surface; solid already fills.
+// Ghost/outline variants get an explicit fill while the menu is open, so the
+// trigger stays visible as the pressed thing; solid already fills.
 const trigger_style = computed(() => {
   if (variant === 'solid' || !popover_open.value) return undefined
-  return { '--btn-bg-color': 'var(--color-element)', '--btn-text-color': 'var(--color-on-element)' }
+  return { '--btn-bg-color': 'var(--color-raised)', '--btn-text-color': 'var(--color-ink)' }
 })
 
 function filter_attrs(keep: (key: string) => boolean) {
@@ -249,13 +243,7 @@ function onMenuSelect(option: DropdownOption) {
       </ui-button>
     </template>
 
-    <dropdown-menu
-      :options="options"
-      :size="size"
-      :depth="ambient_depth"
-      :float="floatMenu"
-      @select="onMenuSelect"
-    >
+    <dropdown-menu :options="options" :size="size" @select="onMenuSelect">
       <template v-if="$slots.panel" #default>
         <slot name="panel" :close="close" />
       </template>

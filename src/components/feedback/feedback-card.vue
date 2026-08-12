@@ -31,7 +31,7 @@ async function onToggleVote() {
 </script>
 
 <template>
-  <div data-testid="feedback-card" class="bg-element rounded-8 flex w-full items-start gap-4 p-6">
+  <div data-testid="feedback-card" class="bg-raised rounded-8 flex w-full items-start gap-4 p-6">
     <div
       data-testid="feedback-card__avatar"
       class="bg-mat rounded-full size-14 p-1 shrink-0 overflow-hidden"
@@ -46,7 +46,7 @@ async function onToggleVote() {
           v-if="item.member_display_name"
           data-testid="feedback-card__author"
           data-palette="info"
-          class="text-(--color-accent) truncate text-base"
+          class="text-(--color-accent-text) truncate text-base"
           :title="item.member_display_name"
         >
           {{ item.member_display_name }}
@@ -62,8 +62,8 @@ async function onToggleVote() {
         :aria-label="t('feedback-board.card.vote-button')"
         :disabled="toggleVote.isLoading.value"
         data-palette="pink"
-        class="flex cursor-pointer items-center justify-center duration-100 disabled:opacity-50 hover:scale-110 hover:rotate-5"
-        :class="item.voted_by_me ? 'text-(--color-accent)' : 'text-ink-muted'"
+        class="flex cursor-pointer items-center justify-center duration-100 disabled:opacity-disabled hover:scale-110 hover:rotate-5"
+        :class="item.voted_by_me ? 'text-(--color-accent-text)' : 'text-ink-muted'"
         v-sfx="{ hover: TYPE_SFX }"
         @click="onToggleVote"
       >

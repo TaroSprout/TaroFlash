@@ -28,7 +28,7 @@ const bindings = computed(() => {
     :class="[
       decoded
         ? 'card-cover--image'
-        : 'bg-(--color-accent) text-(--color-on-accent) not-[[data-palette]]:bg-element not-[[data-palette]]:text-on-element',
+        : 'bg-(--color-accent) text-(--color-on-accent) not-[[data-palette]]:bg-raised not-[[data-palette]]:text-ink',
       has_image && !decoded && 'shimmer'
     ]"
     :data-loading="(has_image && !decoded) || undefined"
@@ -65,12 +65,12 @@ const bindings = computed(() => {
 }
 
 /* No palette → neutral cover: the border and icon step off the accent onto the
-   `element` chrome roles, matching the neutral fill above. */
+   raised chrome roles, matching the neutral fill above. */
 .card-cover:not([data-palette]) {
-  border-color: var(--color-element);
+  border-color: var(--color-raised);
 }
 .card-cover:not([data-palette]) .card-cover__icon {
-  color: var(--color-on-element);
+  color: var(--color-ink);
 }
 
 /* Applied only once the image decodes; before that the neutral skeleton chrome
@@ -78,7 +78,7 @@ const bindings = computed(() => {
 .card-cover--image {
   overflow: hidden;
   border: none;
-  background-color: var(--color-element);
+  background-color: var(--color-raised);
 }
 
 .card-cover__image {

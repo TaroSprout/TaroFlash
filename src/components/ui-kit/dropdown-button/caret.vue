@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { nextDepth, useAmbientDepth } from '@/composables/ui/depth'
 import { type ButtonProps } from '../button.vue'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
 import { TYPE_SFX } from '@/sfx/config'
@@ -11,8 +10,8 @@ type DropdownCaretProps = {
   icon?: string
   size?: NonNullable<ButtonProps['size']>
   disabled?: boolean
-  // A neutral caret rings itself in the `element` role; otherwise it reads
-  // `--color-accent`, inherited from the identity button it sits inside.
+  // A neutral caret fills with the darker companion of the button beside it;
+  // otherwise it rings itself in `--color-accent`, inherited from that button.
   neutral?: boolean
 }
 
@@ -28,8 +27,6 @@ const emit = defineEmits<{
   (e: 'toggle'): void
 }>()
 
-const ambient_depth = useAmbientDepth()
-
 // Own inset scale, distinct from --btn-padding-y (a button's label padding) —
 // this is the caret's circular hit-area inset, so it gets its own token.
 const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -39,10 +36,6 @@ const TRIGGER_PADDING: Record<NonNullable<ButtonProps['size']>, string> = {
   xl: '8px'
 }
 const trigger_padding = computed(() => TRIGGER_PADDING[size])
-
-// Only an identity caret uses this — it sits one depth surface above its
-// button to carry the stepped accent ring; a neutral caret ignores depth.
-const depth = computed(() => nextDepth(ambient_depth.value))
 
 function onEnter(el: Element, done: () => void) {
   flipEnter(el, 'x', done)
@@ -72,13 +65,12 @@ function onLeave(el: Element, done: () => void) {
         :aria-expanded="open"
         :aria-disabled="disabled || undefined"
         :data-active="open"
-        :data-depth="neutral ? undefined : depth"
         class="relative z-1 flex aspect-square h-full items-center justify-center rounded-[calc(var(--btn-border-radius)-var(--btn-trigger-padding))] pointer-coarse:rounded-(--btn-border-radius) transition-[scale] duration-120 ease-[ease]"
         :class="[
-          disabled ? 'opacity-50' : 'cursor-pointer hover:scale-110',
+          disabled ? 'opacity-disabled' : 'cursor-pointer hover:scale-110',
           neutral
-            ? 'bg-(--color-element-soft) text-(--color-on-element)'
-            : 'bg-surface text-ink shadow-[inset_0_0_0_1px_var(--color-accent)]'
+            ? 'bg-raised-shade text-ink'
+            : 'bg-raised-tint text-ink shadow-[inset_0_0_0_1px_var(--color-accent)]'
         ]"
         data-testid="dropdown-button__trigger"
         v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
