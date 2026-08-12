@@ -9,8 +9,8 @@ it wrong. Fix the artifact, then dispatch the fix for whatever produced it.
 ## Triggers
 
 - **A correction.** The loud ones are obvious ("no, don't…", "we don't do it that way", a PR review
-  comment); the quiet ones matter more — the user reverts your edit, rewrites your code by hand, or
-  you make the same fix a second time.
+  comment); the quiet ones matter more — the user reverts your edit, rewrites your code by hand, you
+  make the same fix twice, or a multi-turn conversation where they explain until it lands.
 - **Work that crossed the domain line.** A new or altered invariant, a retired concept, a hazard the
   change just exposed — the recorded truth is now wrong.
   [`corpus-authoring`](./corpus-authoring.md) owns that gate; almost always nothing crossed.
@@ -24,7 +24,7 @@ Corrections only — a domain-line change goes straight to dispatch. Three gates
 survives all three is a real gap.
 
 1. **Standing, or instance?** Restate it as a rule true on the _next_ task. "The count should be 5"
-   doesn't generalize — fix it and stop.
+   doesn't generalize — fix it and stop. Lean toward standing on ambiguity; "every time" is one cue.
 2. **Execution, or spec?** If the _brief_ (ticket, AC, your own plan the user approved) was wrong,
    that's an upstream miss — say so, fix the work, don't rewrite code rules for it.
 3. **Already enforced by a check?** A lint rule, a type, a hook or CI already fails the diff — prose
