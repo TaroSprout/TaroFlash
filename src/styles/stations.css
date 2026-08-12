@@ -1,43 +1,5 @@
-/* Surface stations — the third dial of the theming system, beside `data-mode`
- * (light|dark) and `data-palette` (the member's colour).
- *
- * A surface says WHAT KIND of surface it is via `data-station`, and everything
- * resting on it reads the ten neutral roles below off that answer. There are
- * four kinds and no arithmetic between them:
- *
- *   page    the app background behind everything
- *   panel   a structural band or column inside the page — sidebars, sections
- *   window  app-window, paged-window, dialog-card, mobile sheets
- *   float   menus, popovers, tooltips, toasts — chrome that floats over anything
- *
- * Every station authors all ten roles for both modes by hand. Nothing is
- * derived, so a station can be retuned on its own without moving the others.
- *
- * Components name the ROLE they fill (bg-surface, text-ink, border-line), never
- * the colour and never a station.
- *
- *   surface         the station's own fill
- *   well            a recess cut into it — inputs, tracks, list wells
- *   raised          a neutral thing resting on it — buttons, chips, tiles
- *   raised-tint     the lighter companion in a two-tone control
- *   raised-shade    the darker companion
- *   line            dividers, hairlines, seams
- *   ink             body text
- *   ink-muted       secondary text
- *   skeleton        loading placeholder bars
- *   skeleton-sheen  the highlight sweeping across them
- *
- * The `page` light rendition is declared in the `@theme` block of main.css —
- * that is what registers these as Tailwind colour utilities — so unattributed
- * content already reads as `page`. This file adds the dark renditions and the
- * three other stations.
- *
- * Both the descendant and the self form of each dark selector are listed so a
- * station resolves whether `data-station` sits on a child of the moded root or
- * on the root itself.
- */
-
-/* ─── ROLES OUTSIDE THE STATIONS ────────────────────────────────────── */
+/* The neutral roles for each `data-station`, hand-authored per station with nothing derived
+ * between them →[K:surface-stations-hand-authored]. */
 
 :root {
   --shadow-color: rgba(0, 0, 0, 0.25);
@@ -63,8 +25,6 @@
   --color-on-card: var(--color-brown-100);
   --color-mat: var(--color-stone-900);
 }
-
-/* ─── PAGE ──────────────────────────────────────────────────────────── */
 
 /* Light lives in main.css @theme, so unattributed content behaves as `page`. */
 [data-station='page'] {
@@ -95,8 +55,6 @@
   --color-skeleton-sheen: var(--color-stone-800);
 }
 
-/* ─── PANEL ─────────────────────────────────────────────────────────── */
-
 [data-station='panel'] {
   --color-surface: var(--color-brown-200);
   --color-well: var(--color-brown-50);
@@ -124,8 +82,6 @@
   --color-skeleton-sheen: var(--color-grey-800);
 }
 
-/* ─── WINDOW ────────────────────────────────────────────────────────── */
-
 [data-station='window'] {
   --color-surface: var(--color-brown-300);
   --color-well: var(--color-brown-100);
@@ -152,8 +108,6 @@
   --color-skeleton: var(--color-stone-900);
   --color-skeleton-sheen: var(--color-stone-800);
 }
-
-/* ─── FLOAT ─────────────────────────────────────────────────────────── */
 
 [data-station='float'] {
   --color-surface: var(--color-brown-50);
