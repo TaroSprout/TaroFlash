@@ -52,7 +52,7 @@ function onPatternSelect(p: DeckCoverPattern | undefined) {
           v-if="pattern === selected_pattern"
           class="absolute -top-2 -right-2 bg-white p-1.5 size-6.5 rounded-full flex items-center justify-center"
         >
-          <ui-icon src="check" class="text-(--color-accent)" />
+          <ui-icon src="check" class="text-(--color-accent-text)" />
         </div>
       </button>
     </div>

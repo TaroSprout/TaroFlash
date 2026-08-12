@@ -53,7 +53,7 @@ const invoices = computed(() => invoices_query.data.value?.invoices ?? [])
           target="_blank"
           rel="noopener noreferrer"
           data-palette="info"
-          class="text-sm text-(--color-accent) hover:underline"
+          class="text-sm text-(--color-accent-text) hover:underline"
         >
           {{ t('settings.subscription.invoices.view') }}
         </a>

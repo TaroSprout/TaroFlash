@@ -24,7 +24,7 @@ function onChange() {
     :data-active="checked"
     :data-disabled="disabled"
     class="group/toggle flex items-center justify-between gap-2"
-    :class="disabled ? 'pointer-events-none opacity-50' : 'cursor-pointer'"
+    :class="disabled ? 'pointer-events-none opacity-disabled' : 'cursor-pointer'"
     v-sfx="silent ? {} : { hover: TYPE_SFX }"
   >
     <span data-testid="ui-kit-toggle__label" class="text-ink">

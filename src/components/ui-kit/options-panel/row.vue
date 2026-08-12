@@ -49,11 +49,11 @@ function onSelect() {
     :data-palette="entry.danger ? 'danger' : entry.selected ? entry.selectedPalette : undefined"
     class="text-left flex items-center gap-3 py-3 px-5 [&:first-child:not(:only-child)]:pt-5 [&:first-child:not(:only-child)]:pb-2.5 [&:last-child:not(:only-child)]:pb-5 [&:last-child:not(:only-child)]:pt-2.5 rounded-3"
     :class="[
-      'text-ink [&[data-palette]]:text-(--color-accent) [&[data-palette][data-active=true]]:text-(--color-on-accent)',
+      'text-ink [&[data-palette]]:text-(--color-accent-text) [&[data-palette][data-active=true]]:text-(--color-on-accent)',
       interactive ? 'cursor-pointer' : '',
-      entry.disabled ? 'pointer-events-none opacity-20' : '',
+      entry.disabled ? 'pointer-events-none opacity-disabled' : '',
       interactive &&
-        'data-[active=true]:bg-raised [&[data-palette][data-active=true]]:bg-(--color-accent) [&[data-palette][data-active=true]]:[--color-raised-pattern:var(--color-accent-pattern)]'
+        'data-[active=true]:bg-raised-tint [&[data-palette][data-active=true]]:bg-(--color-accent) [&[data-palette][data-active=true]]:[--color-raised-pattern:var(--color-accent-pattern)]'
     ]"
     :bgx_color="interactive ? 'var(--color-raised-pattern)' : undefined"
     @tap="onSelect"

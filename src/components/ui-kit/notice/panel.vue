@@ -93,7 +93,7 @@ function onActionClick(action: NoticeAction) {
       </ui-button>
 
       <div class="flex flex-col items-center gap-4">
-        <ui-icon :src="NOTICE_ICON[notice.state]" class="size-12 text-(--color-accent)" />
+        <ui-icon :src="NOTICE_ICON[notice.state]" class="size-12 text-(--color-accent-text)" />
 
         <div data-testid="ui-kit-notice-panel__body" class="flex flex-col gap-2">
           <p class="text-ink text-xl">{{ notice.message }}</p>

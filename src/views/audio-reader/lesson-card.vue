@@ -89,7 +89,7 @@ const error_label = computed(
         v-else-if="is_processing"
         data-testid="lesson-card__status"
         data-palette="info"
-        class="text-base text-(--color-accent)"
+        class="text-base text-(--color-accent-text)"
       >
         {{ t(processing_label) }}
       </span>
@@ -98,7 +98,7 @@ const error_label = computed(
         v-else
         data-testid="lesson-card__status"
         data-palette="danger"
-        class="text-base text-(--color-accent)"
+        class="text-base text-(--color-accent-text)"
       >
         {{ t(error_label) }}
       </span>

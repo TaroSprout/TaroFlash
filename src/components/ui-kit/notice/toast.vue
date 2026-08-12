@@ -56,7 +56,7 @@ function onActionClick(action: NoticeAction) {
   >
     <ui-icon
       :src="NOTICE_ICON[notice.state]"
-      class="size-7.5 place-self-center text-(--color-accent)"
+      class="size-7.5 place-self-center text-(--color-accent-text)"
     />
 
     <div data-testid="ui-kit-notice-toast__body" class="flex flex-1 flex-col">

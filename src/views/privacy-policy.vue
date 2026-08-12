@@ -110,7 +110,7 @@ const { t } = useI18n()
       <a
         href="mailto:support@taro-flash.com"
         data-palette="info"
-        class="text-(--color-accent) hover:text-(--color-accent-muted) underline"
+        class="text-(--color-accent-text) hover:text-(--color-accent-muted) underline"
       >
         {{ t('privacy-policy.section-8.email') }}
       </a>

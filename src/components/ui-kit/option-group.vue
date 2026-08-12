@@ -43,7 +43,7 @@ function onTap(option: UiOptionGroupProps<T>['options'][number]) {
       :data-active="option.value === active"
       bgx_color="var(--color-raised-pattern)"
       :class="[
-        'whitespace-nowrap text-ink-muted enabled:cursor-pointer disabled:opacity-50 data-[active=false]:enabled:hover:bg-raised-shade data-[active=false]:enabled:hover:text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)',
+        'whitespace-nowrap text-ink-muted enabled:cursor-pointer disabled:opacity-disabled data-[active=false]:enabled:hover:bg-raised-tint data-[active=false]:enabled:hover:text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)',
         size === 'base' ? 'py-2 px-4 text-base rounded-3' : 'py-1.5 px-3.5 text-sm rounded-2',
         full_width && 'flex-1 justify-center'
       ]"

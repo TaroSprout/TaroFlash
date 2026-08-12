@@ -79,7 +79,7 @@ function onSelect(option: DropdownOption) {
     :options="deck_options"
     :primary-disabled="already_a_card"
     :aria-disabled="disabled || undefined"
-    :class="{ 'pointer-events-none opacity-50': disabled }"
+    :class="{ 'pointer-events-none opacity-disabled': disabled }"
     @click="onPrimary"
     @select="onSelect"
   >
