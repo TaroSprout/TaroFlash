@@ -20,8 +20,8 @@ const HEADER = `/* GENERATED FILE — DO NOT EDIT.
  * Regenerate: pnpm gen:palette-css
  *
  * Accent roles owned by \`data-palette\`. They are disjoint from the neutral
- * roles owned by \`data-depth\` (src/styles/depth.css), so the two axes compose
- * without precedence rules.
+ * roles owned by \`data-station\` (src/styles/stations.css), so the two axes
+ * compose without precedence rules.
  *
  * Each palette emits two blocks: the light rendition, and a dark rendition
  * scoped under \`data-mode='dark'\`. Both the descendant and the self form of the
@@ -50,12 +50,13 @@ function block(prefixes: string[], palette: string, rendition: PaletteRendition)
 
   // --color-accent-pattern is emitted ONLY when a palette pins its own bgx tint;
   // otherwise it falls through to the blanket defaults (brown-100 light in
-  // main.css @theme, stone-700 dark in depth.css), exactly like --color-accent.
+  // main.css @theme, brown-300 dark in stations.css), like --color-accent.
   const lines = [
     `${selector} {`,
     `  --color-accent: var(--color-${rendition.accent});`,
     `  --color-accent-muted: var(--color-${rendition.accentMuted});`,
-    `  --color-on-accent: var(--color-${rendition.onAccent});`
+    `  --color-on-accent: var(--color-${rendition.onAccent});`,
+    `  --color-accent-text: var(--color-${rendition.accentText});`
   ]
   if (rendition.pattern) {
     lines.push(`  --color-accent-pattern: var(--color-${rendition.pattern});`)

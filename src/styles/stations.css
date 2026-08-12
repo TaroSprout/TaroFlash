@@ -1,0 +1,183 @@
+/* Surface stations — the third dial of the theming system, beside `data-mode`
+ * (light|dark) and `data-palette` (the member's colour).
+ *
+ * A surface says WHAT KIND of surface it is via `data-station`, and everything
+ * resting on it reads the ten neutral roles below off that answer. There are
+ * four kinds and no arithmetic between them:
+ *
+ *   page    the app background behind everything
+ *   panel   a structural band or column inside the page — sidebars, sections
+ *   window  app-window, paged-window, dialog-card, mobile sheets
+ *   float   menus, popovers, tooltips, toasts — chrome that floats over anything
+ *
+ * Every station authors all ten roles for both modes by hand. Nothing is
+ * derived, so a station can be retuned on its own without moving the others.
+ *
+ * Components name the ROLE they fill (bg-surface, text-ink, border-line), never
+ * the colour and never a station.
+ *
+ *   surface         the station's own fill
+ *   well            a recess cut into it — inputs, tracks, list wells
+ *   raised          a neutral thing resting on it — buttons, chips, tiles
+ *   raised-tint     the lighter companion in a two-tone control
+ *   raised-shade    the darker companion
+ *   line            dividers, hairlines, seams
+ *   ink             body text
+ *   ink-muted       secondary text
+ *   skeleton        loading placeholder bars
+ *   skeleton-sheen  the highlight sweeping across them
+ *
+ * The `page` light rendition is declared in the `@theme` block of main.css —
+ * that is what registers these as Tailwind colour utilities — so unattributed
+ * content already reads as `page`. This file adds the dark renditions and the
+ * three other stations.
+ *
+ * Both the descendant and the self form of each dark selector are listed so a
+ * station resolves whether `data-station` sits on a child of the moded root or
+ * on the root itself.
+ */
+
+/* ─── ROLES OUTSIDE THE STATIONS ────────────────────────────────────── */
+
+:root {
+  --shadow-color: rgba(0, 0, 0, 0.25);
+}
+
+:root[data-mode='dark'] {
+  --shadow-color: rgba(0, 0, 0, 1);
+
+  /* Default accent (no data-palette) is the blue identity — mirror its dark
+     rendition so an un-palette'd accent reads blue-650 in dark, not the light
+     blue-500 the @theme base declares. Identity call sites override via
+     data-palette; this is only the fallback. */
+  --color-accent: var(--color-blue-650);
+  --color-accent-muted: var(--color-blue-500);
+  --color-accent-text: var(--color-blue-500);
+  --color-accent-pattern: var(--color-brown-300);
+
+  /* The pattern goes the OTHER way in dark: a lighter warm tint over the dark
+     neutral, so the texture still reads. */
+  --color-raised-pattern: var(--color-brown-300);
+
+  --color-card: var(--color-stone-700);
+  --color-on-card: var(--color-brown-100);
+  --color-mat: var(--color-stone-900);
+}
+
+/* ─── PAGE ──────────────────────────────────────────────────────────── */
+
+/* Light lives in main.css @theme, so unattributed content behaves as `page`. */
+[data-station='page'] {
+  --color-surface: var(--color-brown-100);
+  --color-well: var(--color-white);
+  --color-raised: var(--color-brown-300);
+  --color-raised-tint: var(--color-brown-200);
+  --color-raised-shade: var(--color-brown-400);
+  --color-line: var(--color-brown-300);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-300);
+  --color-skeleton-sheen: var(--color-brown-50);
+}
+
+:root[data-mode='dark'],
+[data-mode='dark'] [data-station='page'],
+[data-mode='dark'][data-station='page'] {
+  --color-surface: var(--color-grey-900);
+  --color-well: var(--color-stone-800);
+  --color-raised: var(--color-stone-700);
+  --color-raised-tint: var(--color-stone-800);
+  --color-raised-shade: var(--color-stone-650);
+  --color-line: var(--color-grey-700);
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-stone-850);
+  --color-skeleton-sheen: var(--color-stone-800);
+}
+
+/* ─── PANEL ─────────────────────────────────────────────────────────── */
+
+[data-station='panel'] {
+  --color-surface: var(--color-brown-200);
+  --color-well: var(--color-brown-50);
+  --color-raised: var(--color-brown-100);
+  --color-raised-tint: var(--color-brown-50);
+  --color-raised-shade: var(--color-brown-300);
+  --color-line: var(--color-brown-400);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-300);
+  --color-skeleton-sheen: var(--color-brown-50);
+}
+
+[data-mode='dark'] [data-station='panel'],
+[data-mode='dark'][data-station='panel'] {
+  --color-surface: var(--color-grey-850);
+  --color-well: var(--color-grey-900);
+  --color-raised: var(--color-stone-800);
+  --color-raised-tint: var(--color-grey-900);
+  --color-raised-shade: var(--color-stone-700);
+  --color-line: var(--color-black);
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-grey-900);
+  --color-skeleton-sheen: var(--color-grey-800);
+}
+
+/* ─── WINDOW ────────────────────────────────────────────────────────── */
+
+[data-station='window'] {
+  --color-surface: var(--color-brown-300);
+  --color-well: var(--color-brown-100);
+  --color-raised: var(--color-brown-100);
+  --color-raised-tint: var(--color-brown-50);
+  --color-raised-shade: var(--color-brown-200);
+  --color-line: var(--color-brown-400);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-200);
+  --color-skeleton-sheen: var(--color-brown-100);
+}
+
+[data-mode='dark'] [data-station='window'],
+[data-mode='dark'][data-station='window'] {
+  --color-surface: var(--color-grey-800);
+  --color-well: var(--color-grey-900);
+  --color-raised: var(--color-stone-700);
+  --color-raised-tint: var(--color-stone-850);
+  --color-raised-shade: var(--color-stone-650);
+  --color-line: var(--color-grey-900);
+  --color-ink: var(--color-brown-100);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-stone-900);
+  --color-skeleton-sheen: var(--color-stone-800);
+}
+
+/* ─── FLOAT ─────────────────────────────────────────────────────────── */
+
+[data-station='float'] {
+  --color-surface: var(--color-brown-50);
+  --color-well: var(--color-brown-200);
+  --color-raised: var(--color-brown-300);
+  --color-raised-tint: var(--color-brown-200);
+  --color-raised-shade: var(--color-brown-400);
+  --color-line: var(--color-brown-300);
+  --color-ink: var(--color-brown-700);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-brown-200);
+  --color-skeleton-sheen: var(--color-brown-50);
+}
+
+[data-mode='dark'] [data-station='float'],
+[data-mode='dark'][data-station='float'] {
+  --color-surface: var(--color-black);
+  --color-well: var(--color-stone-850);
+  --color-raised: var(--color-stone-800);
+  --color-raised-tint: var(--color-stone-850);
+  --color-raised-shade: var(--color-stone-700);
+  --color-line: var(--color-stone-800);
+  --color-ink: var(--color-brown-300);
+  --color-ink-muted: var(--color-brown-500);
+  --color-skeleton: var(--color-stone-900);
+  --color-skeleton-sheen: var(--color-stone-800);
+}
