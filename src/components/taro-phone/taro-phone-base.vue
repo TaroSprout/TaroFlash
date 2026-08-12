@@ -5,7 +5,6 @@ import UiButton from '@/components/ui-kit/button.vue'
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
-
 </script>
 
 <template>

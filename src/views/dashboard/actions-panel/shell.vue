@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 type DashboardActionsPanelShellProps = {
   body_class?: string
 }

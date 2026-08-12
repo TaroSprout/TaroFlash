@@ -6,7 +6,6 @@ const emit = defineEmits<{
 }>()
 
 const store = useTaroPhoneStore()
-
 </script>
 
 <template>

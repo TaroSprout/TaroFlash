@@ -26,7 +26,6 @@ const emit = defineEmits<{ 'edit-avatar': [] }>()
 const created_on = computed(() => formatShortDate(createdAt, locale.value))
 
 const body_bindings = computed(() => memberCoverBindings(cover))
-
 </script>
 
 <template>

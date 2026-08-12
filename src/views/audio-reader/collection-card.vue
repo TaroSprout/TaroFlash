@@ -12,7 +12,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
 </script>
 
 <template>
