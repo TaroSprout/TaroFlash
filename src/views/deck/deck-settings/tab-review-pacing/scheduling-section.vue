@@ -6,7 +6,6 @@ import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import FieldRow from './field-row.vue'
 import AdvancedReveal from './advanced-reveal.vue'
 import { pacingFieldsKey } from './use-pacing-fields'
-import { provideDepth } from '@/composables/ui/depth'
 import {
   DESIRED_RETENTION_BOUNDS,
   LEECH_THRESHOLD_BOUNDS,
@@ -14,10 +13,6 @@ import {
 } from '@/utils/review-pacing/defaults'
 
 const { t } = useI18n()
-
-// This panel lifts one elevation off the depth-1 window, so its wells resolve
-// `below` a step darker than the panel instead of the window's lighter one.
-provideDepth(2)
 
 const {
   fields: { desired_retention, leech_threshold, max_interval, learning_steps, relearning_steps }

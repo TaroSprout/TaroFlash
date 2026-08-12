@@ -174,7 +174,11 @@ function onDirectoryNavigate(value: string) {
     </template>
 
     <template v-if="has_sidebar" #sidebar>
-      <div data-testid="paged-window__sidebar" class="flex flex-col gap-10 p-4.5 shrink-0 bg-panel">
+      <div
+        data-testid="paged-window__sidebar"
+        data-station="panel"
+        class="flex flex-col gap-10 p-4.5 shrink-0 bg-surface"
+      >
         <ui-button
           data-testid="paged-window__close-button"
           icon-left="close"

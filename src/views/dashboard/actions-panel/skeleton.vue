@@ -11,7 +11,8 @@ import DashboardActionsPanelShell from './shell.vue'
     <template #polaroid>
       <div
         data-testid="dashboard-actions-panel-skeleton__polaroid"
-        class="absolute top-1 -left-1 z-10 -rotate-12 select-none bg-float rounded-2 w-30 p-2 pb-6"
+        data-station="float"
+        class="absolute top-1 -left-1 z-10 -rotate-12 select-none bg-surface rounded-2 w-30 p-2 pb-6"
       >
         <div class="bg-element rounded-1 aspect-square"></div>
       </div>

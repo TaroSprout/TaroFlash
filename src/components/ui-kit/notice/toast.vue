@@ -51,7 +51,8 @@ function onActionClick(action: NoticeAction) {
     ref="root_ref"
     data-testid="ui-kit-notice-toast"
     :data-palette="NOTICE_PALETTE[notice.state]"
-    class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-float p-4 text-ink bevel-drop-sm"
+    data-station="float"
+    class="group/notice-toast relative rounded-4 pointer-events-auto grid grid-cols-[auto_1fr] items-center w-full xs:w-72 gap-x-4 gap-y-3 bg-surface p-4 text-ink bevel-drop-sm"
   >
     <ui-icon
       :src="NOTICE_ICON[notice.state]"

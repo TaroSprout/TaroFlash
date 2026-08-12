@@ -11,7 +11,8 @@ const { tip } = useTipRotation()
 <template>
   <div
     data-testid="dashboard-tip-card"
-    class="mt-6 h-47.5 w-full rounded-4 relative hidden md:flex flex-col items-center justify-center gap-2 bg-float px-10 text-center"
+    data-station="float"
+    class="mt-6 h-47.5 w-full rounded-4 relative hidden md:flex flex-col items-center justify-center gap-2 bg-surface px-10 text-center"
   >
     <ui-tape
       data-testid="dashboard-tip-card__tape"

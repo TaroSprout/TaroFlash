@@ -75,7 +75,8 @@ function onActionClick(action: NoticeAction) {
       ref="panel_ref"
       data-testid="ui-kit-notice-panel"
       :data-palette="NOTICE_PALETTE[notice.state]"
-      class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-float p-12 text-center"
+      data-station="float"
+      class="group/notice-panel rounded-4 bevel-drop-sm pointer-events-auto relative flex w-96 max-w-full flex-col items-center gap-6 bg-surface p-12 text-center"
     >
       <ui-button
         neutral
