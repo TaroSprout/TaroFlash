@@ -21,7 +21,7 @@ function onSettingsClicked() {
         data-testid="deck-hero__settings-button"
         data-palette="blue"
         icon-left="build"
-        class="absolute! -top-2.5 -left-2.5 ring-4 ring-element"
+        class="absolute! -top-2.5 -left-2.5 ring-4 ring-raised"
         icon-only
       >
         {{ t('deck.settings-modal.title') }}

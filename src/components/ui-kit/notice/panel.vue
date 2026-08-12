@@ -82,7 +82,7 @@ function onActionClick(action: NoticeAction) {
         neutral
         v-if="notice.closable"
         data-testid="ui-kit-notice-panel__close"
-        class="absolute! -top-2 -right-2 [--btn-bg-color:var(--color-below)]! opacity-0 transition-opacity group-hover/notice-panel:opacity-100 group-focus-within/notice-panel:opacity-100 pointer-coarse:opacity-100"
+        class="absolute! -top-2 -right-2 [--btn-bg-color:var(--color-well)]! opacity-0 transition-opacity group-hover/notice-panel:opacity-100 group-focus-within/notice-panel:opacity-100 pointer-coarse:opacity-100"
         icon-only
         size="lg"
         icon-left="close"

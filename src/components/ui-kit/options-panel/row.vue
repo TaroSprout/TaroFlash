@@ -53,9 +53,9 @@ function onSelect() {
       interactive ? 'cursor-pointer' : '',
       entry.disabled ? 'pointer-events-none opacity-20' : '',
       interactive &&
-        'data-[active=true]:bg-element [&[data-palette][data-active=true]]:bg-(--color-accent) [&[data-palette][data-active=true]]:[--color-element-pattern:var(--color-accent-pattern)]'
+        'data-[active=true]:bg-raised [&[data-palette][data-active=true]]:bg-(--color-accent) [&[data-palette][data-active=true]]:[--color-raised-pattern:var(--color-accent-pattern)]'
     ]"
-    :bgx_color="interactive ? 'var(--color-element-pattern)' : undefined"
+    :bgx_color="interactive ? 'var(--color-raised-pattern)' : undefined"
     @tap="onSelect"
   >
     <slot name="leading" :entry="entry">

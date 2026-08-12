@@ -33,7 +33,7 @@ function onChange() {
 
     <span
       data-testid="ui-kit-toggle__switch"
-      class="flex w-12 items-center rounded-full p-1 transition-[background-color,box-shadow] bg-below has-checked:bg-(--color-accent) group-hover/toggle:ring-2 group-hover/toggle:ring-below has-checked:group-hover/toggle:ring-(--color-accent)"
+      class="flex w-12 items-center rounded-full p-1 transition-[background-color,box-shadow] bg-well has-checked:bg-(--color-accent) group-hover/toggle:ring-2 group-hover/toggle:ring-well has-checked:group-hover/toggle:ring-(--color-accent)"
     >
       <input
         type="checkbox"

@@ -33,7 +33,7 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
               <div
                 v-for="n in 3"
                 :key="n"
-                class="h-6 w-20 bg-element rounded-2 animate-pulse"
+                class="h-6 w-20 bg-skeleton rounded-2 animate-pulse"
               ></div>
             </div>
           </template>

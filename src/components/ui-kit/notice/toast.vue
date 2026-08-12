@@ -87,7 +87,7 @@ function onActionClick(action: NoticeAction) {
       data-testid="ui-kit-notice-toast__close"
       icon-only
       icon-left="close"
-      class="absolute! -right-2 -top-2 [--btn-bg-color:var(--color-below)]! opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"
+      class="absolute! -right-2 -top-2 [--btn-bg-color:var(--color-well)]! opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"
       :sfx="{ press: 'snappy_button_5' }"
       @press="closeToast"
     >

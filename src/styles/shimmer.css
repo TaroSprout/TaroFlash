@@ -10,10 +10,12 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
+    /* The sheen is a station role, not white — a white sweep vanishes over a
+       pale surface in light mode. */
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.14) 50%,
+      var(--color-skeleton-sheen) 50%,
       transparent 100%
     );
     transform: translateX(-100%);

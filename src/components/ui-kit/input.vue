@@ -76,10 +76,10 @@ const value = defineModel<string>('value')
   color: var(--color-ink);
 }
 
-/* One step below whatever surface it sits on — a real depth well, not the old
-   `data-theme="brown-100"` fake that overwrote the real identity underneath. */
+/* A recess cut into whatever surface it sits on — never a hardcoded fill, which
+   would overwrite the identity underneath. */
 .ui-kit-input {
-  background-color: var(--color-below);
+  background-color: var(--color-well);
   border-radius: var(--radius-4);
   width: 100%;
   padding: 12px 16px;
@@ -123,7 +123,7 @@ const value = defineModel<string>('value')
 .ui-kit-input input::-webkit-autofill,
 .ui-kit-input input::-webkit-autofill:hover,
 .ui-kit-input input::-webkit-autofill:focus {
-  box-shadow: 0 0 0px 1000px var(--color-below) inset;
+  box-shadow: 0 0 0px 1000px var(--color-well) inset;
 }
 
 .ui-kit-input-container--text-left input {

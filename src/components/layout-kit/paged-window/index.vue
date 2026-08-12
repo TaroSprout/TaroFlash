@@ -209,7 +209,7 @@ function onDirectoryNavigate(value: string) {
               'text-left py-3 px-4 rounded-4 flex items-center gap-3 cursor-pointer data-[active=false]:hover:[&_svg]:scale-120 data-[active=false]:hover:[&_svg]:rotate-6 [&_svg]:transition-transform [&_svg]:duration-75 focus:outline-none',
               page.danger
                 ? 'text-(--color-accent) hover:bg-(--color-accent)/10 data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)'
-                : 'text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) hover:bg-(--color-element) hover:text-(--color-on-element)'
+                : 'text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) hover:bg-(--color-raised) hover:text-(--color-ink)'
             ]"
             v-sfx="page.value === displayed_page ? {} : { hover: hover_sfx }"
             @click="selectPage(page.value)"

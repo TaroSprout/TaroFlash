@@ -74,8 +74,8 @@ const mask = computed(() => {
 /* Raised neutral chip by default; only takes on a palette's colours when
    `data-palette` sits on the tag itself. →[K:theming-palette-identity] */
 .ui-kit-tag {
-  --tag-bg: var(--color-element);
-  --tag-fg: var(--color-on-element);
+  --tag-bg: var(--color-raised);
+  --tag-fg: var(--color-ink);
   background-color: var(--tag-bg);
 }
 .ui-kit-tag[data-palette] {

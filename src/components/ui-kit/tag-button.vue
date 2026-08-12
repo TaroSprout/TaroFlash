@@ -62,8 +62,8 @@ const padding = computed(() => {
 /* Element chrome by default; `[data-palette]` on the shell opts into the accent,
    so the hover silhouette and bgx sweep inherit it too. →[K:theming-palette-identity] */
 .ui-tag-button-shell {
-  --tagbtn-bg: var(--color-element);
-  --tagbtn-fg: var(--color-on-element);
+  --tagbtn-bg: var(--color-raised);
+  --tagbtn-fg: var(--color-ink);
 }
 .ui-tag-button-shell[data-palette] {
   --tagbtn-bg: var(--color-accent);

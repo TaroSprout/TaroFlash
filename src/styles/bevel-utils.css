@@ -1,8 +1,8 @@
 /* Bevels — the seam that covers the edges the cast shadow cannot reach.
  *
  * The shadow does bottom-right, the seam does top-left; together they close the
- * silhouette. The seam colour is --color-below (src/styles/depth.css): the
- * surface one step down, the same value used for well fills and cut-out rings.
+ * silhouette. The seam colour is --color-well (src/styles/stations.css): the
+ * recess the surface is cut into, the same value used for fills and cut-out rings.
  *
  * Two constraints drive the implementation:
  *
@@ -22,7 +22,7 @@
   --bevel-offset: --value(--bevel-*, [length]);
 
   box-shadow:
-    -1px -1px 0 0 var(--color-below),
+    -1px -1px 0 0 var(--color-well),
     var(--bevel-offset) var(--bevel-offset) 0 0 var(--shadow-color);
 }
 
@@ -33,7 +33,7 @@
 @utility bevel-drop-* {
   --bevel-offset: --value(--bevel-*, [length]);
 
-  filter: drop-shadow(-1px -1px 0 var(--color-below))
+  filter: drop-shadow(-1px -1px 0 var(--color-well))
     drop-shadow(var(--bevel-offset) var(--bevel-offset) 0 var(--shadow-color));
 }
 
@@ -42,6 +42,6 @@
  * the right edge instead, leaving a visible top + left + right outline. */
 @utility bevel-sheet {
   box-shadow:
-    -1px -1px 0 0 var(--color-below),
-    1px 0 0 0 var(--color-below);
+    -1px -1px 0 0 var(--color-well),
+    1px 0 0 0 var(--color-well);
 }
