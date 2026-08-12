@@ -54,4 +54,13 @@ describe('DashboardActionsPanelPolaroid', () => {
     const wrapper = mountPolaroid()
     expect(wrapper.find('button').exists()).toBe(false)
   })
+
+  test('the frame stamps the constant data-station="float" [obligation]', () => {
+    const wrapper = mountPolaroid()
+    expect(
+      wrapper
+        .find('[data-testid="dashboard-actions-panel__polaroid-frame"]')
+        .attributes('data-station')
+    ).toBe('float')
+  })
 })

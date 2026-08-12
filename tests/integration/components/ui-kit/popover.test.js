@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import { useFloating } from '@floating-ui/vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 
@@ -293,5 +293,47 @@ describe('UiPopover', () => {
     const panel = wrapper.find('[data-testid="ui-kit-popover"]')
     const style = panel.attributes('style') ?? ''
     expect(style).not.toContain('min-width')
+  })
+
+  // ── teleport restates the trigger's palette, never a depth [obligation] ────
+  // Teleporting to <body> severs DOM inheritance for data-palette, so the
+  // popover restates it explicitly on the teleported node. It no longer walks
+  // an ancestor data-depth — that concept is gone.
+
+  describe('teleported palette inheritance [obligation]', () => {
+    test('restates the trigger-ancestor data-palette on the teleported node when open [obligation]', async () => {
+      const Parent = defineComponent({
+        setup() {
+          return () =>
+            h(
+              'div',
+              { 'data-palette': 'mint' },
+              h(
+                UiPopover,
+                { teleport: true, open: true },
+                { trigger: () => h('button', 'trigger'), default: () => 'content' }
+              )
+            )
+        }
+      })
+      const wrapper = mount(Parent, { attachTo: document.body })
+      wrappers.push(wrapper)
+      await nextTick()
+
+      const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
+      expect(panel.getAttribute('data-palette')).toBe('mint')
+    })
+
+    test('the teleported node carries no data-depth attribute [obligation]', () => {
+      mountPopover({ open: true, teleport: true })
+      const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
+      expect(panel.hasAttribute('data-depth')).toBe(false)
+    })
+
+    test('non-teleported (inline) popovers get no inherited_context restated [obligation]', () => {
+      const wrapper = mountPopover({ open: true, teleport: false })
+      const panel = wrapper.find('[data-testid="ui-kit-popover"]')
+      expect(panel.attributes('data-palette')).toBeUndefined()
+    })
   })
 })

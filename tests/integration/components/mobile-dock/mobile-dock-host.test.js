@@ -82,6 +82,13 @@ describe('MobileDockHost', () => {
 
       expect(el.value?.getAttribute('data-testid')).toBe('mobile-dock-host')
     })
+
+    test('stamps the constant data-station="panel" [obligation]', () => {
+      mountHost()
+
+      const footer = document.querySelector('[data-testid="mobile-dock-host"]')
+      expect(footer.getAttribute('data-station')).toBe('panel')
+    })
   })
 
   describe('footer visibility [obligation]', () => {

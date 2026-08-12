@@ -39,6 +39,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
     class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
   >
     <div
+      data-testid="welcome-roadmap__panel"
       data-station="panel"
       class="w-full flex flex-col gap-14 items-center py-30 px-4 sm:px-16 bg-surface wave-top-[30px]"
     >

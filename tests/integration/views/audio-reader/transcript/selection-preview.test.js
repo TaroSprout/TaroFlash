@@ -72,6 +72,15 @@ describe('SelectionPreview', () => {
       wrapper.unmount()
     })
 
+    test('stamps the constant data-station="float" [obligation]', () => {
+      const wrapper = mountPreview()
+
+      const el = document.querySelector('[data-testid="selection-preview"]')
+      expect(el.getAttribute('data-station')).toBe('float')
+
+      wrapper.unmount()
+    })
+
     test('data-visible is false when preview is null', async () => {
       mountPreview({ preview: null })
 

@@ -2,7 +2,6 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
-import { provideDepth } from '@/composables/ui/depth'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -45,16 +44,15 @@ function mountWindow(props = {}, slots = {}, attrs = {}) {
   })
 }
 
-// Wraps AppWindow in a parent that provides an ambient ui/depth, so tests can
-// assert the window stamps one step above whatever surface opened it.
-// `mount`, not `shallowMount` — AppWindow is the parent's direct child, and
-// shallowMount auto-stubs direct children, which would stub the component
-// under test.
-function mountWindowAtAmbientDepth(ambient_depth, props = {}) {
+// Wraps AppWindow in a parent that itself carries a data-station, so tests
+// can assert the window's own station stays constant regardless of the
+// surface it opened over. `mount`, not `shallowMount` — AppWindow is the
+// parent's direct child, and shallowMount auto-stubs direct children, which
+// would stub the component under test.
+function mountWindowInsideStation(ambient_station, props = {}) {
   const Parent = defineComponent({
     setup() {
-      provideDepth(ambient_depth)
-      return () => h(AppWindow, props)
+      return () => h('div', { 'data-station': ambient_station }, h(AppWindow, props))
     }
   })
   return mount(Parent, { global: { stubs: { UiButton: UiButtonStub } } })
@@ -223,16 +221,22 @@ describe('AppWindow', () => {
     expect(classes).toContain('relative')
   })
 
-  // ── depth ──────────────────────────────────────────────────────────────────
+  // ── station [obligation] ──────────────────────────────────────────────────
+  // A window stamps a constant station — it never varies with whatever
+  // surface it happens to be mounted inside.
 
-  test('stamps data-depth one step above the ambient depth (0 → 1) when no ancestor provides one', () => {
+  test('stamps the constant data-station="window" with no ambient surface [obligation]', () => {
     const wrapper = mountWindow()
-    expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-depth')).toBe('1')
+    expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-station')).toBe(
+      'window'
+    )
   })
 
-  test('stamps data-depth one step above an ancestor-provided ambient depth', () => {
-    const wrapper = mountWindowAtAmbientDepth(1)
-    expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-depth')).toBe('2')
+  test('data-station="window" does not vary with a surrounding station [obligation]', () => {
+    const wrapper = mountWindowInsideStation('panel')
+    expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-station')).toBe(
+      'window'
+    )
   })
 
   // ── header_border prop ────────────────────────────────────────────────────

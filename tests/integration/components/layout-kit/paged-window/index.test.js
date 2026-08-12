@@ -152,6 +152,13 @@ describe('PagedWindow', () => {
         .find((b) => b.text().includes('Design'))
       expect(design_button.exists()).toBe(true)
     })
+
+    test('sidebar stamps data-station="panel" [obligation]', () => {
+      const wrapper = mountWindow()
+      expect(wrapper.find('[data-testid="paged-window__sidebar"]').attributes('data-station')).toBe(
+        'panel'
+      )
+    })
   })
 
   // ── nav_direction ownership [obligation] ──────────────────────────────────

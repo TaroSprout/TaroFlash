@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import { provideDepth } from '@/composables/ui/depth'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -58,13 +57,13 @@ function mountCard(props = {}, slots = {}) {
   })
 }
 
-// Wraps DialogCard in a parent that provides an ambient ui/depth, so tests
-// can assert the card stamps one step above whatever surface opened it.
-function mountCardAtAmbientDepth(ambient_depth, props = {}) {
+// Wraps DialogCard in a parent that itself carries a data-station, so tests
+// can assert the card's own station stays constant regardless of the
+// surface it opened over.
+function mountCardInsideStation(ambient_station, props = {}) {
   const Parent = defineComponent({
     setup() {
-      provideDepth(ambient_depth)
-      return () => h(DialogCard, props)
+      return () => h('div', { 'data-station': ambient_station }, h(DialogCard, props))
     }
   })
   // `mount`, not `shallowMount` — DialogCard is Parent's direct child, and
@@ -128,17 +127,19 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── ambient depth ────────────────────────────────────────────────────────────
+  // ── station [obligation] ──────────────────────────────────────────────────
+  // A dialog card stamps a constant station — it never varies with whatever
+  // surface it happens to be mounted inside.
 
-  describe('depth', () => {
-    test('stamps data-depth one step above the ambient depth (0 → 1) when no ancestor provides one', () => {
+  describe('station [obligation]', () => {
+    test('stamps the constant data-station="window" with no ambient surface [obligation]', () => {
       const wrapper = mountCard()
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-depth')).toBe('1')
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-station')).toBe('window')
     })
 
-    test('stamps data-depth one step above an ancestor-provided ambient depth', () => {
-      const wrapper = mountCardAtAmbientDepth(1)
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-depth')).toBe('2')
+    test('data-station="window" does not vary with a surrounding station [obligation]', () => {
+      const wrapper = mountCardInsideStation('panel')
+      expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-station')).toBe('window')
     })
   })
 

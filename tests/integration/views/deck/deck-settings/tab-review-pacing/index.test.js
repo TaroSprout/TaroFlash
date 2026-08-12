@@ -34,7 +34,11 @@ vi.mock('@/composables/prompt', () => ({ usePrompt: () => ({ ask: vi.fn() }) }))
 // to the tab root's own wiring (provide/inject + section layout).
 const SchedulingSectionStub = defineComponent({
   name: 'SchedulingSection',
-  setup: () => () => h('div', { 'data-testid': 'scheduling-section-stub' })
+  inheritAttrs: false,
+  setup:
+    (_props, { attrs }) =>
+    () =>
+      h('div', { ...attrs, 'data-testid': 'scheduling-section-stub' })
 })
 const DeckSaveButtonStub = defineComponent({
   name: 'DeckSaveButton',
@@ -95,6 +99,13 @@ describe('TabReviewPacing — section layout', () => {
   test('renders the save button unconditionally — no layout-mode gate on this tab', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
+  })
+
+  test('stamps the constant data-station="panel" on scheduling-section [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    expect(wrapper.find('[data-testid="scheduling-section-stub"]').attributes('data-station')).toBe(
+      'panel'
+    )
   })
 })
 

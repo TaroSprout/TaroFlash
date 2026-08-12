@@ -42,4 +42,9 @@ describe('WelcomeFooter', () => {
     const wrapper = mountFooter()
     expect(wrapper.text()).toContain('TaroFlash')
   })
+
+  test('stamps the constant data-station="panel" [obligation]', () => {
+    const wrapper = mountFooter()
+    expect(wrapper.find('[data-testid="welcome-footer"]').attributes('data-station')).toBe('panel')
+  })
 })
