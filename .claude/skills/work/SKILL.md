@@ -139,7 +139,10 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
   **rename** the worktree's existing branch to a conventional name (`git branch -m <fix/…|feat/…>`) —
   **not** `git checkout -b`, which orphans the auto-created `worktree-agent-<id>` branch as junk —
   implement to the acceptance criteria, and follow `.claude/rules/*` — name `comment-authoring` in
-  the prompt, since verbose subagent comments are a recurring review complaint.
+  the prompt, since verbose subagent comments are a recurring review complaint. Include
+  `comment-authoring`'s own remedy for a comment that outgrows its position's shape: since this
+  subagent can't spawn `corpus-author` (next bullet), the fix is never to inline the extra depth —
+  write the comment at its position's proper shape and flag the gap in its report instead.
 - **It does the work itself — `update-tests` is the one agent it's allowed to spawn.** State this in
   the prompt: no other subagents, ever — a depth-two agent reports to nobody the orchestrator can
   hear. `update-tests` is exempted because the subagent stays live and waits on it in the same turn
@@ -168,11 +171,17 @@ Dispatch all subagents in a single message (multiple `Agent` calls) so they run 
   most likely to reach for `git stash` — name the ban on bare `git stash` / `git stash pop`
   ([`git-workflow`](../../rules/git-workflow.md)) in the prompt explicitly.
 - It **reports back** to the orchestrator: branch name, a summary of what changed, the file paths it
-  touched, whether `update-tests` + `vp check` passed, and any unresolved failure or unmet acceptance
-  criterion.
+  touched, whether `update-tests` + `vp check` passed, any unresolved failure or unmet acceptance
+  criterion, and **any corpus gap it hit but couldn't file** — a comment it kept at its position's
+  shape instead of inlining the extra depth, with the file/symbol and the fact that belongs in
+  `corpus/`.
 - **Clean up when done.** After it has pushed/handed back its branch and reported, the subagent
   removes its own worktree (`git worktree remove`) so no orphaned worktrees pile up. Exception: a
   **stuck/blocked** ticket leaves its worktree in place for human inspection (step 5).
+- **The orchestrator dispatches `corpus-author` for every flagged gap**, one background `Agent` call
+  per gap per [`self-heal`](../../rules/self-heal.md), once all reports for this fan-out are in and
+  before step 4 — a subagent's own comment stays at its capped shape; the orchestrator is the one
+  that can reach `corpus-author`.
 
 ### 4. ORCHESTRATE PRs
 
