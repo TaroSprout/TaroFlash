@@ -31,11 +31,16 @@
      - stone = RAISED things resting on a surface (buttons, chips) + the
        flashcard exception
      They read differently despite close lightness: grey is flat-neutral, stone
-     carries a little blue. */
+     carries a little blue.
+     grey-500 and lighter are the cool counterpart to the brown light steps, for
+     a foreground that shouldn't pick up the warm tint. */
   --color-grey-900: #1c1c1c;
   --color-grey-850: #232323;
   --color-grey-800: #292929;
   --color-grey-700: #4f4f4f;
+  --color-grey-500: #959595;
+  --color-grey-400: #b2b2b2;
+  --color-grey-300: #d2d2d2;
 
   --color-stone-900: #1e1f1f;
   --color-stone-850: #232425;
