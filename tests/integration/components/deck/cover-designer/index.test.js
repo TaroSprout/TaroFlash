@@ -71,6 +71,7 @@ describe('CoverDesigner toolbar', () => {
 
     const iconProps = wrapper.findComponent(IconPickerStub).props()
     expect(iconProps.icon).toBe(SUPPORTED_ICONS[0])
+    expect(iconProps.palette).toBe('pink')
     expect(iconProps.supported_icons).toEqual(
       expect.arrayContaining([SUPPORTED_ICONS[0], SUPPORTED_ICONS[1]])
     )

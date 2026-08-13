@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import UiThemePicker from '@/components/ui-kit/theme-picker.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
@@ -55,5 +56,11 @@ describe('UiThemePicker', () => {
 
     expect(wrapper.emitted('update:palette')).toBeUndefined()
     expect(mockEmitSfx).toHaveBeenCalledTimes(1)
+  })
+
+  test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
+    const wrapper = makePicker({ palette: 'blue' })
+    const tick = wrapper.find('[data-testid="theme-picker__option-blue"]').findComponent(UiIcon)
+    expect(tick.classes()).toContain('text-(--color-accent-text)')
   })
 })
