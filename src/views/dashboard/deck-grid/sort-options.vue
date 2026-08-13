@@ -36,7 +36,7 @@ function onOptionClicked(option: SortOption) {
       :key="option.key"
       :data-testid="`deck-grid-sort-options__${option.key}`"
       :data-active="option.key === selected"
-      class="cursor-pointer shrink-0 data-[active=true]:text-brown-700 data-[active=true]:underline data-[active=true]:underline-offset-8 dark:data-[active=true]:text-brown-100"
+      class="cursor-pointer shrink-0 data-[active=true]:text-ink data-[active=true]:underline data-[active=true]:underline-offset-8"
       @click="onOptionClicked(option.key)"
     >
       {{ t(option.label_key) }}

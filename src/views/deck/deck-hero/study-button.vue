@@ -32,14 +32,14 @@ function onStudyClicked() {
     :disabled="is_disabled"
     @press="onStudyClicked"
   >
-    <div v-if="has_due_cards" class="text-brown-100">
+    <div v-if="has_due_cards" class="text-(--color-on-accent)">
       {{ t('deck-view.hero.study') }}
-      <span class="bg-brown-100 dark:text-blue-650 text-blue-500 px-1 py-0.5 -rotate-5 rounded-1.5">
+      <span class="bg-(--color-on-accent) text-(--color-accent) px-1 py-0.5 -rotate-5 rounded-1.5">
         {{ deck.due_count }}
       </span>
       {{ t('deck-view.hero.cards-label') }}
     </div>
-    <div v-else class="text-brown-100">
+    <div v-else class="text-(--color-on-accent)">
       {{ t('deck-view.hero.no-cards-due') }}
     </div>
   </ui-button>

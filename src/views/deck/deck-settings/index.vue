@@ -192,10 +192,7 @@ watch([preview_el, aside_el], ([preview]) => {
         class="w-full flex flex-col max-md:items-center max-md:text-center"
         :class="layout_mode === 'tablet' && 'pt-4'"
       >
-        <h1
-          data-testid="deck-settings__header-title"
-          class="flex items-center gap-3 text-5xl text-white"
-        >
+        <h1 data-testid="deck-settings__header-title" class="flex items-center gap-3 text-5xl">
           {{ header_title }}
         </h1>
       </div>

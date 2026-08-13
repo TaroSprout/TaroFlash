@@ -82,7 +82,7 @@ function onSelect(value: string) {
       @press="actions.onDeleteCards()"
     >
       {{ t('deck-view.bulk-actions.delete-prefix') }}
-      <span class="bg-brown-100 px-1 py-0.5 -rotate-5 rounded-1.5 text-red-500 dark:text-red-600">
+      <span class="bg-(--color-on-accent) px-1 py-0.5 -rotate-5 rounded-1.5 text-(--color-accent)">
         {{ selection.selected_count.value }}
       </span>
       {{ t('deck-view.bulk-actions.delete-cards-label', selection.selected_count.value) }}

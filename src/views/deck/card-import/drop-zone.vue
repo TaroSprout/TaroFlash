@@ -74,6 +74,7 @@ watch(drag_depth, (now, was) => {
     data-testid="card-import-drop-zone"
     :data-active="drag_depth > 0 || undefined"
     :data-error="error ? '' : undefined"
+    :data-palette="error ? 'danger' : undefined"
     class="card-import-drop-zone"
     v-sfx="{ hover: TYPE_SFX }"
     @dragenter="onDragEnter"
@@ -152,27 +153,27 @@ watch(drag_depth, (now, was) => {
    never produces a hover, so the drag state has to claim the same treatment. */
 .card-import-drop-zone:hover,
 .card-import-drop-zone[data-active] {
-  border-color: var(--color-blue-500);
-  color: var(--color-blue-500);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 /* Below the dock's own breakpoint the zone lives in the bottom bar, where there
    is no pointer to hover it — resting neutral would leave it neutral forever. */
 @media (width < 52rem) {
   .card-import-drop-zone {
-    border-color: var(--color-blue-500);
-    color: var(--color-blue-500);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
   }
 }
 
 /* A file held over the zone fills it in, so the drop target reads as live
    without the prompt changing under the pointer. */
 .card-import-drop-zone[data-active] {
-  background-color: color-mix(in srgb, var(--color-blue-500) 15%, var(--color-well));
+  background-color: color-mix(in srgb, var(--color-accent) 15%, var(--color-well));
 }
 
 .card-import-drop-zone[data-error] {
-  border-color: var(--color-red-500);
-  color: var(--color-red-500);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 </style>

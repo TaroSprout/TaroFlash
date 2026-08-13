@@ -55,17 +55,16 @@ function onClick(e: MouseEvent) {
     data-testid="card-list-item"
     :data-id="card.id"
     :data-dragging="dragging"
-    class="group/listitem relative grid w-full grid-cols-1 sm:grid-cols-[1fr_auto_1fr] sm:gap-x-6 place-items-center rounded-6 bg-transparent p-0 sm:p-6 transition-[color,background-color,box-shadow] duration-150 ease-in-out hover:not-focus-within:bg-brown-200 dark:hover:not-focus-within:bg-stone-900 data-[dragging=true]:not-focus-within:bg-brown-200 dark:data-[dragging=true]:not-focus-within:bg-stone-900 data-[dragging=true]:shadow-sm"
+    class="group/listitem relative grid w-full grid-cols-1 sm:grid-cols-[1fr_auto_1fr] sm:gap-x-6 place-items-center rounded-6 bg-transparent p-0 sm:p-6 transition-[color,background-color,box-shadow] duration-150 ease-in-out hover:not-focus-within:bg-raised-tint data-[dragging=true]:not-focus-within:bg-raised-tint data-[dragging=true]:shadow-sm"
     :class="{
       'cursor-pointer': is_selecting,
-      'focus-within:bg-brown-300 hover:focus-within:bg-brown-300 dark:focus-within:bg-blue-650 dark:hover:focus-within:bg-blue-650':
-        !is_selecting
+      'focus-within:bg-raised hover:focus-within:bg-raised': !is_selecting
     }"
     @mousedown="onClick"
   >
     <button
       data-testid="card-list-item__reorder"
-      class="hidden h-12 w-12 cursor-grab touch-none items-center justify-center rounded-full bg-brown-300 text-lg text-brown-700 sm:flex group-focus-within/listitem:bg-brown-100 row-span-2 dark:bg-stone-700 dark:text-brown-100 dark:group-focus-within/listitem:bg-stone-900"
+      class="hidden h-12 w-12 cursor-grab touch-none items-center justify-center rounded-full bg-raised text-lg text-ink sm:flex group-focus-within/listitem:bg-surface row-span-2"
       v-sfx="dragging ? {} : { hover: TYPE_SFX }"
       @click.stop
       @pointerdown="emit('reorderPointerdown', $event)"

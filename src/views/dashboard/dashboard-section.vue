@@ -19,7 +19,7 @@ defineSlots<{
       <h2
         data-testid="dashboard-section__label"
         class="text-3xl"
-        :class="loading ? 'text-brown-300 dark:text-stone-700' : 'text-ink'"
+        :class="loading ? 'text-skeleton' : 'text-ink'"
       >
         {{ label }}
       </h2>
