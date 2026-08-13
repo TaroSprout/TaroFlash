@@ -18,6 +18,11 @@ const bindings = computed(() => {
   if (decoded.value) return null
   return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })
 })
+
+/** Yellow, except on a yellow cover — there the icon would vanish into the fill. */
+const icon_palette = computed<PaletteName>(() =>
+  cover?.palette === 'yellow' ? 'purple' : 'yellow'
+)
 </script>
 
 <template>
@@ -46,7 +51,7 @@ const bindings = computed(() => {
     <div
       v-else-if="cover?.icon"
       data-testid="card-cover__icon"
-      data-palette="yellow"
+      :data-palette="icon_palette"
       class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-(--color-accent)"
       style="width: var(--cover-icon-size); height: var(--cover-icon-size)"
     >
