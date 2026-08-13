@@ -26,6 +26,7 @@ const { t } = useI18n()
     v-if="error"
     data-testid="face-overlay__error"
     data-error
+    data-palette="error"
     class="face-overlay"
     :data-variant="variant"
     @mousedown.stop
@@ -78,42 +79,23 @@ const { t } = useI18n()
 }
 
 .face-overlay[data-variant='full'] {
-  border: 3px dashed var(--color-blue-500);
+  border: 3px dashed var(--color-accent);
   border-radius: var(--face-radius);
-  background-color: var(--color-white);
+  background-color: var(--color-card);
 
-  color: var(--color-blue-500);
-}
-
-[data-mode='dark'] .face-overlay[data-variant='full'] {
-  background-color: var(--color-stone-700);
-}
-
-[data-mode='dark'] .face-overlay[data-variant='full']:not([data-error]) {
-  border-color: var(--color-blue-650);
-  color: var(--color-blue-650);
-}
-
-.face-overlay[data-variant='full'][data-error] {
-  border-color: var(--color-red-500);
-  color: var(--color-red-500);
+  color: var(--color-accent);
 }
 
 /* Inherits the radius of whatever region it scrims (image region / corners
    backdrop) and stays invisible until hovered/dragged (`active`) or erroring. */
 .face-overlay[data-variant='inset'] {
-  background-color: color-mix(in srgb, var(--color-white) 85%, transparent);
+  background-color: color-mix(in srgb, var(--color-card) 85%, transparent);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 
   border-radius: inherit;
-  color: var(--color-brown-700);
+  color: var(--color-on-card);
   opacity: 0;
-}
-
-[data-mode='dark'] .face-overlay[data-variant='inset'] {
-  background-color: color-mix(in srgb, var(--color-stone-700) 85%, transparent);
-  color: var(--color-brown-100);
 }
 
 .face-overlay[data-variant='inset'][data-active] {
@@ -123,17 +105,13 @@ const { t } = useI18n()
 
 .face-overlay[data-variant='inset'][data-error] {
   pointer-events: auto;
-  color: var(--color-red-500);
+  color: var(--color-accent);
   opacity: 1;
 }
 
 /* Dragging a file over the card turns the scrim blue, matching the empty-card
    drop affordance. The drag state lives on the card root, set by the card. */
 .card-container[data-dragging] .face-overlay:not([data-error]) {
-  color: var(--color-blue-500);
-}
-
-[data-mode='dark'] .card-container[data-dragging] .face-overlay:not([data-error]) {
-  color: var(--color-blue-650);
+  color: var(--color-accent);
 }
 </style>

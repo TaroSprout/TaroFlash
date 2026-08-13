@@ -187,7 +187,7 @@ defineExpose({ focus })
   /* Hosts (card-face, the loading scrim) hide this by setting the var, not by selecting into our internals. */
   display: var(--text-editor-placeholder-display, flex);
   pointer-events: none;
-  color: var(--color-brown-300);
+  color: var(--color-ink-muted);
   /* Matches the editor so the hint's line box fits a content-height region without clipping. */
   line-height: 1.2;
 }

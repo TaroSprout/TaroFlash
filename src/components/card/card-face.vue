@@ -79,11 +79,11 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
 }
 
 .card-face[data-mode='edit']:focus-within {
-  outline: 2px solid var(--color-blue-500);
+  outline: 2px solid var(--color-accent);
 }
 
 .card-container[data-error] .card-face {
-  outline: 2px solid var(--color-red-500);
+  outline: 2px solid var(--color-accent);
 }
 
 /* DOM order is always image-region then text-region; layout reorders/repositions
@@ -207,20 +207,13 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
 .card-container[data-active]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
-  outline-color: var(--color-brown-500);
+  outline-color: var(--color-ink-muted);
 }
 
 .card-container[data-dragging]
   .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
   .card-face__image-region {
-  outline-color: var(--color-blue-500);
-}
-
-[data-mode='dark']
-  .card-container[data-dragging]
-  .card-face[data-mode='edit'][data-image='true']:not([data-layout='behind'])
-  .card-face__image-region {
-  outline-color: var(--color-blue-650);
+  outline-color: var(--color-accent);
 }
 
 /* Behind images have no padded region to frame; while dragging, pull the image
@@ -241,15 +234,9 @@ const text_scale = computed(() => cardTextScale(attributes?.text_size))
 
 .card-container[data-dragging]
   .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
-  outline: 3px dashed var(--color-blue-500);
+  outline: 3px dashed var(--color-accent);
   outline-offset: -3px;
   transition: outline-color 0.15s ease;
-}
-
-[data-mode='dark']
-  .card-container[data-dragging]
-  .card-face[data-mode='edit'][data-layout='behind'][data-image='true'] {
-  outline-color: var(--color-blue-650);
 }
 
 .card-face__text-editor {

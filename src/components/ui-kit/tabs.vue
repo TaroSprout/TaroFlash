@@ -54,7 +54,6 @@ function onHover(index: number) {
     <ui-tooltip
       v-for="(tab, index) in tabs"
       data-testid="ui-kit-tabs__tab"
-      theme="white"
       :gap="-4"
       :suppress="active_tab === index"
       class="ui-kit-tabs__tab"
