@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import { SKELETON_COVER, coverBindings } from '@/utils/cover'
+import { SKELETON_COVER, coverBindings, coverIconPalette } from '@/utils/cover'
 import { useImageReveal } from '@/composables/card/image-reveal'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
@@ -19,10 +19,7 @@ const bindings = computed(() => {
   return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })
 })
 
-/** Yellow, except on a yellow cover — there the icon would vanish into the fill. */
-const icon_palette = computed<PaletteName>(() =>
-  cover?.palette === 'yellow' ? 'purple' : 'yellow'
-)
+const icon_palette = computed(() => coverIconPalette(cover?.palette))
 </script>
 
 <template>
