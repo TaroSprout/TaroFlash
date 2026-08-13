@@ -58,6 +58,8 @@ A bullet that fails any gate is not a rule. Cut it or rewrite it.
 ## Spokes
 
 A rule needing a long walkthrough nests it at `.claude/rules/<rule-name>/<spoke>.md` and links it
-from `## Spokes`. The hub holds the decision; the spoke holds the detail. A spoke carries no
-frontmatter and **loads on every run, hub or no hub** — so nesting detail out of a hub buys
-readability, never budget. Give a spoke its own `paths:` when the detail is genuinely path-scoped.
+from `## Spokes`. The hub holds the decision; the spoke holds the detail. **A spoke inherits its
+hub's `paths:` verbatim** — copy the hub's frontmatter into the spoke, don't invent a narrower or
+wider one. A hub with no `paths:` (always-on) leaves its spokes always-on too; inheritance means
+matching the hub, not gating everything. Give a spoke frontmatter of its own only when its content
+is genuinely broader or narrower than the hub's globs, and say why next to the deviation.

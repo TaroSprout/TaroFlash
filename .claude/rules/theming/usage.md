@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{vue,css}'
+---
+
 # Applying theme tokens
 
 ## At a call site
