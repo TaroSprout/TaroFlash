@@ -40,6 +40,13 @@ describe('ReviewInboxItem', () => {
     expect(wrapper.find('[data-testid="review-inbox-item__due-badge"]').text()).toBe('7')
   })
 
+  test('the due-count badge carries data-palette="danger" [obligation]', () => {
+    const wrapper = mount({ id: 1, due_count: 7 })
+    expect(
+      wrapper.find('[data-testid="review-inbox-item__due-badge"]').attributes('data-palette')
+    ).toBe('danger')
+  })
+
   test('plays the type hover sfx on hover [obligation]', () => {
     const wrapper = mount({ id: 1, due_count: 3 })
     wrapper

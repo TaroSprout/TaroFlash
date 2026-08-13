@@ -8,8 +8,9 @@ import { welcomeWidthKey } from '@/views/welcome/welcome-layout'
 const UiIconStub = defineComponent({
   name: 'UiIcon',
   props: ['src'],
-  setup(props) {
-    return () => h('span', { 'data-testid': 'feature-card__icon', 'data-src': props.src })
+  inheritAttrs: false,
+  setup(props, { attrs }) {
+    return () => h('span', { 'data-testid': 'feature-card__icon', 'data-src': props.src, ...attrs })
   }
 })
 
@@ -45,8 +46,7 @@ function mountFeatureCard(props = {}) {
     props: {
       feature_key: 'experience',
       icon: 'paint-brush',
-      accent: 'var(--color-purple-500)',
-      accent_dark: 'var(--color-purple-700)',
+      cover: { theme: 'purple-500', pattern: 'diagonal-stripes', palette: 'purple' },
       ...props
     },
     global: {
@@ -93,34 +93,19 @@ describe('FeatureCard', () => {
   })
 
   test('renders mobile card heading from i18n key', () => {
-    const wrapper = mountFeatureCard({
-      feature_key: 'mobile',
-      icon: 'mobile-phone',
-      accent: 'var(--color-blue-500)',
-      accent_dark: 'var(--color-blue-650)'
-    })
+    const wrapper = mountFeatureCard({ feature_key: 'mobile', icon: 'mobile-phone' })
     const face = wrapper.find('[data-testid="feature-card__face"]')
     expect(face.text()).toContain('Made For Mobile')
   })
 
   test('renders scheduling card heading from i18n key', () => {
-    const wrapper = mountFeatureCard({
-      feature_key: 'scheduling',
-      icon: 'clock',
-      accent: 'var(--color-pink-500)',
-      accent_dark: 'var(--color-pink-700)'
-    })
+    const wrapper = mountFeatureCard({ feature_key: 'scheduling', icon: 'clock' })
     const face = wrapper.find('[data-testid="feature-card__face"]')
     expect(face.text()).toContain('Spaced Repetition')
   })
 
   test('renders upcoming card heading from i18n key', () => {
-    const wrapper = mountFeatureCard({
-      feature_key: 'upcoming',
-      icon: 'shooting-star',
-      accent: 'var(--color-yellow-500)',
-      accent_dark: 'var(--color-yellow-700)'
-    })
+    const wrapper = mountFeatureCard({ feature_key: 'upcoming', icon: 'shooting-star' })
     const face = wrapper.find('[data-testid="feature-card__face"]')
     expect(face.text()).toContain('More On The Way')
   })
@@ -131,6 +116,12 @@ describe('FeatureCard', () => {
     const wrapper = mountFeatureCard({ icon: 'paint-brush' })
     const icon = wrapper.find('[data-testid="feature-card__icon"]')
     expect(icon.attributes('data-src')).toBe('paint-brush')
+  })
+
+  test('renders the icon with the cover’s palette as data-palette [obligation]', () => {
+    const wrapper = mountFeatureCard({ cover: { theme: 'pink-500', palette: 'pink' } })
+    const icon = wrapper.find('[data-testid="feature-card__icon"]')
+    expect(icon.attributes('data-palette')).toBe('pink')
   })
 
   // ── side / cover forwarding ──────────────────────────────────────────────────

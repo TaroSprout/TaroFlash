@@ -264,6 +264,14 @@ describe('StudyCard', () => {
     expect(failLabel.classes()).toContain('review-label--visible')
   })
 
+  test('fail label carries data-palette="danger" [obligation]', async () => {
+    const wrapper = mountStudyCard()
+    await flushPromises()
+
+    const failLabel = wrapper.find('[data-testid="review-label--fail"]')
+    expect(failLabel.attributes('data-palette')).toBe('danger')
+  })
+
   test('pass label is not visible below threshold', async () => {
     const wrapper = mountStudyCard()
     await flushPromises()

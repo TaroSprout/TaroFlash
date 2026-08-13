@@ -29,14 +29,19 @@ import { useThemeStore } from '@/stores/theme'
 import { getStripeAppearance, STRIPE_FONTS } from '@/utils/billing/stripe-theme'
 
 let app
+let mount_target
 
 afterEach(() => {
   app?.unmount()
   app = null
+  mount_target?.remove()
+  mount_target = null
 })
 
 // useTemplateRef needs a real render tree with a matching `ref` element, so
-// mount a host component instead of calling the composable bare.
+// mount a host component instead of calling the composable bare. Mounting
+// into an element attached to the document lets getComputedStyle resolve
+// inherited custom properties the way the real page does.
 function withSetup(options) {
   let result
   app = createApp({
@@ -45,7 +50,10 @@ function withSetup(options) {
       return () => h('div', { ref: 'container' })
     }
   })
-  app.mount(document.createElement('div'))
+  mount_target = document.createElement('div')
+  document.body.appendChild(mount_target)
+  const instance = app.mount(mount_target)
+  result.container_el = instance.$el
   return result
 }
 
@@ -285,18 +293,16 @@ describe('useCheckoutElements — confirm()', () => {
 })
 
 describe('useCheckoutElements — dark-mode reactivity', () => {
-  test('[obligation] initializes the Checkout SDK with the light appearance when is_dark starts false', async () => {
+  test('[obligation] initializes the Checkout SDK with the appearance read off the mounted container', async () => {
     const stripe = makeStripe()
     mockLoadStripe.mockResolvedValue(stripe)
 
-    withSetup(baseOptions())
+    const result = withSetup(baseOptions())
     await flushPromises()
 
-    expect(stripe.initCheckoutElementsSdk).toHaveBeenCalledWith(
-      expect.objectContaining({
-        elementsOptions: { appearance: getStripeAppearance(false), fonts: STRIPE_FONTS }
-      })
-    )
+    const [[{ elementsOptions }]] = stripe.initCheckoutElementsSdk.mock.calls
+    expect(elementsOptions.fonts).toBe(STRIPE_FONTS)
+    expect(elementsOptions.appearance).toEqual(getStripeAppearance(result.container_el))
   })
 
   test('[obligation] calls checkout.changeAppearance when is_dark toggles after mount, not just at init', async () => {
@@ -311,7 +317,27 @@ describe('useCheckoutElements — dark-mode reactivity', () => {
     useThemeStore().is_dark.value = true
     await flushPromises()
 
-    expect(changeAppearance).toHaveBeenCalledWith(getStripeAppearance(true))
+    expect(changeAppearance).toHaveBeenCalledTimes(1)
+  })
+
+  test('[obligation] re-reads colours off the container after data-mode flips, since the watcher is flush: post', async () => {
+    const changeAppearance = vi.fn()
+    const checkout = makeCheckoutSdk({ changeAppearance })
+    mockLoadStripe.mockResolvedValue(makeStripe({ checkout }))
+
+    const result = withSetup(baseOptions())
+    await flushPromises()
+
+    // Simulate the app's dark-mode switch landing on the DOM before the
+    // watcher fires — flush: 'post' means this write is already visible.
+    result.container_el.style.setProperty('--color-accent', '#111827')
+
+    useThemeStore().is_dark.value = true
+    await flushPromises()
+
+    expect(changeAppearance).toHaveBeenCalledWith(
+      expect.objectContaining({ variables: expect.objectContaining({ colorPrimary: '#111827' }) })
+    )
   })
 })
 

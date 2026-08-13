@@ -82,10 +82,22 @@ describe('UiTextarea — max_chars', () => {
     expect(counter.classes()).not.toContain('ui-kit-textarea-char-count--limit')
   })
 
+  test('counter has no data-palette when below the limit [obligation]', () => {
+    const wrapper = mountTextarea({ max_chars: 100, value: 'hi' })
+    const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
+    expect(counter.attributes('data-palette')).toBeUndefined()
+  })
+
   test('counter has the --limit class when at the limit [obligation]', () => {
     const wrapper = mountTextarea({ max_chars: 5, value: 'hello' })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.classes()).toContain('ui-kit-textarea-char-count--limit')
+  })
+
+  test('counter has data-palette="danger" at the character limit [obligation]', () => {
+    const wrapper = mountTextarea({ max_chars: 5, value: 'hello' })
+    const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
+    expect(counter.attributes('data-palette')).toBe('danger')
   })
 
   test('counter has the --limit class when over the limit [obligation]', () => {

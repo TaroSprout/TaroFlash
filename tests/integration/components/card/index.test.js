@@ -156,6 +156,16 @@ describe('Card (cover side)', () => {
     expect(wrapper.find('[data-testid="card"]').attributes('data-error')).toBeDefined()
   })
 
+  test('does not set data-palette on the root when error is false [obligation]', () => {
+    const wrapper = mountCard({ error: false })
+    expect(wrapper.find('[data-testid="card"]').attributes('data-palette')).toBeUndefined()
+  })
+
+  test('sets data-palette="danger" on the root when error is true [obligation]', () => {
+    const wrapper = mountCard({ error: true })
+    expect(wrapper.find('[data-testid="card"]').attributes('data-palette')).toBe('danger')
+  })
+
   // ── shimmer prop [obligation] ─────────────────────────────────────────────
 
   test('renders .card-shimmer overlay when shimmer=true [obligation]', () => {

@@ -29,15 +29,11 @@ describe('DashboardSection — default slot', () => {
 })
 
 describe('DashboardSection — loading prop [obligation]', () => {
-  test('uses the flat loading color classes when loading is true', () => {
+  test('uses the flat loading color class when loading is true', () => {
     const wrapper = mountSection({ label: 'All Decks', loading: true })
     const label = wrapper.find('[data-testid="dashboard-section__label"]')
-    expect(label.classes()).toEqual(
-      expect.arrayContaining(['text-brown-300', 'dark:text-stone-700'])
-    )
-    expect(label.classes()).not.toEqual(
-      expect.arrayContaining(['text-brown-700', 'dark:text-brown-300'])
-    )
+    expect(label.classes()).toEqual(expect.arrayContaining(['text-skeleton']))
+    expect(label.classes()).not.toEqual(expect.arrayContaining(['text-ink']))
   })
 
   test('uses the default heading color classes when loading is false', () => {

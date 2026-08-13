@@ -23,6 +23,16 @@ describe('TaroPhoneSm — notification badge', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="notification-badge"]').exists()).toBe(true)
   })
+
+  test('the badge carries data-palette="danger" [obligation]', async () => {
+    const wrapper = makeWrapper()
+    const store = useTaroPhoneStore()
+    store.notify('settings', 1)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="notification-badge"]').attributes('data-palette')).toBe(
+      'danger'
+    )
+  })
 })
 
 describe('TaroPhoneSm — open', () => {

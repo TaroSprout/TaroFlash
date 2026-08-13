@@ -28,12 +28,26 @@ describe('card-import/drop-zone', () => {
     expect(wrapper.find('[data-testid="card-import-drop-zone__error"]').exists()).toBe(false)
   })
 
+  test('does not set data-palette on the root when there is no error [obligation]', () => {
+    const wrapper = mount()
+    expect(wrapper.find('[data-testid="card-import-drop-zone"]').attributes('data-palette')).toBe(
+      undefined
+    )
+  })
+
   test('renders the error state and hides the browse prompt when error is set', () => {
     const wrapper = mount({ error: 'Choose a .csv or .txt file' })
     expect(wrapper.find('[data-testid="card-import-drop-zone__error"]').text()).toBe(
       'Choose a .csv or .txt file'
     )
     expect(wrapper.find('[data-testid="card-import-drop-zone__browse"]').exists()).toBe(false)
+  })
+
+  test('sets data-palette="danger" on the root when error is set [obligation]', () => {
+    const wrapper = mount({ error: 'bad file' })
+    expect(wrapper.find('[data-testid="card-import-drop-zone"]').attributes('data-palette')).toBe(
+      'danger'
+    )
   })
 
   test('dismiss-error button emits dismiss-error', async () => {

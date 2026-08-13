@@ -88,6 +88,13 @@ describe('SectionRoadmap', () => {
     expect(wrapper.find('[data-testid="welcome-roadmap"]').exists()).toBe(true)
   })
 
+  test('the section carries data-palette="success" [obligation]', () => {
+    const wrapper = mountRoadmap()
+    expect(wrapper.find('[data-testid="welcome-roadmap"]').attributes('data-palette')).toBe(
+      'success'
+    )
+  })
+
   test('renders the section header', () => {
     const wrapper = mountRoadmap()
     expect(wrapper.find('[data-testid="section-header"]').exists()).toBe(true)

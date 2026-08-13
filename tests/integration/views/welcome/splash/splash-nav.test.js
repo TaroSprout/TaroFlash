@@ -86,6 +86,13 @@ describe('SplashNav', () => {
     expect(wrapper.find('[data-testid="welcome-hero__beta"]').exists()).toBe(true)
   })
 
+  test('the beta pill carries data-palette="pink" [obligation]', () => {
+    const wrapper = mountSplashNav()
+    expect(wrapper.find('[data-testid="welcome-hero__beta"]').attributes('data-palette')).toBe(
+      'pink'
+    )
+  })
+
   // ── Login component [obligation] ──────────────────────────────────────────
 
   test('renders the LoginDialogue component in the nav [obligation]', () => {

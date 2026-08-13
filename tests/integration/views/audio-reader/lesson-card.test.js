@@ -74,6 +74,18 @@ describe('LessonCard', () => {
     )
   })
 
+  test('the icon carries no data-palette when the lesson is not failed [obligation]', () => {
+    expect(
+      mountCard(ready).find('[data-testid="lesson-card__icon"]').attributes('data-palette')
+    ).toBeUndefined()
+  })
+
+  test('the icon carries data-palette="danger" when the lesson has failed [obligation]', () => {
+    expect(
+      mountCard(failed).find('[data-testid="lesson-card__icon"]').attributes('data-palette')
+    ).toBe('danger')
+  })
+
   describe('ready', () => {
     test('shows the date and a music-note icon, and the open button is enabled', () => {
       const w = mountCard(ready)
