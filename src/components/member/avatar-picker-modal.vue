@@ -66,7 +66,7 @@ function onAvatarSelect(avatar: string) {
             v-if="avatar === selected"
             class="absolute -top-2 -right-2 bg-knockout p-1.5 size-8 rounded-full flex items-center justify-center"
           >
-            <ui-icon src="check" class="text-on-knockout" />
+            <ui-icon src="check" class="text-(--color-accent-text)" />
           </div>
         </button>
       </div>
