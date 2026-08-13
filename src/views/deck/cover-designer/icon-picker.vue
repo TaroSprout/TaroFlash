@@ -45,10 +45,14 @@ function onIconSelect(value: string | undefined) {
         :data-testid="`icon-picker__option-${name}`"
         :data-selected="name === icon || undefined"
         v-sfx="{ hover: TYPE_SFX }"
-        class="w-14.5 aspect-square rounded-6 cursor-pointer flex items-center justify-center bg-raised [&_svg]:size-6 data-selected:bg-(--color-accent) hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-selected:bgx-diagonal-stripes data-selected:bgx-opacity-10 transition-colors duration-75 hover:[&_svg]:scale-120 hover:[&_svg]:rotate-6"
+        class="w-14.5 aspect-square rounded-6 cursor-pointer flex items-center justify-center bg-raised text-ink-muted [&_svg]:size-6 data-selected:bg-(--color-accent) hover:bg-(--color-accent) hover:text-(--color-accent-muted) hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-selected:bgx-diagonal-stripes data-selected:bgx-opacity-10 transition-colors duration-75 hover:[&_svg]:scale-120 hover:[&_svg]:rotate-6"
         @click="onIconSelect(name)"
       >
-        <ui-icon :src="name" :data-palette="icon_palette" class="text-(--color-accent)" />
+        <ui-icon
+          :src="name"
+          :data-palette="icon_palette"
+          :class="name === icon && 'text-(--color-accent)'"
+        />
       </button>
     </div>
   </div>
