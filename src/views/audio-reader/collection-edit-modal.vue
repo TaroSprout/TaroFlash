@@ -165,7 +165,8 @@ watch(
 
       <section
         data-testid="collection-edit__danger-zone"
-        class="flex flex-col gap-2 rounded-7 border border-red-300 p-4 dark:border-red-500/40"
+        data-palette="danger"
+        class="flex flex-col gap-2 rounded-7 border border-(--color-accent-muted) p-4"
       >
         <h3 class="text-xl text-ink">
           {{ t('collection-edit.danger-zone.heading') }}

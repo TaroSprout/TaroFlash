@@ -18,7 +18,7 @@ const { t } = useI18n()
   <div
     data-testid="collection-card"
     data-station="panel"
-    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
+    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-surface p-4 text-left"
   >
     <button
       data-testid="collection-card__open"
@@ -28,7 +28,7 @@ const { t } = useI18n()
     >
       <span
         data-testid="collection-card__icon"
-        class="flex size-10 items-center justify-center rounded-full bg-blue-500 text-white dark:bg-blue-650"
+        class="flex size-10 items-center justify-center rounded-full bg-(--color-accent) text-(--color-on-accent)"
       >
         <ui-icon src="card-deck" class="h-5" />
       </span>
