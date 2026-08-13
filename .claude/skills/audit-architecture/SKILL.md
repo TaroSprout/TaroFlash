@@ -1,6 +1,6 @@
 ---
 name: audit-architecture
-description: Run an architecture audit that starts from what the feature IS, not what the current code shape says it is. First reconstructs the feature in domain terms as if no code existed, has a dedicated blind subagent design the ideal shape from that description alone, then diffs ideal vs actual — that reframe is the primary output. Pauses for user sign-off on the domain statement before dispatching any subagent. Reports extremely concisely: a bird's-eye view of the architecture now and what the verdict changes, then one ranked list of high/medium fixes and refactors gathered by parallel finder subagents (separation of concerns, reusability, naming, theming tokens, locale paths, defaults, prop drilling, ui-kit neutrality, dead code). Default scope is the feature(s) touched by the current branch's diff vs master. Use `--global` to expand to the entire `src/` tree. `--fable` / `--opus` / `--sonnet` picks the blind agent's model (default fable). Optional `--context "<note>"` feeds extra heuristics. Trigger on `/audit-architecture`, "audit architecture", "audit this branch", "review for smells", or after a multi-step refactor when the user wants a structural sanity check.
+description: Run an architecture audit that starts from what the feature IS, not what the current code shape says it is. First reconstructs the feature in domain terms as if no code existed, has a dedicated blind subagent design the ideal shape from that description alone, then diffs ideal vs actual — that reframe is the primary output. Pauses for user sign-off on the domain statement before dispatching any subagent. Reports extremely concisely: a short prose bird's-eye framing of the blind design, a one-line pipeline sketch, and two scannable tables (roles, mechanisms) each marking whether today converges/partially matches/misses it — then one ranked list of high/medium fixes and refactors gathered by parallel finder subagents (separation of concerns, reusability, naming, theming tokens, locale paths, defaults, prop drilling, ui-kit neutrality, dead code). Default scope is the feature(s) touched by the current branch's diff vs master. Use `--global` to expand to the entire `src/` tree. `--fable` / `--opus` / `--sonnet` picks the blind agent's model (default fable). Optional `--context "<note>"` feeds extra heuristics. Trigger on `/audit-architecture`, "audit architecture", "audit this branch", "review for smells", or after a multi-step refactor when the user wants a structural sanity check.
 allowed-tools: Read, Bash, Glob, Grep, Agent, SendMessage
 argument-hint: '[--global] [--fable|--opus|--sonnet] [--context "<note>"]'
 arguments:
@@ -17,8 +17,8 @@ lastUpdated: 2026-07-19T00:00:00Z
 
 Two things, in order — **both extremely concise**. The whole report is readable in under a minute.
 
-1. **The reframe.** The #1 thing this skill exists to produce. Reconstruct the feature from its requirements — not its files — have a blind subagent design the ideal architecture from that description, then diff that ideal against what's implemented. A run that takes the current decomposition as given and only proposes rewirings of it (prop-drill → provide/inject, composable → store) is an incomplete run. **Report it as a bird's-eye view: what the architecture is today, and what the verdict changes about it** — a compact current-shape sketch plus the deltas. Not a walkthrough of the reasoning, not the blind design in full, not the assumptions list.
-2. A **single ranked list of H/M fixes and refactors.** Drop `L` findings entirely — they don't reach the report.
+1. **The reframe.** The #1 thing this skill exists to produce. Reconstruct the feature from its requirements — not its files — have a blind subagent design the ideal architecture from that description, then diff that ideal against what's implemented. A run that takes the current decomposition as given and only proposes rewirings of it (prop-drill → provide/inject, composable → store) is an incomplete run. **Report it as the blind design, framed in three prose sentences, then two scannable tables** — never a wall of paragraphs, never split into separate "now" and "changes" sections. Not a walkthrough of the reasoning, not the blind design in full, not the assumptions list.
+2. A **single ranked table of H/M fixes and refactors.** Drop `L` findings entirely — they don't reach the report.
 
 Density is the point. If a section can be a diagram or a bullet, it isn't a paragraph. Do **not** apply fixes — wait for the user to pick.
 
@@ -111,7 +111,7 @@ Four finder agents, each owning a lens, launched alongside the blind agent. Each
 5. **Read the implementation in full** while they run.
 6. **Diff + verdict** when the blind design returns (answer material open questions via `SendMessage` first if needed).
 7. **Collect finder output, post-filter** against the verdict + `--context`; drop all `L`.
-8. **Render the report** per the shape below — bird's-eye now/after, then one ranked H/M list. No per-lens sections.
+8. **Render the report** per the shape below — prose framing + pipeline sketch + role/mechanism tables, then one ranked H/M fix table. No per-lens sections.
 9. **Stop.** Do **not** edit code. Wait for the user to pick.
 
 ## Report shape
@@ -123,25 +123,38 @@ Two sections. Nothing else — no per-lens headings, no assumptions, no methodol
 
 ## Architecture
 
-**Now:** each settings tab keeps its own copy of the edit, kept in sync by watchers; only the study tab knows how to save.
+Deck settings edits live behind a single draft that owns what changed, whether it's dirty, and when it saves. Tabs are pure views onto that draft — they render fields and hand edits back, nothing else. Closing the modal from any tab commits or discards through that one save path.
 
-**Verdict — reshape:** one shared draft owns the edit, its dirty state, and the save; tabs just show fields. Blast radius 5 files, no API change.
+`draft (edit + dirty + save) → tab views (render only) → server`
 
-**Changes:** 3 separate edit copies → 1 shared draft · saving moves off the study tab (fixes silent edit loss) · the settings state is renamed to describe a deck draft, not a modal.
+| Role        | Owns                         | Today                                           |
+| ----------- | ---------------------------- | ----------------------------------------------- |
+| Draft       | edit state, dirty flag, save | ❌ missing — no shared draft exists             |
+| Tab view    | render fields only           | ⚠️ partial — tabs also hold their own edit copy |
+| Server sync | persist on save              | ✅ converges — same api call as today           |
 
-**Keeps:** how decks are saved to the server, the modal shell, one file per tab.
+| Mechanism           | Shape                          | Today                                                |
+| ------------------- | ------------------------------ | ---------------------------------------------------- |
+| provide/inject      | draft injected into every tab  | ❌ missing — 3 local copies kept in sync by watchers |
+| single save trigger | one save fn owned by the draft | ⚠️ partial — only the study tab can save             |
 
 ## Fixes
 
-| Sev | Location           | Problem → fix                                                                                         | Verdict fixes it |
-| --- | ------------------ | ----------------------------------------------------------------------------------------------------- | :--------------: |
-| H   | `tab-*.vue`        | 3 separate edit copies, no single owner. → consolidate into the shared draft — see `architecture.md`. |        ✅        |
-| H   | `tab-study.vue:88` | saving is owned by one tab; closing elsewhere drops edits. → move to the shared draft.                |        ✅        |
-| M   | `foo.vue:42`       | payload built inline pre-save. → `src/utils/foo/payload.ts`.                                          |                  |
+| Sev | Location           | Problem → fix                                                                                         | Design fixes it |
+| --- | ------------------ | ----------------------------------------------------------------------------------------------------- | :-------------: |
+| H   | `tab-*.vue`        | 3 separate edit copies, no single owner. → consolidate into the shared draft — see `architecture.md`. |       ✅        |
+| H   | `tab-study.vue:88` | saving is owned by one tab; closing elsewhere drops edits. → move to the shared draft.                |       ✅        |
+| M   | `foo.vue:42`       | payload built inline pre-save. → `src/utils/foo/payload.ts`.                                          |                 |
 ```
 
-- **Architecture:** four labeled lines max, in **product/domain terms — what the user's action does, not the file/token/attribute names that implement it.** `Now` is a one-line shape sketch (arrows fine); `Verdict` names the call + blast radius; `Changes` is the delta list; `Keeps` names what survives so the user knows the scope is bounded. If the verdict is **keep**, `Changes`/`Keeps` collapse to one line. If the user asks to see the shape, or a prose pass at explaining it hasn't landed, switch to an actual diagram (mermaid `graph` or an ASCII box-and-arrow sketch) instead of writing more prose — don't re-explain the same structure in different words a third time. Subsystem vocabulary (component names, composable names, token names) is fine inside a `Fixes` line, which cites a location — never inside `Architecture`.
-- **Fixes:** one table — `Sev | Location | Problem → fix | Verdict fixes it` — rows ranked H before M. Tick the `Verdict fixes it` column when the reshape in `Architecture` already covers that row — the reader needs to know which findings the verdict covers versus which are independent of it before picking. Cap ~12 rows. If lens coverage found nothing above `L`, say so in one line instead of an empty table.
+- **Architecture:** a **prose frame**, a **pipeline sketch**, then two **tables** — nothing else, no separate "now" or "changes" headings.
+  - Prose frame: exactly 3 sentences, product terms only — what the user's action does, never a file, token, or attribute name. This is what the blind agent proposed, not a description of the current code.
+  - Pipeline sketch: one line, arrows between the concepts the prose just named (`concept → concept → concept`).
+  - **Roles table** (who owns what) and **Mechanisms table** (how it's wired) — each row is one concept from the design, with a `Today` column marking `✅ converges` / `⚠️ partial` / `❌ missing` against the actual code, one clause of why. This is the only place convergence/divergence appears — never a prose paragraph restating it.
+  - If the verdict is **keep**, every `Today` cell reads `✅ converges` and the tables collapse to confirm it, still shown (not cut) so the reader sees what was checked.
+  - If the user asks to see the shape, or the tables still read dense, switch to an actual diagram (mermaid `graph` or an ASCII box-and-arrow sketch) instead of adding more rows.
+  - Subsystem vocabulary (component names, composable names, token names) is fine inside a table cell or a `Fixes` line — never inside the prose frame.
+- **Fixes:** one table — `Sev | Location | Problem → fix | Design fixes it` — rows ranked H before M. Tick the `Design fixes it` column when a row in `Architecture` already covers that fix — the reader needs to know which findings the design covers versus which are independent of it before picking. Cap ~12 rows. If lens coverage found nothing above `L`, say so in one line instead of an empty table.
 
 ## When NOT to invoke
 
