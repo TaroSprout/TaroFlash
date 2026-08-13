@@ -206,9 +206,9 @@ function isPageTarget(el: HTMLElement) {
 
 <style scoped>
 .ui-kit-scroll-bar {
-  --bar-color: var(--color-ink-muted);
-  --thumb-color: var(--color-ink-muted);
-  --thumb-hover-color: var(--color-accent-muted);
+  --bar-color: var(--color-raised);
+  --thumb-color: var(--color-raised);
+  --thumb-hover-color: var(--color-accent);
 
   --transition-dur: 0.05s;
   --transition: background-color 0.05s ease-in-out, outline 0.05s ease-in-out;
