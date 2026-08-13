@@ -17,9 +17,9 @@ function withAlpha(hex: string, percent: number): string {
 /**
  * The colour a role resolves to for `host`.
  *
- * Read it off the element the form actually sits in, never off the page root —
- * that is what makes the fields pick up the surrounding surface, the member's
- * colour, and light or dark without any of the three being spelled out here.
+ * @param host - The element the form sits in, never the page root — reading it
+ *   here is what picks up the surrounding surface, the member's colour and the
+ *   current mode without any of the three being named.
  */
 function role(host: HTMLElement, name: string): string {
   return getComputedStyle(host).getPropertyValue(name).trim()
