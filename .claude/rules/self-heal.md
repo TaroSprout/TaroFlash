@@ -72,6 +72,9 @@ surfaced the lesson — healing runs beside your work, never in front of it.
 
 - **Background, always.** One `Agent` call per lesson, `run_in_background`, at the moment the lesson
   lands. There is no foreground variant and no end-of-session sweep, in any flow.
+- **No `Agent` tool means you don't dispatch — you report.** A subagent can't spawn; the call would
+  land nowhere and still read as success. Name the lesson and its candidate row in your report and
+  let the session that spawned you make the call.
 - **One subagent per lesson**, handed the correction verbatim and the **candidate** row from the
   routing table above — never the dispatcher's own pick of file or section. The persona re-checks the
   routing against its own spec before writing; naming a specific file in the prompt pre-loads the

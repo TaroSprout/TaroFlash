@@ -1,20 +1,29 @@
 ---
 name: prepare-pr
-description: Fully autonomous — prepare a branch for PR by committing all pending work, rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint + type-check + knowledge-pointer gate, drafting a PR title and body, then creating a single PR directly (not a draft) and watching CI until green. Never asks for permission or feedback before the PR opens. Always bundles all branch work — committed AND uncommitted (staged + unstaged) — into exactly one PR. Use when a feature branch is code-complete and ready for review.
+description: Fully autonomous — prepare a branch for PR by rewriting commit messages into release-notes-friendly Conventional Commits, renaming the branch if it no longer fits the changes, running a lint + type-check + knowledge-pointer gate, drafting a PR title and body, then creating a single PR directly (not a draft) and watching CI until green. Works on a named branch against a named base without checking anything out. Never asks for permission or feedback before the PR opens. Use when a feature branch is code-complete and ready for review.
 allowed-tools: Read, Edit, Write, Bash, Glob, Grep
-argument-hint: '[--no-watch] [--ticket <ID>] [--ticket-url <URL>]'
+argument-hint: '[--branch <name>] [--base <ref>] [--no-watch] [--ticket <ID>] [--ticket-url <URL>] [--acceptance <path>]'
 arguments:
+  - name: --branch <name>
+    description: The branch to open the PR for. Defaults to the checked-out branch. Never checked out — the working tree does not move.
+  - name: --base <ref>
+    description: The base the PR merges into and the diff is taken against (default `master`). Pass a peer branch to stack this PR on it.
   - name: --no-watch
     description: Skip the post-create CI watch (Step 10).
   - name: --ticket <ID>
     description: Prefix the PR title with the ticket key `TARO-<ID>` (e.g. `TARO-207: …`). Omit for no prefix.
   - name: --ticket-url <URL>
     description: Notion ticket URL. When given alongside `--ticket`, the PR body opens with a `[TARO-<ID>](<URL>)` link line. Omit to render just `TARO-<ID>` text (or nothing if `--ticket` is also absent).
+  - name: --acceptance <path>
+    description: File holding the ticket's acceptance criteria, one per line. The PR body answers every one of them (Step 8).
 lastUpdated: 2026-07-31T00:00:00Z
 ---
 
 ## Args
 
+- **`--branch <name>`** (optional) — the branch the PR is opened for. Defaults to the checked-out branch. **The working tree never moves**: every inspection reads refs (`<base>..<branch>`), and `gh pr create --head <branch>` opens the PR with nothing checked out. A caller orchestrating several branches gets one PR each without a human's tree being dragged around.
+- **`--base <ref>`** (optional, default `master`) — the base branch. It is the diff range's left side, the `--base` of `gh pr create`, and the ref every "is this already on the base" judgement is made against. Pass a peer branch to stack this PR on it.
+- **`--acceptance <path>`** (optional) — a file of the ticket's acceptance criteria, one per line. The body answers each (Step 8).
 - **`--no-watch`** (optional) — skip the post-create CI watch (Step 10). Default behaviour blocks on CI after opening the PR until every check settles, fixing failures as they surface.
 - **`--ticket <ID>`** (optional) — the Notion Task Board ticket ID this PR resolves. When given, the PR **title** is prefixed with `TARO-<ID>: ` and the PR **body** opens with a ticket-link line (Step 8). This affects the PR title and body only — commit subjects stay clean (ticket refs still belong in a commit-body `Refs:` trailer, per Notes). Omit to open a PR with no ticket prefix or link.
 - **`--ticket-url <URL>`** (optional) — the Notion page URL for the ticket. When given with `--ticket`, the body's top line renders as a markdown link `[TARO-<ID>](<URL>)`. Without it, the top line falls back to plain `TARO-<ID>` text. Ignored when `--ticket` is absent.
@@ -23,7 +32,6 @@ lastUpdated: 2026-07-31T00:00:00Z
 
 This skill never stops to ask for permission or feedback before the PR opens. It always:
 
-- Commits **all** pending work — staged, unstaged, and untracked — into the branch. Never leaves anything uncommitted.
 - Produces **exactly one PR** per run. There is no split mode — the whole branch's work always lands as a single PR.
 - Makes its own calls on commit grouping, message wording, branch renaming, and CI-failure classification, and records those calls in the Step 11 report instead of pausing to ask.
 - Only stops mid-run for the hard-safety cases called out in Step 10's "when to abort the watch" — those are genuine stop-and-report conditions, not permission requests, and they happen only _after_ the PR is already open.
@@ -34,7 +42,7 @@ Feature branches accumulate vague commits ("fix", "tests", "refactor study-sessi
 
 Output:
 
-1. All branch work — committed AND uncommitted (staged + unstaged + untracked) — bundled into one PR. Uncommitted changes are committed as part of the workflow.
+1. The branch's own work bundled into one PR, with anything else in the tree left where it was.
 2. All branch commits grouped into a single PR.
 3. Commits renamed to **Conventional Commits** (see style guide below).
 4. Branch renamed if slug no longer fits.
@@ -57,35 +65,34 @@ skill adds only the PR-time constraints below.
 
 ### Step 1 — Sanity check
 
+Resolve `<branch>` (from `--branch`, else `git rev-parse --abbrev-ref HEAD`) and `<base>` (from `--base`, else `master`). **Every command below names those refs; none of them checks anything out.**
+
 ```sh
-git rev-parse --abbrev-ref HEAD
-git log master..HEAD --oneline
-git diff master..HEAD --stat
+git log <base>..<branch> --oneline
+git diff <base>..<branch> --stat
 git status --short
 gh auth status
 ```
 
 Block and warn if any true:
 
-- Current branch is `master` or `main`.
-- `master..HEAD` empty **and** no staged changes. Nothing to prepare.
+- `<branch>` is `master` or `main`.
+- `<base>..<branch>` empty **and** nothing pending for this branch. Nothing to prepare.
 - `gh` not authenticated. Final step need it; authenticate now or agree to skip auto-open.
 
-**Uncommitted changes — both staged and unstaged are included in the PR.** Inspect `git status --short` and `git diff` / `git diff --cached`:
+**Pending work is committed only when `<branch>` is the checked-out branch**, and only the paths that branch's work touched. A branch handed over by someone else is already complete — leave the tree alone entirely.
 
-- **Staged** (`A`/`M`/`D`/`R` col 1): read the staged diff with `git diff --cached`.
-- **Unstaged** (col 2 — `M`/`D`/`?`): read with `git diff` and `git status --short` (untracked files need `git diff --no-index /dev/null <path>` or just a `Read`).
-- **Mixed**: read both.
+When it is checked out, read `git diff` and `git diff --cached`, and decide **per path** whether it belongs to this branch's work. Then:
 
-Combine them into one logical view of pending work. Group by concern if multiple distinct changes are present, write Conventional Commits messages (one commit per concern), then stage + commit each group directly — no approval pause. Treat the new commits as part of the branch for the rest of the workflow. Record the grouping decisions made here in the Step 11 report.
+- **Stage explicit pathspecs** — `git add <path> …`, one commit per concern with a Conventional Commits message. **Never `git add -A`, never `git add .`, never `git commit -a`**: the user keeps unrelated edits in the tree, and a blanket add sweeps them into someone else's PR ([`commit-authoring`](../../rules/commit-authoring.md)).
+- **Untracked files are opted in one at a time**, never swept. A path you can't tie to this branch's work stays untracked.
+- Name in the Step 11 report every path you left uncommitted, so the user can see what stayed behind.
 
-Skip this step only if there are zero uncommitted changes.
-
-Note current upstream (`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null`) so push step can decide flags.
+Note the branch's current upstream (`git rev-parse --abbrev-ref --symbolic-full-name <branch>@{u} 2>/dev/null`) so the push step can decide flags.
 
 ### Step 2 — Inspect each commit
 
-For each SHA from `git log master..HEAD --oneline`, run:
+For each SHA from `git log <base>..<branch> --oneline`, run:
 
 ```sh
 git show --stat <sha>
@@ -102,7 +109,7 @@ Per commit answer:
 
 ### Step 3 — Decide new commit messages
 
-The whole branch always lands as a single PR — there is no split mode. Build the rename table for every commit in `master..HEAD`:
+The whole branch always lands as a single PR — there is no split mode. Build the rename table for every commit in `<base>..<branch>`:
 
 | SHA (short) | Current                                | Proposed                                                                  |
 | ----------- | -------------------------------------- | ------------------------------------------------------------------------- |
@@ -114,7 +121,17 @@ Apply directly — no approval pause. Messages already good Conventional Commits
 
 ### Step 4 — Rewrite commit messages
 
-Use `git filter-branch --msg-filter` with `case` on `$GIT_COMMIT` (pre-rewrite SHA). Preserves authorship, dates, trailers, parentage — only subject changes.
+**`filter-branch` refuses to run against a dirty tree, and it rewrites whatever is checked out.** So run it in a scratch worktree for `<branch>` — the user's tree keeps its uncommitted work and never moves:
+
+```sh
+git worktree add "$TMPDIR/prepare-pr-$$" <branch>
+# …rewrite there, then…
+git worktree remove "$TMPDIR/prepare-pr-$$"
+```
+
+Skip the scratch worktree only when `<branch>` is checked out **and** `git status --short` is empty.
+
+Inside it, use `git filter-branch --msg-filter` with `case` on `$GIT_COMMIT` (pre-rewrite SHA). Preserves authorship, dates, trailers, parentage — only subject changes.
 
 ```sh
 FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --msg-filter '
@@ -123,7 +140,7 @@ case "$GIT_COMMIT" in
   <full-sha-2>) echo "<new message 2>" ;;
   *) cat ;;
 esac
-' master..HEAD
+' <base>..<branch>
 ```
 
 Use **full** 40-char SHAs in case — short SHAs won't match.
@@ -140,13 +157,13 @@ EOF
 ;;
 ```
 
-Verify with `git log master..HEAD --oneline` and `git log master..HEAD --stat` (diffs unchanged from before rewrite).
+Verify with `git log <base>..<branch> --oneline` and `git log <base>..<branch> --stat` (diffs unchanged from before rewrite).
 
 ### Step 5 — Evaluate and, if needed, rename the branch
 
 PR titles in GitHub UI default to:
 
-- single commit's subject if branch has **one** commit off master, or
+- single commit's subject if branch has **one** commit off the base, or
 - branch name humanised (kebab-case → spaces, capitalised) if multiple commits.
 
 So branch name is primary lever for good default title with multiple commits. Even with single commit, tidy branch name reads better in PR list and branch sidebar.
@@ -167,13 +184,13 @@ git branch -m <old-name> <new-name>
 
 ### Step 6 — Lint + type-check + knowledge gate (before any push)
 
-Run the linter, the type-checker **and** the knowledge check on the working tree and fix everything they flag **before** pushing — these are the cheapest CI failures to catch locally, and the most annoying to discover after the PR is already open.
+Run the linter, the type-checker **and** the knowledge check against `<branch>`'s tree — the scratch worktree from Step 4 when `<branch>` isn't checked out — and fix everything they flag **before** pushing. These are the cheapest CI failures to catch locally, and the most annoying to discover after the PR is already open.
 
 ```sh
 vp lint
 pnpm type-check
 node scripts/knowledge-lint.mjs
-node scripts/migration-knowledge-gate.mjs --base origin/master
+node scripts/migration-knowledge-gate.mjs --base origin/<base>
 ```
 
 - **Type-check uses `pnpm type-check` (vue-tsc), not `vp`.** CI runs `pnpm type-check`, and vue-tsc is stricter than `vp check`'s type pass — a `vp`-clean tree can still fail CI on types. Use the same command CI uses so the gate actually matches it.
@@ -189,11 +206,13 @@ Do not push until `vp lint`, `pnpm type-check` and the knowledge checks are clea
 
 User pre-authorised force-push here.
 
-- No upstream previously: `git push -u origin <branch>`
-- Had upstream under same name: `git push --force-with-lease`
+Push by refspec so the branch goes up whether or not it's checked out.
+
+- No upstream previously: `git push -u origin <branch>:<branch>`
+- Had upstream under same name: `git push --force-with-lease origin <branch>:<branch>`
 - Renamed and had upstream under old name:
   ```sh
-  git push -u origin <new-name>
+  git push -u origin <new-name>:<new-name>
   git push origin --delete <old-name>
   ```
 
@@ -227,10 +246,22 @@ Avoid repeating Conventional-Commits prefix in title — GitHub release tooling 
 
 - <what changed and why>
 - <second bullet if it earns its place>
+
+## Acceptance criteria
+
+- [x] <criterion, in the ticket's own words>
+- [ ] <criterion> — <why it isn't met, and what would meet it>
 ```
 
-`## Summary` and nothing else — **never add a `## Test plan` section**, or any heading the repo
-template doesn't carry. The user doesn't work a checklist per PR, and extra headings bury the point.
+**Every criterion in `--acceptance` gets a line, in the ticket's order, none dropped or merged.**
+Ticked means met, and carries nothing else — a tick with an explanation is a reviewer's cue that it
+isn't really ticked. Unticked always carries one, so an unmet criterion can't pass as an oversight.
+An unticked box is not a failure to hide: a PR that answers honestly is reviewable, one that ticks
+everything is not.
+
+Omit the section when `--acceptance` is absent. Otherwise `## Summary` and nothing else — **never add
+a `## Test plan` section**, or any heading the repo template doesn't carry. The user doesn't work a
+checklist per PR, and extra headings bury the point.
 
 Omit the ticket-link line entirely when `--ticket` is absent. `.github/pull_request_template.md` is
 the source of truth for the body's shape — follow it and fill its sections, still prepending the
@@ -244,14 +275,16 @@ Keep body tight. A handful of short bullets beats a wall of text.
 
 ```sh
 gh pr create \
-  --base master \
+  --head <branch> \
+  --base <base> \
   --title "<title from Step 8>" \
   --body "<body from Step 8>"
 ```
 
+- **`--head <branch>` is what keeps the working tree still** — never check a branch out to open its PR.
 - Do **not** pass `--draft` and do **not** pass `--web`.
 - Capture the URL `gh pr create` prints — needed for the Step 11 report.
-- The PR number is available the moment `gh pr create` returns (`gh pr view --json number,url`), so Step 10 can start watching CI right away.
+- The PR number is available the moment `gh pr create` returns (`gh pr view <branch> --json number,url`), so Step 10 can start watching CI right away.
 
 Immediately after the PR is created, open it in the user's browser — the user wants to watch CI themselves from the start, not just get a URL in the final report:
 
@@ -316,9 +349,11 @@ Record what happened in the Step 11 report (CI status, fixes applied) so the use
 Output summary:
 
 ```
-PR: <branch>   (base: master)   (was: <old-name>)   # omit "was" if unchanged
+PR: <branch>   (base: <base>)   (was: <old-name>)   # omit "was" if unchanged
   <url>
   Commits renamed: <n>
+  Left uncommitted: <paths, or "nothing">
+  Acceptance: <n met / n total>
   CI: <green | fixed after N attempts | needs attention — see Deferred items>
 ```
 
@@ -326,8 +361,8 @@ If anything was deferred, skipped, or needed a judgment call instead of a real f
 
 ## Notes
 
-- **Coverage is deliberately not checked here — don't re-add it.** The CI job still runs and still comments on the PR; this skill just doesn't read it. Percentages across runs aren't comparable, because the instrumented file set varies with what a given run touched: one recent PR reported 94.77% lines against a denominator ~620 lines smaller than its neighbours, which reads as a 5pp regression next to a normal 89.6% run and isn't one. Chasing that costs a round of tests written for a problem that doesn't exist. Coverage on the files a branch actually touches belongs to `update-tests`, which measures them directly.
-- **Scope is always `master..HEAD`.** Never rewrite or rename anything already on `master`/`main`.
+- **Coverage percentages are deliberately not read here — don't re-add that.** They aren't comparable across runs, because the instrumented file set varies with what a given run touched: one PR reported 94.77% lines against a denominator ~620 lines smaller than its neighbours, which reads as a 5pp regression and isn't one. Chasing it costs a round of tests written for a problem that doesn't exist. CI's own gate on the branch's uncovered files is a different thing and is watched like any other check.
+- **The Step 10 watch covers every check, not just tests.** Coverage, knowledge pointers, unfinished-work markers, types — a red check is a red check, and the PR isn't done until all of them settle green.
+- **Scope is always `<base>..<branch>`.** Never rewrite or rename anything already on the base.
 - Don't prefix subjects with ticket numbers; belong in body as `Refs: PROJ-123` trailer if used.
 - Don't add co-author trailers during rename — leave authorship alone.
-- If branch is based on something other than `master`, adjust base-ref everywhere (`master..HEAD`, `--base master`) accordingly and note the substitution in the Step 11 report.

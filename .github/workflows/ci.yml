@@ -55,9 +55,10 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'vite.config.*'
 
+  # Deliberately unconditional. Types cross directory boundaries the paths
+  # filter doesn't model — a change under supabase/ or scripts/ can break a
+  # src/ type, and a filtered job that skips reads as one that passed.
   lint:
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     permissions:
@@ -314,6 +315,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The coverage gate diffs against the PR's base commit, which a
+          # shallow clone doesn't contain.
+          fetch-depth: 0
 
       - uses: ./.github/actions/setup-node
 
@@ -407,3 +412,11 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           file-coverage-mode: 'none'
+
+      - name: Gate on coverage of the changed files
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git diff --name-only "$BASE_SHA...HEAD" > "$RUNNER_TEMP/changed.txt"
+          node scripts/coverage-gate.mjs --changed "$RUNNER_TEMP/changed.txt"

@@ -23,9 +23,9 @@ import {
 const LEDGER_ENTRY = /^\s*[-*]\s*\[K:([A-Za-z0-9_-]+)\]\s*—\s*(.*)$/
 
 const RULE =
-  'A pointer that resolves to nothing, a slug declared twice, a slug nobody cites, or an always-on ' +
-  'file over its cap all cost the reader the knowledge they came for. Fix the pointer, not the ' +
-  'check. →[K:knowledge-lint]'
+  'A pointer that resolves to nothing, a slug declared twice, a slug nobody cites, an unfiled gap ' +
+  'or unsigned-off string left behind by a build, or an always-on file over its cap all cost the ' +
+  'reader the knowledge they came for. Fix the pointer, not the check. →[K:knowledge-lint]'
 
 /** Retired slugs and their epitaphs; a malformed entry is an error, not an epitaph. */
 function readLedger(root, ledgerPath) {
@@ -126,6 +126,33 @@ function checkOrphanCitations(root, tokens) {
     )
 }
 
+/**
+ * Marks work an unattended build was unable to finish, so the branch can't merge
+ * carrying it. Group 1 is a knowledge gap the build couldn't file; group 2 is
+ * wording nobody signed off. →[K:build-unfinished-markers]
+ */
+const UNFINISHED = /\[K:gap:([^\]]*)\]|(COPY-TBD)/g
+
+function checkUnfinished(root, files, unfinished) {
+  if (!unfinished) return []
+
+  const scanned = files.filter(
+    (path) => matchesAny(path, unfinished.scan) && !matchesAny(path, unfinished.exempt ?? [])
+  )
+
+  return scanned.flatMap((path) =>
+    readFileSync(join(root, path), 'utf8')
+      .split('\n')
+      .flatMap((line, index) =>
+        [...line.matchAll(UNFINISHED)].map(({ 1: gap, 2: copy }) =>
+          copy
+            ? `${path}:${index + 1} — COPY-TBD stands in for wording nobody signed off; get the string from the user`
+            : `${path}:${index + 1} — [K:gap:${gap}] is an unfiled knowledge gap; land it in corpus/ and cite the topic here`
+        )
+      )
+  )
+}
+
 function checkLineCaps(root, files, alwaysOn) {
   const breaches = []
   const caps = alwaysOn.line_caps
@@ -146,10 +173,19 @@ function checkLineCaps(root, files, alwaysOn) {
     breaches.push(`always-on payload is ${total} lines, over the ${caps.total}-line cap`)
   }
 
+  // The cap is where the payload is; the aspiration is where it should get to.
+  // Reporting the gap keeps the real figure from reading as the target.
+  const aspiration =
+    caps.aspiration && total > caps.aspiration
+      ? [
+          `always-on payload is ${total} lines, ${total - caps.aspiration} over the aspired-to ${caps.aspiration}`
+        ]
+      : []
+
   // Caps stay advisory until the payload is restructured (TARO-331).
   return {
     errors: caps.enforced === false ? [] : breaches,
-    warnings: caps.enforced === false ? breaches : [],
+    warnings: [...(caps.enforced === false ? breaches : []), ...aspiration],
     total
   }
 }
@@ -184,6 +220,7 @@ export function lintKnowledge(root) {
     slugs.citation_exempt ?? []
   )
   const orphans = checkOrphanCitations(root, tokens)
+  const unfinished = checkUnfinished(root, files, config.unfinished)
   const caps = checkLineCaps(root, files, always_on)
 
   return {
@@ -194,6 +231,7 @@ export function lintKnowledge(root) {
       ...citations,
       ...uncited,
       ...orphans,
+      ...unfinished,
       ...caps.errors
     ],
     warnings: caps.warnings,

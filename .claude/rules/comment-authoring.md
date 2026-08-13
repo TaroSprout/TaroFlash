@@ -76,6 +76,9 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
   [`knowledge-addressing`](./knowledge-addressing.md).
 - **A comment that wants to grow past its position's shape is the trigger to write that entry**, not
   a reason to keep typing.
+- When you can't write the entry yourself, the comment still stays at its shape and the fact rides a
+  `[K:gap: …]` tag beside it, which fails CI until someone lands it
+  (→[K:build-unfinished-markers]).
 - The readable sentence is never optional. A pointer replaces the explanation, never the knowledge —
   someone skimming a diff gets the constraint without leaving the file.
 

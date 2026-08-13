@@ -59,4 +59,5 @@ A bullet that fails any gate is not a rule. Cut it or rewrite it.
 
 A rule needing a long walkthrough nests it at `.claude/rules/<rule-name>/<spoke>.md` and links it
 from `## Spokes`. The hub holds the decision; the spoke holds the detail. A spoke carries no
-frontmatter — the hub is what decides when it loads.
+frontmatter and **loads on every run, hub or no hub** — so nesting detail out of a hub buys
+readability, never budget. Give a spoke its own `paths:` when the detail is genuinely path-scoped.

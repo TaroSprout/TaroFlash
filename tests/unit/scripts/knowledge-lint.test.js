@@ -368,6 +368,149 @@ describe('lintKnowledge — line caps', () => {
     expect(stats.declared).toBe(0)
     expect(stats.citations).toBe(0)
   })
+
+  test('the payload over aspiration but under total warns and still exits 0', () => {
+    const root = makeRoot(
+      { 'CLAUDE.md': 'one\ntwo\nthree\nfour\nfive\n' },
+      {
+        always_on: {
+          include: ['CLAUDE.md'],
+          line_caps: { enforced: true, total: 10, aspiration: 3 }
+        }
+      }
+    )
+
+    const { errors, warnings } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(warnings).toEqual([
+      expect.stringContaining('always-on payload is 5 lines, 2 over the aspired-to 3')
+    ])
+  })
+
+  test('a payload at or below aspiration does not warn', () => {
+    const root = makeRoot(
+      { 'CLAUDE.md': 'one\ntwo\nthree\n' },
+      {
+        always_on: {
+          include: ['CLAUDE.md'],
+          line_caps: { enforced: true, total: 10, aspiration: 3 }
+        }
+      }
+    )
+
+    const { errors, warnings } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(warnings).toEqual([])
+  })
+})
+
+describe('lintKnowledge — always-on include globs', () => {
+  test('a rule spoke file nested under .claude/rules/**/*.md counts toward the total', () => {
+    const root = makeRoot(
+      {
+        'CLAUDE.md': 'one\ntwo\n',
+        '.claude/rules/toolchain/commands.md': 'spoke one\nspoke two\nspoke three\n'
+      },
+      {
+        always_on: {
+          include: ['CLAUDE.md', '.claude/rules/**/*.md'],
+          line_caps: { enforced: true, total: 100 }
+        }
+      }
+    )
+
+    const { stats } = lintKnowledge(root)
+
+    expect(stats.alwaysOnLines).toBe(5)
+  })
+
+  test('a rule spoke file carrying paths: frontmatter is still excluded from the count', () => {
+    const root = makeRoot(
+      {
+        'CLAUDE.md': 'one\ntwo\n',
+        '.claude/rules/toolchain/commands.md': [
+          '---',
+          'paths: src/**',
+          '---',
+          'this is path-triggered',
+          'so it never always-loads'
+        ].join('\n')
+      },
+      {
+        always_on: {
+          include: ['CLAUDE.md', '.claude/rules/**/*.md'],
+          line_caps: { enforced: true, total: 100 }
+        }
+      }
+    )
+
+    const { stats } = lintKnowledge(root)
+
+    expect(stats.alwaysOnLines).toBe(2)
+  })
+})
+
+describe('lintKnowledge — unfinished markers', () => {
+  test('a [K:gap: …] marker in a scanned file fails the run, carrying the gap text', () => {
+    const root = makeRoot(
+      { 'src/foo.ts': 'const x = 1 // [K:gap: refund idempotency untested]\n' },
+      { unfinished: { scan: ['src/**/*.ts'], exempt: [] } }
+    )
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([expect.stringContaining('src/foo.ts:1')])
+    expect(errors[0]).toContain('refund idempotency untested')
+  })
+
+  test('a bare COPY-TBD in a scanned file fails the run', () => {
+    const root = makeRoot(
+      { 'src/foo.ts': 'const label = "COPY-TBD"\n' },
+      { unfinished: { scan: ['src/**/*.ts'], exempt: [] } }
+    )
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([expect.stringContaining('src/foo.ts:1')])
+    expect(errors[0]).toMatch(/COPY-TBD/)
+  })
+
+  test('a file matching unfinished.exempt is skipped even carrying both markers', () => {
+    const root = makeRoot(
+      {
+        'tests/unit/scripts/fixture.ts': 'const label = "COPY-TBD" // [K:gap: still needs filing]\n'
+      },
+      { unfinished: { scan: ['tests/**/*.ts'], exempt: ['tests/unit/scripts/**'] } }
+    )
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+  })
+
+  test('a file outside every unfinished.scan glob is ignored', () => {
+    const root = makeRoot(
+      { 'docs/notes.md': 'COPY-TBD and [K:gap: whatever]\n' },
+      { unfinished: { scan: ['src/**/*.ts'], exempt: [] } }
+    )
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+  })
+
+  test('an absent unfinished config block is a silent no-op', () => {
+    const root = makeRoot({
+      'src/foo.ts': 'const label = "COPY-TBD" // [K:gap: whatever]\n'
+    })
+    // DEFAULT_CONFIG carries no `unfinished` key — old configs keep working.
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+  })
 })
 
 describe('lintKnowledge — orphan citations', () => {
