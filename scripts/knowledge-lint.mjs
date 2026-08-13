@@ -146,10 +146,19 @@ function checkLineCaps(root, files, alwaysOn) {
     breaches.push(`always-on payload is ${total} lines, over the ${caps.total}-line cap`)
   }
 
+  // The cap is where the payload is; the aspiration is where it should get to.
+  // Reporting the gap keeps the real figure from reading as the target.
+  const aspiration =
+    caps.aspiration && total > caps.aspiration
+      ? [
+          `always-on payload is ${total} lines, ${total - caps.aspiration} over the aspired-to ${caps.aspiration}`
+        ]
+      : []
+
   // Caps stay advisory until the payload is restructured (TARO-331).
   return {
     errors: caps.enforced === false ? [] : breaches,
-    warnings: caps.enforced === false ? breaches : [],
+    warnings: [...(caps.enforced === false ? breaches : []), ...aspiration],
     total
   }
 }

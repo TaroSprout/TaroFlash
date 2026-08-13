@@ -1,9 +1,10 @@
 {
   "always_on": {
-    "include": ["CLAUDE.md", ".claude/rules/*.md"],
+    "include": ["CLAUDE.md", "AGENTS.md", ".claude/rules/**/*.md"],
     "line_caps": {
       "enforced": true,
-      "total": 250,
+      "total": 1000,
+      "aspiration": 400,
       "per_file": {
         "CLAUDE.md": 80
       }
