@@ -118,9 +118,9 @@
   --color-on-card: var(--color-brown-700);
 
   /* A badge or ring that separates an accent fill from itself — a selected
-     swatch's tick, the outline around it. FIXED in both modes: it sits on the
-     accent, never on the station, so following the station would sink it into
-     whatever is behind the swatch.
+     swatch's tick, the outline around it. Flat across stations because it rests
+     on the accent rather than on a station, but it still swaps with the mode.
+     Dark in stations.css.
      Trap: a station role assumes the thing wearing it rests on a station
      →[K:fixed-roles-skip-the-station] */
   --color-knockout: var(--color-white);
