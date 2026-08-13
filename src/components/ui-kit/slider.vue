@@ -125,7 +125,7 @@ const KEY_DELTAS: Record<string, number> = {
 
     <div
       data-testid="ui-kit-slider__handle"
-      class="absolute inset-y-2.5 w-1 -translate-x-1/2 rounded-full bg-(--color-on-accent) dark:bg-brown-100"
+      class="absolute inset-y-2.5 w-1 -translate-x-1/2 rounded-full bg-(--color-on-accent)"
       :style="{ left: offsetOf(value) }"
     ></div>
 
@@ -135,7 +135,7 @@ const KEY_DELTAS: Record<string, number> = {
       aria-hidden="true"
       data-testid="ui-kit-slider__tick"
       :data-visible="tick > value"
-      class="absolute top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brown-500 transition-opacity dark:bg-grey-700"
+      class="absolute top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink-muted transition-opacity"
       :class="tick > value ? 'opacity-100' : 'opacity-0'"
       :style="{ left: offsetOf(tick) }"
     ></span>

@@ -10,7 +10,7 @@ const { t } = useI18n()
     data-testid="checkout__success"
     class="flex flex-col items-center gap-3 px-(--checkout-padding) py-10 text-center"
   >
-    <ui-icon src="party-popper" class="size-18 text-blue-500" />
+    <ui-icon src="party-popper" class="size-18 text-(--color-accent-text)" />
     <h2 data-testid="checkout__success-heading" class="text-2xl text-ink">
       {{ t('billing.checkout.success-heading') }}
     </h2>

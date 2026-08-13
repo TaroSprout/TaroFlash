@@ -52,19 +52,19 @@ function onAvatarSelect(avatar: string) {
           :data-testid="`avatar-picker-modal__option-${avatar}`"
           :data-selected="avatar === selected || undefined"
           v-sfx="{ hover: TYPE_SFX }"
-          class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-white relative aspect-square p-2"
+          class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-surface relative aspect-square p-2"
           @click="onAvatarSelect(avatar)"
         >
           <div
             v-if="!loaded.has(avatar)"
             data-testid="avatar-picker-modal__skeleton"
-            class="h-full w-full rounded-8 animate-pulse bg-brown-300 bgx-diagonal-stripes"
+            class="h-full w-full rounded-8 animate-pulse bg-skeleton bgx-diagonal-stripes"
           />
           <avatar-image v-else :avatar="avatar" class="h-full w-full" />
 
           <div
             v-if="avatar === selected"
-            class="absolute -top-2 -right-2 bg-white p-1.5 size-8 rounded-full flex items-center justify-center"
+            class="absolute -top-2 -right-2 bg-surface p-1.5 size-8 rounded-full flex items-center justify-center"
           >
             <ui-icon src="check" class="text-(--color-accent-text)" />
           </div>

@@ -32,7 +32,7 @@ const body_bindings = computed(() => memberCoverBindings(cover))
   <div
     data-testid="member-card"
     data-station="panel"
-    class="bg-surface rounded-8 border-surface flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-brown-100)] dark:shadow-[-1px_-1px_0_0_var(--color-grey-900)]"
+    class="bg-surface rounded-8 border-surface flex w-89 flex-col overflow-hidden border-8 shadow-[-1px_-1px_0_0_var(--color-surface)]"
   >
     <div data-testid="member-card__header" class="flex items-center justify-center px-9 pt-4 pb-1">
       <h1
@@ -80,7 +80,7 @@ const body_bindings = computed(() => memberCoverBindings(cover))
 
       <div
         data-testid="member-card__registration"
-        class="align-center flex w-full justify-between text-sm font-semibold text-brown-100 mt-2"
+        class="align-center flex w-full justify-between text-sm font-semibold text-(--color-on-accent) mt-2"
       >
         <p>{{ t('member-card.field.registration-label', { date: created_on }) }}</p>
         <p aria-hidden="true">&lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt;</p>

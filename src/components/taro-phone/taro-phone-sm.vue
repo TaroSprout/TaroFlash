@@ -18,7 +18,8 @@ const store = useTaroPhoneStore()
     <div
       v-if="store.notification_count > 0"
       data-testid="notification-badge"
-      class="absolute top-0 left-0 w-4 h-4 bg-red-500 outline-4 outline-surface rounded-full"
+      data-palette="danger"
+      class="absolute top-0 left-0 w-4 h-4 bg-(--color-accent) outline-4 outline-surface rounded-full"
     ></div>
 
     <div class="w-full h-full bg-well rounded-2.5"></div>

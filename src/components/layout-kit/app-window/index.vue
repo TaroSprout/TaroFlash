@@ -123,7 +123,7 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
               ]"
             >
               <slot name="header-content">
-                <h1 class="text-5xl text-white">{{ title }}</h1>
+                <h1 class="text-5xl">{{ title }}</h1>
               </slot>
             </div>
           </slot>

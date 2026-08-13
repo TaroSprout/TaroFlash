@@ -44,7 +44,7 @@ function onChange() {
       />
       <span
         data-testid="ui-kit-toggle__switch-handle"
-        class="size-5 rounded-full transition-all duration-100 ease-in-out bg-brown-500 dark:bg-brown-300 peer-checked:bg-(--color-on-accent) peer-checked:translate-x-full group-hover/toggle:scale-110"
+        class="size-5 rounded-full transition-all duration-100 ease-in-out bg-ink-muted peer-checked:bg-(--color-on-accent) peer-checked:translate-x-full group-hover/toggle:scale-110"
       ></span>
     </span>
   </label>
