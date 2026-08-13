@@ -1,11 +1,11 @@
 ---
 name: work
-description: Execute groomed Notion Task Board tickets autonomously, in parallel. `/work [<ID> …]` claims each ticket to In Progress, then fans out one worktree-isolated subagent per ticket — each pinned to that ticket's `Assignee` model (Fable/Opus/Sonnet), each implementing to the acceptance criteria, running `update-tests` for its change, and cleaning up its worktree when done. With no IDs it pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). This session is the orchestrator, on its own worktree; it organizes the subagents' branches into non-conflicting PRs, watches CI to green, then stays live for your review feedback — dispatching main-workspace fix subagents per PR. It never merges and never sets Done. Trigger on `/work`, "work the board", "work several tickets".
+description: Execute groomed Notion Task Board tickets autonomously, in parallel. `/work [<ID> …]` claims each ticket to In Progress, then fans out one worktree-isolated `ticket-builder` per ticket — each pinned to that ticket's `Assignee` model (Fable/Opus/Sonnet), each implementing to the acceptance criteria. With no IDs it pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). This session is the orchestrator, on its own worktree; it runs the test pass over each branch the builders hand back, organizes them into non-conflicting PRs, watches CI to green, then stays live for your review feedback — dispatching main-workspace fix subagents per PR. It never merges and never sets Done. Trigger on `/work`, "work the board", "work several tickets".
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, Skill, EnterWorktree, ExitWorktree, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
 argument-hint: '[<ID> <ID> …] [--count N]'
 arguments:
   - name: <ID>
-    description: One or more numeric ticket IDs to work. Each gets its own subagent. Omit to auto-pull the top unblocked `Ready` tickets by priority.
+    description: One or more numeric ticket IDs to work. Each gets its own `ticket-builder`. Omit to auto-pull the top unblocked `Ready` tickets by priority.
   - name: --count N
     description: When no IDs are given, how many `Ready` tickets to pull and work in parallel (default 1). Ignored when IDs are named.
 lastUpdated: 2026-08-01T20:00:00Z
@@ -18,14 +18,15 @@ lands each at an **open PR** for your review. It never merges and never marks a 
 close the loop.
 
 **One mode, always orchestrated.** This session is the **orchestrator**: it claims the tickets, fans
-out one worktree-isolated subagent per ticket, then organizes the branches they hand back into clean,
-CI-green PRs. The orchestrator never edits ticket code itself — subagents do. After the PRs open it
-stays live for your review feedback (§ Review & feedback loop).
+out one worktree-isolated [`ticket-builder`](../../agents/ticket-builder.md) per ticket, then tests
+and organizes the branches they hand back into clean, CI-green PRs. The orchestrator never edits
+ticket code itself — builders do. After the PRs open it stays live for your review feedback
+(§ Review & feedback loop).
 
 - **Source lane** — `Ready` (`/groom` lands tickets there itself, after its review loop).
-- **Model** — each ticket's `Assignee` (`Fable` / `Opus` / `Sonnet`), one subagent pinned to it.
-- **Tests** — the golden "no tests" rule is **suspended here**: each subagent runs the `update-tests`
-  skill to cover its own change. The orchestrator never authors ticket code or tests.
+- **Model** — each ticket's `Assignee` (`Fable` / `Opus` / `Sonnet`), one builder pinned to it.
+- **Tests** — the golden "no tests" rule is **suspended here**, for the orchestrator only: it runs
+  `update-tests` once per branch after the builds hand back (§ 3b). Builders never touch tests.
 
 ## Board constants
 
@@ -34,7 +35,7 @@ stays live for your review feedback (§ Review & feedback loop).
   [`task-board-schema.md`](../../rules/task-board-schema.md).
 - `Status` lanes this skill uses: pulls from `Ready`; claims to `In Progress`; lands at `Review`;
   parks stuck work at `Blocked`. Never sets `Done` / `Duplicate`.
-- `Assignee`: `Fable` · `Opus` · `Sonnet` — the model each subagent is pinned to. **`Assignee = Me`
+- `Assignee`: `Fable` · `Opus` · `Sonnet` — the model each builder is pinned to. **`Assignee = Me`
   and `Status = On Hold` are both hands-off** (user-owned) and never eligible.
 - Status and field writes are plain `notion-update-page` property writes — no transition step.
 
@@ -78,9 +79,9 @@ the `Blocked By` relation means one waits, and a chain is worked a link at a tim
 
 `Blocked By` (above) is Notion's structured ticket-to-ticket relation. Separately, a groomed
 ticket's **body** can carry a free-text `## Blocked on` section recording an **external** blocker —
-an account to provision, a domain to add, a secret to set in Doppler — something no subagent can
+an account to provision, a domain to add, a secret to set in Doppler — something no builder can
 resolve. Finding one at SELECT or CLAIM time means **stop and ask the user before dispatching that
-ticket's subagent**, even when the code work looks doable around it (e.g. behind an env gate). The
+ticket's builder**, even when the code work looks doable around it (e.g. behind an env gate). The
 orchestrator judging "doable anyway" is a guess about a blocker it can't see the state of; only the
 user knows whether it's actually cleared.
 
@@ -128,70 +129,49 @@ For each selected ticket, re-check it's still `Ready` **and still unblocked**, t
 `Status = In Progress` via `notion-update-page`. Drop any that another run already grabbed. Claim
 before dispatching so parallel runs don't collide.
 
-### 3. FAN OUT — one subagent per ticket, in parallel
+### 3. FAN OUT — one `ticket-builder` per ticket, in parallel
 
-Dispatch all subagents in a single message (multiple `Agent` calls) so they run concurrently. Each
-`Agent`:
+Dispatch all builders in a single message (multiple `Agent` calls) so they run concurrently. Each
+`Agent` takes `subagent_type: ticket-builder`, `isolation: worktree` (its own worktree — they edit
+files in parallel and must not collide), and `model:` = the ticket's `Assignee` lowercased →
+`fable`/`opus`/`sonnet`.
 
-- `agentType: general-purpose`, `isolation: worktree` (its own worktree — they edit files in parallel
-  and must not collide), `model:` = the ticket's `Assignee` lowercased → `fable`/`opus`/`sonnet`.
-- Prompt carries the ticket's title + body + acceptance criteria and instructs the subagent to:
-  **rename** the worktree's existing branch to a conventional name (`git branch -m <fix/…|feat/…>`) —
-  **not** `git checkout -b`, which orphans the auto-created `worktree-agent-<id>` branch as junk —
-  implement to the acceptance criteria, and follow `.claude/rules/*` — name `comment-authoring` in
-  the prompt, since verbose subagent comments are a recurring review complaint. Include
-  `comment-authoring`'s own remedy for a comment that outgrows its position's shape: since this
-  subagent can't spawn `corpus-author` (next bullet), the fix is never to inline the extra depth —
-  write the comment at its position's proper shape and flag the gap in its report instead.
-- **It does the work itself — `update-tests` is the one agent it's allowed to spawn.** State this in
-  the prompt: no other subagents, ever — a depth-two agent reports to nobody the orchestrator can
-  hear. `update-tests` is exempted because the subagent stays live and waits on it in the same turn
-  (next bullet), never returning early to report that it's waiting.
-- **Commit in batches of ~5 files, never one commit at the end.** A subagent that stalls mid-ticket
-  then costs one batch instead of everything it did.
-- **Irreversible or cross-ticket-critical work goes first**, named in the prompt, so partial work
-  still carries it.
-- **Partial and committed beats complete and parked — including the report.** A subagent out of road
-  pushes what it has, names what it never reached, and always finishes its turn with a report, even
-  when a gate is red or `update-tests`'s child never reported back. Waiting on a child is not a
-  stopping point.
-- **Tests via `update-tests`, not the full suite.** After implementing, the subagent invokes the
-  **`update-tests`** skill to cover its own change, then runs **`vp check`** (format + lint +
-  type-check) green. It does **not** run the full `vp test` suite — parallel subagents each running
-  the whole suite would swamp the machine, and `update-tests` already runs the scoped tests for what
-  it touched. **CI is the gate**, watched by the orchestrator (step 4).
-- **Confine every action to its own worktree — never touch the shared checkout.** The prompt must
-  give the subagent its worktree's **absolute path** and tell it to: run `pwd` first and confirm it's
-  inside `.claude/worktrees/agent-<id>`; do **all** reads, writes, `cd`s, and git commands there; and
-  build **every file path from that worktree root** — never a bare `/…/TaroFlash/src/…` or any path
-  outside its worktree, which is the shared/main checkout a human may be editing live. If it ever
-  notices a change landed on the shared checkout, it must **stop and report it — never
-  `git checkout` / `git restore` / revert the file**, since a blind revert-to-HEAD can wipe the
-  human's uncommitted work. A worktree-isolated subagent hitting a dirty tree is exactly the actor
-  most likely to reach for `git stash` — name the ban on bare `git stash` / `git stash pop`
-  ([`git-workflow`](../../rules/git-workflow.md)) in the prompt explicitly.
-- It **reports back** to the orchestrator: branch name, a summary of what changed, the file paths it
-  touched, whether `update-tests` + `vp check` passed, any unresolved failure or unmet acceptance
-  criterion, and **any corpus gap it hit but couldn't file** — a comment it kept at its position's
-  shape instead of inlining the extra depth, with the file/symbol and the fact that belongs in
-  `corpus/`.
-- **Clean up when done.** After it has pushed/handed back its branch and reported, the subagent
-  removes its own worktree (`git worktree remove`) so no orphaned worktrees pile up. Exception: a
-  **stuck/blocked** ticket leaves its worktree in place for human inspection (step 5).
-- **The orchestrator dispatches `corpus-author` for every flagged gap**, one background `Agent` call
-  per gap per [`self-heal`](../../rules/self-heal.md), once all reports for this fan-out are in and
-  before step 4 — a subagent's own comment stays at its capped shape; the orchestrator is the one
-  that can reach `corpus-author`.
+The prompt carries **only the payload**: the ticket's title, body and acceptance criteria, its
+worktree's absolute path, and the conventional branch name to rename to. How a build behaves — the
+worktree confinement, the commit batching, the comment shape, what it does with a gap it can't file
+or a string nobody signed off, and the shape of its report — is
+[`ticket-builder`](../../agents/ticket-builder.md)'s own definition. Restating any of it in the
+prompt puts a second copy in play that drifts from the role.
+
+- **`ticket-builder` has no `Agent` and no `Skill` tool**, so it cannot spawn and nothing asks it to.
+  A depth-two agent reports to nobody the orchestrator can hear.
+- **Irreversible or cross-ticket-critical work goes first** — the one build-order fact only this
+  ticket knows, so name it in the payload.
+
+### 3b. TEST PASS — once per branch, here, after the builds hand back
+
+Builders never touch tests. Once every report for this fan-out is in, the orchestrator runs the test
+pass itself, **one branch at a time**: enter that builder's worktree, invoke the **`update-tests`**
+skill for its diff, and commit what it writes onto the branch. Sequential, not parallel — each pass
+runs the scoped suite, and several at once swamp the machine.
+
+The full `vp test` suite is never run locally; **CI is the gate**, watched in step 4.
+
+**The orchestrator dispatches `corpus-author` for every `[K:gap: …]` tag a builder left**, one
+background `Agent` call per gap per [`self-heal`](../../rules/self-heal.md), before step 4. The tag
+fails the knowledge check until the topic lands and the site cites it, so a PR can't go green
+carrying one. A `COPY-TBD` a builder left is **not** dispatched — it's a string only the user can
+settle, so raise it and hold that ticket at step 5.
 
 ### 4. ORCHESTRATE PRs
 
-Once subagents report, turn their branches into PRs. One PR per ticket:
+Once the test pass is done, turn the builders' branches into PRs. One PR per ticket:
 
-a. **READINESS CHECK** — if a subagent reported it couldn't satisfy acceptance, or left `vp check`
+a. **READINESS CHECK** — if a builder reported it couldn't satisfy acceptance, or left `vp check`
 red it couldn't fix, don't open its PR; treat the ticket as stuck (step 5).
 b. **CONFLICT CHECK** — for each finished branch, verify it merges cleanly into current `master`
 (`git merge-tree` / dry-run merge). Then test-merge **every pair** of finished branches against
-each other to catch cross-PR conflicts (two subagents touching the same code).
+each other to catch cross-PR conflicts (two builders touching the same code).
 c. **RESOLVE** — a branch that's clean vs master and vs its peers gets a PR **based off `master`**.
 When two branches conflict but the overlap is mechanical, **stack** the dependent PR on the other
 (base its branch on the peer's branch) so it merges cleanly. If the two tickets carry a
@@ -199,26 +179,28 @@ When two branches conflict but the overlap is mechanical, **stack** the dependen
 it, and never guess a direction when the relation already states it. When a conflict needs
 **genuine human judgment** (semantic overlap, incompatible approaches), do **not** guess: **raise
 it** in the final report and set that ticket to `Blocked`.
-d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill with `--ticket <ID>
-   --ticket-url <url>` (the ticket's `<ID>` and its Notion page URL) → one PR titled `TARO-<ID>: …`
-whose body opens with a `[TARO-<ID>](<url>)` link. Pass the stack base when the PR is stacked.
-`prepare-pr` watches CI; **a PR isn't done until it's green.** If CI fails, route it through the
-**Review & feedback loop** (below) — an inline main-checkout fix on the PR branch; if it still
-can't pass after real effort, treat the ticket as stuck. **Never `git checkout` a branch to open its
-PR** — `gh pr create --head <branch>` opens one with nothing checked out, so PR orchestration can't
-move a tree out from under the user.
+d. **OPEN** — for each non-blocked ticket, invoke the **`prepare-pr`** skill with
+`--branch <branch> --base <master|peer-branch> --ticket <ID> --ticket-url <url> --acceptance <path>`
+→ one PR titled `TARO-<ID>: …` whose body opens with a `[TARO-<ID>](<url>)` link and answers every
+acceptance criterion. Write the ticket's criteria, one per line, to a file first and pass its path —
+the orchestrator is the only actor holding the ticket body. `--base` is the stack base when the PR
+is stacked (§ 4c), `master` otherwise. `prepare-pr` never checks a branch out, so PR orchestration
+can't move a tree out from under the user. It watches CI; **a PR isn't done until it's green.** If
+CI fails, route it through the **Review & feedback loop** (below); if it still can't pass after real
+effort, treat the ticket as stuck.
 e. **HANDOFF** — for each opened, green PR: set the ticket to `Review`, append the PR URL into the
 ticket body via `notion-update-page` (append, don't clobber the body).
 f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), **remove
-its worktree**: `git worktree remove <path>`. The branch lives on origin and its local ref
+its builder's worktree**: `git worktree remove <path>`. Builders never remove their own, because the
+test pass (§ 3b) runs in them after they finish. The branch lives on origin and its local ref
 survives worktree removal, so the human can `git checkout <branch>` in the **main** working copy to
 review it against their local dev server — which a worktree checkout can't feed. Then delete any
-leftover `worktree-agent-<id>` placeholder branch (`git branch -D`) if a subagent left one behind.
+leftover `worktree-agent-<id>` placeholder branch (`git branch -D`) if a builder left one behind.
 Only tear down **successful** tickets here; blocked ones keep their worktree (step 5).
 
 ### 5. STUCK / BLOCKED
 
-A ticket is stuck when its subagent can't satisfy acceptance, its CI won't pass after real effort, or
+A ticket is stuck when its builder can't satisfy acceptance, it left a `COPY-TBD` only the user can settle, its CI won't pass after real effort, or
 a conflict needs human resolution. Set it to `Blocked`, append a one-line reason + what's needed into
 the body, and leave its branch/worktree in place for the human. Never silently fail or leave a ticket
 stranded in `In Progress`.
@@ -265,12 +247,17 @@ handled the same way:
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself** — that stays the
 user's call, exactly as at first handoff.
 
+When the user closes the loop — every PR merged, or they say the run is over — **remove the
+orchestrator's own worktree** (`ExitWorktree`, then `git worktree remove <path>`) and delete its
+branch if nothing on it is wanted. A run that ends without this leaves a worktree behind on every
+invocation.
+
 ## Self-heal
 
 Run every review correction through [`self-heal.md`](../../rules/self-heal.md), separate from the
 ticket PR. Specific to this skill:
 
-- The **orchestrator** dispatches — the per-ticket subagents are gone and their worktrees torn down
+- The **orchestrator** dispatches — the builders are gone and their worktrees torn down
   by the time feedback lands. It dispatches in the background and returns to the feedback loop; it
   never pauses the run to write a rule itself.
 - Review feedback is this skill's richest signal. A miss about **claim, PR handoff, or review
@@ -297,28 +284,26 @@ ticket PR. Specific to this skill:
 - **A ticket body carrying a prose `## Blocked on` section pauses for the user's go-ahead before
   dispatch** — never judged as workable around (e.g. "doable behind an env gate") on the
   orchestrator's own read.
-- **Tests: suspended only for the initial build.** Each initial-build subagent invokes `update-tests`
-  for its change (golden "no tests" rule suspended there); no subagent runs the full `vp test` suite —
-  CI is the gate the orchestrator watches. In the **Review & feedback loop the rule is back on**: don't
-  touch tests until the user asks, then one consolidated `update-tests` pass over all the review edits.
-- **A subagent that returns saying only it's waiting on `update-tests` didn't finish its turn.**
-  Resume it with an explicit directive to stop waiting/polling, finish the ticket, and report —
-  including red results — rather than re-dispatching it or waiting yourself.
+- **Tests run once per branch, from here, and only for the initial build** (§ 3b) — the golden "no
+  tests" rule is suspended for that one pass. Builders never touch tests, and the full `vp test`
+  suite is never run locally; CI is the gate the orchestrator watches. In the **Review & feedback
+  loop the rule is back on**: don't touch tests until the user asks, then one consolidated
+  `update-tests` pass over all the review edits.
+- **Never ask any subagent to spawn another.** A depth-two agent reports to nobody you can hear, and
+  the call silently succeeds — `ticket-builder`'s tool list has no `Agent` or `Skill` so it can't,
+  and no prompt from here reintroduces the ask.
 - One PR per ticket (via `prepare-pr`). Don't batch multiple tickets into a single PR.
 - Self-heal is **dispatched, never written inline** (§ Self-heal). The subagent ships to the shared
   `self-heal` PR, never merged — a rule fix rides its own stream, never a ticket branch.
-- The orchestrator runs from its **own worktree** (step 0). During the **initial build** it never
-  edits ticket code — subagents do, in per-ticket **worktrees**, which the subagent **removes when
-  done** (except a stuck ticket, whose worktree is left for inspection). Out-of-scope side requests
-  during the run are done on the orchestrator worktree. **Post-open review fixes are edited inline by
-  the orchestrator** on the checked-out PR branch in the **main checkout**, one PR at a time, so the
-  user's live dev server reflects them — a fix subagent is the fallback, not the default (§ Review &
-  feedback loop).
-- **Subagents stay inside their own worktree.** Each works only under its `.claude/worktrees/agent-<id>`
-  path — never edits the shared/main checkout, and never reverts a shared-checkout file (that can
-  destroy the user's uncommitted work); it stops and reports instead.
+- The orchestrator runs from its **own worktree** (step 0) and **removes it when the run ends**
+  (§ Review & feedback loop). During the **initial build** it never edits ticket code — builders do,
+  in per-ticket **worktrees**, which the orchestrator removes at handoff (except a stuck ticket,
+  whose worktree is left for inspection). Out-of-scope side requests during the run are done on the
+  orchestrator worktree. **Post-open review fixes are edited inline by the orchestrator** on the
+  checked-out PR branch in the **main checkout**, one PR at a time, so the user's live dev server
+  reflects them — a fix subagent is the fallback, not the default (§ Review & feedback loop).
 - Every PR must merge cleanly (vs `master` and vs the other in-flight PRs) and be CI-green before
   handoff. A conflict needing human judgment → raise it + `Blocked`; never guess a resolution.
-- Successful tickets leave **no worktree and no `worktree-agent-*` branch** behind — subagents rename
+- Successful tickets leave **no worktree and no `worktree-agent-*` branch** behind — builders rename
   their worktree branch (never `checkout -b`), and the orchestrator removes each worktree after
   handoff. Only blocked tickets keep their worktree.
