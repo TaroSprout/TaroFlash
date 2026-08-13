@@ -46,7 +46,8 @@ const bindings = computed(() => {
     <div
       v-else-if="cover?.icon"
       data-testid="card-cover__icon"
-      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full"
+      data-palette="yellow"
+      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-(--color-accent)"
       style="width: var(--cover-icon-size); height: var(--cover-icon-size)"
     >
       <ui-icon :src="cover.icon" />
@@ -64,13 +65,11 @@ const bindings = computed(() => {
   border: var(--face-border-width) solid var(--color-accent);
 }
 
-/* No palette → neutral cover: the border and icon step off the accent onto the
-   raised chrome roles, matching the neutral fill above. */
+/* No palette → neutral cover: the border steps off the accent onto the raised
+   chrome role, matching the neutral fill above. The icon keeps its own palette
+   either way — it is not part of the cover's colour. */
 .card-cover:not([data-palette]) {
   border-color: var(--color-raised);
-}
-.card-cover:not([data-palette]) .card-cover__icon {
-  color: var(--color-ink);
 }
 
 /* Applied only once the image decodes; before that the neutral skeleton chrome
