@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Don't carry unused size / variant maps
 
 When a component takes a `size` / `variant` / `tier` prop and only one value is ever passed, drop the prop and inline the chosen variant's classes. Sizing/variant maps that exist "in case future callers need them" rot fast — the next real caller usually wants a shape the map didn't anticipate, and the unused branches force every reader to scan past dead code.

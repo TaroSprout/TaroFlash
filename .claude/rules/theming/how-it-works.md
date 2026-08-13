@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{vue,css}'
+---
+
 # How theming works
 
 Colors are applied via the `data-theme` attribute, which scopes a set of semantic CSS variables defined in `src/styles/palettes.css`.

@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # At most one level of nesting
 
 **`max-depth` in `vite.config.ts`'s `lint.rules` enforces this** — `vp lint` warns past depth 2.

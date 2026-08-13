@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Watchers are a last resort
 
 `watch` / `watchEffect` is not a default. Before adding one, ask whether the same thing can be expressed declaratively — a `computed`, conditional rendering, an event handler, or a one-time `onMounted` seed.

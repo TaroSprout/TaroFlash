@@ -1,3 +1,10 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'supabase/**/*'
+  - 'src/api/**/*'
+---
+
 # Exercising Stripe locally
 
 Stripe paths can be verified end to end against the Dev Sandbox. Don't settle for "the types check out" when real money logic is involved.

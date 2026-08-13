@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Supabase calls belong in `src/api/`
 
 All Supabase client calls must live in the appropriate `src/api/` module. Never call `supabase` directly from composables, views, or components. Components consume the domain barrel via hooks (`useXxxQuery` / `useXxxMutation`); the raw Supabase calls live in `src/api/<domain>/db/` and are internal.

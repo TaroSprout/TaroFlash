@@ -1,3 +1,11 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**'
+  - 'supabase/**/*.ts'
+  - 'scripts/**'
+---
+
 # Comment examples
 
 One or more pairs per gate. The rules they encode live in

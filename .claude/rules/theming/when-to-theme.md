@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{vue,css}'
+---
+
 # When to theme vs use base palette
 
 Not every color should follow the active theme. Reserve `--theme-*` tokens for elements that genuinely need to signal the active theme — primary CTAs, active selections, accents, themed surfaces inside a deck cover. Base UI chrome — body labels, toggle/spinbox idle states, section headings, generic backgrounds, helper text — should use the static brown/grey palette (e.g. `text-brown-700 dark:text-brown-100`, `bg-brown-100 dark:bg-grey-700`) so the chrome stays calm and consistent regardless of which theme is active around it.

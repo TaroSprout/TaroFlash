@@ -44,9 +44,9 @@ slug declared but never cited from anywhere, and a breached line cap.
 
 `.claude/knowledge-lint.json` is the **single declared place** for the always-on file list, the
 caps, and the scan scope. Always-on = the `always_on.include` globs minus any file carrying `paths:`
-frontmatter, since a `paths:` rule is path-triggered rather than loaded every session. The globs
-reach **every** always-loading file, spokes included — a spoke has no `paths:` of its own, so it
-arrives with its hub on every run and costs the budget whether or not the hub was read.
+frontmatter, since a `paths:` rule is path-triggered rather than loaded every session. A spoke's
+`paths:` — see [`rule-authoring → Spokes`](./rule-authoring.md#spokes) — is scanned the same way: a
+spoke that inherited its hub's `paths:` is path-triggered like the hub, not always-on.
 
 - `slugs.exempt` skips the citation scan. `supabase/migrations/**` is exempt because migrations are
   append-only, so a pointer written into one can never be corrected; `tests/unit/scripts/**` is
@@ -56,10 +56,11 @@ arrives with its hub on every run and costs the budget whether or not the hub wa
   to be pointed at from elsewhere. Minting a slug and never citing it is otherwise a failure: a slug
   nobody points at cost nothing to declare and gives the next reader nothing to find, so it earns its
   keep or it's dropped — grep the file, delete the declaration.
-- Caps are `line_caps` — 80 lines for `CLAUDE.md`, 1000 for the always-on total. 1000 is the
-  measured load with a little headroom, not a target: 28 files carry 986 lines today. `aspiration`
-  is the number the payload is being shrunk toward — 400 — and the check warns on every run until
-  it's met. Shrinking is [`harness-pruner`](../agents/harness-pruner.md)'s only job.
+- Caps are `line_caps` — 80 lines for `CLAUDE.md`, 1000 for the always-on total. 1000 is measured
+  load with headroom, not a target — `node scripts/knowledge-lint.mjs` reports the current always-on
+  line count on every run. `aspiration` is the number the payload is being shrunk toward — 400 — and
+  the check warns on every run until it's met. Shrinking is
+  [`harness-pruner`](../agents/harness-pruner.md)'s only job.
 - `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,
   temporary overshoot, and restore it in the change that gets back under.
 

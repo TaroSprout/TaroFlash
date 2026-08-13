@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Third-party SDKs get one chokepoint composable
 
 A third-party analytics/tracking SDK (Plausible, and the next one) is reached only through a single

@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # ui-kit & layout-kit conventions
 
 ## ui-kit primitives that span multiple files live in a directory
@@ -39,7 +45,7 @@ The `layout-kit` window family follows three naming constraints, worth applying 
 
 - **`modal` is off-limits** — `dialog-card` is also a modal. Dialog vs window is the distinguishing axis: a small transient dialog against a large workflow window (`app-window`, `paged-window`).
 - **No domain-forcing names** — `settings-modal` was rejected because the surface might outgrow settings.
-- **No breakpoint words** — `mobile-sheet` was the original sin. Breakpoint behaviour is a *mode* (`'phone' | 'tablet' | 'desktop'`), not an identity.
+- **No breakpoint words** — `mobile-sheet` was the original sin. Breakpoint behaviour is a _mode_ (`'phone' | 'tablet' | 'desktop'`), not an identity.
 
 ## Check the prop surface before a CSS override
 

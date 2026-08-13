@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Provide/inject editor-shaped composables across deep modal trees
 
 When a composable owns a session of reactive state (e.g. `useDeckEditor`) and several nested children all need to read and write the same fields, the modal root should call the composable once and `provide()` the result. Children `inject()` and read/write directly, no prop drilling, no `field()` factory wrapping each key in a writable computed.
@@ -22,7 +28,7 @@ Reserve plain prop drilling for leaf components that take a derived slice (e.g. 
 
 When a child already owns a derived reactive value the parent also needs, the **child is the single source** and the parent consumes it. Two independent computations of "the same" condition drift — a sidebar visible while the main column fell back to its mobile layout on wide-but-short viewports.
 
-provide/inject can't carry this direction (and inside slot content, the injecting parent is the slot *definer*, not the wrapper). Use `defineExpose` + a template ref:
+provide/inject can't carry this direction (and inside slot content, the injecting parent is the slot _definer_, not the wrapper). Use `defineExpose` + a template ref:
 
 - child takes a configurable default-query prop so callers can override the condition
 - child resolves it once and surfaces it: `defineExpose({ has_sidebar })`

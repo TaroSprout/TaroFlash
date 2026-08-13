@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Pure helpers live in directory-scoped utils, not `src/api/`
 
 `src/api/` is for functions that hit the network. Pure helpers — payload builders, diff checks, formatters, validators — belong in `src/utils/<domain>/`, alongside the domain they describe. This keeps the api layer a thin persistence surface and keeps helpers co-located with their domain instead of sprinkled across flat `src/utils/*.ts` files.
@@ -44,6 +50,6 @@ Extract to `src/utils/<domain>/` once it gains a second call site, grows non-tri
 
 ## Extend, don't add a sibling
 
-When a new capability is a *variant* of an existing function, absorb it via overloads or variadic args rather than adding `fooRandom` / `fooBatch` / `fooWithX` beside it. `emitRandomSfx` was rejected as a sibling of `emitSfx` because the random-pick logic would have been duplicated — variadic `emitSfx(...keys, opts?)` keeps the policy, error handling and category logic in one place.
+When a new capability is a _variant_ of an existing function, absorb it via overloads or variadic args rather than adding `fooRandom` / `fooBatch` / `fooWithX` beside it. `emitRandomSfx` was rejected as a sibling of `emitSfx` because the random-pick logic would have been duplicated — variadic `emitSfx(...keys, opts?)` keeps the policy, error handling and category logic in one place.
 
 If the new function would copy most of the original, merge them.

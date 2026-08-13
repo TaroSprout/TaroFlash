@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Group function bodies into visual phases
 
 A function should read as setup → core work → wrap-up, not a wall of text. Put a single blank line between phases; keep tight clusters tight.

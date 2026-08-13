@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # Component composition over code merging
 
 When consolidating or moving functionality between components, import and use the child component rather than inlining its template or script code.

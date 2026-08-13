@@ -1,3 +1,9 @@
+---
+lastUpdated: 2026-08-13T00:00:00Z
+paths:
+  - 'src/**/*.{ts,vue}'
+---
+
 # One responsibility per function
 
 A function either orchestrates other functions or performs one concrete piece of work — never both.
