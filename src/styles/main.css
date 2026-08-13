@@ -120,7 +120,9 @@
   /* A badge or ring that separates an accent fill from itself — a selected
      swatch's tick, the outline around it. FIXED in both modes: it sits on the
      accent, never on the station, so following the station would sink it into
-     whatever is behind the swatch. */
+     whatever is behind the swatch.
+     Trap: a station role assumes the thing wearing it rests on a station
+     →[K:fixed-roles-skip-the-station] */
   --color-knockout: var(--color-white);
   --color-on-knockout: var(--color-brown-700);
 
