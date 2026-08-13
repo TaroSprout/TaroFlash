@@ -24,7 +24,8 @@ const width = useWelcomeWidth()
         position="bottom"
         data-testid="welcome-hero__beta"
         :text="t('welcome-view.hero.beta-tooltip')"
-        class="ml-1 rounded-3 bg-pink-400 dark:bg-pink-700 px-2.5 py-0.5 text-lg text-brown-100 cursor-default"
+        data-palette="pink"
+        class="ml-1 rounded-3 bg-(--color-accent) px-2.5 py-0.5 text-lg text-(--color-on-accent) cursor-default"
       >
         {{ t('welcome-view.hero.beta-pill') }}
       </ui-tooltip>

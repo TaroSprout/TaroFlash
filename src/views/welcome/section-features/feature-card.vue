@@ -8,22 +8,13 @@ import { useWelcomeWidth } from '../welcome-layout'
 type FeatureCardProps = {
   feature_key: string
   icon: string
-  accent: string
-  accent_dark: string
   cover: DeckCover
   side?: CardSide
 }
 
 type FeatureCardTier = 'sm' | 'lg' | 'xl'
 
-const {
-  feature_key,
-  icon,
-  accent,
-  accent_dark,
-  cover,
-  side = 'front'
-} = defineProps<FeatureCardProps>()
+const { feature_key, icon, cover, side = 'front' } = defineProps<FeatureCardProps>()
 
 const { t } = useI18n()
 const width = useWelcomeWidth()
@@ -68,12 +59,7 @@ const description_size = computed(() => DESCRIPTION_SIZE[size.value])
 </script>
 
 <template>
-  <card
-    :class="card_width"
-    :side="side"
-    :cover_config="cover"
-    :style="{ '--accent': accent, '--accent-dark': accent_dark }"
-  >
+  <card :class="card_width" :side="side" :cover_config="cover">
     <template #front>
       <div
         data-testid="feature-card__face"
@@ -84,7 +70,8 @@ const description_size = computed(() => DESCRIPTION_SIZE[size.value])
         <ui-icon
           data-testid="feature-card__icon"
           :src="icon"
-          class="justify-self-center text-(--accent) dark:text-(--accent-dark)"
+          :data-palette="cover.palette"
+          class="justify-self-center text-(--color-accent)"
           :class="icon_size"
         />
 
