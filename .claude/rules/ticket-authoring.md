@@ -122,6 +122,11 @@ criterion ambiguous or unfailable is cut.
 Written concrete as decisions resolve (mostly groom). At cut time, only acceptance the user dictates,
 verbatim.
 
+**The ticket's PR answers this list line for line** — every criterion ticked or crossed, in this
+order, only a crossed one carrying a reason (`prepare-pr`'s `--acceptance`). Write each one so that
+answer is possible: a criterion a reviewer can't mark pass or fail from the running product is the
+one that comes back as prose.
+
 ### `## Tech details` — the companion encoding
 
 A terse companion to the ACs: one checkbox line per AC that needs the technical detail its product
@@ -170,6 +175,11 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   user-facing string appears in the AC as its exact final wording. Reused copy is stated as reused
   (same wording, its own key — keys aren't shared across features). A ticket with undecided copy does
   not reach `Ready`.
+- **Grooming asks for every string the ticket will need**, one question per line, three varied
+  options each, before the ticket leaves `Needs More Info`. The build that picks the ticket up is
+  unattended and cannot ask — a string the ticket didn't settle reaches the branch as a `COPY-TBD`
+  that fails CI (→[K:build-unfinished-markers]), so the cost of skipping the question is a red PR,
+  not a guess.
 
 ## Epics
 
