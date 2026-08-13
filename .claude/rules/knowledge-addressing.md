@@ -63,6 +63,23 @@ arrives with its hub on every run and costs the budget whether or not the hub wa
 - `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,
   temporary overshoot, and restore it in the change that gets back under.
 
+## Unfinished work is tagged, never narrated [K:build-unfinished-markers]
+
+An unattended build can hit two things it is not allowed to settle on its own. Each gets a marker at
+the site, and the same check fails the branch until someone who can settle it does.
+
+- **A knowledge gap** — the fact belongs in `corpus/` and the build can't put it there. Write
+  `[K:gap: <the fact, in one line>]` riding the comment at the site, and leave the comment itself at
+  its position's shape ([`comment-authoring`](./comment-authoring.md)). Never inline the depth
+  instead.
+- **Wording nobody signed off** — write the literal `COPY-TBD` as the string's value. Never invent
+  one, and never bury the question in a report the reviewer has to read to find it.
+
+Both are cleared by doing the work, never by deleting the marker: the gap becomes a `corpus/` topic
+plus a `→[K:<slug>]` citation, the placeholder becomes the string the user chose.
+`unfinished.scan` in the config is where the check looks; `unfinished.exempt` is for files that
+contain the markers as literals rather than as work.
+
 ## Migrations answer for the record [K:knowledge-migration-gate]
 
 `scripts/migration-knowledge-gate.mjs` fails a PR whose added migration leaves recorded knowledge

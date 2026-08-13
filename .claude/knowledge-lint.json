@@ -10,6 +10,15 @@
       }
     }
   },
+  "unfinished": {
+    "scan": [
+      "src/**/*.{ts,js,vue,json}",
+      "tests/**/*.{ts,js,vue}",
+      "scripts/**/*.{ts,js,mjs}",
+      "supabase/**/*.{sql,ts}"
+    ],
+    "exempt": ["supabase/migrations/**", "tests/unit/scripts/**", "scripts/knowledge-lint.mjs"]
+  },
   "reachability": {
     "roots": [
       "CLAUDE.md",
