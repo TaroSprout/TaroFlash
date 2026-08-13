@@ -38,4 +38,5 @@ Pull the topic for the area you're in:
 covers how topics are written. The `corpus-author` agent owns edits — don't rewrite a topic in passing.
 
 **A diff that contradicts a stated invariant is a bug.** A diff that changes one, or exposes a new
-hazard, is what wakes `corpus-author`.
+hazard, is what wakes `corpus-author` — and when you can't reach it, the fact stays at the site as a
+`[K:gap: …]` tag that fails CI until someone does (→[K:build-unfinished-markers]).
