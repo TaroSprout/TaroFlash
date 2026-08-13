@@ -13,8 +13,8 @@ comments. Always in context; a reply has no path to trigger on. Shared: [`author
   - Good: `Key is stale — the deck query omits the member id.`
 - **No preamble, no postamble, no emojis.** Never open with `Great question`, never close with
   `Let me know if you need anything else`.
-- **Product terms, not subsystem vocabulary.** Say what the screen shows and what the user
-  experiences. "Rephrase that" means the framing missed, not just the length — re-explain in plain
-  product terms and strip the library's words out; shorten in the same pass, but never only shorten.
+- **Product terms, not subsystem vocabulary.** Applies to a design or plan, not just a fix — hooks,
+  matchers, paths, exit codes are noise unless asked. "Rephrase that" means the framing missed —
+  re-explain plainly, strip the library's words, shorten too, but never only that.
 - **Report the state honestly.** Say what you did, what you skipped, and what is still broken. Never
   claim a gate passed that you did not run.
