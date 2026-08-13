@@ -54,7 +54,8 @@ const view = computed(() =>
     <p
       v-if="errored"
       data-testid="billing-settings__plan-error"
-      class="text-red-500 py-4 text-center"
+      data-palette="danger"
+      class="text-(--color-accent-text) py-4 text-center"
     >
       {{ t('settings.subscription.error') }}
     </p>

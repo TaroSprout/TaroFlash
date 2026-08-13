@@ -69,6 +69,7 @@ function onInput() {
         v-if="max_chars !== undefined"
         data-testid="ui-kit-textarea-char-count"
         class="ui-kit-textarea-char-count"
+        :data-palette="at_limit ? 'danger' : undefined"
         :class="{ 'ui-kit-textarea-char-count--limit': at_limit }"
       >
         {{ char_count }}/{{ max_chars }}
@@ -134,12 +135,12 @@ function onInput() {
   text-align: right;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
-  color: var(--color-brown-500) !important;
+  color: var(--color-ink-muted) !important;
   margin-top: 4px;
 }
 
 .ui-kit-textarea-char-count--limit {
-  color: var(--color-red-500);
+  color: var(--color-accent-text);
 }
 
 .ui-kit-textarea-container--text-left textarea {

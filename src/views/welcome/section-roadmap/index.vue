@@ -36,7 +36,8 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
 <template>
   <section
     data-testid="welcome-roadmap"
-    class="w-full bg-green-500 dark:bg-green-800 flex justify-center"
+    data-palette="success"
+    class="w-full bg-(--color-accent) flex justify-center"
   >
     <div
       data-testid="welcome-roadmap__panel"
@@ -60,8 +61,8 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
             class="flex shrink-0 items-center justify-center size-8 rounded-full"
             :class="
               itemFor(entry.value).done
-                ? 'bg-green-500 dark:bg-green-800 text-brown-100'
-                : 'border-3 border-dashed border-brown-500'
+                ? 'bg-(--color-accent) text-(--color-on-accent)'
+                : 'border-3 border-dashed border-line'
             "
           >
             <ui-icon v-if="itemFor(entry.value).done" src="check" class="size-4.5" />
@@ -71,9 +72,7 @@ const entries: OptionsPanelEntry[] = items.map((item) => ({
         <template #trailing="{ entry }">
           <span
             class="text-base"
-            :class="
-              itemFor(entry.value).done ? 'text-green-600 dark:text-green-800' : 'text-ink-muted'
-            "
+            :class="itemFor(entry.value).done ? 'text-(--color-accent-text)' : 'text-ink-muted'"
           >
             {{
               itemFor(entry.value).done

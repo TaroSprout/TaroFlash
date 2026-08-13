@@ -75,7 +75,7 @@ const is_locked = computed(() => locked ?? deck?.is_locked ?? false)
       icon-only
       icon-left="lock"
       neutral
-      class="absolute! -top-1 -right-1 z-10 ring-4 ring-brown-100 dark:ring-grey-900 pointer-events-none"
+      class="absolute! -top-1 -right-1 z-10 ring-4 ring-surface pointer-events-none"
       :class="
         !$slots['corner-action']
           ? 'opacity-100'

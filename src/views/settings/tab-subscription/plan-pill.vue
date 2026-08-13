@@ -41,12 +41,12 @@ defineSlots<{
           <div
             v-if="status || description"
             data-testid="plan-pill__meta"
-            class="flex items-center gap-2 text-brown-200 text-sm"
+            class="flex items-center gap-2 text-(--color-on-accent) text-sm"
           >
             <span
               v-if="status"
               data-testid="plan-pill__status"
-              class="rounded-2 bg-brown-100 px-2 py-0.5 text-(--color-accent-text)"
+              class="rounded-2 bg-surface px-2 py-0.5 text-(--color-accent-text)"
             >
               {{ status }}
             </span>

@@ -69,9 +69,7 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     const wrapper = mountSkeleton()
     const labels = wrapper.findAll('[data-testid="dashboard-section__label"]')
     for (const label of labels) {
-      expect(label.classes()).toEqual(
-        expect.arrayContaining(['text-brown-300', 'dark:text-stone-700'])
-      )
+      expect(label.classes()).toEqual(expect.arrayContaining(['text-skeleton']))
     }
   })
 

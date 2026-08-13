@@ -315,6 +315,15 @@ describe('CollectionEditModal', () => {
     })
   })
 
+  describe('danger zone', () => {
+    test('the danger-zone section carries data-palette="danger" [obligation]', () => {
+      const { wrapper } = mountModal()
+      expect(
+        wrapper.find('[data-testid="collection-edit__danger-zone"]').attributes('data-palette')
+      ).toBe('danger')
+    })
+  })
+
   describe('lessons_error watch', () => {
     test('shows a notice with the error message when lessons_error becomes truthy', async () => {
       const { wrapper } = mountModal({ collection_id: 1 })

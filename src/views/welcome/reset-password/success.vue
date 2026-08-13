@@ -10,7 +10,7 @@ const { t } = useI18n()
     data-testid="reset-password-modal__success"
     class="h-full flex flex-col items-center justify-center gap-4 text-center"
   >
-    <ui-icon src="party-popper" class="size-18 text-blue-500" />
+    <ui-icon src="party-popper" class="size-18 text-(--color-accent-text)" />
     <h2 data-testid="reset-password-modal__success-heading" class="text-2xl text-ink">
       {{ t('reset-password-modal.success-heading') }}
     </h2>

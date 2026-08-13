@@ -147,10 +147,7 @@ watch(layout_mode, (mode) => {
           layout_mode === 'phone' ? 'items-center text-center' : layout_mode === 'tablet' && 'pt-4'
         "
       >
-        <h1
-          data-testid="settings__header-title"
-          class="flex items-center gap-3 text-5xl text-white"
-        >
+        <h1 data-testid="settings__header-title" class="flex items-center gap-3 text-5xl">
           {{ header_title }}
         </h1>
       </div>

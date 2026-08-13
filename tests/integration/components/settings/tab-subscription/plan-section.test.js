@@ -218,6 +218,28 @@ describe('plan-section — error state', () => {
     expect(wrapper.find('[data-testid="plan-pill"]').exists()).toBe(false)
   })
 
+  test('the plan-error paragraph carries data-palette="danger" [obligation]', async () => {
+    memberState.plan = 'paid'
+    const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
+    const wrapper = shallowMount(PlanSection, {
+      props: {
+        subscriptionQuery: makeSubscriptionQuery(null, { error: new Error('boom') })
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          LabeledSection: LabeledSectionStub,
+          PlanPill: PlanPillStub,
+          PlanActions: PlanActionsStub,
+          PaidFeatures: PaidFeaturesStub
+        }
+      }
+    })
+    expect(
+      wrapper.find('[data-testid="billing-settings__plan-error"]').attributes('data-palette')
+    ).toBe('danger')
+  })
+
   test('free member with error does NOT show the error — free member never loads billing [obligation]', async () => {
     memberState.plan = 'free'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default

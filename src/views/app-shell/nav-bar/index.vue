@@ -17,14 +17,14 @@ onMounted(() => {
   <nav
     data-testid="nav-bar-container"
     ref="nav-bar"
-    class="w-full sticky top-0 z-50 transform-[translateZ(0)] pt-4 pb-8 bg-blue-500 dark:bg-blue-650 wave-bottom-[30px] flex justify-center"
+    class="w-full sticky top-0 z-50 transform-[translateZ(0)] pt-4 pb-8 bg-(--color-accent) wave-bottom-[30px] flex justify-center"
   >
     <div
       data-testid="nav-bar"
       class="flex w-full max-w-(--page-width) items-center max-sm:justify-center gap-4 sm:px-(--page-px) relative"
     >
       <back-button class="absolute! left-4" />
-      <div class="flex items-center gap-1 text-4xl text-brown-100">
+      <div class="flex items-center gap-1 text-4xl text-(--color-on-accent)">
         <ui-icon src="logo" class="h-9" />
         <div>{{ t('app.title') }}</div>
       </div>

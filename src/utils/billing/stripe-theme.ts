@@ -5,10 +5,6 @@
 import type { Appearance } from '@stripe/stripe-js'
 import { FONT_FAMILY, FONT_URL } from '@/styles/fonts'
 
-function token(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
 /** Stripe doesn't parse `color-mix()` / alpha functions — build an 8-digit hex. */
 function withAlpha(hex: string, percent: number): string {
   const clean = hex.replace('#', '')
@@ -19,19 +15,43 @@ function withAlpha(hex: string, percent: number): string {
 }
 
 /**
- * @param is_dark - Pass the app's own dark-mode flag, not the system
- *   preference — the form has to match the panel it sits in.
+ * The colour a role resolves to for `host`.
+ *
+ * @param host - The element the form sits in, never the page root — reading it
+ *   here is what picks up the surrounding surface, the member's colour and the
+ *   current mode without any of the three being named.
  */
-export function getStripeAppearance(is_dark: boolean): Appearance {
-  const danger = token(is_dark ? '--color-red-600' : '--color-red-500')
-  const accent = token(is_dark ? '--color-blue-650' : '--color-blue-500')
+function role(host: HTMLElement, name: string): string {
+  return getComputedStyle(host).getPropertyValue(name).trim()
+}
 
-  const background = token(is_dark ? '--color-stone-900' : '--color-brown-50')
-  const surface = token(is_dark ? '--color-grey-700' : '--color-brown-100')
-  const surfaceHover = token(is_dark ? '--color-grey-900' : '--color-brown-200')
-  const border = token(is_dark ? '--color-grey-700' : '--color-brown-300')
-  const text = token(is_dark ? '--color-brown-300' : '--color-brown-700')
-  const placeholder = token(is_dark ? '--color-brown-500' : '--color-brown-500')
+/** The colour a role resolves to for `host` once `palette` is put on it. */
+function paletteRole(host: HTMLElement, palette: string, name: string): string {
+  const probe = document.createElement('span')
+  probe.dataset.palette = palette
+  host.appendChild(probe)
+
+  const value = role(probe, name)
+  probe.remove()
+
+  return value
+}
+
+/**
+ * How the embedded payment form should look.
+ *
+ * @param host - The element the form is mounted into.
+ */
+export function getStripeAppearance(host: HTMLElement): Appearance {
+  const accent = role(host, '--color-accent')
+  const danger = paletteRole(host, 'danger', '--color-accent')
+
+  const background = role(host, '--color-well')
+  const surface = role(host, '--color-surface')
+  const surfaceHover = role(host, '--color-raised')
+  const border = role(host, '--color-line')
+  const text = role(host, '--color-ink')
+  const placeholder = role(host, '--color-ink-muted')
 
   return {
     theme: 'flat',

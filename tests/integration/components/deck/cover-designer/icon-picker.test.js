@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import IconPicker from '@/views/deck/cover-designer/icon-picker.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
@@ -12,12 +13,17 @@ function makePicker(props = {}) {
     props: {
       supported_icons: SUPPORTED_ICONS,
       icon: undefined,
+      palette: undefined,
       ...props
     },
     global: {
       directives: { sfx: {} }
     }
   })
+}
+
+function optionIcon(wrapper, name) {
+  return wrapper.find(`[data-testid="icon-picker__option-${name}"]`).findComponent(UiIcon)
 }
 
 beforeEach(() => {
@@ -57,5 +63,62 @@ describe('IconPicker', () => {
     expect(wrapper.emitted('update:icon')).toBeUndefined()
     // Still plays a sound (powerdown) on the no-op.
     expect(mockEmitSfx).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('IconPicker — icon palette [obligation]', () => {
+  // coverIconPalette() keeps the icon legible against its own card's fill —
+  // sits on the ui-icon itself, never the button, so the button's own
+  // --color-accent (the deck's chosen palette) still drives its own fill.
+
+  test('sets data-palette to yellow on every option icon for a non-yellow cover palette', () => {
+    const wrapper = makePicker({ palette: 'blue' })
+    SUPPORTED_ICONS.forEach((name) => {
+      expect(optionIcon(wrapper, name).attributes('data-palette')).toBe('yellow')
+    })
+  })
+
+  test('sets data-palette to purple on every option icon when the cover palette is yellow', () => {
+    const wrapper = makePicker({ palette: 'yellow' })
+    SUPPORTED_ICONS.forEach((name) => {
+      expect(optionIcon(wrapper, name).attributes('data-palette')).toBe('purple')
+    })
+  })
+
+  test('does not put data-palette on the option button itself [obligation]', () => {
+    const wrapper = makePicker({ palette: 'yellow' })
+    expect(
+      wrapper.find('[data-testid="icon-picker__option-book"]').attributes('data-palette')
+    ).toBeUndefined()
+  })
+})
+
+describe('IconPicker — colours only the selected option [obligation]', () => {
+  // A fixed mid-review after every option was coloured, not just the picked
+  // one — the selected icon alone takes the accent fill colour.
+
+  test('colours the selected option icon with the accent colour', () => {
+    const wrapper = makePicker({ icon: 'book' })
+    expect(optionIcon(wrapper, 'book').classes()).toContain('text-(--color-accent)')
+  })
+
+  test('leaves unselected option icons uncoloured', () => {
+    const wrapper = makePicker({ icon: 'book' })
+    expect(optionIcon(wrapper, 'card-deck').classes()).not.toContain('text-(--color-accent)')
+    expect(optionIcon(wrapper, 'school-cap').classes()).not.toContain('text-(--color-accent)')
+  })
+
+  test('unselected options keep the button base text-ink-muted class', () => {
+    const wrapper = makePicker({ icon: 'book' })
+    expect(wrapper.find('[data-testid="icon-picker__option-card-deck"]').classes()).toContain(
+      'text-ink-muted'
+    )
+  })
+
+  test('unselected options keep the button hover:text-(--color-accent-muted) class', () => {
+    const wrapper = makePicker({ icon: 'book' })
+    expect(wrapper.find('[data-testid="icon-picker__option-card-deck"]').classes()).toContain(
+      'hover:text-(--color-accent-muted)'
+    )
   })
 })

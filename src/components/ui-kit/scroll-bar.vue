@@ -197,7 +197,7 @@ function isPageTarget(el: HTMLElement) {
     <div
       ref="thumbEl"
       data-testid="ui-kit-scroll-bar__thumb"
-      class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes hover:bgx-color-(--color-raised-pattern)"
+      class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes"
       :style="thumbStyle"
       @pointerdown.stop.prevent="onThumbPointerDown"
     />
@@ -206,9 +206,9 @@ function isPageTarget(el: HTMLElement) {
 
 <style scoped>
 .ui-kit-scroll-bar {
-  --bar-color: var(--color-ink-muted);
-  --thumb-color: var(--color-ink-muted);
-  --thumb-hover-color: var(--color-purple-400);
+  --bar-color: var(--color-raised);
+  --thumb-color: var(--color-raised);
+  --thumb-hover-color: var(--color-accent);
 
   --transition-dur: 0.05s;
   --transition: background-color 0.05s ease-in-out, outline 0.05s ease-in-out;

@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import UiPatternPicker from '@/components/ui-kit/pattern-picker.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
@@ -66,5 +67,11 @@ describe('UiPatternPicker', () => {
     const wrapper = makePicker()
     const swatch = wrapper.find('[data-testid="pattern-picker__option-aztec"]')
     expect(swatch.attributes('style') || '').toContain('--bgx-size')
+  })
+
+  test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
+    const wrapper = makePicker({ selected_pattern: 'wave' })
+    const tick = wrapper.find('[data-testid="pattern-picker__option-wave"]').findComponent(UiIcon)
+    expect(tick.classes()).toContain('text-(--color-accent-text)')
   })
 })

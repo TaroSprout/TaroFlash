@@ -283,6 +283,7 @@ function toSwipeZone(offset: number) {
       <div class="absolute inset-0 overflow-hidden rounded-(--face-radius)">
         <div
           data-testid="review-label--fail"
+          data-palette="danger"
           class="review-label review-label--fail"
           :class="{ 'review-label--visible': failVisible }"
         >
@@ -326,7 +327,7 @@ function toSwipeZone(offset: number) {
   font-size: var(--text-3xl);
   line-height: var(--text-3xl--line-height);
 
-  background: var(--color-white);
+  background: var(--color-card);
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
@@ -339,16 +340,9 @@ function toSwipeZone(offset: number) {
     opacity var(--duration) linear;
 }
 
-[data-mode='dark'] .review-label {
-  background: var(--color-stone-700);
-}
-
-.review-label--fail {
-  color: var(--color-red-500);
-}
-
+.review-label--fail,
 .review-label--pass {
-  color: var(--color-blue-500);
+  color: var(--color-accent);
 }
 
 .review-label--visible {

@@ -16,7 +16,7 @@ const { group, index } = defineProps<{
         data-testid="transcript-word"
         :data-word-index="word.index"
         :data-word-text="word.display"
-        class="group/word cursor-pointer transition-colors duration-700 ease-out data-[playing=true]:duration-100 data-[active=true]:duration-100 data-[active=true]:text-white not-data-[active=true]:data-[playing=true]:text-blue-500 dark:not-data-[active=true]:data-[playing=true]:text-blue-650"
+        class="group/word cursor-pointer transition-colors duration-700 ease-out data-[playing=true]:duration-100 data-[active=true]:duration-100 data-[active=true]:text-(--color-on-accent) not-data-[active=true]:data-[playing=true]:text-(--color-accent-text)"
         ><span
           data-word-base
           class="inline-block origin-center leading-none transition-transform duration-700 ease-out group-data-[playing=true]/word:scale-115 group-data-[playing=true]/word:duration-100"

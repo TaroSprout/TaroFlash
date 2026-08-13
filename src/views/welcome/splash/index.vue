@@ -19,7 +19,7 @@ const height = useWelcomeHeight()
     <section
       data-testid="welcome-hero"
       data-station="window"
-      class="flex flex-col w-full h-[95lvh] min-h-160 py-7.5 max-lg:pb-10 max-h-250 relative bg-brown-300 dark:bg-stone-900 wave-bottom-[30px] bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-raised-pattern) bg-center overflow-hidden"
+      class="flex flex-col w-full h-[95lvh] min-h-160 py-7.5 max-lg:pb-10 max-h-250 relative bg-surface wave-bottom-[30px] bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-raised-pattern) bg-center overflow-hidden"
     >
       <splash-nav />
 

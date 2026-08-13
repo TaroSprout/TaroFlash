@@ -142,11 +142,7 @@ watch(
 </script>
 
 <template>
-  <div
-    data-testid="term-card"
-    class="relative [--skeleton-sheen:var(--color-brown-200)] dark:[--skeleton-sheen:var(--color-brown-500)]"
-    :class="{ 'overflow-hidden': sliding }"
-  >
+  <div data-testid="term-card" class="relative" :class="{ 'overflow-hidden': sliding }">
     <transition
       :css="false"
       @enter="onSlideEnter"
@@ -229,10 +225,7 @@ watch(
             {{ result.reading }}
           </span>
 
-          <span
-            v-else-if="is_loading"
-            class="term-card__skeleton h-4 w-24 rounded-2 bg-brown-500 dark:bg-brown-500"
-          />
+          <span v-else-if="is_loading" class="term-card__skeleton h-4 w-24 rounded-2 bg-skeleton" />
         </div>
 
         <ui-divider class="my-3">
@@ -260,9 +253,9 @@ watch(
             aria-busy="true"
             :aria-label="t('audio-reader.popover.loading')"
           >
-            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-brown-500 dark:bg-brown-500" />
-            <span class="term-card__skeleton h-4 w-full rounded-2 bg-brown-500 dark:bg-brown-500" />
-            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-brown-500 dark:bg-brown-500" />
+            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-skeleton" />
+            <span class="term-card__skeleton h-4 w-full rounded-2 bg-skeleton" />
+            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-skeleton" />
           </div>
 
           <p
@@ -275,10 +268,7 @@ watch(
           </p>
 
           <div v-else-if="result" data-testid="term-card__result" class="flex flex-col gap-1">
-            <p
-              data-testid="term-card__translation"
-              class="text-3xl text-brown-700 capitalize dark:text-brown-200"
-            >
+            <p data-testid="term-card__translation" class="text-3xl text-ink capitalize">
               {{ result.translation }}
             </p>
             <p
@@ -335,7 +325,7 @@ body:not(.animation-safe) .term-card__skeleton::after {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, var(--skeleton-sheen), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-skeleton-sheen), transparent);
   animation: term-card-skeleton-sweep 1.4s ease-in-out infinite;
 }
 

@@ -2,9 +2,9 @@
 id: surface-stations
 domain: theming
 status: current
-hazard: false
+hazard: true
 related: [theming]
-updated: 2026-08-12
+updated: 2026-08-13
 ---
 
 # Surface stations
@@ -15,6 +15,17 @@ A surface carries a station name — `page`, `panel`, `window`, or `float` — a
 on it reads its neutral colors off that name. There's no ladder between the four; a thing doesn't
 get darker because it's "more raised" than another. It just belongs to a station, and that station
 owns its own look.
+
+> [!HAZARD] [K:fixed-roles-skip-the-station] **A station role assumes the thing wearing it is
+> resting on a station. Something that isn't — a badge sitting on an accent fill, not on the page,
+> panel, window, or float behind it — can borrow a station role that looks fine in the mode you're
+> testing and disappears in the other.**
+> A selected-swatch tick tried `well`, the natural-sounding pick — and `well` happens to be the
+> darkest shade in the `window` station's dark rendition, so the badge inverted into the fill it was
+> supposed to stand out from. The roles that opt out fix only the station axis — each still swaps
+> light/dark with the mode. Read "fixed" as mode-invariant and a badge tuned for light survives
+> unchanged into dark, which is the opposite of this trap.
+> [See the fixed roles ↓](#a-few-roles-never-re-author)
 
 ## The four stations
 
@@ -43,6 +54,21 @@ never the station, never a shade:
 - **line** — dividers, hairlines, seams
 - **ink** / **ink-muted** — body text and secondary text
 - **skeleton** / **skeleton-sheen** — a loading placeholder bar and the highlight sweeping across it
+
+## A few roles never re-author — by station, not by mode
+
+`card`/`on-card`, `mat`, and `knockout`/`on-knockout` are fixed on the station axis only: the same
+color regardless of which station they sit in, never picked up from a station's own set. Each opts
+out for the same reason — it isn't actually resting on a station's surface. A flashcard carries its
+own identity everywhere it appears; an avatar's mat is color-tuned once per mode, so an avatar image
+reads the same wherever it's mounted; a knockout badge or ring — the tick on a selected swatch, the
+outline around it — sits directly on an accent fill, not on the station behind it, so following the
+station would sink it into whatever's behind the swatch.
+
+They are **not** fixed on the mode axis. All three pairs still swap to a dark rendition when the
+page goes dark — `stations.css` carries a `[data-mode='dark']` value for each of them, same as any
+station-derived role would. "Fixed" here means "the station switch doesn't move it," not "no switch
+moves it."
 
 ## What this isn't
 

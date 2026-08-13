@@ -29,7 +29,7 @@ onUnmounted(() => onClosed())
     :close_label="t('deck-view.mobile-editor.done-button')"
     size="lg"
     class="bgx-dot-grid bgx-size-15 bgx-opacity-25 dark:bgx-opacity-10 bgx-color-(--color-raised-pattern)"
-    bg_class="bg-brown-300 dark:bg-grey-900"
+    bg_class="bg-surface"
     @close="close"
   >
     <template #header-end>

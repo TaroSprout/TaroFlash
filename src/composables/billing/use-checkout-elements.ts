@@ -50,9 +50,11 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
       if (!stripeInstance) throw new Error('Stripe.js failed to load')
       stripe = stripeInstance
 
+      const host = container_ref.value ?? document.documentElement
+
       checkout = stripe.initCheckoutElementsSdk({
         clientSecret,
-        elementsOptions: { appearance: getStripeAppearance(is_dark.value), fonts: STRIPE_FONTS }
+        elementsOptions: { appearance: getStripeAppearance(host), fonts: STRIPE_FONTS }
       })
 
       payment_element = checkout.createPaymentElement({ layout: 'tabs' })
@@ -73,7 +75,16 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
     payment_element?.destroy()
   })
 
-  watch(is_dark, (dark) => checkout?.changeAppearance(getStripeAppearance(dark)))
+  // Post-flush so the page has already been switched over to the new mode — the
+  // appearance is read back off the live element, not computed from the flag.
+  watch(
+    is_dark,
+    () => {
+      const host = container_ref.value ?? document.documentElement
+      checkout?.changeAppearance(getStripeAppearance(host))
+    },
+    { flush: 'post' }
+  )
 
   async function confirm(): Promise<ConfirmOutcome> {
     if (!checkout) return { status: 'error', message: options.genericErrorMessage }

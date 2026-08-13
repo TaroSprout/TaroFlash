@@ -262,7 +262,7 @@ watch(
         data-testid="transcript-view__hover"
         aria-hidden="true"
         :data-playing="tap_active"
-        class="group/pill pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-blue-500 opacity-0 dark:bg-blue-650"
+        class="group/pill pointer-events-none absolute left-0 top-0 -z-10 rounded-2 bg-(--color-accent) opacity-0"
       >
         <div
           data-testid="transcript-view__hover-texture"
@@ -288,7 +288,7 @@ watch(
           <h2 class="text-xl font-medium text-ink-muted">
             {{ rows[vrow.index].chapter_title }}
           </h2>
-          <hr class="w-16 border-brown-700 dark:border-brown-700" />
+          <hr class="w-16 border-ink" />
         </div>
 
         <transcript-segment

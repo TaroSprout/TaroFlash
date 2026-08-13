@@ -42,9 +42,7 @@ const status_icon = computed(() => {
   return 'music-note'
 })
 
-const icon_class = computed(() =>
-  is_failed.value ? 'bg-red-500 text-white' : 'bg-blue-500 text-white dark:bg-blue-650'
-)
+const icon_palette = computed(() => (is_failed.value ? 'danger' : undefined))
 
 const processing_label = computed(() =>
   lesson.phase ? PHASE_KEYS[lesson.phase] : 'audio-reader.lesson-card.processing-fallback'
@@ -60,7 +58,7 @@ const error_label = computed(
     data-testid="lesson-card"
     data-station="panel"
     :data-status="lesson.status"
-    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-brown-200 p-4 text-left dark:bg-grey-700"
+    class="group relative flex w-56 flex-col gap-3 rounded-7 bg-surface p-4 text-left"
   >
     <button
       data-testid="lesson-card__open"
@@ -71,8 +69,8 @@ const error_label = computed(
     >
       <span
         data-testid="lesson-card__icon"
-        class="flex size-10 items-center justify-center rounded-full"
-        :class="icon_class"
+        :data-palette="icon_palette"
+        class="flex size-10 items-center justify-center rounded-full bg-(--color-accent) text-(--color-on-accent)"
       >
         <ui-icon :src="status_icon" class="h-5" />
       </span>

@@ -34,6 +34,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:settled-transform-traps-overlays]         | [[layering]]           | `src/utils/animations/`                                                                                                  |
 | →[K:ios-audio-interruption]                   | [[sound]]              | `src/sfx/`                                                                                                               |
 | →[K:dock-height-single-owner]                 | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
+| →[K:fixed-roles-skip-the-station]             | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
 
 A trap with no directory to echo it into is listed in `CLAUDE.md` instead, so it
 is paid for in every session. There are none today.

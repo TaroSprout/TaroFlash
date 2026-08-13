@@ -9,7 +9,7 @@ defineProps<{
     data-testid="ui-kit-tape"
     class="inline-flex items-center justify-center whitespace-nowrap px-8 py-2 bg-(--color-accent)/70 tape-edges"
   >
-    <span v-if="label" data-testid="ui-kit-tape__label" class="text-brown-100 text-xl">
+    <span v-if="label" data-testid="ui-kit-tape__label" class="text-(--color-on-accent) text-xl">
       {{ label }}
     </span>
   </div>

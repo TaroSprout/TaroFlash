@@ -39,6 +39,7 @@ const DialogCardBodyStub = defineComponent({
 
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import AvatarImage from '@/components/member/avatar-image.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 
 function mountModal(props = {}) {
   return shallowMount(AvatarPickerModal, {
@@ -179,5 +180,13 @@ describe('AvatarPickerModal', () => {
     const otter = wrapper.find('[data-testid="avatar-picker-modal__option-otter"]')
     expect(otter.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
     expect(otter.findComponent(AvatarImage).exists()).toBe(false)
+  })
+
+  test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
+    const wrapper = mountModal({ selected: 'otter' })
+    const tick = wrapper
+      .find('[data-testid="avatar-picker-modal__option-otter"]')
+      .findComponent(UiIcon)
+    expect(tick.classes()).toContain('text-(--color-accent-text)')
   })
 })

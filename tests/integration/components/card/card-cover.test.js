@@ -59,6 +59,34 @@ describe('CardCover', () => {
   })
 })
 
+describe('CardCover — icon palette [obligation]', () => {
+  // coverIconPalette() keeps the icon legible against its own fill — yellow
+  // by default, purple on a yellow cover — independent of the cover's own
+  // data-palette (or lack of one).
+
+  test('colours the icon purple when the cover palette is yellow', () => {
+    const wrapper = mountCover({ icon: 'star', palette: 'yellow' })
+    expect(wrapper.find('[data-testid="card-cover__icon"]').attributes('data-palette')).toBe(
+      'purple'
+    )
+  })
+
+  test('colours the icon yellow for a non-yellow cover palette', () => {
+    const wrapper = mountCover({ icon: 'star', palette: 'blue' })
+    expect(wrapper.find('[data-testid="card-cover__icon"]').attributes('data-palette')).toBe(
+      'yellow'
+    )
+  })
+
+  test('keeps the icon coloured yellow on a palette-less (neutral) cover [obligation]', () => {
+    const wrapper = mountCover({ icon: 'star' })
+    expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBeUndefined()
+    expect(wrapper.find('[data-testid="card-cover__icon"]').attributes('data-palette')).toBe(
+      'yellow'
+    )
+  })
+})
+
 describe('CardCover — image cover [obligation]', () => {
   // A custom cover image fills the cover on its own — the palette/pattern/icon
   // chrome must never show behind it, not even before the image has decoded.

@@ -162,7 +162,7 @@ defineExpose({
   <div
     v-if="pending"
     data-testid="face-image-layer__loading"
-    class="absolute inset-0 z-30 flex items-center justify-center rounded-(--face-radius) bg-white/70 dark:bg-stone-700/70"
+    class="absolute inset-0 z-30 flex items-center justify-center rounded-(--face-radius) bg-(--color-card)/70"
   >
     <ui-icon src="loading-dots" class="size-12 text-ink-muted" />
   </div>
@@ -174,11 +174,9 @@ defineExpose({
     :text="t('card.image-editor.upload-image-button')"
     position="top"
     :gap="4"
-    theme="blue-500"
-    theme-dark="blue-650"
     data-testid="face-image-layer__add"
     :aria-label="t('card.image-editor.upload-image-button')"
-    class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-ink-muted transition-[color,opacity] duration-150 hover:text-blue-500 dark:text-brown-100 dark:hover:text-blue-650"
+    class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-ink-muted transition-[color,opacity] duration-150 hover:text-(--color-accent)"
     :class="hovered ? 'opacity-100' : 'opacity-0'"
     v-sfx="{ hover: TYPE_SFX }"
     @click.stop="onAddClick"

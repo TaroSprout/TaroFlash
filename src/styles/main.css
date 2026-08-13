@@ -117,6 +117,15 @@
   --color-card: var(--color-white);
   --color-on-card: var(--color-brown-700);
 
+  /* Separates an accent fill from itself — the disc behind a selected swatch's
+     tick, the ring around the swatch. Flat across stations because it rests on
+     the accent rather than on a station, but it still swaps with the mode (dark
+     in stations.css): the tick on it is the palette's own hue, which inverts
+     between modes and would go illegible against a frozen white.
+     Trap: a station role assumes the thing wearing it rests on a station
+     →[K:fixed-roles-skip-the-station] */
+  --color-knockout: var(--color-white);
+
   /* Media backdrop for user avatars. FIXED, not station-relative: avatar images
      are colour-tuned to read against it, so it must be identical everywhere —
      one tuning pass for light, one for dark. Dark in stations.css. */

@@ -87,6 +87,12 @@ describe('FaceOverlay — error state', () => {
     expect(error_el.attributes('data-variant')).toBe('inset')
   })
 
+  test('carries data-palette="error" on the error element [obligation]', () => {
+    const wrapper = mountOverlay({ error: 'oops' })
+    const error_el = wrapper.find('[data-testid="face-overlay__error"]')
+    expect(error_el.attributes('data-palette')).toBe('error')
+  })
+
   test('clicking the error element re-emits browse (re-pick after error) [obligation]', async () => {
     const wrapper = mountOverlay({ error: 'oops' })
     await wrapper.find('[data-testid="face-overlay__error"]').trigger('click')

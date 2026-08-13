@@ -106,6 +106,7 @@ function onLeave(el: Element, done: () => void) {
     class="card-container"
     :class="{ 'pointer-events-none': disabled }"
     :data-error="error || undefined"
+    :data-palette="error ? 'danger' : undefined"
     :data-active="image_layer?.active || undefined"
     :data-dragging="image_layer?.dragging || cover_image?.dragging.value || undefined"
     :data-loading="image_layer?.pending || undefined"
@@ -223,7 +224,7 @@ function onLeave(el: Element, done: () => void) {
 
     --card-bg-color: var(--color-card);
     --card-text-color: var(--color-on-card);
-    --card-text-color--placeholder: var(--color-brown-500);
+    --card-text-color--placeholder: var(--color-ink-muted);
 
     aspect-ratio: var(--aspect-card);
     position: relative;

@@ -10,8 +10,6 @@ import FeatureCard from './feature-card.vue'
 type Feature = {
   key: string
   icon: string
-  accent: string
-  accent_dark: string
   cover: DeckCover
 }
 
@@ -28,8 +26,6 @@ const features: Feature[] = [
   {
     key: 'experience',
     icon: 'paint-brush',
-    accent: 'var(--color-purple-500)',
-    accent_dark: 'var(--color-purple-700)',
     cover: {
       palette: 'purple',
       pattern: 'diagonal-stripes',
@@ -39,8 +35,6 @@ const features: Feature[] = [
   {
     key: 'mobile',
     icon: 'mobile-phone',
-    accent: 'var(--color-green-500)',
-    accent_dark: 'var(--color-green-800)',
     cover: {
       palette: 'green',
       pattern: 'squiggle',
@@ -50,15 +44,11 @@ const features: Feature[] = [
   {
     key: 'scheduling',
     icon: 'clock',
-    accent: 'var(--color-pink-500)',
-    accent_dark: 'var(--color-pink-700)',
     cover: { palette: 'pink', pattern: 'aztec', icon: 'clock' }
   },
   {
     key: 'upcoming',
     icon: 'shooting-star',
-    accent: 'var(--color-yellow-500)',
-    accent_dark: 'var(--color-yellow-700)',
     cover: {
       palette: 'yellow',
       pattern: 'bank-note',
@@ -151,8 +141,6 @@ watch(width, buildReveals, { flush: 'post' })
           <feature-card
             :feature_key="feature.key"
             :icon="feature.icon"
-            :accent="feature.accent"
-            :accent_dark="feature.accent_dark"
             :cover="feature.cover"
             :side="sides[index]"
           />

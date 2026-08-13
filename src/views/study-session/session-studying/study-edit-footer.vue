@@ -23,7 +23,7 @@ function onDone(e: MouseEvent) {
     <button
       data-testid="study-card-edit__flip"
       :data-active="flip_playing || null"
-      class="text-brown-700 cursor-pointer rounded-full bg-white px-13 py-4 hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
+      class="text-ink cursor-pointer rounded-full bg-raised px-13 py-4 hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
       @click="onFlip"
     >
       {{ $t('study.flashcard.edit-footer.flip-button') }}
@@ -31,7 +31,7 @@ function onDone(e: MouseEvent) {
     <button
       data-testid="study-card-edit__done"
       :data-active="done_playing || null"
-      class="cursor-pointer rounded-full bg-(--color-accent) px-13 py-4 text-white hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
+      class="cursor-pointer rounded-full bg-(--color-accent) px-13 py-4 text-(--color-on-accent) hover:-translate-0.5 hover:shadow-sm transition-all duration-50"
       @click="onDone"
     >
       {{ $t('study-session.edit.done') }}

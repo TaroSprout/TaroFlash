@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import { SKELETON_COVER, coverBindings } from '@/utils/cover'
+import { SKELETON_COVER, coverBindings, coverIconPalette } from '@/utils/cover'
 import { useImageReveal } from '@/composables/card/image-reveal'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
@@ -18,6 +18,8 @@ const bindings = computed(() => {
   if (decoded.value) return null
   return coverBindings(has_image.value ? SKELETON_COVER : cover, { border: false })
 })
+
+const icon_palette = computed(() => coverIconPalette(cover?.palette))
 </script>
 
 <template>
@@ -46,7 +48,8 @@ const bindings = computed(() => {
     <div
       v-else-if="cover?.icon"
       data-testid="card-cover__icon"
-      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-yellow-500 dark:text-yellow-700"
+      :data-palette="icon_palette"
+      class="card-cover__icon [&>svg]:w-full [&>svg]:h-full text-(--color-accent)"
       style="width: var(--cover-icon-size); height: var(--cover-icon-size)"
     >
       <ui-icon :src="cover.icon" />
@@ -64,13 +67,11 @@ const bindings = computed(() => {
   border: var(--face-border-width) solid var(--color-accent);
 }
 
-/* No palette → neutral cover: the border and icon step off the accent onto the
-   raised chrome roles, matching the neutral fill above. */
+/* No palette → neutral cover: the border steps off the accent onto the raised
+   chrome role, matching the neutral fill above. The icon keeps its own palette
+   either way — it is not part of the cover's colour. */
 .card-cover:not([data-palette]) {
   border-color: var(--color-raised);
-}
-.card-cover:not([data-palette]) .card-cover__icon {
-  color: var(--color-ink);
 }
 
 /* Applied only once the image decodes; before that the neutral skeleton chrome

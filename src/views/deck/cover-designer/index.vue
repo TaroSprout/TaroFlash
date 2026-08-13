@@ -34,6 +34,7 @@ const { t } = useI18n()
       <icon-picker
         :supported_icons="SUPPORTED_ICONS"
         :icon="config.icon"
+        :palette="config.palette"
         @update:icon="config.icon = $event"
       />
     </section-list>

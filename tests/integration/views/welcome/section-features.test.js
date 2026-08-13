@@ -21,7 +21,7 @@ const SectionHeaderStub = defineComponent({
 
 const FeatureCardStub = defineComponent({
   name: 'FeatureCard',
-  props: ['feature_key', 'icon', 'accent', 'accent_dark'],
+  props: ['feature_key', 'icon', 'cover'],
   setup(props) {
     return () =>
       h('div', {
