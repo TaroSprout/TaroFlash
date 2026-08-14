@@ -15,6 +15,10 @@ on.
 4. **Check the PR isn't already merged before pushing follow-ups.** `gh pr view <num> --json state,mergedAt`
    first — pushing to a merged branch strands the commit where it will never reach `master`.
 5. **Force-push only your own feature branch**, and only with `--force-with-lease`. Never `master`.
+   **Once I've left a review comment on the PR, stop force-pushing to it** — it wipes the review
+   history and I can no longer diff just the new changes. Land review fixes as new commits instead;
+   squashing (see [`commit-authoring`](./commit-authoring.md)) waits until after the PR merges, or
+   until I ask for it.
 6. **Prefix PR comments with `🤖 Claude:`.** Comments post under my account, so without it I can't
    tell your replies from my own.
 7. **Never bare `git stash` / `git stash pop`.** The stack is shared across every worktree and
