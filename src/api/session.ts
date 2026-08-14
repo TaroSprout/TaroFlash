@@ -377,6 +377,26 @@ async function runOAuthFlow(
   })
 }
 
+// A real account/session round trip lands well inside this; a returning
+// member's account is always far older, so the two never get confused.
+const NEW_ACCOUNT_WINDOW_MS = 30_000
+
+/**
+ * Whether the account behind the current session was made just now, rather
+ * than one that already existed before this sign-in.
+ *
+ * Google's flow hands back a session either way, with nothing on it that says
+ * which — so freshness is inferred from `created_at` against the moment the
+ * session resolved, not from which modal started the flow.
+ */
+export async function isNewAccountSession(): Promise<boolean> {
+  const session = await getSession()
+  const createdAt = session?.user.created_at
+  if (!createdAt) return false
+
+  return Date.now() - new Date(createdAt).getTime() < NEW_ACCOUNT_WINDOW_MS
+}
+
 export type OAuthOutcome = 'success' | 'error'
 
 /**
