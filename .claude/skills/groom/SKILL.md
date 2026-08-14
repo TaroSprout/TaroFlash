@@ -156,6 +156,10 @@ facts:
   `git log -S`/`-L`, the actual policy or migration. Cheap to check, expensive to get wrong.
 - **A subagent's report is not source.** Open the file an Explore agent's finding points to yourself
   before asserting it as fact.
+- **Supporting markup or CSS is not evidence the state it handles occurs.** An `overflow` class, a
+  scrollbar-handle component, or similar existing in the DOM doesn't mean the content actually
+  overflows today — check the real content against the real container before writing an AC premised
+  on that state.
 - **Label every fact spoken to the user, not just what lands in the body**, as
   `CONFIRMED (verified against <source>)` or `ASSUMED` — a claim in the checkpoint or the
   back-and-forth steers a decision before any AC is written.
