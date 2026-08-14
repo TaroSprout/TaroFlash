@@ -66,6 +66,15 @@ const { mockConsumeReturnDestination } = vi.hoisted(() => ({
   mockConsumeReturnDestination: vi.fn()
 }))
 
+const { mockIsNewAccountSession, mockTrackSignupCompleted } = vi.hoisted(() => ({
+  mockIsNewAccountSession: vi.fn(),
+  mockTrackSignupCompleted: vi.fn()
+}))
+
+vi.mock('@/composables/tracking', () => ({
+  useTracking: () => ({ trackSignupCompleted: mockTrackSignupCompleted })
+}))
+
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
 vi.mock('@pinia/colada', () => ({ useQueryCache: () => mockQueryCache }))
@@ -98,7 +107,8 @@ vi.mock('@/api/session', () => ({
   isPasswordRecoveryUrl: mockIsPasswordRecoveryUrl,
   waitForPasswordRecovery: mockWaitForPasswordRecovery,
   onSignedOut: mockOnSignedOut,
-  isAuthError: mockIsAuthError
+  isAuthError: mockIsAuthError,
+  isNewAccountSession: mockIsNewAccountSession
 }))
 
 vi.mock('vue-router', () => ({
@@ -143,6 +153,8 @@ beforeEach(() => {
   mockCloseAllModals.mockReset()
   mockTaroPhoneReset.mockReset()
   mockClearPersistedSession.mockReset()
+  mockIsNewAccountSession.mockReset()
+  mockTrackSignupCompleted.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -344,6 +356,13 @@ describe('useSessionStore', () => {
       const store = useSessionStore()
       await expect(store.login('user@example.com', 'pw')).rejects.toThrow('invalid credentials')
     })
+
+    test('does NOT record a Signup Completed event [obligation]', async () => {
+      mockLogin.mockResolvedValueOnce({ user: { id: 'u1' } })
+      const store = useSessionStore()
+      await store.login('user@example.com', 'password1')
+      expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
+    })
   })
 
   // ── logout ─────────────────────────────────────────────────────────────────
@@ -536,6 +555,30 @@ describe('useSessionStore', () => {
       await store.signInOAuth('google')
       expect(mockCloseAllModals).toHaveBeenCalledOnce()
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+
+    test('fires Signup Completed on "success" when isNewAccountSession() resolves true [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('success')
+      mockIsNewAccountSession.mockResolvedValueOnce(true)
+      const store = useSessionStore()
+      await store.signInOAuth('google')
+      expect(mockTrackSignupCompleted).toHaveBeenCalledOnce()
+    })
+
+    test('does NOT fire Signup Completed on "success" when isNewAccountSession() resolves false — a returning account [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('success')
+      mockIsNewAccountSession.mockResolvedValueOnce(false)
+      const store = useSessionStore()
+      await store.signInOAuth('google')
+      expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
+    })
+
+    test('does NOT fire Signup Completed on "error" outcome, even when isNewAccountSession() resolves true [obligation]', async () => {
+      mockSignInOAuth.mockResolvedValueOnce('error')
+      mockIsNewAccountSession.mockResolvedValueOnce(true)
+      const store = useSessionStore()
+      await store.signInOAuth('google')
+      expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
     })
 
     test('on "error" outcome, does NOT navigate or close modals [obligation]', async () => {

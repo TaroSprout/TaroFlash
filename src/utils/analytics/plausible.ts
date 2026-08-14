@@ -44,13 +44,22 @@ function ensureScriptLoaded(site_id: string) {
 }
 
 /**
- * Counts one visit with Plausible — only when a site id is configured for
- * this build, so staging and local runs never send anything.
+ * Sends one named event to Plausible — only when a site id is configured for
+ * this build, so staging and local runs never send anything. Carries no
+ * properties, so nothing identifying the visitor ever rides along.
  */
-export function trackPageview() {
+export function trackEvent(name: string) {
   const site_id = import.meta.env.VITE_PLAUSIBLE_SITE_ID
   if (!site_id) return
 
   ensureScriptLoaded(site_id)
-  window.plausible?.('pageview')
+  window.plausible?.(name)
+}
+
+/**
+ * Counts one visit with Plausible — only when a site id is configured for
+ * this build, so staging and local runs never send anything.
+ */
+export function trackPageview() {
+  trackEvent('pageview')
 }

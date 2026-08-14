@@ -4,18 +4,27 @@ import { nextTick } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockSignupEmail, mockSignInOAuth, mockIsDisplayNameAvailable } = vi.hoisted(
-  () => ({
-    mockEmitSfx: vi.fn(),
-    mockSignupEmail: vi.fn(),
-    mockSignInOAuth: vi.fn(),
-    mockIsDisplayNameAvailable: vi.fn()
-  })
-)
+const {
+  mockEmitSfx,
+  mockSignupEmail,
+  mockSignInOAuth,
+  mockIsDisplayNameAvailable,
+  mockTrackSignupCompleted
+} = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockSignupEmail: vi.fn(),
+  mockSignInOAuth: vi.fn(),
+  mockIsDisplayNameAvailable: vi.fn(),
+  mockTrackSignupCompleted: vi.fn()
+}))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
   emitHoverSfx: vi.fn()
+}))
+
+vi.mock('@/composables/tracking', () => ({
+  useTracking: () => ({ trackSignupCompleted: mockTrackSignupCompleted })
 }))
 
 vi.mock('vue-i18n', () => ({
@@ -48,6 +57,7 @@ beforeEach(() => {
   setActivePinia(createPinia())
   mockEmitSfx.mockReset()
   mockSignupEmail.mockReset()
+  mockTrackSignupCompleted.mockReset()
   // Default: the chosen display name is free, so submit() proceeds to signup.
   mockIsDisplayNameAvailable.mockReset()
   mockIsDisplayNameAvailable.mockResolvedValue(true)
@@ -113,6 +123,12 @@ describe('useSignupActions', () => {
       expect(mockSignupEmail).not.toHaveBeenCalled()
     })
 
+    test('does NOT fire Signup Completed on a validation failure [obligation]', async () => {
+      const auth = useSignupActions()
+      await auth.submit()
+      expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
+    })
+
     test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
       const auth = useSignupActions()
       await auth.submit()
@@ -175,6 +191,14 @@ describe('useSignupActions', () => {
       expect(result).toBe('success')
     })
 
+    test('fires Signup Completed on the "success" outcome, and only then [obligation]', async () => {
+      mockSignupEmail.mockResolvedValueOnce('success')
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      expect(mockTrackSignupCompleted).toHaveBeenCalledOnce()
+    })
+
     test('calls the store with trimmed email and display_name', async () => {
       mockSignupEmail.mockResolvedValueOnce('success')
       const auth = useSignupActions()
@@ -223,6 +247,14 @@ describe('useSignupActions', () => {
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    })
+
+    test('does NOT fire Signup Completed when the email is already taken [obligation]', async () => {
+      mockSignupEmail.mockResolvedValueOnce('email-taken')
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
     })
   })
 
@@ -297,6 +329,14 @@ describe('useSignupActions', () => {
       fillValidFields(auth)
       await auth.submit()
       expect(mockEmitSfx).not.toHaveBeenCalled()
+    })
+
+    test('does NOT fire Signup Completed when the store outcome is "error" [obligation]', async () => {
+      mockSignupEmail.mockResolvedValueOnce('error')
+      const auth = useSignupActions()
+      fillValidFields(auth)
+      await auth.submit()
+      expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
     })
   })
 

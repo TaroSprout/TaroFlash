@@ -12,6 +12,7 @@ import {
   signOutLocal as supaSignOutLocal,
   signupEmail as supaSignupEmail,
   signInOAuth as supaSignInOAuth,
+  isNewAccountSession,
   updateEmail as supaUpdateEmail,
   updatePassword as supaUpdatePassword,
   verifyPassword as supaVerifyPassword,
@@ -42,6 +43,7 @@ import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { closeAll as closeAllModals } from '@/composables/modal'
 import { clearPersistedSession } from '@/views/study-session/composables/session-persistence'
 import { consumeReturnDestination } from '@/composables/auth/return-destination'
+import { useTracking } from '@/composables/tracking'
 
 /** Why a session was torn down without the member asking to log out. */
 export type ForceLogoutReason = 'expired' | 'account-deleted'
@@ -60,6 +62,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const notice = useNoticeStore()
   const queryCache = useQueryCache()
   const taroPhone = useTaroPhoneStore()
+  const tracking = useTracking()
 
   const user = ref<User | undefined>(undefined)
   const has_password = ref(false)
@@ -202,6 +205,10 @@ export const useSessionStore = defineStore('sessionStore', () => {
       notice.error(t('login-dialog.errors.generic'))
       return
     }
+
+    // Covers the popup leg only — a redirect leg lands on /auth/callback in a
+    // fresh page load, where this function never runs.
+    if (await isNewAccountSession()) tracking.trackSignupCompleted()
 
     onAuthenticated()
   }

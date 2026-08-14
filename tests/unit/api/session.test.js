@@ -71,7 +71,8 @@ import {
   requestPasswordReset,
   isAuthError,
   onSignedOut,
-  consumeOAuthPopupFlag
+  consumeOAuthPopupFlag,
+  isNewAccountSession
 } from '@/api/session'
 import logger from '@/utils/logger'
 
@@ -138,6 +139,51 @@ describe('getUser', () => {
   test('throws when supabase returns an error', async () => {
     mocks.getUser.mockResolvedValueOnce({ data: null, error: { message: 'nope' } })
     await expect(getUser()).rejects.toThrow('nope')
+  })
+})
+
+describe('isNewAccountSession', () => {
+  const NOW = new Date('2026-01-01T00:00:00.000Z').getTime()
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('returns false when there is no session [obligation]', async () => {
+    mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
+    await expect(isNewAccountSession()).resolves.toBe(false)
+  })
+
+  test('returns true when created_at is 29_999ms before now, just inside the 30_000ms window [obligation]', async () => {
+    const created_at = new Date(NOW - 29_999).toISOString()
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { created_at } } },
+      error: null
+    })
+    await expect(isNewAccountSession()).resolves.toBe(true)
+  })
+
+  test('returns false when created_at is exactly 30_000ms before now, at the boundary [obligation]', async () => {
+    const created_at = new Date(NOW - 30_000).toISOString()
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { created_at } } },
+      error: null
+    })
+    await expect(isNewAccountSession()).resolves.toBe(false)
+  })
+
+  test('returns false when created_at is well before the 30_000ms window, a returning account [obligation]', async () => {
+    const created_at = new Date(NOW - 60_000).toISOString()
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: { user: { created_at } } },
+      error: null
+    })
+    await expect(isNewAccountSession()).resolves.toBe(false)
   })
 })
 

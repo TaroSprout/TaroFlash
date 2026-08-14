@@ -1,4 +1,7 @@
-import { trackPageview as trackPlausiblePageview } from '@/utils/analytics/plausible'
+import {
+  trackPageview as trackPlausiblePageview,
+  trackEvent as trackPlausibleEvent
+} from '@/utils/analytics/plausible'
 
 /**
  * The one place the app reports activity to an analytics provider.
@@ -12,5 +15,15 @@ export function useTracking() {
     trackPlausiblePageview()
   }
 
-  return { trackPageview }
+  /** The sign-up modal opened, from any entry point. */
+  function trackSignupStarted() {
+    trackPlausibleEvent('Signup Started')
+  }
+
+  /** An account was just created — email/password, or a brand-new Google sign-in. */
+  function trackSignupCompleted() {
+    trackPlausibleEvent('Signup Completed')
+  }
+
+  return { trackPageview, trackSignupStarted, trackSignupCompleted }
 }

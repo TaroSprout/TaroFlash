@@ -4,6 +4,7 @@ import { useSessionStore } from '@/stores/session'
 import { isDisplayNameAvailable, type OAuthProvider } from '@/api/session'
 import { emitSfx } from '@/sfx/bus'
 import { validatePasswordFields } from '@/utils/password-validation'
+import { useTracking } from '@/composables/tracking'
 
 type FieldName = 'username' | 'email' | 'password' | 'confirm_password'
 
@@ -29,6 +30,7 @@ function isEmail(s: string) {
 export function useSignupActions() {
   const session = useSessionStore()
   const { t } = useI18n()
+  const tracking = useTracking()
 
   const username = ref('')
   const email = ref('')
@@ -88,7 +90,10 @@ export function useSignupActions() {
     })
     loading.value = false
 
-    if (outcome === 'success') return 'success'
+    if (outcome === 'success') {
+      tracking.trackSignupCompleted()
+      return 'success'
+    }
 
     // Email-taken surfaces inline; the modal stays open, no alert needed.
     if (outcome === 'email-taken') {
