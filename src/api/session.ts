@@ -379,7 +379,7 @@ async function runOAuthFlow(
 
 // A real account/session round trip lands well inside this; a returning
 // member's account is always far older, so the two never get confused.
-const NEW_ACCOUNT_WINDOW_MS = 30_000
+const NEW_ACCOUNT_WINDOW_MS = 30_000 // 30 seconds
 
 /**
  * Whether the account behind the current session was made just now, rather
