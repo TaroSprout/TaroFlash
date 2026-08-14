@@ -3,9 +3,10 @@ import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockOpen } = vi.hoisted(() => ({
+const { mockEmitSfx, mockOpen, mockTrackSignupStarted } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),
-  mockOpen: vi.fn()
+  mockOpen: vi.fn(),
+  mockTrackSignupStarted: vi.fn()
 }))
 
 vi.mock('@/sfx/bus', () => ({
@@ -15,6 +16,10 @@ vi.mock('@/sfx/bus', () => ({
 
 vi.mock('@/composables/modal', () => ({
   useModal: vi.fn(() => ({ open: mockOpen }))
+}))
+
+vi.mock('@/composables/tracking', () => ({
+  useTracking: () => ({ trackSignupStarted: mockTrackSignupStarted })
 }))
 
 import { useSignupModal } from '@/views/welcome/signup/signup-modal'
@@ -35,6 +40,7 @@ function makeModalResult() {
 beforeEach(() => {
   mockEmitSfx.mockReset()
   mockOpen.mockReset()
+  mockTrackSignupStarted.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -47,6 +53,26 @@ describe('useSignupModal', () => {
     useSignupModal().open()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+  })
+
+  test('fires Signup Started on open [obligation]', () => {
+    const { result } = makeModalResult()
+    mockOpen.mockReturnValueOnce(result)
+
+    useSignupModal().open()
+
+    expect(mockTrackSignupStarted).toHaveBeenCalledOnce()
+  })
+
+  test('fires Signup Started again on a second fresh open — no dedup [obligation]', () => {
+    const first = makeModalResult()
+    const second = makeModalResult()
+    mockOpen.mockReturnValueOnce(first.result).mockReturnValueOnce(second.result)
+
+    useSignupModal().open()
+    useSignupModal().open()
+
+    expect(mockTrackSignupStarted).toHaveBeenCalledTimes(2)
   })
 
   test('emits snappy_button_3 before pop_up_close (ordering) [obligation]', async () => {

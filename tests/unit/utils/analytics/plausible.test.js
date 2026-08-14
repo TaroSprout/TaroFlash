@@ -58,3 +58,34 @@ describe('trackPageview', () => {
     expect(window.plausible?.q).toEqual([['pageview'], ['pageview']])
   })
 })
+
+describe('trackEvent', () => {
+  test('does nothing when VITE_PLAUSIBLE_SITE_ID is unset [obligation]', async () => {
+    vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', '')
+    const { trackEvent } = await import('@/utils/analytics/plausible')
+
+    trackEvent('Signup Started')
+
+    expect(scriptTags()).toHaveLength(0)
+    expect(window.plausible).toBeUndefined()
+  })
+
+  test('fires the named event once the site id is set', async () => {
+    vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', SITE_ID)
+    const { trackEvent } = await import('@/utils/analytics/plausible')
+
+    trackEvent('Signup Completed')
+
+    expect(window.plausible?.q).toContainEqual(['Signup Completed'])
+  })
+
+  test('never sends a second argument alongside the event name [obligation]', async () => {
+    vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', SITE_ID)
+    const { trackEvent } = await import('@/utils/analytics/plausible')
+
+    trackEvent('Signup Started')
+
+    const call = window.plausible?.q?.find((args) => args[0] === 'Signup Started')
+    expect(call).toHaveLength(1)
+  })
+})

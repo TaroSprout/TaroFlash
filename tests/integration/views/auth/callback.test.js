@@ -5,7 +5,9 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   push: vi.fn(),
   consumeOAuthPopupFlag: vi.fn(),
-  consumeReturnDestination: vi.fn()
+  consumeReturnDestination: vi.fn(),
+  isNewAccountSession: vi.fn(),
+  trackSignupCompleted: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -17,11 +19,16 @@ vi.mock('vue-router', () => ({
 }))
 
 vi.mock('@/api/session', () => ({
-  consumeOAuthPopupFlag: mocks.consumeOAuthPopupFlag
+  consumeOAuthPopupFlag: mocks.consumeOAuthPopupFlag,
+  isNewAccountSession: mocks.isNewAccountSession
 }))
 
 vi.mock('@/composables/auth/return-destination', () => ({
   consumeReturnDestination: mocks.consumeReturnDestination
+}))
+
+vi.mock('@/composables/tracking', () => ({
+  useTracking: () => ({ trackSignupCompleted: mocks.trackSignupCompleted })
 }))
 
 import Callback from '@/views/auth/callback.vue'
@@ -35,6 +42,8 @@ describe('auth/callback', () => {
     mocks.push.mockReset()
     mocks.consumeOAuthPopupFlag.mockReset()
     mocks.consumeReturnDestination.mockReset().mockReturnValue(null)
+    mocks.isNewAccountSession.mockReset().mockResolvedValue(false)
+    mocks.trackSignupCompleted.mockReset()
     closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
   })
 
@@ -82,5 +91,30 @@ describe('auth/callback', () => {
     mount(Callback)
     await flushPromises()
     expect(mocks.consumeReturnDestination).not.toHaveBeenCalled()
+  })
+
+  test('popup leg never checks isNewAccountSession or fires Signup Completed — the opener owns that [obligation]', async () => {
+    mocks.consumeOAuthPopupFlag.mockReturnValue(true)
+    mocks.isNewAccountSession.mockResolvedValue(true)
+    mount(Callback)
+    await flushPromises()
+    expect(mocks.isNewAccountSession).not.toHaveBeenCalled()
+    expect(mocks.trackSignupCompleted).not.toHaveBeenCalled()
+  })
+
+  test('redirect leg fires Signup Completed when isNewAccountSession() resolves true [obligation]', async () => {
+    mocks.consumeOAuthPopupFlag.mockReturnValue(false)
+    mocks.isNewAccountSession.mockResolvedValue(true)
+    mount(Callback)
+    await flushPromises()
+    expect(mocks.trackSignupCompleted).toHaveBeenCalledOnce()
+  })
+
+  test('redirect leg does NOT fire Signup Completed when isNewAccountSession() resolves false — a returning account [obligation]', async () => {
+    mocks.consumeOAuthPopupFlag.mockReturnValue(false)
+    mocks.isNewAccountSession.mockResolvedValue(false)
+    mount(Callback)
+    await flushPromises()
+    expect(mocks.trackSignupCompleted).not.toHaveBeenCalled()
   })
 })
