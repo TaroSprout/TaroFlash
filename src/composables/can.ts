@@ -35,6 +35,13 @@ export function useCan() {
   // in the transcribe-audio / translate-term edge functions — this gate is UX.
   const useAudioReader = computed(() => member.role === 'admin')
 
+  // Open to any signed-in member in a local dev build, so a solo developer can
+  // exercise moderation without seeding a role. Re-enforced server-side by
+  // can_moderate_feedback() — a local developer without the role still can't write.
+  const moderateFeedback = computed(
+    () => member.role === 'admin' || member.role === 'moderator' || import.meta.env.DEV
+  )
+
   /**
    * True when a deck currently at `count` cards has room for `adding` more
    * under the member's plan cap. Takes params (not a ComputedRef) since the
@@ -45,5 +52,5 @@ export function useCan() {
     return limit === null || count + adding <= limit
   }
 
-  return { useProFeature, createDeck, useCardImages, useAudioReader, addCards }
+  return { useProFeature, createDeck, useCardImages, useAudioReader, moderateFeedback, addCards }
 }
