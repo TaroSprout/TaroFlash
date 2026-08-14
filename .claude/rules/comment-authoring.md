@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-08T00:00:00Z
+lastUpdated: 2026-08-14T00:00:00Z
 paths:
   - 'src/**'
   - 'supabase/**/*.ts'
@@ -36,6 +36,10 @@ there.** Above-the-line is the fallback shape, not the default.
 
 **There is no line cap.** Length follows position — a comment that outgrows its position's shape is
 a missing knowledge entry, not a longer comment.
+
+**A symbol keeps every position that earns its place.** An above-symbol comment and a trailing
+comment on the same line answer different questions, so a request for one is never grounds to delete
+the other — add the one asked for and leave the rest, unless the request specifically supersedes it.
 
 ## Gates
 
