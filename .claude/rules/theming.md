@@ -23,3 +23,4 @@ Colors go through the `data-theme` token layer — never raw hex, never hardcode
 - [`when-to-theme`](./theming/when-to-theme.md) — themed tokens vs base palette decision rule
 - [`semantic-tokens`](./theming/semantic-tokens.md) — promoting recurring brown/grey pairs to `--color-*` roles
 - [`bgx`](./theming/bgx.md) — textured-background `bgx-*` utilities
+- [`stations`](./theming/stations.md) — which background class pairs with a `data-station` root
