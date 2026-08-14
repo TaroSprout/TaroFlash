@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import AppLauncher from '@/components/taro-phone/app-launcher.vue'
 
 const { mockEmitHoverSfx } = vi.hoisted(() => ({ mockEmitHoverSfx: vi.fn() }))
@@ -15,6 +15,13 @@ vi.mock('@/composables/shortcuts', () => ({
       for (const r of [].concat(regs)) handlers[r.combo] = r.handler
     }
   })
+}))
+
+// Off by default so the arrow-key/hover suites below keep their fixed
+// 4-tile indices; the launcher-gate suite flips this per test.
+const moderateFeedback = ref(false)
+vi.mock('@/composables/can', () => ({
+  useCan: () => ({ moderateFeedback })
 }))
 
 function makeAppStub(name) {
@@ -35,6 +42,7 @@ function makeWrapper() {
         SettingsApp: makeAppStub('SettingsApp'),
         DarkmodeApp: makeAppStub('DarkmodeApp'),
         FeedbackApp: makeAppStub('FeedbackApp'),
+        AdminApp: makeAppStub('AdminApp'),
         LogoutApp: makeAppStub('LogoutApp')
       }
     }
@@ -43,6 +51,7 @@ function makeWrapper() {
 }
 
 beforeEach(() => {
+  moderateFeedback.value = false
   for (const key of Object.keys(handlers)) delete handlers[key]
 })
 
@@ -149,5 +158,19 @@ describe('AppLauncher — enter activates the focused app [obligation]', () => {
     handlers['enter']()
 
     expect(click_spy).toHaveBeenCalledOnce()
+  })
+})
+
+describe('AppLauncher — admin app is gated by can.moderateFeedback [obligation]', () => {
+  test('renders the admin app when moderateFeedback is true', () => {
+    moderateFeedback.value = true
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-app="AdminApp"]').exists()).toBe(true)
+  })
+
+  test('does not render the admin app when moderateFeedback is false', () => {
+    moderateFeedback.value = false
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-app="AdminApp"]').exists()).toBe(false)
   })
 })

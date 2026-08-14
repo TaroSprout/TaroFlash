@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 
 let planRef
 let deckCountRef
@@ -183,6 +183,40 @@ describe('useCan', () => {
       expect(can.useAudioReader.value).toBe(true)
       roleRef.value = 'member'
       expect(can.useAudioReader.value).toBe(false)
+    })
+  })
+
+  describe('moderateFeedback [obligation]', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    test('true when member role is admin', () => {
+      vi.stubEnv('DEV', false)
+      roleRef.value = 'admin'
+      expect(useCan().moderateFeedback.value).toBe(true)
+    })
+
+    test('true when member role is moderator', () => {
+      vi.stubEnv('DEV', false)
+      roleRef.value = 'moderator'
+      expect(useCan().moderateFeedback.value).toBe(true)
+    })
+
+    test('false for every other role', () => {
+      vi.stubEnv('DEV', false)
+      roleRef.value = 'member'
+      expect(useCan().moderateFeedback.value).toBe(false)
+      roleRef.value = null
+      expect(useCan().moderateFeedback.value).toBe(false)
+    })
+
+    test('true regardless of role when running a local dev build', () => {
+      vi.stubEnv('DEV', true)
+      roleRef.value = 'member'
+      expect(useCan().moderateFeedback.value).toBe(true)
+      roleRef.value = null
+      expect(useCan().moderateFeedback.value).toBe(true)
     })
   })
 })
