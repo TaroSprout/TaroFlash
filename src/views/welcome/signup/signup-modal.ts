@@ -1,14 +1,17 @@
 import { useModal } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
+import { useTracking } from '@/composables/tracking'
 import SignupDialog from './index.vue'
 
 /** Opens the sign-up modal as a mobile sheet on small viewports. */
 export function useSignupModal() {
   const modal = useModal()
+  const tracking = useTracking()
 
   /** @param payment - preselect the paid plan when the user came from a pricing CTA. */
   function open(payment?: boolean) {
     emitSfx('snappy_button_3')
+    tracking.trackSignupStarted()
     const result = modal.open<boolean>(SignupDialog, {
       backdrop: true,
       mode: 'mobile-sheet',
