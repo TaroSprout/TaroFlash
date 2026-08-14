@@ -2,12 +2,15 @@
 import { useI18n } from 'vue-i18n'
 import { useShortcuts } from '@/composables/shortcuts'
 import { emitHoverSfx } from '@/sfx/bus'
+import { useCan } from '@/composables/can'
 import SettingsApp from '@/components/taro-phone/apps/settings-app.vue'
 import DarkmodeApp from '@/components/taro-phone/apps/darkmode-app.vue'
 import LogoutApp from '@/components/taro-phone/apps/logout-app.vue'
 import FeedbackApp from '@/components/taro-phone/apps/feedback-app.vue'
+import AdminApp from '@/components/taro-phone/apps/admin-app.vue'
 
 const { t } = useI18n()
+const can = useCan()
 const shortcuts = useShortcuts('phone/app-launcher')
 
 let active_index = -1
@@ -78,6 +81,7 @@ function _getApps() {
       <settings-app />
       <darkmode-app />
       <feedback-app />
+      <admin-app v-if="can.moderateFeedback.value" />
       <logout-app />
     </div>
   </div>
