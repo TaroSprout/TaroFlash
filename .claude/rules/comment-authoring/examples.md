@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-13T00:00:00Z
+lastUpdated: 2026-08-14T00:00:00Z
 paths:
   - 'src/**'
   - 'supabase/**/*.ts'
@@ -26,6 +26,18 @@ onAccent?: boolean
 // True when this header sits on an accent-coloured section, so the text and
 // rule switch to colours that read against it.
 onAccent?: boolean
+```
+
+`composables/account/new-account.ts`
+
+```typescript
+// Bad — justifies the value instead of just naming it
+// 30s is roomy next to typical onboarding flows, so treat accounts newer
+// than this as still finishing setup.
+const NEW_ACCOUNT_WINDOW_MS = 30_000
+
+// Good
+const NEW_ACCOUNT_WINDOW_MS = 30_000 // 30 seconds
 ```
 
 ## The opener completes the symbol's name
