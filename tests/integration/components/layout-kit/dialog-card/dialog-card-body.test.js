@@ -1,85 +1,68 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
-import { h, nextTick } from 'vue'
+import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
-import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountBody(props = {}, viewport = 'desktop') {
-  return shallowMount(DialogCardBody, {
+function mountBody(props = {}) {
+  return mount(DialogCardBody, {
     props,
-    slots: { default: () => h('div', { 'data-testid': 'body-content' }, 'content') },
-    global: { provide: { [dialogCardViewportKey]: { value: viewport } } }
+    slots: { default: () => h('div', { 'data-testid': 'body-content' }, 'content') }
   })
+}
+
+function root(wrapper) {
+  return wrapper.find('[data-testid="dialog-card-body"]')
+}
+
+function scroller(wrapper) {
+  return wrapper.find('[data-testid="scroll-region__scroller"]')
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('DialogCardBody', () => {
-  describe('scroll_target [obligation]', () => {
-    test('owns the overflow itself (overflow-y-auto) when scroll_target is omitted', () => {
+  describe('forwards scroll_target and bleed onto the region [obligation]', () => {
+    test('forwards scroll_target as the region target — self-scroll when omitted', () => {
       const wrapper = mountBody()
-      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
-
-      expect(content.classes()).toContain('overflow-y-auto')
-      expect(content.classes()).toContain('scroll-hidden')
+      expect(root(wrapper).attributes('data-scroll')).toBe('self')
     })
 
-    test('does not own the overflow when scroll_target is passed', () => {
+    test('forwards scroll_target as the region target — external target passed through', () => {
       const wrapper = mountBody({ scroll_target: '#external' })
-      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
-
-      expect(content.classes()).not.toContain('overflow-y-auto')
-      expect(content.classes()).not.toContain('scroll-hidden')
+      expect(root(wrapper).attributes('data-scroll')).toBe('external')
     })
 
-    test('points the scroll-bar target at scroll_target when provided', () => {
-      const wrapper = mountBody({ scroll_target: '#external' })
-      expect(wrapper.findComponent({ name: 'UiScrollBar' }).props('target')).toBe('#external')
-    })
-
-    test('points the scroll-bar target at its own content element when scroll_target is omitted', async () => {
+    test('carries no data-overflow-bleed attribute on the region root by default', () => {
       const wrapper = mountBody()
-      await nextTick()
-      const target = wrapper.findComponent({ name: 'UiScrollBar' }).props('target')
-
-      expect(target).toBeTruthy()
-      expect(typeof target).not.toBe('string')
-    })
-  })
-
-  describe('overflow_bleed [obligation]', () => {
-    test('carries no data-overflow-bleed attribute by default [obligation]', () => {
-      const wrapper = mountBody()
-      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
-
-      expect(content.attributes('data-overflow-bleed')).toBeUndefined()
+      expect(root(wrapper).attributes('data-overflow-bleed')).toBeUndefined()
     })
 
-    test('sets data-overflow-bleed when enabled [obligation]', () => {
+    test('sets data-overflow-bleed on the region root when enabled', () => {
       const wrapper = mountBody({ overflow_bleed: true })
-      const content = wrapper.find('[data-testid="dialog-card-body__content"]')
+      expect(root(wrapper).attributes('data-overflow-bleed')).toBe('true')
+    })
 
-      expect(content.attributes('data-overflow-bleed')).toBe('true')
+    test('forwards overflow_bleed onto the scroller class (bleed padding)', () => {
+      const wrapper = mountBody({ overflow_bleed: true })
+      expect(scroller(wrapper).classes()).toContain('px-2.5')
+      expect(scroller(wrapper).classes()).toContain('-mx-2.5')
+    })
+
+    test('omits the bleed padding classes on the scroller by default', () => {
+      const wrapper = mountBody()
+      expect(scroller(wrapper).classes()).not.toContain('px-2.5')
     })
   })
 
-  describe('scroll-bar visibility [obligation]', () => {
-    test('renders the scroll-bar when the injected viewport is desktop', async () => {
-      const wrapper = mountBody({}, 'desktop')
-      await nextTick()
-      expect(wrapper.findComponent({ name: 'UiScrollBar' }).exists()).toBe(true)
-    })
-
-    test('does not render the scroll-bar when the injected viewport is mobile', () => {
-      const wrapper = mountBody({}, 'mobile')
-      expect(wrapper.findComponent({ name: 'UiScrollBar' }).exists()).toBe(false)
-    })
-  })
-
-  test('renders default slot content', () => {
+  test('the scroller carries the bottom-padding class regardless of bleed', () => {
     const wrapper = mountBody()
-    expect(wrapper.find('[data-testid="body-content"]').exists()).toBe(true)
+    expect(scroller(wrapper).classes()).toContain('pb-(--dialog-body-pb,var(--dialog-px))')
+  })
+
+  test('renders default slot content inside the scroller', () => {
+    const wrapper = mountBody()
+    expect(scroller(wrapper).find('[data-testid="body-content"]').exists()).toBe(true)
   })
 })

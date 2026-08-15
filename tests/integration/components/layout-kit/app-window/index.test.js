@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
-import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -294,14 +294,14 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="app-window__header-fill"]').exists()).toBe(false)
   })
 
-  test('scroll_body on: renders a scroll bar targeting the body [obligation]', () => {
+  test('scroll_body on: renders a scroll region targeting the body [obligation]', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
-    expect(wrapper.findComponent(UiScrollBar).exists()).toBe(true)
+    expect(wrapper.findComponent(ScrollRegion).exists()).toBe(true)
   })
 
-  test('scroll_body off: renders no scroll bar [obligation]', () => {
+  test('scroll_body off: renders no scroll region [obligation]', () => {
     const wrapper = mountWindow({ title: 'x' })
-    expect(wrapper.findComponent(UiScrollBar).exists()).toBe(false)
+    expect(wrapper.findComponent(ScrollRegion).exists()).toBe(false)
   })
 
   // ── footer slot [obligation] ──────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 // Real refs so the template's auto-unwrap kicks in — vi.mock factories are
@@ -54,7 +54,8 @@ function mountCheckout(close = vi.fn()) {
         DialogCard: false,
         DialogCardHeader: false,
         DialogCardPager: false,
-        DialogCardBody: false
+        DialogCardBody: false,
+        ScrollRegion: false
       }
     }
   })
@@ -241,20 +242,20 @@ describe('Checkout — dialog-card-body owns the scroll area [obligation]', () =
     expect(scrollArea.find('[data-testid="checkout__body"]').exists()).toBe(true)
   })
 
-  // dialog-card-body's own scroll-bar visibility is desktop-only (viewport !==
-  // 'mobile') — inherited default, not bespoke to checkout anymore.
+  // The handle is overflow-driven now, not viewport-driven — dialog-card-body
+  // hands its overflow to a scroll region, which only draws a handle once the
+  // content outgrows the box.
 
-  test('renders the ui-kit scroll-bar outside full-bleed (desktop) mode', async () => {
-    mediaState.is_mobile.value = false
+  test('[obligation] the scroll area hands its overflow to a scroll region', () => {
     const wrapper = mountCheckout()
-    await nextTick()
-    expect(wrapper.findComponent({ name: 'UiScrollBar' }).exists()).toBe(true)
+
+    const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
+    expect(scrollArea.find('[data-testid="scroll-region__scroller"]').exists()).toBe(true)
   })
 
-  test('does not render the ui-kit scroll-bar in full-bleed (mobile) mode', () => {
-    mediaState.is_mobile.value = true
+  test('draws no handle while the checkout content fits its box', () => {
     const wrapper = mountCheckout()
-    expect(wrapper.findComponent({ name: 'UiScrollBar' }).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="scroll-region__handle"]').exists()).toBe(false)
   })
 })
 
