@@ -11,6 +11,11 @@ comments. Always in context; a reply has no path to trigger on. Shared: [`author
 - **Lead with the answer.** Reasoning follows only where it changes what the user does next.
   - Bad: `I looked at the store, then the composable, then the view, and found that the key is stale.`
   - Good: `Key is stale — the deck query omits the member id.`
+- **Answer at the altitude that generalizes, not the instance asked.** Floor: name a second
+  situation the answer would also cover — can't, go up a level. Ceiling: the reader can act on it —
+  can't, come down. Stop at the lowest altitude that still passes the floor test.
+  - Bad: `Make it pl-28.`
+  - Good: `The content column reserves the polaroid's width; the number follows from that.`
 - **No preamble, no postamble, no emojis.** Never open with `Great question`, never close with
   `Let me know if you need anything else`.
 - **A table, list, or other structure carries its own content — prose frames it, never restates it.**
