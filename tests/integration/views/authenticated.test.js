@@ -1,22 +1,28 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, reactive, ref } from 'vue'
+import { defineComponent, h, reactive, ref, useTemplateRef } from 'vue'
 import AuthenticatedView from '@/views/app-shell/authenticated.vue'
+import { usePageAnchorClaim } from '@/views/app-shell/composables/page-anchor'
+
+const FakeRouteComponent = defineComponent({
+  name: 'FakeRouteComponent',
+  setup: () => () => h('div', { 'data-testid': 'fake-route-component' })
+})
 
 // Renders the `v-slot="{ Component, route }"` content for real, so the
 // transition/suspense/route-skeleton wiring around it gets exercised — the
 // default auto-stub hides slot content entirely.
-const RouterViewStub = defineComponent({
-  name: 'RouterView',
-  setup(_props, { slots }) {
-    const fakeComponent = defineComponent({
-      name: 'FakeRouteComponent',
-      setup: () => () => h('div', { 'data-testid': 'fake-route-component' })
-    })
-    const fakeRoute = { name: 'fake-route' }
-    return () => slots.default?.({ Component: fakeComponent, route: fakeRoute })
-  }
-})
+function createRouterViewStub(component) {
+  return defineComponent({
+    name: 'RouterView',
+    setup(_props, { slots }) {
+      const fakeRoute = { name: 'fake-route' }
+      return () => slots.default?.({ Component: component, route: fakeRoute })
+    }
+  })
+}
+
+const RouterViewStub = createRouterViewStub(FakeRouteComponent)
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -68,7 +74,11 @@ const mockMemberStore = reactive(mockMemberStoreState)
 
 let activeWrapper
 
-function mountAuthenticated({ renderRouteSlot = false } = {}) {
+function mountAuthenticated({
+  renderRouteSlot = false,
+  routerViewStub = RouterViewStub,
+  extraStubs = {}
+} = {}) {
   activeWrapper = shallowMount(AuthenticatedView, {
     global: {
       stubs: {
@@ -76,10 +86,11 @@ function mountAuthenticated({ renderRouteSlot = false } = {}) {
         TaroPhone: true,
         MobileDockHost: true,
         RouteSkeleton: true,
-        RouterView: renderRouteSlot ? RouterViewStub : true,
+        RouterView: renderRouteSlot ? routerViewStub : true,
         // Real Suspense so the matched-component branch (not just the
         // fallback) actually renders — auto-stubbing it hides both.
-        Suspense: !renderRouteSlot
+        Suspense: !renderRouteSlot,
+        ...extraStubs
       }
     }
   })
@@ -201,6 +212,48 @@ describe('AuthenticatedView', () => {
 
       expect(wrapper.find('[data-testid="route-skeleton-overlay"]').exists()).toBe(false)
       expect(wrapper.findComponent({ name: 'FakeRouteComponent' }).exists()).toBe(true)
+    })
+  })
+
+  // ── page scroll region [obligation] ─────────────────────────────────────────
+  //
+  // The shell mounts the only page-level scroll region; a pane elsewhere in
+  // the tree can claim its right edge, but nothing does by default.
+
+  describe('page scroll region [obligation]', () => {
+    test('[obligation] renders exactly one page-scroll-region', () => {
+      const wrapper = mountAuthenticated()
+
+      expect(wrapper.findAll('[data-testid="page-scroll-region"]')).toHaveLength(1)
+    })
+
+    test('[obligation] carries no inline right style while nothing claims the anchor', () => {
+      const wrapper = mountAuthenticated()
+
+      const style = wrapper.find('[data-testid="page-scroll-region"]').attributes('style') ?? ''
+      expect(style).not.toContain('right')
+    })
+
+    test('[obligation] sets an inline right style once a pane claims the anchor', async () => {
+      const ClaimingPane = defineComponent({
+        name: 'ClaimingPane',
+        setup() {
+          const pane_ref = useTemplateRef('pane')
+          usePageAnchorClaim(pane_ref)
+          return () => h('div', { ref: 'pane', 'data-testid': 'claiming-pane' })
+        }
+      })
+
+      const wrapper = mountAuthenticated({
+        renderRouteSlot: true,
+        routerViewStub: createRouterViewStub(ClaimingPane),
+        extraStubs: { ClaimingPane: false }
+      })
+      await flushPromises()
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+      const style = wrapper.find('[data-testid="page-scroll-region"]').attributes('style') ?? ''
+      expect(style).toContain('right')
     })
   })
 })

@@ -26,11 +26,13 @@ afterEach(() => {
 })
 
 // ResizeObserver callbacks batch on their own queue, which can lag a couple of
-// animation frames behind the DOM mutation that triggered them.
+// animation frames behind the DOM mutation that triggered them. The tail wait
+// also has to outlast the metrics' 150ms settle window, since the handle is
+// held back until the measured overflow stops moving.
 async function waitForUpdate() {
   await new Promise((resolve) => requestAnimationFrame(resolve))
   await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => setTimeout(resolve, 60))
+  await new Promise((resolve) => setTimeout(resolve, 200))
 }
 
 function root(wrapper) {

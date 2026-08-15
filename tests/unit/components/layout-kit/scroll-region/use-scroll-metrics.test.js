@@ -2,6 +2,10 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { createApp, nextTick, ref } from 'vue'
 import { useScrollMetrics } from '@/components/layout-kit/scroll-region/use-scroll-metrics'
 
+// Mirrors the source's own SETTLE_MS — overflowing only flips to true once the
+// measured overflow amount has held still for this long.
+const SETTLE_MS = 150
+
 // ── Host-app helper ────────────────────────────────────────────────────────────
 // Mounts a minimal Vue app so onBeforeUnmount fires, and the `flush: 'post'`
 // target watcher runs against a real (if fake-geometried) DOM tree. The watcher
@@ -104,6 +108,7 @@ afterEach(() => {
   unmount = undefined
   rafSpy.mockRestore()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 // ── Basic measurement ─────────────────────────────────────────────────────────
@@ -129,13 +134,37 @@ describe('useScrollMetrics — measurement', () => {
     expect(setup.result.overflowing.value).toBe(false)
   })
 
-  test('flags overflow once content exceeds the 1px slack', async () => {
+  test('flags overflow once content exceeds the 1px slack, after the amount settles', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
     const el = makeElement({ clientHeight: 100, scrollHeight: 102 })
     const target = ref(el)
     const setup = await withSetup(() => useScrollMetrics(target))
     unmount = setup.unmount
 
+    // Mid-settle, before SETTLE_MS has elapsed — not yet reported as overflowing.
+    expect(setup.result.overflowing.value).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(SETTLE_MS)
+
     expect(setup.result.overflowing.value).toBe(true)
+  })
+
+  test('clears overflowing immediately once content fits, without waiting for the settle clock', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+    const el = makeElement({ clientHeight: 100, scrollHeight: 300 })
+    const target = ref(el)
+    const setup = await withSetup(() => useScrollMetrics(target))
+    unmount = setup.unmount
+
+    await vi.advanceTimersByTimeAsync(SETTLE_MS)
+    expect(setup.result.overflowing.value).toBe(true)
+
+    Object.defineProperty(el, 'scrollHeight', { configurable: true, value: 100 })
+    setup.result.measure()
+
+    expect(setup.result.overflowing.value).toBe(false)
   })
 
   test('computes progress as scrollTop over max scroll', async () => {
@@ -192,6 +221,8 @@ describe('useScrollMetrics — scrollToProgress', () => {
 
 describe('useScrollMetrics — re-attaches when the target ref resolves late [obligation]', () => {
   test('measures nothing while the target is null, then attaches once it resolves', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
     const target = ref(null)
     const setup = await withSetup(() => useScrollMetrics(target))
     unmount = setup.unmount
@@ -205,6 +236,9 @@ describe('useScrollMetrics — re-attaches when the target ref resolves late [ob
 
     expect(resize_instances).toHaveLength(1)
     expect(resize_instances[0].observed).toContain(el)
+
+    await vi.advanceTimersByTimeAsync(SETTLE_MS)
+
     expect(setup.result.overflowing.value).toBe(true)
   })
 
@@ -242,12 +276,17 @@ describe('useScrollMetrics — a target named by selector attaches after mount [
   })
 
   test('finds the element the selector names and measures it', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
     const target = ref('#external-scroller')
     const setup = await withSetup(() => useScrollMetrics(target))
     unmount = setup.unmount
 
     expect(resize_instances).toHaveLength(1)
     expect(resize_instances[0].observed).toContain(external)
+
+    await vi.advanceTimersByTimeAsync(SETTLE_MS)
+
     expect(setup.result.overflowing.value).toBe(true)
   })
 
@@ -277,6 +316,35 @@ describe('useScrollMetrics — page target', () => {
     expect(mutation_instances).toHaveLength(1)
     expect(mutation_instances[0].observed[0].el).toBe(document.body)
     addSpy.mockRestore()
+  })
+
+  test('[obligation] a route swap that grows document.body content re-measures and reveals the handle', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+    const target = ref('html')
+    const scrollHeightSpy = vi
+      .spyOn(document.documentElement, 'scrollHeight', 'get')
+      .mockReturnValue(100)
+    const clientHeightSpy = vi
+      .spyOn(document.documentElement, 'clientHeight', 'get')
+      .mockReturnValue(100)
+
+    const setup = await withSetup(() => useScrollMetrics(target))
+    unmount = setup.unmount
+
+    await vi.advanceTimersByTimeAsync(SETTLE_MS)
+    expect(setup.result.overflowing.value).toBe(false)
+
+    // A route swapping in taller content — the mutation observer is what
+    // catches it, since the root's own box (pinned to the viewport) never resizes.
+    scrollHeightSpy.mockReturnValue(400)
+    mutation_instances[0].callback()
+    await vi.advanceTimersByTimeAsync(SETTLE_MS)
+
+    expect(setup.result.overflowing.value).toBe(true)
+
+    scrollHeightSpy.mockRestore()
+    clientHeightSpy.mockRestore()
   })
 })
 
