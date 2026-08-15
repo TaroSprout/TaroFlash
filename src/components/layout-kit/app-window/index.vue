@@ -50,6 +50,7 @@ const slots = defineSlots<{
   header(): any
   'header-content'(): any
   default(): any
+  footer(): any
 }>()
 
 const emit = defineEmits<{
@@ -103,7 +104,7 @@ const root_style = computed(() => ({
     <div
       data-testid="app-window-container"
       data-station="window"
-      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none bevel-lg mobile-modal:bevel-sheet"
+      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none bevel-lg mobile-modal-flush:bevel-sheet"
     >
       <slot name="sidebar"></slot>
 
@@ -155,6 +156,14 @@ const root_style = computed(() => ({
           class="scroll-hidden relative min-h-0 flex-1 bg-surface"
         >
           <slot></slot>
+        </div>
+
+        <div
+          v-if="slots.footer"
+          data-testid="app-window__footer"
+          class="bg-surface relative z-20 shrink-0"
+        >
+          <slot name="footer"></slot>
         </div>
 
         <ui-scroll-bar

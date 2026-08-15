@@ -183,3 +183,96 @@
     }
   }
 }
+
+/*
+ * `mobile-modal-flush`: the width half of `mobile-modal` on its own — the modal
+ * has run out of horizontal room, so its left and right edges meet the
+ * viewport. A modal that only ran out of *height* docks to the bottom but keeps
+ * its side margins, so anything that assumes edge-to-edge (a cast shadow that
+ * would fall off-screen) belongs here rather than on `mobile-modal`.
+ *
+ * The tiers below are the width tiers of `mobile-modal` verbatim; keep the two
+ * in sync.
+ */
+@custom-variant mobile-modal-flush {
+  @media (width < 40rem) {
+    &:where([data-mobile-below-width], [data-mobile-below-width] *) {
+      @slot;
+    }
+  }
+  @media (width < 44rem) {
+    &:where(
+      [data-mobile-below-width='msm'],
+      [data-mobile-below-width='msm'] *,
+      [data-mobile-below-width='md'],
+      [data-mobile-below-width='md'] *,
+      [data-mobile-below-width='mlg'],
+      [data-mobile-below-width='mlg'] *,
+      [data-mobile-below-width='lg'],
+      [data-mobile-below-width='lg'] *,
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < 52rem) {
+    &:where(
+      [data-mobile-below-width='md'],
+      [data-mobile-below-width='md'] *,
+      [data-mobile-below-width='mlg'],
+      [data-mobile-below-width='mlg'] *,
+      [data-mobile-below-width='lg'],
+      [data-mobile-below-width='lg'] *,
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < 56rem) {
+    &:where(
+      [data-mobile-below-width='mlg'],
+      [data-mobile-below-width='mlg'] *,
+      [data-mobile-below-width='lg'],
+      [data-mobile-below-width='lg'] *,
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < 64rem) {
+    &:where(
+      [data-mobile-below-width='lg'],
+      [data-mobile-below-width='lg'] *,
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < 80rem) {
+    &:where(
+      [data-mobile-below-width='xl'],
+      [data-mobile-below-width='xl'] *,
+      [data-mobile-below-width='2xl'],
+      [data-mobile-below-width='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < 96rem) {
+    &:where([data-mobile-below-width='2xl'], [data-mobile-below-width='2xl'] *) {
+      @slot;
+    }
+  }
+}
