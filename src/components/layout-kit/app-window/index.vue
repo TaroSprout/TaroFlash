@@ -1,13 +1,16 @@
 <script setup lang="ts">
+// Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
 import {
   WINDOW_HEADER_BORDER_CLASS,
+  WINDOW_HEADER_DEPTH,
   WINDOW_HEADER_FILL_CLASS,
   type WindowHeaderBorder
 } from './surface'
 import UiButton from '@/components/ui-kit/button.vue'
+import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
 
 type WindowPatternConfig = {
   palette?: PaletteName
@@ -24,6 +27,8 @@ export type AppWindowProps = {
   close_icon?: string
   header_border?: WindowHeaderBorder
   window_px?: string
+  /** Makes the body itself the scrolling region, so content runs under the header and is cut at the window's bottom edge. Off by default; a window whose pages manage their own overflow leaves it off. */
+  scroll_body?: boolean
 }
 
 const {
@@ -33,7 +38,8 @@ const {
   close_label,
   close_icon = 'close',
   header_border = 'wave',
-  window_px
+  window_px,
+  scroll_body = false
 } = defineProps<AppWindowProps>()
 
 const { t } = useI18n()
@@ -72,13 +78,20 @@ const header_bindings = computed(() =>
 )
 
 const showHeader = computed(() => Boolean(slots.header || slots['header-content'] || title))
+
+const root_style = computed(() => ({
+  ...(window_px ? { '--window-px': window_px } : {}),
+  ...(scroll_body && showHeader.value
+    ? { '--window-header-depth': WINDOW_HEADER_DEPTH[header_border] }
+    : {})
+}))
 </script>
 
 <template>
   <div
     data-testid="app-window-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
-    :style="window_px ? { '--window-px': window_px } : undefined"
+    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] [--window-scrollbar-top:10rem] lg:[--window-px:2rem]"
+    :style="root_style"
   >
     <div
       data-testid="app-window__overlay"
@@ -129,17 +142,53 @@ const showHeader = computed(() => Boolean(slots.header || slots['header-content'
           </slot>
 
           <div
-            v-if="header_fill_class"
+            v-if="header_fill_class && !scroll_body"
             data-testid="app-window__header-fill"
             aria-hidden="true"
             :class="['absolute inset-0 z-20 pointer-events-none bg-surface', header_fill_class]"
           ></div>
         </div>
 
-        <div data-testid="app-window__body" class="relative z-20 min-h-0 flex-1 bg-surface">
+        <div
+          data-testid="app-window__body"
+          :data-scroll-body="scroll_body || undefined"
+          class="scroll-hidden relative min-h-0 flex-1 bg-surface"
+        >
           <slot></slot>
         </div>
+
+        <ui-scroll-bar
+          v-if="scroll_body"
+          target="[data-testid='app-window__body']"
+          min-width="sm"
+          class="absolute top-(--window-scrollbar-top) right-3 bottom-3 z-30"
+        />
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Sits above the header's shaped edge so a page can paint into the notch. The
+   header, its fill, and any lowered overlay all order themselves against this
+   number — keep them in the same stacking context, never give the header slot
+   its own z-index. */
+[data-testid='app-window__body'] {
+  z-index: 20;
+}
+
+/* The body scrolls only when the window opted in; a reactive class here would
+   kill iOS momentum scroll mid-gesture, so the attribute drives it instead. */
+[data-scroll-body] {
+  /* Drops under the header so scrolled content passes beneath the wave. */
+  z-index: 0;
+
+  overflow-y: auto;
+
+  /* Starts the scroll area behind the shaped header edge rather than below it,
+     so content passes under the wave instead of clipping on a straight line.
+     The header's own fill strip is what occludes it. */
+  margin-top: calc(var(--window-header-depth, 0px) * -1);
+  padding-top: var(--window-header-depth, 0px);
+}
+</style>

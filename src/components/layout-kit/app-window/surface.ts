@@ -12,3 +12,10 @@ export const WINDOW_HEADER_FILL_CLASS: Record<WindowHeaderBorder, string> = {
   cloud: '',
   none: ''
 }
+
+/** How far a scrolling body reaches up behind the header, matching the depth the border classes above carve. Only a border with a fill strip can occlude, so the others stay flat. */
+export const WINDOW_HEADER_DEPTH: Record<WindowHeaderBorder, string> = {
+  wave: '50px',
+  cloud: '0px',
+  none: '0px'
+}

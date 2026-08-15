@@ -64,3 +64,4 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 ## ui
 
 - [[mobile-dock]] — the floating bar owns its own height tween; a second one nested inside fights it ⚠️
+- [[layout-kit]] — `app-window`'s root is full-width; every caller sets its own cap on non-mobile screens ⚠️

@@ -29,7 +29,7 @@ export type PagedWindowGroup = {
 
 type PagedWindowFrameProps = Pick<
   AppWindowProps,
-  'pattern_config' | 'title' | 'header_border' | 'show_close_button'
+  'pattern_config' | 'title' | 'header_border' | 'show_close_button' | 'scroll_body'
 >
 
 export type PagedWindowProps = PagedWindowFrameProps & {
@@ -54,6 +54,7 @@ const {
   pattern_config,
   show_close_button = true,
   header_border = 'wave',
+  scroll_body = false,
   phone_query = 'w<md',
   desktop_query = 'w>=lg & fine',
   between,
@@ -164,6 +165,7 @@ function onDirectoryNavigate(value: string) {
     :close_label="back_mode ? t('paged-window.back-label') : undefined"
     :close_icon="back_mode ? 'arrow-back' : 'close'"
     :header_border="header_border"
+    :scroll_body="scroll_body"
     :window_px="window_px"
     @close="onFrameClose"
   >
@@ -224,13 +226,13 @@ function onDirectoryNavigate(value: string) {
     <div
       data-testid="paged-window__content-row"
       :data-stretch="stretch_page"
-      class="flex h-full"
-      :class="stretch_page ? 'items-stretch' : 'items-start'"
+      class="flex"
+      :class="[stretch_page ? 'items-stretch' : 'items-start', !scroll_body && 'h-full']"
     >
       <div
         data-testid="paged-window__page-column"
         class="relative flex flex-1 flex-col min-w-0"
-        :class="layout_mode !== 'phone' && 'max-h-full'"
+        :class="layout_mode !== 'phone' && !scroll_body && 'max-h-full'"
       >
         <div
           :id="panel_id"
@@ -241,7 +243,8 @@ function onDirectoryNavigate(value: string) {
             'flex flex-col gap-4 w-full',
             layout_mode === 'phone'
               ? 'max-w-111 mx-auto overflow-hidden pt-0.5'
-              : 'min-h-0 flex-1 px-(--window-px) pb-8'
+              : 'px-(--window-px)',
+            layout_mode !== 'phone' && !scroll_body && 'min-h-0 flex-1 pb-8'
           ]"
         >
           <transition :css="false" mode="out-in" @leave="onPageLeave" @enter="onPageEnter">
@@ -262,7 +265,7 @@ function onDirectoryNavigate(value: string) {
               data-testid="paged-window__page"
               :data-stretch="stretch_page"
               class="w-full"
-              :class="stretch_page && 'flex flex-1 flex-col'"
+              :class="stretch_page && 'flex min-h-0 flex-1 flex-col'"
             >
               <slot :displayed_page="displayed_page"></slot>
             </div>
