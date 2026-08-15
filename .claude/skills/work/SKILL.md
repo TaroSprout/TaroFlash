@@ -268,6 +268,9 @@ ticket PR. Specific to this skill:
   run** is a high-confidence gap — weight it up at gate 1.
 - The healing PR is autonomous; the user's review of it confirms or kills the generalization, so
   there's no inline confirm mid-run. Several dispatches across a run stack onto that one PR.
+- The maintainer-sweep condition in `self-heal.md` (§ Dispatch) is checked at the round boundary, not
+  per correction — `/work` is the session that would dispatch it, so it defers its own check until
+  the round closes rather than sweeping mid-round while builders are running.
 
 ## Guardrails
 

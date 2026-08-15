@@ -44,6 +44,12 @@ Any container that clips overflow — height/crossfade transitions, `overflow-hi
 
 The app leans on outlines and shadows that overflow their element boxes; if the clipping container holds the padding, those get cut off at its edge mid-tween. Insetting the children instead leaves the overflow room to render.
 
+## A caller's class doesn't beat the component's own
+
+A component's root `class` merges with a caller's, but stylesheet order — not the merge — decides
+which utility wins. Never hardcode on the root a utility a caller is meant to override (`relative`
+vs. their `absolute`, a fixed `w-*`); put it on the inner element instead.
+
 ## Shaped edges
 
 `src/styles/border-utils.css` defines `wave-bottom-[<length>]`, `wave-top-[<length>]` and `cloud-bottom-[<length>]` — CSS masks that carve a shaped edge. Use them; don't hand-roll SVG.

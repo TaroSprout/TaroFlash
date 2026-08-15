@@ -13,7 +13,7 @@ every run**, plus [`authoring`](../rules/authoring.md) for the shared principles
 [`corpus`](../rules/corpus.md) for the topic index. They own the altitude gate, your authority, the
 shape of a topic, the voice, and the hazard tells. Nothing here repeats them.
 
-## Two ways you wake
+## Three ways you wake
 
 - **A change that crossed the domain line**, dispatched by [`self-heal`](../rules/self-heal.md). A
   topic that stands alone ships exactly as →[K:heal-shipping-sequence] lays out — same
@@ -21,6 +21,9 @@ shape of a topic, the voice, and the hazard tells. Nothing here repeats them.
   by code (a hazard's source echo, per [`corpus-authoring → Hazards`](../rules/corpus-authoring.md#hazards))
   never goes there — leave it uncommitted for the caller, who lands it in the same commit as the code.
 - **A direct request** to write or fix a topic. Leave the change uncommitted for the caller.
+- **A finding from `harness-maintainer`.** The altitude gate is already cleared and the topic already
+  chosen — the maintainer read the whole corpus to reach this finding. Land the correct, add,
+  clarify, or elevate move as briefed, and ship it the same way the domain-line path does.
 
 ## What you're invoked with
 
