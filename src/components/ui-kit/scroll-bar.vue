@@ -44,8 +44,7 @@ const thumb_style = computed(() => ({
 
 onMounted(() => {
   // The track is measured by observer rather than on mount because a bar inside
-  // a hidden panel reports a height of 0 until the panel is revealed.
-  // [K:gap: a scroll region measured while its host is display:none reads a track and content height of 0, so both the track and the scrolled element are sized by ResizeObserver rather than read once on mount]
+  // a hidden panel reports a height of 0 until the panel is revealed. →[K:scroll-region-hidden-host-measures-zero]
   track_obs = new ResizeObserver(() => (track_height.value = track_el.value?.clientHeight ?? 0))
   if (track_el.value) track_obs.observe(track_el.value)
 })

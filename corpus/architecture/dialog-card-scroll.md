@@ -22,10 +22,10 @@ can overflow. Once wrapped, two things follow from where it sits:
   comes from the card and drops to 0 once the card has a toolbar row, since that
   row then owns the space above the bottom edge instead. The fallback keeps a
   body rendered outside a `dialog-card` sane.
-- **The scroll-bar hangs in the card's own horizontal padding** (`-right-8`
-  against a `--dialog-px` of 1.5–2rem), so the body has to sit in the content
-  column rather than break out of it — moving the body out from under the card's
-  padding orphans the scroll-bar's positioning.
+- **The scroll handle hangs in the scroll region's own `--scroll-gutter`**, not
+  a padding value `dialog-card-body.vue` owns itself — the body only sets the
+  handle's bottom inset, through `--scroll-track-inset-end`, so it clears
+  `--dialog-body-pb` instead of running past the card's bottom edge.
 
 > [!HAZARD] [K:dialog-card-overflow-bleed] **`overflow_bleed` widens the clip boundary without moving the slotted content.**
 > `overflow-y-auto` clips the x-axis too, so corner-overhang content (an

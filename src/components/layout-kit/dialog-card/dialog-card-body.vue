@@ -4,7 +4,6 @@ import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
 /**
  * The dialog-card's opt-in scrolling region — owns the overflow and the bottom padding. →[K:dialog-card-overflow-bleed]
- * [K:gap: the scroll handle's placement is no longer the body's own `-right-8`; it hangs in the scroll region's `--scroll-gutter`, which the body sets its bottom inset for through `--scroll-track-inset-end`]
  */
 
 type DialogCardBodyProps = {

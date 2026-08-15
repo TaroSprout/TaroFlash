@@ -93,6 +93,8 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
   function attachElement(scroller: HTMLElement) {
     scroller.addEventListener('scroll', schedule, { passive: true })
 
+    // A ResizeObserver, not a one-time measure — a host hidden with display:none
+    // reports 0 until it's revealed, and only the observer catches that. →[K:scroll-region-hidden-host-measures-zero]
     resize_obs = new ResizeObserver(schedule)
     observeContent()
 
