@@ -1,18 +1,37 @@
 ---
-lastUpdated: 2026-08-13T00:00:00Z
+lastUpdated: 2026-08-15T00:00:00Z
 paths:
   - 'src/**/*.{vue,css}'
 ---
 
-# When to theme vs use base palette
+# Accent role vs. neutral role
 
-**Owns the decision between a `--theme-*` token and the static base palette.**
+**Owns the choice between an accent role, which follows the member's palette, and a neutral station
+role, which doesn't.**
 
-Not every color should follow the active theme. Reserve `--theme-*` tokens for elements that genuinely need to signal the active theme — primary CTAs, active selections, accents, themed surfaces inside a deck cover. Base UI chrome — body labels, toggle/spinbox idle states, section headings, generic backgrounds, helper text — should use the static brown/grey palette (e.g. `text-brown-700 dark:text-brown-100`, `bg-brown-100 dark:bg-grey-700`) so the chrome stays calm and consistent regardless of which theme is active around it.
+The split is by _switch_, not by shade: the accent roles (`accent`, `accent-muted`, `on-accent`,
+`accent-text`, `accent-pattern`) are answered by `data-palette`; every neutral role (`surface`,
+`well`, `raised`, `raised-tint`, `raised-shade`, `line`, `ink`, `ink-muted`, `skeleton`,
+`skeleton-sheen`) is answered by `data-station`. The two sets are disjoint, so a choice between them
+is a choice about which switch should move the element.
 
-Rule of thumb:
+- **Default to a neutral role.** Reach for an accent role only where the element carries identity or
+  a semantic meaning: a primary action, a selected or checked state, a destructive control, a deck
+  cover. Chrome — labels, idle states, dividers, panels, skeletons — stays neutral, so it reads the
+  same whichever palette the member picked.
+- **An accent role needs `data-palette` on that same element.** An accent role with no palette in
+  scope falls back to the blue default rather than the colour you meant, which reads as correct on a
+  blue account and wrong on every other.
+- **Never re-derive a rendition with a `dark:` variant** — `bg-raised`, not
+  `bg-brown-300 dark:bg-stone-700`. Both renditions already live in the role, and the pair drifts
+  from the station the moment either is retuned.
+- **Text on a neutral surface uses `accent-text`, not `accent`.** `accent` is tuned as a fill and
+  goes illegible at body size; `accent-text` is the same identity darkened to read as text.
+- **Text on an accent fill uses `on-accent`** — pairing `text-ink` with an accent background hands
+  the label a colour tuned for the station behind it, not for the fill it's actually sitting on.
+- **A role that isn't resting on a station doesn't take one.** A badge or ring on an accent fill uses
+  the fixed `knockout` / `card` / `mat` roles; borrowing a station role there looks right in one mode
+  and inverts in the other →[K:fixed-roles-skip-the-station].
 
-- **Themed**: the _active_ / _checked_ / _selected_ state of an interactive element, primary buttons, accent borders, themed cover surfaces.
-- **Base palette**: labels, idle/off states, section headings, modal chrome, dividers, generic surfaces.
-
-Mixing is normal in one component — e.g. a toggle's label and off-track stay base palette, while the on-track and on-handle pick up `--theme-primary` / `--theme-on-primary`.
+Mixing both in one component is normal — a toggle's label and off-track stay neutral while the
+on-track takes `accent` / `on-accent`.
