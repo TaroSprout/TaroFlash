@@ -59,8 +59,9 @@ spoke that inherited its hub's `paths:` is path-triggered like the hub, not alwa
 - Caps are `line_caps` — 80 lines for `CLAUDE.md`, 1000 for the always-on total. 1000 is measured
   load with headroom, not a target — `node scripts/knowledge-lint.mjs` reports the current always-on
   line count on every run. `aspiration` is the number the payload is being shrunk toward — 400 — and
-  the check warns on every run until it's met. Shrinking is
-  [`harness-pruner`](../agents/harness-pruner.md)'s only job.
+  the check warns on every run until it's met. Shrinking it — merging, retiring, or re-scoping a rule
+  off the always-on payload — is [`harness-maintainer`](../agents/harness-maintainer.md)'s to find,
+  dispatched to `harness-author` per [`self-heal → Dispatch`](./self-heal.md#dispatch).
 - `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,
   temporary overshoot, and restore it in the change that gets back under.
 

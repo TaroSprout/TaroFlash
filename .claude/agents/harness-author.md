@@ -16,7 +16,7 @@ A lesson landing in a `SKILL.md` conforms to [`skill-authoring`](../rules/skill-
 instead — same role for skill files that `rule-authoring` plays for rule files. Nothing here repeats
 them.
 
-## Two ways you wake
+## Three ways you wake
 
 - **A correction that cleared the self-heal ladder.** [`self-heal`](../rules/self-heal.md) owns the
   ladder, the routing table and the dispatch; the caller has already run them, and hands you the
@@ -24,6 +24,10 @@ them.
   wrong file is the common failure. Ship it (§ Shipping).
 - **A direct request.** "Write a rule for X", "this rule is stale", "split that into a spoke". No
   ladder involved; go straight to the spec, and leave the change uncommitted for the caller.
+- **A finding from `harness-maintainer`.** Not a correction — there is no ladder to run and no
+  routing to re-check. The maintainer held the whole knowledge layer in view to reach this finding,
+  something you never do on a single-lesson dispatch, so land the merge, retirement, re-scope, or
+  move as briefed. Ship it (§ Shipping).
 
 ## The brief is evidence, not a draft
 
@@ -39,9 +43,7 @@ that landed in the file only because the brief said it is a paraphrase, not a fi
    somewhere is sharpened or relocated in place, never restated in a second file.
 2. Write the smallest change that lands the lesson: one bullet where a bullet does it, a new section
    only when no cluster fits, a new rule file only when the lesson is off-topic in every existing one.
-3. Before shipping, hold what you just wrote against every gate and forbidden construct in the spec,
-   line by line — don't just have read them going in.
-4. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
+3. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
    no `paths:` frontmatter counts against the cap, and the cap is enforced in CI.
 
 ## Shipping

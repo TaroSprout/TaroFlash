@@ -19,8 +19,12 @@ already held by a sibling's worktree, and that is the failure this sequence avoi
    `.claude/worktrees/heal-$(date +%s)-$$` — **detached** at `origin/self-heal`, or at
    `origin/master` when that ref doesn't exist yet.
 2. Write the change there. `node scripts/knowledge-lint.mjs` must pass before you commit.
-3. Stage explicit pathspecs, never `git add -A`. **One commit per lesson**, conventional —
-   `docs(<rule-or-skill>): …` from `harness-author`, `docs(corpus): …` from `corpus-author`.
+3. `mkdir -p .claude/heals` and add an empty, extensionless marker at `.claude/heals/<unique-name>` —
+   how the pending count in [`self-heal`](../self-heal.md) is kept, since git history alone can't
+   reconstruct it (a corpus edit riding a feature-branch commit never touches `self-heal` at all). A
+   sweep from `harness-maintainer` deletes markers instead of adding one. Stage explicit pathspecs,
+   never `git add -A`. **One commit per lesson**, conventional — `docs(<rule-or-skill>): …` from
+   `harness-author`, `docs(corpus): …` from `corpus-author`.
 4. `git push origin HEAD:self-heal`. On rejection, `git fetch origin` and rebase onto
    `origin/self-heal`, then push again — a sibling landed first, which is expected.
 5. Open the PR if `gh pr list --head self-heal --state open` is empty, and only then put it in front

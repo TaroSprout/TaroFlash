@@ -72,9 +72,13 @@ surfaced the lesson — healing runs beside your work, never in front of it.
 
 - **Background, always.** One `Agent` call per lesson, `run_in_background`, at the moment the lesson
   lands. There is no foreground variant and no end-of-session sweep, in any flow.
-- **No `Agent` tool means you don't dispatch — you report.** A subagent can't spawn; the call would
-  land nowhere and still read as success. Name the lesson and its candidate row in your report and
-  let the session that spawned you make the call.
+- **Before dispatching a heal, count the markers in `.claude/heals/`.** At 5 or more, or when
+  `knowledge-lint` warns the always-on payload is over aspiration, dispatch `harness-maintainer`
+  first — it sweeps the whole knowledge layer and clears the markers itself.
+- **No `Agent` tool means you don't dispatch — you report.** Most personas hold no `Agent` tool, so
+  for them the call would land nowhere and still read as success — name the lesson and its candidate
+  row in your report and let the session that spawned you make the call. `harness-maintainer` is the
+  one exception, carrying `Agent` for exactly this.
 - **One subagent per lesson**, handed the correction verbatim and the **candidate** row from the
   routing table above — never the dispatcher's own pick of file or section. The persona re-checks the
   routing against its own spec before writing; naming a specific file in the prompt pre-loads the
