@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
+import type { ButtonProps } from '@/components/ui-kit/button.vue'
 import { emitSfx } from '@/sfx/bus'
 
 defineOptions({ inheritAttrs: false })
@@ -12,12 +13,12 @@ type SelectMenuOption = {
   label: string
 }
 
-type SelectMenuProps = {
+type SelectMenuProps = Pick<ButtonProps, 'size'> & {
   options: SelectMenuOption[]
   modelValue: T
 }
 
-const { options, modelValue } = defineProps<SelectMenuProps>()
+const { options, modelValue, size = 'base' } = defineProps<SelectMenuProps>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: T]
@@ -38,6 +39,7 @@ function onSelect(option: DropdownOption) {
     data-testid="ui-select-menu"
     open-on-trigger
     full-width
+    :size="size"
     :options="options"
     v-bind="$attrs"
     @select="onSelect"
