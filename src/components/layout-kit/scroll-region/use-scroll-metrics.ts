@@ -5,6 +5,9 @@ export type ScrollTarget = string | HTMLElement | null | undefined
 // Sub-pixel layout rounding leaves a scrollHeight a hair over clientHeight on content that fits.
 const OVERFLOW_SLACK_PX = 1
 
+// How long the measured overflow has to hold still before it counts as the resting one.
+const SETTLE_MS = 150
+
 function resolveTarget(target: ScrollTarget): HTMLElement | null {
   if (!target) return null
   if (typeof target !== 'string') return target
@@ -40,6 +43,8 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
   let frame = 0
   let resize_obs: ResizeObserver | null = null
   let mutation_obs: MutationObserver | null = null
+  let settle_timer = 0
+  let last_max_scroll = -1
 
   function schedule() {
     if (frame) return
@@ -48,6 +53,32 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
       frame = 0
       measure()
     })
+  }
+
+  /** Restarts the settling clock whenever the amount of overflow moves, and measures again once it stops. */
+  function trackSettling(max_scroll: number) {
+    if (max_scroll === last_max_scroll) return
+
+    last_max_scroll = max_scroll
+
+    window.clearTimeout(settle_timer)
+    settle_timer = window.setTimeout(() => {
+      settle_timer = 0
+      measure()
+    }, SETTLE_MS)
+  }
+
+  /**
+   * Publishes whether the handle belongs on screen.
+   *
+   * Appearing waits for the overflow to hold still, because a layout that is
+   * animating passes through heights it never comes to rest at and a handle
+   * shown on one of those flashes in and straight back out. Disappearing is
+   * immediate — content that fits can't be scrolled, whatever it does next.
+   */
+  function reportOverflow(overflows: boolean) {
+    if (!overflows) overflowing.value = false
+    else if (!settle_timer) overflowing.value = true
   }
 
   function measure() {
@@ -64,7 +95,9 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
     // Rubber-band overscroll pushes scrollTop outside [0, max] on iOS.
     const scroll_top = clamp(el.scrollTop, 0, max_scroll)
 
-    overflowing.value = max_scroll > OVERFLOW_SLACK_PX
+    trackSettling(max_scroll)
+    reportOverflow(max_scroll > OVERFLOW_SLACK_PX)
+
     visible_fraction.value = scroll_height > 0 ? client_height / scroll_height : 0
     progress.value = max_scroll > 0 ? scroll_top / max_scroll : 0
   }
@@ -121,6 +154,10 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
   function detach() {
     cancelAnimationFrame(frame)
     frame = 0
+
+    window.clearTimeout(settle_timer)
+    settle_timer = 0
+    last_max_scroll = -1
 
     window.removeEventListener('scroll', schedule)
     window.removeEventListener('resize', schedule)
