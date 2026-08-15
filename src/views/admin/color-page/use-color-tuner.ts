@@ -120,8 +120,10 @@ export function useColorTuner() {
     return id ? (shade_by_id.value.get(id) ?? null) : null
   }
 
+  // Rounding a shipped hex through whole-number HSL shifts it a shade, so an untouched colour keeps
+  // its stylesheet spelling and a preview shows what the product actually renders.
   function hexOf(shade: Shade | null): string | null {
-    return shade ? hslToHex(shade.hsl) : null
+    return shade ? exportHex(shade) : null
   }
 
   /** The shade behind a mode's four previews — the one it was pointed at, else its own page surface. */
