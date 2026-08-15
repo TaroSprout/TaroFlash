@@ -4,7 +4,7 @@ domain: theming
 status: current
 hazard: true
 related: [theming]
-updated: 2026-08-13
+updated: 2026-08-15
 ---
 
 # Surface stations
@@ -57,16 +57,18 @@ never the station, never a shade:
 
 ## A few roles never re-author — by station, not by mode
 
-`card`/`on-card`, `mat`, and `knockout`/`on-knockout` are fixed on the station axis only: the same
-color regardless of which station they sit in, never picked up from a station's own set. Each opts
-out for the same reason — it isn't actually resting on a station's surface. A flashcard carries its
-own identity everywhere it appears; an avatar's mat is color-tuned once per mode, so an avatar image
+`card`/`on-card`, `mat`, and `knockout` are fixed on the station axis only: the same color
+regardless of which station they sit in, never picked up from a station's own set. Each opts out for
+the same reason — it isn't actually resting on a station's surface. A flashcard carries its own
+identity everywhere it appears; an avatar's mat is color-tuned once per mode, so an avatar image
 reads the same wherever it's mounted; a knockout badge or ring — the tick on a selected swatch, the
 outline around it — sits directly on an accent fill, not on the station behind it, so following the
-station would sink it into whatever's behind the swatch.
+station would sink it into whatever's behind the swatch. `knockout` has no `on-knockout` companion —
+content sitting on a knockout fill (the checkmark on a selected swatch) reads its color off the
+accent roles instead.
 
-They are **not** fixed on the mode axis. All three pairs still swap to a dark rendition when the
-page goes dark — `stations.css` carries a `[data-mode='dark']` value for each of them, same as any
+They are **not** fixed on the mode axis. Each still swaps to a dark rendition when the page goes
+dark — `stations.css` carries a `[data-mode='dark']` value for each of them, same as any
 station-derived role would. "Fixed" here means "the station switch doesn't move it," not "no switch
 moves it."
 
