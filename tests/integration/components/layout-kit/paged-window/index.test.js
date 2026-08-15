@@ -66,7 +66,8 @@ const AppWindowStub = defineComponent({
     header_border: { type: String, default: undefined },
     close_label: { type: String, default: undefined },
     close_icon: { type: String, default: undefined },
-    window_px: { type: String, default: undefined }
+    window_px: { type: String, default: undefined },
+    scroll_body: { type: Boolean, default: undefined }
   },
   emits: ['close'],
   setup(props, { slots, emit }) {
@@ -78,6 +79,7 @@ const AppWindowStub = defineComponent({
           'data-show-close-button': String(props.show_close_button),
           'data-close-label': props.close_label,
           'data-close-icon': props.close_icon,
+          'data-scroll-body': String(props.scroll_body),
           onClick: () => emit('close')
         },
         [
@@ -484,5 +486,28 @@ describe('PagedWindow — stretch_page [obligation]', () => {
     const wrapper = mountWindow({ active: null, stretch_page: true }, {}, { attachTo: undefined })
 
     expect(wrapper.find('[data-testid="paged-window__page"]').exists()).toBe(false)
+  })
+
+  test('stretch_page: true caps the page column with min-h-0 so a scrolling child can shrink [obligation]', () => {
+    const wrapper = mountWindow({ active: 'design', stretch_page: true })
+    expect(wrapper.find('[data-testid="paged-window__page"]').classes()).toContain('min-h-0')
+  })
+})
+
+// ── scroll_body forwarding ──────────────────────────────────────────────────
+
+describe('PagedWindow — scroll_body', () => {
+  test('defaults scroll_body to false on the frame', () => {
+    const wrapper = mountWindow({ active: 'design' })
+    expect(wrapper.find('[data-testid="app-window-stub"]').attributes('data-scroll-body')).toBe(
+      'false'
+    )
+  })
+
+  test('forwards scroll_body: true to the frame', () => {
+    const wrapper = mountWindow({ active: 'design', scroll_body: true })
+    expect(wrapper.find('[data-testid="app-window-stub"]').attributes('data-scroll-body')).toBe(
+      'true'
+    )
   })
 })

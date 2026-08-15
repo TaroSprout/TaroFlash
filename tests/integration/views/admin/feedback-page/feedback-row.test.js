@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 import FeedbackRow from '@/views/admin/feedback-page/feedback-row.vue'
+import MemberPolaroid from '@/components/member/member-polaroid.vue'
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k) => k }) }))
 
@@ -130,6 +131,18 @@ describe('FeedbackRow — rendering', () => {
     expect(
       wrapper.find('[data-testid="admin-feedback-row__status"]').attributes('data-value')
     ).toBe('done')
+  })
+
+  test('passes the member avatar and size="sm" to member-polaroid [obligation]', () => {
+    const wrapper = mountRow(makeItem({ member_avatar: 'owl' }))
+    const polaroid = wrapper.findComponent(MemberPolaroid)
+    expect(polaroid.props('avatar')).toBe('owl')
+    expect(polaroid.props('size')).toBe('sm')
+  })
+
+  test('passes size="sm" to the status select-menu [obligation]', () => {
+    const wrapper = mountRow()
+    expect(wrapper.find('[data-testid="admin-feedback-row__status"]').attributes('size')).toBe('sm')
   })
 })
 

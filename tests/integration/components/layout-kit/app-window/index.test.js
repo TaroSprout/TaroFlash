@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
+import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -269,5 +270,70 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
       '--window-px: 3rem'
     )
+  })
+
+  // ── scroll_body prop [obligation] ─────────────────────────────────────────
+  // The body becomes the scrolling region only when opted in, and the header
+  // fill (an opaque strip meant to occlude a lowered overlay) must not render
+  // alongside a scrolling body — rendering both was the regression that
+  // occluded scrolled content on a straight line.
+
+  test('scroll_body off: body carries no data-scroll-body and the header fill renders [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x' })
+    expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-scroll-body')).toBe(
+      undefined
+    )
+    expect(wrapper.find('[data-testid="app-window__header-fill"]').exists()).toBe(true)
+  })
+
+  test('scroll_body on: body carries data-scroll-body and the header fill does not render [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x', scroll_body: true })
+    expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-scroll-body')).toBe(
+      'true'
+    )
+    expect(wrapper.find('[data-testid="app-window__header-fill"]').exists()).toBe(false)
+  })
+
+  test('scroll_body on: renders a scroll bar targeting the body [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x', scroll_body: true })
+    expect(wrapper.findComponent(UiScrollBar).exists()).toBe(true)
+  })
+
+  test('scroll_body off: renders no scroll bar [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x' })
+    expect(wrapper.findComponent(UiScrollBar).exists()).toBe(false)
+  })
+
+  // ── footer slot [obligation] ──────────────────────────────────────────────
+  // A pinned action bar must not scroll away with the body, and an empty
+  // footer must not occupy space.
+
+  test('renders footer slot content outside the scrolling body when filled [obligation]', () => {
+    const wrapper = mountWindow({}, { footer: '<div data-testid="footer-content">Footer</div>' })
+    const footer = wrapper.find('[data-testid="app-window__footer"]')
+    expect(footer.exists()).toBe(true)
+    expect(footer.find('[data-testid="footer-content"]').exists()).toBe(true)
+    expect(
+      wrapper
+        .find('[data-testid="app-window__body"]')
+        .find('[data-testid="footer-content"]')
+        .exists()
+    ).toBe(false)
+  })
+
+  test('does not render the footer element when no footer slot content is provided [obligation]', () => {
+    const wrapper = mountWindow()
+    expect(wrapper.find('[data-testid="app-window__footer"]').exists()).toBe(false)
+  })
+
+  // ── header slot stacking [obligation] ─────────────────────────────────────
+  // The header slot wrapper must never carry its own z-index — that would
+  // make it a stacking context and break a floating overlay elsewhere that
+  // relies on ordering between the header (z-10) and the fill (z-20).
+
+  test('header slot wrapper carries no z-index utility class [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x' })
+    const classes = wrapper.find('[data-testid="app-window__header-slot"]').classes()
+    expect(classes.some((c) => /(^|:)z-/.test(c))).toBe(false)
   })
 })

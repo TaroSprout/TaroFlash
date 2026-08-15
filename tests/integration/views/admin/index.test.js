@@ -15,7 +15,12 @@ vi.mock('@/views/admin/feedback-page/index.vue', async () => {
 
 const PagedWindowStub = defineComponent({
   name: 'PagedWindow',
-  props: { title: String, pages: { type: Array, default: () => [] }, active: String },
+  props: {
+    title: String,
+    pages: { type: Array, default: () => [] },
+    active: String,
+    scroll_body: { type: Boolean, default: undefined }
+  },
   emits: ['close', 'update:active'],
   setup(props, { slots, emit }) {
     return () =>
@@ -65,6 +70,11 @@ describe('Admin — chrome', () => {
     await nextTick()
 
     expect(wrapper.findComponent(PagedWindowStub).props('active')).toBe('other')
+  })
+
+  test('opts the window body into scroll_body', () => {
+    const { wrapper } = mountAdmin()
+    expect(wrapper.findComponent(PagedWindowStub).props('scroll_body')).toBe(true)
   })
 })
 

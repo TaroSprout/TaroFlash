@@ -19,7 +19,7 @@ vi.mock('@/composables/deck/actions', () => ({
 }))
 
 vi.mock('@/stores/member', () => ({
-  useMemberStore: () => ({ display_name: 'Ada', cover: {} })
+  useMemberStore: () => ({ display_name: 'Ada', cover: { avatar: 'panda' } })
 }))
 
 vi.mock('@/sfx/bus', () => ({
@@ -30,9 +30,15 @@ vi.mock('@/sfx/bus', () => ({
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const PolaroidStub = defineComponent({
-  name: 'DashboardActionsPanelPolaroid',
-  setup() {
-    return () => h('div', { 'data-testid': 'dashboard-actions-panel__polaroid' })
+  name: 'MemberPolaroid',
+  props: { avatar: { type: String, default: undefined } },
+  setup(props, { attrs }) {
+    return () =>
+      h('div', {
+        'data-testid': 'dashboard-actions-panel__polaroid',
+        'data-avatar': props.avatar,
+        class: attrs.class
+      })
   }
 })
 
@@ -93,7 +99,7 @@ function mount(due_decks = [], editing_decks = false, has_decks = false) {
     global: {
       stubs: {
         DashboardActionsPanelShell: DashboardActionsPanelShellStub,
-        DashboardActionsPanelPolaroid: PolaroidStub,
+        MemberPolaroid: PolaroidStub,
         UiOptionsPanel: UiOptionsPanelStub,
         UiButton: UiButtonStub
       }
@@ -121,6 +127,13 @@ describe('DashboardActionsPanel — header', () => {
     expect(
       wrapper.find('[data-testid="dashboard-actions-panel__header"]').attributes('title')
     ).toBe('Ada')
+  })
+
+  test('passes the member store avatar into the polaroid and positions it itself [obligation]', () => {
+    const wrapper = mount()
+    const polaroid = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    expect(polaroid.attributes('data-avatar')).toBe('panda')
+    expect(polaroid.classes()).toContain('absolute')
   })
 })
 

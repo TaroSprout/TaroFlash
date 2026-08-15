@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import FeedbackCard from '@/components/feedback/feedback-card.vue'
+import MemberPolaroid from '@/components/member/member-polaroid.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -100,6 +101,18 @@ describe('FeedbackCard — content', () => {
     expect(wrapper.find('[data-testid="feedback-card__content"] p:nth-of-type(2)').exists()).toBe(
       false
     )
+  })
+
+  test('renders the vote count', () => {
+    const wrapper = mountCard({ vote_count: 7 })
+    expect(wrapper.find('[data-testid="feedback-card__vote-count"]').text()).toBe('7')
+  })
+
+  test('passes the member avatar and size="sm" to member-polaroid [obligation]', () => {
+    const wrapper = mountCard({ member_avatar: 'owl' })
+    const polaroid = wrapper.findComponent(MemberPolaroid)
+    expect(polaroid.props('avatar')).toBe('owl')
+    expect(polaroid.props('size')).toBe('sm')
   })
 })
 

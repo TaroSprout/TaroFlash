@@ -82,6 +82,23 @@ describe('FeedbackBoard — content', () => {
       'Leave Feedback'
     )
   })
+
+  test('opts the window body into scroll_body [obligation]', () => {
+    const { wrapper } = mountBoard()
+    expect(wrapper.findComponent(AppWindow).props('scroll_body')).toBe(true)
+  })
+
+  test('renders the submit button inside the app-window footer, not the scrolling body [obligation]', () => {
+    const { wrapper } = mountBoard()
+    const footer = wrapper.find('[data-testid="app-window__footer"]')
+    expect(footer.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
+    expect(
+      wrapper
+        .find('[data-testid="app-window__body"]')
+        .find('[data-testid="feedback-board__submit-button"]')
+        .exists()
+    ).toBe(false)
+  })
 })
 
 // ── Close wiring ──────────────────────────────────────────────────────────────
