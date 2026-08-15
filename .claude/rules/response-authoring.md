@@ -15,10 +15,16 @@ comments. Always in context; a reply has no path to trigger on. Shared: [`author
   `Let me know if you need anything else`.
 - **A table, list, or other structure carries its own content — prose frames it, never restates it.**
   One or two sentences of setup before the structure, then stop; no paragraph per row explaining what
-  the row already says.
+  the row already says. The cut isn't even across rows: a row naming something the reader already
+  knows goes bare; a row introducing a mechanism they haven't seen keeps whatever makes it legible on
+  its own (what it counts, what moves it, who reads it) — spend the same words on both and the novel
+  one is the one that stops making sense.
   - Bad: a paragraph per trigger, each restating what its table row says, plus separate paragraphs
     for a guard, a gap, and an open question the table could carry as rows.
   - Good: one sentence naming what the table distinguishes, then the table.
+  - Bad: a newly-introduced mechanism compressed to the same single-clause row as its familiar
+    neighbors — `count crosses threshold`, with no count of what, no trigger, no reader.
+  - Good: the familiar rows stay bare; the novel row keeps the clause that says what it is.
 - **Product terms, not subsystem vocabulary.** Applies to a design or plan, not just a fix — hooks,
   matchers, paths, exit codes are noise unless asked. "Rephrase that" means the framing missed —
   re-explain plainly, strip the library's words, shorten too, but never only that.
