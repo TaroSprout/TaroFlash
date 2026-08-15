@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import FieldRow from '@/components/layout-kit/field-row.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiOptionGroup from '@/components/ui-kit/option-group.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -47,9 +48,10 @@ const ordering_options = computed(() => [
 </script>
 
 <template>
-  <div
+  <scroll-region
     data-testid="session-settings"
-    class="flex h-full w-full flex-col gap-6 overflow-x-hidden overflow-y-auto pb-6"
+    class="flex h-full w-full flex-col"
+    scroller_class="gap-6 overflow-x-hidden pb-6"
   >
     <p data-testid="session-settings__description" class="text-center text-base text-ink-muted">
       {{ t('study-session.settings.description') }}
@@ -136,5 +138,5 @@ const ordering_options = computed(() => [
     >
       {{ t('study-session.settings.reset-button') }}
     </ui-button>
-  </div>
+  </scroll-region>
 </template>

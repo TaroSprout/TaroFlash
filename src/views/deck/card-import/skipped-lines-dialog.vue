@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import { useI18n } from 'vue-i18n'
 import type { SkippedImportLine } from '@/utils/card/csv'
 
@@ -18,9 +19,10 @@ const { t } = useI18n()
     :title="t('deck-view.card-import.skipped-dialog.title')"
     @close="close"
   >
-    <div
+    <scroll-region
       data-testid="skipped-lines-dialog__list"
-      class="scroll-hidden flex h-full flex-col gap-2 overflow-y-auto"
+      class="h-full flex flex-col"
+      scroller_class="gap-2"
     >
       <div
         v-for="line in lines"
@@ -39,7 +41,7 @@ const { t } = useI18n()
           {{ line.text }}
         </p>
       </div>
-    </div>
+    </scroll-region>
   </dialog-card>
 </template>
 
