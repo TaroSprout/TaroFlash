@@ -6,6 +6,8 @@ paths:
 
 # Don't carry unused size / variant maps
 
+**Owns when a size/variant prop earns a map vs. gets inlined.**
+
 [`architecture/utils`](../architecture/utils.md) states the general rule — generalize only on the
 second concrete caller — that both sections of this file apply to a component's props.
 

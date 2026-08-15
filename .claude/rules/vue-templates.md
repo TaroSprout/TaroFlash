@@ -6,6 +6,9 @@ paths:
 
 # Vue Template Conventions
 
+**Owns template markup conventions** — `data-testid` coverage and state-attribute naming. Reaches
+you editing any `.vue` file's template.
+
 ## data-testid attributes
 
 Add `data-testid` to every meaningful structural element in new component markup. Use `component-name__section` naming (e.g. `mobile-sheet__body`, `deck-settings__actions`).

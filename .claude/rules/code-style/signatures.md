@@ -6,6 +6,8 @@ paths:
 
 # Function signatures
 
+**Owns how a function's parameters and return value are shaped.**
+
 ## Name a shared surface for its role, not its source
 
 A parameter, a shared primitive's prop, or anything else more than one caller reaches is named for

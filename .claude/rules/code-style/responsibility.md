@@ -6,6 +6,8 @@ paths:
 
 # One responsibility per function
 
+**Owns whether a function orchestrates or does the work — never both.**
+
 A function either orchestrates other functions or performs one concrete piece of work — never both.
 
 - **Orchestrator**: routes, sequences, handles errors. Body is mostly calls.

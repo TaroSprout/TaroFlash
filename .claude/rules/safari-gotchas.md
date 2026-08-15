@@ -6,6 +6,9 @@ paths:
 
 # Safari Gotchas
 
+**Owns the WebKit-only workarounds this app carries.** Reaches you editing any `.ts`/`.vue`/`.css`
+file — check it before chasing an iOS-only bug as if it were app logic.
+
 WebKit quirks Chrome doesn't share. Chrome's mobile-mode uses Blink, so these won't surface there — only on real Safari.
 
 ## Don't bind `:class` reactively on a scrolling container

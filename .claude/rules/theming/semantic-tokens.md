@@ -6,6 +6,8 @@ paths:
 
 # Semantic surface tokens
 
+**Owns when a recurring brown/grey pair gets promoted to a semantic `--color-*` token.**
+
 Recurring brown/grey pairs (`bg-brown-100 dark:bg-grey-700`, etc.) that mark a particular _surface role_ — input controls, page chrome, elevated cards — are defined as semantic tokens at `@theme` and overridden in the dark block in `src/styles/main.css`. Use the semantic class everywhere:
 
 ```css

@@ -6,6 +6,8 @@ paths:
 
 # ui-kit & layout-kit conventions
 
+**Owns file layout, naming, and domain-neutrality for `ui-kit`/`layout-kit` primitives.**
+
 ## ui-kit primitives that span multiple files live in a directory
 
 A ui-kit component that needs more than one file (private subcomponents, a colocated composable, a sizes/config table) lives in `src/components/ui-kit/<name>/` with `index.vue` as the public entry. Sibling files use kebab-case (`button.vue`, `use-numeric-input.ts`) and are imported relatively from `index.vue`. Callers import the directory: `import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'`.

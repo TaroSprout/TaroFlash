@@ -19,7 +19,7 @@ paths:
 | `src/composables/` | Reusable composition functions (modal, alert, prompt, shortcuts, settings, storage, fsrs, can, per-domain folders)                              |
 | `src/stores/`      | Pinia stores: `session`, `member`, `theme`, `notice-store`, `shortcut-store`, `taro-phone`                                                      |
 | `src/views/`       | Routed pages; `authenticated.vue` wraps the protected routes                                                                                    |
-| `src/styles/`      | Global CSS + TailwindCSS 4 config; `palettes.css` defines the color tokens                                                                      |
+| `src/styles/`      | Global CSS + TailwindCSS 4 config; `palettes.gen.css` (generated) defines the color tokens                                                      |
 | `src/sfx/`         | Custom audio engine behind the `v-sfx` directive                                                                                                |
 | `types/`           | Shared TypeScript types — outside `src/`                                                                                                        |
 

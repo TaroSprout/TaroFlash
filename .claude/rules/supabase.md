@@ -11,9 +11,7 @@ paths:
 
 RLS gives multi-tenant isolation; complex reads go through PostgreSQL RPCs (e.g.
 `get_member_decks_with_due_count`); a trigger mints the `members` row on signup. Deno edge functions
-live in `supabase/functions/`: `cleanup-media`, `purge-accounts`, `request-account-deletion`,
-`create-subscription`, `manage-subscription`, `stripe-webhook`, `transcribe-lesson`, `translate-term`,
-`translate-transcript`, `transliterate-transcript`.
+live one directory per function under `supabase/functions/`, alongside the shared `_shared/` helpers.
 
 Local Supabase: API on 54321, PostgreSQL on 54322. Start with `supabase start`.
 

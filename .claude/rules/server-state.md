@@ -1,5 +1,4 @@
 ---
-title: Server State with Pinia Colada
 lastUpdated: 2026-04-17T01:31:17Z
 paths:
   - 'src/api/**/*'
@@ -8,6 +7,9 @@ paths:
 ---
 
 # Server State with Pinia Colada
+
+**Owns the split between server state and client state, and the `src/api/` topology.** Reaches you
+touching `src/api/`, a composable, or a `.vue` file that reads server data.
 
 Server state (fetched rows — decks, cards, reviews, members, shop, purchases) lives in the **Pinia Colada** query cache. Client state (auth session, theme, modal stack, shortcut registry) stays in **Pinia**. The two never overlap.
 

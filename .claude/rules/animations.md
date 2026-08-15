@@ -4,7 +4,12 @@ paths:
   - 'src/**/*.{ts,vue}'
 ---
 
-# Animation Sequencing
+# Animations
+
+**Owns how an animation is sequenced, transitioned, and where its code lives.** Reaches you editing
+any `.ts`/`.vue` file that animates something.
+
+## Sequencing
 
 Prefer animation-completion hooks over wall-clock waits. Emit from the hook's `onComplete` so timing stays in sync if the animation changes.
 
@@ -16,17 +21,17 @@ await new Promise((resolve) => {
 
 If a duration is referenced in more than one place, extract it as a named constant rather than repeating the magic number.
 
-# File Structure
+## File structure
 
 All animation functions should be in `src/utils/animations/` and named after the element or effect they animate (`modal.ts`, `phone.ts`, `blur.ts`).
 
-# Transitions
+## Transitions
 
 Wire Vue `<Transition>` with `:css="false"` and JS hooks (`@enter`, `@leave`) that delegate to the helpers above. **Never write `*-enter-active` / `*-leave-to` class rules in a `<style>` block**, even though Vue supports it — mixing CSS-class transitions with GSAP gives inconsistent feel and hides the timing.
 
 Prefer a **simultaneous** swap (entering and leaving panes overlapping) over `out-in`, which reads as a sequential two-step. When a transition needs reworking, adapt the existing util rather than deleting it.
 
-# Sequencing dependent work
+## Sequencing dependent work
 
 When something must happen _after_ a transition, make the state-transition function `async` and resolve it from the real GSAP completion, then `await` it. Keep the synchronous effect synchronous — only the returned promise is deferred, so non-awaiting callers are unaffected.
 

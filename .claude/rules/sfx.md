@@ -7,6 +7,9 @@ paths:
 
 # Sound effects
 
+**Owns how a sound effect is wired into a component or seam.** Reaches you touching `src/sfx/` or
+adding sound to any `.vue` component.
+
 Audio runs through a lightweight custom engine in `src/sfx/`, surfaced as the `v-sfx` directive and the imperative `emitSfx()`.
 
 ## Buttons use the `sfx` prop

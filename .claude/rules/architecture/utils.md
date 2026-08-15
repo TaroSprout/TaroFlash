@@ -6,6 +6,8 @@ paths:
 
 # Pure helpers live in directory-scoped utils, not `src/api/`
 
+**Owns where a pure helper function lives.**
+
 `src/api/` is for functions that hit the network. Pure helpers — payload builders, diff checks, formatters, validators — belong in `src/utils/<domain>/`, alongside the domain they describe. This keeps the api layer a thin persistence surface and keeps helpers co-located with their domain instead of sprinkled across flat `src/utils/*.ts` files.
 
 ```ts

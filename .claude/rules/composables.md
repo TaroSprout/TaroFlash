@@ -6,6 +6,9 @@ paths:
 
 # Composable Conventions
 
+**Owns where a composable lives and how a capability composable is shaped.** Reaches you adding or
+moving anything under `src/composables/`.
+
 ## Where a composable lives
 
 Feature-private composables **colocate with their feature** (`src/views/<feature>/composables/`). `src/composables/` is reserved for primitives any feature can import — a global folder connotes "reusable", so filing feature-private logic there lies about its scope.
