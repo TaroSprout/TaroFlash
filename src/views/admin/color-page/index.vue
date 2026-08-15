@@ -11,6 +11,7 @@ import { colorTunerKey, useColorTuner, type ChangeLabel } from './use-color-tune
 type OpenPanel = { mode: Mode; station: StationName; anchor: HTMLElement }
 
 const PANEL_WIDTH = 352
+const PANEL_HEIGHT = 420
 const PANEL_GAP = 12
 
 const { t } = useI18n()
@@ -59,11 +60,21 @@ function placePanel() {
 
   const rect = preview.getBoundingClientRect()
   const fits_right = rect.right + PANEL_GAP + PANEL_WIDTH <= window.innerWidth
-  const left = fits_right ? rect.right + PANEL_GAP : rect.left - PANEL_GAP - PANEL_WIDTH
+  const fits_left = rect.left - PANEL_GAP - PANEL_WIDTH >= 0
+
+  if (!fits_right && !fits_left) return placeBelow(rect)
 
   panel_style.value = {
-    top: `${Math.max(PANEL_GAP, Math.min(rect.top, window.innerHeight - 420))}px`,
-    left: `${Math.max(PANEL_GAP, left)}px`
+    top: `${Math.max(PANEL_GAP, Math.min(rect.top, window.innerHeight - PANEL_HEIGHT))}px`,
+    left: `${fits_right ? rect.right + PANEL_GAP : rect.left - PANEL_GAP - PANEL_WIDTH}px`
+  }
+}
+
+/** The last resort when neither side of the preview has room, still clear of what it edits. */
+function placeBelow(rect: DOMRect) {
+  panel_style.value = {
+    top: `${Math.min(rect.bottom + PANEL_GAP, window.innerHeight - PANEL_HEIGHT)}px`,
+    left: `${Math.max(PANEL_GAP, Math.min(rect.left, window.innerWidth - PANEL_WIDTH - PANEL_GAP))}px`
   }
 }
 

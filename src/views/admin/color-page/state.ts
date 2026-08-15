@@ -134,14 +134,21 @@ function restoreModeRoles(target: TunerState, mode: Mode, saved: Record<string, 
   const known = new Set(target.shades.map((shade) => shade.id))
 
   for (const station of STATIONS) {
-    const station_roles = asRecord(saved[station])
-    if (!station_roles) continue
+    restoreStationRoles(target.roles[mode][station], asRecord(saved[station]), known)
+  }
+}
 
-    for (const role of ROLE_NAMES) {
-      const value = station_roles[role]
-      if (value === null) target.roles[mode][station][role] = null
-      if (typeof value === 'string' && known.has(value)) target.roles[mode][station][role] = value
-    }
+function restoreStationRoles(
+  target: Record<RoleName, string | null>,
+  saved: Record<string, unknown> | null,
+  known: Set<string>
+) {
+  if (!saved) return
+
+  for (const role of ROLE_NAMES) {
+    const value = saved[role]
+    if (value === null) target[role] = null
+    if (typeof value === 'string' && known.has(value)) target[role] = value
   }
 }
 
