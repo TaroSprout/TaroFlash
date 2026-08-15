@@ -1,31 +1,41 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
-import AvatarImage from '@/components/member/avatar-image.vue'
-import { useMemberStore } from '@/stores/member'
+import AvatarImage from './avatar-image.vue'
 
-const member_store = useMemberStore()
+type MemberPolaroidSize = 'base' | 'sm'
+
+type MemberPolaroidProps = {
+  avatar?: string
+  size?: MemberPolaroidSize
+}
+
+const SIZES: Record<MemberPolaroidSize, { frame: string; clip: string }> = {
+  base: { frame: 'w-30 p-2 pb-6', clip: '-top-3 left-12 size-10' },
+  sm: { frame: 'w-24 p-1.5 pb-5', clip: '-top-3 left-11 size-9' }
+}
+
+const { avatar, size = 'base' } = defineProps<MemberPolaroidProps>()
 </script>
 
 <template>
-  <div
-    data-testid="dashboard-actions-panel__polaroid"
-    class="absolute top-1 -left-1 z-10 -rotate-12 select-none"
-  >
-    <ui-icon
-      src="paperclip"
-      class="absolute -top-3 left-12 z-10 size-10 rotate-200 text-ink-muted"
-    />
-
+  <div data-testid="member-polaroid" :data-size="size" class="-rotate-12 select-none">
     <div
-      data-testid="dashboard-actions-panel__polaroid-frame"
+      data-testid="member-polaroid__frame"
       data-station="float"
-      class="bg-surface rounded-2 shadow-xs w-30 p-2 pb-6"
+      class="bg-surface rounded-2 shadow-xs relative"
+      :class="SIZES[size].frame"
     >
+      <ui-icon
+        src="paperclip"
+        class="text-ink-muted absolute z-10 rotate-200"
+        :class="SIZES[size].clip"
+      />
+
       <div
-        data-testid="dashboard-actions-panel__polaroid-photo"
+        data-testid="member-polaroid__photo"
         class="bg-mat rounded-1 aspect-square overflow-hidden"
       >
-        <avatar-image :avatar="member_store.cover.avatar" class="h-full w-full" />
+        <avatar-image :avatar="avatar" class="h-full w-full" />
       </div>
     </div>
   </div>

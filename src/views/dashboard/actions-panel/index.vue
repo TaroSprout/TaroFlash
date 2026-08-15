@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DashboardActionsPanelShell from './shell.vue'
-import DashboardActionsPanelPolaroid from './polaroid.vue'
+import MemberPolaroid from '@/components/member/member-polaroid.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useMemberStore } from '@/stores/member'
@@ -76,7 +76,7 @@ async function onSelect(value: string) {
     body_class="bg-surface"
   >
     <template #polaroid>
-      <dashboard-actions-panel-polaroid />
+      <member-polaroid :avatar="member_store.cover.avatar" class="absolute top-1 -left-1 z-10" />
     </template>
 
     <template #header>
