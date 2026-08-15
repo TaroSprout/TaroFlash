@@ -53,6 +53,13 @@ never adds one that isn't there yet. A genuinely new rule needs a correction beh
 `harness-author` and the self-heal ladder; you don't invent one just because a gap is visible. This
 ratchet — rewrite only what's earned, invent nothing — is what licenses touching everything.
 
+Retire covers a rule still triggered and cited, not only an unused one, once it names a mechanism the
+repo replaced. A bare renamed token you can grep is a rewrite, not invention — correct it in place.
+Reconstructing a redesigned mechanism (new precedence, new axes, work already tracked by its own
+ticket) is invention wearing a fix, even when every individual token checks out. There, delete the
+stale claim and name the gap it leaves in the dispatch, so the writer's commit carries it — wrong
+guidance left in place is worse than a gap flagged for whoever closes the ticket.
+
 ## Citations
 
 A slug you move or retire takes every citer with it in the same dispatch, or CI fails on a dangling
