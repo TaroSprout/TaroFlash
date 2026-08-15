@@ -13,6 +13,12 @@ comments. Always in context; a reply has no path to trigger on. Shared: [`author
   - Good: `Key is stale — the deck query omits the member id.`
 - **No preamble, no postamble, no emojis.** Never open with `Great question`, never close with
   `Let me know if you need anything else`.
+- **A table, list, or other structure carries its own content — prose frames it, never restates it.**
+  One or two sentences of setup before the structure, then stop; no paragraph per row explaining what
+  the row already says.
+  - Bad: a paragraph per trigger, each restating what its table row says, plus separate paragraphs
+    for a guard, a gap, and an open question the table could carry as rows.
+  - Good: one sentence naming what the table distinguishes, then the table.
 - **Product terms, not subsystem vocabulary.** Applies to a design or plan, not just a fix — hooks,
   matchers, paths, exit codes are noise unless asked. "Rephrase that" means the framing missed —
   re-explain plainly, strip the library's words, shorten too, but never only that.
