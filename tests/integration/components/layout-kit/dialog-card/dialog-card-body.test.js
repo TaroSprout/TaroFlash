@@ -23,15 +23,10 @@ function scroller(wrapper) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('DialogCardBody', () => {
-  describe('forwards scroll_target and bleed onto the region [obligation]', () => {
-    test('forwards scroll_target as the region target — self-scroll when omitted', () => {
+  describe('always self-scrolls and forwards bleed onto the region [obligation]', () => {
+    test('the body always self-scrolls — no scroll_target prop exists to override it [obligation]', () => {
       const wrapper = mountBody()
       expect(root(wrapper).attributes('data-scroll')).toBe('self')
-    })
-
-    test('forwards scroll_target as the region target — external target passed through', () => {
-      const wrapper = mountBody({ scroll_target: '#external' })
-      expect(root(wrapper).attributes('data-scroll')).toBe('external')
     })
 
     test('carries no data-overflow-bleed attribute on the region root by default', () => {

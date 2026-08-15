@@ -205,6 +205,13 @@ describe('MoveCardsModal', () => {
     expect(items).toHaveLength(3)
   })
 
+  test('no longer forwards a scroll_target selector onto dialog-card-body — the panel owns its own scroll handle [obligation]', () => {
+    const cards = [makeCard()]
+    const { wrapper } = mountModal({ cards })
+    const body = wrapper.find('[data-testid="move-cards__deck-list-wrap"]')
+    expect(body.attributes('scroll_target')).toBeUndefined()
+  })
+
   test('disables the current deck row', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards, current_deck_id: 10 })

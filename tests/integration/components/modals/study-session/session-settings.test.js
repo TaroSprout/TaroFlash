@@ -84,6 +84,16 @@ describe('SessionSettings', () => {
     expect(wrapper.find('[data-testid="session-settings__order"]').exists()).toBe(true)
   })
 
+  // ── Scrolls through scroll-region, not a native overflow-y-auto root [obligation] ─
+
+  test('the root scrolls through scroll-region rather than a bare overflow-y-auto [obligation]', () => {
+    const wrapper = mountSettings()
+    const root = wrapper.find('[data-testid="session-settings"]')
+    expect(root.attributes('data-scroll')).toBe('self')
+    expect(root.classes()).not.toContain('overflow-y-auto')
+    expect(root.find('[data-testid="scroll-region__scroller"]').exists()).toBe(true)
+  })
+
   // ── ratings_mode: writable computed over show_all_ratings [obligation] ────
 
   describe('ratings mode', () => {

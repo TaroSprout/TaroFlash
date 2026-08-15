@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount as vueMount } from '@vue/test-utils'
 import SkippedLinesDialog from '@/views/deck/card-import/skipped-lines-dialog.vue'
 import { vSfx } from '@/sfx/directive'
@@ -11,11 +11,43 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: mockEmitHoverS
 
 // Real dialog-card: shallowMount stubs its default slot away entirely, and
 // the list of skipped lines is rendered into that slot.
-function mount(lines = [], close = vi.fn()) {
+function mount(lines = [], close = vi.fn(), options = {}) {
   return vueMount(SkippedLinesDialog, {
     props: { lines, close },
-    global: { directives: { sfx: vSfx } }
+    global: { directives: { sfx: vSfx } },
+    ...options
   })
+}
+
+// ── Overflow geometry helper ─────────────────────────────────────────────────
+// Tailwind utilities aren't compiled here, so the scroll-region scroller's own
+// flex/min-h-0 can't be trusted to clip it — force real geometry directly, the
+// same way scroll-region's own tests do.
+
+let _activeWrappers = []
+
+afterEach(() => {
+  for (const w of _activeWrappers) w.unmount()
+  _activeWrappers = []
+})
+
+async function waitForUpdate() {
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+  await new Promise((resolve) => setTimeout(resolve, 60))
+}
+
+function mountOverflowing(height = 60) {
+  const lines = Array.from({ length: 40 }, (_, i) => ({ line: i + 1, text: `bad row ${i + 1}` }))
+  const wrapper = mount(lines, vi.fn(), { attachTo: document.body })
+  _activeWrappers.push(wrapper)
+
+  const scroller = wrapper.find('[data-testid="scroll-region__scroller"]').element
+  scroller.style.height = `${height}px`
+  scroller.style.overflowY = 'auto'
+  scroller.style.display = 'block'
+
+  return wrapper
 }
 
 describe('card-import/skipped-lines-dialog', () => {
@@ -43,5 +75,14 @@ describe('card-import/skipped-lines-dialog', () => {
     const wrapper = mount([], close)
     await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
     expect(close).toHaveBeenCalledOnce()
+  })
+
+  test('the list renders a scroll-region handle once its lines overflow [obligation]', async () => {
+    const wrapper = mountOverflowing()
+    await waitForUpdate()
+
+    const list = wrapper.find('[data-testid="skipped-lines-dialog__list"]')
+    expect(list.attributes('data-scroll')).toBe('self')
+    expect(list.find('[data-testid="scroll-region__handle"]').exists()).toBe(true)
   })
 })
