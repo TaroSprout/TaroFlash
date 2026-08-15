@@ -42,3 +42,7 @@ specific to their artifact and link here for these five; none of them restates o
     shipped, because copy exists for it.
   - Good: read the code that gates or renders the feature (a `done` flag, a `can_` check, a route)
     before claiming it ships — authored copy proves a string was written, nothing about the feature.
+  - Bad: "nothing plays a sound on open anywhere in the app" — stated after reading only the files
+    where the seam was expected to live.
+  - Good: `grep -rn` the mechanism (e.g. `emitSfx`) across the whole tree before asserting a
+    universal absence — reading the expected files rules out only those files, not the codebase.
