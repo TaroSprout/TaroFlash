@@ -17,7 +17,7 @@ const { data: items } = useAdminFeedbackItemsQuery()
       {{ t('admin.feedback-page.empty') }}
     </p>
 
-    <div v-else data-testid="admin-feedback-page__list" class="flex flex-col gap-2">
+    <div v-else data-testid="admin-feedback-page__list" class="flex flex-col gap-3 pb-8">
       <feedback-row v-for="item in items" :key="item.id" :item="item" />
     </div>
   </div>
