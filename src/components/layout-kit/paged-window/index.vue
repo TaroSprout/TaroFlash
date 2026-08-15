@@ -241,9 +241,8 @@ function onDirectoryNavigate(value: string) {
           role="tabpanel"
           :class="[
             'flex flex-col gap-4 w-full',
-            layout_mode === 'phone'
-              ? 'max-w-111 mx-auto overflow-hidden pt-0.5'
-              : 'px-(--window-px)',
+            layout_mode === 'phone' ? 'mx-auto overflow-hidden' : 'px-(--window-px)',
+            layout_mode === 'phone' && (scroll_body ? 'max-w-116 px-2.5 pt-3' : 'max-w-111 pt-0.5'),
             layout_mode !== 'phone' && !scroll_body && 'min-h-0 flex-1 pb-8'
           ]"
         >
