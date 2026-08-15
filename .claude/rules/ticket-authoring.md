@@ -94,8 +94,12 @@ filepaths, symbols, or SQL. This is the list the reviewer checks off and the imp
 so keep it skimmable. The technical encoding each one rides on — the seam, mechanism, or reuse
 pointer — lives on a companion line in `## Tech details`, not here.
 
-Five gates on every AC, on top of [`authoring`](./authoring.md):
+Six gates on every AC, on top of [`authoring`](./authoring.md):
 
+- **Readable without decoding.** No unexplained breakpoint values, code names, or shorthand a
+  reader has to reverse-engineer to know what's being watched — say what changes, in words.
+  - Bad: `Between 916px and its two-column breakpoint, the scrollbar sits beside the narrower column.`
+  - Good: `Before the dashboard drops to two columns, the scrollbar sits beside the content column, not the full page.`
 - **An enumerated failure set names its catch-all.** When ACs list the specific ways something can
   fail (parse errors, validation, rejected input), add one AC for the case that fits none of the
   named ones, with its own signed-off copy.
