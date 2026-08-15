@@ -17,7 +17,8 @@ const UiDropdownButtonStub = defineComponent({
   props: {
     options: { type: Array, default: () => [] },
     openOnTrigger: { type: Boolean, default: false },
-    fullWidth: { type: Boolean, default: false }
+    fullWidth: { type: Boolean, default: false },
+    size: { type: String, default: undefined }
   },
   emits: ['select'],
   setup(props, { slots, emit }) {
@@ -120,6 +121,18 @@ describe('UiSelectMenu', () => {
     const wrapper = mountSelectMenu({ modelValue: 'default' })
     await wrapper.find('[data-testid="fire-select"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+  })
+
+  // ── size prop [obligation] ────────────────────────────────────────────────
+
+  test('defaults size to "base" on the dropdown button [obligation]', () => {
+    const wrapper = mountSelectMenu()
+    expect(wrapper.findComponent(UiDropdownButtonStub).props('size')).toBe('base')
+  })
+
+  test('forwards an explicit size to the dropdown button [obligation]', () => {
+    const wrapper = mountSelectMenu({ size: 'sm' })
+    expect(wrapper.findComponent(UiDropdownButtonStub).props('size')).toBe('sm')
   })
 
   test('extra attrs (e.g. data-theme) fall through to the dropdown button', () => {

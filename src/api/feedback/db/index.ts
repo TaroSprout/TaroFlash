@@ -17,6 +17,26 @@ export async function fetchFeedbackItems(): Promise<FeedbackItem[]> {
   return data ?? []
 }
 
+// The admin list needs every post, published or not, so it calls the same rpc
+// without the board's `visibility = 'public'` filter — RLS lets a moderator
+// select unpublished rows here.
+export async function fetchAllFeedbackItems(): Promise<FeedbackItem[]> {
+  const { data, error } = await supabase.rpc('feedback_items_with_votes').select('*')
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  const items = data ?? []
+
+  // Posts still unpublished surface above ones already on the board, newest first within each group.
+  return [...items].sort((a, b) => {
+    if (a.visibility !== b.visibility) return a.visibility === 'public' ? 1 : -1
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+}
+
 export type SubmitFeedbackParams = {
   title: string
   body?: string

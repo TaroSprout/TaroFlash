@@ -18,6 +18,7 @@ vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
 import {
   fetchFeedbackItems,
+  fetchAllFeedbackItems,
   submitFeedback,
   toggleFeedbackVote,
   updateFeedbackItem
@@ -60,6 +61,47 @@ describe('fetchFeedbackItems', () => {
     mocks.eqMock.mockResolvedValueOnce({ data: null, error: err })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await expect(fetchFeedbackItems()).rejects.toBe(err)
+  })
+})
+
+// ── fetchAllFeedbackItems ────────────────────────────────────────────────────
+
+describe('fetchAllFeedbackItems', () => {
+  test('calls the feedback_items_with_votes rpc and selects * without a visibility filter [obligation]', async () => {
+    mocks.selectMock.mockResolvedValueOnce({ data: [], error: null })
+    mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
+    await fetchAllFeedbackItems()
+    expect(mocks.rpcMock).toHaveBeenCalledWith('feedback_items_with_votes')
+    expect(mocks.selectMock).toHaveBeenCalledWith('*')
+    expect(mocks.eqMock).not.toHaveBeenCalled()
+  })
+
+  test('sorts unpublished items first, then newest-first within each group [obligation]', async () => {
+    // Interleaved by date across the two visibility groups so a naive
+    // single-key (created_at only) sort would fail this assertion.
+    const rows = [
+      { id: 1, visibility: 'public', created_at: '2024-01-03T00:00:00Z' },
+      { id: 2, visibility: 'internal', created_at: '2024-01-01T00:00:00Z' },
+      { id: 3, visibility: 'public', created_at: '2024-01-04T00:00:00Z' },
+      { id: 4, visibility: 'internal', created_at: '2024-01-05T00:00:00Z' }
+    ]
+    mocks.selectMock.mockResolvedValueOnce({ data: rows, error: null })
+    mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
+    const result = await fetchAllFeedbackItems()
+    expect(result.map((r) => r.id)).toEqual([4, 2, 3, 1])
+  })
+
+  test('returns an empty array when data is null', async () => {
+    mocks.selectMock.mockResolvedValueOnce({ data: null, error: null })
+    mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
+    await expect(fetchAllFeedbackItems()).resolves.toEqual([])
+  })
+
+  test('rethrows the supabase error', async () => {
+    const err = { message: 'boom' }
+    mocks.selectMock.mockResolvedValueOnce({ data: null, error: err })
+    mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
+    await expect(fetchAllFeedbackItems()).rejects.toBe(err)
   })
 })
 

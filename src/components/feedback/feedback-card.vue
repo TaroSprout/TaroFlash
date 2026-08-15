@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiBurst from '@/components/ui-kit/burst.vue'
-import AvatarImage from '@/components/member/avatar-image.vue'
+import MemberPolaroid from '@/components/member/member-polaroid.vue'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useToggleFeedbackVoteMutation } from '@/api/feedback'
@@ -31,15 +31,13 @@ async function onToggleVote() {
 </script>
 
 <template>
-  <div data-testid="feedback-card" class="bg-raised rounded-8 flex w-full items-start gap-4 p-6">
-    <div
-      data-testid="feedback-card__avatar"
-      class="bg-mat rounded-full size-14 p-1 shrink-0 overflow-hidden"
-    >
-      <avatar-image :avatar="item.member_avatar" class="h-full w-full" />
-    </div>
+  <div
+    data-testid="feedback-card"
+    class="bg-raised rounded-8 relative flex w-full items-start gap-4 p-6"
+  >
+    <member-polaroid :avatar="item.member_avatar" size="sm" class="absolute top-2 left-0 z-10" />
 
-    <div data-testid="feedback-card__content" class="flex min-w-0 flex-1 flex-col gap-2">
+    <div data-testid="feedback-card__content" class="flex min-w-0 flex-1 flex-col gap-2 pl-24">
       <div data-testid="feedback-card__heading">
         <h2 class="text-ink truncate text-2xl">{{ item.title }}</h2>
         <p
@@ -69,6 +67,13 @@ async function onToggleVote() {
       >
         <ui-icon src="symbol-hearts" class="size-6" />
       </button>
+
+      <span
+        data-testid="feedback-card__vote-count"
+        class="text-ink-muted absolute top-full left-1/2 -translate-x-1/2 text-base"
+      >
+        {{ item.vote_count }}
+      </span>
 
       <ui-burst
         v-if="burst_id"
