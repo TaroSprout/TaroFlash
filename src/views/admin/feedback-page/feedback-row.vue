@@ -17,7 +17,8 @@ const { published, status, status_options, onPublishedChange, onStatusChange } =
 <template>
   <div
     data-testid="admin-feedback-row"
-    class="bg-raised rounded-8 flex w-full items-start gap-4 p-6"
+    data-station="panel"
+    class="bg-surface rounded-8 flex w-full items-start gap-4 p-6"
   >
     <div
       data-testid="admin-feedback-row__avatar"

@@ -16,7 +16,7 @@ function onPress() {
 <template>
   <app-shell
     :title="t('phone.apps.admin.title')"
-    data-palette="purple"
+    data-palette="blue"
     icon-src="inventory"
     hover-icon-src="inventory-hover"
     @press="onPress"
