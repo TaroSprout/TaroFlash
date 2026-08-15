@@ -6,6 +6,8 @@ paths:
 
 # Component composition over code merging
 
+**Owns composing components vs. inlining another component's code.**
+
 When consolidating or moving functionality between components, import and use the child component rather than inlining its template or script code.
 
 ```vue

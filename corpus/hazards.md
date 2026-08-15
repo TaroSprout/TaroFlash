@@ -31,11 +31,17 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:public-is-read-only]                      | [[decks]]              | `src/api/decks/`                                                                                                         |
 | →[K:posts-hidden-until-published]             | [[feedback]]           | `src/api/feedback/`                                                                                                      |
 | →[K:text-editor-ghost-click-guard]            | [[cards]]              | `src/components/card/`                                                                                                   |
+| →[K:deck-focus-microtask-ordering]            | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`                                                                          |
+| →[K:deck-temp-card-handoff]                   | [[deck-card-editor]]   | `src/views/deck/composables/virtual-list.ts`                                                                             |
+| →[K:deck-editor-focus-claim]                  | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`, `src/views/deck/card-editor/list-item-card.vue`                         |
 | →[K:settled-transform-traps-overlays]         | [[layering]]           | `src/utils/animations/`                                                                                                  |
 | →[K:ios-audio-interruption]                   | [[sound]]              | `src/sfx/`                                                                                                               |
 | →[K:dock-height-single-owner]                 | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
 | →[K:fixed-roles-skip-the-station]             | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
 | →[K:app-window-fills-full-width]              | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
+| →[K:dialog-card-overflow-bleed]               | [[dialog-card]]        | `src/components/layout-kit/dialog-card/dialog-card-body.vue`                                                             |
+| →[K:dialog-card-toolbar-slot-reactivity]      | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
+| →[K:dialog-card-content-grid-padding]         | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
 
 A trap with no directory to echo it into is listed in `CLAUDE.md` instead, so it
 is paid for in every session. There are none today.

@@ -6,13 +6,16 @@ paths:
 
 # Composable Conventions
 
+**Owns where a composable lives and how a capability composable is shaped.** Reaches you adding or
+moving anything under `src/composables/`.
+
 ## Where a composable lives
 
 Feature-private composables **colocate with their feature** (`src/views/<feature>/composables/`). `src/composables/` is reserved for primitives any feature can import — a global folder connotes "reusable", so filing feature-private logic there lies about its scope.
 
 Test: _would another feature import this?_ No → colocate.
 
-**Promote on the second unrelated caller.** A `useXModal()` called from one feature stays colocated; once a second, unrelated caller appears, move it to `src/composables/<feature>/` — named after the feature it belongs to, not the caller that happened to build it first. Leaving it under the first consumer makes that consumer the de facto owner of something another feature depends on.
+**Promote on the second unrelated caller** — [`architecture/utils`](./architecture/utils.md) states the general rule this instantiates. A `useXModal()` called from one feature stays colocated; once a second, unrelated caller appears, move it to `src/composables/<feature>/` — named after the feature it belongs to, not the caller that happened to build it first. Leaving it under the first consumer makes that consumer the de facto owner of something another feature depends on.
 
 ## Capabilities are ComputedRefs
 

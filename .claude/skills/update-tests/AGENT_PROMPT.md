@@ -111,16 +111,17 @@ Valid grounds to skip are narrow and listed in Step 8: barrel re-exports with no
 
 ### Edge functions (`supabase/functions/<name>/`)
 
+See `.claude/rules/test-authoring.md` § Type selection for the Deno test type.
+
 1. Read the function to understand what changed.
-2. Tests are **Deno**, not Vitest. Colocate as `index.test.ts` next to `index.ts`.
-3. Inject a fake supabase via `supabase/functions/_shared/test-utils.ts` (`makeFakeSupabase`). Never hit a real network — the handler must be exported as a pure `handler({ supabase, ... })` and `Deno.serve(...)` gated on `import.meta.main`.
-4. Run from `supabase/functions/`: `deno test --allow-net --allow-env --allow-read`.
+2. The handler must be exported as a pure `handler({ supabase, ... })` with `Deno.serve(...)` gated on `import.meta.main`.
+3. Run from `supabase/functions/`: `deno test --allow-net --allow-env --allow-read`.
 
 Skip to Step 8 for these files — Steps 3–7 are frontend-specific.
 
 ## Step 2d — API-layer changes (`src/api/<domain>/db/**`)
 
-Files under `src/api/*/db/` talk to PostgREST. Mocked unit tests pin call shapes but cannot detect schema-cache drift, broken FK embeds, missing GRANTs, or RLS regressions — those are HTTP-layer concerns.
+Files under `src/api/*/db/` talk to PostgREST — see `.claude/rules/test-authoring.md` § Type selection for why mocked unit tests can't catch these regressions.
 
 For every changed file under `src/api/*/db/`:
 
@@ -130,16 +131,10 @@ For every changed file under `src/api/*/db/`:
 
 ## Step 3 — Determine test type (in priority order)
 
-For each changed unit of code, choose the **lowest-cost test type** that can meaningfully cover it:
-
-| Priority | Type            | When to use                                                                                                                                                                       |
-| -------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1        | **Unit**        | Pure functions, utilities, composables with no rendering, store logic that can be called directly                                                                                 |
-| 2        | **Integration** | Vue components — anything that renders HTML (runs in Chromium via browser mode)                                                                                                   |
-| 2        | **Contract**    | `src/api/<domain>/db/*` — anything that round-trips through PostgREST / GoTrue / Storage. See Step 2d.                                                                            |
-| 3        | **E2E**         | **Last resort only.** Use only when the behaviour cannot be covered without full navigation or multi-step flow interaction. Always justify why integration is insufficient first. |
-
-**Default to integration tests for components.** Use `shallowMount` for isolated component tests (stub child components) and `mount` only when child component behaviour is directly under test.
+Pick the lowest-cost type that can meaningfully cover each changed unit — see
+`.claude/rules/test-authoring.md` § Type selection for the type table and defaults. Priority order
+for this skill: Unit first, then Integration or Contract (see Step 2d for Contract), E2E only as a
+last resort — always justify why integration is insufficient first.
 
 Don't shy away from a higher-cost tier if it's the only way to cover a critical regression — especially when satisfying a cross-cutting obligation from the orchestrator.
 
@@ -168,14 +163,8 @@ vp test --no-coverage tests/integration/components/ui-kit/toggle.test.js
 
 Target **~90% line coverage of each touched file** (higher if achievable without test bloat) AND satisfy every cross-cutting obligation passed by the orchestrator.
 
-Integration tests run in **Chromium browser mode** — not jsdom. This means:
-
-- Test stubs must use **render functions** (`h()`), not `template` strings (no runtime compiler in Vite's runtime-only Vue build)
-- GSAP mocks must call `onComplete` so `transition-group` JS hooks complete
-- Don't find elements by auto-generated stub tag names (`ui-icon-stub`) — use `findComponent({ name: '...' })`
-- `global` is not available — the browser setup file (`tests/setup-browser.js`) handles i18n only
-
-See `.claude/rules/test-authoring.md` for full details and examples.
+Integration tests run in **Chromium browser mode**, not jsdom — see `.claude/rules/test-authoring.md`
+§ Browser mode for stub shape, GSAP mocks, and query rules before writing component tests.
 
 ## Step 6 — Validate all tests pass
 
@@ -191,29 +180,20 @@ Do not proceed to the next file until the current file's tests are passing.
 
 ### When a new test refuses to pass — suspect the source
 
-A new test that won't pass after one or two reasonable adjustments to the scaffolding (mocks, stubs, mount mode, async timing) is a strong signal the **source** is wrong, not the test. The assertion was written from your understanding of what the code _should_ do; if reality keeps disagreeing, the gap is a candidate bug.
+See `.claude/rules/test-authoring.md` § A failing test accuses the source first — the same doctrine
+applies to a test you just wrote.
 
-Don't:
-
-- delete the test
-- relax the assertion to match the (suspected-wrong) behaviour
-- weaken to an indirect check (e.g. asserting on a stub presence instead of the real output)
-- chalk it up to "test infra quirk" and move on
-
-Do:
-
-- pause, re-read the source line that produced the unexpected value
-- form a hypothesis (Vue Boolean prop coercion, computed reading non-reactive source, destructured-prop default capture, mock path mismatch, …)
-- surface it back to the orchestrator with: (1) the assertion, (2) the source line, (3) the hypothesis, (4) the proposed fix
-- wait for confirmation before patching source
-
-Surface a suspected bug and **stop there** — do not patch source, and do not commit anything. The orchestrator confirms with the user and owns any `fix(<scope>):` commit. Call it out in the Step 8 report under the **Bug found** line so the orchestrator can act on it.
+Surface a suspected bug back to the orchestrator with: (1) the assertion, (2) the source line, (3)
+the hypothesis, (4) the proposed fix. Then **stop there** — do not patch source, and do not commit
+anything. The orchestrator confirms with the user and owns any `fix(<scope>):` commit. Call it out in
+the Step 8 report under the **Bug found** line so the orchestrator can act on it.
 
 If the failure really is a test-scaffolding issue (and you've eliminated source as the cause), fix the test and move on.
 
 ## Step 7 — Review and quality check
 
-Once all tests are written and passing, review the full set of new tests for quality using the flakiness audit in `.claude/rules/test-authoring.md`.
+Once all tests are written and passing, review the full set of new tests against
+`.claude/rules/test-authoring.md` § Reject.
 
 **Fix any critical issues** — specifically anything that would cause intermittent CI failures or mask real regressions. Call out non-critical issues (low severity style/practice notes) in the report but do not auto-fix them.
 

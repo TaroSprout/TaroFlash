@@ -6,6 +6,8 @@ paths:
 
 # ui-kit & layout-kit conventions
 
+**Owns file layout, naming, and domain-neutrality for `ui-kit`/`layout-kit` primitives.**
+
 ## ui-kit primitives that span multiple files live in a directory
 
 A ui-kit component that needs more than one file (private subcomponents, a colocated composable, a sizes/config table) lives in `src/components/ui-kit/<name>/` with `index.vue` as the public entry. Sibling files use kebab-case (`button.vue`, `use-numeric-input.ts`) and are imported relatively from `index.vue`. Callers import the directory: `import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'`.
@@ -31,7 +33,7 @@ type SpinboxProps = { all_label?: string; all_active?: boolean }
 type SpinboxProps = { pill_label?: string; pill_active?: boolean }
 ```
 
-When you catch a domain-y name slipping into a ui-kit prop, rename before more callers depend on it. The primitive exists to be reused across features that don't share vocabulary.
+When you catch a domain-y name slipping into a ui-kit prop, rename before more callers depend on it. The primitive exists to be reused across features that don't share vocabulary — the same naming-for-role rule [`code-style/signatures`](../code-style/signatures.md) states for a function parameter.
 
 ## Layout-only primitives live in `layout-kit/`, not `ui-kit/`
 
@@ -57,4 +59,4 @@ When an `icon-only` `UiButton` needs a label, keep `icon-only` and put the text 
 
 ## Fix a stray event at its source
 
-When a primitive misbehaves because of a spurious upstream event, neutralise it where it originates rather than widening the primitive's API with a behaviour toggle. A pointer-driven transcript emitting a trailing compatibility `click` that dismissed a popover was fixed with a capture-phase swallower scoped to the transcript — not with a `dismiss_event` prop on the popover. A local quirk shouldn't become a knob on a domain-neutral component.
+When a primitive misbehaves because of a spurious upstream event, neutralise it where it originates rather than widening the primitive's API with a behaviour toggle ([`architecture/api-layer`](./api-layer.md) states the general rule). A pointer-driven transcript emitting a trailing compatibility `click` that dismissed a popover was fixed with a capture-phase swallower scoped to the transcript — not with a `dismiss_event` prop on the popover. A local quirk shouldn't become a knob on a domain-neutral component.

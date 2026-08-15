@@ -6,6 +6,8 @@ paths:
 
 # Textured backgrounds: `bgx-*`
 
+**Owns the `bgx-*` textured-background utilities and how they pick up a theme color.**
+
 `src/styles/bg-utils.css` defines a `bgx-*` utility that composites a masked pattern layer over an element using a `::before` pseudo-element. Use it for decorative texture effects (e.g. diagonal stripes on hover).
 
 Key modifiers:

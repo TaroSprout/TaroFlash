@@ -6,6 +6,8 @@ paths:
 
 # Semantic surface tokens
 
+**Owns when a recurring brown/grey pair gets promoted to a semantic `--color-*` token.**
+
 Recurring brown/grey pairs (`bg-brown-100 dark:bg-grey-700`, etc.) that mark a particular _surface role_ — input controls, page chrome, elevated cards — are defined as semantic tokens at `@theme` and overridden in the dark block in `src/styles/main.css`. Use the semantic class everywhere:
 
 ```css
@@ -31,4 +33,4 @@ Recurring brown/grey pairs (`bg-brown-100 dark:bg-grey-700`, etc.) that mark a p
 <div class="bg-brown-100 dark:bg-grey-700">…</div>
 ```
 
-When you find yourself writing the same `bg-X dark:bg-Y` pair (or `text-`, `ring-`, etc.) in ≥ 3 places, promote it to a semantic `--color-*` token. Name the token after the role (`input`, `surface`, `elevated`), not the colour (`brown-100`). Themed variants (`--theme-primary`) stay separate — semantic surface tokens are for non-themed chrome.
+When you find yourself writing the same `bg-X dark:bg-Y` pair (or `text-`, `ring-`, etc.) in ≥ 3 places, promote it to a semantic `--color-*` token — the concrete-caller threshold [`architecture/utils`](../architecture/utils.md) states generally. Name the token after the role (`input`, `surface`, `elevated`), not the colour (`brown-100`). Themed variants (`--theme-primary`) stay separate — semantic surface tokens are for non-themed chrome.

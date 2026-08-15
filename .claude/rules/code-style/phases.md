@@ -6,6 +6,8 @@ paths:
 
 # Group function bodies into visual phases
 
+**Owns blank-line grouping inside a function body.**
+
 A function should read as setup → core work → wrap-up, not a wall of text. Put a single blank line between phases; keep tight clusters tight.
 
 **Insert a blank line:**

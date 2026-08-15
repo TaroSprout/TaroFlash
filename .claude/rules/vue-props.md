@@ -6,6 +6,9 @@ paths:
 
 # Vue Props Convention
 
+**Owns how a component declares its props and slots.** Reaches you editing any `.vue` file's
+`<script setup>` block.
+
 Define props with a named type alias and destructure defaults inline — never use `withDefaults`.
 
 ```ts

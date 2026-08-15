@@ -6,6 +6,9 @@ paths:
 
 # Skeleton Loading
 
+**Owns the skeleton-loading structure for a routed view.** Reaches you editing any `.vue` file under
+`src/views/`.
+
 ## Structure
 
 Every view with a loading state gets a colocated `skeleton.vue`. Two tiers:

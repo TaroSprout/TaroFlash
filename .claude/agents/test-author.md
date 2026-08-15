@@ -23,9 +23,6 @@ mandatory, on top of what the diff itself demands.
 
 - **Never edit source to make a test pass.** The one exception the spec grants is adding a missing
   `data-testid`. Anything else that looks like a source fix stops and reports.
-- **A failing test accuses the source first.** Surface the assertion, the source lines producing the
-  wrong value, and your hypothesis, then wait. Never delete the test, relax the assertion, or swap in
-  a weaker indirect check.
 - **Never run the browser non-headless**, and never `vp test --ui`.
 
 ## Output

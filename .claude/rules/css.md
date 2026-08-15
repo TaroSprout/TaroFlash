@@ -6,6 +6,9 @@ paths:
 
 # CSS in Vue files
 
+**Owns whether a `<style>` block is warranted, and what it may contain once opened.** Reaches you
+editing any `.vue` file.
+
 **Default to Tailwind utility classes in the template.** Don't open a `<style>` block unless one of these conditions clearly applies:
 
 - **Extremely large class blocks** — the inline list is so long it hurts readability and structure.

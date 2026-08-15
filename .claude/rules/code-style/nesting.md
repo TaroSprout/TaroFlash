@@ -6,6 +6,8 @@ paths:
 
 # At most one level of nesting
 
+**Owns nesting depth inside a function body.**
+
 **`max-depth` in `vite.config.ts`'s `lint.rules` enforces this** — `vp lint` warns past depth 2.
 Still `warn`, not `error`: 14 pre-existing sites haven't been cleared, and this rule's owner can't
 touch source to clear them.

@@ -6,6 +6,8 @@ paths:
 
 # Applying theme tokens
 
+**Owns the call-site and in-component syntax for applying theme tokens.**
+
 ## At a call site
 
 Pass `data-theme` (and `data-theme-dark` if needed) directly on the child element or component:

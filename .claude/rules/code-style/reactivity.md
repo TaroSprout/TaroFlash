@@ -6,6 +6,8 @@ paths:
 
 # Watchers are a last resort
 
+**Owns when a `watch`/`watchEffect` is warranted vs. a declarative alternative.**
+
 `watch` / `watchEffect` is not a default. Before adding one, ask whether the same thing can be expressed declaratively — a `computed`, conditional rendering, an event handler, or a one-time `onMounted` seed.
 
 Watchers hide control flow as a side-effect reacting to state: harder to follow, easy to fire spuriously. A declarative form makes the dependency explicit and is usually self-correcting.
