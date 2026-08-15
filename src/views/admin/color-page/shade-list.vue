@@ -127,6 +127,7 @@ function onAdd(family: string) {
             />
             <span
               v-if="name_error === shade.id"
+              data-testid="shade-list__name-error"
               data-palette="danger"
               class="text-(--color-accent-text)"
             >
