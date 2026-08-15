@@ -39,7 +39,9 @@ that landed in the file only because the brief said it is a paraphrase, not a fi
    somewhere is sharpened or relocated in place, never restated in a second file.
 2. Write the smallest change that lands the lesson: one bullet where a bullet does it, a new section
    only when no cluster fits, a new rule file only when the lesson is off-topic in every existing one.
-3. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
+3. Before shipping, hold what you just wrote against every gate and forbidden construct in the spec,
+   line by line — don't just have read them going in.
+4. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
    no `paths:` frontmatter counts against the cap, and the cap is enforced in CI.
 
 ## Shipping
