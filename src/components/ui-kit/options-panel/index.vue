@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue'
+import { computed, useAttrs } from 'vue'
 import OptionsPanelRow from './row.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import type { SfxOptions } from '@/sfx/directive'
 
 export type OptionsPanelEntry = {
@@ -25,8 +26,7 @@ type OptionsPanelProps = {
   sfx?: SfxOptions
   // false renders plain rows with no tap/hover/sfx behavior (static info/status rows)
   interactive?: boolean
-  // scrolls internally within the card instead of clipping; pair with a sibling
-  // <scroll-region> targeting the `__content` testid below (native scrollbar is suppressed)
+  // scrolls internally within the card, drawing the standard handle, instead of clipping
   scrollable?: boolean
 }
 
@@ -50,6 +50,12 @@ const emit = defineEmits<{
 
 const attrs = useAttrs()
 
+const content_testid = computed(() =>
+  attrs['data-testid'] ? `${attrs['data-testid']}__content` : 'options-panel__content'
+)
+
+const content_component = computed(() => (scrollable ? ScrollRegion : 'div'))
+
 function onSelect(entry: OptionsPanelEntry) {
   emit('select', entry.value)
 }
@@ -57,12 +63,12 @@ function onSelect(entry: OptionsPanelEntry) {
 
 <template>
   <div data-testid="options-panel" class="relative flex flex-col">
-    <div
-      :data-testid="
-        attrs['data-testid'] ? `${attrs['data-testid']}__content` : 'options-panel__content'
-      "
+    <component
+      :is="content_component"
+      :data-testid="content_testid"
+      v-bind="scrollable ? { gutter: 'inside' } : {}"
       class="flex min-h-0 flex-1 flex-col rounded-4 bg-well p-1"
-      :class="scrollable ? 'overflow-y-auto scroll-hidden' : 'overflow-hidden'"
+      :class="scrollable ? 'relative' : 'overflow-hidden'"
     >
       <options-panel-row
         v-for="entry in entries"
@@ -80,7 +86,7 @@ function onSelect(entry: OptionsPanelEntry) {
           <slot name="trailing" v-bind="slot_props" />
         </template>
       </options-panel-row>
-    </div>
+    </component>
 
     <div
       v-if="$slots.overlay"

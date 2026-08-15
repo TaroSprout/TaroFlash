@@ -96,10 +96,7 @@ function onClose() {
 
 <template>
   <dialog-card data-testid="move-cards" size="md" :title="title" @close="onClose">
-    <dialog-card-body
-      data-testid="move-cards__deck-list-wrap"
-      scroll_target="[data-testid='move-cards__deck-list__content']"
-    >
+    <dialog-card-body data-testid="move-cards__deck-list-wrap">
       <ui-options-panel
         data-testid="move-cards__deck-list"
         scrollable
