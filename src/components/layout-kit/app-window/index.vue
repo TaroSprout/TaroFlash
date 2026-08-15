@@ -91,7 +91,7 @@ const root_style = computed(() => ({
 <template>
   <div
     data-testid="app-window-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] [--window-scrollbar-top:10rem] lg:[--window-px:2rem]"
+    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
     :style="root_style"
   >
     <div
@@ -155,7 +155,16 @@ const root_style = computed(() => ({
           :data-scroll-body="scroll_body || undefined"
           class="scroll-hidden relative min-h-0 flex-1 bg-surface"
         >
-          <slot></slot>
+          <scroll-region
+            v-if="scroll_body"
+            gutter="inside"
+            class="flex h-full flex-col [--scroll-track-inset-start:var(--window-header-depth,0px)]"
+            scroller_class="pt-(--window-header-depth)"
+          >
+            <slot></slot>
+          </scroll-region>
+
+          <slot v-else></slot>
         </div>
 
         <div
@@ -165,13 +174,6 @@ const root_style = computed(() => ({
         >
           <slot name="footer"></slot>
         </div>
-
-        <scroll-region
-          v-if="scroll_body"
-          target="[data-testid='app-window__body']"
-          gutter="inside"
-          class="absolute top-(--window-scrollbar-top) right-3 bottom-3 z-30"
-        />
       </div>
     </div>
   </div>
@@ -186,18 +188,17 @@ const root_style = computed(() => ({
   z-index: 20;
 }
 
-/* The body scrolls only when the window opted in; a reactive class here would
-   kill iOS momentum scroll mid-gesture, so the attribute drives it instead. */
+/* Set only when the window opted in, and as an attribute rather than a bound
+   class — Vue rewriting `class` around the scrolling box mid-gesture kills iOS
+   momentum scroll. */
 [data-scroll-body] {
   /* Drops under the header so scrolled content passes beneath the wave. */
   z-index: 0;
 
-  overflow-y: auto;
-
   /* Starts the scroll area behind the shaped header edge rather than below it,
      so content passes under the wave instead of clipping on a straight line.
-     The header's own fill strip is what occludes it. */
+     The header's own fill strip is what occludes it, and the region inside
+     pads its scrolling box back down by the same depth. */
   margin-top: calc(var(--window-header-depth, 0px) * -1);
-  padding-top: var(--window-header-depth, 0px);
 }
 </style>

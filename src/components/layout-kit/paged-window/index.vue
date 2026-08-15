@@ -167,6 +167,11 @@ function onDirectoryNavigate(value: string) {
     :header_border="header_border"
     :scroll_body="scroll_body"
     :window_px="window_px"
+    :class="
+      layout_mode === 'phone'
+        ? '[--scroll-content-inset:0.625rem]'
+        : '[--scroll-content-inset:var(--window-px)]'
+    "
     @close="onFrameClose"
   >
     <template v-if="$slots.overlay" #overlay><slot name="overlay"></slot></template>
@@ -241,8 +246,13 @@ function onDirectoryNavigate(value: string) {
           role="tabpanel"
           :class="[
             'flex flex-col gap-4 w-full',
-            layout_mode === 'phone' ? 'mx-auto overflow-hidden' : 'px-(--window-px)',
-            layout_mode === 'phone' && (scroll_body ? 'max-w-116 px-2.5 pt-3' : 'max-w-111 pt-0.5'),
+            layout_mode === 'phone'
+              ? 'mx-auto overflow-hidden'
+              : 'pl-(--window-px) pr-[var(--scroll-content-pad-end,var(--window-px))]',
+            layout_mode === 'phone' &&
+              (scroll_body
+                ? 'max-w-116 pl-2.5 pr-(--scroll-content-pad-end) pt-3'
+                : 'max-w-111 pt-0.5'),
             layout_mode !== 'phone' && !scroll_body && 'min-h-0 flex-1 pb-8'
           ]"
         >
