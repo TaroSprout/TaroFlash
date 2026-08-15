@@ -56,7 +56,8 @@ to invent to build exactly this?"** and resolve that too, recursively.
 
 Pin every **design** dimension of a UI element (UX decisions, not implementation): **placement**
 (side, order) · **host** (component / primitive / slot) · **trigger** (how invoked; what it swaps or
-coexists with) · **label + icon** (signed-off copy) · **states** (default, disabled, empty, count).
+coexists with) · **label + icon** (signed-off copy) · **states** (default, disabled, empty, count) ·
+**sound** (which of its interactions get a cue, and which `src/sfx/` key — or explicitly none).
 
 Three traps this closes:
 
@@ -155,6 +156,10 @@ facts:
   `git log -S`/`-L`, the actual policy or migration. Cheap to check, expensive to get wrong.
 - **A subagent's report is not source.** Open the file an Explore agent's finding points to yourself
   before asserting it as fact.
+- **Supporting markup or CSS is not evidence the state it handles occurs.** An `overflow` class, a
+  scrollbar-handle component, or similar existing in the DOM doesn't mean the content actually
+  overflows today — check the real content against the real container before writing an AC premised
+  on that state.
 - **Label every fact spoken to the user, not just what lands in the body**, as
   `CONFIRMED (verified against <source>)` or `ASSUMED` — a claim in the checkpoint or the
   back-and-forth steers a decision before any AC is written.
@@ -314,8 +319,8 @@ it without guessing. Test it by asking:
 - Is the prior art a `## Tech details` clause ("built from X"), and is every factual claim in the body `CONFIRMED`, not `ASSUMED`?
 - If this was a split: is **every** sibling independently verifiable — a concrete standalone check
   named in its ACs — and can `/work` tell which must land first without reading all of them?
-- For every UI element: are placement, host/slot, trigger, label/icon, and states decided — or would
-  an implementer still choose?
+- For every UI element: are placement, host/slot, trigger, label/icon, states, and sound decided —
+  or would an implementer still choose?
 - Is every new or changed string the user-signed-off exact wording (≥3 options offered), and is
   reused copy marked as reused?
 - Does any AC smuggle undecided design behind a competence claim, or grow into implementation mechanics (which belong on `## Tech details` lines)?
