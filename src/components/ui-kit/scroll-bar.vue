@@ -1,204 +1,138 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { TYPE_SFX } from '@/sfx/config'
 
 type UiScrollBarProps = {
-  target?: string | HTMLElement
-  // Viewport width above which the bar can show on a fine pointer. Page-level
-  // bars stay 'md'; container-local ones can drop to 'sm'.
-  minWidth?: 'sm' | 'md'
+  /** Reading position — 0 at the top of the content, 1 at the bottom. */
+  progress: number
+  /** Share of the content on screen, 0 to 1; the thumb takes that much of the track. */
+  visible_fraction: number
 }
 
-const { target, minWidth = 'md' } = defineProps<UiScrollBarProps>()
+const { progress, visible_fraction } = defineProps<UiScrollBarProps>()
 
-const visibilityClass = computed(() =>
-  minWidth === 'sm' ? 'hidden pointer-fine:block' : 'hidden pointer-fine:md:block'
-)
-
-const thumbEl = shallowRef<HTMLElement | null>(null)
-
-const visible = ref(false)
-const thumbHeight = ref(0)
-const thumbOffset = ref(0)
-const trackHeight = ref(0)
-const dragging = ref(false)
-
-let scrollTarget: HTMLElement | null = null
-let resizeObs: ResizeObserver | null = null
-let mutObs: MutationObserver | null = null
-let animationFrame: number | null = null
-let dragStartY = 0
-let dragStartOffset = 0
+const emit = defineEmits<{
+  drag: [progress: number]
+  jump: [progress: number]
+}>()
 
 const MIN_THUMB_PX = 24
 
-const thumbStyle = computed(() => ({
-  height: `${thumbHeight.value}px`,
-  transform: `translatey(${thumbOffset.value}px)`
+const track_el = useTemplateRef<HTMLElement>('track')
+const thumb_el = useTemplateRef<HTMLElement>('thumb')
+
+const track_height = ref(0)
+const dragging = ref(false)
+
+let track_obs: ResizeObserver | null = null
+let drag_pointer_id = 0
+let drag_start_y = 0
+let drag_start_offset = 0
+let frame = 0
+
+const thumb_height = computed(() => {
+  const raw = Math.floor(track_height.value * visible_fraction)
+  return Math.min(track_height.value, Math.max(MIN_THUMB_PX, raw))
+})
+
+const travel = computed(() => Math.max(track_height.value - thumb_height.value, 0))
+
+const thumb_style = computed(() => ({
+  height: `${thumb_height.value}px`,
+  transform: `translateY(${clamp(progress, 0, 1) * travel.value}px)`
 }))
 
-onMounted(attach)
-onUnmounted(detach)
+onMounted(() => {
+  // The track is measured by observer rather than on mount because a bar inside
+  // a hidden panel reports a height of 0 until the panel is revealed.
+  // [K:gap: a scroll region measured while its host is display:none reads a track and content height of 0, so both the track and the scrolled element are sized by ResizeObserver rather than read once on mount]
+  track_obs = new ResizeObserver(() => (track_height.value = track_el.value?.clientHeight ?? 0))
+  if (track_el.value) track_obs.observe(track_el.value)
+})
 
-function attach() {
-  scrollTarget = resolveTarget(target)
+onBeforeUnmount(() => {
+  endDrag()
 
-  if (!scrollTarget || isPageTarget(scrollTarget)) {
-    window.addEventListener('scroll', scheduleUpdate, { passive: true })
-    window.addEventListener('resize', scheduleUpdate, { passive: true })
+  track_obs?.disconnect()
+  track_obs = null
+})
 
-    mutObs = new MutationObserver(() => scheduleUpdate())
-    mutObs.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      characterData: false
-    })
-  } else {
-    scrollTarget.addEventListener('scroll', scheduleUpdate, { passive: true })
-
-    resizeObs = new ResizeObserver(() => scheduleUpdate())
-    resizeObs.observe(scrollTarget)
-  }
-
-  scheduleUpdate()
-}
-
-function detach() {
-  if (animationFrame) cancelAnimationFrame(animationFrame)
-  animationFrame = 0
-
-  if (!scrollTarget || isPageTarget(scrollTarget)) {
-    window.removeEventListener('scroll', scheduleUpdate)
-    window.removeEventListener('resize', scheduleUpdate)
-  } else {
-    scrollTarget.removeEventListener('scroll', scheduleUpdate)
-  }
-
-  resizeObs?.disconnect()
-  resizeObs = null
-
-  mutObs?.disconnect()
-  mutObs = null
-
-  scrollTarget = null
-}
-
-function scheduleUpdate() {
-  if (animationFrame) return
-
-  animationFrame = requestAnimationFrame(() => {
-    animationFrame = null
-    update()
-  })
-}
-
-function update() {
-  if (!scrollTarget) {
-    visible.value = false
-    return
-  }
-
-  const clientH = scrollTarget.clientHeight
-  const scrollH = scrollTarget.scrollHeight
-  const scrollTop = scrollTarget.scrollTop
-
-  const hasOverflow = scrollH > clientH + 1
-  visible.value = hasOverflow
-
-  if (!hasOverflow) {
-    thumbHeight.value = 0
-    thumbOffset.value = 0
-    return
-  }
-
-  const trackEl = thumbEl.value?.parentElement
-  const trackH = trackEl?.clientHeight ?? 0
-  trackHeight.value = trackH
-
-  const ratio = clientH / scrollH
-  const rawThumb = Math.floor(trackH * ratio)
-  const tH = Math.max(MIN_THUMB_PX, Math.min(trackH, rawThumb))
-  thumbHeight.value = tH
-
-  const maxScroll = scrollH - clientH
-  const maxThumbTravel = trackH - tH
-  thumbOffset.value = maxScroll > 0 ? (scrollTop / maxScroll) * maxThumbTravel : 0
-}
-
-function setScrollFromThumb(offsetPx: number) {
-  if (!scrollTarget) return
-
-  const clientH = scrollTarget.clientHeight
-  const scrollH = scrollTarget.scrollHeight
-
-  const maxScroll = scrollH - clientH
-  const maxThumbTravel = trackHeight.value - thumbHeight.value
-  const clamped = Math.max(0, Math.min(maxThumbTravel, offsetPx))
-
-  scrollTarget.scrollTop = maxThumbTravel > 0 ? (clamped / maxThumbTravel) * maxScroll : 0
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
 }
 
 function onThumbPointerDown(e: PointerEvent) {
+  const thumb = e.currentTarget as HTMLElement
+
   dragging.value = true
-  dragStartY = e.clientY
-  dragStartOffset = thumbOffset.value
-  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  window.addEventListener('pointermove', onThumbPointerMove, { passive: false })
-  window.addEventListener('pointerup', onThumbPointerUp)
+  drag_pointer_id = e.pointerId
+  drag_start_y = e.clientY
+  drag_start_offset = clamp(progress, 0, 1) * travel.value
+
+  // Capturing on the thumb keeps the move and release events coming even once
+  // the pointer leaves the window, so a drag that ends out there still stops.
+  thumb.setPointerCapture(e.pointerId)
+  thumb.addEventListener('pointermove', onThumbPointerMove)
+  thumb.addEventListener('pointerup', endDrag)
+  thumb.addEventListener('pointercancel', endDrag)
 }
 
 function onThumbPointerMove(e: PointerEvent) {
-  if (!dragging.value) return
-  e.preventDefault()
-  setScrollFromThumb(dragStartOffset + (e.clientY - dragStartY))
-  scheduleUpdate()
+  if (!dragging.value || frame) return
+
+  const pointer_y = e.clientY
+
+  frame = requestAnimationFrame(() => {
+    frame = 0
+    if (travel.value <= 0) return
+
+    const offset = clamp(drag_start_offset + (pointer_y - drag_start_y), 0, travel.value)
+    emit('drag', offset / travel.value)
+  })
 }
 
-function onThumbPointerUp() {
+function endDrag() {
+  cancelAnimationFrame(frame)
+  frame = 0
+
+  if (!dragging.value) return
   dragging.value = false
-  window.removeEventListener('pointermove', onThumbPointerMove)
-  window.removeEventListener('pointerup', onThumbPointerUp)
+
+  const thumb = thumb_el.value
+  if (!thumb) return
+
+  if (thumb.hasPointerCapture(drag_pointer_id)) thumb.releasePointerCapture(drag_pointer_id)
+
+  thumb.removeEventListener('pointermove', onThumbPointerMove)
+  thumb.removeEventListener('pointerup', endDrag)
+  thumb.removeEventListener('pointercancel', endDrag)
 }
 
 function onTrackPointerDown(e: PointerEvent) {
-  if ((e.target as HTMLElement) === thumbEl.value) return
+  const track = track_el.value
+  if (!track || travel.value <= 0) return
 
-  const trackEl = thumbEl.value?.parentElement
-  if (!trackEl) return
+  const rect = track.getBoundingClientRect()
+  const offset = clamp(e.clientY - rect.top - thumb_height.value / 2, 0, travel.value)
 
-  const rect = trackEl.getBoundingClientRect()
-  setScrollFromThumb(e.clientY - rect.top - thumbHeight.value / 2)
-  scheduleUpdate()
-}
-
-function resolveTarget(target?: string | HTMLElement): HTMLElement | null {
-  if (!target) return null
-  if (typeof target !== 'string') return target
-  if (target === 'body') return document.body
-  if (target === 'html') return document.documentElement
-  return document.querySelector(target) as HTMLElement | null
-}
-
-function isPageTarget(el: HTMLElement) {
-  return el === document.documentElement || el === document.body
+  emit('jump', offset / travel.value)
 }
 </script>
 
 <template>
   <div
-    v-show="visible"
-    ref="scrollBarRef"
+    ref="track"
     data-testid="ui-kit-scroll-bar"
-    :data-min-width="minWidth"
-    class="ui-kit-scroll-bar"
-    :class="visibilityClass"
+    class="ui-kit-scroll-bar pointer-fine:block hidden"
     @pointerdown.prevent="onTrackPointerDown"
   >
     <div
-      ref="thumbEl"
+      ref="thumb"
+      v-sfx="{ hover: TYPE_SFX }"
       data-testid="ui-kit-scroll-bar__thumb"
+      :data-active="dragging"
       class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes"
-      :style="thumbStyle"
+      :style="thumb_style"
       @pointerdown.stop.prevent="onThumbPointerDown"
     />
   </div>
