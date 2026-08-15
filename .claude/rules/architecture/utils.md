@@ -42,7 +42,15 @@ export const DAILY_LIMIT_BOUNDS = { step: 5, min: 5, ... } as const
 export function withDeckConfigDefaults(partial?: Partial<DeckConfig>): Required<DeckConfig> { ... }
 ```
 
-## Inline before extracting
+## Generalize on the second concrete caller
+
+A helper, prop, composable's home, chokepoint, or repeated style pair earns generalizing —
+extraction, a variant, a promotion, an abstraction layer, a token — only once a **second** concrete
+caller actually needs it, never in anticipation of one; and that second caller is what shapes the
+generalization, not a speculative third. [`composables`](../composables.md),
+[`code-style/variants`](../code-style/variants.md), [`vendor-chokepoint`](./vendor-chokepoint.md),
+and [`theming/semantic-tokens`](../theming/semantic-tokens.md) apply this to a composable's home, a
+component's props, a chokepoint composable, and a CSS token.
 
 A helper that's small and has exactly **one** call site stays a local function inside its consumer. Extraction pays off when the helper is reused, complex enough to hide, or needs its own tests — a three-line join-filter used once earns a file and a test file it doesn't need.
 

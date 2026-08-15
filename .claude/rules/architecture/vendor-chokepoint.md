@@ -21,6 +21,6 @@ const { trackPageview } = useTracking()
 ```
 
 Keep the composable small until a second provider actually lands — this is the chokepoint, not the
-place to build out a provider-abstraction layer speculatively. Naming the vendor inside that one
-file is fine; call sites and the composable's own exports stay vendor-neutral —
-[`code-style/signatures`](../code-style/signatures.md).
+place to build out a provider-abstraction layer speculatively ([`architecture/utils`](./utils.md)).
+Naming the vendor inside that one file is fine; call sites and the composable's own exports stay
+vendor-neutral — [`code-style/signatures`](../code-style/signatures.md).

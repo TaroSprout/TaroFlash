@@ -19,6 +19,15 @@ const { data: decks } = useMemberDecksQuery()
 
 If no suitable domain exists, create one as `src/api/<domain>/` with `db/`, `queries/`, `mutations/`, and `index.ts`. See [`server-state`](../server-state.md) for the full topology.
 
+## A behaviour is owned by its single seam
+
+A behaviour that must happen for every instance of an action — a sound, a cache invalidation, a fix
+for a misbehaving event, an optimistic apply — is implemented once, in the single function or layer
+that performs the underlying action, never wired or half-wired at each call site, where copies drift
+or double up. [`sfx`](../sfx.md), [`server-state`](../server-state.md), and
+[`ui-kit`](./ui-kit.md) apply this to a sound, a mutation's invalidation, and a stray DOM event; the
+rule below is this file's own instance, for optimistic apply.
+
 ## `src/api/` functions must not mutate their arguments
 
 API-layer functions are thin network adapters. They must not mutate their input parameters — callers can't tell from the signature which fields are now stale, and optimistic-UI rollback becomes impossible because the "before" state is already gone by the time the network fails. Optimistic apply belongs in the composable that calls the mutation, not in the network adapter.

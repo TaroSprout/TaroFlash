@@ -68,7 +68,8 @@ syntax restated, not why it matches that.
 - A library's internal vocabulary where an observable term exists — say what the screen shows.
 - **A caller's name as the opening subject** (`Deck-hero "Export cards":`, `Bulk-panel "Export
 selected".`) — it reads as a lookup instead of naming what the function does, and goes stale the
-  moment that caller moves, renames, or gains a sibling.
+  moment that caller moves, renames, or gains a sibling; the same source-vs-role naming rule
+  [`code-style/signatures`](./code-style/signatures.md) states for a parameter.
 - A pointer carrying nothing a human can act on.
 - **A comment that is only a citation.** `→[K:<slug>]` is a suffix to a sentence, never a comment on
   its own — a reader skimming the diff must get the constraint without leaving the file. Enforced by
