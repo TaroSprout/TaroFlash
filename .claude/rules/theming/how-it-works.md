@@ -1,22 +1,29 @@
 ---
-lastUpdated: 2026-08-13T00:00:00Z
+lastUpdated: 2026-08-15T00:00:00Z
 paths:
   - 'src/**/*.{vue,css}'
 ---
 
-# How theming works
+# Where a role is authored
 
-**Owns the selector mechanics behind `data-theme`/`data-theme-dark` and the dark-mode root.**
+**Owns which file you edit to change what a role resolves to, per switch.**
 
-Colors are applied via the `data-theme` attribute, which scopes a set of semantic CSS variables defined in `src/styles/palettes.gen.css` (generated).
-
-1. Parents apply theming by setting `data-theme` (and optionally `data-theme-dark`) directly on the element or component — the value is a `MemberTheme` (e.g. `'blue-500'`, `'green-400'`).
-2. On a component, those attributes flow through to its root element via Vue's normal attribute inheritance. Components do **not** declare a `theme` / `themeDark` prop; they just let the attrs forward.
-3. `palettes.gen.css` maps each theme value to a set of `--theme-*` variables using a comma selector covering two activation conditions:
-   - `[data-theme='X']` — `(0,1,0)` always active (light or dark mode)
-   - `[data-theme='dark'] [data-theme-dark='X']` — `(0,2,0)` active when the root is dark
-     Each selector in a comma list keeps its own specificity (unlike `:is()`, which elevates all arms to the highest), so the descendant form genuinely beats the plain form in dark mode.
-4. Available tokens: `--theme-primary` / `--theme-on-primary`, `--theme-secondary` / `--theme-on-secondary`, `--theme-accent` / `--theme-on-accent`, `--theme-neutral` / `--theme-on-neutral`.
-5. Child elements reference those variables via Tailwind's arbitrary-property syntax or plain CSS.
-
-> **Dark mode root**: `use-theme` always writes an explicit `'light'` or `'dark'` to `data-theme` on `document.documentElement` — even when the user's preference is `'system'`. CSS never needs a `prefers-color-scheme` media-query fallback.
+- **Accent roles come from the registry, not the stylesheet.** Change `--color-accent`,
+  `--color-accent-muted`, `--color-on-accent` or `--color-accent-text` for a palette in
+  `src/utils/palette/registry.ts`, then run `pnpm gen:palette-css`. `src/styles/palettes.gen.css` is
+  generated — an edit there is overwritten by the next run and never reaches
+  `src/utils/cover/tokens.ts`, which must list the same palette set.
+- **Neutral roles are authored per station, by hand, in `src/styles/stations.css`** — light and dark
+  renditions both, with nothing derived from another station →[K:surface-stations-hand-authored].
+  Changing one station's value is not a signal to recompute the other three.
+- **A role only becomes a Tailwind utility once it is declared under `@theme` in
+  `src/styles/main.css`.** Adding a value in `stations.css` alone gives you a variable that
+  `var()` reads but `bg-*` / `text-*` / `border-*` never resolve.
+- **A new palette alias joins the selector list of the palette it points at**, so `danger` and `red`
+  stay one rendition — never a second block copying the values.
+- **Never gate a dark rendition on `prefers-color-scheme`.** The theme store always writes an
+  explicit `data-mode` to `documentElement`, including for the `system` preference, so a media query
+  is a second source of truth that disagrees the moment a member overrides the system.
+- **Scope a dark override with both the descendant and the self form** —
+  `[data-mode='dark'] [data-palette='x']` and `[data-mode='dark'][data-palette='x']` — or the role
+  breaks whenever the attribute lands on the moded root itself rather than below it.
