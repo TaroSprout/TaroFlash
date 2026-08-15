@@ -1,4 +1,4 @@
-import { computed, ref, watch, type InjectionKey, type Ref } from 'vue'
+import { computed, inject, ref, watch, type InjectionKey, type Ref } from 'vue'
 import {
   MODES,
   ROLES,
@@ -46,6 +46,14 @@ export type RoleReading = {
 export type ColorTuner = ReturnType<typeof useColorTuner>
 
 export const colorTunerKey: InjectionKey<ColorTuner> = Symbol('color-tuner')
+
+/** Reaches the one tuner the page created; every preview and panel shares it. */
+export function injectColorTuner(): ColorTuner {
+  const tuner = inject(colorTunerKey)
+  if (!tuner) throw new Error('Colour tuner used outside the colour page')
+
+  return tuner
+}
 
 export function useColorTuner() {
   const state = ref<TunerState>(loadState()) as Ref<TunerState>
