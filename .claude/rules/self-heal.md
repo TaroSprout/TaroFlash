@@ -38,6 +38,11 @@ only the user could ever tell you.
 
 Never heal on a taste call the user hasn't actually made — one offhand remark is an instance.
 
+**Surviving the ladder doesn't fix the altitude — that's the writer's call, not this one.** The
+correction as given is usually pitched at the symptom; the writer reframes it to the class of mistake
+before landing it, per its own spec. Don't draft that reframe here — same reason routing hands a
+candidate row instead of a file.
+
 ## Routing — one lesson, one home
 
 | The correction is about                                                                    | It lands in                                                                                     |
@@ -83,7 +88,9 @@ surfaced the lesson — healing runs beside your work, never in front of it.
   routing table above — never the dispatcher's own pick of file or section. The persona re-checks the
   routing against its own spec before writing; naming a specific file in the prompt pre-loads the
   answer and defeats that check. Nothing else rides along — no incident narrative, no argument for
-  why the existing rule missed. Two lessons are two dispatches, each shipped per `shipping`.
+  why the existing rule missed, and no drafted rule text: a pre-written generalization pre-loads the
+  altitude the same way a named file pre-loads the routing. Two lessons are two dispatches, each
+  shipped per `shipping`.
 - **A lesson routed to `corpus/` is one dispatch, to `corpus-author`, even when it also needs a
   source citation.** `corpus-author` lands the topic and the citation together — never split the
   citation off to a second `harness-author` dispatch, which can't write `corpus/` or touch source.

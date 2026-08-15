@@ -41,9 +41,19 @@ that landed in the file only because the brief said it is a paraphrase, not a fi
 
 1. Read the spec. Then **grep the whole rules directory for the fact** — a rule already stated
    somewhere is sharpened or relocated in place, never restated in a second file.
-2. Write the smallest change that lands the lesson: one bullet where a bullet does it, a new section
-   only when no cluster fits, a new rule file only when the lesson is off-topic in every existing one.
-3. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
+2. **Reframe before you write.** The correction you were handed is pitched at the instance; name the
+   class of mistake it belongs to and test that class two ways. Floor — name a second, different
+   situation the rule would also catch; can't, it's welded to this one instance, go up a level.
+   Ceiling — a reviewer could fail a diff with it; can't, it's become a platitude, come down a level.
+   Land at the lowest altitude that still passes the floor test, and never draft this at the level
+   the correction happened to arrive in.
+   - Bad (symptom): `Prose doesn't duplicate a table.`
+   - Good (source): a table carries its own content — prose frames it, spending the cut unevenly:
+     bare for a row the reader already knows, load-bearing for one that's new.
+3. Write the smallest change that lands the reframed lesson: one bullet where a bullet does it, a new
+   section only when no cluster fits, a new rule file only when the lesson is off-topic in every
+   existing one.
+4. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
    no `paths:` frontmatter counts against the cap, and the cap is enforced in CI.
 
 ## Shipping
