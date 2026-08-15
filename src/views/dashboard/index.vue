@@ -6,7 +6,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { useCan } from '@/composables/can'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { emitSfx } from '@/sfx/bus'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import DashboardShell from './dashboard-shell.vue'
 import DashboardSkeleton from './skeleton.vue'
 import DashboardSection from './dashboard-section.vue'
@@ -99,7 +99,11 @@ const show_skeleton = computed(() => !decks_data.value)
       </template>
     </dashboard-shell>
 
-    <scroll-bar class="fixed right-4 top-(--nav-height) bottom-10 z-30" target="html" />
+    <scroll-region
+      class="fixed right-4 top-(--nav-height) bottom-10 z-30"
+      target="html"
+      gutter="inside"
+    />
 
     <dashboard-mobile-footer
       :due_decks="due_decks"

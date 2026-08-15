@@ -10,7 +10,7 @@ import {
   type WindowHeaderBorder
 } from './surface'
 import UiButton from '@/components/ui-kit/button.vue'
-import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
 type WindowPatternConfig = {
   palette?: PaletteName
@@ -166,10 +166,10 @@ const root_style = computed(() => ({
           <slot name="footer"></slot>
         </div>
 
-        <ui-scroll-bar
+        <scroll-region
           v-if="scroll_body"
           target="[data-testid='app-window__body']"
-          min-width="sm"
+          gutter="inside"
           class="absolute top-(--window-scrollbar-top) right-3 bottom-3 z-30"
         />
       </div>

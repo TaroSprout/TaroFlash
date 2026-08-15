@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
-import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
-import { useDialogCardViewport } from './dialog-card-viewport'
+import { computed } from 'vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
-/** The dialog-card's opt-in scrolling region — owns the overflow, bottom padding, and custom scroll-bar placement. →[K:dialog-card-overflow-bleed] */
+/**
+ * The dialog-card's opt-in scrolling region — owns the overflow and the bottom padding. →[K:dialog-card-overflow-bleed]
+ * [K:gap: the scroll handle's placement is no longer the body's own `-right-8`; it hangs in the scroll region's `--scroll-gutter`, which the body sets its bottom inset for through `--scroll-track-inset-end`]
+ */
 
 type DialogCardBodyProps = {
   /** Selector or element for an inner scroller (an options-panel's content, say) when the overflow lives deeper than this wrapper; omitted, the body scrolls. */
@@ -14,33 +16,20 @@ type DialogCardBodyProps = {
 
 const { scroll_target, overflow_bleed = false } = defineProps<DialogCardBodyProps>()
 
-const viewport = useDialogCardViewport()
-
-const content_el = useTemplateRef<HTMLElement>('content')
-
-const target = computed(() => scroll_target ?? content_el.value ?? undefined)
+const scroller_class = computed(() =>
+  ['pb-(--dialog-body-pb,var(--dialog-px))', overflow_bleed ? 'px-2.5 -mx-2.5' : ''].join(' ')
+)
 </script>
 
 <template>
-  <div data-testid="dialog-card-body" class="relative flex min-h-0 flex-col">
-    <div
-      ref="content"
-      data-testid="dialog-card-body__content"
-      :data-overflow-bleed="overflow_bleed || undefined"
-      class="flex min-h-0 flex-1 flex-col pb-(--dialog-body-pb,var(--dialog-px))"
-      :class="[
-        scroll_target ? '' : 'overflow-y-auto scroll-hidden',
-        overflow_bleed ? 'px-2.5 -mx-2.5' : ''
-      ]"
-    >
-      <slot></slot>
-    </div>
-
-    <ui-scroll-bar
-      v-if="target && viewport !== 'mobile'"
-      :target="target"
-      min-width="sm"
-      class="absolute -right-8 top-0 bottom-(--dialog-body-pb,var(--dialog-px))"
-    />
-  </div>
+  <scroll-region
+    data-testid="dialog-card-body"
+    :data-overflow-bleed="overflow_bleed || undefined"
+    class="relative flex min-h-0 flex-col"
+    :style="{ '--scroll-track-inset-end': 'var(--dialog-body-pb, var(--dialog-px))' }"
+    :target="scroll_target"
+    :scroller_class="scroller_class"
+  >
+    <slot></slot>
+  </scroll-region>
 </template>
