@@ -30,6 +30,23 @@ A sound that should play for **every** instance of an action belongs in the sing
 
 Centralise only for genuine instances of _that_ action — don't fold in unrelated uses of the same key.
 
+## Every sound debounces by default — say so when a cue can't take it
+
+`player.ts` runs every call through a shared 10ms trailing debounce keyed by sound name, whether or
+not the caller mentioned it. That's invisible at the call site, so a rhythmic or latency-sensitive
+cue — one paced by something other than the debounce itself, like a drag's `requestAnimationFrame`
+loop or a countdown tick — inherits a delay that lands wherever the timer happens to fire, not on the
+beat the caller intended. Pass `debounce: 0` explicitly on any call whose timing is driven by
+something other than user click-spam.
+
+```html
+<!-- Bad — default debounce free-floats the sound off the drag's own cadence -->
+emitSfx('drag.detent')
+
+<!-- Good — timing is the caller's; nothing shared should reschedule it -->
+emitSfx('drag.detent', { debounce: 0 })
+```
+
 ## Options go on the existing call
 
 If a click handler already calls `emitSfx(...)` imperatively, pass options to **that call**. Don't add a parallel `v-sfx="{ click: … }"` next to it — it double-plays and splits the configuration surface, leaving it ambiguous which one carries the options. Leave `v-sfx` to hover/focus/blur on that element.

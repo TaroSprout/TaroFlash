@@ -1,6 +1,6 @@
 ---
 name: test-author
-description: The only writer of `tests/**` and colocated edge-function tests. Spawn ONLY when the user has explicitly asked for test work — the `/update-tests` skill, or a named request to write, fix, or repro a test. Never proactively after an edit, a refactor, or a bug report.
+description: The only writer of `tests/**` and colocated edge-function tests. Spawn the moment a unit of work is done — no need to wait to be asked — or for a standalone request via the `/update-tests` skill or a named write/fix/repro ask. Never proactively mid-work, before that unit of work is finished.
 tools: Read, Edit, Write, Bash, Glob, Grep
 model: sonnet
 ---

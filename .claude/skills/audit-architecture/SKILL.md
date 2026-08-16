@@ -171,7 +171,7 @@ Deck settings edits live behind a single draft that owns what changed, whether i
 - Brevity > completeness, everywhere — including the reframe. The report is a bird's-eye view, not a record of the analysis; the depth went into producing the verdict, not into narrating it.
 - Be specific about locations: `src/components/foo.vue:42` beats "the foo component".
 - If the blind design converges suspiciously hard on the current shape, check whether the domain statement leaked structure before accepting a "keep" verdict.
-- **A rendering-behavior finding (scrollbar shows, content overflows, text clips) needs the layout checked, not just the class.** A missing or present CSS class is evidence of intent, not of what renders — trace the container's height constraint against its content's actual length before reporting it. Can't confirm the layout renders that way → drop the finding, don't pass it through as fact.
+- **A rendering-behavior finding (scrollbar shows, content overflows, text clips) is not evidence from the class alone** — see [`authoring.md` → Label a guess](../../rules/authoring.md). Can't confirm the layout actually renders that way against the real container and content → drop the finding, don't pass it through as fact.
 
 ## Trigger phrases
 

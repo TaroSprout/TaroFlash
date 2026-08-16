@@ -21,9 +21,7 @@ Add `data-testid` to every meaningful structural element in new component markup
 </div>
 ```
 
-Purely decorative or `aria-hidden` elements (spacers, etc.) don't need one. Every `div`, `section`, `header`, `footer`, `nav`, and `aside` that represents a distinct part of the component does.
-
-**Why:** Tests assert on `data-*` attributes, never class names. These attributes also serve as a scannable map of a component's structure.
+Purely decorative or `aria-hidden` elements (spacers, etc.) don't need one. Every `div`, `section`, `header`, `footer`, `nav`, and `aside` that represents a distinct part of the component does — [`test-authoring`](./test-authoring.md) queries only by `data-testid`, never class names.
 
 ## `data-active` is the canonical state attr
 

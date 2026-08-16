@@ -125,6 +125,10 @@ echo **everything it will not work**: ungroomed epic tickets, blocked rows, `Ass
 ticket carrying a prose `## Blocked on` section. The user decides once, here, whether to work a
 `## Blocked on` ticket anyway.
 
+Every echoed row — worked or not — carries its title alongside the id, since the SELECT table already
+returned one. An id-plus-reason row makes the user ask for the title before they can judge the row;
+don't make them ask for data you already have.
+
 **After the user's OK, the run is uninterrupted until every PR is green** — no mid-run questions.
 Everything that used to pause becomes a decision plus a ledger line (§ Run ledger) instead.
 

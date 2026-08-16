@@ -28,5 +28,21 @@ comments. Always in context; a reply has no path to trigger on. Shared: [`author
 - **Product terms, not subsystem vocabulary.** Applies to a design or plan, not just a fix — hooks,
   matchers, paths, exit codes are noise unless asked. "Rephrase that" means the framing missed —
   re-explain plainly, strip the library's words, shorten too, but never only that.
+- **An option's description holds only what was asked for.** When laying out choices for the user to
+  pick between, each option's text covers only scope the user actually raised — never fold in an
+  extra dimension (size, placement, behaviour) you inferred, even inside an option that otherwise
+  answers what they asked. Picking that option later reads as approval of everything its text named,
+  so an inference smuggled into the description becomes an unagreed decision the moment it's picked.
+  Put your own suggestion outside the option list, labelled as yours, so a pick can't absorb it.
+  - Bad: option reads "Stay in the modal, but bigger — let it break out to near-viewport width" when
+    the user only asked for a wider modal.
+  - Good: "Stay in the modal, but bigger" states only the size bump asked for; a follow-up line
+    offers the near-viewport idea as a separate suggestion, not folded into the pick.
 - **Report the state honestly.** Say what you did, what you skipped, and what is still broken. Never
   claim a gate passed that you did not run.
+- **Relaying a subagent's report re-applies every rule above — it isn't a pass-through.** Compress to
+  what changed and what needs a decision from the user; the subagent's own headings, structure, and
+  exhaustive detail don't ride along just because the report arrived that way.
+  - Bad: forwarding a subagent's multi-paragraph report — layout specifics, a corrected assumption,
+    every flagged issue — near-verbatim.
+  - Good: `Built the settings panel. One thing to check: the sync toggle defaults on — intended?`

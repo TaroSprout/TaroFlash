@@ -35,6 +35,15 @@
             "command": "fp=$(jq -r '.tool_input.file_path // empty'); dir=$( [ -n \"$fp\" ] && dirname \"$fp\" || pwd ); branch=$(git -C \"$dir\" branch --show-current 2>/dev/null) || exit 0; [ \"$branch\" = \"master\" ] && echo 'On master \u2014 cut a branch before editing (see .claude/rules/git-workflow.md)' >&2 && exit 2; exit 0"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // empty')\ncase \"$cmd\" in\n  *\"git reset --hard\"*|*\"git clean -f\"*|*\"git checkout --\"*|*\"git checkout .\"*|*\"git restore \"*) ;;\n  *) exit 0 ;;\nesac\ncase \"$cmd\" in\n  *\"git restore\"*)\n    case \"$cmd\" in\n      *\"--staged\"*) exit 0 ;;\n    esac\n    ;;\nesac\ndirty=$(git status --porcelain --untracked-files=no 2>/dev/null)\n[ -z \"$dirty\" ] && exit 0\necho 'Working tree has uncommitted tracked changes -- a destructive git command would discard them. Stash first (git stash push -u -m \"<tag>\"); the branch or target being rebuilt may be disposable, the working tree never is. see .claude/rules/git-workflow.md' >&2\nexit 2\n"
+          }
+        ]
       }
     ],
     "PostToolUse": [

@@ -102,6 +102,25 @@ async function onExportCards() { … }
 /** A card's save state, separate from whether the user got it right. →[K:study-review-durability] */
 ```
 
+## A declaration-block comment is body position, not a symbol doc
+
+`layout-kit/scroll-region/index.vue`
+
+```css
+/* Bad — JSDoc-length paragraph over one custom property inside a rule block */
+.scroll-region {
+  /* How far in from this box's end edge the consumer wants its content to
+     stop. A consumer that names nothing gets the handle's full band and
+     nothing beyond it. */
+  --scroll-content-end: var(--consumer-inset, var(--full-band));
+}
+
+/* Good */
+.scroll-region {
+  --scroll-content-end: var(--consumer-inset, var(--full-band)); /* falls back to the full band */
+}
+```
+
 ## Open on the situation, not the principle
 
 `ui-kit/button.vue`

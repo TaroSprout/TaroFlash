@@ -28,8 +28,9 @@ code needs none — a clear name beats a comment.
 | Top of a file           | one or two lines   | what lives here — only where the filename and its exports don't already carry it    |
 | Inside `<template>`     | none, ever         | improve the `data-testid`, slot, and component names instead                        |
 
-In `<style>`, a comment above a selector is a symbol doc; one inside a declaration block follows the
-in-body rule.
+In `<style>`, a comment above a selector is a symbol doc; **one above a single custom-property or
+property line, inside a rule block, is body position** — same single-line shape as script, not a
+JSDoc-style paragraph, however many properties in the block each want documenting.
 
 **A body comment sits trailing on the line it annotates, wrapping above only when it doesn't fit
 there.** Above-the-line is the fallback shape, not the default.

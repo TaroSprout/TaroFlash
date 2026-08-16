@@ -100,42 +100,6 @@ Use this first. Match words in the raw ticket to a starting path, then grep from
 
 ---
 
-## Epics (Notion Epic Board → code area)
-
-`/triage` sets the ticket's **Epic** relation. Active (In Dev / Ready / P0) first; map to code:
-
-| Epic                        | Status       | Code area                                              |
-| --------------------------- | ------------ | ------------------------------------------------------ |
-| Deck/Card Config            | In Dev · P0  | `views/deck/deck-settings/`, `utils/cover/`            |
-| Study Session               | In Dev · P0  | `views/study-session/`                                 |
-| Phone Navigation            | In Dev · P0  | `components/taro-phone/`, `mobile-dock/`               |
-| Member Settings             | In Dev · P0  | `views/settings/`                                      |
-| Login/Signup                | In Dev · P0  | `views/welcome/`, `composables/auth/`                  |
-| Splash Page                 | In Dev · P0  | `views/welcome/splash/`, `section-*/`                  |
-| Dashboard                   | In Dev · P0  | `views/dashboard/`                                     |
-| Permissions                 | In Dev · P0  | `composables/can.ts`, RLS + capability SQL fns         |
-| UI-Kit                      | In Dev · P0  | `components/ui-kit/`, `layout-kit/`                    |
-| Card Images                 | In Dev · P0  | `components/card/` (image layers), `api/media/`        |
-| Community Page              | Backlog · P0 | (not built)                                            |
-| Analytics                   | Backlog · P0 | (not built)                                            |
-| Marketing Email Integration | Backlog · P0 | (not built)                                            |
-| Card Audio Upload           | Backlog · P0 | `api/media/`, sfx/audio                                |
-| Legal                       | Planned · P0 | `views/privacy-policy.vue`, `terms-of-service.vue`     |
-| Security & Compliance       | Planned · P1 | `supabase/` RLS, edge-fn authz                         |
-| Misc Bugs                   | Ready · P1   | (cross-cutting — default bucket for stray bugs)        |
-| Feedback Board              | Ready · P2   | `components/feedback/`, `api/feedback/`                |
-| Export/Import               | Planned · P2 | (not built)                                            |
-| Shortcuts                   | Planned · P2 | `composables/shortcuts.ts`, `stores/shortcut-store.ts` |
-| Tips/Tutorials              | Planned · P2 | `views/dashboard/tip-card/`                            |
-| Global Search               | Backlog · P1 | (not built)                                            |
-| Audio Reader                | Planned · P3 | `views/audio-reader/`, `api/lessons/`                  |
-
-Other backlog epics (P1–P3, mostly unbuilt): Power-Ups, Paperclips, Shop, Metrics & Stamps, Daily Challenges, Card decoration, Theming, Postcard sending, Tips/Deck Ratings, 3rd-party integration, Course Builder, Deck Printing, Favorites, Stickers, Attributions, Study Modes, Competitive Social Play, Realtime Collaborative Study, Verified Content, Offline Mode, Heatmap, Lightning Rounds, Trackable Goals, Card Notes, Avatar Designer, Bulk Find/Replace, Admin Dashboard, Accessibility, Misc Features.
-
-> If no epic fits, `Misc Bugs` (bugs) or `Misc Features` (tasks/stories) are the catch-alls.
-
----
-
 ## Domain glossary
 
 - **FSRS** — Free Spaced Repetition Scheduler; drives review-pacing. `composables/fsrs.ts`, `api/reviews/`.
@@ -148,13 +112,3 @@ Other backlog epics (P1–P3, mostly unbuilt): Power-Ups, Paperclips, Shop, Metr
 - **app-window / paged-window / dialog-card** — layout-kit window chrome: `app-window` (windowed surface), `paged-window` (multi-page directory nav), `dialog-card` (paged modal w/ header/pager/viewport).
 - **wave/cloud borders** — shaped-edge utilities `wave-bottom-[size]`, `wave-top-[size]`, `cloud-bottom-[size]` in `styles/border-utils.css` (never hand-roll SVG).
 - **audio-reader / lessons** — transcription reading: collections → lessons → word/segment-synced transcript; term popover creates cards.
-
----
-
-## Conventions (`.claude/rules/`, auto-loaded by path glob)
-
-`architecture` (feature-colocation + api pattern) · `code-style` · `FE-formatting` · `vue-props` · `vue-script-order` · `vue-templates` · `composables` · `css` · `theming` · `animations` · `server-state` (Pinia Colada) · `skeleton-loading` · `study-session-architecture` · `supabase` · `i18n` · `safari-gotchas` · `test-authoring`.
-
-Writing anything is governed by the `*-authoring` spec family — `authoring` (the five shared principles) plus `rule-`, `ticket-`, `corpus-`, `test-`, `commit-`, and `response-authoring`. A rule's long-form walkthroughs nest as spokes at `.claude/rules/<rule>/<spoke>.md`.
-
-> All user-facing strings use i18n (`t('...')`, `src/locales/en-us.json`). Rules carry frontmatter (`paths`) scoping them to globs.

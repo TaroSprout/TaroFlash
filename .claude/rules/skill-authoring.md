@@ -2,10 +2,14 @@
 lastUpdated: 2026-08-08T00:00:00Z
 paths:
   - '.claude/skills/**/*.md'
-  - '.claude/agents/**/*.md'
 ---
 
 # Skill authoring
+
+**Owns `SKILL.md` shape** — its frontmatter contract and how its description routes a user's
+phrasing to it. Reaches you editing a file under `.claude/skills/`. An agent definition in
+`.claude/agents/` is [`harness-author`](../agents/harness-author.md)'s to write but isn't a skill and
+carries no frontmatter contract of its own — this file's rules don't reach it.
 
 ## Declare arguments in frontmatter
 

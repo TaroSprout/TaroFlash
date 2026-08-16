@@ -25,3 +25,8 @@ on.
    session, so a pop can take another session's entry. Prefer a temporary WIP commit; if you must
    stash, tag it uniquely (`git stash push -u -m "<tag>"`) and restore by SHA
    (`git stash apply <sha>`, never `pop`).
+8. **A disposable target doesn't make the working tree disposable.** Rebuilding a throwaway or
+   re-derivable branch (`reset --hard`, `checkout --`, `clean -f`, `restore`) still runs against the
+   one working tree, which is never yours to discard — stash anything uncommitted
+   (`git stash push -u -m "<tag>"`) first, regardless of how disposable the branch itself is. A
+   `PreToolUse` hook blocks these commands outright while the tree is dirty.
