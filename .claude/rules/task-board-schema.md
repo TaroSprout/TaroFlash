@@ -44,6 +44,14 @@ Add/remove/rename a field's **options** with `notion-update-data-source`
 first and verify with a row-level `WHERE id IN (…)` query — Notion's aggregate `COUNT/GROUP BY` reads
 lag row writes.
 
+**A create or update response is not proof the row is on the board — read it back.** [K:notion-write-verification]
+`notion-create-pages` and `notion-update-page` echo the properties you sent even when the write never
+reached the board: a page created without its parent set to the Task Board data source still returns
+`Status`/`Type`/`Epic` as if set, but they're ordinary page properties on a private page, backing
+nothing the board's queries see. Before reporting any ticket created or field written, re-query the
+data source for that page id and read the row that comes back. An empty read-back is the finding, not
+a replication-lag explanation to write around — re-run the same query before trusting either story.
+
 ## Fields
 
 ### `Status` — a `status`-type field (grouped)

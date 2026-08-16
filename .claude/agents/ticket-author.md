@@ -31,8 +31,10 @@ Expensive-to-produce and worth-recording are not the same thing.
    than dropping it — an unverified lead still beats nothing, but it must be marked.
 3. **Write each ticket** per the spec. One ticket per idea; if the input describes three things, cut
    three.
-4. **Report** one line per ticket: `TARO-<ID> · <title> · <Type> → Backlog` + URL. Then, separately,
-   anything you could not verify and any near-duplicate you found.
+4. **Read each new page back** from the Task Board data source before calling it done
+   (→[K:notion-write-verification]) — the `notion-create-pages` response is not that proof.
+5. **Report** one line per ticket confirmed on the board: `TARO-<ID> · <title> · <Type> → Backlog` +
+   URL. Then, separately, anything you could not verify and any near-duplicate you found.
 
 ## Hard limits
 
