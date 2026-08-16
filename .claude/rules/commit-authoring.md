@@ -35,9 +35,7 @@ Repeated attempts at the _same_ logical change collapse into one commit before r
 stay separate.
 
 - **Unpushed:** `git reset --soft HEAD~N` then re-commit, or `git commit --amend --no-edit`.
+  Recover an accidentally dropped commit via `git reflog` + `git checkout <hash> -- <paths>`.
 - **Pushed to your own feature branch, before any review comment lands:** the same reset,
   then `git push --force-with-lease`. Once I've reviewed the PR, force-pushing to it is off —
   see [`git-workflow`](./git-workflow.md).
-- Before any reset, `git status` and confirm every pending change is yours — if the tree or the
-  dropped commit touches files you didn't author, stash the user's work first. (Recovery:
-  `git reflog` + `git checkout <hash> -- <paths>`.)
