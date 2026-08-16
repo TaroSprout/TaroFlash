@@ -1,5 +1,7 @@
 <script setup lang="ts">
 // Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
+// Docked to the bottom of a viewport too short to hold it, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls.
+// [K:gap: A docked app-window has exactly one scroller, the modal container it sits in; its body must not scroll, so the window grows to its children and overflows the viewport iOS-card style. Docking is the `mobile-modal` variant in src/styles/mobile-modal-variant.css, which is pure media queries plus attribute selectors and has no JS flag, because rewriting an attribute on a scrolling box mid-gesture kills iOS momentum scroll — so every part of this state has to be expressible as a CSS variant. Two things fight it. A caller height cap, feedback-board `msm:h-196` and admin `h-205`, is a same-property variant utility whose cascade order against `mobile-modal:` is not guaranteed, and the caps overlap the docked state on the height axis where a viewport can be wide and short, so the window root drops the cap with an important `mobile-modal:h-auto!` rather than a plain utility. The body scroll-region cannot be switched off by a utility either, since scroll-region owns `overflow-y` in its scoped stylesheet at a specificity a `:where`-wrapped variant utility loses to, so the window sets `--scroll-overflow: visible` and the region reads it. The scroll handle needs no hiding branch of its own: with the cap gone the scroller`s scrollHeight equals its clientHeight, use-scroll-metrics reports not-overflowing, and the handle is simply never rendered. New against corpus/ui/scroll-region.md and corpus/architecture/dialog-card-scroll.md, which describe the region`s own geometry and the dialog-card body, not what docking does to a window.]
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
@@ -91,7 +93,7 @@ const root_style = computed(() => ({
 <template>
   <div
     data-testid="app-window-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
+    class="relative w-full shrink-0 mobile-modal:mt-auto mobile-modal:h-auto! mobile-modal:[--scroll-overflow:visible] pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
     :style="root_style"
   >
     <div

@@ -111,9 +111,14 @@ const { overflowing, progress, visible_fraction, scrollToProgress } =
 
 /* Whether the box scrolls is an attribute the browser reads, not a bound class —
    Vue re-writing `class` on a scrolling element mid-gesture kills iOS momentum
-   scroll. */
+   scroll.
+
+   A host that has to stop this box scrolling — one that grows to its content and
+   lets something outside it do the scrolling — sets `--scroll-overflow: visible`
+   on any element above the region. It goes through a custom property rather than
+   a utility class because this rule out-specifies one. */
 .scroll-region[data-scroll='self'] > .scroll-region__scroller {
-  overflow-y: auto;
+  overflow-y: var(--scroll-overflow, auto);
 }
 
 /* Holds the content column to the same width it has where no handle is drawn.
