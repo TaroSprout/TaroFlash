@@ -46,3 +46,7 @@ specific to their artifact and link here for these five; none of them restates o
     where the seam was expected to live.
   - Good: `grep -rn` the mechanism (e.g. `emitSfx`) across the whole tree before asserting a
     universal absence — reading the expected files rules out only those files, not the codebase.
+  - Bad: an `overflow` class or a scrollbar-handle component exists in the DOM → reported as
+    evidence the content overflows or clips today.
+  - Good: check the real content against the real container's actual size before asserting the
+    rendering state occurs — the class is evidence of intent, not of what renders.
