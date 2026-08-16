@@ -27,8 +27,7 @@ function clamp(value: number, min: number, max: number) {
  *
  * Reports how far down the reader is and how much of the content is on screen,
  * both as fractions, so whatever draws the handle never measures the element
- * itself. Re-attaches whenever `target` resolves to a different element, which
- * is what makes a target that only appears after the first render work.
+ * itself. Re-attaches whenever `target` resolves to a different element.
  */
 export function useScrollMetrics(target: Ref<ScrollTarget>) {
   const overflowing = ref(false)
@@ -70,22 +69,37 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
     progress.value = max_scroll > 0 ? scroll_top / max_scroll : 0
   }
 
-  /** Re-points the size observer at the element's current children. */
+  /** Starts watching the element and every direct child for a size change. */
   function observeContent() {
     if (!el || !resize_obs) return
 
-    resize_obs.disconnect()
     resize_obs.observe(el)
 
-    // The element's own box never changes when content grows inside it, so the
-    // children are what report growth.
+    // The element's own box never changes when content grows inside it, so the children report growth.
     for (const child of el.children) resize_obs.observe(child)
+  }
+
+  /** Follows children in and out of the element, so a list only costs work for the rows that moved. */
+  function trackChildren(records: MutationRecord[]) {
+    if (!resize_obs) return
+
+    for (const record of records) {
+      for (const node of record.removedNodes) {
+        if (node instanceof Element) resize_obs.unobserve(node)
+      }
+      for (const node of record.addedNodes) {
+        if (node instanceof Element) resize_obs.observe(node)
+      }
+    }
   }
 
   function attachPage() {
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule, { passive: true })
 
+    // Never a ResizeObserver on the page's own boxes: `index.html` pins `html`, `body` and `#app` to
+    // the viewport with `h-full`, so none of them grows when a route swaps taller content in and
+    // the handle would stay hidden until the reader scrolls. →[K:page-boxes-are-height-pinned]
     mutation_obs = new MutationObserver(schedule)
     mutation_obs.observe(document.body, { childList: true, subtree: true, attributes: true })
   }
@@ -93,13 +107,12 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
   function attachElement(scroller: HTMLElement) {
     scroller.addEventListener('scroll', schedule, { passive: true })
 
-    // A ResizeObserver, not a one-time measure — a host hidden with display:none
-    // reports 0 until it's revealed, and only the observer catches that. →[K:scroll-region-hidden-host-measures-zero]
+    // A hidden host reports a size of 0 until it's revealed, which only an observer catches. →[K:scroll-region-hidden-host-measures-zero]
     resize_obs = new ResizeObserver(schedule)
     observeContent()
 
-    mutation_obs = new MutationObserver(() => {
-      observeContent()
+    mutation_obs = new MutationObserver((records) => {
+      trackChildren(records)
       schedule()
     })
     mutation_obs.observe(scroller, { childList: true })
@@ -147,9 +160,7 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
   onBeforeUnmount(detach)
 
   watch(
-    // A target named by selector is only findable once this tree is in the page,
-    // so hold the first lookup until mount — searching during setup finds
-    // nothing, and a selector never changes to trigger a second attempt.
+    // Hold the first lookup until mount — a selector searched during setup finds nothing and never retries.
     () => (mounted.value ? resolveTarget(target.value) : null),
     (next) => attach(next),
     { flush: 'post' }

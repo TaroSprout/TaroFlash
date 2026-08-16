@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: [layout-kit]
-updated: 2026-08-15
+updated: 2026-08-16
 ---
 
 # The scroll region owns its scrollbar
@@ -21,6 +21,12 @@ scrolling box and the handle just renders whatever numbers it's handed.
 > get sized by `ResizeObserver` instead of a single read on mount, because the
 > observer fires again the moment the host is shown and its size stops being
 > zero.
+
+> [!HAZARD] [K:page-boxes-are-height-pinned] **`html`, `body` and `#app` are all pinned to the viewport height, so nothing about page height can be read off their size.**
+> `index.html` gives all three `class="h-full"` — a `ResizeObserver` watching
+> any of them only ever fires on viewport resize, never when a route swaps in
+> taller content. Page-mode scroll measurement (`use-scroll-metrics`'s
+> `attachPage`) watches `document.body` with a `MutationObserver` instead.
 
 ## What this isn't
 

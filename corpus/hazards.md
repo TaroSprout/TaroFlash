@@ -44,6 +44,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:dialog-card-toolbar-slot-reactivity]      | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
 | →[K:dialog-card-content-grid-padding]         | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
 | →[K:scroll-region-hidden-host-measures-zero]  | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`, `src/components/ui-kit/scroll-bar.vue`                  |
+| →[K:page-boxes-are-height-pinned]             | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`                                                          |
 
 A trap with no directory to echo it into is listed in `CLAUDE.md` instead, so it
 is paid for in every session. There are none today.
