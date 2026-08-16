@@ -25,7 +25,7 @@ const { t } = useI18n()
     class="absolute! top-1/2 z-20 -translate-y-2/3 shadow-xs"
     :class="direction === 'prev' ? '-left-3 sm:-left-8' : '-right-3 sm:-right-8'"
     size="lg"
-    :sfx="{ press: 'snappy_button_5' }"
+    :sfx="{ press: 'ui.press' }"
     @press="emit('press')"
   >
     {{ t(direction === 'prev' ? 'review-inbox.prev-button' : 'review-inbox.next-button') }}

@@ -36,7 +36,7 @@ export function useReviewInboxTickSfx(items_el: Ref<HTMLElement | null>) {
       const scroll_left = Math.min(Math.max(el.scrollLeft, 0), max_scroll_left)
 
       const index = Math.round(scroll_left / cardPitch(el))
-      if (index !== last_index && !is_fine.value) emitSfx('gesture.tick', { volume: 0.1 })
+      if (index !== last_index && !is_fine.value) emitSfx('gesture.tick')
       last_index = index
     })
   }

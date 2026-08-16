@@ -24,7 +24,7 @@ const height = useWelcomeHeight()
       v-if="width === 'desktop' || height === 'tall'"
       size="xl"
       icon-left="arrow-down"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       @press="seeMore()"
     >
       {{ t('welcome-view.hero.see-more-button') }}

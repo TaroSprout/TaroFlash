@@ -7,7 +7,7 @@ import { useWindowLayout, windowLayoutKey } from './layout'
 import { usePageTransition } from './page-transition'
 import type { OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import { emitSfx } from '@/sfx/bus'
-import { type SoundKey } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/roles'
 import uid from '@/utils/uid'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -38,9 +38,7 @@ export type PagedWindowProps = PagedWindowFrameProps & {
   phone_query?: string
   desktop_query?: string
   between?: () => void | Promise<void>
-  hover_sfx?: SoundKey | SoundKey[] | ''
-  select_sfx?: SoundKey | ''
-  reselect_sfx?: SoundKey | ''
+  sfx?: SfxOptions
   /** Stretches the page column to the full content height instead of sizing to its content, so a page can pin its own footer to the bottom. Off by default. */
   stretch_page?: boolean
 }
@@ -58,9 +56,7 @@ const {
   phone_query = 'w<md',
   desktop_query = 'w>=lg & fine',
   between,
-  hover_sfx = 'ui.hover',
-  select_sfx = 'snappy_button_5',
-  reselect_sfx = 'digi_powerdown',
+  sfx = {},
   stretch_page = false
 } = defineProps<PagedWindowProps>()
 
@@ -147,12 +143,12 @@ function onFrameClose() {
 
 function selectPage(value: string) {
   if (value === displayed_page.value) {
-    if (reselect_sfx) emitSfx(reselect_sfx)
+    if (sfx.reselect !== false) emitSfx(sfx.reselect ?? 'ui.deselect')
     emit('reselect', value)
     return
   }
 
-  if (select_sfx) emitSfx(select_sfx)
+  if (sfx.select !== false) emitSfx(sfx.select ?? 'ui.press')
   nav_direction.value = 'forward'
   active.value = value
   emit('select', value)
@@ -221,7 +217,7 @@ function onDirectoryNavigate(value: string) {
                 ? 'text-(--color-accent-text) hover:bg-(--color-accent)/10 data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent)'
                 : 'text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) hover:bg-(--color-raised) hover:text-(--color-ink)'
             ]"
-            v-sfx="page.value === displayed_page ? {} : { hover: hover_sfx }"
+            v-sfx="page.value === displayed_page ? {} : { hover: sfx.hover ?? 'ui.hover' }"
             @click="selectPage(page.value)"
           >
             <ui-icon v-if="page.icon" :src="page.icon" class="w-6 h-6" />

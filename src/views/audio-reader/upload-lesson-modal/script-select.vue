@@ -21,7 +21,7 @@ function onOption(e: MouseEvent, value: TranscriptScript) {
     () => {
       script.value = value
     },
-    { audio: 'select' }
+    { audio: 'ui.select' }
   )(e)
 }
 </script>

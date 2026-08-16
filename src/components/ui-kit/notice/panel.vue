@@ -86,7 +86,7 @@ function onActionClick(action: NoticeAction) {
         icon-only
         size="lg"
         icon-left="close"
-        :sfx="{ press: 'snappy_button_5' }"
+        :sfx="{ press: 'ui.press' }"
         @press="closePanel"
       >
         {{ t('notice.close-label') }}
@@ -111,7 +111,7 @@ function onActionClick(action: NoticeAction) {
           v-for="action in notice.actions"
           :key="action.label"
           full-width
-          :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"
+          :sfx="{ press: action.sfx?.press || 'ui.press' }"
           @press="onActionClick(action)"
         >
           {{ action.label }}

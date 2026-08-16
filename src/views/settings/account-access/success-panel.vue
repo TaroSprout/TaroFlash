@@ -31,7 +31,7 @@ onMounted(() => emitSfx('notice.success'))
       data-testid="account-access-success-panel__close"
       size="xl"
       full-width
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       @press="close"
     >
       {{ t('dialog-card.close-label') }}

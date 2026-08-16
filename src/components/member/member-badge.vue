@@ -5,17 +5,15 @@ import { memberCoverBindings } from './cover'
 import AvatarImage from './avatar-image.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
-import type { SfxOptions } from '@/sfx/directive'
 
 type MemberBadgeProps = {
   displayName?: string
   description?: string
   cover?: MemberCover
-  sfx?: SfxOptions
   editable?: boolean
 }
 
-const { displayName, description, cover, sfx, editable = false } = defineProps<MemberBadgeProps>()
+const { displayName, description, cover, editable = false } = defineProps<MemberBadgeProps>()
 defineSlots<{ actions?: () => any; description?: () => any }>()
 const emit = defineEmits<{ click: [e: MouseEvent]; 'edit-avatar': [] }>()
 
@@ -32,7 +30,6 @@ function onEditAvatar(e: MouseEvent) {
 <template>
   <ui-tappable
     as="div"
-    :sfx="sfx"
     data-testid="member-badge"
     v-bind="body_bindings"
     style="--badge-radius: 42px; --badge-padding: 14px"

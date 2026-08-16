@@ -30,7 +30,7 @@ export function useCardSearch(
   )
 
   function open() {
-    emitSfx('generic_button_15')
+    emitSfx('ui.press')
     is_searching.value = true
   }
 

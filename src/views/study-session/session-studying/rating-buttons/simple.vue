@@ -30,7 +30,7 @@ const preview_on = computed(
       icon-left="dislike"
       full-width
       :active="primed_grade === Rating.Again"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
+      :sfx="{ tap_pre: 'ui.press' }"
       @press="emit('rated', Rating.Again)"
     >
       {{ preview_on ? rating_times.bare[Rating.Again] : t('study.flashcard.rating.fail-button') }}
@@ -43,7 +43,7 @@ const preview_on = computed(
       icon-left="like"
       full-width
       :active="primed_grade === Rating.Good"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
+      :sfx="{ tap_pre: 'ui.press' }"
       @press="emit('rated', Rating.Good)"
     >
       {{ preview_on ? rating_times.bare[Rating.Good] : t('study.flashcard.rating.pass-button') }}

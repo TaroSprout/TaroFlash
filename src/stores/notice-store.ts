@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import generateUID from '@/utils/uid'
-import { type SoundKey } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/roles'
 
 export type NoticeState = 'success' | 'error' | 'warn' | 'info'
 export type NoticeVariant = 'toast' | 'panel'
@@ -11,7 +11,7 @@ export type NoticeAction = {
   onClick: () => void
   // Dismiss the notice once onClick has run.
   closesOnClick?: boolean
-  sfx?: { press?: SoundKey }
+  sfx?: SfxOptions
 }
 
 type NoticeOptions = {
@@ -26,7 +26,7 @@ type NoticeOptions = {
   // Show the close (x) button. Defaults to true.
   closable?: boolean
   // Caller-defined sound played once, when the notice opens.
-  sfx?: { open?: SoundKey | SoundKey[] }
+  sfx?: SfxOptions
 }
 
 export type Notice = NoticeOptions & {
@@ -81,28 +81,28 @@ export const useNoticeStore = defineStore('notice', () => {
   function warn(message: string, options?: NoticeOptions): Notice {
     return addNotice('warn', message, {
       ...options,
-      sfx: { open: 'etc_error_swipe', ...options?.sfx }
+      sfx: { open: 'notice.error', ...options?.sfx }
     })
   }
 
   function success(message: string, options?: NoticeOptions): Notice {
     return addNotice('success', message, {
       ...options,
-      sfx: { open: 'success_3', ...options?.sfx }
+      sfx: { open: 'notice.success', ...options?.sfx }
     })
   }
 
   function error(message: string, options?: NoticeOptions): Notice {
     return addNotice('error', message, {
       ...options,
-      sfx: { open: 'digi_powerdown', ...options?.sfx }
+      sfx: { open: 'notice.error', ...options?.sfx }
     })
   }
 
   function info(message: string, options?: NoticeOptions): Notice {
     return addNotice('info', message, {
       ...options,
-      sfx: { open: 'chime_ring', ...options?.sfx }
+      sfx: { open: 'notice.info', ...options?.sfx }
     })
   }
 

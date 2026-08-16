@@ -9,7 +9,7 @@ import { CARD_IMAGE_MAX_BYTES, useFaceImageUpload } from '@/composables/card'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
-import { type SfxOptions } from '@/sfx/directive'
+import { type SfxOptions } from '@/sfx/roles'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
 import { useMatchMedia } from '@/composables/ui/media-query'
@@ -71,7 +71,7 @@ const region_dropzone = computed(
 )
 /** Hover chime for behind/full-bleed layouts; region layout scopes its own chime instead (see onRegionPointerEnter). */
 const card_sfx = computed<SfxOptions | undefined>(() =>
-  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'tap_05' } : undefined
+  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'ui.hover' } : undefined
 )
 
 const error_message = computed(() => {

@@ -38,7 +38,7 @@ function onSelect(h: Horizontal, v: Vertical) {
     emitSfx('ui.deselect')
     return
   }
-  emitSfx('etc_camera_shutter')
+  emitSfx('ui.select')
   // center/center is the implicit default — store undefined so the dirty check
   // treats it identically to the initial unset state.
   const is_default = h === 'center' && v === 'center'

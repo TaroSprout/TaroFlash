@@ -232,7 +232,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
       document.documentElement.scrollHeight - document.documentElement.clientHeight
     )
 
-    emitSfx('generic_button_15')
+    emitSfx('ui.press')
     document.body.style.userSelect = 'none'
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onEnd)

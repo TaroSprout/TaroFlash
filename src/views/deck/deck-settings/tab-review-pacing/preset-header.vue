@@ -45,7 +45,7 @@ const divergence_label = computed(() =>
               size="sm"
               icon-only
               icon-left="refresh"
-              :sfx="{ press: 'snappy_button_5' }"
+              :sfx="{ press: 'ui.press' }"
               @press="resetAllOverrides"
             >
               {{ t('deck.settings-modal.review-pacing.reset-all') }}

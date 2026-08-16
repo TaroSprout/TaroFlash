@@ -105,7 +105,7 @@ function skipForward() {
 // owns the action: it fires immediately on fine pointers and at the pop's peak
 // on coarse — exactly one activation per pointer type.
 function onPlayTap(e: MouseEvent) {
-  emitSfx(player.is_playing.value ? 'snappy_button_3' : 'snappy_button_2')
+  emitSfx(player.is_playing.value ? 'dialog.open' : 'ui.press')
   tapPlay(toggle)(e)
 }
 
@@ -191,7 +191,7 @@ function setMode(next: 'expanded' | 'mini') {
             variant="ghost"
             icon-only
             play-on-tap
-            :sfx="{ press: 'snappy_button_5' }"
+            :sfx="{ press: 'ui.press' }"
             @press="setMode('mini')"
           />
         </div>
@@ -246,7 +246,7 @@ function setMode(next: 'expanded' | 'mini') {
         variant="ghost"
         icon-only
         play-on-tap
-        :sfx="{ press: 'snappy_button_5' }"
+        :sfx="{ press: 'ui.press' }"
         @press="setMode('expanded')"
       />
 

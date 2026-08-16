@@ -115,7 +115,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
 
   /** Exit the current mode: drop selection, return to view mode. */
   function onCancel() {
-    emitSfx('card_drop')
+    emitSfx('dialog.close')
     shell.exitMode()
     selection.exitSelection()
   }

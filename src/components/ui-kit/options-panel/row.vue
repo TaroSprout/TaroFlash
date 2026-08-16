@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiIcon from '../icon.vue'
 import UiTappable from '../tappable.vue'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 import type { OptionsPanelEntry } from './index.vue'
 
 type OptionsPanelRowProps = {

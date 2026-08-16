@@ -40,7 +40,7 @@ const value = defineModel<string>('value')
     <div data-testid="ui-kit-input" class="ui-kit-input" :data-palette="error ? 'danger' : 'info'">
       <input
         v-bind="$attrs"
-        v-sfx.focus="'type_05'"
+        v-sfx.focus="'ui.focus'"
         :placeholder="placeholder"
         :maxlength="maxLength"
         v-model="value"

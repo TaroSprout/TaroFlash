@@ -23,7 +23,7 @@ const { t } = useI18n()
     :aria-label="t('dashboard.create-deck-button')"
     class="pointer-fine:hover:scale-102 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
     :class="(loading || disabled) && 'opacity-disabled pointer-events-none'"
-    :sfx="{ hover: 'ui.hover', press: 'pop_up_pop' }"
+    :sfx="{ hover: 'ui.hover', press: 'dialog.open' }"
     @tap="!disabled && emit('press', $event)"
   >
     <card side="front">

@@ -101,9 +101,9 @@ function onClosed() {
 function onPaneEnterStart() {
   // Only the summary's first arrival gets the session-complete jingle; every other swap gets a light click.
   const enter_sfx = {
-    settings: 'snappy_button_3',
-    studying: 'snappy_button_2',
-    'summary-category': 'snappy_button_3'
+    settings: 'dialog.open',
+    studying: 'ui.press',
+    'summary-category': 'dialog.open'
   } as const
 
   if (current_page.value !== 'summary') {
@@ -111,7 +111,7 @@ function onPaneEnterStart() {
     return
   }
 
-  emitSfx(summary_seen.value ? 'snappy_button_2' : 'music_pizz_duo_hi')
+  emitSfx(summary_seen.value ? 'ui.press' : 'session.complete')
   summary_seen.value = true
 }
 
@@ -243,7 +243,7 @@ function onToggleSummarySelecting() {
         full-width
         size="xl"
         class="mx-auto max-w-95"
-        :sfx="{ press: 'slide_up' }"
+        :sfx="{ press: 'nav.page-forward' }"
         @press="onClosed"
       >
         {{ t('session-summary.close-button') }}

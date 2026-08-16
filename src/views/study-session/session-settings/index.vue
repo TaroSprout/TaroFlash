@@ -133,7 +133,7 @@ const ordering_options = computed(() => [
       size="lg"
       full-width
       :disabled="prefs_are_default"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       @press="resetToDefaults"
     >
       {{ t('study-session.settings.reset-button') }}

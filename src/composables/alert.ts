@@ -1,7 +1,7 @@
 import { useModal } from './modal'
 import { emitSfx } from '@/sfx/bus'
 import alert, { type AlertType } from '@/components/ui-kit/alert.vue'
-import { type SoundKey } from '@/sfx/config'
+import type { SfxRole } from '@/sfx/roles'
 
 type AlertArgs = {
   title?: string
@@ -9,9 +9,9 @@ type AlertArgs = {
   confirmLabel?: string
   cancelLabel?: string
   backdrop?: boolean
-  openAudio?: SoundKey
-  cancelAudio?: SoundKey
-  confirmAudio?: SoundKey
+  openAudio?: SfxRole
+  cancelAudio?: SfxRole
+  confirmAudio?: SfxRole
 }
 
 export function useAlert() {
@@ -28,8 +28,8 @@ export function useAlert() {
   function _openAlert(type: AlertType, args?: AlertArgs) {
     const {
       backdrop,
-      openAudio = 'etc_woodblock_stuck',
-      cancelAudio = 'digi_powerdown',
+      openAudio = 'notice.error',
+      cancelAudio = 'dialog.dismiss',
       ...props
     } = args ?? {}
 

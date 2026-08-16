@@ -14,7 +14,7 @@ function onFlip(e: MouseEvent) {
 }
 
 function onDone(e: MouseEvent) {
-  tapDone(stopEdit, { audio: 'music_plink_ok' })(e)
+  tapDone(stopEdit, { audio: 'dialog.confirm' })(e)
 }
 </script>
 

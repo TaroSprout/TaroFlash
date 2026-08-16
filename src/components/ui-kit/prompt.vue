@@ -5,7 +5,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import { type ModalCloseFn, useModalRequestClose } from '@/composables/modal'
 import { emitSfx } from '@/sfx/bus'
-import { type SoundKey } from '@/sfx/config'
+import type { SfxRole } from '@/sfx/roles'
 
 type UiPromptProps = {
   title: string
@@ -16,8 +16,8 @@ type UiPromptProps = {
   confirmLabel: string
   cancelLabel?: string
   maxLength?: number
-  cancelAudio?: SoundKey
-  confirmAudio?: SoundKey
+  cancelAudio?: SfxRole
+  confirmAudio?: SfxRole
   close: ModalCloseFn<string>
 }
 

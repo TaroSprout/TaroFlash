@@ -22,7 +22,7 @@ export function useCardPrompts() {
       title: t('alert.delete-card.title', { count }),
       message: t('alert.delete-card.message', { count }),
       confirmLabel: t('alert.delete-card.confirm'),
-      confirmAudio: 'trash_crumple_short'
+      confirmAudio: 'card.delete'
     })
     return response
   }
@@ -41,7 +41,7 @@ export function useCardPrompts() {
     current_deck_id: number | undefined,
     move: (deck_id: number) => Promise<void>
   ) {
-    emitSfx('double_pop_up')
+    emitSfx('dialog.open')
 
     const { response } = modal.open<{ deck_id: number }>(MoveCardsModal, {
       backdrop: true,

@@ -19,7 +19,7 @@ const { t } = useI18n()
 const loaded = reactive(new Set<string>())
 
 onMounted(() => {
-  emitSfx('wooden_chime_ring')
+  emitSfx('dialog.open')
   AVATAR_KEYS.forEach((avatar) => loadAvatarUrl(avatar)?.then(() => loaded.add(avatar)))
 })
 
@@ -40,7 +40,6 @@ function onAvatarSelect(avatar: string) {
     size="lg"
     data-palette="blue"
     :title="t('avatar-picker-modal.title')"
-    :close_sfx="{ press: 'pop_up_close' }"
     @close="close()"
   >
     <dialog-card-body data-testid="avatar-picker-modal__scroll-area">

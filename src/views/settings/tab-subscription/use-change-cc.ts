@@ -27,7 +27,7 @@ export function useChangeCard(close: (response?: ChangeCardResponse) => void) {
     }
   })
 
-  onMounted(() => emitSfx('wooden_chime_ring'))
+  onMounted(() => emitSfx('dialog.open'))
   onBeforeUnmount(() => emitSfx('dialog.close'))
 
   async function onSubmit() {

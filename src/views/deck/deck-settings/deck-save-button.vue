@@ -51,7 +51,7 @@ function onReset() {
       size="lg"
       icon-only
       icon-left="refresh"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       :disabled="!is_dirty"
       click-when-disabled
       class="shrink-0"

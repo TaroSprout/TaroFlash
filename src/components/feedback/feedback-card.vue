@@ -20,7 +20,7 @@ async function onToggleVote() {
   const was_voted = item.voted_by_me
 
   try {
-    emitSfx(was_voted ? 'toggle_off' : 'generic_notification_9')
+    emitSfx(was_voted ? 'ui.toggle-off' : 'notice.info')
     if (!was_voted) burst_id.value++
     await toggleVote.mutateAsync(item.id)
   } catch {

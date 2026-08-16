@@ -14,7 +14,7 @@ export function useNewDeckAction() {
     if (creating_deck.value) return
 
     creating_deck.value = true
-    emitSfx('pop_up_pop')
+    emitSfx('dialog.open')
     await deck_actions.createDeck(buildNewDeckPayload(t('deck.default-title')), {
       openSettingsAfterCreate: true
     })

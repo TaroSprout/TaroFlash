@@ -51,7 +51,7 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     return 'form'
   })
 
-  onMounted(() => emitSfx('wooden_chime_ring'))
+  onMounted(() => emitSfx('dialog.open'))
   onBeforeUnmount(() => emitSfx('dialog.close'))
 
   useModalRequestClose(() => {

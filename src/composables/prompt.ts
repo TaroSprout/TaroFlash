@@ -1,7 +1,7 @@
 import { useModal } from './modal'
 import { emitSfx } from '@/sfx/bus'
 import prompt from '@/components/ui-kit/prompt.vue'
-import { type SoundKey } from '@/sfx/config'
+import type { SfxRole } from '@/sfx/roles'
 
 type PromptArgs = {
   title: string
@@ -13,9 +13,9 @@ type PromptArgs = {
   cancelLabel?: string
   maxLength?: number
   backdrop?: boolean
-  openAudio?: SoundKey
-  cancelAudio?: SoundKey
-  confirmAudio?: SoundKey
+  openAudio?: SfxRole
+  cancelAudio?: SfxRole
+  confirmAudio?: SfxRole
 }
 
 /**
@@ -30,12 +30,7 @@ export function usePrompt() {
   const modal = useModal()
 
   function ask(args: PromptArgs) {
-    const {
-      backdrop,
-      openAudio = 'etc_woodblock_stuck',
-      cancelAudio = 'digi_powerdown',
-      ...props
-    } = args
+    const { backdrop, openAudio = 'notice.error', cancelAudio = 'dialog.dismiss', ...props } = args
 
     emitSfx(openAudio)
 

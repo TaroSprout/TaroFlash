@@ -22,7 +22,7 @@ const router = useRouter()
 
 const { password, confirm_password, loading, errors, success, submit } = useResetPasswordActions()
 
-onMounted(() => emitSfx('wooden_chime_ring'))
+onMounted(() => emitSfx('dialog.open'))
 onBeforeUnmount(() => emitSfx('dialog.close'))
 
 async function onSubmit() {

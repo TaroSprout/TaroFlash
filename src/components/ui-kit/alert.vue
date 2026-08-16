@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { type SoundKey } from '@/sfx/config'
+import type { SfxRole } from '@/sfx/roles'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn, useModalRequestClose } from '@/composables/modal'
 
@@ -13,8 +13,8 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio, type } = de
   message?: string
   title?: string
   type?: AlertType
-  cancelAudio?: SoundKey
-  confirmAudio?: SoundKey
+  cancelAudio?: SfxRole
+  confirmAudio?: SfxRole
   close: ModalCloseFn<boolean>
 }>()
 

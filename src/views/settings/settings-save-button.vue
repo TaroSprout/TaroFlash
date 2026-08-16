@@ -53,7 +53,7 @@ function onReset() {
       size="lg"
       icon-only
       icon-left="refresh"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       :disabled="!is_dirty"
       click-when-disabled
       class="shrink-0"
@@ -69,7 +69,7 @@ function onReset() {
       class="flex-1!"
       :loading="is_saving"
       :disabled="!is_dirty || !has_name"
-      :sfx="{ press: 'snappy_button_2' }"
+      :sfx="{ press: 'ui.press' }"
       click-when-disabled
       @press="onSave"
     >

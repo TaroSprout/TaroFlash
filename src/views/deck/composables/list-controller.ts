@@ -155,7 +155,7 @@ export function useCardListController(opts: Options) {
 
     // The new row's autofocus is programmatic and stays silent, so the chime
     // plays alone.
-    emitSfx('snappy_button_2')
+    emitSfx('ui.press')
     addCardAtTop()
   }
 

@@ -2,7 +2,7 @@
 import Card from '@/components/card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

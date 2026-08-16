@@ -53,7 +53,7 @@ const success_options = computed<ButtonGroupOption[]>(() => {
       :icon-left="preview_on ? undefined : 'dislike'"
       class="shrink-0"
       :active="primed_grade === Rating.Again"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
+      :sfx="{ tap_pre: 'ui.press' }"
       @press="emit('rated', Rating.Again)"
     >
       {{ preview_on ? rating_times.bare[Rating.Again] : t('study.flashcard.rating.again-button') }}
@@ -66,7 +66,7 @@ const success_options = computed<ButtonGroupOption[]>(() => {
       :options="success_options"
       :icon_only="is_mobile && !preview_on"
       :active_value="primed_grade ?? undefined"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
+      :sfx="{ tap_pre: 'ui.press' }"
       @press="emit('rated', $event as Grade)"
     />
   </div>

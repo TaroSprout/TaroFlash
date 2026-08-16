@@ -130,7 +130,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
    * footer in place of the toolbar on mobile).
    */
   function openTerm(next: TermSelection) {
-    emitSfx('pop_up_pop')
+    emitSfx('dialog.open')
     player.pause()
 
     selection.value = next

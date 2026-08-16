@@ -66,7 +66,7 @@ const pasted_text = computed({
         icon-only
         icon-left="close"
         size="sm"
-        :sfx="{ press: 'digi_powerdown' }"
+        :sfx="{ press: 'ui.deselect' }"
         @press="draft.clear"
       >
         {{ t('deck-view.card-import.clear-file') }}

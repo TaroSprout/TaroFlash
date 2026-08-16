@@ -45,11 +45,7 @@ function onSelect(value: string) {
       :data-testid="`directory-page__nav-group--${group.key}`"
       :label="group.heading"
     >
-      <ui-options-panel
-        :entries="group.entries"
-        :sfx="{ press: 'snappy_button_5' }"
-        @select="onSelect"
-      />
+      <ui-options-panel :entries="group.entries" :sfx="{ press: 'ui.press' }" @select="onSelect" />
     </labeled-section>
 
     <slot name="footer"></slot>

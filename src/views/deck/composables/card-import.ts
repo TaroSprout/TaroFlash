@@ -170,7 +170,7 @@ export function useCardImport({ editor, shell }: Options) {
   /** Leave without importing — the same exit, sounded as a refusal rather than a mode change. */
   function dismiss() {
     discardDraft()
-    shell.exitMode('digi_powerdown')
+    shell.exitMode('ui.rejected')
   }
 
   /**

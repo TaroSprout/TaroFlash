@@ -47,7 +47,7 @@ export function useDeckOptionsMenu({ onRearrange }: DeckOptionsMenuConfig) {
       title: t('alert.delete-deck.title'),
       message: t('alert.delete-deck.message'),
       confirmLabel: t('alert.delete-deck.confirm'),
-      confirmAudio: 'trash_crumple_short'
+      confirmAudio: 'card.delete'
     }).response
     if (!confirmed) return
 
