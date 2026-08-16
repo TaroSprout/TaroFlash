@@ -12,39 +12,40 @@ radius: data loss and silent corruption first, design ceilings and footguns last
 You don't read this list to work. Each trap is echoed as a `→[K:<slug>]` pointer
 in the directory it bites, so it reaches you when you're standing on it.
 
-| Trap                                          | Topic                  | Echoed at                                                                                                                |
-| --------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| →[K:unconfirmed-review-loss]                  | [[study]]              | `src/views/study-session/composables/`                                                                                   |
-| →[K:deleted-account-token-outlives-deletion]  | [[sessions]]           | `src/api/session.ts`, `src/stores/`                                                                                      |
-| →[K:return-destination-open-redirect]         | [[return-destination]] | `src/composables/auth/`                                                                                                  |
-| →[K:oauth-popup-loses-its-opener]             | [[sessions]]           | `src/api/session.ts`                                                                                                     |
-| →[K:stall-reaper-strands-slow-jobs]           | [[audio-generation]]   | `supabase/functions/transcribe-lesson/`                                                                                  |
-| →[K:card-rank-byte-collation]                 | [[cards]]              | `supabase/schemas/40_cards/`                                                                                             |
-| →[K:ownership-stamp-empty-under-service-role] | [[members]]            | `supabase/schemas/` (`set_member_id`)                                                                                    |
-| →[K:permission-widening-ripples]              | [[permissions]]        | `supabase/schemas/` (the `can_` functions)                                                                               |
-| →[K:media-lifetime-follows-notes]             | [[media]]              | `src/api/media/`                                                                                                         |
-| →[K:client-owns-the-schedule]                 | [[scheduling]]         | `src/views/study-session/`                                                                                               |
-| →[K:silent-stale-cache]                       | [[data-flow]]          | `src/api/reviews/mutations/`                                                                                             |
-| →[K:postgrest-max-rows-truncates-silently]    | [[data-flow]]          | `src/api/**`                                                                                                             |
-| →[K:pin-is-presence-not-difference]           | [[pacing]]             | `src/api/review-pacing/`                                                                                                 |
-| →[K:closed-color-set-fails-bare]              | [[theming]]            | `src/utils/palette/`                                                                                                     |
-| →[K:public-is-read-only]                      | [[decks]]              | `src/api/decks/`                                                                                                         |
-| →[K:posts-hidden-until-published]             | [[feedback]]           | `src/api/feedback/`                                                                                                      |
-| →[K:text-editor-ghost-click-guard]            | [[cards]]              | `src/components/card/`                                                                                                   |
-| →[K:deck-focus-microtask-ordering]            | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`                                                                          |
-| →[K:deck-temp-card-handoff]                   | [[deck-card-editor]]   | `src/views/deck/composables/virtual-list.ts`                                                                             |
-| →[K:deck-editor-focus-claim]                  | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`, `src/views/deck/card-editor/list-item-card.vue`                         |
-| →[K:settled-transform-traps-overlays]         | [[layering]]           | `src/utils/animations/`                                                                                                  |
-| →[K:ios-audio-interruption]                   | [[sound]]              | `src/sfx/`                                                                                                               |
-| →[K:dock-height-single-owner]                 | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
-| →[K:fixed-roles-skip-the-station]             | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
-| →[K:app-window-fills-full-width]              | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
-| →[K:docked-app-window-drops-body-scroll]      | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
-| →[K:dialog-card-overflow-bleed]               | [[dialog-card]]        | `src/components/layout-kit/dialog-card/dialog-card-body.vue`                                                             |
-| →[K:dialog-card-toolbar-slot-reactivity]      | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
-| →[K:dialog-card-content-grid-padding]         | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
-| →[K:scroll-region-hidden-host-measures-zero]  | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`, `src/components/ui-kit/scroll-bar.vue`                  |
-| →[K:page-boxes-are-height-pinned]             | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`                                                          |
+| Trap                                            | Topic                  | Echoed at                                                                                                                |
+| ----------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| →[K:unconfirmed-review-loss]                    | [[study]]              | `src/views/study-session/composables/`                                                                                   |
+| →[K:deleted-account-token-outlives-deletion]    | [[sessions]]           | `src/api/session.ts`, `src/stores/`                                                                                      |
+| →[K:return-destination-open-redirect]           | [[return-destination]] | `src/composables/auth/`                                                                                                  |
+| →[K:oauth-popup-loses-its-opener]               | [[sessions]]           | `src/api/session.ts`                                                                                                     |
+| →[K:stall-reaper-strands-slow-jobs]             | [[audio-generation]]   | `supabase/functions/transcribe-lesson/`                                                                                  |
+| →[K:card-rank-byte-collation]                   | [[cards]]              | `supabase/schemas/40_cards/`                                                                                             |
+| →[K:ownership-stamp-empty-under-service-role]   | [[members]]            | `supabase/schemas/` (`set_member_id`)                                                                                    |
+| →[K:permission-widening-ripples]                | [[permissions]]        | `supabase/schemas/` (the `can_` functions)                                                                               |
+| →[K:media-lifetime-follows-notes]               | [[media]]              | `src/api/media/`                                                                                                         |
+| →[K:client-owns-the-schedule]                   | [[scheduling]]         | `src/views/study-session/`                                                                                               |
+| →[K:silent-stale-cache]                         | [[data-flow]]          | `src/api/reviews/mutations/`                                                                                             |
+| →[K:postgrest-max-rows-truncates-silently]      | [[data-flow]]          | `src/api/**`                                                                                                             |
+| →[K:pin-is-presence-not-difference]             | [[pacing]]             | `src/api/review-pacing/`                                                                                                 |
+| →[K:closed-color-set-fails-bare]                | [[theming]]            | `src/utils/palette/`                                                                                                     |
+| →[K:public-is-read-only]                        | [[decks]]              | `src/api/decks/`                                                                                                         |
+| →[K:posts-hidden-until-published]               | [[feedback]]           | `src/api/feedback/`                                                                                                      |
+| →[K:text-editor-ghost-click-guard]              | [[cards]]              | `src/components/card/`                                                                                                   |
+| →[K:deck-focus-microtask-ordering]              | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`                                                                          |
+| →[K:deck-temp-card-handoff]                     | [[deck-card-editor]]   | `src/views/deck/composables/virtual-list.ts`                                                                             |
+| →[K:deck-editor-focus-claim]                    | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`, `src/views/deck/card-editor/list-item-card.vue`                         |
+| →[K:settled-transform-traps-overlays]           | [[layering]]           | `src/utils/animations/`                                                                                                  |
+| →[K:ios-audio-interruption]                     | [[sound]]              | `src/sfx/`                                                                                                               |
+| →[K:dock-height-single-owner]                   | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
+| →[K:fixed-roles-skip-the-station]               | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
+| →[K:app-window-fills-full-width]                | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
+| →[K:docked-app-window-drops-body-scroll]        | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
+| →[K:dialog-card-overflow-bleed]                 | [[dialog-card]]        | `src/components/layout-kit/dialog-card/dialog-card-body.vue`                                                             |
+| →[K:dialog-card-toolbar-slot-reactivity]        | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
+| →[K:dialog-card-content-grid-padding]           | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
+| →[K:scroll-region-hidden-host-measures-zero]    | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`, `src/components/ui-kit/scroll-bar.vue`                  |
+| →[K:mid-gesture-mutation-kills-momentum-scroll] | [[scroll-region]]      | `src/components/layout-kit/scroll-region/index.vue`, `src/components/layout-kit/app-window/index.vue`                    |
+| →[K:page-boxes-are-height-pinned]               | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`                                                          |
 
 A trap with no directory to echo it into is listed in `CLAUDE.md` instead, so it
 is paid for in every session. There are none today.

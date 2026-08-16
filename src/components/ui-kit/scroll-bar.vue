@@ -43,8 +43,7 @@ const thumb_style = computed(() => ({
 }))
 
 onMounted(() => {
-  // The track is measured by observer rather than on mount because a bar inside
-  // a hidden panel reports a height of 0 until the panel is revealed. →[K:scroll-region-hidden-host-measures-zero]
+  // A bar inside a hidden panel reports a height of 0 until the panel is revealed, so watch it rather than read it once. →[K:scroll-region-hidden-host-measures-zero]
   track_obs = new ResizeObserver(() => (track_height.value = track_el.value?.clientHeight ?? 0))
   if (track_el.value) track_obs.observe(track_el.value)
 })
@@ -68,8 +67,7 @@ function onThumbPointerDown(e: PointerEvent) {
   drag_start_y = e.clientY
   drag_start_offset = clamp(progress, 0, 1) * travel.value
 
-  // Capturing on the thumb keeps the move and release events coming even once
-  // the pointer leaves the window, so a drag that ends out there still stops.
+  // Capture keeps move and release coming after the pointer leaves the window, so a drag ending out there still stops.
   thumb.setPointerCapture(e.pointerId)
   thumb.addEventListener('pointermove', onThumbPointerMove)
   thumb.addEventListener('pointerup', endDrag)
@@ -146,9 +144,7 @@ function onTrackPointerDown(e: PointerEvent) {
   --transition-dur: 0.05s;
   --transition: background-color 0.05s ease-in-out, outline 0.05s ease-in-out;
 
-  /* How far the thumb hangs over the bar on each side. It is sized from here
-     rather than on the thumb's own edges so the handle's entrance can grow it
-     from 0, where thumb and bar are the same width. */
+  /* How far the thumb hangs over the bar on each side; the entrance grows it from 0. */
   --thumb-overhang: 4px;
 
   width: 4px;

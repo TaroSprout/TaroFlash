@@ -120,14 +120,7 @@ const window_close_button = computed(
 )
 const back_mode = computed(() => active.value !== null && !has_sidebar.value)
 
-/**
- * How far in from the window's end edge a page's content stops.
- *
- * Normally the window's own horizontal padding, so both edges of a page match.
- * It floors at 3rem where that padding is narrower, because the clear air the
- * scrollbar needs comes out of this one distance — a page whose padding is
- * under the floor ends up with its end edge the wider of the two.
- */
+/** How far in from the window's end edge a page's content stops — its own horizontal padding, floored so the scrollbar still has clear air. */
 const content_inset_class = computed(() =>
   layout_mode.value === 'phone'
     ? '[--scroll-content-inset:0.625rem]'

@@ -56,40 +56,25 @@ const { overflowing, progress, visible_fraction, scrollToProgress } =
 </template>
 
 <style scoped>
-/* The gutter only exists where a handle is drawn — `ui-kit/scroll-bar` hides
-   itself on a coarse pointer, so reserving space for it there would leave a
-   dead band no one can grab. Everything else here is derived from it, so on a
-   coarse pointer the consumer keeps all of its own padding and the band the
-   handle would have sat in disappears. */
+/* Every distance below starts from the gutter, which stays 0 where no handle is
+   drawn — the bar hides on a coarse pointer, and a band no one can grab is dead
+   space. */
 .scroll-region {
   --scroll-gutter: 0px;
 
-  /* How far in from this box's end edge the consumer wants its content to stop,
-     named in `--scroll-content-inset` on any element above this one. A consumer
-     that names nothing gets the handle's full band and nothing beyond it. */
+  /* How far in from this box's end edge content stops; a consumer moves it with `--scroll-content-inset`. */
   --scroll-content-end: var(--scroll-content-inset, var(--scroll-gutter));
 
-  /* The slice of that space the handle's band takes. Never wider than the space
-     the consumer allotted — a window whose content sits closer in than the band
-     narrows the band, rather than having its content column pushed in past
-     where the design put it and its end edge left wider than its start one. */
+  /* Never wider than the space the consumer allotted, so its content column is never pushed further in. */
   --scroll-handle-band: min(var(--scroll-gutter), var(--scroll-content-end));
 
-  /* End padding a consumer applies instead of the inset it asked for in
-     `--scroll-content-inset`: the handle's band takes the rest, so the content
-     column ends up in the same place whether or not a handle is drawn. */
+  /* End padding a consumer applies instead of the inset it asked for — the band takes the rest. */
   --scroll-content-pad-end: calc(var(--scroll-content-end) - var(--scroll-handle-band));
 
-  /* Clear air the handle keeps between itself and where the content ends. Turn
-     this one number to re-tune every region at once — a consumer setting its own
-     would put the per-window guesswork back that `--scroll-content-inset` took
-     out. */
+  /* Clear air between handle and content, tuned here for every region at once. */
   --scroll-handle-gap: 0.5rem;
 
-  /* Where the handle's band ends, measured in from this box's own end edge. The
-     gap is only ever taken out of padding the consumer actually has going spare,
-     so a consumer whose content already reaches the handle's band keeps the
-     handle where it was rather than having it pushed off the edge. */
+  /* Only ever eats padding the consumer has going spare, so the handle can't be pushed off the edge. */
   --scroll-handle-inset-end: max(
     0px,
     calc(var(--scroll-content-pad-end) - var(--scroll-handle-gap))
@@ -102,29 +87,21 @@ const { overflowing, progress, visible_fraction, scrollToProgress } =
   }
 }
 
-/* The handle is absolutely positioned, so a region owning its own scroller has
-   to be the box it measures against. An external target keeps the host's
-   positioning — the host is what placed the region. */
+/* The handle is placed against this box; a region pointed at an outside scroller is positioned by
+   its host instead. */
 .scroll-region[data-scroll='self'] {
   position: relative;
 }
 
-/* Whether the box scrolls is an attribute the browser reads, not a bound class —
-   Vue re-writing `class` on a scrolling element mid-gesture kills iOS momentum
-   scroll.
-
-   A host that has to stop this box scrolling — one that grows to its content and
-   lets something outside it do the scrolling — sets `--scroll-overflow: visible`
-   on any element above the region. It goes through a custom property rather than
-   a utility class because this rule out-specifies one. */
+/* A host stops this box scrolling by setting `--scroll-overflow: visible` above the region, never a
+   class — this rule out-specifies a utility, and rewriting a scrolling box's class mid-gesture
+   kills iOS momentum scroll. →[K:mid-gesture-mutation-kills-momentum-scroll] */
 .scroll-region[data-scroll='self'] > .scroll-region__scroller {
   overflow-y: var(--scroll-overflow, auto);
 }
 
-/* Holds the content column to the same width it has where no handle is drawn.
-   It sits on the scrolling box, never on the region itself — the handle is
-   positioned against the region's padding box, so padding here would shift the
-   handle by the same width a second time. */
+/* Pads the scrolling box, never the region — the handle is placed against the region's padding box,
+   so padding there would shift it a second time. */
 .scroll-region[data-scroll='self'][data-gutter='inside'] > .scroll-region__scroller {
   padding-inline-end: var(--scroll-handle-band);
 }
@@ -140,14 +117,8 @@ const { overflowing, progress, visible_fraction, scrollToProgress } =
   right: calc(-1 * var(--scroll-gutter));
 }
 
-/* Puts the bar in the band a short way outside where the content ends, so it
-   reads as belonging to the rows rather than to the box they scroll in. A
-   consumer that wants that says how far in its content sits by setting
-   `--scroll-content-inset` on any element above this one, and pads its own end
-   edge with the `--scroll-content-pad-end` published above; leaving both alone
-   parks the bar at this box's own edge. The `translateX` centres the bar on the
-   band's midline by half its own width, so it can be re-sized without retuning
-   this. */
+/* Centres the bar on the band just outside where content ends, so it reads as belonging to the rows
+   rather than to the box they scroll in. */
 .scroll-region[data-scroll='self'][data-gutter='inside'] > .scroll-region__handle {
   right: calc(var(--scroll-handle-inset-end) + var(--scroll-handle-band) / 2);
   transform: translateX(50%);

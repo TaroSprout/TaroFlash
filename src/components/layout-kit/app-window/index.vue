@@ -190,27 +190,20 @@ const root_style = computed(() => ({
   z-index: 20;
 }
 
-/* Set when nothing sits between the body and the window's bottom edge. The
-   window clips on its corner curve, so a scrollbar drawn against that edge
-   would lose its bottom cap there — the track stops where the straight part of
-   the edge does. This distance is the container's own `rounded-b-8` written
-   out — 8 spacing steps of 4px, which is not the same as 2rem here. A window
-   with a footer keeps its track running the body's full height. */
+/* Stops the scroll track where the window's rounded bottom corner starts, which would clip its cap —
+   32px being `rounded-b-8` written out. A window with a footer has no such edge and keeps the
+   track's full height. */
 [data-window-edge='bottom'] {
   --scroll-track-inset-end: 32px;
 }
 
-/* Set only when the window opted in, and as an attribute rather than a bound
-   class — Vue rewriting `class` around the scrolling box mid-gesture kills iOS
-   momentum scroll. */
+/* An attribute rather than a bound class — rewriting `class` around a scrolling box mid-gesture
+   kills iOS momentum scroll. →[K:mid-gesture-mutation-kills-momentum-scroll] */
 [data-scroll-body] {
   /* Drops under the header so scrolled content passes beneath the wave. */
   z-index: 0;
 
-  /* Starts the scroll area behind the shaped header edge rather than below it,
-     so content passes under the wave instead of clipping on a straight line.
-     The header's own fill strip is what occludes it, and the region inside
-     pads its scrolling box back down by the same depth. */
+  /* Starts the scroll area behind the header's shaped edge, so content passes under the wave instead of clipping on a straight line. */
   margin-top: calc(var(--window-header-depth, 0px) * -1);
 }
 </style>

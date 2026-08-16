@@ -6,8 +6,8 @@ const ENTER_DURATION = 0.18
  * Fades a scroll handle in, growing its thumb out from the width of the bar
  * behind it.
  *
- * There is no matching exit. A handle is dropped the instant its box stops
- * overflowing, and one still fading out over content that no longer scrolls
+ * There is deliberately no matching exit — a handle is dropped the instant its
+ * box stops overflowing, and fading one out over content that no longer scrolls
  * reads worse than a blunt cut.
  */
 export function scrollHandleEnter(el: Element, done: () => void) {
@@ -16,12 +16,9 @@ export function scrollHandleEnter(el: Element, done: () => void) {
     return
   }
 
-  // Killing first keeps an entrance that restarts before it finished from
-  // fighting the tween already running on this element.
-  gsap.killTweensOf(el)
+  gsap.killTweensOf(el) // An entrance restarting before it finished would fight the tween still running.
 
-  // `from` takes the resting width and opacity off the stylesheet, so the two
-  // ends of the growth stay owned by the CSS that draws the bar.
+  // `from` reads the resting width and opacity off the stylesheet, so the CSS that draws the bar owns both ends.
   gsap.from(el, {
     opacity: 0,
     '--thumb-overhang': '0px',

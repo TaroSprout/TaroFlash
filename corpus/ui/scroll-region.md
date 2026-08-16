@@ -22,6 +22,14 @@ scrolling box and the handle just renders whatever numbers it's handed.
 > observer fires again the moment the host is shown and its size stops being
 > zero.
 
+> [!HAZARD] [K:mid-gesture-mutation-kills-momentum-scroll] **Rewriting the `class` or an attribute on a scrolling box while a touch gesture is in flight kills iOS momentum scroll.**
+> Every state a scrolling box switches between has to be expressible in CSS
+> alone — a data attribute set once at mount, or a variable a selector reads —
+> never a class Vue re-patches on every render. `scroll-region`'s own
+> `--scroll-overflow` switch, `app-window`'s body scroller, and the
+> mobile-modal docking variant all lean on this to change scroll behaviour
+> without ever touching the scrolling element's own attributes mid-gesture.
+
 > [!HAZARD] [K:page-boxes-are-height-pinned] **`html`, `body` and `#app` are all pinned to the viewport height, so nothing about page height can be read off their size.**
 > `index.html` gives all three `class="h-full"` — a `ResizeObserver` watching
 > any of them only ever fires on viewport resize, never when a route swaps in

@@ -44,9 +44,8 @@ Docked to the bottom of a viewport too short to hold it, `app-window` drops
 whatever height its caller set and grows to fit its content instead — the
 modal sheet around it is then the only thing that scrolls. Docking is the
 `mobile-modal` variant in `src/styles/mobile-modal-variant.css`: pure media
-queries plus attribute selectors, no JS flag, because rewriting an attribute
-on a scrolling box mid-gesture kills iOS momentum scroll — so every part of
-this state has to be expressible as a CSS variant.
+queries plus attribute selectors, no JS flag, so every part of this state is
+expressible as a CSS variant →[K:mid-gesture-mutation-kills-momentum-scroll].
 
 > [!HAZARD] [K:docked-app-window-drops-body-scroll] **A docked window has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight.**
 > Two things get in the way of switching the body off. A caller's height cap
