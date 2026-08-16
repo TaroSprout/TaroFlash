@@ -146,8 +146,8 @@ Leave `Status` alone. Grooming doesn't claim.
 
 ### 2. INVESTIGATE — and verify
 
-Read the code the ticket touches. Then go further than `/triage` did, because decisions rest on
-facts:
+Read the code the ticket touches — start from [`app-map.md`](../../context/app-map.md) so the first
+grep lands in the right place. Then go further than `/triage` did, because decisions rest on facts:
 
 - **Verify every claim against source, not recall — including the mundane ones.** Library API
   surface and version history are the obvious traps; "does this trigger still exist", "what does

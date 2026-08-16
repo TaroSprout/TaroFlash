@@ -64,7 +64,9 @@ The board **schema** (data sources, field option lists) lives in
 
 3. **Clarify.** Rewrite the title and description so the groomer can pick the ticket up cold — clear
    product intent, plain language, no fluff. Peek at code only if the raw ticket is too cryptic to
-   clarify from its text. Don't spec it, don't add acceptance criteria — leave the design for `/groom`.
+   clarify from its text — start from [`app-map.md`](../../context/app-map.md) so the first grep
+   lands in the right place. Don't spec it, don't add acceptance criteria — leave the design for
+   `/groom`.
 
 4. **Fields (straggler fallback only).** `Type`, `Epic`, `Target`, and `Priority` are
    [`/backlog`](../backlog/SKILL.md)'s to own — normally they're already set when a ticket reaches
