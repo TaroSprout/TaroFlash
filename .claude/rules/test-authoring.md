@@ -9,8 +9,8 @@ paths:
 # Test authoring
 
 **Owns everything about writing a test** — which type to pick, how to query, how to await, how to
-fake, and what to reject. Only read when the user has asked for test work. The five shared
-principles live in [`authoring`](./authoring.md).
+fake, and what to reject. Read once the work under test is done, or on a standalone request for test
+work — never mid-work. The five shared principles live in [`authoring`](./authoring.md).
 
 Vitest on jsdom; `tests/fixtures/` holds the MSW handlers and Faker builders; CI enforces coverage
 on every PR.
