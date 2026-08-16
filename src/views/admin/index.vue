@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, provide, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PagedWindow, { type Page } from '@/components/layout-kit/paged-window/index.vue'
 import type { WindowLayout } from '@/components/layout-kit/paged-window/layout'
+import PalettePage from './color-page/palette-page.vue'
+import RolesPage from './color-page/roles-page.vue'
+import { colorTunerKey, useColorTuner } from './color-page/use-color-tuner'
 import FeedbackPage from './feedback-page/index.vue'
 
 const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 
-// One page today; a permanent home so TARO-100 can add a sibling without a rewire.
-const pages: Page[] = [{ value: 'feedback', icon: 'megaphone', label: t('admin.page.feedback') }]
+const pages: Page[] = [
+  { value: 'feedback', icon: 'megaphone', label: t('admin.page.feedback') },
+  { value: 'palette', icon: 'paint-brush', label: t('admin.page.palette') },
+  { value: 'roles', icon: 'design-services', label: t('admin.page.roles') }
+]
 
-// Always the (only) feedback page — no directory step to land on first.
+// The tuner lives above the pages that read it, so switching between palette and roles keeps one
+// undo history rather than two.
+provide(colorTunerKey, useColorTuner())
+
 const active_page = ref('feedback')
 
 const pager = useTemplateRef<{ layout_mode: WindowLayout }>('pager')
@@ -36,8 +45,10 @@ const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'ph
     v-model:active="active_page"
     @close="close"
   >
-    <template #default>
-      <feedback-page />
+    <template #default="{ displayed_page }">
+      <palette-page v-if="displayed_page === 'palette'" />
+      <roles-page v-else-if="displayed_page === 'roles'" />
+      <feedback-page v-else />
     </template>
   </paged-window>
 </template>
