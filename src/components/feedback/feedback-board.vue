@@ -31,7 +31,7 @@ function onSubmitPress() {
   >
     <div
       data-testid="feedback-board__body"
-      class="flex flex-col gap-5 pr-(--scroll-content-pad-end) pl-5 pb-6 msm:pl-20"
+      class="flex flex-col gap-5 pr-(--scroll-content-pad-end) pl-5 msm:pl-20"
     >
       <div data-testid="feedback-board__list" class="flex flex-col gap-2">
         <p data-testid="feedback-board__intro" class="text-ink-muted pb-3 text-base text-center">
