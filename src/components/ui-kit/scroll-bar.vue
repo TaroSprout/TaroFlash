@@ -146,6 +146,11 @@ function onTrackPointerDown(e: PointerEvent) {
   --transition-dur: 0.05s;
   --transition: background-color 0.05s ease-in-out, outline 0.05s ease-in-out;
 
+  /* How far the thumb hangs over the bar on each side. It is sized from here
+     rather than on the thumb's own edges so the handle's entrance can grow it
+     from 0, where thumb and bar are the same width. */
+  --thumb-overhang: 4px;
+
   width: 4px;
 
   user-select: none;
@@ -192,8 +197,8 @@ function onTrackPointerDown(e: PointerEvent) {
 
 .ui-kit-scroll-bar__thumb {
   position: absolute;
-  left: -4px;
-  right: -4px;
+  left: calc(-1 * var(--thumb-overhang));
+  right: calc(-1 * var(--thumb-overhang));
   border-radius: 999px;
   background-color: var(--thumb-color);
   cursor: pointer;

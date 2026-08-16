@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
 import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import { scrollHandleEnter } from '@/utils/animations/scroll-handle'
 import { useScrollMetrics, type ScrollTarget } from './use-scroll-metrics'
 
 /** A scrolling area that draws its own handle beside itself. The host positions this root — the handle anchors to it. */
@@ -40,15 +41,17 @@ const { overflowing, progress, visible_fraction, scrollToProgress } =
       <slot></slot>
     </div>
 
-    <ui-scroll-bar
-      v-if="overflowing"
-      data-testid="scroll-region__handle"
-      class="scroll-region__handle"
-      :progress="progress"
-      :visible_fraction="visible_fraction"
-      @drag="scrollToProgress"
-      @jump="scrollToProgress"
-    />
+    <transition :css="false" @enter="scrollHandleEnter">
+      <ui-scroll-bar
+        v-if="overflowing"
+        data-testid="scroll-region__handle"
+        class="scroll-region__handle"
+        :progress="progress"
+        :visible_fraction="visible_fraction"
+        @drag="scrollToProgress"
+        @jump="scrollToProgress"
+      />
+    </transition>
   </div>
 </template>
 
