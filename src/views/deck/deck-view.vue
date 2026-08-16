@@ -10,7 +10,6 @@ import ModeToolbarSkeleton from './mode-toolbar/skeleton.vue'
 import ModeStack from './mode-stack.vue'
 import CardGridSkeleton from './card-grid/skeleton.vue'
 import CardGridEmpty from './card-grid/empty-state.vue'
-import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import DeckMobileFooter from './mobile-footer/index.vue'
 import { useDeckQuery } from '@/api/decks'
 import {
@@ -132,13 +131,6 @@ const show_skeleton = computed(() => !deck.value)
         </div>
       </template>
     </deck-shell>
-
-    <scroll-region
-      v-if="view_state === 'ready'"
-      class="fixed right-4 top-(--nav-height) bottom-10 z-30"
-      target="html"
-      gutter="inside"
-    />
 
     <deck-mobile-footer />
   </section>
