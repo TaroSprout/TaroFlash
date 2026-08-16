@@ -35,7 +35,6 @@ function toggle() {
     position="bottom"
     :gap="4"
     :transition_duration="0"
-    shadow
     teleport
     data-testid="page-settings"
     @close="closePageSettings"
@@ -62,10 +61,12 @@ function toggle() {
       <page-settings-panel />
     </div>
 
+    <!-- The panel casts its own shadow (`bevel-drop-sm`), so this popover doesn't take the
+         `shadow` prop — that would compound with it — and the arrow carries its own instead. -->
     <template #arrow>
       <div
         data-station="float"
-        class="ui-kit-popover__arrow-default [--popover-arrow-color:var(--color-surface)]"
+        class="ui-kit-popover__arrow-default drop-shadow-sm [--popover-arrow-color:var(--color-surface)]"
       />
     </template>
   </ui-popover>
