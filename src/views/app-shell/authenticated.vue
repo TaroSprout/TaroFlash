@@ -3,7 +3,9 @@ import NavBar from '@/views/app-shell/nav-bar/index.vue'
 import TaroPhone from '@/components/taro-phone/index.vue'
 import MobileDockHost from '@/components/mobile-dock/mobile-dock-host.vue'
 import RouteSkeleton from '@/views/app-shell/route-skeleton.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import { computed, watch } from 'vue'
+import { providePageAnchor } from '@/views/app-shell/composables/page-anchor'
 import { useRouteTransition } from '@/composables/ui/route-transition'
 import { useResumeStudySession } from '@/views/study-session/composables/session-resume'
 import { useMemberStore } from '@/stores/member'
@@ -13,6 +15,8 @@ const { show_skeleton_overlay, onSuspensePending, onSuspenseResolve, onLeave, on
   useRouteTransition()
 const member = useMemberStore()
 
+const { inset: page_anchor_inset } = providePageAnchor()
+
 useResumeStudySession()
 
 /**
@@ -21,6 +25,17 @@ useResumeStudySession()
  * behind the restore dialog. Same visual state as a cold load.
  */
 const show_skeleton = computed(() => show_skeleton_overlay.value || member.pending_deletion)
+
+/**
+ * Moves the page scrollbar in beside a pane that keeps its content narrower
+ * than the page column. Unset the rest of the time, leaving the stylesheet's
+ * page-column position in charge.
+ */
+const page_scroll_style = computed(() => {
+  if (page_anchor_inset.value === null) return undefined
+
+  return { right: `calc(${page_anchor_inset.value}px + var(--page-px) / 2)` }
+})
 
 /**
  * A suspended (pending-deletion) member is admitted to the shell and sees
@@ -63,6 +78,23 @@ watch(
       </router-view>
     </main>
 
+    <scroll-region
+      data-testid="page-scroll-region"
+      class="page-scroll-region fixed top-(--nav-height) bottom-10 z-30"
+      :style="page_scroll_style"
+      target="html"
+      gutter="inside"
+    />
+
     <mobile-dock-host />
   </div>
 </template>
+
+<style scoped>
+/* The page column stops widening at --page-width while the window keeps going,
+   so the scrollbar hangs in the column's own padding rather than out at the
+   window edge. */
+.page-scroll-region {
+  right: calc(max(0px, (100vw - var(--page-width)) / 2) + var(--page-px) / 2);
+}
+</style>

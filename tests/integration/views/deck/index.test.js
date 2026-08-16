@@ -86,13 +86,6 @@ const ModeStackStub = defineComponent({
   name: 'ModeStack',
   setup: () => () => h('div', { 'data-testid': 'mode-stack-stub' })
 })
-const ScrollRegionStub = defineComponent({
-  name: 'ScrollRegion',
-  props: ['target'],
-  setup: (props) => () =>
-    h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
-})
-
 const CardGridSkeletonStub = defineComponent({
   name: 'CardGridSkeleton',
   setup: () => () => h('div', { 'data-testid': 'card-grid-skeleton-stub' })
@@ -177,7 +170,6 @@ function mount({
         ModeToolbar: ModeToolbarStub,
         ModeToolbarSkeleton: ModeToolbarSkeletonStub,
         ModeStack: ModeStackStub,
-        ScrollRegion: ScrollRegionStub,
         CardGridSkeleton: CardGridSkeletonStub,
         CardGridEmpty: CardGridEmptyStub
       }
@@ -326,15 +318,6 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(main.classes()).not.toContain('xl:h-[calc(100dvh-var(--nav-height))]')
   })
 
-  test('renders the page scroll-bar tracking the document in every mode', () => {
-    for (const mode of ['view', 'edit', 'import']) {
-      const wrapper = mount({ mode, editorOpts: { cards: [{ id: 1 }] } })
-      const bar = wrapper.find('[data-testid="scroll-bar-stub"]')
-      expect(bar.exists()).toBe(true)
-      expect(bar.attributes('data-target')).toBe('html')
-    }
-  })
-
   // ── toolbar-skeleton swap [obligation] ────────────────────────────────────
 
   test('shows mode-toolbar-skeleton when view_state is "empty" [obligation]', () => {
@@ -353,18 +336,6 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     const wrapper = mount({ editorOpts: { cards: [{ id: 1 }], isLoading: false } })
     expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
-  })
-
-  // ── scroll-bar only in ready state [obligation] ────────────────────────────
-
-  test('hides scroll-bar when view_state is "empty" [obligation]', () => {
-    const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
-    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
-  })
-
-  test('hides scroll-bar when view_state is "loading" [obligation]', () => {
-    const wrapper = mount({ editorOpts: { cards: [], isLoading: true } })
-    expect(wrapper.find('[data-testid="scroll-bar-stub"]').exists()).toBe(false)
   })
 
   // ── deck-hero hide-actions driven by view_state [obligation] ──────────────
@@ -473,7 +444,6 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
           ModeToolbar: ModeToolbarStub,
           ModeToolbarSkeleton: ModeToolbarSkeletonStub,
           ModeStack: ModeStackStub,
-          ScrollRegion: ScrollRegionStub,
           CardGridSkeleton: CardGridSkeletonStub,
           CardGridEmpty: CardGridEmptyStub
         }

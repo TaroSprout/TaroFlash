@@ -317,18 +317,6 @@
     width: 100%;
   }
 
-  .app-container {
-    width: 100%;
-    max-width: var(--page-width);
-    padding: 0 4rem;
-  }
-
-  @media (width >= 40rem) {
-    .app-container {
-      padding: 0 16rem;
-    }
-  }
-
   @media (pointer: fine) {
     html {
       scrollbar-width: none;
