@@ -39,6 +39,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:dock-height-single-owner]                 | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
 | →[K:fixed-roles-skip-the-station]             | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
 | →[K:app-window-fills-full-width]              | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
+| →[K:docked-app-window-drops-body-scroll]      | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
 | →[K:dialog-card-overflow-bleed]               | [[dialog-card]]        | `src/components/layout-kit/dialog-card/dialog-card-body.vue`                                                             |
 | →[K:dialog-card-toolbar-slot-reactivity]      | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |
 | →[K:dialog-card-content-grid-padding]         | [[dialog-card]]        | `src/components/layout-kit/dialog-card/index.vue`                                                                        |

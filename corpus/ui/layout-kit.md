@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: [dialog-card]
-updated: 2026-08-14
+updated: 2026-08-16
 ---
 
 # The window family
@@ -38,6 +38,34 @@ Two shapes cover every current caller:
   fall back to `w-full! max-w-*` otherwise, `!` because `paged-window`'s own
   layout classes would otherwise win.
 
+## Docking drops the body scroller
+
+Docked to the bottom of a viewport too short to hold it, `app-window` drops
+whatever height its caller set and grows to fit its content instead — the
+modal sheet around it is then the only thing that scrolls. Docking is the
+`mobile-modal` variant in `src/styles/mobile-modal-variant.css`: pure media
+queries plus attribute selectors, no JS flag, because rewriting an attribute
+on a scrolling box mid-gesture kills iOS momentum scroll — so every part of
+this state has to be expressible as a CSS variant.
+
+> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A docked window has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight.**
+> Two things get in the way of switching the body off. A caller's height cap
+> (feedback-board's `msm:h-196`, admin's `h-205`) is a same-property variant
+> utility whose cascade order against `mobile-modal:` isn't guaranteed, so the
+> window root drops the cap with an important `mobile-modal:h-auto!` instead of
+> a plain utility. The body's `overflow-y` can't be switched off by a utility
+> either — `scroll-region` owns it in a scoped stylesheet at a specificity a
+> `:where`-wrapped variant utility loses to — so the window sets
+> `--scroll-overflow: visible` for the region to read. That variable
+> inherits, so a scroll region mounted deeper inside a docked window's body
+> would stop scrolling too; there are none today, and "nothing inside a
+> docked window scrolls" is arguably the rule anyway, but the reach is wider
+> than the body scroller alone.
+
+With the cap gone, the scroller's `scrollHeight` equals its `clientHeight`,
+`use-scroll-metrics` reports not-overflowing, and the scroll handle needs no
+hiding branch of its own — it's simply never rendered.
+
 ## What this isn't
 
 Not a rule that the window should have a default width — the primitive's job
@@ -48,4 +76,4 @@ warns when you do — the window just renders too wide.
 
 ## Related
 
-[[dialog-card]]
+[[dialog-card]], [[scroll-region]]
