@@ -205,6 +205,39 @@ describe('MoveCardsModal', () => {
     expect(items).toHaveLength(3)
   })
 
+  test('no longer wraps the deck list in a dialog-card-body — the panel owns its own scroll handle [obligation]', () => {
+    const cards = [makeCard()]
+    const { wrapper } = mountModal({ cards })
+    expect(wrapper.find('[data-testid="move-cards__deck-list-wrap"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="dialog-card-body"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(true)
+  })
+
+  // dialog-card's `content-grid` gives grid-column: content to its own direct
+  // children only — a wrapper in between would have opted the deck list out.
+  test('the deck list is a direct child of dialog-card, landing in the same content-grid column as before [obligation]', () => {
+    const cards = [makeCard()]
+    const wrapper = shallowMount(MoveCardsModal, {
+      props: { cards, current_deck_id: 30, close: vi.fn(), move: vi.fn() },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
+        stubs: {
+          Card: CardStub,
+          UiRadio: UiRadioStub,
+          UiButton: UiButtonStub,
+          UiOptionsPanel: UiOptionsPanelStub,
+          ScrollBar: ScrollBarStub,
+          DialogCard: false,
+          DialogCardHeader: false
+        }
+      }
+    })
+
+    const dialog_card = wrapper.find('[data-testid="move-cards"]')
+    const deck_list = wrapper.find('[data-testid="move-cards__deck-list"]')
+    expect(deck_list.element.parentElement).toBe(dialog_card.element)
+  })
+
   test('disables the current deck row', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards, current_deck_id: 10 })

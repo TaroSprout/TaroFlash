@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n'
 import UiRadio from '@/components/ui-kit/radio.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
-import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import UiOptionsPanel, { type OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
@@ -96,44 +95,39 @@ function onClose() {
 
 <template>
   <dialog-card data-testid="move-cards" size="md" :title="title" @close="onClose">
-    <dialog-card-body
-      data-testid="move-cards__deck-list-wrap"
-      scroll_target="[data-testid='move-cards__deck-list__content']"
+    <ui-options-panel
+      data-testid="move-cards__deck-list"
+      scrollable
+      class="my-4 min-h-0"
+      :entries="entries"
+      :sfx="{ press: 'snappy_button_2' }"
+      @select="onSelect"
     >
-      <ui-options-panel
-        data-testid="move-cards__deck-list"
-        scrollable
-        class="my-4 min-h-0 flex-1"
-        :entries="entries"
-        :sfx="{ press: 'snappy_button_2' }"
-        @select="onSelect"
-      >
-        <template #leading="{ entry }">
-          <card class="w-[43px]" :cover_config="deckFor(entry.value).cover_config" side="cover" />
-        </template>
+      <template #leading="{ entry }">
+        <card class="w-[43px]" :cover_config="deckFor(entry.value).cover_config" side="cover" />
+      </template>
 
-        <template #trailing="{ entry }">
-          <span
-            v-if="isDeckFull(deckFor(entry.value)) && Number(entry.value) !== current_deck_id"
-            data-testid="move-cards__deck-full-label"
-            class="text-sm"
-          >
-            {{ t('move-cards-modal.deck-full-label') }}
-          </span>
-          <ui-radio
-            v-else
-            class="group-hover/tappable:bg-(--color-accent)!"
-            :class="{ 'opacity-20': Number(entry.value) === current_deck_id }"
-            data-palette="brand"
-            :sfx="{ press: 'snappy_button_2' }"
-            :checked="
-              Number(entry.value) === selected_deck_id || Number(entry.value) === current_deck_id
-            "
-            @click.stop="selected_deck_id = Number(entry.value)"
-          />
-        </template>
-      </ui-options-panel>
-    </dialog-card-body>
+      <template #trailing="{ entry }">
+        <span
+          v-if="isDeckFull(deckFor(entry.value)) && Number(entry.value) !== current_deck_id"
+          data-testid="move-cards__deck-full-label"
+          class="text-sm"
+        >
+          {{ t('move-cards-modal.deck-full-label') }}
+        </span>
+        <ui-radio
+          v-else
+          class="group-hover/tappable:bg-(--color-accent)!"
+          :class="{ 'opacity-20': Number(entry.value) === current_deck_id }"
+          data-palette="brand"
+          :sfx="{ press: 'snappy_button_2' }"
+          :checked="
+            Number(entry.value) === selected_deck_id || Number(entry.value) === current_deck_id
+          "
+          @click.stop="selected_deck_id = Number(entry.value)"
+        />
+      </template>
+    </ui-options-panel>
 
     <template #toolbar>
       <div data-testid="move-cards__actions" class="flex w-full justify-end gap-3">

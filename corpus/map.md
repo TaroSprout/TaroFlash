@@ -49,7 +49,7 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 ## theming
 
 - [[theming]] — colors are roles, not shades; three switches reslot the whole screen ⚠️
-- [[surface-stations]] — four named surfaces, each hand-authored, none derived from another; a few roles opt out of every station entirely ⚠️
+- [[surface-stations]] — four named surfaces, each hand-authored, none derived from another; a few roles opt out of every station entirely, and two roles can collide into the same color ⚠️
 
 ## sessions
 

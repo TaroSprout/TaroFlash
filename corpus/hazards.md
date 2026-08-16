@@ -38,6 +38,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:ios-audio-interruption]                     | [[sound]]              | `src/sfx/`                                                                                                               |
 | →[K:dock-height-single-owner]                   | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
 | →[K:fixed-roles-skip-the-station]               | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
+| →[K:station-roles-can-collide]                  | [[surface-stations]]   | `src/styles/stations.css`, `src/components/ui-kit/options-panel/index.vue`                                               |
 | →[K:app-window-fills-full-width]                | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
 | →[K:docked-app-window-drops-body-scroll]        | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
 | →[K:dialog-card-overflow-bleed]                 | [[dialog-card]]        | `src/components/layout-kit/dialog-card/dialog-card-body.vue`                                                             |

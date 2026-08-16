@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
@@ -20,12 +20,52 @@ const ENTRIES = [
   { value: 'subscription', icon: 'piggy-bank', label: 'Subscription' }
 ]
 
+const MANY_ENTRIES = Array.from({ length: 20 }, (_, i) => ({
+  value: `entry-${i}`,
+  icon: 'user-sticker-square',
+  label: `Entry ${i}`
+}))
+
 function makePanel(props = {}, options = {}) {
   return mount(OptionsPanel, {
     props: { entries: ENTRIES, ...props },
     global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } },
     ...options
   })
+}
+
+// ── Overflow geometry helpers ────────────────────────────────────────────────
+// Tailwind utilities aren't compiled in this test environment, so the
+// scroll-region scroller's own flex/min-h-0 can't be trusted to clip it —
+// force real geometry directly, the same way scroll-region's own tests do.
+
+let _activeWrappers = []
+
+afterEach(() => {
+  for (const w of _activeWrappers) w.unmount()
+  _activeWrappers = []
+})
+
+async function waitForUpdate() {
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+  await new Promise((resolve) => setTimeout(resolve, 60))
+}
+
+function makeOverflowingPanel(height = 60) {
+  const wrapper = mount(OptionsPanel, {
+    attachTo: document.body,
+    props: { entries: MANY_ENTRIES, scrollable: true },
+    global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } }
+  })
+  _activeWrappers.push(wrapper)
+
+  const scroller = wrapper.find('[data-testid="scroll-region__scroller"]').element
+  scroller.style.height = `${height}px`
+  scroller.style.overflowY = 'auto'
+  scroller.style.display = 'block'
+
+  return wrapper
 }
 
 describe('OptionsPanel', () => {
@@ -90,11 +130,33 @@ describe('OptionsPanel', () => {
     expect(content.classes()).not.toContain('overflow-y-auto')
   })
 
-  test('scrollable=true scrolls internally instead of clipping [obligation]', () => {
+  test('scrollable=true swaps the content element for a scroll-region instead of a plain div [obligation]', () => {
     const wrapper = makePanel({ scrollable: true })
     const content = wrapper.find('[data-testid="options-panel__content"]')
-    expect(content.classes()).toContain('overflow-y-auto')
+    expect(content.attributes('data-scroll')).toBe('self')
     expect(content.classes()).not.toContain('overflow-hidden')
+  })
+
+  // The window station paints `raised` and `well` the same colour, so a handle
+  // drawn inside the panel is invisible — it hangs in an outside gutter instead.
+  test('scrollable=true hangs the handle in an outside gutter, not inside the panel [obligation]', () => {
+    const wrapper = makePanel({ scrollable: true })
+    const content = wrapper.find('[data-testid="options-panel__content"]')
+    expect(content.attributes('data-gutter')).toBe('outside')
+  })
+
+  test('scrollable unset renders no scroll-region and no handle [obligation]', () => {
+    const wrapper = makePanel()
+    const content = wrapper.find('[data-testid="options-panel__content"]')
+    expect(content.attributes('data-scroll')).toBeUndefined()
+    expect(wrapper.find('[data-testid="scroll-region__handle"]').exists()).toBe(false)
+  })
+
+  test('scrollable=true shows a scroll-region__handle once content overflows [obligation]', async () => {
+    const wrapper = makeOverflowingPanel()
+    await waitForUpdate()
+
+    expect(wrapper.find('[data-testid="scroll-region__handle"]').exists()).toBe(true)
   })
 
   // ── overlay slot ──────────────────────────────────────────────────────────
