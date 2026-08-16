@@ -27,6 +27,11 @@ If none of the conditions apply, keep it inline — even when the class list loo
 
 `src/styles/main.css` declares `--*: initial`, which wipes Tailwind's built-in theme. **Only tokens explicitly defined under `@theme` exist** — check `main.css` before reaching for a utility rather than assuming the default scale is there. Common gaps: most `-200`/`-400`/`-600` colour shades, and the radius scale, which is custom (`rounded-2_5`, `rounded-3_25`). Base spacing unit is 4px.
 
+**Never hand-convert a Tailwind token (`rounded-N`, `p-N`, `gap-N`, …) to `rem` or `px`.** `main.css`
+sets `html { font-size: var(--text-base) }`, which is 14px, not the browser's 16px default — the
+usual `N × 0.25rem` or `N × 4px` mental math is wrong here in both units. Use the utility class, or
+the CSS var it resolves to (`--spacing(N)`), never a literal length you derived by hand.
+
 ## Type sizing
 
 `text-base` is the floor for anything a user reads — body copy, descriptions, labels, metadata, captions. Scale hierarchy _upward_ (`text-lg`, `text-xl`), never below base. Only genuinely trivial subtext (a version number, a build hash) may go smaller.
