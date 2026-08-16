@@ -2,6 +2,7 @@ import { describe, test, expect, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
+import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // Tailwind's utility classes aren't compiled in this test environment, so the
@@ -25,15 +26,7 @@ afterEach(() => {
   _activeHosts = []
 })
 
-// ResizeObserver callbacks batch on their own queue, which can lag a couple of
-// animation frames behind the DOM mutation that triggered them. The tail wait
-// also has to outlast the metrics' 150ms settle window, since the handle is
-// held back until the measured overflow stops moving.
-async function waitForUpdate() {
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => setTimeout(resolve, 200))
-}
+const waitForUpdate = waitForScrollSettle
 
 function root(wrapper) {
   return wrapper.find('[data-testid="scroll-region"]')
