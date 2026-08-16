@@ -1,10 +1,6 @@
-import { describe, test, expect, afterEach, vi } from 'vite-plus/test'
+import { describe, test, expect, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
-
-const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
-vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
-
+import { h } from 'vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -12,6 +8,12 @@ import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 // scroller's own `flex-1`/`min-h-0` can't be trusted to clip it to the parent's
 // height. Force real geometry directly with inline styles instead, the same
 // way the scroll-bar tests fake a scrollable container.
+//
+// `stubs: { transition: false }` is not optional: test-utils replaces
+// <Transition> with a <transition-stub> element by default, and that extra
+// element sits between the region and its handle — which breaks the direct-child
+// selector the handle's absolute positioning is written with, leaving the bar
+// with no height and nothing to drag.
 
 let _activeWrappers = []
 let _activeHosts = []
@@ -21,7 +23,6 @@ afterEach(() => {
   _activeWrappers = []
   for (const h of _activeHosts) h.remove()
   _activeHosts = []
-  emitSfxMock.mockClear()
 })
 
 // ResizeObserver callbacks batch on their own queue, which can lag a couple of
@@ -30,6 +31,10 @@ async function waitForUpdate() {
   await new Promise((resolve) => requestAnimationFrame(resolve))
   await new Promise((resolve) => requestAnimationFrame(resolve))
   await new Promise((resolve) => setTimeout(resolve, 60))
+}
+
+function root(wrapper) {
+  return wrapper.find('[data-testid="scroll-region"]')
 }
 
 function handle(wrapper) {
@@ -52,36 +57,34 @@ function forceScrollerGeometry(wrapper, height) {
 }
 
 /** Mounts a self-scrolling region with a real, fixed-height container and a resizable content child. */
-function mountRegion({ height = 100, contentHeight = 500, attachTo = document.body } = {}) {
+function mountRegion({
+  height = 100,
+  contentHeight = 500,
+  attachTo = document.body,
+  props = {},
+  attrs = {},
+  contentStyle = ''
+} = {}) {
   const wrapper = mount(ScrollRegion, {
     attachTo,
+    props,
+    attrs,
+    global: { stubs: { transition: false } },
     slots: {
-      default: () => h('div', { 'data-testid': 'content', style: `height: ${contentHeight}px` })
+      default: () =>
+        h('div', {
+          'data-testid': 'content',
+          style: `height: ${contentHeight}px; ${contentStyle}`
+        })
     }
   })
   _activeWrappers.push(wrapper)
-  forceScrollerGeometry(wrapper, height)
+  if (height !== null) forceScrollerGeometry(wrapper, height)
   return wrapper
 }
 
-const UiScrollBarStub = defineComponent({
-  name: 'UiScrollBar',
-  props: ['progress', 'visible_fraction'],
-  emits: ['drag', 'jump'],
-  setup: () => () => h('div', { 'data-testid': 'scroll-region__handle' })
-})
-
-function mountRegionWithStub({ height = 100, contentHeight = 500 } = {}) {
-  const wrapper = mount(ScrollRegion, {
-    attachTo: document.body,
-    global: { stubs: { UiScrollBar: UiScrollBarStub } },
-    slots: {
-      default: () => h('div', { 'data-testid': 'content', style: `height: ${contentHeight}px` })
-    }
-  })
-  _activeWrappers.push(wrapper)
-  forceScrollerGeometry(wrapper, height)
-  return wrapper
+function pxOf(el, property) {
+  return Number.parseFloat(getComputedStyle(el)[property])
 }
 
 // ── Handle visibility follows overflow [obligation] ──────────────────────────
@@ -129,55 +132,121 @@ describe('ScrollRegion — handle resizes when content grows with no scroll or r
   })
 })
 
-// ── Screenful ticks, jump never ticks [obligation] ────────────────────────────
+// ── The gutter is carved out of the inset the consumer declared [obligation] ─
+// A consumer says how far in from its end edge the content stops
+// (`--scroll-content-inset`) and pads with the `--scroll-content-pad-end` the
+// region publishes back. Whatever the region takes for the handle's band, the
+// two together have to add back up to the inset the consumer asked for, or the
+// content column lands somewhere the design never put it.
 
-describe('ScrollRegion — handle_drag_tick fires once per screenful crossed [obligation]', () => {
-  test('a drag that crosses N screenfuls ticks exactly N times, silent between crossings', async () => {
-    const wrapper = mountRegionWithStub({ height: 100, contentHeight: 500 })
+describe('ScrollRegion — the handle band plus the published end padding equal the declared inset [obligation]', () => {
+  async function mountWithInset(inset) {
+    const wrapper = mountRegion({
+      height: 100,
+      contentHeight: 500,
+      props: { gutter: 'inside' },
+      attrs: { style: `--scroll-content-inset: ${inset}` },
+      contentStyle: 'padding-right: var(--scroll-content-pad-end);'
+    })
     await waitForUpdate()
-    const bar = wrapper.findComponent(UiScrollBarStub)
+    return wrapper
+  }
 
-    // max_scroll = 500 - 100 = 400px; one screenful = 100px = progress step of 0.25.
-    bar.vm.$emit('drag', 0) // screenful 0 (start)
-    await waitForUpdate()
-    bar.vm.$emit('drag', 0.1) // still inside screenful 0 → silent
-    await waitForUpdate()
-    expect(emitSfxMock).not.toHaveBeenCalled()
+  test('an inset wider than the gutter leaves the leftover as end padding', async () => {
+    const wrapper = await mountWithInset('80px')
 
-    bar.vm.$emit('drag', 0.25) // crosses into screenful 1 → tick
-    await waitForUpdate()
-    expect(emitSfxMock).toHaveBeenCalledTimes(1)
+    const band = pxOf(scroller(wrapper).element, 'paddingInlineEnd')
+    const pad_end = pxOf(content(wrapper).element, 'paddingRight')
 
-    bar.vm.$emit('drag', 0.5) // crosses into screenful 2 → tick
-    await waitForUpdate()
-    expect(emitSfxMock).toHaveBeenCalledTimes(2)
-    expect(emitSfxMock).toHaveBeenCalledWith('handle_drag_tick')
+    expect(band).toBeGreaterThan(0)
+    expect(band + pad_end).toBe(80)
   })
 
-  test('a drag that ends exactly on a screenful boundary does not double-tick on a repeat call', async () => {
-    const wrapper = mountRegionWithStub({ height: 100, contentHeight: 500 })
-    await waitForUpdate()
-    const bar = wrapper.findComponent(UiScrollBarStub)
+  test('an inset narrower than the gutter narrows the band and leaves no end padding', async () => {
+    const wrapper = await mountWithInset('8px')
 
-    bar.vm.$emit('drag', 1) // bottom of the track
-    await waitForUpdate()
-    emitSfxMock.mockClear()
+    const band = pxOf(scroller(wrapper).element, 'paddingInlineEnd')
+    const pad_end = pxOf(content(wrapper).element, 'paddingRight')
 
-    bar.vm.$emit('drag', 1) // still at the bottom — no new screenful crossed
-    await waitForUpdate()
-
-    expect(emitSfxMock).not.toHaveBeenCalled()
+    expect(band).toBe(8)
+    expect(pad_end).toBe(0)
   })
 
-  test('a jump never ticks, even when it crosses several screenfuls at once', async () => {
-    const wrapper = mountRegionWithStub({ height: 100, contentHeight: 500 })
+  test('a consumer that declares no inset gets the whole gutter as the band', async () => {
+    const wrapper = mountRegion({
+      height: 100,
+      contentHeight: 500,
+      props: { gutter: 'inside' },
+      contentStyle: 'padding-right: var(--scroll-content-pad-end);'
+    })
     await waitForUpdate()
-    const bar = wrapper.findComponent(UiScrollBarStub)
 
-    bar.vm.$emit('jump', 1) // jumps straight from screenful 0 to the last screenful
+    expect(pxOf(scroller(wrapper).element, 'paddingInlineEnd')).toBeGreaterThan(0)
+    expect(pxOf(content(wrapper).element, 'paddingRight')).toBe(0)
+  })
+
+  test('an outside gutter reserves nothing inside the scrolling box', async () => {
+    const wrapper = mountRegion({ height: 100, contentHeight: 500 })
     await waitForUpdate()
 
-    expect(emitSfxMock).not.toHaveBeenCalled()
+    expect(pxOf(scroller(wrapper).element, 'paddingInlineEnd')).toBe(0)
+  })
+})
+
+// ── A host can take the scroller away [obligation] ───────────────────────────
+// A window that docks to the viewport edge grows to its children and lets the
+// sheet around it do the scrolling. It says so with `--scroll-overflow: visible`
+// and a height of auto; the handle then goes on its own, because a box that
+// grows to its content never overflows.
+
+describe('ScrollRegion — a host that sets --scroll-overflow drops the scroller [obligation]', () => {
+  test('the scrolling box stops scrolling and no handle is drawn', async () => {
+    const wrapper = mountRegion({
+      height: null,
+      contentHeight: 500,
+      attrs: { style: '--scroll-overflow: visible;' }
+    })
+    await waitForUpdate()
+
+    expect(getComputedStyle(scroller(wrapper).element).overflowY).toBe('visible')
+    expect(handle(wrapper).exists()).toBe(false)
+  })
+
+  test('the same region scrolls and draws a handle without that declaration', async () => {
+    const wrapper = mountRegion({ height: 100, contentHeight: 500 })
+    await waitForUpdate()
+
+    expect(getComputedStyle(scroller(wrapper).element).overflowY).toBe('auto')
+    expect(handle(wrapper).exists()).toBe(true)
+  })
+})
+
+// ── An external target keeps the host's positioning [obligation] ─────────────
+
+describe('ScrollRegion — data-scroll reflects who owns the scroller [obligation]', () => {
+  test('no target: the region owns its own scroller and becomes the positioning box', async () => {
+    const wrapper = mountRegion({ height: 100, contentHeight: 500 })
+    await waitForUpdate()
+
+    expect(root(wrapper).attributes('data-scroll')).toBe('self')
+    expect(getComputedStyle(root(wrapper).element).position).toBe('relative')
+  })
+
+  test('an external target: the host stays the positioning box', async () => {
+    const external = document.createElement('div')
+    external.id = 'external-scroller'
+    document.body.appendChild(external)
+    _activeHosts.push(external)
+
+    const wrapper = mountRegion({
+      height: 100,
+      contentHeight: 500,
+      props: { target: '#external-scroller' }
+    })
+    await waitForUpdate()
+
+    expect(root(wrapper).attributes('data-scroll')).toBe('external')
+    expect(getComputedStyle(root(wrapper).element).position).toBe('static')
   })
 })
 
