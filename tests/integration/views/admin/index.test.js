@@ -13,6 +13,26 @@ vi.mock('@/views/admin/feedback-page/index.vue', async () => {
   }
 })
 
+vi.mock('@/views/admin/color-page/palette-page.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'PalettePage',
+      setup: () => () => h('div', { 'data-testid': 'palette-page-stub' })
+    })
+  }
+})
+
+vi.mock('@/views/admin/color-page/roles-page.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'RolesPage',
+      setup: () => () => h('div', { 'data-testid': 'roles-page-stub' })
+    })
+  }
+})
+
 const PagedWindowStub = defineComponent({
   name: 'PagedWindow',
   props: {
@@ -26,7 +46,11 @@ const PagedWindowStub = defineComponent({
     return () =>
       h('div', { 'data-testid': 'admin-container', 'data-title': props.title }, [
         h('button', { 'data-testid': 'pw__close', onClick: () => emit('close') }, 'close'),
-        h('div', { 'data-testid': 'pw__default' }, slots.default?.())
+        h(
+          'div',
+          { 'data-testid': 'pw__default' },
+          slots.default?.({ displayed_page: props.active })
+        )
       ])
   }
 })
@@ -49,10 +73,10 @@ describe('Admin — chrome', () => {
     )
   })
 
-  test('registers exactly one page: feedback', () => {
+  test('registers three pages: feedback, palette, roles', () => {
     const { wrapper } = mountAdmin()
     const pw = wrapper.findComponent(PagedWindowStub)
-    expect(pw.props('pages').map((p) => p.value)).toEqual(['feedback'])
+    expect(pw.props('pages').map((p) => p.value)).toEqual(['feedback', 'palette', 'roles'])
   })
 
   test('close event forwards to the close prop', async () => {
@@ -82,5 +106,25 @@ describe('Admin — content', () => {
   test('renders the feedback page by default', () => {
     const { wrapper } = mountAdmin()
     expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(true)
+  })
+
+  test('renders the palette page when displayed_page is palette', async () => {
+    const { wrapper } = mountAdmin()
+    const pw = wrapper.findComponent(PagedWindowStub)
+    pw.vm.$emit('update:active', 'palette')
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="palette-page-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(false)
+  })
+
+  test('renders the roles page when displayed_page is roles', async () => {
+    const { wrapper } = mountAdmin()
+    const pw = wrapper.findComponent(PagedWindowStub)
+    pw.vm.$emit('update:active', 'roles')
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="roles-page-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(false)
   })
 })

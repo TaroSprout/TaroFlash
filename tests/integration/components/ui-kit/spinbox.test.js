@@ -389,6 +389,36 @@ describe('UiSpinbox', () => {
     expect(container.element.tagName).toBe('DIV')
   })
 
+  // ── Arrow key stepping [obligation] ─────────────────────────────────────────
+
+  test('ArrowUp on the focused input steps the value up by step', async () => {
+    const wrapper = mountSpinbox({ value: 5, step: 1 })
+    const input = findInput(wrapper)
+    await input.trigger('keydown', { key: 'ArrowUp' })
+    expect(wrapper.emitted('update:value')).toEqual([[6]])
+  })
+
+  test('ArrowDown on the focused input steps the value down by step', async () => {
+    const wrapper = mountSpinbox({ value: 5, step: 1 })
+    const input = findInput(wrapper)
+    await input.trigger('keydown', { key: 'ArrowDown' })
+    expect(wrapper.emitted('update:value')).toEqual([[4]])
+  })
+
+  test('ArrowUp respects max and does not emit past it', async () => {
+    const wrapper = mountSpinbox({ value: 10, max: 10, step: 1 })
+    const input = findInput(wrapper)
+    await input.trigger('keydown', { key: 'ArrowUp' })
+    expect(wrapper.emitted('update:value')).toBeUndefined()
+  })
+
+  test('ArrowDown respects min and does not emit past it', async () => {
+    const wrapper = mountSpinbox({ value: 1, min: 1, step: 1 })
+    const input = findInput(wrapper)
+    await input.trigger('keydown', { key: 'ArrowDown' })
+    expect(wrapper.emitted('update:value')).toBeUndefined()
+  })
+
   // ── Defaults ──────────────────────────────────────────────────────────────
 
   test('with no min/max, both buttons are enabled by default', () => {

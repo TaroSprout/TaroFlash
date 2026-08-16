@@ -30,6 +30,7 @@ type PopoverProps = {
   use_arrow?: boolean
   clip?: boolean
   anchor_rect?: DOMRect | null
+  anchor_el?: HTMLElement | null
   teleport?: boolean
   match_reference_width?: boolean
 }
@@ -48,6 +49,7 @@ const {
   use_arrow = true,
   clip = true,
   anchor_rect = null,
+  anchor_el = null,
   teleport = false,
   match_reference_width = false
 } = defineProps<PopoverProps>()
@@ -131,13 +133,23 @@ const arrowStyle = computed(() => {
   }
 })
 
+// Only the watcher below disarms, on the edge back out of `open`. Disarming here
+// instead would strand a caller that answers `close` by reopening on another
+// anchor in the same tick: the prop never leaves `open`, so no edge ever re-arms
+// the listener and the popover becomes undismissable.
 function onPageClick(e: Event): void {
   const target = e.target as HTMLElement
 
-  if (!target.closest(`[data-id="${id}"]`)) {
-    emit('close')
-    document.removeEventListener('click', onPageClick, true)
-  }
+  if (target.closest(`[data-id="${id}"]`)) return
+  // A trigger wrapped in the default slot is already inside the container above,
+  // but an `anchor_el` caller anchors to DOM this component doesn't contain — and
+  // this listener runs in the capture phase, ahead of the anchor's own click
+  // handler. Counting that click as outside would close the popover a frame
+  // before the anchor reopened it, which reads as a flash. Left to the anchor,
+  // its handler is the only thing that decides open or closed.
+  if (anchor_el?.contains(target)) return
+
+  emit('close')
 }
 
 watch(
@@ -182,7 +194,11 @@ watch(
           class="ui-kit-popover"
           :class="[
             `ui-kit-popover--${side}`,
-            { 'ui-kit-popover--shadow': shadow, 'ui-kit-popover--open': open }
+            {
+              'ui-kit-popover--shadow': shadow,
+              'ui-kit-popover--open': open,
+              'ui-kit-popover--teleported': teleport
+            }
           ]"
           :style="floatingStyles"
         >
@@ -221,9 +237,27 @@ watch(
   display: block;
 }
 
-/* Kept off `.ui-kit-popover` itself — a `filter` there would clip the arrow,
-   which deliberately pokes out past the box's edge. */
-.ui-kit-popover--shadow .ui-kit-popover__arrow-default {
+/* In place, z-60 competes inside whatever ancestor owns the stacking context.
+   Teleporting to <body> takes the popover out of that ancestor entirely, so it
+   is compared against the body-level overlay sections in index.html instead —
+   and a popover opened from inside a modal lands under the modal container
+   (z-100) that its own trigger lives in. On the body it joins that same layer:
+   appended after the static sections, it paints above the modal, while the
+   notice panel (z-101) and tooltips (z-102) still win over it. */
+.ui-kit-popover--teleported {
+  z-index: 100;
+}
+
+/* This box is a transparent positioning wrapper — the background and the corner
+   radius that a shadow has to trace both live on the slotted panel, whose radius
+   is the caller's choice and is not `--radius-7`. So the shadow is a
+   `drop-shadow`, which follows the alpha shape of whatever the slot actually
+   paints, rather than a `box-shadow` tracing this wrapper's own rectangle. It
+   covers the arrow in the same pass — the arrow pokes out past the panel's edge
+   and is part of that silhouette, so it needs no rule of its own.
+   A panel that already casts its own shadow (`bevel-drop-*`) must not also ask
+   for `shadow`: the two compound into one shadow at twice the offset. */
+.ui-kit-popover--shadow {
   filter: drop-shadow(var(--drop-shadow-sm));
 }
 
