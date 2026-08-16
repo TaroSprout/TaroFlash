@@ -3,7 +3,7 @@ id: scroll-lock
 domain: ui
 status: current
 hazard: true
-related: []
+related: [scroll-region]
 updated: 2026-08-16
 ---
 
@@ -17,7 +17,7 @@ open modal from scrolling, without the usual `overflow: hidden` /
 > The lock only recognises the modal's own container as "still allowed to scroll" — a popover
 > teleported to `<body>`, as Vue's `<Teleport>` does, renders outside it. Its scroll area shows a
 > scrollbar and does nothing: no error, no console warning, just a wheel that stops working. It has
-> to opt back in with `data-scroll-live` on its own scroller.
+> to opt back in with `data-scroll-live` on its own scrolling area.
 > [See how the opt-in works ↓](#a-teleported-panel-has-to-opt-back-in)
 
 ## Layout-based scroll locks visibly move the page on iOS Safari [K:scroll-lock-no-layout-mutation]
@@ -42,8 +42,16 @@ container ref it was handed? A popover, dropdown, or editor panel that teleports
 can escape a clipping ancestor) breaks that containment on purpose, which means it also breaks out of
 the one subtree still allowed to scroll.
 
-Any scroller inside a teleported panel sets `data-scroll-live` on itself. The lock treats that
-attribute as a second live root, exactly like the modal's own container — scroll stops at its edges
-and chains through to the page the same way. Nothing wires this automatically; it's opt-in per
-scroller, so a new teleported panel with its own internal scroll area needs the attribute the moment
-it's added, not after someone notices the scrollbar doesn't work.
+A teleported panel's scrolling area sets `data-scroll-live` on itself. The lock treats that attribute
+as a second live root, exactly like the modal's own container — the scroller is then looked up
+_inside_ that root, scroll stops at its edges, and it chains through to the page the same way.
+
+Because the attribute names a root rather than the scrolling element itself, it goes on whichever box
+the panel builds its scroll area from: a raw `overflow-y-auto` element, or the
+[[scroll-region]] wrapping one, which owns the scrolling element a level down. Nothing wires this
+automatically; it's opt-in per scroll area, so a new teleported panel with its own internal scrolling
+needs the attribute the moment it's added, not after someone notices the wheel does nothing.
+
+## Related
+
+[[scroll-region]]

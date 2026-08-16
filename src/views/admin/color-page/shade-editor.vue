@@ -7,6 +7,7 @@ import { injectColorTuner } from './use-color-tuner'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiInput from '@/components/ui-kit/input.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import { emitSfx } from '@/sfx/bus'
 import { TYPE_SFX } from '@/sfx/config'
 
@@ -156,22 +157,30 @@ function onCommitName() {
       </h3>
 
       <!-- The editor is teleported to the body, outside the admin modal the scroll lock keeps
-           scrollable, so this list opts itself back in or its scrollbar is decorative.
-           →[K:scroll-lock-teleport-opt-in] -->
-      <ul
+           scrollable, so this list opts itself back in or its handle is decorative. The attribute
+           rides the region rather than the box inside it — the region owns the element that
+           actually scrolls. →[K:scroll-lock-teleport-opt-in]
+
+           `--scroll-content-inset` is the `p-2` the well already had, so the handle draws in that
+           same band and the rows stop exactly where they did before. -->
+      <scroll-region
         v-if="bindings.length > 0"
         data-testid="shade-editor__bindings"
         data-scroll-live
-        class="max-h-40 overflow-auto rounded-3 bg-well p-2 flex flex-col gap-1"
+        gutter="inside"
+        class="flex max-h-40 flex-col [--scroll-content-inset:0.5rem]"
+        scroller_class="rounded-3 bg-well p-2"
       >
-        <li
-          v-for="binding in bindings"
-          :key="`${binding.mode}-${binding.station}-${binding.role}`"
-          class="text-base text-ink-muted tabular-nums"
-        >
-          {{ binding.mode }} · {{ binding.station }} · {{ binding.role }}
-        </li>
-      </ul>
+        <ul class="flex flex-col gap-1">
+          <li
+            v-for="binding in bindings"
+            :key="`${binding.mode}-${binding.station}-${binding.role}`"
+            class="text-base text-ink-muted tabular-nums"
+          >
+            {{ binding.mode }} · {{ binding.station }} · {{ binding.role }}
+          </li>
+        </ul>
+      </scroll-region>
 
       <p v-else data-testid="shade-editor__unused" class="text-base text-ink-muted">
         {{ t('admin.palette-page.unused-label') }}
