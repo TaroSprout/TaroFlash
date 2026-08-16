@@ -64,7 +64,11 @@ you waiting on something.
   all four; you hand back a local branch.
 - **Never remove your own worktree.** The orchestrator tears it down after handoff, and a stuck
   ticket's worktree is what a human inspects.
-- **Never widen scope past the acceptance criteria.** An adjacent defect you spot goes in the report.
+- **Never widen scope past what you were handed** — every acceptance criterion in the ticket's words,
+  or the fix/instruction exactly as given. A follow-on change you infer would make the requested one
+  "work better" or "look consistent" — a hover state to keep a restyled background legible, a related
+  prop nudged to match — is still unrequested scope; the requester decides whether it's needed, not
+  you. An adjacent defect you spot goes in the report.
 
 ## Output
 
