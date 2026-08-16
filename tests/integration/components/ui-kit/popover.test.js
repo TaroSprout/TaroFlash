@@ -221,6 +221,53 @@ describe('UiPopover', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
+  // ── anchor_el — a click inside it never reads as outside [obligation] ─────
+
+  test('a click inside anchor_el does not emit close [obligation]', async () => {
+    const anchor = document.createElement('button')
+    document.body.appendChild(anchor)
+
+    const wrapper = mountPopover({ open: false, mode: 'click', anchor_el: anchor })
+    await wrapper.setProps({ open: true })
+
+    anchor.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    anchor.remove()
+    expect(wrapper.emitted('close')).toBeFalsy()
+  })
+
+  test('a click outside both the container and anchor_el still emits close [obligation]', async () => {
+    const anchor = document.createElement('button')
+    document.body.appendChild(anchor)
+
+    const wrapper = mountPopover({ open: false, mode: 'click', anchor_el: anchor })
+    await wrapper.setProps({ open: true })
+
+    const outside = document.createElement('div')
+    document.body.appendChild(outside)
+    outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    anchor.remove()
+    outside.remove()
+    expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  // ── teleported layer class [obligation] ────────────────────────────────────
+
+  test('a teleported popover carries the teleported layer class [obligation]', () => {
+    mountPopover({ open: true, teleport: true })
+    const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
+    expect(panel.classList.contains('ui-kit-popover--teleported')).toBe(true)
+  })
+
+  test('a non-teleported popover does not carry the teleported layer class', () => {
+    const wrapper = mountPopover({ open: true, teleport: false })
+    const panel = wrapper.find('[data-testid="ui-kit-popover"]')
+    expect(panel.classes()).not.toContain('ui-kit-popover--teleported')
+  })
+
   // ── default (no teleport) — panel renders inline ───────────────────────────
 
   test('default: panel renders inside the container (not teleported) [obligation]', () => {
