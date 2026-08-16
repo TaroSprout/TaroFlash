@@ -179,7 +179,7 @@ describe('UiButton', () => {
     test('emits press sfx at the start of the tap when sfx.press is set', async () => {
       vi.useFakeTimers()
       const wrapper = shallowMount(UiButton, {
-        props: { playOnTap: true, sfx: { press: 'select' } },
+        props: { playOnTap: true, sfx: { press: 'ui.select' } },
         attrs: { onClick: vi.fn() }
       })
 
@@ -189,7 +189,7 @@ describe('UiButton', () => {
       vi.advanceTimersByTime(500)
       await wrapper.vm.$nextTick()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.any(Object))
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
       vi.useRealTimers()
     })
 
@@ -251,7 +251,7 @@ describe('UiButton', () => {
       test('tapAnimate=false still fires press sfx when sfx.press is set [obligation]', async () => {
         mockEmitSfx.mockClear()
         const wrapper = shallowMount(UiButton, {
-          props: { playOnTap: true, tapAnimate: false, sfx: { press: 'select' } },
+          props: { playOnTap: true, tapAnimate: false, sfx: { press: 'ui.select' } },
           attrs: { onClick: vi.fn() }
         })
 
@@ -261,7 +261,7 @@ describe('UiButton', () => {
         vi.advanceTimersByTime(500)
         await wrapper.vm.$nextTick()
 
-        expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.any(Object))
+        expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
       })
 
       test('tapAnimate=true (default) still uses GSAP tween [obligation]', async () => {
@@ -277,6 +277,35 @@ describe('UiButton', () => {
 
         expect(gsap.to).toHaveBeenCalled()
       })
+    })
+  })
+
+  // ── merged_sfx: false silences a channel, an omitted one keeps the default [obligation] ──
+
+  describe('merged_sfx passed to v-sfx', () => {
+    function captureSfxBinding(props = {}) {
+      let captured
+      const captureDirective = {
+        mounted: (_el, binding) => (captured = binding.value),
+        updated: (_el, binding) => (captured = binding.value)
+      }
+      shallowMount(UiButton, {
+        props,
+        global: { directives: { sfx: captureDirective } }
+      })
+      return captured
+    }
+
+    test('an omitted hover channel falls back to the primitive default (ui.hover) [obligation]', () => {
+      expect(captureSfxBinding({}).hover).toBe('ui.hover')
+    })
+
+    test('sfx.hover: false silences the hover channel [obligation]', () => {
+      expect(captureSfxBinding({ sfx: { hover: false } }).hover).toBe(false)
+    })
+
+    test('disabled clears every v-sfx channel, not just press', () => {
+      expect(captureSfxBinding({ disabled: true, sfx: { hover: 'ui.select' } })).toEqual({})
     })
   })
 
@@ -502,22 +531,19 @@ describe('UiButton', () => {
       expect(gsap.to).not.toHaveBeenCalled()
     })
 
-    test('disabled=true suppresses sfx on a click (merged_sfx returns {}) [obligation]', async () => {
+    test('disabled=true fires ui.rejected, not ui.press [obligation]', async () => {
       mockEmitSfx.mockClear()
-      // A disabled button has merged_sfx = {} so no hover sfx is emitted.
-      // The v-sfx directive is stubbed in these tests so we only verify the
-      // prop value passed to UiTooltip (via sfx binding) stays empty.
-      // We simply confirm clicking doesn't call emitSfx (the sfx is cleared).
       const wrapper = mountButtonWithSlots(
-        { disabled: true, playOnTap: true, sfx: { click: 'select' } },
+        { disabled: true, playOnTap: true },
         { default: 'Label' }
       )
       wrapper
         .find('[data-testid="ui-kit-button"]')
         .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       await wrapper.vm.$nextTick()
-      // emitSfx not called because onCaptureClick returns early before emitClickSfx
-      expect(mockEmitSfx).not.toHaveBeenCalled()
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
+      expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.press', expect.anything())
     })
 
     // ── clickWhenDisabled [obligation] ─────────────────────────────────────
@@ -556,10 +582,10 @@ describe('UiButton', () => {
       expect(preventSpy).toHaveBeenCalled()
     })
 
-    test('clickWhenDisabled suppresses sfx even when clicks are allowed through [obligation]', async () => {
+    test('clickWhenDisabled still fires ui.rejected even though the click reaches the handler [obligation]', async () => {
       mockEmitSfx.mockClear()
       const wrapper = shallowMount(UiButton, {
-        props: { disabled: true, clickWhenDisabled: true, sfx: { click: 'select' } },
+        props: { disabled: true, clickWhenDisabled: true },
         attrs: { onClick: vi.fn() },
         global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
       })
@@ -567,9 +593,8 @@ describe('UiButton', () => {
         .find('[data-testid="ui-kit-button"]')
         .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       await wrapper.vm.$nextTick()
-      // merged_sfx returns {} when disabled, so emitClickSfx is never invoked
-      // (onCaptureClick returns early at the clickWhenDisabled guard, skipping interceptClick)
-      expect(mockEmitSfx).not.toHaveBeenCalled()
+
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     })
   })
 })

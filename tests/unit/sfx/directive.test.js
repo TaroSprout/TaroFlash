@@ -38,26 +38,16 @@ describe('vSfx directive', () => {
 
   describe('hover', () => {
     test('plays hover sfx when pointerenter pointerType is mouse', () => {
-      const el = mountDirective({ hover: 'click_07' })
+      const el = mountDirective({ hover: 'ui.hover' })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
 
-      expect(emitHoverSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
-      unmount(el)
-    })
-
-    test('array hover — passes full array to emitHoverSfx on pointerenter [obligation]', () => {
-      const keys = ['type_01', 'type_02']
-      const el = mountDirective({ hover: keys })
-
-      el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
-
-      expect(emitHoverSfx).toHaveBeenCalledWith(keys, { debounce: undefined })
+      expect(emitHoverSfx).toHaveBeenCalledWith('ui.hover')
       unmount(el)
     })
 
     test('does NOT play hover sfx when pointerenter pointerType is touch', () => {
-      const el = mountDirective({ hover: 'click_07' })
+      const el = mountDirective({ hover: 'ui.hover' })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }))
 
@@ -66,7 +56,7 @@ describe('vSfx directive', () => {
     })
 
     test('does NOT play hover sfx when pointerenter pointerType is pen', () => {
-      const el = mountDirective({ hover: 'click_07' })
+      const el = mountDirective({ hover: 'ui.hover' })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'pen' }))
 
@@ -74,17 +64,17 @@ describe('vSfx directive', () => {
       unmount(el)
     })
 
-    test('passes debounce option through', () => {
-      const el = mountDirective({ hover: 'click_07', debounce: 250 })
+    test('does NOT play hover sfx when no hover key is configured', () => {
+      const el = mountDirective({ focus: 'ui.focus' })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
 
-      expect(emitHoverSfx).toHaveBeenCalledWith('click_07', { debounce: 250 })
+      expect(emitHoverSfx).not.toHaveBeenCalled()
       unmount(el)
     })
 
     test('beforeUnmount removes the listener', () => {
-      const el = mountDirective({ hover: 'click_07' })
+      const el = mountDirective({ hover: 'ui.hover' })
 
       vSfx.beforeUnmount(el)
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
@@ -94,52 +84,60 @@ describe('vSfx directive', () => {
     })
   })
 
-  describe('click', () => {
-    test('click key is accepted in the object shape without error [obligation]', () => {
-      // The `click` key remains in SfxOptions so button.vue can read it —
-      // v-sfx just no longer handles the click event itself.
-      expect(() => {
-        const el = mountDirective({ click: 'click_07' })
-        unmount(el)
-      }).not.toThrow()
+  // ── the directive no longer accepts a per-call debounce [obligation] ───────
+
+  describe('no per-call debounce', () => {
+    test('hover fires emitHoverSfx with just the role — no debounce/options argument [obligation]', () => {
+      const el = mountDirective({ hover: 'ui.hover', debounce: 250 })
+
+      el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+
+      // A `debounce` key on the binding value is inert — the directive only
+      // ever reads cfg.hover / cfg.focus, so it's forwarded to neither call.
+      expect(emitHoverSfx).toHaveBeenCalledWith('ui.hover')
+      expect(emitHoverSfx).not.toHaveBeenCalledWith('ui.hover', expect.anything())
+      unmount(el)
     })
 
-    test('clicking an element with click key does NOT call emitSfx [obligation]', () => {
-      const el = mountDirective({ click: 'click_07' })
+    test('focus fires emitSfx with just the role — no debounce/options argument [obligation]', () => {
+      const el = mountDirective({ focus: 'ui.focus', debounce: 250 })
+
+      el.dispatchEvent(new Event('focus'))
+
+      expect(emitSfx).toHaveBeenCalledWith('ui.focus')
+      expect(emitSfx).not.toHaveBeenCalledWith('ui.focus', expect.anything())
+      unmount(el)
+    })
+  })
+
+  describe('click', () => {
+    test('clicking an element with a press key does NOT call emitSfx — press routes through staged-tap, not the directive', () => {
+      const el = mountDirective({ press: 'ui.press' })
 
       el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
       expect(emitSfx).not.toHaveBeenCalled()
       unmount(el)
     })
-
-    test('press_blocking key accepted without error — directive ignores it silently [obligation]', () => {
-      expect(() => {
-        const el = mountDirective({ press: 'click_07', press_blocking: true })
-        el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-        unmount(el)
-      }).not.toThrow()
-      expect(emitSfx).not.toHaveBeenCalled()
-    })
   })
 
   describe('updated hook (binding value changes)', () => {
-    test('picks up the new audio key on the next event without unbinding', () => {
-      const el = mountDirective({ hover: 'click_07' })
-      const oldValue = { hover: 'click_07' }
-      const newValue = { hover: 'select' }
+    test('picks up the new role on the next event without unbinding', () => {
+      const el = mountDirective({ hover: 'ui.hover' })
+      const oldValue = { hover: 'ui.hover' }
+      const newValue = { hover: 'ui.select' }
 
       vSfx.updated(el, { value: newValue, oldValue, modifiers: {} })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
 
-      expect(emitHoverSfx).toHaveBeenCalledWith('select', { debounce: undefined })
+      expect(emitHoverSfx).toHaveBeenCalledWith('ui.select')
       unmount(el)
     })
 
     test('skips work when value reference is unchanged', () => {
-      const el = mountDirective({ hover: 'click_07' })
-      const value = { hover: 'click_07' }
+      const el = mountDirective({ hover: 'ui.hover' })
+      const value = { hover: 'ui.hover' }
 
       vSfx.updated(el, { value, oldValue: value, modifiers: {} })
 
@@ -155,23 +153,23 @@ describe('vSfx directive', () => {
       vSfx.mounted(el, { value: undefined, modifiers: {} })
 
       vSfx.updated(el, {
-        value: { hover: 'click_07' },
+        value: { hover: 'ui.hover' },
         oldValue: undefined,
         modifiers: {}
       })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
 
-      expect(emitHoverSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
+      expect(emitHoverSfx).toHaveBeenCalledWith('ui.hover')
       unmount(el)
     })
 
-    test('clearing the audio key on update silences the listener', () => {
-      const el = mountDirective({ hover: 'click_07' })
+    test('clearing the role on update silences the listener', () => {
+      const el = mountDirective({ hover: 'ui.hover' })
 
       vSfx.updated(el, {
         value: {},
-        oldValue: { hover: 'click_07' },
+        oldValue: { hover: 'ui.hover' },
         modifiers: {}
       })
 
@@ -184,16 +182,16 @@ describe('vSfx directive', () => {
 
   describe('focus', () => {
     test('plays sfx on focus', () => {
-      const el = mountDirective({ focus: 'click_07' })
+      const el = mountDirective({ focus: 'ui.focus' })
 
       el.dispatchEvent(new Event('focus'))
 
-      expect(emitSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
+      expect(emitSfx).toHaveBeenCalledWith('ui.focus')
       unmount(el)
     })
 
     test('does NOT play sfx on focus when no focus key configured', () => {
-      const el = mountDirective({ hover: 'click_07' })
+      const el = mountDirective({ hover: 'ui.hover' })
 
       el.dispatchEvent(new Event('focus'))
 
@@ -202,18 +200,20 @@ describe('vSfx directive', () => {
     })
   })
 
-  describe('blur', () => {
-    test('plays sfx on blur', () => {
-      const el = mountDirective({ blur: 'click_07' })
+  // ── the `blur` channel is gone [obligation] ─────────────────────────────────
+
+  describe('blur is no longer a supported channel [obligation]', () => {
+    test('a `blur` key on the binding object does nothing — no listener, no emitSfx', () => {
+      const el = mountDirective({ blur: 'ui.focus' })
 
       el.dispatchEvent(new Event('blur'))
 
-      expect(emitSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
+      expect(emitSfx).not.toHaveBeenCalled()
       unmount(el)
     })
 
-    test('does NOT play sfx on blur when no blur key configured', () => {
-      const el = mountDirective({ hover: 'click_07' })
+    test('the .blur modifier on a string binding does nothing', () => {
+      const el = mountDirective('ui.focus', { blur: true })
 
       el.dispatchEvent(new Event('blur'))
 
@@ -224,16 +224,16 @@ describe('vSfx directive', () => {
 
   describe('binding shorthand', () => {
     test('string binding + .hover modifier wires hover sfx', () => {
-      const el = mountDirective('click_07', { hover: true })
+      const el = mountDirective('ui.hover', { hover: true })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
 
-      expect(emitHoverSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
+      expect(emitHoverSfx).toHaveBeenCalledWith('ui.hover')
       unmount(el)
     })
 
     test('string binding + .hover modifier still filters touch', () => {
-      const el = mountDirective('click_07', { hover: true })
+      const el = mountDirective('ui.hover', { hover: true })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }))
 
@@ -242,20 +242,22 @@ describe('vSfx directive', () => {
     })
 
     test('string binding + .focus modifier wires focus sfx', () => {
-      const el = mountDirective('click_07', { focus: true })
+      const el = mountDirective('ui.focus', { focus: true })
 
       el.dispatchEvent(new Event('focus'))
 
-      expect(emitSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
+      expect(emitSfx).toHaveBeenCalledWith('ui.focus')
       unmount(el)
     })
 
-    test('string binding + .blur modifier wires blur sfx', () => {
-      const el = mountDirective('click_07', { blur: true })
+    test('a plain string binding with no modifier wires neither channel', () => {
+      const el = mountDirective('ui.hover')
 
-      el.dispatchEvent(new Event('blur'))
+      el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+      el.dispatchEvent(new Event('focus'))
 
-      expect(emitSfx).toHaveBeenCalledWith('click_07', { debounce: undefined })
+      expect(emitHoverSfx).not.toHaveBeenCalled()
+      expect(emitSfx).not.toHaveBeenCalled()
       unmount(el)
     })
   })

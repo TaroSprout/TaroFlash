@@ -78,10 +78,10 @@ describe('SplashPreview', () => {
     expect(wrapper.find('[data-testid="pinned-preview"]').attributes('data-side')).toBe('front')
   })
 
-  test('flipping the pinned preview emits slide_up sfx [obligation]', async () => {
+  test('flipping the pinned preview emits nav.page-forward sfx [obligation]', async () => {
     const wrapper = mountSplashPreview()
     await wrapper.find('[data-testid="pinned-preview__flip"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-forward')
   })
 
   test('flipping back to cover side updates the side', async () => {
@@ -93,12 +93,12 @@ describe('SplashPreview', () => {
     expect(wrapper.find('[data-testid="pinned-preview"]').attributes('data-side')).toBe('cover')
   })
 
-  test('each flip emits slide_up sfx', async () => {
+  test('each flip emits nav.page-forward sfx', async () => {
     const wrapper = mountSplashPreview()
     await wrapper.find('[data-testid="pinned-preview__flip"]').trigger('click')
     await wrapper.find('[data-testid="pinned-preview__flip"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledTimes(2)
-    expect(mockEmitSfx).toHaveBeenNthCalledWith(1, 'slide_up')
-    expect(mockEmitSfx).toHaveBeenNthCalledWith(2, 'slide_up')
+    expect(mockEmitSfx).toHaveBeenNthCalledWith(1, 'nav.page-forward')
+    expect(mockEmitSfx).toHaveBeenNthCalledWith(2, 'nav.page-forward')
   })
 })

@@ -202,7 +202,7 @@ describe('useCardImport — sfx contract [obligation]', () => {
 
     await draft.loadFile(makeFile('deck.csv'))
 
-    expect(emitSfxMock).toHaveBeenCalledWith('music_plink_ok')
+    expect(emitSfxMock).toHaveBeenCalledWith('dialog.confirm')
   })
 
   test('loadFile does not chime music_plink_ok when the file is refused', async () => {
@@ -211,7 +211,7 @@ describe('useCardImport — sfx contract [obligation]', () => {
 
     await draft.loadFile(makeFile('virus.exe'))
 
-    expect(emitSfxMock).not.toHaveBeenCalledWith('music_plink_ok')
+    expect(emitSfxMock).not.toHaveBeenCalledWith('dialog.confirm')
   })
 
   test('loadText never chimes, even on a successful parse — it re-parses every keystroke', () => {
@@ -225,13 +225,13 @@ describe('useCardImport — sfx contract [obligation]', () => {
 
     draft.loadText('a,b')
 
-    expect(emitSfxMock).not.toHaveBeenCalledWith('music_plink_ok')
+    expect(emitSfxMock).not.toHaveBeenCalledWith('dialog.confirm')
   })
 
-  test('toggleExpanded emits snappy_button_5', () => {
+  test('toggleExpanded emits ui.press', () => {
     const { draft } = setup()
     draft.toggleExpanded()
-    expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 })
 
@@ -314,7 +314,7 @@ describe('useCardImport — commit', () => {
     await draft.commit()
 
     expect(exitMode).toHaveBeenCalledWith()
-    expect(exitMode).not.toHaveBeenCalledWith('digi_powerdown')
+    expect(exitMode).not.toHaveBeenCalledWith('ui.rejected')
   })
 
   test('nothing reaches the deck before commit runs — loadText/loadFile never call the mutation', () => {
@@ -533,7 +533,7 @@ describe('useCardImport — close / dismiss exit paths [obligation]', () => {
 
     draft.dismiss()
 
-    expect(exitMode).toHaveBeenCalledWith('digi_powerdown')
+    expect(exitMode).toHaveBeenCalledWith('ui.rejected')
     expect(draft.pasted_text.value).toBe('')
   })
 })

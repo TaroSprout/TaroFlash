@@ -86,14 +86,14 @@ describe('useCardPrompts — confirmDelete [obligation]', () => {
     expect(result).toBe(false)
   })
 
-  test('includes confirmAudio: trash_crumple_short', async () => {
+  test('includes confirmAudio: card.delete', async () => {
     alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(false) })
     const { confirmDelete } = useCardPrompts()
 
     await confirmDelete(1)
 
     expect(alertWarnMock).toHaveBeenCalledWith(
-      expect.objectContaining({ confirmAudio: 'trash_crumple_short' })
+      expect.objectContaining({ confirmAudio: 'card.delete' })
     )
   })
 })
@@ -139,13 +139,13 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     )
   })
 
-  test('emits double_pop_up before the modal opens [obligation]', async () => {
+  test('emits dialog.open before the modal opens [obligation]', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
     await openMoveModal([makeCard()], 1, 10)
 
-    expect(emitSfxMock).toHaveBeenCalledWith('double_pop_up')
+    expect(emitSfxMock).toHaveBeenCalledWith('dialog.open')
   })
 
   test('does not emit any sfx when the returned response promise resolves [obligation]', async () => {

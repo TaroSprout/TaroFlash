@@ -302,7 +302,7 @@ describe('FaceImageLayer — defineExpose surface', () => {
   test('card_sfx plays a hover chime for a corners (behind) image', () => {
     state.upload.has_image.value = true
     const wrapper = mountLayer({ attributes: { image_layout: 'behind' } })
-    expect(wrapper.vm.card_sfx).toEqual({ hover: 'tap_05' })
+    expect(wrapper.vm.card_sfx).toEqual({ hover: 'ui.hover' })
   })
 
   test('card_sfx is undefined for a region (non-behind) image, so the region dropzone owns the hover chime', () => {
@@ -337,7 +337,7 @@ describe('FaceImageLayer — defineExpose surface', () => {
   test('onRegionPointerEnter plays the hover chime and calls onPointerEnter', () => {
     const wrapper = mountLayer()
     wrapper.vm.onRegionPointerEnter()
-    expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
+    expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     expect(state.upload.onPointerEnter).toHaveBeenCalled()
   })
 })

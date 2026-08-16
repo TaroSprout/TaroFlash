@@ -89,30 +89,30 @@ describe('UiRadio', () => {
 
   // ── sfx prop ───────────────────────────────────────────────────────────────
 
-  test('plays the "select" press sfx by default [obligation]', async () => {
+  test('plays the "ui.select" press sfx by default [obligation]', async () => {
     const wrapper = mountRadio({ checked: false })
     await wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
   test('overrides the press sfx via the sfx prop [obligation]', async () => {
-    const wrapper = mountRadio({ checked: false, sfx: { press: 'snappy_button_2' } })
+    const wrapper = mountRadio({ checked: false, sfx: { press: 'ui.press' } })
     await wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2', expect.anything())
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('select', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
   test('forwards hover sfx to the v-sfx directive [obligation]', () => {
-    const wrapper = mountRadio({ checked: false, sfx: { hover: 'type_05' } })
+    const wrapper = mountRadio({ checked: false, sfx: { hover: 'ui.focus' } })
     wrapper
       .find('[data-testid="ui-kit-radio"]')
       .element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
-    expect(mockEmitHoverSfx).toHaveBeenCalledWith('type_05', expect.anything())
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.focus')
   })
 
   test('forwards focus sfx to the v-sfx directive [obligation]', async () => {
-    const wrapper = mountRadio({ checked: false, sfx: { focus: 'type_05' } })
+    const wrapper = mountRadio({ checked: false, sfx: { focus: 'ui.focus' } })
     await wrapper.find('[data-testid="ui-kit-radio"]').trigger('focus')
-    expect(mockEmitSfx).toHaveBeenCalledWith('type_05', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.focus')
   })
 })

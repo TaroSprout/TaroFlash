@@ -17,13 +17,13 @@ vi.mock('@/components/member/avatars', () => ({
 const DialogCardStub = defineComponent({
   name: 'DialogCard',
   inheritAttrs: false,
-  props: { close_sfx: { type: Object, default: undefined } },
+  props: { sfx: { type: Object, default: () => ({}) } },
   emits: ['close'],
   setup(props, { slots, attrs }) {
     return () =>
       h(
         'div',
-        { ...attrs, 'data-close-sfx': JSON.stringify(props.close_sfx ?? null) },
+        { ...attrs, 'data-sfx': JSON.stringify(props.sfx) },
         slots.default?.({ viewport: 'desktop' })
       )
   }
@@ -57,15 +57,15 @@ beforeEach(() => {
 })
 
 describe('AvatarPickerModal', () => {
-  test('plays wooden_chime_ring on mount', () => {
+  test('plays dialog.open on mount', () => {
     mountModal()
-    expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('passes close_sfx: { press: "pop_up_close" } to dialog-card', () => {
+  test('passes no sfx override to dialog-card, so it falls back to its own default close cue', () => {
     const wrapper = mountModal()
-    expect(wrapper.find('[data-testid="avatar-picker-modal"]').attributes('data-close-sfx')).toBe(
-      JSON.stringify({ press: 'pop_up_close' })
+    expect(wrapper.find('[data-testid="avatar-picker-modal"]').attributes('data-sfx')).toBe(
+      JSON.stringify({})
     )
   })
 
@@ -76,17 +76,17 @@ describe('AvatarPickerModal', () => {
     expect(wrapper.find('[data-testid="avatar-picker-modal__option-owl"]').exists()).toBe(true)
   })
 
-  test('clicking an avatar that is not selected calls close with that key and plays toggle_on', async () => {
+  test('clicking an avatar that is not selected calls close with that key and plays ui.toggle-on', async () => {
     const close = vi.fn()
     const wrapper = mountModal({ close, selected: 'owl' })
 
     await wrapper.find('[data-testid="avatar-picker-modal__option-panda"]').trigger('click')
 
     expect(close).toHaveBeenCalledWith('panda')
-    expect(mockEmitSfx).toHaveBeenCalledWith('toggle_on')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.toggle-on')
   })
 
-  test('clicking the already-selected avatar is a no-op and plays digi_powerdown', async () => {
+  test('clicking the already-selected avatar is a no-op and plays ui.deselect', async () => {
     const close = vi.fn()
     const wrapper = mountModal({ close, selected: 'owl' })
     mockEmitSfx.mockClear()
@@ -94,7 +94,7 @@ describe('AvatarPickerModal', () => {
     await wrapper.find('[data-testid="avatar-picker-modal__option-owl"]').trigger('click')
 
     expect(close).not.toHaveBeenCalled()
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
   })
 
   test('marks the selected avatar with data-selected', () => {

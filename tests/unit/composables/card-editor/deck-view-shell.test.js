@@ -132,7 +132,7 @@ describe('useDeckViewShell', () => {
   test('setMode plays ui.select chime on a real switch [obligation]', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
-    expect(emitSfxMock).toHaveBeenCalledWith('select')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 
   test('setMode does NOT play ui.select when already in new_mode [obligation]', () => {
@@ -143,8 +143,8 @@ describe('useDeckViewShell', () => {
 
   test('setMode plays an explicit chime when one is passed [obligation]', () => {
     const shell = useDeckViewShell()
-    shell.setMode('edit', 'digi_powerdown')
-    expect(emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
+    shell.setMode('edit', 'ui.deselect')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.deselect')
   })
 
   test('exitMode forwards its chime argument to setMode [obligation]', () => {
@@ -152,9 +152,9 @@ describe('useDeckViewShell', () => {
     shell.setMode('edit')
     emitSfxMock.mockClear()
 
-    shell.exitMode('digi_powerdown')
+    shell.exitMode('ui.deselect')
 
-    expect(emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.deselect')
   })
 
   test('exitMode defaults to the select chime when no chime is passed [obligation]', () => {
@@ -164,7 +164,7 @@ describe('useDeckViewShell', () => {
 
     shell.exitMode()
 
-    expect(emitSfxMock).toHaveBeenCalledWith('select')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 
   test('notifyModeSettled resolves all pending setMode promises [obligation]', async () => {
@@ -273,10 +273,10 @@ describe('useDeckViewShell', () => {
     expect(shell.mode.value).toBe('view') // still view (no mode side-effect)
   })
 
-  test('toggleRearrange emits pop_up_pop when turning ON [obligation]', () => {
+  test('toggleRearrange emits dialog.open when turning ON [obligation]', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange()
-    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_pop')
+    expect(emitSfxMock).toHaveBeenCalledWith('dialog.open')
   })
 
   test('toggleRearrange emits pop_up_close when turning OFF', () => {
@@ -284,7 +284,7 @@ describe('useDeckViewShell', () => {
     shell.toggleRearrange() // on
     emitSfxMock.mockClear()
     shell.toggleRearrange() // off
-    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
+    expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
   })
 
   test('setMode(<non-view>) clears is_rearranging [obligation]', () => {
@@ -471,16 +471,16 @@ describe('useDeckViewShell', () => {
     expect(shell.is_page_settings_open.value).toBe(false)
   })
 
-  test('openPageSettings emits snappy_button_5 [obligation]', () => {
+  test('openPageSettings emits ui.press [obligation]', () => {
     const shell = useDeckViewShell()
     shell.openPageSettings()
-    expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 
-  test('closePageSettings emits snappy_button_5 [obligation]', () => {
+  test('closePageSettings emits ui.press [obligation]', () => {
     const shell = useDeckViewShell()
     shell.closePageSettings()
-    expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 
   test("is_page_settings_open is shared state — one shell instance reflects another's toggle [obligation]", () => {

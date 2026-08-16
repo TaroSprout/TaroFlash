@@ -7,7 +7,10 @@ const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: mockEmitHoverSfx }))
-vi.mock('@/sfx/config', () => ({ TYPE_SFX: [] }))
+vi.mock('@/sfx/config', () => ({
+  SOUNDS: {},
+  BUS_DEFAULTS: { interface: 5, hover: 5 }
+}))
 
 import DropZone from '@/views/deck/card-import/drop-zone.vue'
 import { vSfx } from '@/sfx/directive'
@@ -120,14 +123,14 @@ describe('card-import/drop-zone', () => {
     expect(zone.attributes('data-active')).toBe('true')
   })
 
-  test('clicking browse plays the select sfx and opens the hidden file input', async () => {
+  test('clicking browse plays the ui.select sfx and opens the hidden file input', async () => {
     const wrapper = mount()
     const input = wrapper.find('[data-testid="card-import-drop-zone__input"]')
     const clickSpy = vi.spyOn(input.element, 'click')
 
     await wrapper.find('[data-testid="card-import-drop-zone__browse"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     expect(clickSpy).toHaveBeenCalledOnce()
   })
 

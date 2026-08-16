@@ -111,13 +111,13 @@ describe('ReviewInbox — editing mode disables item interaction [obligation]', 
     })
   })
 
-  test('clicking an item while editing plays digi_powerdown and does not start a study session [obligation]', async () => {
+  test('clicking an item while editing plays ui.rejected and does not start a study session [obligation]', async () => {
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks, true)
 
     await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     expect(studyStartMock).not.toHaveBeenCalled()
   })
 })
@@ -192,16 +192,16 @@ describe('ReviewInbox — clicking an item starts a study session for just that 
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks)
     await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.rejected')
   })
 })
 
 describe('ReviewInbox — clicking an item while editing [obligation]', () => {
-  test('plays digi_powerdown and does not start a study session', async () => {
+  test('plays ui.rejected and does not start a study session', async () => {
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks, true)
     await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     expect(studyStartMock).not.toHaveBeenCalled()
   })
 })

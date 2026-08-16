@@ -527,7 +527,7 @@ describe('LessonView', () => {
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
-    test('transcript dismiss event emits ui.pop_up_close [obligation]', async () => {
+    test('transcript dismiss event emits dialog.close [obligation]', async () => {
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -536,7 +536,7 @@ describe('LessonView', () => {
 
       await wrapper.find('[data-testid="transcript-stub__dismiss"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
+      expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
     })
 
     test('closeTerm alone does NOT emit ui.pop_up_close [obligation]', async () => {
@@ -550,7 +550,7 @@ describe('LessonView', () => {
 
       // closeTermMock was called but sfx was NOT emitted (sfx only in dismissTerm)
       expect(closeTermMock).toHaveBeenCalledOnce()
-      expect(emitSfxMock).not.toHaveBeenCalledWith('pop_up_close')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('dialog.close')
     })
   })
 

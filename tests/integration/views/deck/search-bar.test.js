@@ -189,18 +189,18 @@ describe('search-bar', () => {
     // clear() empties the draft and query, and emits snappy_button_5
     expect(wrapper.find('[data-testid="deck-search-bar__input"]').element.value).toBe('')
     expect(search.query.value).toBe('')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   // ── clear() refocuses input ────────────────────────────────────────────────
 
-  test('clear() emits snappy_button_5 sfx [obligation]', async () => {
+  test('clear() emits ui.press sfx [obligation]', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     await wrapper.find('[data-testid="deck-search-bar__input"]').setValue('text')
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="deck-search-bar__button"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   // ── Enter key submits immediately (bypasses debounce) ─────────────────────

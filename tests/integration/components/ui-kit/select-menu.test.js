@@ -111,16 +111,16 @@ describe('UiSelectMenu', () => {
 
   // ── Sfx [obligation] ──────────────────────────────────────────────────────
 
-  test('picking a different option plays select [obligation]', async () => {
+  test('picking a different option plays ui.select [obligation]', async () => {
     const wrapper = mountSelectMenu({ modelValue: 'default' })
     await wrapper.find('[data-testid="fire-select-alt"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('picking the already-selected option plays digi_powerdown [obligation]', async () => {
+  test('picking the already-selected option plays ui.deselect [obligation]', async () => {
     const wrapper = mountSelectMenu({ modelValue: 'default' })
     await wrapper.find('[data-testid="fire-select"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
   })
 
   // ── size prop [obligation] ────────────────────────────────────────────────

@@ -110,8 +110,8 @@ describe('useReorderDrag — start()', () => {
     expect(result.target_index.value).toBe(2)
   })
 
-  // [obligation] emits generic_button_15 on drag start
-  test('emits generic_button_15 on successful start [obligation]', () => {
+  // [obligation] emits ui.press on drag start
+  test('emits ui.press on successful start [obligation]', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -120,7 +120,7 @@ describe('useReorderDrag — start()', () => {
 
     result.start(1, pointerEvent('pointerdown', { button: 0, clientY: 100 }))
 
-    expect(emitSfxMock).toHaveBeenCalledWith('generic_button_15')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
     expect(emitSfxMock).toHaveBeenCalledTimes(1)
   })
 })
@@ -161,7 +161,7 @@ describe('useReorderDrag — hysteresis', () => {
     moveTo(66)
 
     expect(result.target_index.value).toBe(2)
-    expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
+    expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     expect(emitSfxMock).toHaveBeenCalledTimes(1)
   })
 
@@ -186,7 +186,7 @@ describe('useReorderDrag — hysteresis', () => {
     moveTo(34)
 
     expect(result.target_index.value).toBe(1)
-    expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
+    expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     expect(emitSfxMock).toHaveBeenCalledTimes(1)
   })
 
@@ -213,7 +213,7 @@ describe('useReorderDrag — sfx contract', () => {
 
     pointerUp()
 
-    expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_5')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 
   // [obligation] tap_05 only when target_index changes between two non-null slots
@@ -230,8 +230,8 @@ describe('useReorderDrag — sfx contract', () => {
     moveTo(66) // crosses into slot 1 → one tap_05
     pointerUp()
 
-    const tap_calls = emitSfxMock.mock.calls.filter((c) => c[0] === 'tap_05')
-    const drop_calls = emitSfxMock.mock.calls.filter((c) => c[0] === 'snappy_button_5')
+    const tap_calls = emitSfxMock.mock.calls.filter((c) => c[0] === 'gesture.tick')
+    const drop_calls = emitSfxMock.mock.calls.filter((c) => c[0] === 'ui.press')
     expect(tap_calls).toHaveLength(1)
     expect(drop_calls).toHaveLength(1)
   })

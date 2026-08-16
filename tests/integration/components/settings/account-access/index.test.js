@@ -139,15 +139,15 @@ describe('AccountAccessModal — header title reflects content.title [obligation
 })
 
 describe('AccountAccessModal — sfx [obligation]', () => {
-  test('plays wooden_chime_ring on mount [obligation]', () => {
+  test('plays dialog.open on mount [obligation]', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('plays pop_up_close on unmount [obligation]', () => {
+  test('plays dialog.close on unmount [obligation]', () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
     wrapper.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 })

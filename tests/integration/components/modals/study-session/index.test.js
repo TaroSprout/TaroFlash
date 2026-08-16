@@ -441,7 +441,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
     })
 
-    test('pressing it calls enterSelection when not already selecting, and plays the select sfx [obligation]', async () => {
+    test('pressing it calls enterSelection when not already selecting, and plays the ui.select sfx [obligation]', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -451,10 +451,10 @@ describe('StudySession (index.vue)', () => {
 
       expect(mockEnterSelection).toHaveBeenCalledOnce()
       expect(mockExitSelection).not.toHaveBeenCalled()
-      expect(mockEmitSfx).toHaveBeenCalledWith('select')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     })
 
-    test('pressing it calls exitSelection while already selecting, and plays digi_powerdown [obligation]', async () => {
+    test('pressing it calls exitSelection while already selecting, and plays ui.deselect [obligation]', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -466,7 +466,7 @@ describe('StudySession (index.vue)', () => {
 
       expect(mockExitSelection).toHaveBeenCalledOnce()
       expect(mockEnterSelection).not.toHaveBeenCalled()
-      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
     })
   })
 
@@ -559,7 +559,7 @@ describe('StudySession (index.vue)', () => {
       await wrapper.find('[data-testid="session-header__close"]').trigger('click')
 
       expect(mockRequestClose).not.toHaveBeenCalled()
-      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+      expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
       expect(mockClearPersistedSession).toHaveBeenCalledOnce()
       expect(close).toHaveBeenCalledOnce()
     })
@@ -575,7 +575,7 @@ describe('StudySession (index.vue)', () => {
 
       request_close_handlers.get(TEST_MODAL_ID)()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+      expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
       expect(mockClearPersistedSession).toHaveBeenCalledOnce()
       expect(close).toHaveBeenCalledOnce()
       expect(mockCloseSettings).not.toHaveBeenCalled()
@@ -634,7 +634,7 @@ describe('StudySession (index.vue)', () => {
       request_close_handlers.get(TEST_MODAL_ID)()
 
       expect(mockRequestClose).not.toHaveBeenCalled()
-      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+      expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
       expect(mockClearPersistedSession).toHaveBeenCalledOnce()
       expect(close).toHaveBeenCalledOnce()
     })
@@ -738,7 +738,7 @@ describe('StudySession (index.vue)', () => {
     await finishSession([])
     await wrapper.find('[data-testid="session-summary__close"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
     expect(mockClearPersistedSession).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledOnce()
   })
@@ -799,13 +799,13 @@ describe('StudySession (index.vue)', () => {
 
   // ── emitStudySfx fires in pane enter's onStart, not at phase-flip [obligation] ─
 
-  test('music_pizz_duo_hi sfx is NOT emitted directly when state flips to summary [obligation]', async () => {
+  test('session.complete sfx is NOT emitted directly when state flips to summary [obligation]', async () => {
     const { wrapper } = makeWrapper()
 
     await finishSession([])
 
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(true)
-    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
+    expect(mockEmitStudySfx).not.toHaveBeenCalledWith('session.complete')
   })
 
   // ── Jingle fires only on first summary entry [obligation] ─────────────────
@@ -820,8 +820,8 @@ describe('StudySession (index.vue)', () => {
     const pager = wrapper.findComponent({ name: 'DialogCardPager' })
     pager.vm.$emit('enter-start')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('session.complete')
   })
 
   test('the pager is not instant on the first arrival at the summary, and enter-start plays the jingle [obligation]', async () => {
@@ -832,7 +832,7 @@ describe('StudySession (index.vue)', () => {
     expect(pager.props('instant')).toBe(false)
 
     pager.vm.$emit('enter-start')
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_pizz_duo_hi')
+    expect(mockEmitSfx).toHaveBeenCalledWith('session.complete')
   })
 
   test('returning to the summary from a category page is instant and enter-start plays the light click, not the jingle again [obligation]', async () => {
@@ -854,8 +854,8 @@ describe('StudySession (index.vue)', () => {
     expect(pager.props('instant')).toBe(true)
 
     pager.vm.$emit('enter-start')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_pizz_duo_hi')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('session.complete')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   // ── regression: outlet must not clip the swipe/drag animation ──────────────

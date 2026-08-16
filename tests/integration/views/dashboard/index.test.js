@@ -319,14 +319,14 @@ describe('DashboardIndex — edit-decks toggle', () => {
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
   })
 
-  test('emits pop_up_pop sfx when editing_decks flips true, and pop_up_close when it flips false [obligation]', async () => {
+  test('emits dialog.open sfx when editing_decks flips true, and dialog.close when it flips false [obligation]', async () => {
     const wrapper = mountDashboard()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
 
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 })
 

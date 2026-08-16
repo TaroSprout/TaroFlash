@@ -1,7 +1,6 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
-import { TYPE_SFX } from '@/sfx/config'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -366,21 +365,21 @@ describe('DeckThumbnail', () => {
   // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
 
   describe('sfx prop — default + override [obligation]', () => {
-    test('passes { hover: TYPE_SFX } to UiTappable when sfx prop is omitted', () => {
+    test('passes { hover: "ui.hover" } to UiTappable when sfx prop is omitted', () => {
       const wrapper = mountWithDeck()
       const sfx = wrapper.findComponent(UiTappableStub).props('sfx')
-      expect(sfx).toEqual({ hover: TYPE_SFX })
+      expect(sfx).toEqual({ hover: 'ui.hover' })
     })
 
     test('merges caller sfx over the default so both hover and custom key are present', () => {
-      const wrapper = mount({ deck: { title: 'X' }, sfx: { press: 'card_drop' } })
+      const wrapper = mount({ deck: { title: 'X' }, sfx: { press: 'ui.press' } })
       const sfx = wrapper.findComponent(UiTappableStub).props('sfx')
-      expect(sfx.hover).toEqual(TYPE_SFX)
-      expect(sfx.press).toBe('card_drop')
+      expect(sfx.hover).toEqual('ui.hover')
+      expect(sfx.press).toBe('ui.press')
     })
 
-    test('caller-supplied hover overrides the TYPE_SFX default', () => {
-      const custom_hover = ['click_04']
+    test('caller-supplied hover overrides the default', () => {
+      const custom_hover = 'ui.select'
       const wrapper = mount({ deck: { title: 'X' }, sfx: { hover: custom_hover } })
       const sfx = wrapper.findComponent(UiTappableStub).props('sfx')
       expect(sfx.hover).toEqual(custom_hover)

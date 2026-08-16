@@ -81,13 +81,13 @@ beforeEach(() => {
 describe('useChangeCard — mount/unmount chimes', () => {
   test('[obligation] plays wooden_chime_ring on mount', () => {
     withSetup(() => useChangeCard(vi.fn()))
-    expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('[obligation] plays pop_up_close on unmount', () => {
     withSetup(() => useChangeCard(vi.fn()))
     app.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 })
 

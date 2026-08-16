@@ -41,7 +41,7 @@ describe('useFeedbackModal — call shape [obligation]', () => {
     const { open } = useFeedbackModal()
     open()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('plays pop_up_close sfx once the modal resolves', async () => {
@@ -57,7 +57,7 @@ describe('useFeedbackModal — call shape [obligation]', () => {
     resolve(undefined)
     await response
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
   test('returns the result of modal.open unchanged', () => {

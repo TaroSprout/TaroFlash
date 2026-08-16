@@ -223,9 +223,9 @@ describe('UiTextarea — sfx', () => {
     mockEmitSfx.mockReset()
   })
 
-  test('plays type_05 sfx when the <textarea> receives focus [obligation]', async () => {
+  test('plays ui.focus sfx when the <textarea> receives focus [obligation]', async () => {
     const wrapper = mountTextareaWithSfx()
     await wrapper.find('textarea').trigger('focus')
-    expect(mockEmitSfx).toHaveBeenCalledWith('type_05', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.focus')
   })
 })

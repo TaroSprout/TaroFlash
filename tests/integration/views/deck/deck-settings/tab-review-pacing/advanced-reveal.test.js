@@ -86,12 +86,12 @@ describe('AdvancedReveal — toggling flips persistence [obligation]', () => {
     expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('false')
   })
 
-  test('toggling plays the snappy_button_5 sfx', async () => {
+  test('toggling plays the ui.press sfx', async () => {
     const { wrapper } = makeWrapper()
 
     await wrapper.find('[data-testid="advanced-reveal__scrim"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('calls popScrimReveal with revealed=true on the reveal click', async () => {

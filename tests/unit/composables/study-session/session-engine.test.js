@@ -313,11 +313,11 @@ describe('per-card flip [obligation]', () => {
 
     mockEmitSfx.mockClear()
     engine.flipCurrentCard() // fired while still on the starting side ('back')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
 
     mockEmitSfx.mockClear()
     engine.flipCurrentCard() // fired while off the starting side ('front')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
   })
 })
 
@@ -830,17 +830,17 @@ describe('updateCard', () => {
 })
 
 describe('flipCurrentCard sfx', () => {
-  test('emits transition_up when flipping away from the starting side, transition_down when flipping back', () => {
+  test('emits card.flip-away when flipping away from the starting side, card.flip-back when flipping back', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 901, deck_id: 1 })])
     engine.startSession()
 
     mockEmitSfx.mockClear()
     engine.flipCurrentCard()
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
 
     mockEmitSfx.mockClear()
     engine.flipCurrentCard()
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
   })
 })

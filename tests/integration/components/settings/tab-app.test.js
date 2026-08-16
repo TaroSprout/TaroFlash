@@ -8,7 +8,6 @@ import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
 // Break config→player→config circular dep.
 vi.mock('@/sfx/config', () => ({
-  TYPE_SFX: [],
   SOUNDS: {},
   BUS_DEFAULTS: { interface: 5, hover: 5 }
 }))
@@ -29,7 +28,7 @@ vi.mock('@/sfx/player', () => ({
 const SliderStub = defineComponent({
   name: 'UiSlider',
   inheritAttrs: false,
-  props: { modelValue: Number, min: Number, max: Number, sfx: Object, label: String },
+  props: { modelValue: Number, min: Number, max: Number, preview_bus: String, label: String },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
     const attrs = useAttrs()
@@ -38,7 +37,7 @@ const SliderStub = defineComponent({
         ...attrs,
         'data-testid': 'slider-stub',
         'data-value': String(props.modelValue),
-        'data-bus': props.sfx?.bus ?? '',
+        'data-bus': props.preview_bus ?? '',
         onClick: () => emit('update:modelValue', (props.modelValue ?? 0) + 1)
       })
   }

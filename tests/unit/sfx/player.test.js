@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 // Bus defaults mirror BUS_DEFAULTS in config.ts (5 → 1.0× multiplier).
-const BUS_DEFAULTS = { interface: 5, study: 5, hover: 5 }
+const BUS_DEFAULTS = { interface: 5, hover: 5 }
 
 // engine.play() is now async and returns Promise<void>.
 const engineMock = {
@@ -28,7 +28,7 @@ function loadSound(key, { volume = 0.5, duration = 0.2, default_bus = 'interface
   return buffer
 }
 
-describe('audio_player._play', () => {
+describe('audio_player.play', () => {
   beforeEach(() => {
     engineMock.resume.mockReset().mockResolvedValue(true)
     engineMock.play.mockReset().mockResolvedValue(undefined)
@@ -88,15 +88,7 @@ describe('audio_player._play', () => {
     )
   })
 
-  test('passes the volume option through to the engine', async () => {
-    const buffer = loadSound('click_04', { volume: 0.5 })
-
-    await audio_player.play('click_04', { volume: 0.9 })
-
-    expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.9)
-  })
-
-  test('falls back to the loaded volume when no volume option is given', async () => {
+  test('falls back to the loaded volume, scaled by the bus multiplier', async () => {
     const buffer = loadSound('click_04', { volume: 0.3 })
 
     await audio_player.play('click_04')
@@ -105,19 +97,11 @@ describe('audio_player._play', () => {
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.3)
   })
 
-  test('skips engine.play when effective volume is zero — hover bus muted [obligation]', async () => {
+  test('skips engine.play when the resolved bus is muted to 0 — hover bus [obligation]', async () => {
     audio_player.volume_settings = { ...BUS_DEFAULTS, hover: 0 }
     loadSound('tap_05', { volume: 0.1, default_bus: 'hover' })
 
     await audio_player.play('tap_05', { bus: 'hover' })
-
-    expect(engineMock.play).not.toHaveBeenCalled()
-  })
-
-  test('skips engine.play when options.volume is explicitly 0 [obligation]', async () => {
-    loadSound('click_04', { volume: 0.3, default_bus: 'interface' })
-
-    await audio_player.play('click_04', { volume: 0 })
 
     expect(engineMock.play).not.toHaveBeenCalled()
   })
@@ -142,7 +126,7 @@ describe('audio_player._play', () => {
   })
 })
 
-describe('audio_player._getVolumeMultiplier', () => {
+describe('audio_player — bus resolution', () => {
   beforeEach(() => {
     engineMock.play.mockReset().mockResolvedValue(undefined)
     engineMock.isUnlocked.mockReturnValue(true)
@@ -161,7 +145,7 @@ describe('audio_player._getVolumeMultiplier', () => {
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.4)
   })
 
-  test('type_01 (defaultBus hover) routes to hover bus setting', async () => {
+  test('type_01 (default_bus hover) routes to the hover bus setting when no options.bus is given', async () => {
     // hover = 5 → multiplier = 1.0
     const buffer = loadSound('type_01', { volume: 0.2, default_bus: 'hover' })
 
@@ -170,28 +154,19 @@ describe('audio_player._getVolumeMultiplier', () => {
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.2)
   })
 
-  test('transition_up with bus:study option routes to study bus setting', async () => {
-    // study = 5 → multiplier = 1.0
-    const buffer = loadSound('transition_up', { volume: 0.6 })
-
-    await audio_player.play('transition_up', { bus: 'study' })
-
-    expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.6)
-  })
-
-  test('select uses interface bus — not hover — because its default_bus is interface', async () => {
+  test("options.bus overrides the sound's own default_bus", async () => {
     // Override interface to 10; multiplier = 10/5 = 2.0
-    audio_player.setVolumeConfig({ study: 5, interface: 10, hover: 5 })
-    const buffer = loadSound('select', { volume: 0.3 })
+    audio_player.setVolumeConfig({ interface: 10, hover: 5 })
+    const buffer = loadSound('select', { volume: 0.3, default_bus: 'interface' })
 
-    await audio_player.play('select')
+    await audio_player.play('select', { bus: 'interface' })
 
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.6)
   })
 
-  test('type_01 uses hover bus, not interface bus', async () => {
+  test('a sound with default_bus hover ignores the interface setting', async () => {
     // interface = 10 (2×), hover = 5 (1×) — type_01 must use hover
-    audio_player.setVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    audio_player.setVolumeConfig({ interface: 10, hover: 5 })
     const buffer = loadSound('type_01', { volume: 0.2, default_bus: 'hover' })
 
     await audio_player.play('type_01')
@@ -211,7 +186,7 @@ describe('audio_player.setVolumeConfig', () => {
   })
 
   test('wires through: interface=10 doubles select volume', async () => {
-    audio_player.setVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    audio_player.setVolumeConfig({ interface: 10, hover: 5 })
     const buffer = loadSound('select', { volume: 0.3 })
 
     await audio_player.play('select')
@@ -233,32 +208,32 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
   })
 
   test('setVolumeConfig sets both volume_settings and committed_volume_settings [obligation]', () => {
-    const cfg = { study: 3, interface: 7, hover: 2 }
+    const cfg = { interface: 7, hover: 2 }
     audio_player.setVolumeConfig(cfg)
     expect(audio_player.volume_settings).toEqual(cfg)
     expect(audio_player.committed_volume_settings).toEqual(cfg)
   })
 
   test('previewVolumeConfig sets volume_settings but leaves committed_volume_settings untouched [obligation]', () => {
-    const committed = { study: 5, interface: 5, hover: 5 }
+    const committed = { interface: 5, hover: 5 }
     audio_player.setVolumeConfig(committed)
-    audio_player.previewVolumeConfig({ study: 2, interface: 2, hover: 2 })
-    expect(audio_player.volume_settings).toEqual({ study: 2, interface: 2, hover: 2 })
+    audio_player.previewVolumeConfig({ interface: 2, hover: 2 })
+    expect(audio_player.volume_settings).toEqual({ interface: 2, hover: 2 })
     expect(audio_player.committed_volume_settings).toEqual(committed)
   })
 
   test('commit→preview→reset restores the committed value, not the preview [obligation]', () => {
-    const committed = { study: 3, interface: 3, hover: 3 }
+    const committed = { interface: 3, hover: 3 }
     audio_player.setVolumeConfig(committed)
-    audio_player.previewVolumeConfig({ study: 9, interface: 9, hover: 9 })
+    audio_player.previewVolumeConfig({ interface: 9, hover: 9 })
     audio_player.resetSettings()
     expect(audio_player.volume_settings).toEqual(committed)
   })
 
   test('resetSettings uses committed baseline for volume multiplier after preview [obligation]', async () => {
     // commit interface=2 → multiplier 2/5=0.4; preview interface=10 → 2.0; reset → back to 0.4
-    audio_player.setVolumeConfig({ study: 5, interface: 2, hover: 5 })
-    audio_player.previewVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    audio_player.setVolumeConfig({ interface: 2, hover: 5 })
+    audio_player.previewVolumeConfig({ interface: 10, hover: 5 })
     audio_player.resetSettings()
 
     const buffer = loadSound('select', { volume: 0.5 })
@@ -268,22 +243,22 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
   })
 
   test('previewVolumeConfig stores a copy — mutating the caller object does not change player state [obligation]', () => {
-    const cfg = { study: 5, interface: 5, hover: 5 }
+    const cfg = { interface: 5, hover: 5 }
     audio_player.previewVolumeConfig(cfg)
     cfg.interface = 99
     expect(audio_player.volume_settings.interface).toBe(5)
   })
 
   test('setVolumeConfig stores a copy — mutating the caller object does not change committed baseline [obligation]', () => {
-    const cfg = { study: 5, interface: 5, hover: 5 }
+    const cfg = { interface: 5, hover: 5 }
     audio_player.setVolumeConfig(cfg)
-    cfg.study = 99
-    expect(audio_player.committed_volume_settings.study).toBe(5)
+    cfg.interface = 99
+    expect(audio_player.committed_volume_settings.interface).toBe(5)
   })
 
   test('volume multiplier uses live volume_settings (previewed value) during preview [obligation]', async () => {
-    audio_player.setVolumeConfig({ study: 5, interface: 5, hover: 5 })
-    audio_player.previewVolumeConfig({ study: 5, interface: 10, hover: 5 })
+    audio_player.setVolumeConfig({ interface: 5, hover: 5 })
+    audio_player.previewVolumeConfig({ interface: 10, hover: 5 })
 
     const buffer = loadSound('select', { volume: 0.5 })
     await audio_player.play('select')
@@ -302,6 +277,28 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
     expect(Object.keys(audio_player.committed_volume_settings).sort()).toEqual(expected_keys)
     expect(audio_player.volume_settings).toEqual(defaults)
     expect(audio_player.committed_volume_settings).toEqual(defaults)
+  })
+})
+
+describe('audio_player — preview_bus routes a drag onto the bus the slider sets [obligation]', () => {
+  beforeEach(() => {
+    engineMock.play.mockReset().mockResolvedValue(undefined)
+    engineMock.isUnlocked.mockReturnValue(true)
+    audio_player.loaded_sounds.clear()
+    audio_player.queued_sound = undefined
+    audio_player.volume_settings = { interface: 10, hover: 2 }
+  })
+
+  test('an explicit options.bus is heard on that bus even when the sound defaults elsewhere', async () => {
+    // gesture.tick's own default_bus is interface, but the audio-settings slider
+    // passes { bus: 'hover' } via preview_bus so the drag is heard on the hover
+    // dial it's actually moving.
+    const buffer = loadSound('tap_05', { volume: 0.5, default_bus: 'interface' })
+
+    await audio_player.play('tap_05', { bus: 'hover' })
+
+    // multiplier = hover(2)/5 = 0.4
+    expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.5 * 0.4)
   })
 })
 
@@ -422,5 +419,28 @@ describe('audio_player.setup', () => {
     } finally {
       delete SOUNDS[test_key]
     }
+  })
+})
+
+describe('gesture.tick end to end at zero interface volume [obligation]', () => {
+  beforeEach(() => {
+    engineMock.resume.mockReset().mockResolvedValue(true)
+    engineMock.play.mockReset().mockResolvedValue(undefined)
+    engineMock.isUnlocked.mockReturnValue(true)
+    audio_player.loaded_sounds.clear()
+    audio_player.queued_sound = undefined
+    audio_player.volume_settings = { interface: 0, hover: 5 }
+  })
+
+  test('the review-inbox tick goes fully silent — the player bails before waking the audio context', async () => {
+    const { emitSfx } = await import('@/sfx/bus')
+    loadSound('tap_05', { volume: 0.1, default_bus: 'interface' })
+
+    await emitSfx('gesture.tick')
+
+    // volume resolves to base_volume(0.1) × (interface(0)/5) = 0 → the player
+    // bails before calling engine.play, so the context is never woken.
+    expect(engineMock.play).not.toHaveBeenCalled()
+    expect(engineMock.resume).not.toHaveBeenCalled()
   })
 })

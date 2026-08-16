@@ -164,16 +164,16 @@ describe('useLessonReader', () => {
       expect(reader.popover_open.value).toBe(true)
     })
 
-    test('openTerm emits ui.pop_up_pop on every call [obligation]', () => {
+    test('openTerm emits dialog.open on every call [obligation]', () => {
       let reader
       ;[reader, app] = withReader()
       const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
 
       reader.openTerm(term)
-      expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
+      expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
     })
 
-    test('openTerm emits ui.pop_up_pop on re-tap [obligation]', () => {
+    test('openTerm emits dialog.open on re-tap [obligation]', () => {
       let reader
       ;[reader, app] = withReader()
       const term = { term: 'world', sentence: 'Hello world.', rect: new DOMRect() }
@@ -182,7 +182,7 @@ describe('useLessonReader', () => {
       reader.openTerm(term)
 
       expect(mockEmitSfx).toHaveBeenCalledTimes(2)
-      expect(mockEmitSfx.mock.calls.every((c) => c[0] === 'pop_up_pop')).toBe(true)
+      expect(mockEmitSfx.mock.calls.every((c) => c[0] === 'dialog.open')).toBe(true)
     })
 
     test('openTerm never opens a global modal [obligation]', () => {

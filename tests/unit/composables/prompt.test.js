@@ -28,7 +28,7 @@ describe('usePrompt — ask()', () => {
   test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create' })
-    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
   test('calls emitSfx with the provided openAudio when supplied', () => {
@@ -43,7 +43,7 @@ describe('usePrompt — ask()', () => {
     expect(mockOpen).toHaveBeenCalledWith(
       anyComponent,
       expect.objectContaining({
-        props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
+        props: expect.objectContaining({ cancelAudio: 'dialog.dismiss' })
       })
     )
   })

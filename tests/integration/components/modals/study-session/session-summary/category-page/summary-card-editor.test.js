@@ -74,7 +74,7 @@ describe('SummaryCardEditor', () => {
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
       'back'
     )
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
   test('flipping twice returns to the front and plays the opposite sfx [obligation]', async () => {
@@ -87,7 +87,7 @@ describe('SummaryCardEditor', () => {
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
       'front'
     )
-    expect(mockEmitSfx).toHaveBeenLastCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenLastCalledWith('card.flip-back')
   })
 
   // ── update forwarding ─────────────────────────────────────────────────────
@@ -106,6 +106,6 @@ describe('SummaryCardEditor', () => {
     await wrapper.find('[data-testid="session-summary__card-editor-done"]').trigger('click')
 
     expect(wrapper.emitted('done')).toHaveLength(1)
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
   })
 })

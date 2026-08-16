@@ -125,16 +125,16 @@ describe('FeedbackCard — vote toggle', () => {
     expect(mockMutateAsync).toHaveBeenCalledWith(42)
   })
 
-  test('plays generic_notification_9 sfx when voting for the first time', async () => {
+  test('plays notice.info sfx when voting for the first time', async () => {
     const wrapper = mountCard({ voted_by_me: false })
     await wrapper.find('[data-testid="feedback-card__vote"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('generic_notification_9')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.info')
   })
 
-  test('plays toggle_off sfx when un-voting [obligation]', async () => {
+  test('plays ui.toggle-off sfx when un-voting [obligation]', async () => {
     const wrapper = mountCard({ voted_by_me: true })
     await wrapper.find('[data-testid="feedback-card__vote"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('toggle_off')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.toggle-off')
   })
 
   test('shows a burst effect when voting for the first time', async () => {

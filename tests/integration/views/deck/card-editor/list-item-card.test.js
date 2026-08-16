@@ -194,15 +194,15 @@ describe('ListItemCard', () => {
     return { card, editor }
   }
 
-  test('emits ui.slide_up when a card is activated from outside every card (relatedTarget null)', async () => {
+  test('emits nav.page-forward when a card is activated from outside every card (relatedTarget null)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('nav.page-forward')
     wrapper.unmount()
   })
 
-  test('emits ui.slide_up when focus enters from an element outside every card', async () => {
+  test('emits nav.page-forward when focus enters from an element outside every card', async () => {
     const external = document.createElement('div')
     document.body.appendChild(external)
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
@@ -210,12 +210,12 @@ describe('ListItemCard', () => {
     contenteditable.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: external })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('nav.page-forward')
     external.remove()
     wrapper.unmount()
   })
 
-  test('emits ui.click_04 when focus moves within the card (between sides)', async () => {
+  test('emits gesture.tick when focus moves within the card (between sides)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const first_editor = wrapper.find('[data-testid="front-input"]').element
     const second_editor = wrapper.find('[data-testid="back-input"]').element
@@ -223,18 +223,18 @@ describe('ListItemCard', () => {
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('click_04')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     wrapper.unmount()
   })
 
-  test('emits ui.click_04 when focus moves in from another card', async () => {
+  test('emits gesture.tick when focus moves in from another card', async () => {
     const other = makeOtherCardEditor()
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: other.editor })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('click_04')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     other.card.remove()
     wrapper.unmount()
   })
@@ -251,48 +251,48 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('emits ui.card_drop when an editor blurs to outside every card', async () => {
+  test('emits dialog.close when an editor blurs to outside every card', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: null })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('card_drop')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('dialog.close')
     wrapper.unmount()
   })
 
-  test('does NOT emit ui.card_drop when a non-contenteditable element blurs to outside every card', async () => {
+  test('does NOT emit dialog.close when a non-contenteditable element blurs to outside every card', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     // A non-contenteditable element (e.g. the image button) losing focus must not trigger the drop sfx.
     const button = document.createElement('button')
     wrapper.element.appendChild(button)
     button.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }))
     // e.target.isContentEditable is false → card_drop guard skipped
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('dialog.close')
     button.remove()
     wrapper.unmount()
   })
 
-  test('does NOT emit ui.card_drop when focus moves out to another card', async () => {
+  test('does NOT emit dialog.close when focus moves out to another card', async () => {
     const other = makeOtherCardEditor()
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="front-input"]').element
     contenteditable.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: other.editor })
     )
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('dialog.close')
     other.card.remove()
     wrapper.unmount()
   })
 
-  test('does NOT emit ui.card_drop when focus stays within the card (between sides)', async () => {
+  test('does NOT emit dialog.close when focus stays within the card (between sides)', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const first_editor = wrapper.find('[data-testid="front-input"]').element
     const second_editor = wrapper.find('[data-testid="back-input"]').element
     first_editor.dispatchEvent(
       new FocusEvent('focusout', { bubbles: true, relatedTarget: second_editor })
     )
-    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('card_drop')
+    expect(mocks.emitSfxMock).not.toHaveBeenCalledWith('dialog.close')
     wrapper.unmount()
   })
 
@@ -332,7 +332,7 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('focusout with relatedTarget inside the card keeps focused true, so the next focusin emits click_04', async () => {
+  test('focusout with relatedTarget inside the card keeps focused true, so the next focusin emits gesture.tick', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const first_editor = wrapper.find('[data-testid="front-input"]').element
     const second_editor = wrapper.find('[data-testid="back-input"]').element
@@ -347,7 +347,7 @@ describe('ListItemCard', () => {
     second_editor.dispatchEvent(
       new FocusEvent('focusin', { bubbles: true, relatedTarget: first_editor })
     )
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('click_04')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     wrapper.unmount()
   })
 
@@ -362,7 +362,7 @@ describe('ListItemCard', () => {
     )
     mocks.emitSfxMock.mockReset()
     contenteditable.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: null }))
-    expect(mocks.emitSfxMock).toHaveBeenCalledWith('slide_up')
+    expect(mocks.emitSfxMock).toHaveBeenCalledWith('nav.page-forward')
     wrapper.unmount()
   })
 

@@ -1000,7 +1000,7 @@ describe('useCardListController', () => {
       const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
       const ctrl = makeController([], [], undefined, makeShell({ setMode }))
       await ctrl.newCard()
-      expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_2')
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
     })
 
     test('emits the add chime on non-empty deck path too [obligation]', async () => {
@@ -1008,7 +1008,7 @@ describe('useCardListController', () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
       await ctrl.newCard()
-      expect(emitSfxMock).toHaveBeenCalledWith('snappy_button_2')
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
     })
 
     test('stages the new card at index 0 when deck is non-empty [obligation]', async () => {

@@ -279,7 +279,7 @@ describe('settings app — active_page is a plain, non-persisted ref [obligation
 // ── Back navigation ───────────────────────────────────────────────────────────
 
 describe('settings app — back navigation', () => {
-  test('onBack clears the active tab and plays the snappy_button_5 sfx', async () => {
+  test('onBack clears the active tab and plays the ui.press sfx', async () => {
     const wrapper = makeWrapper()
     await flushPromises()
     await wrapper.find('[data-testid="pw__select-account-access"]').trigger('click')
@@ -288,7 +288,7 @@ describe('settings app — back navigation', () => {
     await wrapper.vm.onBack()
 
     expect(wrapper.vm.active_page).toBe(null)
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('the paged-window back emit routes to onChromeBack, clearing the active tab', async () => {
@@ -317,7 +317,7 @@ describe('settings app — onChromeBack delegates to the active tab first [oblig
     await wrapper.vm.onChromeBack()
 
     expect(wrapper.vm.active_page).toBe(null)
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('stays on the tab when the active tab onChromeBack returns true (handled locally)', async () => {
@@ -332,7 +332,7 @@ describe('settings app — onChromeBack delegates to the active tab first [oblig
     expect(mockAccountAccessOnChromeBack).toHaveBeenCalledOnce()
     expect(wrapper.vm.active_page).toBe('account-access')
     // Sound still plays even when a nested tab handles its own back-navigation.
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 })
 
@@ -388,16 +388,16 @@ describe('settings app — close with unsaved-changes guard', () => {
 // ── Open / close sfx ──────────────────────────────────────────────────────────
 
 describe('settings app — open/close sfx', () => {
-  test('emits snappy_button_3 on mount', () => {
+  test('emits dialog.open on mount', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('emits pop_up_close on unmount', () => {
+  test('emits dialog.close on unmount', () => {
     const wrapper = makeWrapper()
     mockEmitSfx.mockReset()
     wrapper.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 })
 

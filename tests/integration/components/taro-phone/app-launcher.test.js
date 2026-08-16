@@ -123,7 +123,7 @@ describe('AppLauncher — mouse hover tracking', () => {
     mockEmitHoverSfx.mockClear()
     wrapper.find('[data-app="DarkmodeApp"]').trigger('mouseover')
 
-    expect(mockEmitHoverSfx).toHaveBeenCalledWith('pop_drip_mid')
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
   })
 
   test('hovering the already-focused app is a no-op', () => {

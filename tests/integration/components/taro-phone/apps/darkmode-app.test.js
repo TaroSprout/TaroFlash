@@ -40,9 +40,9 @@ describe('DarkmodeApp — theme cycling [obligation]', () => {
     expect(theme_store.mode).toBe('light')
   })
 
-  test('plays the select sfx on click', async () => {
+  test('plays the ui.select sfx on click', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="phone-app"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 })

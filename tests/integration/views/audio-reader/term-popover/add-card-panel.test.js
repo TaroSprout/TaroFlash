@@ -244,17 +244,17 @@ describe('AddCardPanel', () => {
       expect(wrapper.findComponent(CardFaceFieldStub).props('side')).toBe('front')
     })
 
-    test('flipping to back emits ui.transition_up [obligation]', async () => {
+    test('flipping to back emits card.flip-away [obligation]', async () => {
       const wrapper = mountPanel()
       emitSfxMock.mockClear()
 
       // Start on front; flip to back
       await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('transition_up')
+      expect(emitSfxMock).toHaveBeenCalledWith('card.flip-away')
     })
 
-    test('flipping to front emits ui.transition_down [obligation]', async () => {
+    test('flipping to front emits card.flip-back [obligation]', async () => {
       const wrapper = mountPanel()
 
       // Flip to back first, then back to front
@@ -262,12 +262,12 @@ describe('AddCardPanel', () => {
       emitSfxMock.mockClear()
       await wrapper.find('[data-testid="add-card-panel__flip-button"]').trigger('click')
 
-      expect(emitSfxMock).toHaveBeenCalledWith('transition_down')
+      expect(emitSfxMock).toHaveBeenCalledWith('card.flip-back')
     })
   })
 
   describe('focus cue [obligation]', () => {
-    test('focusin on a contenteditable target emits ui.slide_up [obligation]', async () => {
+    test('focusin on a contenteditable target emits nav.page-forward [obligation]', async () => {
       const wrapper = mountPanel()
       emitSfxMock.mockClear()
 
@@ -280,7 +280,7 @@ describe('AddCardPanel', () => {
       editable.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
       await wrapper.vm.$nextTick()
 
-      expect(emitSfxMock).toHaveBeenCalledWith('slide_up')
+      expect(emitSfxMock).toHaveBeenCalledWith('nav.page-forward')
       editable.remove()
     })
 
@@ -296,7 +296,7 @@ describe('AddCardPanel', () => {
       button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
       await wrapper.vm.$nextTick()
 
-      expect(emitSfxMock).not.toHaveBeenCalledWith('slide_up')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('nav.page-forward')
       button.remove()
     })
   })

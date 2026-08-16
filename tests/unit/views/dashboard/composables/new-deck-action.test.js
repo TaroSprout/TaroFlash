@@ -74,11 +74,11 @@ describe('useNewDeckAction', () => {
     expect(mockCreateDeck).toHaveBeenCalledTimes(1)
   })
 
-  test('emits pop_up_pop sfx when a new deck creation starts', async () => {
+  test('emits dialog.open sfx when a new deck creation starts', async () => {
     const { createNewDeck } = useNewDeckAction()
 
     await createNewDeck()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_pop')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 })

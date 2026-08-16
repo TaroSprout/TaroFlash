@@ -696,7 +696,7 @@ describe('useDeckEditor', () => {
       editor.setActiveSide('front')
 
       expect(editor.active_side.value).toBe('front')
-      expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+      expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-forward')
       unmount()
     })
 

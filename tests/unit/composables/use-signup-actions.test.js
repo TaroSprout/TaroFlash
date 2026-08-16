@@ -132,7 +132,7 @@ describe('useSignupActions', () => {
     test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
       const auth = useSignupActions()
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     })
 
     test('sets tried_submit so errors populate [obligation]', async () => {
@@ -246,7 +246,7 @@ describe('useSignupActions', () => {
       const auth = useSignupActions()
       fillValidFields(auth)
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
     test('does NOT fire Signup Completed when the email is already taken [obligation]', async () => {
@@ -295,7 +295,7 @@ describe('useSignupActions', () => {
       const auth = useSignupActions()
       fillValidFields(auth)
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
     test('typing in username clears the taken-name error', async () => {

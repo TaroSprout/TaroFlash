@@ -537,19 +537,19 @@ describe('UiDropdownButton', () => {
 
   // ── sfx emissions [obligation] ────────────────────────────────────────────
 
-  test('clicking the trigger emits ui.snappy_button_5 [obligation]', async () => {
+  test('clicking the trigger emits ui.press [obligation]', async () => {
     const wrapper = mountDropdown()
     mockEmitSfx.mockClear()
     await trigger(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('clicking the trigger again (close) emits ui.snappy_button_5 [obligation]', async () => {
+  test('clicking the trigger again (close) emits ui.press [obligation]', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
     await trigger(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('selecting an option does NOT emit ui.select (removed in menu refactor) [obligation]', async () => {
@@ -557,7 +557,7 @@ describe('UiDropdownButton', () => {
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
     await options(wrapper)[0].trigger('click')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
   // ── primaryDisabled prop [obligation] ─────────────────────────────────────

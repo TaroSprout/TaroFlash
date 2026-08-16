@@ -97,14 +97,14 @@ describe('ForgotPasswordModal (forgot-password/index.vue)', () => {
 
   test('plays wooden_chime_ring on mount', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('plays pop_up_close on unmount', () => {
     const wrapper = makeWrapper()
     mockEmitSfx.mockClear()
     wrapper.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
   // ── submit wiring ─────────────────────────────────────────────────────────

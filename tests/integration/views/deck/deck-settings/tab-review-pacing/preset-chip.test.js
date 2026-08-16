@@ -174,14 +174,14 @@ describe('PresetChip — select sfx [obligation]', () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="preset-chip__option-2"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
   test('emits the select sfx when picking a CRUD action row [obligation]', async () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="preset-chip__option-fork"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 })
 

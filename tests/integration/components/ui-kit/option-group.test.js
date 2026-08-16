@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
+import { vSfx } from '@/sfx/directive'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -102,18 +103,18 @@ describe('UiOptionGroup', () => {
 
   // ── Sfx [obligation] ──────────────────────────────────────────────────────
 
-  test('clicking an inactive option plays select [obligation]', async () => {
+  test('clicking an inactive option plays ui.select [obligation]', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[1].trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('clicking the already-active option plays digi_powerdown [obligation]', async () => {
+  test('clicking the already-active option plays ui.rejected [obligation]', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[0].trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
   })
 
   // ── Regression: data-active fallthrough must not collide with tappable's
@@ -124,6 +125,37 @@ describe('UiOptionGroup', () => {
     const opts = getOptions(wrapper)
     expect(opts[0].attributes('data-active')).toBe('true')
     expect(opts[0].attributes('data-tap-active')).toBeUndefined()
+  })
+
+  // ── v-sfx directive cleanup [obligation] ────────────────────────────────
+
+  test('unmounting removes every hover listener the real v-sfx directive attached [obligation]', () => {
+    const addSpy = vi.spyOn(EventTarget.prototype, 'addEventListener')
+    const removeSpy = vi.spyOn(EventTarget.prototype, 'removeEventListener')
+
+    const wrapper = mount(UiOptionGroup, {
+      props: { options: OPTIONS, value: 'simple' },
+      global: { directives: { sfx: vSfx } }
+    })
+
+    // v-sfx always attaches with `{ passive: true }` — filter to just its own
+    // listeners (by handler reference) so a tappable's own native
+    // `@pointerenter` binding isn't counted alongside it.
+    const directiveHandlers = addSpy.mock.calls
+      .filter(([type, , options]) => type === 'pointerenter' && !!options?.passive)
+      .map(([, handler]) => handler)
+
+    wrapper.unmount()
+
+    const removedHandlers = removeSpy.mock.calls
+      .filter(([type]) => type === 'pointerenter')
+      .map(([, handler]) => handler)
+
+    expect(directiveHandlers.length).toBeGreaterThan(0)
+    directiveHandlers.forEach((handler) => expect(removedHandlers).toContain(handler))
+
+    addSpy.mockRestore()
+    removeSpy.mockRestore()
   })
 
   // ── Size variants ─────────────────────────────────────────────────────────

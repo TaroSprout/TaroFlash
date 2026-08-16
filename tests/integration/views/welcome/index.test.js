@@ -202,10 +202,10 @@ describe('WelcomeIndex', () => {
 
   // ── openSignup sfx [obligation] ────────────────────────────────────────────
 
-  test('clicking signup emits snappy_button_3 sfx [obligation]', async () => {
+  test('clicking signup emits dialog.open sfx [obligation]', async () => {
     const wrapper = mountWelcome()
     await wrapper.find('[data-testid="splash__signup"]').trigger('click')
-    expect(mocks.emitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mocks.emitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('clicking signup opens the modal [obligation]', async () => {
@@ -214,7 +214,7 @@ describe('WelcomeIndex', () => {
     expect(mocks.modalOpen).toHaveBeenCalled()
   })
 
-  test('modal response resolution emits pop_up_close sfx [obligation]', async () => {
+  test('modal response resolution emits dialog.close sfx [obligation]', async () => {
     let resolve_response
     const deferred = new Promise((resolve) => {
       resolve_response = resolve
@@ -224,7 +224,7 @@ describe('WelcomeIndex', () => {
     mocks.emitSfx.mockReset()
     resolve_response(undefined)
     await flushPromises()
-    expect(mocks.emitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mocks.emitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
   // ── scrollToContent / See More [obligation] ────────────────────────────────

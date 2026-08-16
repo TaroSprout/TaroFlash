@@ -267,7 +267,7 @@ describe('useSummarySelection — onSelectCard [obligation]', () => {
 
     result.onSelectCard(1)
 
-    expect(emitSfxMock).toHaveBeenCalledWith('select')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 
   test('enters selection mode without toggling any card when id is omitted [obligation]', () => {
@@ -279,7 +279,7 @@ describe('useSummarySelection — onSelectCard [obligation]', () => {
 
     expect(result.selection.is_selecting.value).toBe(true)
     expect(result.selection.selected_count.value).toBe(0)
-    expect(emitSfxMock).toHaveBeenCalledWith('select')
+    expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 })
 

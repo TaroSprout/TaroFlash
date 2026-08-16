@@ -100,7 +100,7 @@ describe('useEmailActions — validation', () => {
     const email_actions = useEmailActions()
     email_actions.email.value = ''
     await email_actions.submit()
-    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
   test('[obligation] does NOT fire a notice-store error for a validation failure', async () => {
@@ -184,7 +184,7 @@ describe('useEmailActions — submit', () => {
 
       await email_actions.submit()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     }
   })
 

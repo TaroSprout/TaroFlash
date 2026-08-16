@@ -238,7 +238,7 @@ describe('PagedWindow', () => {
       setDesktop(true)
       const wrapper = mountWindow({ active: null })
       await wrapper.find('[data-testid="paged-window__tab"]').trigger('click')
-      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
     })
 
     test('sidebar highlight (data-active) keys off displayed_page, not the raw active prop', () => {
@@ -420,8 +420,8 @@ describe('PagedWindow', () => {
 // ── Optional sfx + danger + hidden close branches ─────────────────────────────
 
 describe('PagedWindow — sfx suppression, danger pages, hidden close', () => {
-  test('empty-string select_sfx and reselect_sfx suppress all selection sounds', async () => {
-    const wrapper = mountWindow({ select_sfx: '', reselect_sfx: '' })
+  test('sfx.select: false and sfx.reselect: false suppress all selection sounds', async () => {
+    const wrapper = mountWindow({ sfx: { select: false, reselect: false } })
     const tabs = wrapper.findAll('[data-testid="paged-window__tab"]')
 
     await tabs[1].trigger('click')

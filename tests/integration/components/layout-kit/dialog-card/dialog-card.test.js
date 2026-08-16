@@ -295,10 +295,16 @@ describe('DialogCard', () => {
       expect(close.props('neutral')).toBe(true)
     })
 
-    test('forwards close_sfx to the close button sfx prop', () => {
-      const wrapper = mountCard({ title: 'x', close_sfx: { press: 'snappy_button_5' } })
+    test('forwards sfx.close to the close button press channel', () => {
+      const wrapper = mountCard({ title: 'x', sfx: { close: 'ui.press' } })
       const close = wrapper.findComponent(UiButtonStub)
-      expect(close.props('sfx')).toEqual({ press: 'snappy_button_5' })
+      expect(close.props('sfx')).toEqual({ press: 'ui.press' })
+    })
+
+    test('defaults the close button press channel to dialog.close when sfx.close is omitted', () => {
+      const wrapper = mountCard({ title: 'x' })
+      const close = wrapper.findComponent(UiButtonStub)
+      expect(close.props('sfx')).toEqual({ press: 'dialog.close' })
     })
   })
 

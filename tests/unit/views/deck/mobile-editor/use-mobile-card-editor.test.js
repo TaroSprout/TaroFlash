@@ -111,11 +111,11 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
     expect(editor.side.value).toBe('front')
   })
 
-  test('open_at emits snappy_button_3 [obligation]', () => {
+  test('open_at emits dialog.open [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('open_at with no arg opens at the first card [obligation]', () => {
@@ -197,13 +197,13 @@ describe('useMobileCardEditor — close [obligation]', () => {
 })
 
 describe('useMobileCardEditor — onClosed [obligation]', () => {
-  test('onClosed emits snappy_button_5 [obligation]', () => {
+  test('onClosed emits ui.press [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     mockEmitSfx.mockClear()
     editor.onClosed()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('onClosed resets internal state so a later open_at reopens the editor [obligation]', () => {
@@ -234,23 +234,23 @@ describe('useMobileCardEditor — flip [obligation]', () => {
     expect(editor.side.value).toBe('front')
   })
 
-  test('flip emits transition_up when landing on back [obligation]', () => {
+  test('flip emits card.flip-away when landing on back [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     mockEmitSfx.mockClear()
     editor.flip()
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('flip emits transition_down when landing on front [obligation]', () => {
+  test('flip emits card.flip-back when landing on front [obligation]', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     editor.flip()
     mockEmitSfx.mockClear()
     editor.flip()
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
   })
 })
 
