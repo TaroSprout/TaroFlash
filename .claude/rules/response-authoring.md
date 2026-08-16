@@ -40,3 +40,9 @@ comments. Always in context; a reply has no path to trigger on. Shared: [`author
     offers the near-viewport idea as a separate suggestion, not folded into the pick.
 - **Report the state honestly.** Say what you did, what you skipped, and what is still broken. Never
   claim a gate passed that you did not run.
+- **Relaying a subagent's report re-applies every rule above — it isn't a pass-through.** Compress to
+  what changed and what needs a decision from the user; the subagent's own headings, structure, and
+  exhaustive detail don't ride along just because the report arrived that way.
+  - Bad: forwarding a subagent's multi-paragraph report — layout specifics, a corrected assumption,
+    every flagged issue — near-verbatim.
+  - Good: `Built the settings panel. One thing to check: the sync toggle defaults on — intended?`
