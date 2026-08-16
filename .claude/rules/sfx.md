@@ -35,8 +35,10 @@ sound-shaped prop beside it, and never a `silent` boolean.
 <ui-tappable :sfx="{ hover: false }">…</ui-tappable>
 ```
 
-Every primitive already defaults its own `press`, `hover` and `rejected`, so pass a channel only to
-change it. `press` / `tap_pre` route through staged-tap; the directive handles `hover` and `focus`.
+Every primitive already defaults its own `hover`, so pass that channel only to change it. **`press`
+never defaults** — a button stays silent on press until a call site names a role, because most
+already play their own cue from the handler behind `@press`. `press` / `tap_pre` route through
+staged-tap; the directive handles `hover` and `focus`.
 
 ## A recurring sound lives in its seam
 

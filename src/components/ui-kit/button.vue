@@ -101,9 +101,12 @@ function onClick(e: MouseEvent) {
     return
   }
 
+  // A button stays silent on press unless the call site names a role. Most
+  // already play their own cue from the handler behind @press, so a default
+  // here would sound twice on every one of them.
   tap((ev) => emit('press', ev), {
     preAudio: sfx.tap_pre || undefined,
-    audio: sfx.press === false ? undefined : (sfx.press ?? 'ui.press')
+    audio: sfx.press || undefined
   })(e)
 }
 </script>
