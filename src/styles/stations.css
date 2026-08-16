@@ -87,6 +87,8 @@
 [data-station='window'] {
   --color-surface: var(--color-brown-300);
   --color-well: var(--color-brown-100);
+  /* Trap: well and raised are the same color here, so a raised element on a
+     well surface is invisible →[K:station-roles-can-collide] */
   --color-raised: var(--color-brown-100);
   --color-raised-tint: var(--color-brown-50);
   --color-raised-shade: var(--color-brown-200);

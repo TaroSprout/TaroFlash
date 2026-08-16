@@ -26,7 +26,8 @@ type OptionsPanelProps = {
   sfx?: SfxOptions
   // false renders plain rows with no tap/hover/sfx behavior (static info/status rows)
   interactive?: boolean
-  // scrolls internally within the card, drawing the standard handle, instead of clipping
+  // scrolls internally instead of clipping, drawing the standard handle in a gutter
+  // just beside the panel — a host that clips its own overflow cuts that handle off
   scrollable?: boolean
 }
 
@@ -56,6 +57,15 @@ const content_testid = computed(() =>
 
 const content_component = computed(() => (scrollable ? ScrollRegion : 'div'))
 
+/**
+ * What the scrolling variant hands its region.
+ *
+ * The handle hangs beside the panel rather than within it: the `window`
+ * station paints `raised` and `well` the same colour, so a bar drawn over
+ * this panel would be invisible. →[K:station-roles-can-collide]
+ */
+const content_bindings = computed(() => (scrollable ? { gutter: 'outside' as const } : {}))
+
 function onSelect(entry: OptionsPanelEntry) {
   emit('select', entry.value)
 }
@@ -66,9 +76,9 @@ function onSelect(entry: OptionsPanelEntry) {
     <component
       :is="content_component"
       :data-testid="content_testid"
-      v-bind="scrollable ? { gutter: 'inside' } : {}"
+      v-bind="content_bindings"
       class="flex min-h-0 flex-1 flex-col rounded-4 bg-well p-1"
-      :class="scrollable ? 'relative' : 'overflow-hidden'"
+      :class="scrollable ? '' : 'overflow-hidden'"
     >
       <options-panel-row
         v-for="entry in entries"

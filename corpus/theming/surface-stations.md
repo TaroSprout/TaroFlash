@@ -27,6 +27,15 @@ owns its own look.
 > unchanged into dark, which is the opposite of this trap.
 > [See the fixed roles ↓](#a-few-roles-never-re-author)
 
+> [!HAZARD] [K:station-roles-can-collide] **Hand-authoring gives no promise that two roles in the
+> same station end up different colors. Where they don't, an element painted in one role, drawn on
+> top of a surface painted in the other, is invisible — same size, same position, zero contrast.**
+> `window`'s light rendering is the one case today: `well` and `raised` both resolve to
+> `brown-100`. A scroll handle (painted `raised`) sitting inside an `options-panel` box (painted
+> `well`) inside a `window`-station dialog rendered at the right size and place and simply couldn't
+> be seen. Check the actual values in `stations.css` before assuming two roles read apart in a
+> given station — don't infer it from how they read in another.
+
 ## The four stations
 
 - **page** — the app background behind everything.
