@@ -12,12 +12,12 @@ export function useCollectionCreateModal() {
   const modal = useModal()
 
   function open() {
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
     const result = modal.open<CollectionCreateResponse>(CollectionCreate, {
       backdrop: true,
       mode: 'mobile-sheet'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
+    result.response.then(() => emitSfx('dialog.close'))
     return result
   }
 

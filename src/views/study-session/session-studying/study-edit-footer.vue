@@ -9,7 +9,7 @@ const { playing: done_playing, tap: tapDone } = useStagedTap({ triggerAt: 'press
 
 function onFlip(e: MouseEvent) {
   tapFlip(flipCurrentCard, {
-    audio: is_starting_side.value ? 'transition_up' : 'transition_down'
+    audio: is_starting_side.value ? 'card.flip-away' : 'card.flip-back'
   })(e)
 }
 

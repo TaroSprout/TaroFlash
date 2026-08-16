@@ -85,8 +85,8 @@ const groups = computed<PagedWindowGroup[]>(() => [
 const header_title = computed(() => t('settings.header.title'))
 
 // Open/close sfx live here, not per-callsite, so every launcher sounds identical — mirrors the deck-settings modal.
-onMounted(() => emitSfx('snappy_button_3'))
-onBeforeUnmount(() => emitSfx('pop_up_close'))
+onMounted(() => emitSfx('dialog.open'))
+onBeforeUnmount(() => emitSfx('dialog.close'))
 
 async function onClose() {
   if (!editor.is_dirty.value) return close()
@@ -103,13 +103,13 @@ async function onClose() {
 useModalRequestClose(onClose)
 
 function onBack() {
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   active_page.value = null
 }
 
 function onChromeBack() {
   if (active_page_ref.value?.onChromeBack?.()) {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     return
   }
   onBack()

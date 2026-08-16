@@ -138,13 +138,13 @@ async function onClose() {
 }
 
 function onBack() {
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   active_page.value = null
 }
 
 function onChromeBack() {
   if (active_page_ref.value?.onChromeBack?.()) {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     return
   }
   onBack()

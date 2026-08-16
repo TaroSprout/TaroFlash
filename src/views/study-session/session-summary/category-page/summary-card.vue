@@ -66,7 +66,7 @@ function onCardClick() {
     return
   }
 
-  emitSfx(side.value === 'front' ? 'transition_up' : 'transition_down')
+  emitSfx(side.value === 'front' ? 'card.flip-away' : 'card.flip-back')
   side.value = side.value === 'front' ? 'back' : 'front'
 }
 </script>

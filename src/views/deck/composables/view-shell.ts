@@ -119,12 +119,12 @@ export function useDeckViewShell() {
   }
 
   function openPageSettings() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     is_page_settings_open.value = true
   }
 
   function closePageSettings() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     is_page_settings_open.value = false
   }
 

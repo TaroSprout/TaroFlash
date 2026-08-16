@@ -56,7 +56,7 @@ export function usePasswordActions() {
   }
 
   function fail(field: FieldName, message: string): SubmitResult {
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     errors.value = { ...errors.value, [field]: message }
     return 'invalid'
   }
@@ -82,7 +82,7 @@ export function usePasswordActions() {
       return fail('password', t('account-access-modal.password.validation-same'))
     }
 
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     notice.error(t('account-access-modal.password.error'))
     return 'error'
   }
@@ -96,7 +96,7 @@ export function usePasswordActions() {
     }
 
     if (outcome === 'error') {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       notice.error(t('account-access-modal.password.error'))
       return 'error'
     }
@@ -109,13 +109,13 @@ export function usePasswordActions() {
     const outcome = await session.requestReauthCode()
 
     if (outcome === 'rate-limited') {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       notice.error(t('account-access-modal.password.code-rate-limited'))
       return 'error'
     }
 
     if (outcome === 'error') {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       notice.error(t('account-access-modal.password.code-request-error'))
       return 'error'
     }
@@ -136,7 +136,7 @@ export function usePasswordActions() {
     }
 
     if (outcome === 'error') {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       notice.error(t('account-access-modal.password.error'))
       return 'error'
     }
@@ -148,7 +148,7 @@ export function usePasswordActions() {
     if (loading.value) return 'invalid'
 
     if (step.value === 'password' && !validate()) {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       return 'invalid'
     }
 
@@ -175,7 +175,7 @@ export function usePasswordActions() {
       return
     }
 
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     notice.error(
       outcome === 'rate-limited'
         ? t('account-access-modal.password.code-rate-limited')

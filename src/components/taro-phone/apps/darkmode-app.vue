@@ -29,7 +29,7 @@ const title = computed(() => t(active_mode_config.value.labelKey))
 
 function cycleMode() {
   cycle()
-  emitSfx('select')
+  emitSfx('ui.select')
 }
 </script>
 

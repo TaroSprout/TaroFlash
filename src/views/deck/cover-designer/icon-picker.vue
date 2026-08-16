@@ -23,11 +23,11 @@ const emit = defineEmits<{
 
 function onIconSelect(value: string | undefined) {
   if (value === icon) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('toggle_on')
+  emitSfx('ui.toggle-on')
   emit('update:icon', value)
 }
 </script>

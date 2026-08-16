@@ -99,7 +99,7 @@ function onRootPointerLeave() {
 
 /** Scopes the hover chime to the image region; behind/full-bleed play it card-wide instead, via `card_sfx`. */
 function onRegionPointerEnter() {
-  emitSfx('tap_05')
+  emitSfx('gesture.tick')
   onPointerEnter()
 }
 

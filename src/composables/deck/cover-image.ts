@@ -51,7 +51,7 @@ export function useCoverImage(
     maxBytes: COVER_IMAGE_MAX_BYTES,
     fileInput: file_input,
     onFile: stageFile,
-    onError: () => emitSfx('digi_powerdown')
+    onError: () => emitSfx('ui.rejected')
   })
 
   const has_image = computed(() => !!toValue(cover).image_path)
@@ -76,12 +76,12 @@ export function useCoverImage(
     staged_url = URL.createObjectURL(file)
     staged_file.value = file
     toValue(cover).image_path = staged_url
-    emitSfx('music_plink_ok')
+    emitSfx('dialog.confirm')
   }
 
   /** Clear the cover image — drops any staged file and reverts to palette/pattern/icon. */
   function onRemove() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     clearError()
     revokeStaged()
     staged_file.value = null
@@ -90,12 +90,12 @@ export function useCoverImage(
 
   /** Open the file picker. No paid gate — a custom cover is free. */
   function openPicker() {
-    emitSfx('select')
+    emitSfx('ui.select')
     browse()
   }
 
   function onDismissError() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     clearError()
   }
 

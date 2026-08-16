@@ -69,7 +69,7 @@ export function useSignupActions() {
   /** Validate, then create the account. See the hook doc for the result contract. */
   async function submit(): Promise<SubmitResult> {
     if (!validate()) {
-      emitSfx('digi_powerdown')
+      emitSfx('ui.rejected')
       return 'invalid'
     }
 
@@ -77,7 +77,7 @@ export function useSignupActions() {
 
     if (!(await isDisplayNameAvailable(username.value.trim()))) {
       loading.value = false
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       errors.value = {
         ...errors.value,
         username: t('signup-dialog.form-validation.username-already-in-use')
@@ -97,7 +97,7 @@ export function useSignupActions() {
 
     // Email-taken surfaces inline; the modal stays open, no alert needed.
     if (outcome === 'email-taken') {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       errors.value = {
         ...errors.value,
         email: t('signup-dialog.form-validation.email-already-in-use')

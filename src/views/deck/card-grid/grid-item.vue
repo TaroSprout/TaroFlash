@@ -69,7 +69,9 @@ function onCardClick() {
   if (sel && !sel.isCollapsed) return
 
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
-  emitSfx(active_side.value === 'back' ? 'transition_up' : 'transition_down')
+  // The grid picks which face it shows, so the cue reads against that face and
+  // not against the front.
+  emitSfx(active_side.value === side ? 'card.flip-back' : 'card.flip-away')
 }
 
 // Suppresses text selection only on a multi-click (`detail > 1`) — spamming

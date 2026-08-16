@@ -44,7 +44,7 @@ export function useForgotPasswordActions() {
     submitError.value = ''
 
     if (!validate()) {
-      emitSfx('digi_powerdown')
+      emitSfx('ui.rejected')
       return 'invalid'
     }
 
@@ -57,7 +57,7 @@ export function useForgotPasswordActions() {
       return 'success'
     }
 
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     submitError.value = t('forgot-password-modal.errors.generic')
     return 'error'
   }

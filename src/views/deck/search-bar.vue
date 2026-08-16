@@ -61,7 +61,7 @@ function submit() {
 
 // Empty the field but stay in search mode, dropping back to the full list.
 function clear() {
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   draft.value = ''
   query.value = ''
   input.value?.focus()

@@ -10,7 +10,7 @@ export function useSignupModal() {
 
   /** @param payment - preselect the paid plan when the user came from a pricing CTA. */
   function open(payment?: boolean) {
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
     tracking.trackSignupStarted()
     const result = modal.open<boolean>(SignupDialog, {
       backdrop: true,
@@ -19,7 +19,7 @@ export function useSignupModal() {
       mobile_below_height: 'md',
       props: { payment }
     })
-    result.response.then(() => emitSfx('pop_up_close'))
+    result.response.then(() => emitSfx('dialog.close'))
     return result
   }
 

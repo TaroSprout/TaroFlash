@@ -36,7 +36,7 @@ function toggleRevealed() {
   if (!scrim.value || !badge_content.value || !fields.value) return
 
   revealed.value = !revealed.value
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   popScrimReveal(scrim.value, badge_content.value, fields.value, revealed.value, {
     collapse: is_phone.value
   })

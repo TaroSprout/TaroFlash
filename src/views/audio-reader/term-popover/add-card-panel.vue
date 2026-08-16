@@ -95,8 +95,7 @@ const can_save = computed(
 
 function flip() {
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
-  // Match the study-session flip cue: down toward the front (starting side), up away.
-  emitSfx(active_side.value === 'front' ? 'transition_down' : 'transition_up')
+  emitSfx(active_side.value === 'front' ? 'card.flip-back' : 'card.flip-away')
 }
 
 function onSelectDeck(option: DropdownOption) {
@@ -105,7 +104,7 @@ function onSelectDeck(option: DropdownOption) {
 
 // Focusing the card editor slides it up, matching the card-editor's focus cue.
 function onCardFocus(e: FocusEvent) {
-  if ((e.target as HTMLElement | null)?.isContentEditable) emitSfx('slide_up')
+  if ((e.target as HTMLElement | null)?.isContentEditable) emitSfx('nav.page-forward')
 }
 
 function onEditActive(value: string) {

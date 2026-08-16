@@ -38,7 +38,7 @@ export function useResetPasswordActions() {
 
   async function submit(): Promise<SubmitResult> {
     if (!validate()) {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       return 'invalid'
     }
 
@@ -51,7 +51,7 @@ export function useResetPasswordActions() {
       return 'success'
     }
 
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
 
     if (outcome === 'weak-password') {
       errors.value = { ...errors.value, password: t('reset-password-modal.validation-weak') }

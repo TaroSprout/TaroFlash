@@ -25,7 +25,7 @@ export function coverCardEnter(el: HTMLElement, done: () => void) {
     delay: COVER_DELAY,
     ease: 'power2.out',
     clearProps: 'transform,opacity',
-    onStart: () => emitSfx('slide_up'),
+    onStart: () => emitSfx('nav.page-forward'),
     onComplete: done
   })
 }

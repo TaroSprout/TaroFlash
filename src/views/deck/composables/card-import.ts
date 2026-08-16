@@ -89,7 +89,7 @@ export function useCardImport({ editor, shell }: Options) {
   function applyResult(target: CardImportSource, result: ReturnType<typeof parseCardText>) {
     if (!result.ok) {
       results.value[target] = { ...emptyResult(), refusal: result.refusal }
-      emitSfx('digi_powerdown')
+      emitSfx('ui.rejected')
       return
     }
 
@@ -112,7 +112,7 @@ export function useCardImport({ editor, shell }: Options) {
     applyResult('file', result)
 
     // Only the file lands with a chime — pasted text re-parses on every keystroke.
-    if (result.ok) emitSfx('music_plink_ok')
+    if (result.ok) emitSfx('dialog.confirm')
   }
 
   /** Re-read the pasted box; every keystroke re-previews what it holds. */
@@ -136,7 +136,7 @@ export function useCardImport({ editor, shell }: Options) {
   }
 
   function toggleExpanded() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     is_expanded.value = !is_expanded.value
   }
 
@@ -145,7 +145,7 @@ export function useCardImport({ editor, shell }: Options) {
   function dismissRefusal() {
     if (!refusal.value) return
 
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     results.value[source.value].refusal = null
   }
 

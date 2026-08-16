@@ -15,7 +15,7 @@ const { t } = useI18n()
 const auth = useForgotPasswordActions()
 
 onMounted(() => emitSfx('wooden_chime_ring'))
-onBeforeUnmount(() => emitSfx('pop_up_close'))
+onBeforeUnmount(() => emitSfx('dialog.close'))
 
 async function onSubmit() {
   await auth.submit()

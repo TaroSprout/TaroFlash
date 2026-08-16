@@ -93,7 +93,7 @@ useModalRequestClose(onRequestClose)
 
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {
-  emitSfx('pop_up_close')
+  emitSfx('dialog.close')
   clearPersistedSession()
   close()
 }
@@ -175,10 +175,10 @@ function onRequestClose() {
  */
 function onToggleSummarySelecting() {
   if (summary_selection.is_selecting.value) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     summary_selection.exitSelection()
   } else {
-    emitSfx('select')
+    emitSfx('ui.select')
     summary_selection.enterSelection()
   }
 }

@@ -9,7 +9,7 @@ defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 
-onMounted(() => emitSfx('success_1'))
+onMounted(() => emitSfx('notice.success'))
 </script>
 
 <template>

@@ -20,11 +20,11 @@ function isSelected(option: PaletteName) {
 
 function onThemeSelect(option: PaletteName) {
   if (isSelected(option)) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('toggle_on')
+  emitSfx('ui.toggle-on')
   emit('update:palette', option)
 }
 </script>

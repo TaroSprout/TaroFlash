@@ -200,7 +200,7 @@ export function useSessionEngine({
   }
 
   function flipCurrentCard() {
-    emitSfx(is_starting_side.value ? 'transition_up' : 'transition_down')
+    emitSfx(is_starting_side.value ? 'card.flip-away' : 'card.flip-back')
     current_card_side.value = current_card_side.value === 'front' ? 'back' : 'front'
   }
 

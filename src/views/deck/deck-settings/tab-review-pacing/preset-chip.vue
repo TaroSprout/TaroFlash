@@ -66,7 +66,7 @@ const options = computed<DropdownOption[]>(() => [
 ])
 
 function onSelect(option: DropdownOption) {
-  emitSfx('select')
+  emitSfx('ui.select')
 
   const action = ACTION_HANDLERS[option.value as PresetAction]
   if (action) return void action()

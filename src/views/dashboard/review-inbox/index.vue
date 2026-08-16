@@ -21,7 +21,7 @@ useReviewInboxTickSfx(items_el)
 
 function onItemClicked(deck: Deck) {
   if (editing) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.rejected')
     return
   }
 

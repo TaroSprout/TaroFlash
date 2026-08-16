@@ -21,11 +21,11 @@ function swatchBindings(p: DeckCoverPattern) {
 
 function onPatternSelect(p: DeckCoverPattern | undefined) {
   if (p === selected_pattern) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('toggle_on')
+  emitSfx('ui.toggle-on')
   emit('update:pattern', p)
 }
 </script>

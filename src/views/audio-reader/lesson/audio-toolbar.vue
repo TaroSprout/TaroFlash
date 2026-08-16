@@ -110,12 +110,12 @@ function onPlayTap(e: MouseEvent) {
 }
 
 function onBackTap(e: MouseEvent) {
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   tapBack(skipBack)(e)
 }
 
 function onForwardTap(e: MouseEvent) {
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   tapForward(skipForward)(e)
 }
 

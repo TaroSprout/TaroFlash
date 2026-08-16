@@ -61,7 +61,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     maxBytes: CARD_IMAGE_MAX_BYTES,
     fileInput,
     onFile: uploadFile,
-    onError: () => emitSfx('digi_powerdown'),
+    onError: () => emitSfx('ui.rejected'),
     guard: guardCardImage
   })
 
@@ -103,7 +103,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
       return
     }
 
-    emitSfx('music_plink_ok')
+    emitSfx('dialog.confirm')
     reveal_pending = true
     pending.value = false
   }
@@ -126,7 +126,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
    * deletion runs, and the trash sfx plays once the removal lands.
    */
   async function onRemove() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     clearError()
 
     const img = faceImageEl()
@@ -136,7 +136,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
     try {
       await mutations.deleteCardImage(toValue(card).id!, toValue(side))
-      emitSfx('trash_crumple_short')
+      emitSfx('card.delete')
     } catch {
       notice.error(t('toast.error.card-image-delete-failed'))
     } finally {
@@ -151,12 +151,12 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
   async function openPicker() {
     if (!(await guardCardImage())) return
 
-    emitSfx('select')
+    emitSfx('ui.select')
     browse()
   }
 
   function onDismissError() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     clearError()
   }
 
@@ -185,7 +185,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
 
   // Chime once when a drag first enters the card (not on every child dragenter).
   watch(dragging, (now, was) => {
-    if (now && !was && can_upload.value) emitSfx('music_plink_mid')
+    if (now && !was && can_upload.value) emitSfx('gesture.zone-cross')
   })
 
   // Reveal waits for the refetched path to reach the DOM, not the upload call. `flush: 'post'`

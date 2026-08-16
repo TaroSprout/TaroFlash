@@ -40,7 +40,7 @@ async function onSubmit() {
       body: body.value.trim() || undefined,
       type: UNCATEGORIZED_TYPE
     })
-    emitSfx('generic_notification_9')
+    emitSfx('notice.info')
     notice.success(t('toast.success.feedback-submitted'))
     close(true)
   } catch {
@@ -49,7 +49,7 @@ async function onSubmit() {
 }
 
 function onClose() {
-  emitSfx('pop_up_close')
+  emitSfx('dialog.close')
   close(false)
 }
 </script>

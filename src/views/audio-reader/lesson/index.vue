@@ -140,7 +140,7 @@ function onPlayFromHere() {
 
 // Tapping outside the term dismisses it with the same cue as its close button.
 function dismissTerm() {
-  emitSfx('pop_up_close')
+  emitSfx('dialog.close')
   closeTerm()
 }
 

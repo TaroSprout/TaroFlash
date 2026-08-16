@@ -134,7 +134,7 @@ export function useDeckEditor(deck?: Deck) {
   /** Switch the design tab's previewed side. No-op when already active. */
   function setActiveSide(side: CardSide) {
     if (side === active_side.value) return
-    emitSfx('slide_up')
+    emitSfx('nav.page-forward')
     active_side.value = side
   }
 

@@ -52,7 +52,7 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
   })
 
   onMounted(() => emitSfx('wooden_chime_ring'))
-  onBeforeUnmount(() => emitSfx('pop_up_close'))
+  onBeforeUnmount(() => emitSfx('dialog.close'))
 
   useModalRequestClose(() => {
     if (status.value === 'confirming') return
@@ -81,7 +81,7 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     is_confirming.value = false
     is_success.value = true
 
-    emitSfx('success_1')
+    emitSfx('notice.success')
     await wait(SUCCESS_DISPLAY_MS)
     close({ upgraded: true })
   }

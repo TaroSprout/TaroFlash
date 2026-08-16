@@ -35,7 +35,7 @@ export function useCardSearch(
   }
 
   function close() {
-    emitSfx('slide_left')
+    emitSfx('nav.page-back')
     is_searching.value = false
     query.value = ''
   }

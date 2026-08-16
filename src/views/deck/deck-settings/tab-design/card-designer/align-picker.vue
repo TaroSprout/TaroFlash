@@ -35,7 +35,7 @@ function isActive(h: Horizontal, v: Vertical) {
 
 function onSelect(h: Horizontal, v: Vertical) {
   if (isActive(h, v)) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
   emitSfx('etc_camera_shutter')

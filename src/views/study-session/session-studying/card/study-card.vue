@@ -135,7 +135,7 @@ function flingCard(
   el.style.transform = `translateX(${targetX}px) rotate(${direction * 45}deg)`
   emit('drag-progress', 1, FLING_SPEED)
 
-  emitSfx(grade === Rating.Again ? 'music_plink_locancel' : 'music_plink_ok')
+  emitSfx(grade === Rating.Again ? 'card.grade-again' : 'card.grade-good')
 
   // Leave is_animating true — this instance stays mounted through the parent's next-card intro flip, and the flag guards it from a spam re-fling.
   const onTransitionEnd = () => {
@@ -151,7 +151,7 @@ function flingCard(
 function handleDrag(el: HTMLElement, dx: number, dy: number) {
   if (side === 'cover') return
 
-  if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitSfx('music_plink_mid')
+  if (toSwipeZone(card_offset.value) !== toSwipeZone(dx)) emitSfx('gesture.zone-cross')
 
   is_dragging.value = Math.abs(dx) > FLIP_THRESHOLD
   card_offset.value = dx
@@ -166,7 +166,7 @@ function updateDragRating(dx: number, dy: number) {
   if (show_all_ratings && dx > SWIPE_DISTANCE_THRESHOLD) {
     const new_rating = toDragRating(dy)
     if (new_rating !== drag_rating.value) {
-      emitSfx('music_plink_mid')
+      emitSfx('gesture.zone-cross')
       drag_rating.value = new_rating
     }
   } else {

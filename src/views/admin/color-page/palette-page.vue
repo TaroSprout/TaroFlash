@@ -23,7 +23,7 @@ const swatch_els = new Map<string, HTMLElement>()
 // Every path out of the editor lands here, so the close sound is emitted once, in the one place the
 // popover actually shuts — an outside click, a re-click on the open swatch, or Esc.
 function onClose() {
-  if (picked_id.value) emitSfx('snappy_button_5')
+  if (picked_id.value) emitSfx('ui.press')
   picked_id.value = null
 }
 
@@ -48,7 +48,7 @@ function onPick(id: string, event: MouseEvent) {
   if (id === picked_id.value) return onClose()
 
   const el = event.currentTarget as HTMLElement
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   picked_id.value = id
   anchor_el.value = el
   anchor_rect.value = el.getBoundingClientRect()
@@ -58,7 +58,7 @@ function onAddShade(family: string) {
   const lightest = tuner.families.value.get(family)?.[0]
   const seed = lightest ? { ...lightest.hsl, l: lightest.hsl.l + 4 } : { h: 0, s: 0, l: 50 }
 
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   picked_id.value = tuner.addShade(family, seed).id
   void nextTick(() => remeasure())
 }

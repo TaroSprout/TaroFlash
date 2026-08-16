@@ -12,7 +12,7 @@ export function useStudyModal() {
    * ids (and a refresh-resume can reopen from persisted ids alone).
    */
   function start(deck_ids: number[]) {
-    emitSfx('generic_notification_9')
+    emitSfx('notice.info')
     return modal.open(StudySession, {
       backdrop: true,
       mode: 'popup',

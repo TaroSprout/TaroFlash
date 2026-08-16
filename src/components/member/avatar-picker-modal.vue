@@ -25,11 +25,11 @@ onMounted(() => {
 
 function onAvatarSelect(avatar: string) {
   if (avatar === selected) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('toggle_on')
+  emitSfx('ui.toggle-on')
   close(avatar)
 }
 </script>

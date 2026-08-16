@@ -25,7 +25,7 @@ const file_input = useTemplateRef<HTMLInputElement>('file_input')
 const drag_depth = ref(0)
 
 function browse() {
-  emitSfx('select')
+  emitSfx('ui.select')
   file_input.value?.click()
 }
 
@@ -64,7 +64,7 @@ function onDrop(e: DragEvent) {
 
 // Chimes once as the file arrives over the zone, not on every child dragenter.
 watch(drag_depth, (now, was) => {
-  if (now > 0 && was === 0) emitSfx('music_plink_mid')
+  if (now > 0 && was === 0) emitSfx('gesture.zone-cross')
 })
 </script>
 

@@ -12,13 +12,13 @@ export function useUploadLessonModal() {
   const modal = useModal()
 
   function open(collection_id: number) {
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
     const result = modal.open<UploadLessonResponse>(UploadLesson, {
       props: { collection_id },
       backdrop: true,
       mode: 'mobile-sheet'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
+    result.response.then(() => emitSfx('dialog.close'))
     return result
   }
 

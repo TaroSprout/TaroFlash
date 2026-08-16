@@ -88,7 +88,7 @@ function onSelect(value: string) {
 }
 
 function onClose() {
-  emitSfx('pop_up_close')
+  emitSfx('dialog.close')
   close(false)
 }
 </script>

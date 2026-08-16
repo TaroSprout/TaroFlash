@@ -17,7 +17,7 @@ const is_saving = ref(false)
 async function onSave() {
   if (!has_name.value) {
     name_error.value = t('settings.profile.member-name-required')
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     return
   }
   is_saving.value = true
@@ -30,7 +30,7 @@ async function onSave() {
   }
   if (outcome === 'duplicate-name') {
     name_error.value = t('settings.profile.member-name-duplicate-error')
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     return
   }
   notice.error(t('settings.save-error'))
@@ -38,7 +38,7 @@ async function onSave() {
 
 function onReset() {
   if (!is_dirty.value) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.rejected')
     return
   }
   resetChanges()

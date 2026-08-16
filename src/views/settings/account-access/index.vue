@@ -14,7 +14,7 @@ const page = ref<AccountAccessContentPage>('menu')
 const content = useTemplateRef<{ title: string }>('content')
 
 onMounted(() => emitSfx('wooden_chime_ring'))
-onBeforeUnmount(() => emitSfx('pop_up_close'))
+onBeforeUnmount(() => emitSfx('dialog.close'))
 </script>
 
 <template>

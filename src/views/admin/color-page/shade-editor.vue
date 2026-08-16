@@ -67,7 +67,7 @@ function onPickColor(event: Event) {
 
 function onCopyHex() {
   void navigator.clipboard?.writeText(hex.value)
-  emitSfx('select')
+  emitSfx('ui.select')
 
   copied.value = true
   if (copied_timer) clearTimeout(copied_timer)

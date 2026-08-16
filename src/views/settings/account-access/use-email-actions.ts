@@ -44,7 +44,7 @@ export function useEmailActions() {
 
   async function submit(): Promise<SubmitResult> {
     if (!validate()) {
-      emitSfx('etc_woodblock_stuck')
+      emitSfx('notice.error')
       return 'invalid'
     }
 
@@ -57,7 +57,7 @@ export function useEmailActions() {
       return 'success'
     }
 
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
 
     if (outcome === 'email-taken') {
       error.value = t('account-access-modal.email.validation-taken')

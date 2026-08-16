@@ -92,7 +92,7 @@ function onArrow(direction: 1 | -1) {
   if (direction === 1) increment()
   else decrement()
 
-  emitSfx('select', { debounce: ARROW_SFX_DEBOUNCE_MS })
+  emitSfx('ui.select', { debounce: ARROW_SFX_DEBOUNCE_MS })
 }
 </script>
 
