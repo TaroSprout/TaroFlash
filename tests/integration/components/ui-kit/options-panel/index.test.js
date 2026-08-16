@@ -134,8 +134,15 @@ describe('OptionsPanel', () => {
     const wrapper = makePanel({ scrollable: true })
     const content = wrapper.find('[data-testid="options-panel__content"]')
     expect(content.attributes('data-scroll')).toBe('self')
-    expect(content.attributes('data-gutter')).toBe('inside')
     expect(content.classes()).not.toContain('overflow-hidden')
+  })
+
+  // The window station paints `raised` and `well` the same colour, so a handle
+  // drawn inside the panel is invisible — it hangs in an outside gutter instead.
+  test('scrollable=true hangs the handle in an outside gutter, not inside the panel [obligation]', () => {
+    const wrapper = makePanel({ scrollable: true })
+    const content = wrapper.find('[data-testid="options-panel__content"]')
+    expect(content.attributes('data-gutter')).toBe('outside')
   })
 
   test('scrollable unset renders no scroll-region and no handle [obligation]', () => {
