@@ -24,12 +24,15 @@ function onSubmitPress() {
   <app-window
     data-testid="feedback-board"
     data-palette="green"
-    class="sm:h-196 sm:w-170"
+    class="msm:h-196 msm:w-170 [--scroll-content-inset:1.25rem] msm:[--scroll-content-inset:5rem]"
     :title="t('feedback-board.title')"
     scroll_body
     @close="close"
   >
-    <div data-testid="feedback-board__body" class="flex flex-col gap-5 px-5 sm:px-20 pb-6">
+    <div
+      data-testid="feedback-board__body"
+      class="flex flex-col gap-5 pr-(--scroll-content-pad-end) pl-5 msm:pl-20"
+    >
       <div data-testid="feedback-board__list" class="flex flex-col gap-2">
         <p data-testid="feedback-board__intro" class="text-ink-muted pb-3 text-base text-center">
           {{ t('feedback-board.intro') }}
@@ -40,7 +43,7 @@ function onSubmitPress() {
     </div>
 
     <template #footer>
-      <div data-testid="feedback-board__actions" class="px-5 pt-2 pb-6 sm:px-20">
+      <div data-testid="feedback-board__actions" class="px-5 pt-2 pb-6 msm:px-20">
         <ui-button
           data-testid="feedback-board__submit-button"
           data-palette="green"

@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
-import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -294,14 +294,73 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="app-window__header-fill"]').exists()).toBe(false)
   })
 
-  test('scroll_body on: renders a scroll bar targeting the body [obligation]', () => {
+  test('scroll_body on: renders a scroll region targeting the body [obligation]', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
-    expect(wrapper.findComponent(UiScrollBar).exists()).toBe(true)
+    expect(wrapper.findComponent(ScrollRegion).exists()).toBe(true)
   })
 
-  test('scroll_body off: renders no scroll bar [obligation]', () => {
+  test('scroll_body off: renders no scroll region [obligation]', () => {
     const wrapper = mountWindow({ title: 'x' })
-    expect(wrapper.findComponent(UiScrollBar).exists()).toBe(false)
+    expect(wrapper.findComponent(ScrollRegion).exists()).toBe(false)
+  })
+
+  // The region owns the scroller inside the body, so the padding that keeps
+  // content clear of the header rides on the scrolling box — putting it on the
+  // body instead would scroll the gap away with the content.
+
+  test('scroll_body on: the region reserves its gutter inside the body [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x', scroll_body: true })
+    expect(wrapper.findComponent(ScrollRegion).props('gutter')).toBe('inside')
+  })
+
+  test('scroll_body on: the header depth pads the scrolling box, not the body [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x', scroll_body: true })
+    expect(wrapper.findComponent(ScrollRegion).props('scroller_class')).toContain(
+      'pt-(--window-header-depth)'
+    )
+    expect(wrapper.find('[data-testid="app-window__body"]').classes()).not.toContain(
+      'pt-(--window-header-depth)'
+    )
+  })
+
+  test('scroll_body on: publishes the header depth the handle and the padding both read [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x', scroll_body: true })
+    expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
+      '--window-header-depth: 50px'
+    )
+  })
+
+  test('a headerless scrolling window publishes no header depth [obligation]', () => {
+    const wrapper = mountWindow({ scroll_body: true })
+    expect(wrapper.find('[data-testid="app-window-root"]').attributes('style') ?? '').not.toContain(
+      '--window-header-depth'
+    )
+  })
+
+  test('a header border with no fill strip publishes a zero depth [obligation]', () => {
+    const wrapper = mountWindow({ title: 'x', scroll_body: true, header_border: 'none' })
+    expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
+      '--window-header-depth: 0px'
+    )
+  })
+
+  // ── bottom-edge track inset [obligation] ──────────────────────────────────
+  // The window clips on its bottom corner curve, so a handle drawn all the way
+  // down loses its cap there. The body is marked as sitting on that edge only
+  // when nothing else does — a footer is what takes the edge otherwise.
+
+  test('marks the body as the window bottom edge when no footer is passed [obligation]', () => {
+    const wrapper = mountWindow()
+    expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-window-edge')).toBe(
+      'bottom'
+    )
+  })
+
+  test('leaves the bottom-edge mark off the body when a footer is passed [obligation]', () => {
+    const wrapper = mountWindow({}, { footer: '<div data-testid="footer-content">Footer</div>' })
+    expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-window-edge')).toBe(
+      undefined
+    )
   })
 
   // ── footer slot [obligation] ──────────────────────────────────────────────

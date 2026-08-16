@@ -86,8 +86,8 @@ const ModeStackStub = defineComponent({
   name: 'ModeStack',
   setup: () => () => h('div', { 'data-testid': 'mode-stack-stub' })
 })
-const ScrollBarStub = defineComponent({
-  name: 'ScrollBar',
+const ScrollRegionStub = defineComponent({
+  name: 'ScrollRegion',
   props: ['target'],
   setup: (props) => () =>
     h('div', { 'data-testid': 'scroll-bar-stub', 'data-target': props.target })
@@ -177,7 +177,7 @@ function mount({
         ModeToolbar: ModeToolbarStub,
         ModeToolbarSkeleton: ModeToolbarSkeletonStub,
         ModeStack: ModeStackStub,
-        ScrollBar: ScrollBarStub,
+        ScrollRegion: ScrollRegionStub,
         CardGridSkeleton: CardGridSkeletonStub,
         CardGridEmpty: CardGridEmptyStub
       }
@@ -473,7 +473,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
           ModeToolbar: ModeToolbarStub,
           ModeToolbarSkeleton: ModeToolbarSkeletonStub,
           ModeStack: ModeStackStub,
-          ScrollBar: ScrollBarStub,
+          ScrollRegion: ScrollRegionStub,
           CardGridSkeleton: CardGridSkeletonStub,
           CardGridEmpty: CardGridEmptyStub
         }

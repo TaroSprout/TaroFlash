@@ -13,7 +13,7 @@ import { scrollClearOf } from '@/utils/animations/transcript-scroll'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import ScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import CrossfadeResize from '@/components/layout-kit/crossfade-resize.vue'
 import MobileDock from '@/components/mobile-dock/mobile-dock.vue'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
@@ -394,7 +394,11 @@ onBeforeUnmount(() => {
         class="hidden"
       />
 
-      <scroll-bar class="fixed top-(--nav-height) right-6 bottom-6" target="html" />
+      <scroll-region
+        class="fixed top-(--nav-height) right-6 bottom-6"
+        target="html"
+        gutter="inside"
+      />
 
       <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
         <resume-follow-button

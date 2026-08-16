@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
+// Docked to the bottom of a viewport too short to hold it, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls. →[K:docked-app-window-drops-body-scroll]
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
@@ -10,7 +11,7 @@ import {
   type WindowHeaderBorder
 } from './surface'
 import UiButton from '@/components/ui-kit/button.vue'
-import UiScrollBar from '@/components/ui-kit/scroll-bar.vue'
+import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 
 type WindowPatternConfig = {
   palette?: PaletteName
@@ -50,7 +51,7 @@ const slots = defineSlots<{
   header(): any
   'header-content'(): any
   default(): any
-  footer(): any
+  footer?(): any
 }>()
 
 const emit = defineEmits<{
@@ -91,7 +92,7 @@ const root_style = computed(() => ({
 <template>
   <div
     data-testid="app-window-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] [--window-scrollbar-top:10rem] lg:[--window-px:2rem]"
+    class="relative w-full shrink-0 mobile-modal:mt-auto mobile-modal:h-auto! mobile-modal:[--scroll-overflow:visible] pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
     :style="root_style"
   >
     <div
@@ -153,9 +154,19 @@ const root_style = computed(() => ({
         <div
           data-testid="app-window__body"
           :data-scroll-body="scroll_body || undefined"
+          :data-window-edge="slots.footer ? undefined : 'bottom'"
           class="scroll-hidden relative min-h-0 flex-1 bg-surface"
         >
-          <slot></slot>
+          <scroll-region
+            v-if="scroll_body"
+            gutter="inside"
+            class="flex h-full flex-col [--scroll-track-inset-start:var(--window-header-depth,0px)]"
+            scroller_class="pt-(--window-header-depth)"
+          >
+            <slot></slot>
+          </scroll-region>
+
+          <slot v-else></slot>
         </div>
 
         <div
@@ -165,13 +176,6 @@ const root_style = computed(() => ({
         >
           <slot name="footer"></slot>
         </div>
-
-        <ui-scroll-bar
-          v-if="scroll_body"
-          target="[data-testid='app-window__body']"
-          min-width="sm"
-          class="absolute top-(--window-scrollbar-top) right-3 bottom-3 z-30"
-        />
       </div>
     </div>
   </div>
@@ -186,18 +190,20 @@ const root_style = computed(() => ({
   z-index: 20;
 }
 
-/* The body scrolls only when the window opted in; a reactive class here would
-   kill iOS momentum scroll mid-gesture, so the attribute drives it instead. */
+/* Stops the scroll track where the window's rounded bottom corner starts, which would clip its cap —
+   32px being `rounded-b-8` written out. A window with a footer has no such edge and keeps the
+   track's full height. */
+[data-window-edge='bottom'] {
+  --scroll-track-inset-end: 32px;
+}
+
+/* An attribute rather than a bound class — rewriting `class` around a scrolling box mid-gesture
+   kills iOS momentum scroll. →[K:mid-gesture-mutation-kills-momentum-scroll] */
 [data-scroll-body] {
   /* Drops under the header so scrolled content passes beneath the wave. */
   z-index: 0;
 
-  overflow-y: auto;
-
-  /* Starts the scroll area behind the shaped header edge rather than below it,
-     so content passes under the wave instead of clipping on a straight line.
-     The header's own fill strip is what occludes it. */
+  /* Starts the scroll area behind the header's shaped edge, so content passes under the wave instead of clipping on a straight line. */
   margin-top: calc(var(--window-header-depth, 0px) * -1);
-  padding-top: var(--window-header-depth, 0px);
 }
 </style>

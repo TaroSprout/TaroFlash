@@ -26,7 +26,7 @@ type OptionsPanelProps = {
   // false renders plain rows with no tap/hover/sfx behavior (static info/status rows)
   interactive?: boolean
   // scrolls internally within the card instead of clipping; pair with a sibling
-  // <scroll-bar> targeting the `__content` testid below (native scrollbar is suppressed)
+  // <scroll-region> targeting the `__content` testid below (native scrollbar is suppressed)
   scrollable?: boolean
 }
 

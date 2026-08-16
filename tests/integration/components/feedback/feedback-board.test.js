@@ -101,6 +101,41 @@ describe('FeedbackBoard — content', () => {
   })
 })
 
+// ── Fixed geometry [obligation] ───────────────────────────────────────────────
+// The board is the one window that pins its own width and height, so the
+// breakpoint that switches those on has to be wider than the width itself —
+// gate them any earlier and the window is wider than the screen showing it.
+// The utility names are the only signal for this: the sizes never render in
+// this environment, and nothing else records which breakpoint owns them.
+
+describe('FeedbackBoard — fixed size [obligation]', () => {
+  function rootClasses(wrapper) {
+    return wrapper.find('[data-testid="feedback-board"]').classes()
+  }
+
+  test('gates every fixed width and height on the same breakpoint', () => {
+    const { wrapper } = mountBoard()
+    const sized = rootClasses(wrapper).filter((c) => /(^|:)[wh]-\d/.test(c))
+
+    expect(sized.length).toBeGreaterThan(0)
+    for (const c of sized) expect(c.startsWith('msm:')).toBe(true)
+  })
+
+  test('never turns its fixed size on at a breakpoint narrower than the size itself', () => {
+    const { wrapper } = mountBoard()
+
+    expect(rootClasses(wrapper)).toEqual(expect.arrayContaining(['msm:w-170', 'msm:h-196']))
+  })
+
+  test('leaves the gap below the wall to the footer, not the body [obligation]', () => {
+    const { wrapper } = mountBoard()
+    const body = wrapper.find('[data-testid="feedback-board__body"]').classes()
+
+    expect(body.some((c) => /(^|:)pb-/.test(c))).toBe(false)
+    expect(wrapper.find('[data-testid="feedback-board__actions"]').classes()).toContain('pb-6')
+  })
+})
+
 // ── Close wiring ──────────────────────────────────────────────────────────────
 
 describe('FeedbackBoard — close wiring', () => {
