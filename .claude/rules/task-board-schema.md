@@ -44,13 +44,19 @@ Add/remove/rename a field's **options** with `notion-update-data-source`
 first and verify with a row-level `WHERE id IN (…)` query — Notion's aggregate `COUNT/GROUP BY` reads
 lag row writes.
 
-**A create or update response is not proof the row is on the board — read it back.** [K:notion-write-verification]
-`notion-create-pages` and `notion-update-page` echo the properties you sent even when the write never
-reached the board: a page created without its parent set to the Task Board data source still returns
-`Status`/`Type`/`Epic` as if set, but they're ordinary page properties on a private page, backing
-nothing the board's queries see. Before reporting any ticket created or field written, re-query the
-data source for that page id and read the row that comes back. An empty read-back is the finding, not
-a replication-lag explanation to write around — re-run the same query before trusting either story.
+**A create or update response is not proof the write landed — read it back.** [K:notion-write-verification]
+`notion-create-pages` and `notion-update-page` echo what you sent even when the write never reached
+the board or the page: a page created without its parent set to the Task Board data source still
+returns `Status`/`Type`/`Epic` as if set, but they're ordinary page properties on a private page,
+backing nothing the board's queries see. `notion-update-page`'s `update_content` op is the same
+failure mode on body content — it reports success even when an operation's `old_str` matched
+nothing, which routinely happens when inline comment markup on the target page splits a sentence
+into multiple text fragments that a plain-text match can't find. Before reporting any ticket created,
+field written, or body edited, re-fetch it and read back what actually landed — for a property
+write, re-query the data source for that page id; for a body edit, re-fetch the page and confirm
+each intended change is present. An empty or unchanged read-back is the finding, not a replication-lag
+or stale-tab explanation to write around — re-run the same query, or re-fetch the page, before
+telling the user it landed or that their view is stale.
 
 ## Fields
 

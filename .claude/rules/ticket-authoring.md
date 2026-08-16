@@ -67,8 +67,9 @@ tickets defaulting there too. Leave `Target` empty at capture; `/backlog` sets i
 ## Body
 
 The body is the Notion **page content**. Prefer `replace_content` for a full rewrite over a chain of
-`update_content` edits. Use **bullets, not numbered lists**, for anything ordered — Notion renumbers
-ordered lists and the churn shows up as noise in the page history.
+`update_content` edits — a chain reports success even on a partial match, see
+→[K:notion-write-verification]. Use **bullets, not numbered lists**, for anything ordered — Notion
+renumbers ordered lists and the churn shows up as noise in the page history.
 
 **One section list. Each stage fills more of it — no stage invents sections.**
 
