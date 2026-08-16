@@ -50,7 +50,7 @@ const slots = defineSlots<{
   header(): any
   'header-content'(): any
   default(): any
-  footer(): any
+  footer?(): any
 }>()
 
 const emit = defineEmits<{
@@ -153,6 +153,7 @@ const root_style = computed(() => ({
         <div
           data-testid="app-window__body"
           :data-scroll-body="scroll_body || undefined"
+          :data-window-edge="slots.footer ? undefined : 'bottom'"
           class="scroll-hidden relative min-h-0 flex-1 bg-surface"
         >
           <scroll-region
@@ -186,6 +187,16 @@ const root_style = computed(() => ({
    its own z-index. */
 [data-testid='app-window__body'] {
   z-index: 20;
+}
+
+/* Set when nothing sits between the body and the window's bottom edge. The
+   window clips on its corner curve, so a scrollbar drawn against that edge
+   would lose its bottom cap there — the track stops where the straight part of
+   the edge does. This distance is the container's own `rounded-b-8` written
+   out — 8 spacing steps of 4px, which is not the same as 2rem here. A window
+   with a footer keeps its track running the body's full height. */
+[data-window-edge='bottom'] {
+  --scroll-track-inset-end: 32px;
 }
 
 /* Set only when the window opted in, and as an attribute rather than a bound

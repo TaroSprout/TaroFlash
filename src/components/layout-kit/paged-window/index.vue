@@ -120,6 +120,20 @@ const window_close_button = computed(
 )
 const back_mode = computed(() => active.value !== null && !has_sidebar.value)
 
+/**
+ * How far in from the window's end edge a page's content stops.
+ *
+ * Normally the window's own horizontal padding, so both edges of a page match.
+ * It floors at 3rem where that padding is narrower, because the clear air the
+ * scrollbar needs comes out of this one distance — a page whose padding is
+ * under the floor ends up with its end edge the wider of the two.
+ */
+const content_inset_class = computed(() =>
+  layout_mode.value === 'phone'
+    ? '[--scroll-content-inset:0.625rem]'
+    : '[--scroll-content-inset:max(var(--window-px),3rem)]'
+)
+
 defineExpose({ layout_mode, displayed_page, has_sidebar })
 
 function toEntry(value: string): OptionsPanelEntry {
@@ -167,11 +181,7 @@ function onDirectoryNavigate(value: string) {
     :header_border="header_border"
     :scroll_body="scroll_body"
     :window_px="window_px"
-    :class="
-      layout_mode === 'phone'
-        ? '[--scroll-content-inset:0.625rem]'
-        : '[--scroll-content-inset:var(--window-px)]'
-    "
+    :class="content_inset_class"
     @close="onFrameClose"
   >
     <template v-if="$slots.overlay" #overlay><slot name="overlay"></slot></template>
