@@ -5,13 +5,12 @@ import UiSlider from '@/components/ui-kit/slider.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import LabeledSection from '@/components/layout-kit/labeled-section.vue'
 import { memberEditorKey } from '@/composables/member/editor'
-import { toBusVolumes } from '@/utils/member/preferences'
-import audio_player from '@/sfx/player'
+import { discardVolumePreview, previewMemberVolumes } from '@/sfx/volume-seam'
 
 const { t } = useI18n()
 const editor = inject(memberEditorKey)!
 
-onBeforeUnmount(() => audio_player.resetSettings())
+onBeforeUnmount(() => discardVolumePreview())
 
 // Only the sliders live-preview — mute is excluded, so the preview always plays unmuted; mute itself applies on save via App.vue.
 watch(
@@ -20,7 +19,7 @@ watch(
     editor.draft.preferences.audio.hover_sounds
   ],
   ([interface_sounds, hover_sounds]) =>
-    audio_player.previewVolumeConfig(toBusVolumes({ muted: false, interface_sounds, hover_sounds }))
+    previewMemberVolumes({ muted: false, interface_sounds, hover_sounds })
 )
 </script>
 
@@ -39,14 +38,14 @@ watch(
         :min="0"
         :max="10"
         :label="t('settings.app.audio.interface-sounds')"
-        :sfx="{ bus: 'interface' }"
+        preview_bus="interface"
       />
       <ui-slider
         v-model="editor.draft.preferences.audio.hover_sounds"
         :min="0"
         :max="10"
         :label="t('settings.app.audio.hover-sounds')"
-        :sfx="{ bus: 'hover' }"
+        preview_bus="hover"
       />
     </div>
   </labeled-section>

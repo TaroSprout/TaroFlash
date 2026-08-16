@@ -7,7 +7,7 @@ import NoticePanel from '@/components/ui-kit/notice/panel.vue'
 import UiModal from '@/components/ui-kit/modal/index.vue'
 import { springScaleIn } from '@/utils/animations/modal'
 import { noticeToastListLeave } from '@/utils/animations/notice-toast'
-import audio_player from '@/sfx/player'
+import { applyMemberVolumes, setupAudio } from '@/sfx/volume-seam'
 import { installAudioLifecycle } from '@/sfx/lifecycle'
 import { installSafeAreaPadding } from '@/composables/ui/safe-area'
 import { useSessionStore } from '@/stores/session'
@@ -15,7 +15,7 @@ import { onMounted, onBeforeUnmount } from 'vue'
 import logger from '@/utils/logger'
 import { useThemeStore } from '@/stores/theme'
 import { useMemberStore } from '@/stores/member'
-import { withMemberPreferencesDefaults, toBusVolumes } from '@/utils/member/preferences'
+import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
 import { watch } from 'vue'
 
 const { t } = useI18n()
@@ -56,7 +56,7 @@ watch(
       'data-left-hand',
       String(resolved.accessibility.left_hand)
     )
-    audio_player.setVolumeConfig(toBusVolumes(resolved.audio))
+    applyMemberVolumes(resolved.audio)
   },
   { immediate: true, deep: true }
 )
@@ -82,8 +82,7 @@ onMounted(() => {
   }
 
   scheduleIdle(() => {
-    audio_player
-      .setup()
+    setupAudio()
       .then(() => {
         teardownAudioLifecycle = installAudioLifecycle()
       })
