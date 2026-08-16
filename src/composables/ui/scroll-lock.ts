@@ -23,9 +23,25 @@ export function useScrollLock(container: MaybeRefOrGetter<HTMLElement | null | u
     return null
   }
 
-  function wouldScrollBackground(target: EventTarget | null, scrolling_down: boolean): boolean {
+  /**
+   * The subtree the gesture is allowed to scroll: the locked container, or a panel that opted in
+   * with `data-scroll-live`. A teleported popover renders on `<body>`, outside the container, so
+   * without the opt-in its own scrollers read as background and every wheel over them is
+   * cancelled. →[K:scroll-lock-teleport-opt-in]
+   */
+  function liveRoot(target: Node): HTMLElement | null {
     const root = toValue(container)
-    if (!root || !(target instanceof Node) || !root.contains(target)) return true
+    if (root?.contains(target)) return root
+
+    const el = target instanceof HTMLElement ? target : target.parentElement
+    return el?.closest<HTMLElement>('[data-scroll-live]') ?? null
+  }
+
+  function wouldScrollBackground(target: EventTarget | null, scrolling_down: boolean): boolean {
+    if (!(target instanceof Node)) return true
+
+    const root = liveRoot(target)
+    if (!root) return true
 
     const scroller = scrollableAncestor(target, root)
     if (!scroller) return true

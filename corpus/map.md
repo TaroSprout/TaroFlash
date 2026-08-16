@@ -76,6 +76,6 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 - [[pin-scroll-while-typing]] — `usePinScrollWhileTyping` stops the page jumping while typing inside a window-scrolled virtualized list
 - [[reorder-drag]] — the pointer-driven drag-to-reorder engine; applies a computed offset as a translate, never moves or clones DOM
 - [[safe-area-chrome-detection]] — `installSafeAreaPadding` decides live whether browser chrome already covers the safe-area strip
-- [[scroll-lock]] — `useScrollLock` keeps the background from scrolling without the usual overflow/position toggle
+- [[scroll-lock]] — `useScrollLock` keeps the background from scrolling without the usual overflow/position toggle ⚠️
 - [[scroll-region]] — `layout-kit/scroll-region` owns the scrolling box and its handle; a host hidden with `display: none` measures 0 until it's revealed ⚠️
 - [[window-refocus-guard]] — `useWindowRefocusGuard` tells a real blur apart from focus round-tripping through an OS app-switch
