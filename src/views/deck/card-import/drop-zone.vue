@@ -4,7 +4,6 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 import { ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 import { CARD_IMPORT_ACCEPT } from '@/utils/card/csv'
 
 type DropZoneProps = {
@@ -76,7 +75,7 @@ watch(drag_depth, (now, was) => {
     :data-error="error ? '' : undefined"
     :data-palette="error ? 'danger' : undefined"
     class="card-import-drop-zone"
-    v-sfx="{ hover: TYPE_SFX }"
+    v-sfx="{ hover: 'ui.hover' }"
     @dragenter="onDragEnter"
     @dragleave="onDragLeave"
     @dragover="onDragOver"

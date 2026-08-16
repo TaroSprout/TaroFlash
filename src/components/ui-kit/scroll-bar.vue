@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
-import { TYPE_SFX } from '@/sfx/config'
 
 type UiScrollBarProps = {
   /** Reading position — 0 at the top of the content, 1 at the bottom. */
@@ -125,7 +124,7 @@ function onTrackPointerDown(e: PointerEvent) {
   >
     <div
       ref="thumb"
-      v-sfx="{ hover: TYPE_SFX }"
+      v-sfx="{ hover: 'ui.hover' }"
       data-testid="ui-kit-scroll-bar__thumb"
       :data-active="dragging"
       class="ui-kit-scroll-bar__thumb hover:bgx-diagonal-stripes"

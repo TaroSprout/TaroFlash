@@ -2,10 +2,7 @@ import { ref } from 'vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
 import { emitSfx } from '@/sfx/bus'
-import type { PlayOptions } from '@/sfx/player'
-import type { SoundKey } from '@/sfx/config'
-
-type SfxKey = SoundKey
+import type { SfxRole } from '@/sfx/roles'
 
 export type StagedTapAnimate = 'pop' | 'quiet'
 export type StagedTapPhase = 'press' | 'peak' | 'done'
@@ -27,13 +24,9 @@ export interface StagedTapOptions {
 
 export interface TapCallOptions {
   /** Coarse only — fires at press, before the animation starts (an "arm" cue). */
-  preAudio?: SfxKey
+  preAudio?: SfxRole
   /** Primary click-feedback sound; fires immediately on fine, at the action phase on coarse. */
-  audio?: SfxKey
-  /** Options forwarded to emitSfx for the main audio key (volume, debounce, bus). */
-  audioOpts?: PlayOptions
-  /** Coarse only — fires after the animation completes. */
-  postAudio?: SfxKey
+  audio?: SfxRole
   /** Fires on every call, even one that bails as already-playing. */
   onTap?: (e: MouseEvent) => void
   /** Override the composable-level triggerAt for this specific call. */
@@ -48,7 +41,6 @@ export interface TapCallOptions {
  * Sound phases:
  * - preAudio  — coarse only, fires at press before animation (arm/haptic cue)
  * - audio     — all pointers; fires immediately on fine, at the action phase on coarse
- * - postAudio — coarse only, fires after animation completes
  */
 export function useStagedTap(options: StagedTapOptions = {}) {
   const {
@@ -73,7 +65,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
       tapOpts.onTap?.(e)
 
       if (activeOn === 'coarse-only' && !is_coarse.value) {
-        if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+        if (tapOpts.audio) emitSfx(tapOpts.audio)
         action?.(e)
         return
       }
@@ -83,7 +75,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       if (tapOpts.preAudio) emitSfx(tapOpts.preAudio)
       if (phase === 'press') {
-        if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+        if (tapOpts.audio) emitSfx(tapOpts.audio)
         action?.(e)
       }
 
@@ -94,19 +86,17 @@ export function useStagedTap(options: StagedTapOptions = {}) {
         const { peak, done } = playButtonTap(target, duration, { yoyo, hold })
         await peak
         if (phase === 'peak') {
-          if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+          if (tapOpts.audio) emitSfx(tapOpts.audio)
           action?.(e)
         }
         await done
-        if (tapOpts.postAudio) emitSfx(tapOpts.postAudio)
         if (phase === 'done') action?.(e)
       } else {
         await new Promise<void>((resolve) => setTimeout(resolve, duration * 1000))
         if (phase !== 'press') {
-          if (tapOpts.audio) emitSfx(tapOpts.audio, tapOpts.audioOpts)
+          if (tapOpts.audio) emitSfx(tapOpts.audio)
           action?.(e)
         }
-        if (tapOpts.postAudio) emitSfx(tapOpts.postAudio)
       }
 
       playing.value = false

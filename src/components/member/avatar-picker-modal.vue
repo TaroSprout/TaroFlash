@@ -7,7 +7,6 @@ import AvatarImage from './avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { AVATAR_KEYS, loadAvatarUrl } from './avatars'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 type AvatarPickerModalProps = {
   selected?: string
@@ -51,7 +50,7 @@ function onAvatarSelect(avatar: string) {
           :key="avatar"
           :data-testid="`avatar-picker-modal__option-${avatar}`"
           :data-selected="avatar === selected || undefined"
-          v-sfx="{ hover: TYPE_SFX }"
+          v-sfx="{ hover: 'ui.hover' }"
           class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-knockout relative aspect-square p-2"
           @click="onAvatarSelect(avatar)"
         >

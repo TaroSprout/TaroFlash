@@ -9,7 +9,6 @@ import { CARD_IMAGE_MAX_BYTES, useFaceImageUpload } from '@/composables/card'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 import { type SfxOptions } from '@/sfx/directive'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
@@ -178,7 +177,7 @@ defineExpose({
     :aria-label="t('card.image-editor.upload-image-button')"
     class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-ink-muted transition-[color,opacity] duration-150 hover:text-(--color-accent)"
     :class="hovered ? 'opacity-100' : 'opacity-0'"
-    v-sfx="{ hover: TYPE_SFX }"
+    v-sfx="{ hover: 'ui.hover' }"
     @click.stop="onAddClick"
   >
     <span ref="addIcon" class="inline-flex">

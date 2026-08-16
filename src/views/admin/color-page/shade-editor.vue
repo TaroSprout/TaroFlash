@@ -9,7 +9,6 @@ import UiInput from '@/components/ui-kit/input.vue'
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 type ShadeEditorProps = {
   shade: Shade
@@ -91,7 +90,7 @@ function onCommitName() {
       <div class="relative shrink-0">
         <label
           data-testid="shade-editor__swatch"
-          v-sfx="{ hover: TYPE_SFX }"
+          v-sfx="{ hover: 'ui.hover' }"
           class="relative block size-12 cursor-pointer rounded-3 border border-line"
           :style="{ backgroundColor: hex }"
           :title="t('admin.palette-page.pick-color-label')"
@@ -112,7 +111,7 @@ function onCommitName() {
         <button
           type="button"
           data-testid="shade-editor__hex"
-          v-sfx="{ hover: TYPE_SFX }"
+          v-sfx="{ hover: 'ui.hover' }"
           class="absolute top-full left-0 cursor-pointer whitespace-nowrap text-base text-ink-muted tabular-nums hover:text-ink"
           @click="onCopyHex"
         >

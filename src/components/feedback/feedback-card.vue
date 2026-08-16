@@ -7,7 +7,6 @@ import MemberPolaroid from '@/components/member/member-polaroid.vue'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useToggleFeedbackVoteMutation } from '@/api/feedback'
-import { TYPE_SFX } from '@/sfx/config'
 
 const { item } = defineProps<{ item: FeedbackItem }>()
 
@@ -62,7 +61,7 @@ async function onToggleVote() {
         data-palette="pink"
         class="flex cursor-pointer items-center justify-center duration-100 disabled:opacity-disabled hover:scale-110 hover:rotate-5"
         :class="item.voted_by_me ? 'text-(--color-accent-text)' : 'text-ink-muted'"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
         @click="onToggleVote"
       >
         <ui-icon src="symbol-hearts" class="size-6" />

@@ -3,8 +3,8 @@ import { computed, useSlots } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import type { SfxOptions } from '@/sfx/directive'
-import { TYPE_SFX } from '@/sfx/config'
+import { emitSfx } from '@/sfx/bus'
+import type { SfxOptions } from '@/sfx/roles'
 
 defineOptions({ inheritAttrs: false })
 
@@ -66,15 +66,13 @@ const slots = useSlots()
 
 const { playing, tap } = useStagedTap({ animate: tapAnimate ? 'pop' : 'quiet' })
 
-// Only hover/focus/blur reach v-sfx — press-phase sounds are routed through
+// Only hover/focus reach v-sfx — press-phase sounds are routed through
 // staged-tap in onClick so they fire at the correct phase for each pointer.
 const merged_sfx = computed<SfxOptions>(() => {
   if (disabled) return {}
   return {
-    hover: sfx.hover ?? TYPE_SFX,
-    focus: sfx.focus,
-    blur: sfx.blur,
-    debounce: sfx.debounce
+    hover: sfx.hover ?? 'ui.hover',
+    focus: sfx.focus
   }
 })
 
@@ -89,6 +87,8 @@ function onClick(e: MouseEvent) {
   if ((e.target as HTMLElement).closest?.('.btn-trailing')) return
 
   if (disabled) {
+    if (sfx.rejected !== false) emitSfx(sfx.rejected ?? 'ui.rejected')
+
     // clickWhenDisabled still surfaces the press (e.g. to flag a validation
     // error); otherwise a disabled button emits nothing and blocks the default.
     if (clickWhenDisabled) emit('press', e)
@@ -102,12 +102,8 @@ function onClick(e: MouseEvent) {
   }
 
   tap((ev) => emit('press', ev), {
-    preAudio: sfx.tap_pre,
-    audio: sfx.press,
-    audioOpts: {
-      debounce: sfx.debounce
-    },
-    postAudio: sfx.tap_post
+    preAudio: sfx.tap_pre || undefined,
+    audio: sfx.press === false ? undefined : (sfx.press ?? 'ui.press')
   })(e)
 }
 </script>

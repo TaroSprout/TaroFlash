@@ -8,7 +8,6 @@ import { injectColorTuner } from './use-color-tuner'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 const { t } = useI18n()
 const tuner = injectColorTuner()
@@ -101,7 +100,7 @@ watch(
             type="button"
             data-testid="palette-page__swatch"
             :data-active="shade.id === picked_id"
-            v-sfx="{ hover: TYPE_SFX }"
+            v-sfx="{ hover: 'ui.hover' }"
             class="flex w-(--palette-page-swatch-size) cursor-pointer flex-col gap-1 rounded-3 p-2 text-left hover:bg-raised-tint data-[active=true]:bg-raised"
             @click="onPick(shade.id, $event)"
           >
@@ -132,7 +131,7 @@ watch(
           <button
             type="button"
             data-testid="palette-page__add-shade"
-            v-sfx="{ hover: TYPE_SFX }"
+            v-sfx="{ hover: 'ui.hover' }"
             class="flex w-(--palette-page-swatch-size) cursor-pointer flex-col self-start rounded-3 p-2 text-ink-muted"
             :aria-label="t('admin.palette-page.add-shade-button')"
             :title="t('admin.palette-page.add-shade-button')"

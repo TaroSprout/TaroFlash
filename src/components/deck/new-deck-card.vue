@@ -2,7 +2,6 @@
 import Card from '@/components/card/index.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { TYPE_SFX } from '@/sfx/config'
 import { useI18n } from 'vue-i18n'
 
 type NewDeckCardProps = {
@@ -24,7 +23,7 @@ const { t } = useI18n()
     :aria-label="t('dashboard.create-deck-button')"
     class="pointer-fine:hover:scale-102 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 relative cursor-pointer h-min touch-manipulation"
     :class="(loading || disabled) && 'opacity-disabled pointer-events-none'"
-    :sfx="{ hover: TYPE_SFX, press: 'pop_up_pop' }"
+    :sfx="{ hover: 'ui.hover', press: 'pop_up_pop' }"
     @tap="!disabled && emit('press', $event)"
   >
     <card side="front">

@@ -2,7 +2,6 @@
 import Card from '@/components/card/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTappable from '@/components/ui-kit/tappable.vue'
-import { TYPE_SFX } from '@/sfx/config'
 import type { SfxOptions } from '@/sfx/directive'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -57,7 +56,7 @@ const is_locked = computed(() => locked ?? deck?.is_locked ?? false)
       dragging && 'drop-shadow-sm'
     ]"
     :active="active"
-    :sfx="{ hover: TYPE_SFX, ...sfx }"
+    :sfx="{ hover: 'ui.hover', ...sfx }"
     @tap="emit('press', $event)"
   >
     <card

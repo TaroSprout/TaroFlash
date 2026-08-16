@@ -5,7 +5,6 @@ import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 import { inject, ref, useTemplateRef, watch } from 'vue'
 import { usePressHold } from '@/composables/ui/press-hold'
 import {
@@ -94,7 +93,7 @@ watch(
       'pointer-fine:hover:scale-101': is_selecting,
       jiggle: rearranging && !dragging
     }"
-    v-sfx="{ hover: is_selecting || rearranging ? TYPE_SFX : undefined }"
+    v-sfx="{ hover: is_selecting || rearranging ? 'ui.hover' : undefined }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
     @pointerdown="onPointerdown"

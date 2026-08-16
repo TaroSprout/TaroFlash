@@ -7,7 +7,7 @@ import { useWindowLayout, windowLayoutKey } from './layout'
 import { usePageTransition } from './page-transition'
 import type { OptionsPanelEntry } from '@/components/ui-kit/options-panel/index.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX, type SoundKey } from '@/sfx/config'
+import { type SoundKey } from '@/sfx/config'
 import uid from '@/utils/uid'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
@@ -58,7 +58,7 @@ const {
   phone_query = 'w<md',
   desktop_query = 'w>=lg & fine',
   between,
-  hover_sfx = TYPE_SFX,
+  hover_sfx = 'ui.hover',
   select_sfx = 'snappy_button_5',
   reselect_sfx = 'digi_powerdown',
   stretch_page = false

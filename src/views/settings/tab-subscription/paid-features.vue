@@ -4,7 +4,6 @@ import { PLANS } from '@/config/plans'
 import { useUpgradeClick } from './use-upgrade-click'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import UiButton from '@/components/ui-kit/button.vue'
-import { TYPE_SFX } from '@/sfx/config'
 
 const { t } = useI18n()
 const { onUpgradeClick } = useUpgradeClick()
@@ -18,7 +17,7 @@ const price = `$${PLANS.paid.monthlyPriceUsd} / mo`
   <div data-testid="paid-features" class="relative">
     <ui-tappable
       data-testid="paid-features__body"
-      :sfx="{ hover: TYPE_SFX }"
+      :sfx="{ hover: 'ui.hover' }"
       class="card-outline w-full flex flex-col gap-3 rounded-4 px-5 py-4 text-ink bg-raised pointer-fine:hover:scale-101 data-[tap-active=true]:scale-101 pointer-coarse:data-[tap-active=true]:scale-105 pointer-fine:transition-transform duration-75 cursor-pointer touch-manipulation"
       @tap="onUpgradeClick"
     >

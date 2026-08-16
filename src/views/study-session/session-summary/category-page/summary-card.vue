@@ -10,7 +10,6 @@ import { useDeckResolution } from '@/views/study-session/deck-resolution'
 import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 import { usePressHold } from '@/composables/ui/press-hold'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 import type { StudyCard } from '@/views/study-session/composables/session-engine'
 
 type SummaryCardProps = { card: StudyCard }
@@ -76,7 +75,7 @@ function onCardClick() {
   <div
     data-testid="session-summary__card"
     class="group relative w-full"
-    v-sfx="{ hover: is_selecting ? TYPE_SFX : undefined }"
+    v-sfx="{ hover: is_selecting ? 'ui.hover' : undefined }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
     @pointerdown="onPointerdown"

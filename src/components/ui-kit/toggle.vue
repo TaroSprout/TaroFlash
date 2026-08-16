@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
+import type { SfxOptions } from '@/sfx/roles'
 
 type ToggleProps = {
-  // Suppresses hover + select sfx — for contexts like dev/debug tooling that
-  // shouldn't make noise, not a general-purpose per-instance mute.
-  silent?: boolean
+  sfx?: SfxOptions
   disabled?: boolean
 }
 
-const { silent = false, disabled = false } = defineProps<ToggleProps>()
+const { sfx = {}, disabled = false } = defineProps<ToggleProps>()
 
 const checked = defineModel<boolean>('checked')
 
 function onChange() {
-  if (!silent) emitSfx('select')
+  const picked = sfx.press ?? 'ui.select'
+  if (picked !== false) emitSfx(picked)
 }
 </script>
 
@@ -25,7 +24,7 @@ function onChange() {
     :data-disabled="disabled"
     class="group/toggle flex items-center justify-between gap-2"
     :class="disabled ? 'pointer-events-none opacity-disabled' : 'cursor-pointer'"
-    v-sfx="silent ? {} : { hover: TYPE_SFX }"
+    v-sfx="{ hover: sfx.hover ?? 'ui.hover' }"
   >
     <span data-testid="ui-kit-toggle__label" class="text-ink">
       <slot></slot>

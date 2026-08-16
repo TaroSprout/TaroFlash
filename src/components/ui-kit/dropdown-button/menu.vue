@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import { TYPE_SFX } from '@/sfx/config'
 import type { DropdownOption } from './types'
 
 type DropdownMenuProps = {
@@ -59,7 +58,7 @@ function onOptionTap(option: DropdownOption, e: MouseEvent) {
           :data-active="option.selected || null"
           :data-tapping="tapping_value === option.value || null"
           data-testid="dropdown-button__option"
-          v-sfx="option.disabled ? {} : { hover: TYPE_SFX }"
+          v-sfx="option.disabled ? {} : { hover: 'ui.hover' }"
           @click="onOptionTap(option, $event)"
         >
           <div
