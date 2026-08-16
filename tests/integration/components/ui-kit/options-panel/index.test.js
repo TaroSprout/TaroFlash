@@ -6,6 +6,7 @@ const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 import OptionsPanel from '@/components/ui-kit/options-panel/index.vue'
+import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
 
 const IconStub = defineComponent({
   name: 'UiIcon',
@@ -46,11 +47,7 @@ afterEach(() => {
   _activeWrappers = []
 })
 
-async function waitForUpdate() {
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => setTimeout(resolve, 60))
-}
+const waitForUpdate = waitForScrollSettle
 
 function makeOverflowingPanel(height = 60) {
   const wrapper = mount(OptionsPanel, {

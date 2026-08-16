@@ -2,6 +2,7 @@ import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount as vueMount } from '@vue/test-utils'
 import SkippedLinesDialog from '@/views/deck/card-import/skipped-lines-dialog.vue'
 import { vSfx } from '@/sfx/directive'
+import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
 
 const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),
@@ -31,11 +32,7 @@ afterEach(() => {
   _activeWrappers = []
 })
 
-async function waitForUpdate() {
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  await new Promise((resolve) => setTimeout(resolve, 60))
-}
+const waitForUpdate = waitForScrollSettle
 
 function mountOverflowing(height = 60) {
   const lines = Array.from({ length: 40 }, (_, i) => ({ line: i + 1, text: `bad row ${i + 1}` }))
