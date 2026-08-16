@@ -30,6 +30,10 @@ export const ROLES = {
   'dialog.confirm': { sound: 'music_plink_ok' },
   'dialog.dismiss': { sound: 'digi_powerdown' },
 
+  'phone.open': { sound: 'pop_window' },
+  'phone.close': { sound: 'pop_window' },
+  'phone.app-focus': { sound: 'pop_drip_mid', bus: 'hover' },
+
   'notice.success': { sound: 'success_1' },
   'notice.error': { sound: 'etc_woodblock_stuck' },
   'notice.info': { sound: 'generic_notification_9' },

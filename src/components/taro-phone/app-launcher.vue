@@ -38,7 +38,7 @@ function focusApp(index: number, emit_hover_sfx = true) {
   }
 
   apps[active_index]?.focus()
-  if (emit_hover_sfx) emitHoverSfx('ui.hover')
+  if (emit_hover_sfx) emitHoverSfx('phone.app-focus')
 }
 
 function activateFocused() {
@@ -55,7 +55,7 @@ function onMouseOverApp(e: MouseEvent) {
 
   apps[active_index]?.blur()
   active_index = -1
-  emitHoverSfx('ui.hover')
+  emitHoverSfx('phone.app-focus')
 }
 
 function _getApps() {
