@@ -58,9 +58,9 @@ Launch the blind agent and all four finders **in the same message** so they run 
 
 ### 1. State what the feature IS (orchestrator, before deep-reading)
 
-Reconstruct the feature in domain terms as if no code existed: its essential entities, invariants, states, and user-facing behavior. Sources are the _outside_ of the code — the rendered UI, DB schema/migrations, PR history, `project_*` memories — not the current module boundaries. Write 1–2 paragraphs, thorough on behavior: the blind agent designs from this alone, so under-description produces a toy design. Err on the side of more behavioral detail, not more structural detail.
+Reconstruct the feature in domain terms as if no code existed: its essential entities, invariants, states, and user-facing behavior. Sources are the _outside_ of the code — the rendered UI, DB schema/migrations, PR history — not the current module boundaries. Write 1–2 paragraphs, thorough on behavior: the blind agent designs from this alone, so under-description produces a toy design. Err on the side of more behavioral detail, not more structural detail.
 
-**Launder it.** The description must not leak the current decomposition: no file names, component names, composable names, prop names, or locale keys (locale keys encode component structure in this repo). `project_*` memories often describe the _implementation_ — extract the domain facts, drop the shape. If you can't state the feature without naming current files, step back further.
+**Launder it.** The description must not leak the current decomposition: no file names, component names, composable names, prop names, or locale keys (locale keys encode component structure in this repo). If you can't state the feature without naming current files, step back further.
 
 **Sign-off gate (blocking).** Print the domain statement and stop. Nothing dispatches until the user approves it — everything downstream is derived from this statement, so a wrong one wastes the whole run. Print it as a short concise summary, not the full text: scope line + 3–6 bullets covering entities, invariants/states, and user-facing behavior. Then ask the user to approve or correct. Apply corrections and re-print if the change is material; otherwise proceed straight to dispatch.
 
