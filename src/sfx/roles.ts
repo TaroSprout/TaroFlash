@@ -26,6 +26,8 @@ export const ROLES = {
   'ui.toggle-off': { sound: 'toggle_off' },
 
   'dialog.open': { sound: 'snappy_button_3' },
+  // The softer of the two opening cues; both close on 'dialog.close'.
+  'dialog.open-chime': { sound: 'wooden_chime_ring' },
   'dialog.close': { sound: 'pop_up_close' },
   'dialog.confirm': { sound: 'music_plink_ok' },
   'dialog.dismiss': { sound: 'digi_powerdown' },

@@ -22,7 +22,7 @@ const router = useRouter()
 
 const { password, confirm_password, loading, errors, success, submit } = useResetPasswordActions()
 
-onMounted(() => emitSfx('dialog.open'))
+onMounted(() => emitSfx('dialog.open-chime'))
 onBeforeUnmount(() => emitSfx('dialog.close'))
 
 async function onSubmit() {

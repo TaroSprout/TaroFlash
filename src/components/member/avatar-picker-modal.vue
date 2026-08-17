@@ -19,7 +19,7 @@ const { t } = useI18n()
 const loaded = reactive(new Set<string>())
 
 onMounted(() => {
-  emitSfx('dialog.open')
+  emitSfx('dialog.open-chime')
   AVATAR_KEYS.forEach((avatar) => loadAvatarUrl(avatar)?.then(() => loaded.add(avatar)))
 })
 

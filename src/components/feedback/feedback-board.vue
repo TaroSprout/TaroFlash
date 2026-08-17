@@ -15,7 +15,7 @@ const modal = useModal()
 const { data: items } = useFeedbackItemsQuery()
 
 function onSubmitPress() {
-  emitSfx('dialog.open')
+  emitSfx('dialog.open-chime')
   modal.open(FeedbackSubmitDialog, { backdrop: true, mode: 'popup' })
 }
 </script>

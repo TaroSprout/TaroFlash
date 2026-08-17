@@ -51,7 +51,7 @@ export function useCheckout(close: (response?: CheckoutResponse) => void) {
     return 'form'
   })
 
-  onMounted(() => emitSfx('dialog.open'))
+  onMounted(() => emitSfx('dialog.open-chime'))
   onBeforeUnmount(() => emitSfx('dialog.close'))
 
   useModalRequestClose(() => {

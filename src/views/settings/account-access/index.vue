@@ -13,7 +13,7 @@ const { t } = useI18n()
 const page = ref<AccountAccessContentPage>('menu')
 const content = useTemplateRef<{ title: string }>('content')
 
-onMounted(() => emitSfx('dialog.open'))
+onMounted(() => emitSfx('dialog.open-chime'))
 onBeforeUnmount(() => emitSfx('dialog.close'))
 </script>
 

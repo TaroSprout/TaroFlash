@@ -27,7 +27,7 @@ export function useChangeCard(close: (response?: ChangeCardResponse) => void) {
     }
   })
 
-  onMounted(() => emitSfx('dialog.open'))
+  onMounted(() => emitSfx('dialog.open-chime'))
   onBeforeUnmount(() => emitSfx('dialog.close'))
 
   async function onSubmit() {
