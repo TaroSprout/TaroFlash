@@ -62,7 +62,8 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     fileInput,
     onFile: uploadFile,
     onError: () => emitSfx('ui.rejected'),
-    guard: guardCardImage
+    guard: guardCardImage,
+    dragCue: () => can_upload.value
   })
 
   const image_path = computed(() =>
@@ -182,11 +183,6 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     const root = rootEl()
     if (root && !root.contains(e.target as Node)) onDismissError()
   }
-
-  // Chime once when a drag first enters the card (not on every child dragenter).
-  watch(dragging, (now, was) => {
-    if (now && !was && can_upload.value) emitSfx('gesture.zone-cross')
-  })
 
   // Reveal waits for the refetched path to reach the DOM, not the upload call. `flush: 'post'`
   // so the freshly-mounted <img> is queryable.
