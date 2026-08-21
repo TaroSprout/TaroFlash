@@ -101,12 +101,37 @@ unanswered. Answer in the migration's own header, one line per group of schema o
 
 ## The pull-request digest [K:knowledge-pr-digest]
 
-`scripts/knowledge-report.mjs` posts one comment, updated in place, and never blocks: the slugs the
-changed code cites, the slugs this change dropped to zero citations, and the knowledge files it left
-unroutable. It compares against the merge base, so it names only what this change caused.
+`scripts/knowledge-report.mjs` posts one comment, updated in place, and never blocks. **Silence is
+the expected output** — it speaks only where the diff met recorded knowledge, which is a minority of
+pull requests. Three sections, each a flat list of one-line entries:
+
+- **Facts your changes sit on** — a corpus fact cited from a line this diff actually rewrote. A
+  citation elsewhere in a file the diff merely touched is not a signal and is never listed.
+- **Knowledge you changed** — a declaration whose own block this diff edited, still cited from code
+  the diff never opened. [`corpus-authoring → Authority`](./corpus-authoring.md#authority) already
+  makes the topic and its source echo ride one commit, so this is the backstop for the sibling site
+  that got missed, not the common path.
+- **Housekeeping** — a slug this change dropped to zero citations, and a knowledge file it left
+  unroutable. Both compare against the merge base, so they name only what this change caused.
+
+**Every entry is the declaration's own sentence, quoted.** The digest never paraphrases a fact and
+never describes one — it prints what the corpus says, so it can be read without opening a topic.
+Links ride footnotes as `topic — site, site`, keeping the line itself free of anything but the fact.
 
 `reachability.roots` in the config lists the files a reader arrives at unaided; everything else is
 reachable only by being linked, `[[id]]`-referenced, or cited from a file that is.
+
+## A declaration states its fact on its line [K:knowledge-declaration-statement]
+
+The digest quotes that line and nothing else, so the line has to carry the fact alone. Two shapes
+yield one: a heading, `## <the fact> [K:<slug>]`, or a callout whose lead sentence states it,
+`> [!HAZARD] [K:<slug>] **<the fact>**`. A callout is read to the end of its block and cut to whole
+sentences; a slug buried mid-paragraph yields nothing at all.
+
+Write the fact, not the section it lives in — `Nothing is derived` names a topic's argument, and
+reaches the reviewer as a line that says nothing. `slugs.statement` in the config sets the floor;
+`enforced` is `false` while the declarations that predate the rule are reworded, and flips to `true`
+in the change that clears the last one.
 
 ## Mechanising a prose rule [K:knowledge-mechanisation]
 

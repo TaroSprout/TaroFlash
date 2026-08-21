@@ -572,3 +572,87 @@ describe('lintKnowledge — orphan citations', () => {
     expect(lintKnowledge(root).errors).toEqual([])
   })
 })
+
+describe('lintKnowledge — statements', () => {
+  const STATEMENT_SLUGS = {
+    ...DEFAULT_CONFIG.slugs,
+    statement: { enforced: false, min_words: 5 }
+  }
+
+  test('a thin statement lands in warnings, not errors, when enforced is false', () => {
+    const root = makeRoot(
+      {
+        'corpus/a.md': '## X [K:thin-slug]\n',
+        'src/a.ts': '// Uses the thin fact here. →[K:thin-slug]\nconst VALUE = 1\n'
+      },
+      { slugs: STATEMENT_SLUGS }
+    )
+
+    const { errors, warnings } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(warnings).toEqual([
+      expect.stringContaining('[K:thin-slug] states "X." — too thin to read on its own')
+    ])
+  })
+
+  test('the same thin statement lands in errors, not warnings, when enforced is true', () => {
+    const root = makeRoot(
+      {
+        'corpus/a.md': '## X [K:thin-slug]\n',
+        'src/a.ts': '// Uses the thin fact here. →[K:thin-slug]\nconst VALUE = 1\n'
+      },
+      { slugs: { ...STATEMENT_SLUGS, statement: { enforced: true, min_words: 5 } } }
+    )
+
+    const { errors, warnings } = lintKnowledge(root)
+
+    expect(warnings).toEqual([])
+    expect(errors).toEqual([
+      expect.stringContaining('[K:thin-slug] states "X." — too thin to read on its own')
+    ])
+  })
+
+  test('a declaration with no statement at all reports that it states nothing', () => {
+    const root = makeRoot(
+      {
+        'corpus/a.md': 'A fact mentions [K:mid-slug] mid-sentence, not as a heading or callout.\n',
+        'src/a.ts': '// Uses the mid fact here. →[K:mid-slug]\nconst VALUE = 1\n'
+      },
+      { slugs: { ...STATEMENT_SLUGS, statement: { enforced: true, min_words: 5 } } }
+    )
+
+    const { errors } = lintKnowledge(root)
+
+    expect(errors).toEqual([
+      expect.stringContaining('[K:mid-slug] states nothing; declare it on a heading or a callout')
+    ])
+  })
+
+  test('a statement at or above min_words is not reported', () => {
+    const root = makeRoot(
+      {
+        'corpus/a.md': '## The sync stays optimistic across a rating [K:roomy-slug]\n',
+        'src/a.ts': '// Uses the roomy fact here. →[K:roomy-slug]\nconst VALUE = 1\n'
+      },
+      { slugs: STATEMENT_SLUGS }
+    )
+
+    const { errors, warnings } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(warnings).toEqual([])
+  })
+
+  test('a missing slugs.statement config disables the check entirely, even for a thin statement', () => {
+    const root = makeRoot({
+      'corpus/a.md': '## X [K:thin-slug]\n',
+      'src/a.ts': '// Uses the thin fact here. →[K:thin-slug]\nconst VALUE = 1\n'
+    })
+
+    const { errors, warnings } = lintKnowledge(root)
+
+    expect(errors).toEqual([])
+    expect(warnings).toEqual([])
+  })
+})

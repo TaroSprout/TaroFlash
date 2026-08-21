@@ -126,11 +126,15 @@ jobs:
       - name: Build the knowledge digest
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git worktree add "$RUNNER_TEMP/base" "$BASE_SHA"
-          git diff --name-only "$BASE_SHA...HEAD" > "$RUNNER_TEMP/changed.txt"
+          # -U0 so the digest can tell a line this PR rewrote from a line it
+          # merely sits near — the whole basis of what it reports.
+          git diff -U0 "$BASE_SHA...HEAD" > "$RUNNER_TEMP/diff.patch"
           node scripts/knowledge-report.mjs \
-            --head . --base "$RUNNER_TEMP/base" --changed "$RUNNER_TEMP/changed.txt" \
+            --head . --base "$RUNNER_TEMP/base" --diff "$RUNNER_TEMP/diff.patch" \
+            --repo "$GITHUB_REPOSITORY" --sha "$HEAD_SHA" \
             > "$RUNNER_TEMP/report.md"
 
       - name: Post or clear the digest comment

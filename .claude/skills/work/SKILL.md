@@ -210,7 +210,10 @@ f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed
 builder's worktree (`git worktree remove <path>`) from the home tree, once you've confirmed via
 `pwd`/`git worktree list` you're not removing the one you're standing in. The branch lives on origin
 and its local ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its
-worktree (§ Stuck / blocked).
+worktree (§ Stuck / blocked). **For a single-ticket or freeform run, `git checkout <branch>` on the
+home tree right after removal** — the branch's local ref survives, so this is the same-second next
+command, not a separate pass. Without it the home tree is still sitting on whatever it had at step 0,
+and the user has nothing of this run to look at without asking.
 
 **Copy never blocks the build.** A PR whose only red check is the knowledge check's `COPY-TBD` marker
 still opens, still counts as this run's output — it is not stuck, and the run does not wait on it.
@@ -248,7 +251,7 @@ run** — that is the tree the user's dev server points at, and it shows every w
 only, never a PR, and re-derivable at any moment (re-merge `master` plus the live branches), so a
 merged PR or a new wave just rebuilds it. A merge that conflicts is a real cross-PR conflict, handled
 exactly as § 5b/c already handles one. A single-ticket or freeform run has no integration branch — the
-home tree just checks out that one branch (§ 0).
+home tree checks out that one branch at tear-down instead (§ 5f), once the branch exists.
 
 ## Review & feedback loop
 

@@ -36,13 +36,9 @@ ON CONFLICT (id) DO UPDATE SET
 
 Gate on `auth.uid()::text = (storage.foldername(name))[1]` when paths start with `<member_id>/...`. **Always include a SELECT policy** when the client uploads: `supabase-js` upsert-upload emits `INSERT ... ON CONFLICT DO UPDATE`, which needs SELECT for the conflict check. Without it, every upload fails with "new row violates row-level security policy."
 
-`NEW.owner::text = foldername[1]` is a _consistency_ check, not isolation — compare against `auth.uid()` for per-caller scoping.
+`auth.uid()` **does** resolve inside storage-api's SQL session, so gate per-member isolation on it. Avoid `NEW.owner::text = foldername[1]`: that's a _consistency_ check — the row's owner matches its own path, true regardless of caller — not isolation.
 
-`storage.protect_delete` blocks direct `DELETE FROM storage.objects`, so DELETE policies can only be verified in the UI, not via pgTAP.
-
-`auth.uid()` **does** resolve inside storage-api's SQL session — use `auth.uid()::text = (storage.foldername(name))[1]` for per-member isolation. Avoid `NEW.owner::text = foldername[1]`: that's a consistency check (the row's owner matches its own path), true regardless of caller, not real isolation.
-
-DELETE policies aren't pgTAP-testable — the `storage.protect_delete` trigger blocks direct `DELETE FROM storage.objects` regardless of RLS. Verify DELETE behaviour through a real upload-replacement flow instead.
+`storage.protect_delete` blocks direct `DELETE FROM storage.objects` regardless of RLS, so DELETE policies aren't pgTAP-testable. Verify DELETE behaviour through a real upload-replacement flow instead.
 
 ## Capability functions for authorization
 

@@ -155,3 +155,99 @@ export function scanTokens(root, config) {
     declarable: new Set(files.filter((path) => matchesAny(path, slugs.declare_in)))
   }
 }
+
+// A declaration states its fact on its own line — as a heading, or as the lead
+// of a callout. Both shapes are read back out verbatim for the PR digest, so the
+// digest quotes the corpus rather than describing it. →[K:knowledge-declaration-statement]
+const HEADING_DECLARATION = /^#{1,6}\s+(.*?)\s*\[K:[A-Za-z0-9_-]+\]\s*$/
+const CALLOUT_DECLARATION = /^>\s*(?:\[!\w+\]\s*)?\[K:[A-Za-z0-9_-]+\]\s*(.*)$/
+const QUOTED_LINE = /^>\s?(.*)$/
+// Splits where one sentence ends and the next starts — `e.g.` and `display: none`
+// both survive the cut.
+const SENTENCE_END = /(?<=[.!?])\s+(?=[A-Z`])/
+// A hazard often needs its second sentence to mean anything; a topic's opening
+// paragraph runs far past what a digest line can carry. Take whole sentences up
+// to this budget, and never fewer than one.
+const STATEMENT_WORDS = 30
+
+/**
+ * The fact a declaration states, in the corpus's own words, or `null` when the
+ * line can't yield one. A callout is read to the end of its block and cut to the
+ * lead sentence; a heading is taken whole.
+ */
+export function statementAt(rows, index) {
+  const heading = HEADING_DECLARATION.exec(rows[index])
+  if (heading) return finish(normalise(heading[1]))
+
+  const callout = CALLOUT_DECLARATION.exec(rows[index])
+  if (!callout) return null
+
+  const block = [callout[1]]
+  for (let next = index + 1; next < rows.length; next++) {
+    const quoted = QUOTED_LINE.exec(rows[next])
+    if (!quoted || !quoted[1].trim()) break
+    block.push(quoted[1].trim())
+  }
+
+  return finish(withinBudget(normalise(block.join(' '))))
+}
+
+/** Bold stripped and whitespace collapsed, so sentence boundaries are visible. */
+function normalise(text) {
+  return text.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim()
+}
+
+/** Whole sentences from the front, stopping before the line outgrows a glance. */
+function withinBudget(text) {
+  const sentences = text.split(SENTENCE_END)
+  let kept = sentences[0]
+
+  for (const sentence of sentences.slice(1)) {
+    const candidate = `${kept} ${sentence}`
+    if (candidate.split(/\s+/).length > STATEMENT_WORDS) break
+    kept = candidate
+  }
+
+  return kept
+}
+
+/** Closed off so a heading reads as a sentence alongside the callouts. */
+function finish(statement) {
+  if (!statement) return null
+
+  return /[.!?]$/.test(statement) ? statement : `${statement}.`
+}
+
+/** Every slug declared under `corpus/`, with where it sits and what it says. */
+export function corpusDeclarations(root, config) {
+  const declarations = new Map()
+
+  for (const path of listFiles(root).filter((file) => isCorpusTopic(file, config))) {
+    const rows = readFileSync(join(root, path), 'utf8').split('\n')
+
+    for (const token of collectTokens(path, rows.join('\n'))) {
+      if (token.cites || declarations.has(token.slug)) continue
+
+      declarations.set(token.slug, {
+        slug: token.slug,
+        path,
+        line: token.line,
+        statement: statementAt(rows, token.line - 1)
+      })
+    }
+  }
+
+  return declarations
+}
+
+/**
+ * A corpus topic — where domain facts live. `hazards.md` is the roll-call rather
+ * than a topic: it restates nothing, so it declares nothing either.
+ */
+export function isCorpusTopic(path, config) {
+  return (
+    matchesAny(path, config.slugs.declare_in) &&
+    path.startsWith('corpus/') &&
+    path !== 'corpus/hazards.md'
+  )
+}
