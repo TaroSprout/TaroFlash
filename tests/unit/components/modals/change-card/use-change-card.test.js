@@ -79,12 +79,13 @@ beforeEach(() => {
 // ── onMounted / onBeforeUnmount sfx ──────────────────────────────────────────────
 
 describe('useChangeCard — mount/unmount chimes', () => {
-  test('[obligation] plays wooden_chime_ring on mount', () => {
+  test('[obligation] plays dialog.open-chime on mount', () => {
     withSetup(() => useChangeCard(vi.fn()))
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.open')
   })
 
-  test('[obligation] plays pop_up_close on unmount', () => {
+  test('[obligation] plays dialog.close on unmount', () => {
     withSetup(() => useChangeCard(vi.fn()))
     app.unmount()
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')

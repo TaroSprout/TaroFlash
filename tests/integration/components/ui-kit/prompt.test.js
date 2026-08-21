@@ -134,16 +134,16 @@ describe('UiPrompt — sound effects', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('card.delete')
   })
 
-  test('confirm plays no extra sound when confirmAudio is omitted (just the button press)', async () => {
+  test('confirm stays silent when confirmAudio is omitted', async () => {
     const { wrapper } = makeWrapper()
     await input(wrapper).setValue('My Preset')
     mockEmitSfx.mockClear()
 
     await confirmButton(wrapper).trigger('click')
 
-    // UiButton's own default press cue still fires; prompt.vue adds nothing on top.
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
-    expect(mockEmitSfx).toHaveBeenCalledTimes(1)
+    // UiButton names no press role of its own, and prompt.vue adds nothing on
+    // top, so an omitted confirmAudio means the click is silent.
+    expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
   test('cancel plays cancelAudio when provided', async () => {
@@ -154,14 +154,13 @@ describe('UiPrompt — sound effects', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
   })
 
-  test('cancel plays no extra sound when cancelAudio is omitted (just the button press)', async () => {
+  test('cancel stays silent when cancelAudio is omitted', async () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
 
     await cancelButton(wrapper).trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
-    expect(mockEmitSfx).toHaveBeenCalledTimes(1)
+    expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 })
 

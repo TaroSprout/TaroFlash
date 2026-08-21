@@ -9,7 +9,10 @@ import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.v
 
 const mockItems = ref([])
 
-const { modalOpenMock } = vi.hoisted(() => ({ modalOpenMock: vi.fn() }))
+const { modalOpenMock, mockEmitSfx } = vi.hoisted(() => ({
+  modalOpenMock: vi.fn(),
+  mockEmitSfx: vi.fn()
+}))
 
 vi.mock('@/api/feedback', () => ({
   useFeedbackItemsQuery: () => ({ data: mockItems }),
@@ -20,6 +23,8 @@ vi.mock('@/api/feedback', () => ({
 vi.mock('@/composables/modal', () => ({
   useModal: () => ({ open: modalOpenMock })
 }))
+
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -151,6 +156,7 @@ describe('FeedbackBoard — close wiring', () => {
 describe('FeedbackBoard — submit dialog wiring [obligation]', () => {
   beforeEach(() => {
     modalOpenMock.mockReset()
+    mockEmitSfx.mockClear()
   })
 
   test('pressing the submit button opens FeedbackSubmitDialog as a stacked modal via useModal().open', async () => {
@@ -160,5 +166,11 @@ describe('FeedbackBoard — submit dialog wiring [obligation]', () => {
       backdrop: true,
       mode: 'popup'
     })
+  })
+
+  test('pressing the submit button plays dialog.open-chime [obligation]', async () => {
+    const { wrapper } = mountBoard()
+    await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 })

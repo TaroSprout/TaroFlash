@@ -375,6 +375,19 @@ describe('useCoverImage — validation errors [obligation]', () => {
   })
 })
 
+// ── drag cue [obligation] ────────────────────────────────────────────────────
+
+describe('useCoverImage — drag cue [obligation]', () => {
+  test('onDragEnter chimes gesture.zone-cross since dragCue is omitted (defaults to true) [obligation]', () => {
+    const { cover_image, unmount } = withCoverImage(reactive({}), ref(1))
+
+    cover_image.onDragEnter({ preventDefault: vi.fn() })
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.zone-cross')
+    unmount()
+  })
+})
+
 // ── discardStaged ────────────────────────────────────────────────────────────
 
 describe('useCoverImage — discardStaged', () => {

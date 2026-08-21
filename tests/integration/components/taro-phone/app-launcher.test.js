@@ -115,15 +115,25 @@ describe('AppLauncher — arrow-key focus cycling [obligation]', () => {
   })
 })
 
+describe('AppLauncher — arrow-key focus emits phone.app-focus [obligation]', () => {
+  test('arrow-key focus emits phone.app-focus via emitHoverSfx [obligation]', () => {
+    makeWrapper()
+
+    handlers['arrowright']()
+
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith('phone.app-focus')
+  })
+})
+
 describe('AppLauncher — mouse hover tracking', () => {
-  test('hovering a different app resets keyboard focus tracking and plays a hover sfx', () => {
+  test('hovering a different app resets keyboard focus tracking and plays the phone.app-focus cue [obligation]', () => {
     const wrapper = makeWrapper()
     handlers['arrowright']()
 
     mockEmitHoverSfx.mockClear()
     wrapper.find('[data-app="DarkmodeApp"]').trigger('mouseover')
 
-    expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith('phone.app-focus')
   })
 
   test('hovering the already-focused app is a no-op', () => {

@@ -204,6 +204,75 @@ describe('UiButton', () => {
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
 
+    // ── press no longer defaults to ui.press — regression guard [obligation] ──
+    // Call sites play their own press cue from the @press handler; button.vue
+    // used to double it up by also defaulting to ui.press internally.
+
+    describe('press sfx no longer defaults [obligation]', () => {
+      test('a click with no sfx.press emits zero press sounds [obligation]', async () => {
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true },
+          attrs: { onClick: vi.fn() }
+        })
+
+        await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
+
+        expect(mockEmitSfx).not.toHaveBeenCalled()
+      })
+
+      test('a click with sfx.press set emits exactly one call, with that role [obligation]', async () => {
+        vi.useFakeTimers()
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, sfx: { press: 'ui.select' } },
+          attrs: { onClick: vi.fn() }
+        })
+
+        wrapper
+          .find('[data-testid="ui-kit-button"]')
+          .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        vi.advanceTimersByTime(500)
+        await wrapper.vm.$nextTick()
+
+        expect(mockEmitSfx).toHaveBeenCalledTimes(1)
+        expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+        vi.useRealTimers()
+      })
+
+      test('sfx.press: false stays silent on click [obligation]', async () => {
+        vi.useFakeTimers()
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, sfx: { press: false } },
+          attrs: { onClick: vi.fn() }
+        })
+
+        wrapper
+          .find('[data-testid="ui-kit-button"]')
+          .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        vi.advanceTimersByTime(500)
+        await wrapper.vm.$nextTick()
+
+        expect(mockEmitSfx).not.toHaveBeenCalled()
+        vi.useRealTimers()
+      })
+
+      test('sfx.tap_pre is unaffected — still plays its own role on tap start [obligation]', async () => {
+        vi.useFakeTimers()
+        const wrapper = shallowMount(UiButton, {
+          props: { playOnTap: true, sfx: { tap_pre: 'ui.select' } },
+          attrs: { onClick: vi.fn() }
+        })
+
+        wrapper
+          .find('[data-testid="ui-kit-button"]')
+          .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        vi.advanceTimersByTime(500)
+        await wrapper.vm.$nextTick()
+
+        expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
+        vi.useRealTimers()
+      })
+    })
+
     describe('tapAnimate=false — quiet tap mode [obligation]', () => {
       beforeEach(() => {
         vi.useFakeTimers()

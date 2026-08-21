@@ -57,9 +57,9 @@ beforeEach(() => {
 })
 
 describe('AvatarPickerModal', () => {
-  test('plays dialog.open on mount', () => {
+  test('plays dialog.open-chime on mount', () => {
     mountModal()
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
   test('passes no sfx override to dialog-card, so it falls back to its own default close cue', () => {

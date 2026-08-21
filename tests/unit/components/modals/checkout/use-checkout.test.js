@@ -221,9 +221,9 @@ describe('useCheckout — onSubmit success path', () => {
 // ── onMounted / onBeforeUnmount sfx ─────────────────────────────────────────────
 
 describe('useCheckout — mount/unmount chimes', () => {
-  test('plays dialog.open on mount', () => {
+  test('plays dialog.open-chime on mount', () => {
     withSetup(() => useCheckout(vi.fn()))
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
   test('plays dialog.close on unmount', () => {

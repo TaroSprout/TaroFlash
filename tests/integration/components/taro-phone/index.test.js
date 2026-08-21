@@ -9,7 +9,8 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ({ value: false })
 }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
 // Captures the esc handler so tests can fire it directly instead of routing
 // through the global shortcut store / active-namespace gate.
@@ -70,6 +71,24 @@ beforeEach(async () => {
 
 afterEach(() => {
   wrapper?.unmount()
+})
+
+describe('TaroPhoneIndex — open/close emit the phone-specific roles [obligation]', () => {
+  test('openPhone emits phone.open, never dialog.open [obligation]', () => {
+    // beforeEach already drove the open click that put the phone in its open state.
+    expect(mockEmitSfx).toHaveBeenCalledWith('phone.open')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.open')
+  })
+
+  test('closing via esc emits phone.close, never dialog.open [obligation]', async () => {
+    mockEmitSfx.mockClear()
+
+    escHandlerRef.current()
+    await flushPromises()
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('phone.close')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.open')
+  })
 })
 
 describe('TaroPhoneIndex — openApp hide/reopen integration', () => {

@@ -2,6 +2,9 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { ref } from 'vue'
 import { useImageDropzone } from '@/composables/card/image-dropzone'
 
+const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+
 const MAX_BYTES = 1024
 
 let onFile
@@ -22,6 +25,13 @@ function setupWithGuard(guard, maxBytes = MAX_BYTES) {
   return useImageDropzone({ maxBytes, fileInput, onFile, onError, guard })
 }
 
+function setupWithDragCue(dragCue, maxBytes = MAX_BYTES) {
+  onFile = vi.fn()
+  onError = vi.fn()
+  fileInput = ref(null)
+  return useImageDropzone({ maxBytes, fileInput, onFile, onError, dragCue })
+}
+
 function pngFile(bytes = 1) {
   return new File(['x'.repeat(bytes)], 'a.png', { type: 'image/png' })
 }
@@ -35,6 +45,7 @@ beforeEach(() => {
   onFile = undefined
   onError = undefined
   fileInput = undefined
+  mockEmitSfx.mockClear()
 })
 
 describe('useImageDropzone', () => {
@@ -212,5 +223,56 @@ describe('useImageDropzone', () => {
     await dz.onDrop(dropEvent(pngFile()))
 
     expect(dz.dragging.value).toBe(false)
+  })
+
+  // ── dragCue chime ────────────────────────────────────────────────────────
+
+  test('chimes gesture.zone-cross on the first dragenter when dragCue is omitted', () => {
+    const dz = setup()
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.zone-cross')
+  })
+
+  test('does not chime again on a nested child dragenter', () => {
+    const dz = setup()
+    dz.onDragEnter(dropEvent())
+    mockEmitSfx.mockClear()
+
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('chimes again after a full leave-and-re-enter (counter back to 0)', () => {
+    const dz = setup()
+    dz.onDragEnter(dropEvent())
+    dz.onDragLeave(dropEvent())
+    mockEmitSfx.mockClear()
+
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.zone-cross')
+  })
+
+  test('stays silent when dragCue resolves false via a plain ref', () => {
+    const dz = setupWithDragCue(ref(false))
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('stays silent when dragCue resolves false via a getter', () => {
+    const dz = setupWithDragCue(() => false)
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('chimes when dragCue resolves true via a plain ref', () => {
+    const dz = setupWithDragCue(ref(true))
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.zone-cross')
+  })
+
+  test('chimes when dragCue resolves true via a getter', () => {
+    const dz = setupWithDragCue(() => true)
+    dz.onDragEnter(dropEvent())
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.zone-cross')
   })
 })

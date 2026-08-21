@@ -139,9 +139,9 @@ describe('AccountAccessModal — header title reflects content.title [obligation
 })
 
 describe('AccountAccessModal — sfx [obligation]', () => {
-  test('plays dialog.open on mount [obligation]', () => {
+  test('plays dialog.open-chime on mount [obligation]', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
   test('plays dialog.close on unmount [obligation]', () => {

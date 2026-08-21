@@ -95,9 +95,9 @@ describe('ForgotPasswordModal (forgot-password/index.vue)', () => {
 
   // ── sfx lifecycle ─────────────────────────────────────────────────────────
 
-  test('plays wooden_chime_ring on mount', () => {
+  test('plays dialog.open-chime (wooden_chime_ring) on mount', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
   test('plays pop_up_close on unmount', () => {

@@ -25,4 +25,25 @@ describe('roleDef', () => {
   test('ui.rejected carries its own debounce, separate from the shared player debounce', () => {
     expect(roleDef('ui.rejected').debounce).toBeGreaterThan(0)
   })
+
+  // ── phone.open / phone.close / phone.app-focus [obligation] ──────────────
+
+  test('phone.open resolves to pop_window [obligation]', () => {
+    expect(roleDef('phone.open').sound).toBe('pop_window')
+  })
+
+  test('phone.close resolves to pop_window [obligation]', () => {
+    expect(roleDef('phone.close').sound).toBe('pop_window')
+  })
+
+  test('phone.app-focus resolves to pop_drip_mid on the hover bus [obligation]', () => {
+    expect(roleDef('phone.app-focus').sound).toBe('pop_drip_mid')
+    expect(roleDef('phone.app-focus').bus).toBe('hover')
+  })
+
+  // ── dialog.open-chime [obligation] ────────────────────────────────────────
+
+  test('dialog.open-chime resolves to wooden_chime_ring [obligation]', () => {
+    expect(roleDef('dialog.open-chime').sound).toBe('wooden_chime_ring')
+  })
 })
