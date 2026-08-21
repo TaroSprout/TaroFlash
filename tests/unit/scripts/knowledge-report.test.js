@@ -2,7 +2,7 @@ import { describe, test, expect, afterEach } from 'vite-plus/test'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
-import { buildReport, MARKER } from '../../../scripts/knowledge-report.mjs'
+import { buildReport, parseDiff, MARKER } from '../../../scripts/knowledge-report.mjs'
 
 // Every test builds its own throwaway head/base roots under os.tmpdir() —
 // never assert against the real repo's knowledge files.
@@ -59,54 +59,194 @@ function makeRoot(files = {}) {
   return root
 }
 
+/** `path -> Set(lines)` shorthand so fixtures read as data, not Map-building boilerplate. */
+function touching(spec) {
+  return new Map(Object.entries(spec).map(([path, lines]) => [path, new Set(lines)]))
+}
+
 describe('buildReport — silence on no change', () => {
-  test('returns the empty string when nothing changed between base and head', () => {
+  test('returns the empty string when nothing is touched', () => {
     const files = {
-      'CLAUDE.md': '[K:steady-slug] declared once.\n',
-      '.claude/rules/foo.md': 'Cites →[K:steady-slug] steadily.\n'
+      'corpus/topic.md': '## The sync stays optimistic [K:steady-slug]\n',
+      'src/foo.ts': '// →[K:steady-slug] cited here\nconst VALUE = 1\n'
     }
     const head = makeRoot(files)
     const base = makeRoot(files)
 
-    const report = buildReport({ head, base, changed: [] })
+    const report = buildReport({ head, base, touched: touching({}) })
 
     expect(report).toBe('')
   })
 })
 
-describe('buildReport — newly-dropped-to-zero citations', () => {
+describe('buildReport — Facts your changes sit on', () => {
+  test('a citation on a touched line appears; the same file on an untouched line does not', () => {
+    const head = makeRoot({
+      'corpus/topic.md':
+        '## The sync stays optimistic [K:fact-one]\n\n## The cache expires in five minutes [K:fact-two]\n',
+      'src/foo.ts':
+        '// →[K:fact-one] cited on line 1\n// →[K:fact-two] cited on line 2, never touched\nconst VALUE = 1\n'
+    })
+
+    const report = buildReport({ head, base: undefined, touched: touching({ 'src/foo.ts': [1] }) })
+
+    expect(report).toContain(MARKER)
+    expect(report).toContain('#### Facts your changes sit on')
+    expect(report).toContain('The sync stays optimistic.')
+    expect(report).not.toContain('The cache expires in five minutes.')
+    expect(report).toContain('foo.ts:1')
+  })
+
+  test('markdown files are never scanned for citations, even on a touched line', () => {
+    const files = {
+      'corpus/topic.md':
+        '## The sync stays optimistic [K:doc-slug]\n\n→[K:doc-slug] cited in the same file.\n'
+    }
+    const head = makeRoot(files)
+    const base = makeRoot(files)
+
+    const report = buildReport({
+      head,
+      base,
+      touched: touching({ 'corpus/topic.md': [3] })
+    })
+
+    expect(report).toBe('')
+  })
+
+  test('a file matching slugs.exempt is never scanned, even on a touched line', () => {
+    const files = {
+      'corpus/topic.md': '## The sync stays optimistic [K:fixture-slug]\n',
+      'tests/unit/scripts/foo.test.js': '// →[K:fixture-slug] a fixture citation, not a real one\n'
+    }
+    const head = makeRoot(files)
+    const base = makeRoot(files)
+
+    const report = buildReport({
+      head,
+      base,
+      touched: touching({ 'tests/unit/scripts/foo.test.js': [1] })
+    })
+
+    expect(report).toBe('')
+  })
+
+  test('collapses multiple touched sites for one slug onto a single entry', () => {
+    const head = makeRoot({
+      'corpus/topic.md': '## The sync stays optimistic [K:shared-slug]\n',
+      'src/foo.ts': '// →[K:shared-slug] cited here\nconst VALUE = 1\n',
+      'src/bar.ts': '// →[K:shared-slug] cited here too\nconst VALUE = 2\n'
+    })
+
+    const report = buildReport({
+      head,
+      base: undefined,
+      touched: touching({ 'src/foo.ts': [1], 'src/bar.ts': [1] })
+    })
+
+    expect(report.match(/The sync stays optimistic\./g)).toHaveLength(1)
+    expect(report).toContain('foo.ts:1')
+    expect(report).toContain('bar.ts:1')
+  })
+})
+
+describe('buildReport — Knowledge you changed', () => {
+  test('fires when the declaration block was edited and the citing file was untouched', () => {
+    const head = makeRoot({
+      'corpus/topic.md': '## The sync stays optimistic [K:changed-fact]\n\nSome detail line.\n',
+      'src/bar.ts': '// →[K:changed-fact] cited here\nconst VALUE = 1\n'
+    })
+
+    const report = buildReport({
+      head,
+      base: undefined,
+      touched: touching({ 'corpus/topic.md': [1] })
+    })
+
+    expect(report).toContain(MARKER)
+    expect(report).toContain('#### Knowledge you changed')
+    expect(report).toContain('The sync stays optimistic.')
+    expect(report).toContain('bar.ts:1')
+  })
+
+  test('stays silent when every citing site was also touched', () => {
+    // Touch bar.ts's second line, not the citation line itself, so the
+    // citation doesn't also qualify for "Facts your changes sit on".
+    const files = {
+      'corpus/topic.md': '## The sync stays optimistic [K:changed-fact]\n\nSome detail line.\n',
+      'src/bar.ts': '// →[K:changed-fact] cited here\nconst VALUE = 1\n'
+    }
+    const head = makeRoot(files)
+    const base = makeRoot(files)
+
+    const report = buildReport({
+      head,
+      base,
+      touched: touching({ 'corpus/topic.md': [1], 'src/bar.ts': [2] })
+    })
+
+    expect(report).toBe('')
+  })
+
+  test('stays silent when the edit landed under a different heading, outside the declaration block', () => {
+    const head = makeRoot({
+      'corpus/topic.md':
+        '## The sync stays optimistic [K:changed-fact]\n\nSome detail line.\n\n## Unrelated heading\n\nEdited under here, not under the declaration.\n',
+      'src/bar.ts': '// →[K:changed-fact] cited here\nconst VALUE = 1\n'
+    })
+
+    const report = buildReport({
+      head,
+      base: undefined,
+      touched: touching({ 'corpus/topic.md': [7] })
+    })
+
+    expect(report).toBe('')
+  })
+
+  test('stays silent when the only citations are from markdown', () => {
+    const head = makeRoot({
+      'corpus/topic.md': '## The sync stays optimistic [K:changed-fact]\n\nSome detail line.\n',
+      '.claude/rules/other.md': 'Cites →[K:changed-fact] here.\n'
+    })
+
+    const report = buildReport({
+      head,
+      base: undefined,
+      touched: touching({ 'corpus/topic.md': [1] })
+    })
+
+    expect(report).toBe('')
+  })
+})
+
+describe('buildReport — Housekeeping', () => {
   test('a slug with >=1 citation at base and 0 at head is reported as newly dropped', () => {
     const base = makeRoot({
-      'CLAUDE.md': '[K:was-cited] declared here.\n',
+      'corpus/topic.md': '## Was cited [K:was-cited]\n',
       '.claude/rules/foo.md': 'Cites →[K:was-cited] here.\n'
     })
     const head = makeRoot({
-      'CLAUDE.md': '[K:was-cited] declared here.\n',
+      'corpus/topic.md': '## Was cited [K:was-cited]\n',
       '.claude/rules/foo.md': 'No longer cites it.\n'
     })
 
-    const report = buildReport({ head, base, changed: [] })
+    const report = buildReport({ head, base, touched: touching({}) })
 
     expect(report).toContain(MARKER)
-    expect(report).toContain('Nothing cites these any more')
-    expect(report).toContain('[K:was-cited]')
+    expect(report).toContain('#### Housekeeping')
+    expect(report).toContain('Nothing cites `was-cited` any more.')
   })
 
   test('a slug already uncited at base stays silent even though it is still uncited at head', () => {
-    const base = makeRoot({
-      'CLAUDE.md': '[K:already-zero] declared, never cited.\n'
-    })
-    const head = makeRoot({
-      'CLAUDE.md': '[K:already-zero] declared, never cited.\n'
-    })
+    const base = makeRoot({ 'corpus/topic.md': '## Never cited [K:already-zero]\n' })
+    const head = makeRoot({ 'corpus/topic.md': '## Never cited [K:already-zero]\n' })
 
-    const report = buildReport({ head, base, changed: [] })
+    const report = buildReport({ head, base, touched: touching({}) })
 
     expect(report).toBe('')
   })
-})
 
-describe('buildReport — newly-unreachable knowledge files', () => {
   test('a knowledge file reachable at base but unreachable at head is reported as newly stranded', () => {
     const base = makeRoot({
       'CLAUDE.md': 'Links to [details](corpus/details.md).\n',
@@ -117,11 +257,10 @@ describe('buildReport — newly-unreachable knowledge files', () => {
       'corpus/details.md': 'now unreachable at head\n'
     })
 
-    const report = buildReport({ head, base, changed: [] })
+    const report = buildReport({ head, base, touched: touching({}) })
 
     expect(report).toContain(MARKER)
-    expect(report).toContain('Nothing routes a reader to these files any more')
-    expect(report).toContain('corpus/details.md')
+    expect(report).toContain('Nothing routes a reader to `corpus/details.md`.')
   })
 
   test('a knowledge file already unreachable at base stays silent even though still unreachable at head', () => {
@@ -134,50 +273,90 @@ describe('buildReport — newly-unreachable knowledge files', () => {
       'corpus/orphan.md': 'still unreachable at head\n'
     })
 
-    const report = buildReport({ head, base, changed: [] })
+    const report = buildReport({ head, base, touched: touching({}) })
 
     expect(report).toBe('')
   })
 })
 
-describe('buildReport — knowledge cited by changed code', () => {
-  test('slugs cited from a changed non-markdown file are listed, sorted, in the cited-code section', () => {
+describe('buildReport — statement fallback and links', () => {
+  test('falls back to the slug when the declaration has no statement', () => {
     const head = makeRoot({
-      'CLAUDE.md': '[K:z-slug] declared here.\n[K:a-slug] declared here too.\n',
-      'src/foo.ts': '// →[K:z-slug] cited from here\n// →[K:a-slug] and here\nconst VALUE = 1\n'
+      'corpus/topic.md':
+        'A slug declared mid-paragraph [K:no-statement] with no heading or callout.\n',
+      'src/foo.ts': '// →[K:no-statement] cited here\nconst VALUE = 1\n'
     })
 
-    const report = buildReport({ head, base: undefined, changed: ['src/foo.ts'] })
+    const report = buildReport({ head, base: undefined, touched: touching({ 'src/foo.ts': [1] }) })
 
-    expect(report).toContain(MARKER)
-    expect(report).toContain('Knowledge this change stands on')
-    expect(report.indexOf('a-slug')).toBeLessThan(report.indexOf('z-slug'))
-    expect(report).toContain('src/foo.ts:1')
+    expect(report).toContain('`no-statement` — no statement on its declaration.')
   })
 
-  test('a markdown file in the changed set is not scanned for code citations', () => {
-    const head = makeRoot({
-      'CLAUDE.md': '[K:doc-slug] declared here.\n→[K:doc-slug] cited in the same file.\n'
-    })
+  test('links to github when repo and sha are given, falls back to relative hrefs otherwise', () => {
+    const files = {
+      'corpus/topic.md': '## The sync stays optimistic [K:linked-slug]\n',
+      'src/foo.ts': '// →[K:linked-slug] cited here\nconst VALUE = 1\n'
+    }
+    const withRepo = makeRoot(files)
+    const withoutRepo = makeRoot(files)
 
-    const report = buildReport({ head, base: undefined, changed: ['CLAUDE.md'] })
-
-    expect(report).toBe('')
-  })
-
-  test('a changed file matching slugs.exempt is not scanned, even carrying real-looking citations', () => {
-    const head = makeRoot({
-      'CLAUDE.md': '[K:fixture-slug] declared here.\n',
-      'tests/unit/scripts/knowledge-lint.test.js':
-        '// →[K:fixture-slug] a checker fixture, not a real cite\n'
-    })
-
-    const report = buildReport({
-      head,
+    const reportWithRepo = buildReport({
+      head: withRepo,
       base: undefined,
-      changed: ['tests/unit/scripts/knowledge-lint.test.js']
+      touched: touching({ 'src/foo.ts': [1] }),
+      repo: 'org/project',
+      sha: 'deadbeef'
+    })
+    const reportWithoutRepo = buildReport({
+      head: withoutRepo,
+      base: undefined,
+      touched: touching({ 'src/foo.ts': [1] })
     })
 
-    expect(report).toBe('')
+    expect(reportWithRepo).toContain(
+      'https://github.com/org/project/blob/deadbeef/corpus/topic.md#L1'
+    )
+    expect(reportWithoutRepo).toContain('corpus/topic.md#L1')
+    expect(reportWithoutRepo).not.toContain('github.com')
+  })
+})
+
+describe('parseDiff', () => {
+  test('maps multi-hunk, single-line-hunk, and skipped /dev/null targets', () => {
+    const diff = [
+      'diff --git a/src/foo.ts b/src/foo.ts',
+      'index abc..def 100644',
+      '--- a/src/foo.ts',
+      '+++ b/src/foo.ts',
+      '@@ -10,0 +11,2 @@',
+      '+new line 11',
+      '+new line 12',
+      '@@ -20 +23 @@',
+      '-old',
+      '+new',
+      'diff --git a/src/bar.ts b/src/bar.ts',
+      'new file mode 100644',
+      'index 000..abc',
+      '--- /dev/null',
+      '+++ b/src/bar.ts',
+      '@@ -0,0 +1 @@',
+      '+content',
+      'diff --git a/src/baz.ts b/src/baz.ts',
+      'deleted file mode 100644',
+      'index abc..000',
+      '--- a/src/baz.ts',
+      '+++ /dev/null',
+      '@@ -1,3 +0,0 @@',
+      '-x',
+      '-y',
+      '-z',
+      ''
+    ].join('\n')
+
+    const touched = parseDiff(diff)
+
+    expect(touched.get('src/foo.ts')).toEqual(new Set([11, 12, 23]))
+    expect(touched.get('src/bar.ts')).toEqual(new Set([1]))
+    expect(touched.has('src/baz.ts')).toBe(false)
   })
 })
