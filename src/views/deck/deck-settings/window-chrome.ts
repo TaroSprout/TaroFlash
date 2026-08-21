@@ -26,7 +26,7 @@ export function useWindowChrome(
   async function tuck() {
     if (is_tucked.value) return
 
-    emitSfx('slide_up')
+    emitSfx('nav.page-forward')
     await Promise.all([
       preview.value && tuckPinnedPreview(preview.value, () => (is_tucked.value = true)),
       aside.value && retractAside(aside.value)
@@ -38,7 +38,7 @@ export function useWindowChrome(
   async function restore() {
     if (!is_tucked.value) return
 
-    emitSfx('slide_up')
+    emitSfx('nav.page-forward')
     await Promise.all([
       preview.value && untuckPinnedPreview(preview.value, () => (is_tucked.value = false)),
       aside.value && restoreAside(aside.value)

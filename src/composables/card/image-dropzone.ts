@@ -1,4 +1,5 @@
 import { computed, ref, toValue, type MaybeRefOrGetter, type ShallowRef } from 'vue'
+import { emitSfx } from '@/sfx/bus'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const ACCEPT_ATTR = ACCEPTED_TYPES.join(',')
@@ -16,6 +17,10 @@ type UseImageDropzoneOptions = {
   // Precondition checked on drop before validation. When it resolves false the
   // drop is abandoned (e.g. a feature gate showed its own prompt instead).
   guard?: () => boolean | Promise<boolean>
+  // Gates the chime played as a drag first crosses in, nothing else. Set it
+  // false on a surface that can't take a file yet, so it stays silent instead
+  // of promising a drop that would do nothing. Defaults to chiming.
+  dragCue?: MaybeRefOrGetter<boolean>
 }
 
 /**
@@ -26,14 +31,17 @@ type UseImageDropzoneOptions = {
  * Validation (accepted MIME types + `maxBytes`) runs before `onFile` fires;
  * a rejected file sets `error` and skips the callback. Dragging is tracked
  * with an enter/leave counter so `dragging` doesn't flicker as the pointer
- * crosses child elements of the drop target.
+ * crosses child elements of the drop target, and the chime that tells the user
+ * the file is over a live target belongs here too, so every surface built on
+ * this gets it once.
  */
 export function useImageDropzone({
   maxBytes,
   fileInput,
   onFile,
   onError,
-  guard
+  guard,
+  dragCue = true
 }: UseImageDropzoneOptions) {
   const drag_counter = ref(0)
   const error = ref<ImageFileError | null>(null)
@@ -61,6 +69,10 @@ export function useImageDropzone({
   function onDragEnter(e: DragEvent) {
     e.preventDefault()
     clearError()
+
+    // Chime on the way in, not on every child element the pointer then crosses.
+    if (drag_counter.value === 0 && toValue(dragCue)) emitSfx('gesture.zone-cross')
+
     drag_counter.value++
   }
 

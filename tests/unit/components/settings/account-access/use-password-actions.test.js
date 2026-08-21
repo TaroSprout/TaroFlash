@@ -112,7 +112,7 @@ describe('usePasswordActions — validation', () => {
   test('[obligation] plays the stuck sfx when client-side validation fails', async () => {
     const password_actions = usePasswordActions()
     await password_actions.submit()
-    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
   test('[obligation] does NOT fire a notice-store error for a validation failure', async () => {
@@ -508,7 +508,7 @@ describe('usePasswordActions — submit (current-password branch success/outcome
 
       await password_actions.submit()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     }
   })
 

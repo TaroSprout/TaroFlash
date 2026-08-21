@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
 import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
 import UiButton from '@/components/ui-kit/button.vue'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 
 export type DialogCardSize = 'sm' | 'md' | 'lg'
 
@@ -38,7 +38,7 @@ export type DialogCardProps = {
   show_close_button?: boolean
   close_label?: string
   close_disabled?: boolean
-  close_sfx?: SfxOptions
+  sfx?: SfxOptions
   size?: DialogCardSize
   full_bleed_at?: string
   dialog_px?: string
@@ -56,7 +56,7 @@ const {
   show_close_button = true,
   close_label,
   close_disabled = false,
-  close_sfx,
+  sfx = {},
   size = 'md',
   full_bleed_at,
   dialog_px,
@@ -144,7 +144,7 @@ defineExpose({ viewport })
               icon-left="close"
               icon-only
               rounded-full
-              :sfx="close_sfx"
+              :sfx="{ press: sfx.close ?? 'dialog.close' }"
               :disabled="close_disabled"
               @press="emit('close')"
             >

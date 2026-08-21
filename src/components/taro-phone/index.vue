@@ -33,13 +33,13 @@ function togglePhone() {
 
 function openPhone() {
   store.open()
-  emitSfx('pop_window')
+  emitSfx('phone.open')
   document.addEventListener('pointerdown', onPageClick)
 }
 
 function closePhone() {
   store.close()
-  emitSfx('pop_window')
+  emitSfx('phone.close')
   document.removeEventListener('pointerdown', onPageClick)
 }
 

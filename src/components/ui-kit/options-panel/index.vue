@@ -2,7 +2,7 @@
 import { computed, useAttrs } from 'vue'
 import OptionsPanelRow from './row.vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 
 export type OptionsPanelEntry = {
   value: string

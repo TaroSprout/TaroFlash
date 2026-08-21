@@ -1,7 +1,6 @@
 <script setup lang="ts" generic="T extends string | number">
 import UiTappable from '@/components/ui-kit/tappable.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 type UiOptionGroupProps<V> = {
   options: { value: V; label: string; disabled?: boolean }[]
@@ -18,7 +17,7 @@ const emit = defineEmits<{ (e: 'update:value', value: T): void }>()
 function onTap(option: UiOptionGroupProps<T>['options'][number]) {
   if (option.disabled) return
 
-  emitSfx(option.value === active.value ? 'digi_powerdown' : 'select')
+  emitSfx(option.value === active.value ? 'ui.rejected' : 'ui.select')
   emit('update:value', option.value)
 }
 </script>
@@ -35,7 +34,7 @@ function onTap(option: UiOptionGroupProps<T>['options'][number]) {
     <ui-tappable
       v-for="option in options"
       :key="String(option.value)"
-      v-sfx="{ hover: option.value === active || option.disabled ? undefined : TYPE_SFX }"
+      :sfx="{ hover: option.value !== active && !option.disabled && 'ui.hover', press: false }"
       as="button"
       type="button"
       data-testid="ui-option-group__option"

@@ -12,7 +12,6 @@ vi.mock('@/sfx/bus', () => ({
 
 import ReviewInboxItem from '@/views/dashboard/review-inbox/item.vue'
 import { vSfx } from '@/sfx/directive'
-import { TYPE_SFX } from '@/sfx/config'
 
 function mount(deck, props = {}) {
   return shallowMount(ReviewInboxItem, {
@@ -52,7 +51,7 @@ describe('ReviewInboxItem', () => {
     wrapper
       .find('[data-testid="review-inbox-item"]')
       .element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
-    expect(mockEmitHoverSfx).toHaveBeenCalledWith(TYPE_SFX, expect.anything())
+    expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
   })
 
   describe('disabled prop [obligation]', () => {

@@ -58,7 +58,7 @@ function onInput() {
     >
       <textarea
         v-bind="$attrs"
-        v-sfx.focus="'type_05'"
+        v-sfx.focus="'ui.focus'"
         :placeholder="placeholder"
         :maxlength="max_chars"
         v-model="value"

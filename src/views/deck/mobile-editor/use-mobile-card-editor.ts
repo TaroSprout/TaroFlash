@@ -52,7 +52,7 @@ export function useMobileCardEditor(controller: CardListController) {
     cursor_client_id.value = target
     side.value = 'front'
     is_open.value = true
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
 
     if (close_modal) return
 
@@ -80,12 +80,12 @@ export function useMobileCardEditor(controller: CardListController) {
   function onClosed() {
     close_modal = null
     is_open.value = false
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
   }
 
   function flip() {
     side.value = side.value === 'front' ? 'back' : 'front'
-    emitSfx(side.value === 'back' ? 'transition_up' : 'transition_down')
+    emitSfx(side.value === 'back' ? 'card.flip-away' : 'card.flip-back')
   }
 
   // Always lands on the front, so each card opens the same way.

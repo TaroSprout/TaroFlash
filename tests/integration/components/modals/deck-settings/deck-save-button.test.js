@@ -76,12 +76,12 @@ beforeEach(() => {
 })
 
 describe('DeckSaveButton — not dirty', () => {
-  test('plays digi_powerdown when deck is not dirty', async () => {
+  test('plays ui.rejected when deck is not dirty', async () => {
     const { wrapper } = makeSaveButton({ is_dirty: false })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
   })
 
   test('does not call saveDeck when not dirty', async () => {
@@ -102,20 +102,20 @@ describe('DeckSaveButton — not dirty', () => {
 })
 
 describe('DeckSaveButton — empty title', () => {
-  test('plays etc_woodblock_stuck when title is empty (is_dirty=true)', async () => {
+  test('plays notice.error when title is empty (is_dirty=true)', async () => {
     const { wrapper } = makeSaveButton({ title: '', is_dirty: true })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
-  test('plays etc_woodblock_stuck when title is whitespace-only', async () => {
+  test('plays notice.error when title is whitespace-only', async () => {
     const { wrapper } = makeSaveButton({ title: '   ', is_dirty: true })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
   test('does not call saveDeck when title is empty', async () => {
@@ -256,13 +256,13 @@ describe('DeckSaveButton — loading state', () => {
 })
 
 describe('DeckSaveButton — empty-title check fires before not-dirty check [obligation]', () => {
-  test('when not dirty AND title is empty: etc_woodblock_stuck fires (title check runs first)', async () => {
+  test('when not dirty AND title is empty: notice.error fires (title check runs first)', async () => {
     const { wrapper } = makeSaveButton({ title: '', is_dirty: false })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.rejected')
   })
 })
 
@@ -281,13 +281,13 @@ describe('DeckSaveButton — reset button [obligation]', () => {
     ).toBe('false')
   })
 
-  test('pressing it while disabled does NOT call resetChanges, only plays digi_powerdown [obligation]', async () => {
+  test('pressing it while disabled does NOT call resetChanges, only plays ui.rejected [obligation]', async () => {
     const { wrapper, resetChanges } = makeSaveButton({ is_dirty: false })
 
     await wrapper.find('[data-testid="deck-settings__reset-button"]').trigger('click')
 
     expect(resetChanges).not.toHaveBeenCalled()
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
   })
 
   test('pressing it while enabled calls resetChanges [obligation]', async () => {

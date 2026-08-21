@@ -237,10 +237,10 @@ describe('useSessionPrefs', () => {
     expect(prefs.show_all_ratings.value).toBe(true)
   })
 
-  test('toggleRatings plays the snappy_button_5 sfx', () => {
+  test('toggleRatings plays the ui.press sfx', () => {
     const prefs = useSessionPrefs()
     prefs.toggleRatings()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('toggleRatings persists via the member upsert', () => {

@@ -660,7 +660,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('tap_05 ratchet on range-select via long-press', () => {
-    test('arming range-select via long-press emits ui.tap_05 for the first word [obligation]', async () => {
+    test('arming range-select via long-press emits gesture.tick for the first word [obligation]', async () => {
       const wrapper = mountHost(vi.fn())
       emitSfxMock.mockClear()
 
@@ -670,10 +670,10 @@ describe('useReaderHighlights', () => {
       await wrapper.vm.$nextTick()
       vi.useRealTimers()
 
-      expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
+      expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     })
 
-    test('each new word the drag adds emits ui.tap_05 [obligation]', async () => {
+    test('each new word the drag adds emits gesture.tick [obligation]', async () => {
       const wrapper = mountHost(vi.fn())
 
       vi.useFakeTimers()
@@ -695,7 +695,7 @@ describe('useReaderHighlights', () => {
       await wrapper.vm.$nextTick()
       vi.useRealTimers()
 
-      expect(emitSfxMock).toHaveBeenCalledWith('tap_05')
+      expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     })
 
     test('release does not emit an extra ui.tap_05 [obligation]', async () => {
@@ -722,7 +722,7 @@ describe('useReaderHighlights', () => {
       vi.useRealTimers()
 
       // release should not call tap_05 again
-      expect(emitSfxMock).not.toHaveBeenCalledWith('tap_05')
+      expect(emitSfxMock).not.toHaveBeenCalledWith('gesture.tick')
     })
   })
 

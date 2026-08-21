@@ -17,7 +17,7 @@ const is_saving = ref(false)
 async function onSave() {
   if (!has_name.value) {
     name_error.value = t('settings.profile.member-name-required')
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     return
   }
   is_saving.value = true
@@ -30,7 +30,7 @@ async function onSave() {
   }
   if (outcome === 'duplicate-name') {
     name_error.value = t('settings.profile.member-name-duplicate-error')
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     return
   }
   notice.error(t('settings.save-error'))
@@ -38,7 +38,7 @@ async function onSave() {
 
 function onReset() {
   if (!is_dirty.value) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.rejected')
     return
   }
   resetChanges()
@@ -53,7 +53,7 @@ function onReset() {
       size="lg"
       icon-only
       icon-left="refresh"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       :disabled="!is_dirty"
       click-when-disabled
       class="shrink-0"
@@ -69,7 +69,7 @@ function onReset() {
       class="flex-1!"
       :loading="is_saving"
       :disabled="!is_dirty || !has_name"
-      :sfx="{ press: 'snappy_button_2' }"
+      :sfx="{ press: 'ui.press' }"
       click-when-disabled
       @press="onSave"
     >

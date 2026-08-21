@@ -17,11 +17,11 @@ const is_saving = ref(false)
 async function onSave() {
   if (!has_title.value) {
     title_error.value = t('deck.settings-modal.title-required')
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     return
   }
   if (!is_dirty.value) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.rejected')
     return
   }
   is_saving.value = true
@@ -36,7 +36,7 @@ async function onSave() {
 
 function onReset() {
   if (!is_dirty.value) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.rejected')
     return
   }
   resetChanges()
@@ -51,7 +51,7 @@ function onReset() {
       size="lg"
       icon-only
       icon-left="refresh"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       :disabled="!is_dirty"
       click-when-disabled
       class="shrink-0"

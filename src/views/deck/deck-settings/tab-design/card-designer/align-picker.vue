@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 type Horizontal = 'left' | 'center' | 'right'
 type Vertical = 'top' | 'center' | 'bottom'
@@ -36,10 +35,10 @@ function isActive(h: Horizontal, v: Vertical) {
 
 function onSelect(h: Horizontal, v: Vertical) {
   if (isActive(h, v)) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
-  emitSfx('etc_camera_shutter')
+  emitSfx('ui.select')
   // center/center is the implicit default — store undefined so the dirty check
   // treats it identically to the initial unset state.
   const is_default = h === 'center' && v === 'center'
@@ -58,7 +57,7 @@ function onSelect(h: Horizontal, v: Vertical) {
         :data-active="isActive(h, v)"
         class="aspect-square flex items-center justify-center rounded-5 cursor-pointer text-ink-muted data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10 data-[active=false]:hover:bg-(--color-accent) data-[active=false]:hover:text-(--color-on-accent) data-[active=false]:hover:bgx-diagonal-stripes data-[active=false]:hover:bgx-opacity-10"
         @click="onSelect(h, v)"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
       >
         <ui-icon :src="isActive(h, v) ? ICONS[v][h] : 'dot'" />
       </button>

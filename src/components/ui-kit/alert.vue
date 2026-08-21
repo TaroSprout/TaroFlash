@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { TYPE_SFX, type SoundKey } from '@/sfx/config'
+import type { SfxRole } from '@/sfx/roles'
 import { emitSfx } from '@/sfx/bus'
 import { type ModalCloseFn, useModalRequestClose } from '@/composables/modal'
 
@@ -13,8 +13,8 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio, type } = de
   message?: string
   title?: string
   type?: AlertType
-  cancelAudio?: SoundKey
-  confirmAudio?: SoundKey
+  cancelAudio?: SfxRole
+  confirmAudio?: SfxRole
   close: ModalCloseFn<boolean>
 }>()
 
@@ -68,7 +68,7 @@ function onKeydown(e: KeyboardEvent) {
         data-testid="ui-kit-alert__cancel"
         class="ui-kit-alert__cancel group"
         @click="onCancel"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
       >
         {{ cancelText }}
         <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
@@ -83,7 +83,7 @@ function onKeydown(e: KeyboardEvent) {
         :data-palette="palette"
         class="ui-kit-alert__confirm group"
         @click="onConfirm"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
       >
         {{ confirmText }}
         <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">

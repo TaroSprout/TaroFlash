@@ -178,7 +178,7 @@ export function useSessionEngine({
 
   /** Transitions from the cover into the active session. `silent` skips the start jingle (refresh-restore). */
   function startSession({ silent = false }: { silent?: boolean } = {}) {
-    if (!silent) emitSfx('music_plink_chordyes')
+    if (!silent) emitSfx('session.intro')
     current_card_side.value = active_starting_side.value
     state.value = 'studying'
   }
@@ -200,7 +200,7 @@ export function useSessionEngine({
   }
 
   function flipCurrentCard() {
-    emitSfx(is_starting_side.value ? 'transition_up' : 'transition_down')
+    emitSfx(is_starting_side.value ? 'card.flip-away' : 'card.flip-back')
     current_card_side.value = current_card_side.value === 'front' ? 'back' : 'front'
   }
 

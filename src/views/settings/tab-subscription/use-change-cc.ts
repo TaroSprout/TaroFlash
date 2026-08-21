@@ -27,8 +27,8 @@ export function useChangeCard(close: (response?: ChangeCardResponse) => void) {
     }
   })
 
-  onMounted(() => emitSfx('wooden_chime_ring'))
-  onBeforeUnmount(() => emitSfx('pop_up_close'))
+  onMounted(() => emitSfx('dialog.open-chime'))
+  onBeforeUnmount(() => emitSfx('dialog.close'))
 
   async function onSubmit() {
     // A failed outcome is left unhandled here — Stripe's own Payment Element renders the decline/validation message inline.

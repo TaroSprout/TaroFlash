@@ -25,7 +25,6 @@ const {
 const value = defineModel<number>('value', { required: true })
 
 /** Keeps a held arrow key from machine-gunning the step sound on every repeat. */
-const ARROW_SFX_DEBOUNCE_MS = 40
 
 const focused = ref(false)
 
@@ -87,12 +86,15 @@ function increment() {
 // until they are handled here — and only here, on the input, so they step the value while it holds
 // focus and stay the page's arrows otherwise.
 function onArrow(direction: 1 | -1) {
-  if (direction === 1 ? !can_increment.value : !can_decrement.value) return
+  if (direction === 1 ? !can_increment.value : !can_decrement.value) {
+    emitSfx('ui.rejected')
+    return
+  }
 
   if (direction === 1) increment()
   else decrement()
 
-  emitSfx('select', { debounce: ARROW_SFX_DEBOUNCE_MS })
+  emitSfx('ui.select')
 }
 </script>
 

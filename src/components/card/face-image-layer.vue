@@ -9,8 +9,7 @@ import { CARD_IMAGE_MAX_BYTES, useFaceImageUpload } from '@/composables/card'
 import { cardImageUrl } from '@/api/media'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
-import { type SfxOptions } from '@/sfx/directive'
+import { type SfxOptions } from '@/sfx/roles'
 import { playButtonTap } from '@/utils/animations/button-tap'
 import { bytesToMbLabel } from '@/utils/file-size'
 import { useMatchMedia } from '@/composables/ui/media-query'
@@ -72,7 +71,7 @@ const region_dropzone = computed(
 )
 /** Hover chime for behind/full-bleed layouts; region layout scopes its own chime instead (see onRegionPointerEnter). */
 const card_sfx = computed<SfxOptions | undefined>(() =>
-  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'tap_05' } : undefined
+  has_image.value && dropzone_mode.value === 'corners' ? { hover: 'ui.hover' } : undefined
 )
 
 const error_message = computed(() => {
@@ -100,7 +99,7 @@ function onRootPointerLeave() {
 
 /** Scopes the hover chime to the image region; behind/full-bleed play it card-wide instead, via `card_sfx`. */
 function onRegionPointerEnter() {
-  emitSfx('tap_05')
+  emitSfx('gesture.tick')
   onPointerEnter()
 }
 
@@ -178,7 +177,7 @@ defineExpose({
     :aria-label="t('card.image-editor.upload-image-button')"
     class="absolute! top-(--face-padding) right-(--face-padding) z-20 cursor-pointer text-ink-muted transition-[color,opacity] duration-150 hover:text-(--color-accent)"
     :class="hovered ? 'opacity-100' : 'opacity-0'"
-    v-sfx="{ hover: TYPE_SFX }"
+    v-sfx="{ hover: 'ui.hover' }"
     @click.stop="onAddClick"
   >
     <span ref="addIcon" class="inline-flex">

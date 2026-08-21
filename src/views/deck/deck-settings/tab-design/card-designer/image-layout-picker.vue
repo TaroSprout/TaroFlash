@@ -5,7 +5,6 @@ import Card from '@/components/card/index.vue'
 import LayoutSkeleton from './layout-skeleton.vue'
 import { CARD_ATTRIBUTES_DEFAULTS } from '@/utils/deck/defaults'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 const layout = defineModel<CardImageLayout | undefined>('layout')
 
@@ -17,11 +16,11 @@ const selected = computed(() => layout.value ?? CARD_ATTRIBUTES_DEFAULTS.image_l
 
 function onSelect(value: CardImageLayout) {
   if (selected.value === value) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('select')
+  emitSfx('ui.select')
   layout.value = value
 }
 </script>
@@ -36,7 +35,7 @@ function onSelect(value: CardImageLayout) {
       :data-active="selected === option"
       class="group relative flex cursor-pointer flex-col items-center gap-2 rounded-8 p-2 transition-colors hover:bg-raised-shade hover:bgx-diagonal-stripes hover:bgx-opacity-10 data-[active=true]:bg-(--color-accent) data-[active=true]:bgx-diagonal-stripes data-[active=true]:bgx-opacity-10"
       @click="onSelect(option)"
-      v-sfx="{ hover: selected === option ? undefined : TYPE_SFX }"
+      v-sfx="{ hover: selected === option ? undefined : 'ui.hover' }"
     >
       <card class="w-(--card-w-2xs)" side="front">
         <template #front>

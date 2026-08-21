@@ -57,10 +57,10 @@ describe('useResetPasswordActions', () => {
       expect(mockUpdatePassword).not.toHaveBeenCalled()
     })
 
-    test('emits etc_woodblock_stuck sfx on validation failure', async () => {
+    test('emits notice.error sfx on validation failure', async () => {
       const auth = useResetPasswordActions()
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
     test('sets errors.password when password is empty', async () => {
@@ -121,7 +121,7 @@ describe('useResetPasswordActions', () => {
       expect(auth.errors.value.password).toBe('reset-password-modal.validation-weak')
     })
 
-    test('emits etc_woodblock_stuck sfx on weak-password [obligation]', async () => {
+    test('emits notice.error sfx on weak-password [obligation]', async () => {
       mockUpdatePassword.mockResolvedValueOnce('weak-password')
       const auth = useResetPasswordActions()
       fillValidFields(auth)
@@ -129,7 +129,7 @@ describe('useResetPasswordActions', () => {
 
       await auth.submit()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
   })
 

@@ -10,7 +10,10 @@ const { coarseRef, fineRef, mockEmitSfx } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
-vi.mock('@/sfx/config', () => ({ TYPE_SFX: [], HOVER_SFX_SET: new Set() }))
+vi.mock('@/sfx/config', () => ({
+  SOUNDS: {},
+  BUS_DEFAULTS: { interface: 5, hover: 5 }
+}))
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: (query) => (query === 'fine' ? fineRef : coarseRef)
 }))
@@ -419,6 +422,24 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toBeUndefined()
   })
 
+  // ── ui.rejected at the bound [obligation] ────────────────────────────────
+
+  test('ArrowUp at max fires ui.rejected, not ui.select [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 10, max: 10, step: 1 })
+    mockEmitSfx.mockClear()
+    await findInput(wrapper).trigger('keydown', { key: 'ArrowUp' })
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
+  })
+
+  test('ArrowDown at min fires ui.rejected, not ui.select [obligation]', async () => {
+    const wrapper = mountSpinbox({ value: 1, min: 1, step: 1 })
+    mockEmitSfx.mockClear()
+    await findInput(wrapper).trigger('keydown', { key: 'ArrowDown' })
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
+  })
+
   // ── Defaults ──────────────────────────────────────────────────────────────
 
   test('with no min/max, both buttons are enabled by default', () => {
@@ -464,10 +485,10 @@ describe('SpinboxButton', () => {
   // old ad-hoc emitSfx('select') + active:scale-95. The sound itself stays
   // 'select' — only the path it travels changed.
 
-  test('clicking the button plays the select press sfx through the staged-tap path', async () => {
+  test('clicking the button plays the ui.select press sfx through the staged-tap path', async () => {
     const wrapper = mountSpinboxButton()
     await wrapper.find('button').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select', expect.any(Object))
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
   test('plays the press sfx exactly once per click (no double sound)', async () => {

@@ -46,7 +46,7 @@ describe('useLoginModal', () => {
 
     useLoginModal().open()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('emits pop_up_close when the modal response resolves [obligation]', async () => {
@@ -59,7 +59,7 @@ describe('useLoginModal', () => {
     resolve(undefined)
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
   test('emits snappy_button_3 before pop_up_close (ordering) [obligation]', async () => {
@@ -71,7 +71,7 @@ describe('useLoginModal', () => {
     await flushPromises()
 
     const calls = mockEmitSfx.mock.calls.map((c) => c[0])
-    expect(calls.indexOf('snappy_button_3')).toBeLessThan(calls.indexOf('pop_up_close'))
+    expect(calls.indexOf('dialog.open')).toBeLessThan(calls.indexOf('dialog.close'))
   })
 
   test('opens modal with mode mobile-sheet [obligation]', () => {

@@ -7,7 +7,6 @@ import AvatarImage from './avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { AVATAR_KEYS, loadAvatarUrl } from './avatars'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 type AvatarPickerModalProps = {
   selected?: string
@@ -20,17 +19,17 @@ const { t } = useI18n()
 const loaded = reactive(new Set<string>())
 
 onMounted(() => {
-  emitSfx('wooden_chime_ring')
+  emitSfx('dialog.open-chime')
   AVATAR_KEYS.forEach((avatar) => loadAvatarUrl(avatar)?.then(() => loaded.add(avatar)))
 })
 
 function onAvatarSelect(avatar: string) {
   if (avatar === selected) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('toggle_on')
+  emitSfx('ui.toggle-on')
   close(avatar)
 }
 </script>
@@ -41,7 +40,6 @@ function onAvatarSelect(avatar: string) {
     size="lg"
     data-palette="blue"
     :title="t('avatar-picker-modal.title')"
-    :close_sfx="{ press: 'pop_up_close' }"
     @close="close()"
   >
     <dialog-card-body data-testid="avatar-picker-modal__scroll-area">
@@ -51,7 +49,7 @@ function onAvatarSelect(avatar: string) {
           :key="avatar"
           :data-testid="`avatar-picker-modal__option-${avatar}`"
           :data-selected="avatar === selected || undefined"
-          v-sfx="{ hover: TYPE_SFX }"
+          v-sfx="{ hover: 'ui.hover' }"
           class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-knockout relative aspect-square p-2"
           @click="onAvatarSelect(avatar)"
         >

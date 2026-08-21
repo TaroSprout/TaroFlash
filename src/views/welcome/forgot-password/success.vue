@@ -9,7 +9,7 @@ defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 
-onMounted(() => emitSfx('success_1'))
+onMounted(() => emitSfx('notice.success'))
 </script>
 
 <template>
@@ -33,7 +33,7 @@ onMounted(() => emitSfx('success_1'))
       data-testid="forgot-password-modal__success-close"
       size="xl"
       full-width
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       @press="close"
     >
       {{ t('dialog-card.close-label') }}

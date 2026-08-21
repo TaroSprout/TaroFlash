@@ -64,7 +64,7 @@ export function useLoginActions() {
     submitError.value = ''
 
     if (!validate()) {
-      emitSfx('digi_powerdown')
+      emitSfx('ui.rejected')
       return 'invalid'
     }
 
@@ -74,7 +74,7 @@ export function useLoginActions() {
 
     if (outcome === 'success') return 'success'
 
-    emitSfx('etc_woodblock_stuck')
+    emitSfx('notice.error')
     submitError.value = t(LOGIN_ERROR_KEYS[outcome])
     return 'error'
   }

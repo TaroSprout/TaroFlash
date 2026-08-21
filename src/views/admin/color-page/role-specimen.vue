@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { autoUpdate } from '@floating-ui/vue'
 import type { Mode, RoleName, StationName } from './catalog'
 import { injectColorTuner } from './use-color-tuner'
-import { TYPE_SFX } from '@/sfx/config'
 
 type RoleSpecimenProps = {
   mode: Mode
@@ -136,7 +135,7 @@ watch(
         :data-active="region.role === active_role"
         :data-flagged="isFlagged(region.role)"
         :aria-label="region.role"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
         class="absolute cursor-pointer data-[active=true]:outline-2 data-[active=true]:outline-(--color-accent) hover:outline-2 hover:outline-(--color-accent)"
         :class="[region.box, region.kind === 'glyph' && 'flex items-center text-lg leading-none']"
         :style="styleOf(region)"

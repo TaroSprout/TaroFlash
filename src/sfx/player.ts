@@ -3,7 +3,6 @@ import { debounce } from '@/utils/debounce'
 import { BUS_DEFAULTS, SOUNDS, type Bus, type SoundDef, type SoundKey } from '@/sfx/config'
 
 export type PlayOptions = {
-  volume?: number
   debounce?: number
   // Overrides the sound's own bus, which otherwise falls back to 'interface'.
   bus?: Bus
@@ -103,7 +102,7 @@ class AudioPlayer {
 
     // Bail before touching the context — waking it steals audio focus and
     // pauses whatever the person is listening to, even at zero volume.
-    const volume = options.volume ?? sound.base_volume * this._getVolumeMultiplier(sound, options)
+    const volume = sound.base_volume * this._getVolumeMultiplier(sound, options)
     if (volume <= 0) return
 
     return engine.play(sound.buffer, volume)

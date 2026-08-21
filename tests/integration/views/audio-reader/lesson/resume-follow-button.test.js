@@ -72,11 +72,11 @@ describe('ResumeFollowButton', () => {
   })
 
   describe('click feedback [obligation]', () => {
-    test('plays the snappy_button_5 sfx on click [obligation]', () => {
+    test('plays the ui.press sfx on click [obligation]', () => {
       const wrapper = mountButton()
 
       expect(wrapper.findComponent(UiButtonStub).props('sfx')).toEqual({
-        press: 'snappy_button_5'
+        press: 'ui.press'
       })
     })
   })

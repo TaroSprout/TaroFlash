@@ -29,7 +29,7 @@ describe('useAlert', () => {
     test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
       const { warn } = useAlert()
       warn({ title: 'Are you sure?' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
     test('calls emitSfx with the provided openAudio when supplied', () => {
@@ -44,7 +44,7 @@ describe('useAlert', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
+          props: expect.objectContaining({ cancelAudio: 'dialog.dismiss' })
         })
       )
     })
@@ -101,11 +101,11 @@ describe('useAlert', () => {
     test('works with no args (all defaults)', () => {
       const { warn } = useAlert()
       warn()
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
+          props: expect.objectContaining({ cancelAudio: 'dialog.dismiss' })
         })
       )
     })
@@ -115,7 +115,7 @@ describe('useAlert', () => {
     test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
       const { info } = useAlert()
       info({ title: 'FYI' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
     test('passes default cancelAudio to the alert component when cancelAudio is omitted [obligation]', () => {
@@ -124,7 +124,7 @@ describe('useAlert', () => {
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
-          props: expect.objectContaining({ cancelAudio: 'digi_powerdown' })
+          props: expect.objectContaining({ cancelAudio: 'dialog.dismiss' })
         })
       )
     })

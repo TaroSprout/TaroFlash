@@ -9,12 +9,12 @@ const { playing: done_playing, tap: tapDone } = useStagedTap({ triggerAt: 'press
 
 function onFlip(e: MouseEvent) {
   tapFlip(flipCurrentCard, {
-    audio: is_starting_side.value ? 'transition_up' : 'transition_down'
+    audio: is_starting_side.value ? 'card.flip-away' : 'card.flip-back'
   })(e)
 }
 
 function onDone(e: MouseEvent) {
-  tapDone(stopEdit, { audio: 'music_plink_ok' })(e)
+  tapDone(stopEdit, { audio: 'dialog.confirm' })(e)
 }
 </script>
 

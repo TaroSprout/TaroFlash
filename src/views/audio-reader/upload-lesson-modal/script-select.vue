@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import { TYPE_SFX } from '@/sfx/config'
 
 type ScriptOption = { value: TranscriptScript; label: string }
 
@@ -22,7 +21,7 @@ function onOption(e: MouseEvent, value: TranscriptScript) {
     () => {
       script.value = value
     },
-    { audio: 'select' }
+    { audio: 'ui.select' }
   )(e)
 }
 </script>
@@ -43,7 +42,7 @@ function onOption(e: MouseEvent, value: TranscriptScript) {
         :data-active="script === option.value"
         class="flex-1 cursor-pointer rounded-4 px-3 py-2 text-sm transition-colors data-[active=false]:text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) data-[active=false]:hover:bg-(--color-accent)/10"
         :data-playing="playing || null"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
         @click="(e) => onOption(e, option.value)"
       >
         {{ t(option.label) }}

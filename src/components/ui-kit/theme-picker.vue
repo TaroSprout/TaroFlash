@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
 type ThemePickerProps = {
@@ -21,11 +20,11 @@ function isSelected(option: PaletteName) {
 
 function onThemeSelect(option: PaletteName) {
   if (isSelected(option)) {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     return
   }
 
-  emitSfx('toggle_on')
+  emitSfx('ui.toggle-on')
   emit('update:palette', option)
 }
 </script>
@@ -41,7 +40,7 @@ function onThemeSelect(option: PaletteName) {
         :key="option"
         :data-testid="`theme-picker__option-${option}`"
         :data-palette="option"
-        v-sfx="{ hover: TYPE_SFX }"
+        v-sfx="{ hover: 'ui.hover' }"
         class="w-9 shrink-0 aspect-square bg-(--color-accent) rounded-8 rounded-tr-3 cursor-pointer relative! hover:outline-5 outline-knockout"
         :class="{ 'outline-5 outline-knockout': isSelected(option) }"
         @click="onThemeSelect(option)"

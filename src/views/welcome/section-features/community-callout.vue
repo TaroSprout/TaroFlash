@@ -46,7 +46,7 @@ const { t } = useI18n()
         size="sm"
         icon-left="arrow-down"
         class="self-center sm:self-start"
-        :sfx="{ press: 'snappy_button_5' }"
+        :sfx="{ press: 'ui.press' }"
         @press="seeRoadmap()"
       >
         {{ t('welcome-view.features.callout.roadmap-link') }}

@@ -682,7 +682,7 @@ export function useReaderHighlights(
     focus_index.value = tap.index
     touch_point.value = { x: tap.x, y: tap.y }
     navigator.vibrate?.(10)
-    emitSfx('tap_05')
+    emitSfx('gesture.tick')
   }
 
   function beginDrag(event: PointerEvent) {
@@ -718,7 +718,7 @@ export function useReaderHighlights(
     if (anchor_index.value !== null) {
       if (index !== null && index !== focus_index.value) {
         focus_index.value = index
-        emitSfx('tap_05')
+        emitSfx('gesture.tick')
       }
       return
     }
@@ -758,7 +758,7 @@ export function useReaderHighlights(
     if (index === null || index === focus_index.value) return
 
     focus_index.value = index
-    emitSfx('tap_05')
+    emitSfx('gesture.tick')
   }
 
   function onPointerUp(event: PointerEvent) {

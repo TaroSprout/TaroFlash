@@ -26,7 +26,7 @@ const { display_side, show_all_ratings, show_rating_buttons, loading } =
       full-width
       :loading="loading"
       :disabled="loading"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
+      :sfx="{ tap_pre: 'ui.press' }"
       @press="emit('started')"
     >
       {{ t('study.flashcard.start-button') }}

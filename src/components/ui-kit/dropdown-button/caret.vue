@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { type ButtonProps } from '../button.vue'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
-import { TYPE_SFX } from '@/sfx/config'
 
 type DropdownCaretProps = {
   open: boolean
@@ -73,7 +72,7 @@ function onLeave(el: Element, done: () => void) {
             : 'bg-raised-tint text-ink shadow-[inset_0_0_0_1px_var(--color-accent)]'
         ]"
         data-testid="dropdown-button__trigger"
-        v-sfx="{ hover: disabled ? undefined : TYPE_SFX }"
+        v-sfx="{ hover: disabled ? undefined : 'ui.hover' }"
         @keydown.enter.space.stop.prevent="!disabled && emit('toggle')"
       >
         <ui-icon

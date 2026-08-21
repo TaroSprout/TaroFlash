@@ -340,40 +340,40 @@ describe('AudioToolbar', () => {
 
   // ── Sfx wiring ─────────────────────────────────────────────────────────────
 
-  test('skip-back click.capture emits ui.snappy_button_5 sfx [obligation]', async () => {
+  test('skip-back click.capture emits ui.press sfx [obligation]', async () => {
     const wrapper = mountToolbar()
 
     // click.capture fires on the element's capture phase — trigger('click') fires
     // the click event which is caught by the @click.capture="onBackTap" handler
     await wrapper.find('[data-testid="audio-toolbar__skip-back"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('skip-forward click.capture emits ui.snappy_button_5 sfx [obligation]', async () => {
+  test('skip-forward click.capture emits ui.press sfx [obligation]', async () => {
     const wrapper = mountToolbar()
 
     await wrapper.find('[data-testid="audio-toolbar__skip-forward"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('play/pause toggle click.capture emits ui.snappy_button_2 when paused [obligation]', async () => {
+  test('play/pause toggle click.capture emits ui.press when paused [obligation]', async () => {
     const player = makePlayer({ is_playing: ref(false) })
     const wrapper = mountToolbar({ player })
 
     await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_2')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('play/pause toggle click.capture emits ui.snappy_button_3 when playing [obligation]', async () => {
+  test('play/pause toggle click.capture emits dialog.open when playing [obligation]', async () => {
     const player = makePlayer({ is_playing: ref(true) })
     const wrapper = mountToolbar({ player })
 
     await wrapper.find('[data-testid="audio-toolbar__toggle"]').trigger('click')
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   // ── Dropdown wiring: chapters ──────────────────────────────────────────────

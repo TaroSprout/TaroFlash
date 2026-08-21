@@ -21,7 +21,7 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
       icon-left="chevron-left"
       size="xl"
       :disabled="!has_prev"
-      :sfx="{ press: 'transition_down' }"
+      :sfx="{ press: 'card.flip-back' }"
       @press="prev"
     >
       {{ t('deck-view.mobile-editor.prev-button') }}
@@ -33,7 +33,7 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
       icon-left="card-flip"
       full-width
       size="xl"
-      :sfx="{ tap_pre: 'snappy_button_5' }"
+      :sfx="{ tap_pre: 'ui.press' }"
       @press="flip"
     >
       {{ t('deck-view.mobile-editor.flip-button') }}
@@ -46,7 +46,7 @@ const { has_prev, has_next, flip, prev, next } = inject(mobileCardEditorKey)!
       icon-left="chevron-right"
       size="xl"
       :disabled="!has_next"
-      :sfx="{ press: 'transition_up' }"
+      :sfx="{ press: 'card.flip-away' }"
       @press="next"
     >
       {{ t('deck-view.mobile-editor.next-button') }}

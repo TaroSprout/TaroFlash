@@ -28,7 +28,7 @@ function onStudyClicked() {
     data-palette="brand"
     full-width
     size="xl"
-    :sfx="{ tap_pre: 'snappy_button_3' }"
+    :sfx="{ tap_pre: 'dialog.open' }"
     :disabled="is_disabled"
     @press="onStudyClicked"
   >

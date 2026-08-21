@@ -1,20 +1,8 @@
 import type { Directive, DirectiveBinding } from 'vue'
 import { emitSfx, emitHoverSfx } from './bus'
-import { type SoundKey } from './config'
+import type { SfxOptions, SfxRole } from './roles'
 
-export type SfxOptions = {
-  // Routed through staged-tap in button.vue — not handled by this directive.
-  press?: SoundKey
-  tap_pre?: SoundKey
-  tap_post?: SoundKey
-  // Handled by this directive.
-  hover?: SoundKey | SoundKey[]
-  focus?: SoundKey
-  blur?: SoundKey
-  debounce?: number
-}
-
-type SfxBindingValue = SoundKey | SfxOptions
+type SfxBindingValue = SfxRole | SfxOptions
 
 type Cleanup = () => void
 
@@ -63,21 +51,14 @@ function _attach(el: HTMLElement, binding: DirectiveBinding<SfxBindingValue>) {
     _add(el, 'pointerenter', (e) => {
       if (!state.cfg.hover) return
       if ((e as PointerEvent).pointerType !== 'mouse') return
-      emitHoverSfx(state.cfg.hover, { debounce: state.cfg.debounce })
+      emitHoverSfx(state.cfg.hover)
     })
   )
 
   cleanups.push(
     _add(el, 'focus', () => {
       if (!state.cfg.focus) return
-      emitSfx(state.cfg.focus, { debounce: state.cfg.debounce })
-    })
-  )
-
-  cleanups.push(
-    _add(el, 'blur', () => {
-      if (!state.cfg.blur) return
-      emitSfx(state.cfg.blur, { debounce: state.cfg.debounce })
+      emitSfx(state.cfg.focus)
     })
   )
 
@@ -98,7 +79,6 @@ function _parseBinding(
     const c: SfxOptions = {}
     if (mods.hover) c.hover = binding
     if (mods.focus) c.focus = binding
-    if (mods.blur) c.blur = binding
     return c
   }
 

@@ -65,7 +65,7 @@ function onOptionSelect(option: DropdownOption) {
       :rearranging="rearranging"
       :dragging="dragging"
       :active="!!dropdown?.open"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       class="w-full"
       @press="onPress"
     >

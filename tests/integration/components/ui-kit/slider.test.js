@@ -8,9 +8,8 @@ import { _resetGestureState } from '@/composables/ui/gestures'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 vi.mock('@/sfx/config', () => ({
-  TYPE_SFX: [],
   SOUNDS: {},
-  BUS_DEFAULTS: { interface: 5, study: 5, hover: 5 }
+  BUS_DEFAULTS: { interface: 5, hover: 5 }
 }))
 
 import UiSlider from '@/components/ui-kit/slider.vue'
@@ -300,10 +299,10 @@ describe('UiSlider — applyX stepping and clamping', () => {
     expect(getValue()).toBe(2)
   })
 
-  test('emitSfx is called with tick sound when value changes', () => {
-    const { wrapper } = makeSlider({ min: 0, max: 10, step: 1, sfx: { tick: 'tap_05' } }, 5)
+  test('emitSfx is called with the gesture.tick role when value changes', () => {
+    const { wrapper } = makeSlider({ min: 0, max: 10, step: 1 }, 5)
     simulateDrag(wrapper, EDGE_PX) // will change from 5 → 0
-    expect(mockEmitSfx).toHaveBeenCalledWith('tap_05', { bus: undefined })
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick', undefined)
   })
 
   test('emitSfx is NOT called when drag lands on current value', () => {
@@ -313,16 +312,24 @@ describe('UiSlider — applyX stepping and clamping', () => {
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('sfx.bus is forwarded to emitSfx', () => {
-    const { wrapper } = makeSlider({ min: 0, max: 10, step: 1, sfx: { bus: 'study' } }, 5)
+  // ── preview_bus routes the tick to the bus the slider itself sets [obligation] ──
+
+  test('preview_bus is forwarded to emitSfx as the second argument [obligation]', () => {
+    const { wrapper } = makeSlider({ min: 0, max: 10, step: 1, preview_bus: 'hover' }, 5)
     simulateDrag(wrapper, EDGE_PX) // 5 → 0 = change
-    expect(mockEmitSfx).toHaveBeenCalledWith('tap_05', { bus: 'study' })
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick', 'hover')
   })
 
-  test('sfx.tick defaults to tap_05 when not specified', () => {
+  test('preview_bus never changes which sound plays — the role stays gesture.tick [obligation]', () => {
+    const { wrapper } = makeSlider({ min: 0, max: 10, step: 1, preview_bus: 'interface' }, 5)
+    simulateDrag(wrapper, EDGE_PX)
+    expect(mockEmitSfx.mock.calls[0][0]).toBe('gesture.tick')
+  })
+
+  test("an omitted preview_bus forwards undefined, so the role's own default bus applies", () => {
     const { wrapper } = makeSlider({ min: 0, max: 10, step: 1 }, 5)
     simulateDrag(wrapper, EDGE_PX)
-    expect(mockEmitSfx).toHaveBeenCalledWith('tap_05', { bus: undefined })
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick', undefined)
   })
 
   test('pointermove mid-drag updates the value (onMove path)', () => {

@@ -154,7 +154,7 @@ describe('mode-toolbar/mode-select', () => {
   test('clicking select-all emits ui.select sfx and calls toggleSelectAll', async () => {
     const { wrapper, editor } = mount()
     await selectAllBtn(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     expect(editor.selection.toggleSelectAll).toHaveBeenCalledOnce()
   })
 

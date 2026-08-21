@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { useStagedTap } from '@/composables/ui/staged-tap'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 
 const {
   checked,
@@ -18,8 +18,7 @@ const {
 
 const { playing, tap } = useStagedTap({ triggerAt: 'press' })
 const onClick = tap(undefined, {
-  audio: sfx.press ?? 'select',
-  audioOpts: { debounce: sfx.debounce }
+  audio: sfx.press || 'ui.select'
 })
 </script>
 
@@ -32,7 +31,7 @@ const onClick = tap(undefined, {
       'bg-well hover:bg-(--color-accent) data-[active=true]:bg-(--color-accent)': !checked
     }"
     :data-active="playing || active || null"
-    v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
+    v-sfx="{ hover: sfx.hover ?? 'ui.hover', focus: sfx.focus }"
     @click="onClick"
   >
     <ui-icon v-if="checked" class="size-5 text-(--color-on-accent)" src="check" />

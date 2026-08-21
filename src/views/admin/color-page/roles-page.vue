@@ -31,14 +31,14 @@ function activeRole(mode: Mode, station: StationName): RoleName | null {
 // Every path out of the editor lands here, so the close sound is emitted once, in the one place the
 // popover actually shuts — an outside click, a re-click on the open region, or Esc.
 function onClose() {
-  if (picked.value) emitSfx('snappy_button_5')
+  if (picked.value) emitSfx('ui.press')
   picked.value = null
 }
 
 function onPick(mode: Mode, station: StationName, role: RoleName, el: HTMLElement) {
   if (picked.value?.el === el) return onClose()
 
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   picked.value = { mode, station, role, rect: el.getBoundingClientRect(), el }
 }
 </script>

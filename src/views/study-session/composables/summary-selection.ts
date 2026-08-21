@@ -81,7 +81,7 @@ export function useSummarySelection({
   function onSelectCard(id?: number) {
     if (id !== undefined) selection.toggleSelectCard(id)
     selection.enterSelection()
-    emitSfx('select')
+    emitSfx('ui.select')
   }
 
   async function onDeleteSelected() {

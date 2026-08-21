@@ -225,10 +225,10 @@ describe('useCardSearch', () => {
       expect(search.is_searching.value).toBe(true)
     })
 
-    test('emits generic_button_15 sfx [obligation]', () => {
+    test('emits ui.press sfx [obligation]', () => {
       const { search } = makeCardSearch()
       search.open()
-      expect(mockEmitSfx).toHaveBeenCalledWith('generic_button_15')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
     })
   })
 
@@ -253,10 +253,10 @@ describe('useCardSearch', () => {
       expect(search.query.value).toBe('')
     })
 
-    test('emits slide_left sfx [obligation]', () => {
+    test('emits nav.page-back sfx [obligation]', () => {
       const { search } = makeCardSearch()
       search.close()
-      expect(mockEmitSfx).toHaveBeenCalledWith('slide_left')
+      expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-back')
     })
   })
 
@@ -266,7 +266,7 @@ describe('useCardSearch', () => {
       search.is_searching.value = false
       search.toggle()
       expect(search.is_searching.value).toBe(true)
-      expect(mockEmitSfx).toHaveBeenCalledWith('generic_button_15')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
     })
 
     test('calls close() when is_searching is true [obligation]', () => {
@@ -275,7 +275,7 @@ describe('useCardSearch', () => {
       search.toggle()
       expect(search.is_searching.value).toBe(false)
       expect(query_ref.value).toBe('')
-      expect(mockEmitSfx).toHaveBeenCalledWith('slide_left')
+      expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-back')
     })
   })
 })

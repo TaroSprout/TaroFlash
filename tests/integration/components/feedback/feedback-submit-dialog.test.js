@@ -246,6 +246,6 @@ describe('FeedbackSubmitDialog — close wiring', () => {
   test('dialog-card close emits pop_up_close', async () => {
     const { wrapper } = mountDialog()
     await wrapper.find('[data-testid="feedback-submit-dialog__dialog-close"]').trigger('click')
-    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
+    expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
   })
 })

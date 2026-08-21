@@ -136,7 +136,7 @@ onUnmounted(() => {
 
 function toggle() {
   if (disabled) return
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   if (popover_open.value) return close()
 
   close_open_menu?.()

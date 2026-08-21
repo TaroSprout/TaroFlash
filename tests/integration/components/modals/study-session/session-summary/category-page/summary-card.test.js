@@ -190,7 +190,7 @@ describe('SummaryCard', () => {
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
   test('clicking twice flips back to the front and plays the opposite sfx', async () => {
@@ -201,7 +201,7 @@ describe('SummaryCard', () => {
     await card.trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
-    expect(mockEmitSfx).toHaveBeenLastCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenLastCalledWith('card.flip-back')
   })
 
   test('resolves card_attributes via appearanceFor(card.deck_id)', () => {

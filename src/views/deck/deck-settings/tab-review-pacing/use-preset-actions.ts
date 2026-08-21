@@ -161,7 +161,7 @@ export function usePresetActions(pacing: PacingFields, editor: DeckEditor): Pres
         named: { name: preset.name, count: other_follower_count.value }
       }),
       confirmLabel: t('alert.delete-preset.confirm'),
-      confirmAudio: 'trash_crumple_short'
+      confirmAudio: 'card.delete'
     }).response
     if (!confirmed) return
 

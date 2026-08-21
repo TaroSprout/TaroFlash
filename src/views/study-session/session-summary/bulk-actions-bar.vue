@@ -28,7 +28,7 @@ const select_all_label = computed(() =>
  * `useBulkActions.onToggleSelectAll`.
  */
 function onToggleSelectAll() {
-  emitSfx('select')
+  emitSfx('ui.select')
   if (selection.all_cards_selected.value) selection.clearSelectedCards()
   else selectAllSummaryCards()
 }

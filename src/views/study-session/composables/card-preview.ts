@@ -47,7 +47,7 @@ export function useCardPreview(next_card: ComputedRef<StudyCard | undefined>) {
    * runs through here.
    */
   function awaitFlip(side: 'front' | 'back') {
-    emitSfx('slide_up')
+    emitSfx('nav.page-forward')
     next_card_side.value = side
     return new Promise<void>((resolve) => {
       resolveFlip = resolve

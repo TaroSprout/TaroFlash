@@ -30,12 +30,12 @@ export function useCardSearch(
   )
 
   function open() {
-    emitSfx('generic_button_15')
+    emitSfx('ui.press')
     is_searching.value = true
   }
 
   function close() {
-    emitSfx('slide_left')
+    emitSfx('nav.page-back')
     is_searching.value = false
     query.value = ''
   }

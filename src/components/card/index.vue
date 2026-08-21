@@ -9,7 +9,7 @@ import ImageDropzone from './image-dropzone.vue'
 import { type CoverImage } from '@/composables/deck/cover-image'
 import { type CardBase } from '@type/card'
 import { cardImageUrl } from '@/api/media'
-import { type SfxOptions } from '@/sfx/directive'
+import { type SfxOptions } from '@/sfx/roles'
 import { flipEnter, flipLeave } from '@/utils/animations/flip'
 
 type CardProps = Partial<CardBase> & {

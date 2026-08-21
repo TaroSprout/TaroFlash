@@ -77,7 +77,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   function onSelectCard(id?: number) {
     if (id !== undefined) selection.toggleSelectCard(id)
     selection.enterSelection()
-    emitSfx('select')
+    emitSfx('ui.select')
   }
 
   /**
@@ -115,14 +115,14 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
 
   /** Exit the current mode: drop selection, return to view mode. */
   function onCancel() {
-    emitSfx('card_drop')
+    emitSfx('dialog.close')
     shell.exitMode()
     selection.exitSelection()
   }
 
   /** Exit selection mode only (keeps the current editor mode). */
   function onCancelSelection() {
-    emitSfx('digi_powerdown')
+    emitSfx('ui.deselect')
     selection.exitSelection()
   }
 

@@ -115,7 +115,7 @@ describe('useMemberDangerActions', () => {
       title: 'alert.delete-account.title',
       message: 'alert.delete-account.message',
       confirmLabel: 'alert.delete-account.confirm',
-      confirmAudio: 'trash_crumple_short'
+      confirmAudio: 'card.delete'
     })
   })
 

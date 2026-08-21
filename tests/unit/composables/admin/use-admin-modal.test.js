@@ -53,7 +53,7 @@ describe('useAdminModal — call shape', () => {
     const { open } = useAdminModal()
     open()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_3')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
   test('plays pop_up_close sfx once the modal resolves [obligation]', async () => {
@@ -69,6 +69,6 @@ describe('useAdminModal — call shape', () => {
     resolve(undefined)
     await response
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 })

@@ -122,7 +122,7 @@ describe('useWindowChrome — tuck/restore are no-ops when already in that state
 
     await chrome.tuck()
     expect(mockEmitSfx).toHaveBeenCalledTimes(1)
-    expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-forward')
     expect(mockTuckPreview).toHaveBeenCalledTimes(1)
 
     await chrome.tuck()
@@ -148,7 +148,7 @@ describe('useWindowChrome — tuck/restore are no-ops when already in that state
 
     await chrome.restore()
     expect(mockEmitSfx).toHaveBeenCalledTimes(1)
-    expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-forward')
     expect(mockUntuckPreview).toHaveBeenCalledTimes(1)
 
     await chrome.restore()

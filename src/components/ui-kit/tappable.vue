@@ -6,7 +6,7 @@ import {
   useStagedTap
 } from '@/composables/ui/staged-tap'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 
 type UiTappableProps = {
   as?: string
@@ -44,10 +44,8 @@ const hovering = ref(false)
 
 function onClick(e: MouseEvent) {
   tap((ev) => emit('tap', ev), {
-    preAudio: sfx.tap_pre,
-    audio: sfx.press,
-    audioOpts: { debounce: sfx.debounce },
-    postAudio: sfx.tap_post
+    preAudio: sfx.tap_pre || undefined,
+    audio: sfx.press || undefined
   })(e)
 }
 
@@ -65,7 +63,7 @@ function onPointerLeave() {
     :is="as"
     :data-tap-active="playing || hovering || active || null"
     class="group/tappable relative isolate"
-    v-sfx="{ hover: sfx.hover, focus: sfx.focus, blur: sfx.blur, debounce: sfx.debounce }"
+    v-sfx="{ hover: sfx.hover ?? 'ui.hover', focus: sfx.focus }"
     @pointerenter="onPointerEnter"
     @pointerleave="onPointerLeave"
     @click="onClick"

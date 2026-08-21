@@ -29,7 +29,7 @@ function onBack() {
     icon-left="arrow-left"
     :size="is_mobile ? 'base' : 'sm'"
     icon-only
-    :sfx="{ tap_pre: 'snappy_button_5', press: 'slide_left' }"
+    :sfx="{ tap_pre: 'ui.press', press: 'nav.page-back' }"
     @press="onBack"
   >
   </ui-button>

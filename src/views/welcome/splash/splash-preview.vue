@@ -22,7 +22,7 @@ const preview_attributes: DeckCardAttributes = {
 
 function flipPreviewSide(side: CardSide) {
   preview_side.value = side
-  emitSfx('slide_up')
+  emitSfx('nav.page-forward')
 }
 </script>
 

@@ -445,7 +445,7 @@ describe('MoveCardsModal', () => {
   test('dialog-card close emits pop_up_close [obligation]', async () => {
     const { wrapper } = mountModal({ cards: [makeCard()] })
     await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
-    expect(emitSfxMock).toHaveBeenCalledWith('pop_up_close')
+    expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
   })
 
   // ── onMove failure handling ──────────────────────────────────────────────────

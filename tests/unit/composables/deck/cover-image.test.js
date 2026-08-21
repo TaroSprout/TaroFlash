@@ -141,7 +141,7 @@ describe('useCoverImage — stageFile (via onFile) [obligation]', () => {
 
     await cover_image.onDrop(dropEvent(pngFile()))
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
     unmount()
   })
 
@@ -192,7 +192,7 @@ describe('useCoverImage — onRemove [obligation]', () => {
 
     cover_image.onRemove()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
     unmount()
   })
 })
@@ -317,7 +317,7 @@ describe('useCoverImage — no paid-plan gate [obligation]', () => {
     cover_image.openPicker()
 
     expect(click).toHaveBeenCalled()
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     unmount()
   })
 
@@ -370,7 +370,20 @@ describe('useCoverImage — validation errors [obligation]', () => {
 
     await cover_image.onDrop(dropEvent(new File(['x'], 'notes.txt', { type: 'text/plain' })))
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
+    unmount()
+  })
+})
+
+// ── drag cue [obligation] ────────────────────────────────────────────────────
+
+describe('useCoverImage — drag cue [obligation]', () => {
+  test('onDragEnter chimes gesture.zone-cross since dragCue is omitted (defaults to true) [obligation]', () => {
+    const { cover_image, unmount } = withCoverImage(reactive({}), ref(1))
+
+    cover_image.onDragEnter({ preventDefault: vi.fn() })
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('gesture.zone-cross')
     unmount()
   })
 })

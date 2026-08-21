@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { createApp, ref, nextTick } from 'vue'
+import { createApp, ref, nextTick, toValue } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import messages from '@intlify/unplugin-vue-i18n/messages'
@@ -53,12 +53,14 @@ vi.mock('@/composables/card/mutations', () => ({
 
 // Capture the onFile callback so tests can invoke uploadFile directly.
 let capturedOnFile
+let capturedDropzoneOpts
 let mockDragging
 let mockFileError
 
 vi.mock('@/composables/card/image-dropzone', () => ({
   useImageDropzone: vi.fn((opts) => {
     capturedOnFile = opts.onFile
+    capturedDropzoneOpts = opts
     mockDragging = ref(false)
     mockFileError = ref(null)
     return {
@@ -178,7 +180,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     // Before flushPromises — deleteCardImage has not resolved yet
     await nextTick()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
 
     resolveDeleteCard()
     await flushPromises()
@@ -195,14 +197,14 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
 
     // Not yet — deleteCardImage hasn't resolved
     const trashCallsBefore = mockEmitSfx.mock.calls.filter(
-      ([name]) => name === 'trash_crumple_short'
+      ([name]) => name === 'card.delete'
     ).length
     expect(trashCallsBefore).toBe(0)
 
     resolveDeleteCard()
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('trash_crumple_short')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.delete')
     unmount()
   })
 
@@ -213,7 +215,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     await result.onRemove()
     await flushPromises()
 
-    const trashCalls = mockEmitSfx.mock.calls.filter(([name]) => name === 'trash_crumple_short')
+    const trashCalls = mockEmitSfx.mock.calls.filter(([name]) => name === 'card.delete')
     expect(trashCalls.length).toBe(0)
     unmount()
   })
@@ -319,7 +321,7 @@ describe('useFaceImageUpload — openPicker guard', () => {
     await flushPromises()
 
     // browse() is from the dropzone mock; it should not be called
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
     unmount()
   })
 
@@ -330,7 +332,7 @@ describe('useFaceImageUpload — openPicker guard', () => {
     await result.openPicker()
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     unmount()
   })
 })
@@ -362,7 +364,7 @@ describe('useFaceImageUpload — onDismissError', () => {
   test('emits ui.snappy_button_5 on dismiss', () => {
     const { result, unmount } = withUpload()
     result.onDismissError()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
     unmount()
   })
 })
@@ -412,7 +414,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
     expect(mockNoticeError).not.toHaveBeenCalled()
     unmount()
   })
@@ -425,7 +427,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     await flushPromises()
 
     expect(mockNoticeError).toHaveBeenCalledWith("Couldn't save image — try again")
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_ok')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.confirm')
     expect(result.pending.value).toBe(false)
     unmount()
   })
@@ -523,28 +525,18 @@ describe('useFaceImageUpload — file_error watcher (document pointerdown listen
   })
 })
 
-describe('useFaceImageUpload — dragging watcher (chime on drag enter)', () => {
-  test('emits ui.music_plink_mid when dragging transitions false→true', async () => {
+describe('useFaceImageUpload — dragCue wiring to useImageDropzone', () => {
+  test('passes a dragCue that resolves true when the card can accept an upload', () => {
     const { unmount } = withUpload({ card: makeCard({ id: 1 }) })
 
-    mockDragging.value = true
-    await nextTick()
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_mid')
+    expect(toValue(capturedDropzoneOpts.dragCue)).toBe(true)
     unmount()
   })
 
-  test('does NOT emit chime when dragging transitions true→false', async () => {
-    const { unmount } = withUpload({ card: makeCard({ id: 1 }) })
+  test('passes a dragCue that resolves false when the card is unpersisted (id <= 0)', () => {
+    const { unmount } = withUpload({ card: makeCard({ id: 0 }) })
 
-    mockDragging.value = true
-    await nextTick()
-    mockEmitSfx.mockClear()
-
-    mockDragging.value = false
-    await nextTick()
-
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('music_plink_mid')
+    expect(toValue(capturedDropzoneOpts.dragCue)).toBe(false)
     unmount()
   })
 })

@@ -2,7 +2,7 @@ import { computed, ref, type InjectionKey } from 'vue'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { emitSfx } from '@/sfx/bus'
-import type { SoundKey } from '@/sfx/config'
+import type { SfxRole } from '@/sfx/roles'
 
 export type DeckViewShell = ReturnType<typeof useDeckViewShell>
 
@@ -50,7 +50,7 @@ export function useDeckViewShell() {
    * transition finishes (`notifyModeSettled`, from the mode-stack's GSAP
    * completion). `mode` flips synchronously; only the promise is deferred.
    */
-  function setMode(new_mode: CardEditorMode, chime: SoundKey = 'select'): Promise<void> {
+  function setMode(new_mode: CardEditorMode, chime: SfxRole = 'ui.select'): Promise<void> {
     if (mode.value === new_mode) return Promise.resolve()
 
     emitSfx(chime)
@@ -84,7 +84,7 @@ export function useDeckViewShell() {
   }
 
   /** Leave the current mode back to the base view. */
-  function exitMode(chime?: SoundKey) {
+  function exitMode(chime?: SfxRole) {
     return setMode('view', chime)
   }
 
@@ -111,7 +111,7 @@ export function useDeckViewShell() {
   /** Flip drag-to-reorder on the base grid; turning it on returns to the view. */
   function toggleRearrange() {
     is_rearranging.value = !is_rearranging.value
-    emitSfx(is_rearranging.value ? 'pop_up_pop' : 'pop_up_close')
+    emitSfx(is_rearranging.value ? 'dialog.open' : 'dialog.close')
     if (is_rearranging.value) {
       mode.value = 'view'
       sort_by.value = 'default'
@@ -119,12 +119,12 @@ export function useDeckViewShell() {
   }
 
   function openPageSettings() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     is_page_settings_open.value = true
   }
 
   function closePageSettings() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     is_page_settings_open.value = false
   }
 

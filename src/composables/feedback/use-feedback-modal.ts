@@ -7,14 +7,14 @@ export function useFeedbackModal() {
   const modal = useModal()
 
   function open() {
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
     const result = modal.open(FeedbackBoard, {
       backdrop: true,
       mode: 'mobile-sheet',
       mobile_below_width: 'msm',
       mobile_below_height: 'md'
     })
-    result.response.then(() => emitSfx('pop_up_close'))
+    result.response.then(() => emitSfx('dialog.close'))
     return result
   }
 

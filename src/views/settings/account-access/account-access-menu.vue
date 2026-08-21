@@ -40,7 +40,7 @@ function onGooglePress() {
       {{ t('account-access-modal.description') }}
     </p>
 
-    <ui-options-panel :entries="entries" :sfx="{ press: 'snappy_button_5' }" @select="onSelect" />
+    <ui-options-panel :entries="entries" :sfx="{ press: 'ui.press' }" @select="onSelect" />
 
     <ui-button
       neutral

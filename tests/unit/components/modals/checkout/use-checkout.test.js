@@ -145,7 +145,7 @@ describe('useCheckout — onSubmit non-success confirm', () => {
 
     expect(mockRefetch).not.toHaveBeenCalled()
     expect(mockInvalidateQueries).not.toHaveBeenCalled()
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('success_1')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('notice.success')
     expect(close).not.toHaveBeenCalled()
     expect(status.value).toBe('form')
   })
@@ -197,7 +197,7 @@ describe('useCheckout — onSubmit success path', () => {
     await submitPromise
 
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ key: ['billing'] })
-    expect(mockEmitSfx).toHaveBeenCalledWith('success_1')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.success')
     expect(close).toHaveBeenCalledWith({ upgraded: true })
     expect(status.value).toBe('success')
   })
@@ -221,15 +221,15 @@ describe('useCheckout — onSubmit success path', () => {
 // ── onMounted / onBeforeUnmount sfx ─────────────────────────────────────────────
 
 describe('useCheckout — mount/unmount chimes', () => {
-  test('plays wooden_chime_ring on mount', () => {
+  test('plays dialog.open-chime on mount', () => {
     withSetup(() => useCheckout(vi.fn()))
-    expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
-  test('plays pop_up_close on unmount', () => {
+  test('plays dialog.close on unmount', () => {
     withSetup(() => useCheckout(vi.fn()))
     app.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 })
 

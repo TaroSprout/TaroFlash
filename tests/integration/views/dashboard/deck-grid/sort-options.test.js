@@ -64,21 +64,21 @@ describe('DeckGridSortOptions — selected prop drives data-active', () => {
 })
 
 describe('DeckGridSortOptions — click behavior', () => {
-  test('clicking a non-selected option emits select with that key and plays snappy_button_5 [obligation]', async () => {
+  test('clicking a non-selected option emits select with that key and plays ui.press [obligation]', async () => {
     const wrapper = mount({ selected: 'custom' })
 
     await wrapper.find('[data-testid="deck-grid-sort-options__date-created"]').trigger('click')
 
     expect(wrapper.emitted('select')).toEqual([['date-created']])
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('clicking the currently selected option still emits select but plays digi_powerdown [obligation]', async () => {
+  test('clicking the currently selected option still emits select but plays ui.deselect [obligation]', async () => {
     const wrapper = mount({ selected: 'custom' })
 
     await wrapper.find('[data-testid="deck-grid-sort-options__custom"]').trigger('click')
 
     expect(wrapper.emitted('select')).toEqual([['custom']])
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
   })
 })

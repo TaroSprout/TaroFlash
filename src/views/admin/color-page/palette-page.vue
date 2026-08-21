@@ -8,7 +8,6 @@ import { injectColorTuner } from './use-color-tuner'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
 import { emitSfx } from '@/sfx/bus'
-import { TYPE_SFX } from '@/sfx/config'
 
 const { t } = useI18n()
 const tuner = injectColorTuner()
@@ -24,7 +23,7 @@ const swatch_els = new Map<string, HTMLElement>()
 // Every path out of the editor lands here, so the close sound is emitted once, in the one place the
 // popover actually shuts — an outside click, a re-click on the open swatch, or Esc.
 function onClose() {
-  if (picked_id.value) emitSfx('snappy_button_5')
+  if (picked_id.value) emitSfx('ui.press')
   picked_id.value = null
 }
 
@@ -49,7 +48,7 @@ function onPick(id: string, event: MouseEvent) {
   if (id === picked_id.value) return onClose()
 
   const el = event.currentTarget as HTMLElement
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   picked_id.value = id
   anchor_el.value = el
   anchor_rect.value = el.getBoundingClientRect()
@@ -59,7 +58,7 @@ function onAddShade(family: string) {
   const lightest = tuner.families.value.get(family)?.[0]
   const seed = lightest ? { ...lightest.hsl, l: lightest.hsl.l + 4 } : { h: 0, s: 0, l: 50 }
 
-  emitSfx('snappy_button_5')
+  emitSfx('ui.press')
   picked_id.value = tuner.addShade(family, seed).id
   void nextTick(() => remeasure())
 }
@@ -101,7 +100,7 @@ watch(
             type="button"
             data-testid="palette-page__swatch"
             :data-active="shade.id === picked_id"
-            v-sfx="{ hover: TYPE_SFX }"
+            v-sfx="{ hover: 'ui.hover' }"
             class="flex w-(--palette-page-swatch-size) cursor-pointer flex-col gap-1 rounded-3 p-2 text-left hover:bg-raised-tint data-[active=true]:bg-raised"
             @click="onPick(shade.id, $event)"
           >
@@ -132,7 +131,7 @@ watch(
           <button
             type="button"
             data-testid="palette-page__add-shade"
-            v-sfx="{ hover: TYPE_SFX }"
+            v-sfx="{ hover: 'ui.hover' }"
             class="flex w-(--palette-page-swatch-size) cursor-pointer flex-col self-start rounded-3 p-2 text-ink-muted"
             :aria-label="t('admin.palette-page.add-shade-button')"
             :title="t('admin.palette-page.add-shade-button')"

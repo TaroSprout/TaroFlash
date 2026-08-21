@@ -194,7 +194,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('mouse drag — fine-pointer ratchet [obligation]', () => {
-    test('onPointerMove emits ui.tap_05 when a new word is entered during active drag', async () => {
+    test('onPointerMove emits gesture.tick when a new word is entered during active drag', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl3 = addWord(contentEl, 3)
       const wordEl5 = addWord(contentEl, 5)
@@ -212,7 +212,7 @@ describe('useReaderHighlights', () => {
         new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 100, clientY: 50 })
       )
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick')
     })
 
     test('onPointerMove does NOT emit ui.tap_05 when pointer stays on the same word', async () => {
@@ -252,7 +252,7 @@ describe('useReaderHighlights', () => {
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
 
-    test('touch path (extendTouchSelection) emits tap_05 when a word changes but the fine-pointer code path does NOT handle it', async () => {
+    test('touch path (extendTouchSelection) emits gesture.tick when a word changes but the fine-pointer code path does NOT handle it', async () => {
       // This is the existing touch ratchet via extendTouchSelection — separate from
       // the fine-pointer path. Verifies the two paths are distinct: touch goes
       // through trackTap→extendTouchSelection, not through the fine-pointer branch.
@@ -277,7 +277,7 @@ describe('useReaderHighlights', () => {
         new PointerEvent('pointermove', { pointerType: 'touch', clientX: 30, clientY: 10 })
       )
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick')
 
       vi.useRealTimers()
     })
@@ -531,7 +531,7 @@ describe('useReaderHighlights', () => {
       expect(result.interaction_range.value).toEqual({ lo: 2, hi: 2 })
     })
 
-    test('long-press emits ui.tap_05 when armed', async () => {
+    test('long-press emits gesture.tick when armed', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 3)
 
@@ -543,7 +543,7 @@ describe('useReaderHighlights', () => {
       vi.advanceTimersByTime(410)
       await nextTick()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick')
     })
 
     test('drifting past slop before long-press cancels the arm', async () => {
@@ -566,7 +566,7 @@ describe('useReaderHighlights', () => {
       expect(result.interaction_range.value).toBeNull()
     })
 
-    test('extending a long-press drag to a second word emits ui.tap_05', async () => {
+    test('extending a long-press drag to a second word emits gesture.tick', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl1 = addWord(contentEl, 1)
       const wordEl2 = addWord(contentEl, 2)
@@ -587,7 +587,7 @@ describe('useReaderHighlights', () => {
       await nextTick()
 
       expect(result.interaction_range.value).toEqual({ lo: 1, hi: 2 })
-      expect(mockEmitSfx).toHaveBeenCalledWith('tap_05')
+      expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick')
     })
   })
 

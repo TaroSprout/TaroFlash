@@ -60,21 +60,21 @@ describe('StudyEditFooter', () => {
     expect(mockStopEdit).toHaveBeenCalledOnce()
   })
 
-  test('clicking flip plays transition_up when on the starting side', async () => {
+  test('clicking flip plays card.flip-away when on the starting side', async () => {
     const wrapper = mountFooter({ starting_side: true })
     await wrapper.find('[data-testid="study-card-edit__flip"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up', undefined)
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('clicking flip plays transition_down when not on the starting side', async () => {
+  test('clicking flip plays card.flip-back when not on the starting side', async () => {
     const wrapper = mountFooter({ starting_side: false })
     await wrapper.find('[data-testid="study-card-edit__flip"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down', undefined)
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
   })
 
-  test('clicking done plays music_plink_ok', async () => {
+  test('clicking done plays dialog.confirm', async () => {
     const wrapper = mountFooter()
     await wrapper.find('[data-testid="study-card-edit__done"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('music_plink_ok', undefined)
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
   })
 })

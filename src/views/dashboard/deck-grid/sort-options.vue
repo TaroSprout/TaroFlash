@@ -21,7 +21,7 @@ const OPTIONS: { key: SortOption; label_key: string }[] = [
 ]
 
 function onOptionClicked(option: SortOption) {
-  emitSfx(option === selected ? 'digi_powerdown' : 'snappy_button_5')
+  emitSfx(option === selected ? 'ui.deselect' : 'ui.press')
   emit('select', option)
 }
 </script>

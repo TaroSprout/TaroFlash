@@ -13,8 +13,8 @@ function onPress() {
     title: t('phone.apps.logout.title'),
     message: t('phone.apps.logout.description'),
     confirmLabel: t('phone.apps.logout.confirm'),
-    cancelAudio: 'digi_powerdown',
-    confirmAudio: 'toggle_off'
+    cancelAudio: 'dialog.dismiss',
+    confirmAudio: 'ui.toggle-off'
   })
 
   response.then((result) => {

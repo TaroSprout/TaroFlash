@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { useGestures } from '@/composables/ui/gestures'
 import { emitSfx } from '@/sfx/bus'
-import type { Bus, SoundKey } from '@/sfx/config'
+import type { Bus } from '@/sfx/config'
 
 type SliderProps = {
   min?: number
@@ -10,15 +10,22 @@ type SliderProps = {
   step?: number
   label?: string
   ticks?: boolean
-  /** Sound played on each notch while dragging; `bus` routes its volume. */
-  sfx?: { tick?: SoundKey; bus?: Bus }
+  /** For a slider that sets a volume dial: hear the drag on the dial it moves. */
+  preview_bus?: Bus
 }
 
 const MAX_TICKS = 20
 const EDGE_PX = 20
 const EDGE = `${EDGE_PX}px`
 
-const { min = 0, max = 100, step = 1, label, ticks = true, sfx = {} } = defineProps<SliderProps>()
+const {
+  min = 0,
+  max = 100,
+  step = 1,
+  label,
+  ticks = true,
+  preview_bus
+} = defineProps<SliderProps>()
 
 const value = defineModel<number>({ required: true })
 
@@ -80,7 +87,7 @@ function applyX(client_x: number) {
   if (stepped === value.value) return
 
   value.value = stepped
-  emitSfx(sfx.tick ?? 'tap_05', { bus: sfx.bus })
+  emitSfx('gesture.tick', preview_bus)
 }
 
 function onKeydown(e: KeyboardEvent) {

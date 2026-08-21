@@ -68,38 +68,38 @@ describe('UiToggle', () => {
     expect(getChecked()).toBe(true)
   })
 
-  test('plays the select sfx when the input changes', async () => {
+  test('plays the ui.select sfx when the input changes', async () => {
     const { wrapper } = makeToggle({ checked: false })
     await wrapper.find('input[type="checkbox"]').setValue(true)
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('silent=true suppresses the select sfx on change [obligation]', async () => {
-    const { wrapper } = makeToggle({ checked: false, silent: true })
+  test('sfx.press: false suppresses the select sfx on change [obligation]', async () => {
+    const { wrapper } = makeToggle({ checked: false, sfx: { press: false } })
     await wrapper.find('input[type="checkbox"]').setValue(true)
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
   function pointerEnter(el) {
     el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
   }
 
-  test('silent=true suppresses the hover sfx [obligation]', async () => {
-    const { wrapper } = makeToggle({ checked: false, silent: true })
+  test('sfx.hover: false suppresses the hover sfx [obligation]', async () => {
+    const { wrapper } = makeToggle({ checked: false, sfx: { hover: false } })
     pointerEnter(wrapper.find('[data-testid="ui-kit-toggle"]').element)
     expect(mockEmitHoverSfx).not.toHaveBeenCalled()
   })
 
-  test('silent=false (default) plays the hover sfx', () => {
+  test('an omitted hover channel falls back to the primitive default and plays the hover sfx', () => {
     const { wrapper } = makeToggle({ checked: false })
     pointerEnter(wrapper.find('[data-testid="ui-kit-toggle"]').element)
     expect(mockEmitHoverSfx).toHaveBeenCalled()
   })
 
-  test('silent defaults to false, still playing the select sfx', async () => {
+  test('an omitted press channel falls back to ui.select, still playing on change', async () => {
     const { wrapper } = makeToggle({ checked: false })
     await wrapper.find('input[type="checkbox"]').setValue(true)
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
   // ── disabled [obligation] ───────────────────────────────────────────────────
@@ -134,7 +134,7 @@ describe('UiToggle', () => {
       const { wrapper } = makeToggle({ checked: false, disabled: true })
       await wrapper.find('input[type="checkbox"]').trigger('click')
 
-      expect(mockEmitSfx).not.toHaveBeenCalledWith('select')
+      expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
     })
   })
 })

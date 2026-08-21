@@ -88,7 +88,7 @@ function onSelect(value: string) {
 }
 
 function onClose() {
-  emitSfx('pop_up_close')
+  emitSfx('dialog.close')
   close(false)
 }
 </script>
@@ -100,7 +100,7 @@ function onClose() {
       scrollable
       class="my-4 min-h-0"
       :entries="entries"
-      :sfx="{ press: 'snappy_button_2' }"
+      :sfx="{ press: 'ui.press' }"
       @select="onSelect"
     >
       <template #leading="{ entry }">
@@ -120,7 +120,7 @@ function onClose() {
           class="group-hover/tappable:bg-(--color-accent)!"
           :class="{ 'opacity-20': Number(entry.value) === current_deck_id }"
           data-palette="brand"
-          :sfx="{ press: 'snappy_button_2' }"
+          :sfx="{ press: 'ui.press' }"
           :checked="
             Number(entry.value) === selected_deck_id || Number(entry.value) === current_deck_id
           "

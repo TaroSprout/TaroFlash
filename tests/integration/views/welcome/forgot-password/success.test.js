@@ -31,7 +31,7 @@ describe('ForgotPasswordSuccess (forgot-password/success.vue)', () => {
 
   test('plays success_1 sfx on mount', () => {
     mountSuccess()
-    expect(mockEmitSfx).toHaveBeenCalledWith('success_1')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.success')
   })
 
   test('calls the close prop when the close button is pressed', async () => {

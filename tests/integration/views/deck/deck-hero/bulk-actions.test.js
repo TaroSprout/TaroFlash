@@ -139,7 +139,7 @@ describe('deck-hero/bulk-actions', () => {
   test('navigating select-all emits ui.select sfx and calls toggleSelectAll', async () => {
     const { wrapper, editor } = mount()
     await selectAllEntry(wrapper).trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('select')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     expect(editor.selection.toggleSelectAll).toHaveBeenCalledOnce()
   })
 

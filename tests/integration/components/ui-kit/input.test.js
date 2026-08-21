@@ -101,9 +101,9 @@ describe('UiInput', () => {
 
   // ── sfx on focus ──────────────────────────────────────────────────────────
 
-  test('plays type_05 sfx when the <input> receives focus [obligation]', async () => {
+  test('plays ui.focus sfx when the <input> receives focus [obligation]', async () => {
     const wrapper = mountInput()
     await wrapper.find('input').trigger('focus')
-    expect(mockEmitSfx).toHaveBeenCalledWith('type_05', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.focus')
   })
 })

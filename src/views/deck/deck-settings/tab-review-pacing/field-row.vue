@@ -28,7 +28,7 @@ const { t } = useI18n()
       size="sm"
       icon-only
       icon-left="refresh"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       @press="field?.reset()"
       class="absolute! -left-8"
     >

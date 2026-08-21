@@ -119,16 +119,16 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
 
   // ── sfx lifecycle ─────────────────────────────────────────────────────────
 
-  test('plays wooden_chime_ring on mount', () => {
+  test('plays dialog.open-chime (wooden_chime_ring) on mount', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('wooden_chime_ring')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
   test('plays pop_up_close on unmount', () => {
     const wrapper = makeWrapper()
     mockEmitSfx.mockClear()
     wrapper.unmount()
-    expect(mockEmitSfx).toHaveBeenCalledWith('pop_up_close')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
   // ── onSubmit — failure/invalid keeps the modal open ─────────────────────────
@@ -140,7 +140,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
     await wrapper.find('[data-testid="reset-password-modal__submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('success_1')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('notice.success')
     expect(mockPush).not.toHaveBeenCalled()
   })
 
@@ -154,7 +154,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       await wrapper.find('[data-testid="reset-password-modal__submit"]').trigger('click')
       await flushPromises()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('success_1')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.success')
     })
 
     test('does NOT call close or route before the ~1400ms wait elapses [obligation]', async () => {

@@ -74,7 +74,7 @@ function onActionClick(action: NoticeAction) {
         v-for="action in notice.actions"
         :key="action.label"
         size="sm"
-        :sfx="{ press: action.sfx?.press ?? 'snappy_button_5' }"
+        :sfx="{ press: action.sfx?.press || 'ui.press' }"
         @press="onActionClick(action)"
       >
         {{ action.label }}
@@ -88,7 +88,7 @@ function onActionClick(action: NoticeAction) {
       icon-only
       icon-left="close"
       class="absolute! -right-2 -top-2 [--btn-bg-color:var(--color-well)]! opacity-0 transition-opacity group-hover/notice-toast:opacity-100 group-focus-within/notice-toast:opacity-100"
-      :sfx="{ press: 'snappy_button_5' }"
+      :sfx="{ press: 'ui.press' }"
       @press="closeToast"
     >
       {{ t('notice.close-label') }}

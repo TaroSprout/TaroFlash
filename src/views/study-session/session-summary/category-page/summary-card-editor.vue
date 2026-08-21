@@ -18,12 +18,12 @@ const { t } = useI18n()
 const side = ref<'front' | 'back'>('front')
 
 function onFlip() {
-  emitSfx(side.value === 'front' ? 'transition_up' : 'transition_down')
+  emitSfx(side.value === 'front' ? 'card.flip-away' : 'card.flip-back')
   side.value = side.value === 'front' ? 'back' : 'front'
 }
 
 function onDone() {
-  emitSfx('music_plink_ok')
+  emitSfx('dialog.confirm')
   emit('done')
 }
 </script>

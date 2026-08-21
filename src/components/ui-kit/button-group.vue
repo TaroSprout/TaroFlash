@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
 import type { ButtonProps } from '@/components/ui-kit/button.vue'
-import type { SfxOptions } from '@/sfx/directive'
+import type { SfxOptions } from '@/sfx/roles'
 
 export type ButtonGroupOption = {
   label: string

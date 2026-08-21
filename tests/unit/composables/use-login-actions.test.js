@@ -95,7 +95,7 @@ describe('useLoginActions', () => {
     test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
       const auth = useLoginActions()
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     })
 
     test('sets errors.email when email is empty', async () => {
@@ -126,7 +126,7 @@ describe('useLoginActions', () => {
     test('returns "invalid" without emitting woodblock when fields invalid [obligation]', async () => {
       const auth = useLoginActions()
       await auth.submit()
-      expect(mockEmitSfx).not.toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).not.toHaveBeenCalledWith('notice.error')
     })
   })
 
@@ -158,7 +158,7 @@ describe('useLoginActions', () => {
       fillValidFields(auth)
       await nextTick()
       await auth.submit()
-      expect(mockEmitSfx).not.toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).not.toHaveBeenCalledWith('notice.error')
       expect(auth.submitError).toBe('')
     })
   })
@@ -190,7 +190,7 @@ describe('useLoginActions', () => {
       fillValidFields(auth)
       await nextTick()
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
     test('maps email-not-confirmed to its error key [obligation]', async () => {

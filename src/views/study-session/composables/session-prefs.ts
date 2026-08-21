@@ -105,7 +105,7 @@ export function useSessionPrefs() {
   )
 
   function toggleRatings() {
-    emitSfx('snappy_button_5')
+    emitSfx('ui.press')
     show_all_ratings.value = !show_all_ratings.value
   }
 

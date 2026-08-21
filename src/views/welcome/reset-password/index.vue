@@ -22,14 +22,14 @@ const router = useRouter()
 
 const { password, confirm_password, loading, errors, success, submit } = useResetPasswordActions()
 
-onMounted(() => emitSfx('wooden_chime_ring'))
-onBeforeUnmount(() => emitSfx('pop_up_close'))
+onMounted(() => emitSfx('dialog.open-chime'))
+onBeforeUnmount(() => emitSfx('dialog.close'))
 
 async function onSubmit() {
   const result = await submit()
   if (result !== 'success') return
 
-  emitSfx('success_1')
+  emitSfx('notice.success')
   await wait(SUCCESS_DISPLAY_MS)
   close()
   router.push({ name: 'authenticated' })

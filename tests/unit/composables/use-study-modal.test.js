@@ -26,10 +26,10 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValue({ response: Promise.resolve(undefined) })
   })
 
-  test('plays generic_notification_9 sfx synchronously when starting [obligation]', () => {
+  test('plays notice.info sfx synchronously when starting [obligation]', () => {
     const { start } = useStudyModal()
     start([1])
-    expect(mockEmitSfx).toHaveBeenCalledWith('generic_notification_9')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.info')
   })
 
   test('opens a StudySession popup modal with deck_ids [obligation]', () => {

@@ -7,7 +7,7 @@ export function useAdminModal() {
   const modal = useModal()
 
   function open() {
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
 
     const result = modal.open(AdminComponent, {
       backdrop: true,
@@ -16,7 +16,7 @@ export function useAdminModal() {
       mobile_below_height: 'md'
     })
 
-    result.response.then(() => emitSfx('pop_up_close'))
+    result.response.then(() => emitSfx('dialog.close'))
 
     return result
   }

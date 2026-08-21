@@ -88,7 +88,7 @@ describe('useForgotPasswordActions', () => {
     test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
       const auth = useForgotPasswordActions()
       await auth.submit()
-      expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown')
+      expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     })
   })
 
@@ -143,7 +143,7 @@ describe('useForgotPasswordActions', () => {
 
       await auth.submit()
 
-      expect(mockEmitSfx).toHaveBeenCalledWith('etc_woodblock_stuck')
+      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
   })
 

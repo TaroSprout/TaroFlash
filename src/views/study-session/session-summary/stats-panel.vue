@@ -45,7 +45,7 @@ function labelFor(key: SummaryCategory) {
     data-testid="session-summary__stats"
     :entries="entries"
     size="lg"
-    :sfx="{ press: 'snappy_button_5' }"
+    :sfx="{ press: 'ui.press' }"
     @select="emit('select', $event as SummaryCategory)"
   />
 </template>

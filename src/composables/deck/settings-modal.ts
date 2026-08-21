@@ -19,7 +19,7 @@ export function useDeckSettingsModal() {
    *   (e.g. `{ tab: 'design', side: 'front' }`); both override any persisted state.
    */
   function open(deck: Deck, options: OpenOptions = {}) {
-    emitSfx('snappy_button_3')
+    emitSfx('dialog.open')
     const result = modal.open<DeckSettingsResponse>(DeckSettings, {
       backdrop: true,
       mode: 'mobile-sheet',
@@ -27,7 +27,7 @@ export function useDeckSettingsModal() {
       mobile_below_height: 'md',
       props: { deck, initial_page: options.tab, initial_side: options.side }
     })
-    result.response.then(() => emitSfx('pop_up_close'))
+    result.response.then(() => emitSfx('dialog.close'))
     return result
   }
 

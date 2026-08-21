@@ -46,7 +46,7 @@ watch(decks_error, (err) => {
 
 function onToggleEditDecks() {
   editing_decks.value = !editing_decks.value
-  emitSfx(editing_decks.value ? 'pop_up_pop' : 'pop_up_close')
+  emitSfx(editing_decks.value ? 'dialog.open' : 'dialog.close')
 }
 
 function onEnterEditDecks() {

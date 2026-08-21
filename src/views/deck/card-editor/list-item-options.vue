@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import UiButton from '@/components/ui-kit/button.vue'
 import { useI18n } from 'vue-i18n'
-import { TYPE_SFX } from '@/sfx/config'
 
 const emit = defineEmits<{
   (e: 'move'): void
@@ -18,7 +17,7 @@ const { t } = useI18n()
       @press="emit('move')"
       icon-only
       icon-left="move-item"
-      :sfx="{ hover: TYPE_SFX }"
+      :sfx="{ hover: 'ui.hover' }"
     >
       {{ t('deck-view.item-options.move') }}
     </ui-button>
@@ -28,7 +27,7 @@ const { t } = useI18n()
       icon-only
       icon-left="delete"
       data-palette="danger"
-      :sfx="{ hover: TYPE_SFX }"
+      :sfx="{ hover: 'ui.hover' }"
     >
       {{ t('deck-view.item-options.delete') }}
     </ui-button>

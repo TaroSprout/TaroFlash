@@ -88,7 +88,7 @@ function onFocusIn(e: FocusEvent) {
     return
   }
 
-  emitSfx(withinAnyCard(e.relatedTarget) ? 'click_04' : 'slide_up')
+  emitSfx(withinAnyCard(e.relatedTarget) ? 'gesture.tick' : 'nav.page-forward')
   focused.value = true
 }
 
@@ -101,7 +101,7 @@ function onFocusOut(e: FocusEvent) {
   // A window blur isn't the user leaving the card — flag the round-trip so the matching refocus stays silent.
   if (!document.hasFocus()) return flagWindowBlur()
 
-  if (!withinAnyCard(e.relatedTarget)) emitSfx('card_drop')
+  if (!withinAnyCard(e.relatedTarget)) emitSfx('dialog.close')
 }
 
 function hasFocusWithin() {

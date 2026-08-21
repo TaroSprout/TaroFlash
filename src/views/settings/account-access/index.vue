@@ -13,8 +13,8 @@ const { t } = useI18n()
 const page = ref<AccountAccessContentPage>('menu')
 const content = useTemplateRef<{ title: string }>('content')
 
-onMounted(() => emitSfx('wooden_chime_ring'))
-onBeforeUnmount(() => emitSfx('pop_up_close'))
+onMounted(() => emitSfx('dialog.open-chime'))
+onBeforeUnmount(() => emitSfx('dialog.close'))
 </script>
 
 <template>
@@ -44,7 +44,7 @@ onBeforeUnmount(() => emitSfx('pop_up_close'))
         icon-left="arrow-back"
         icon-only
         rounded-full
-        :sfx="{ press: 'snappy_button_5' }"
+        :sfx="{ press: 'ui.press' }"
         @press="page = 'menu'"
       >
         {{ t('account-access-modal.back-label') }}

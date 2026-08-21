@@ -8,52 +8,52 @@ describe('useNoticeStore', () => {
   })
 
   describe('sfx defaults', () => {
-    test('error() auto-defaults sfx.open to digi_powerdown when caller omits it', () => {
+    test('error() auto-defaults sfx.open to notice.error when caller omits it', () => {
       const store = useNoticeStore()
       store.error('broke')
-      expect(store.notices[0].sfx).toEqual({ open: 'digi_powerdown' })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.error' })
     })
 
     test('error() lets a caller-supplied sfx.open override the default', () => {
       const store = useNoticeStore()
-      store.error('broke', { sfx: { open: 'success_3' } })
-      expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
+      store.error('broke', { sfx: { open: 'notice.success' } })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.success' })
     })
 
-    test('success() auto-defaults sfx.open to success_3 when caller omits it', () => {
+    test('success() auto-defaults sfx.open to notice.success when caller omits it', () => {
       const store = useNoticeStore()
       store.success('yay')
-      expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.success' })
     })
 
     test('success() lets a caller-supplied sfx.open override the default', () => {
       const store = useNoticeStore()
-      store.success('yay', { sfx: { open: 'chime_ring' } })
-      expect(store.notices[0].sfx).toEqual({ open: 'chime_ring' })
+      store.success('yay', { sfx: { open: 'notice.info' } })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.info' })
     })
 
-    test('warn() auto-defaults sfx.open to etc_error_swipe when caller omits it', () => {
+    test('warn() auto-defaults sfx.open to notice.error when caller omits it', () => {
       const store = useNoticeStore()
       store.warn('careful')
-      expect(store.notices[0].sfx).toEqual({ open: 'etc_error_swipe' })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.error' })
     })
 
     test('warn() lets a caller-supplied sfx.open override the default', () => {
       const store = useNoticeStore()
-      store.warn('careful', { sfx: { open: 'success_3' } })
-      expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
+      store.warn('careful', { sfx: { open: 'notice.success' } })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.success' })
     })
 
-    test('info() auto-defaults sfx.open to chime_ring when caller omits it', () => {
+    test('info() auto-defaults sfx.open to notice.info when caller omits it', () => {
       const store = useNoticeStore()
       store.info('fyi')
-      expect(store.notices[0].sfx).toEqual({ open: 'chime_ring' })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.info' })
     })
 
     test('info() lets a caller-supplied sfx.open override the default', () => {
       const store = useNoticeStore()
-      store.info('fyi', { sfx: { open: 'success_3' } })
-      expect(store.notices[0].sfx).toEqual({ open: 'success_3' })
+      store.info('fyi', { sfx: { open: 'notice.success' } })
+      expect(store.notices[0].sfx).toEqual({ open: 'notice.success' })
     })
   })
 

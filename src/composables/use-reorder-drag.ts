@@ -126,7 +126,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
     while (next - ideal > 0.5 + HYSTERESIS && next > 0) next--
 
     if (next === target_index.value) return
-    if (target_index.value !== null) emitSfx('tap_05')
+    if (target_index.value !== null) emitSfx('gesture.tick')
     target_index.value = next
   }
 
@@ -202,7 +202,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
 
     stopTracking()
 
-    if (from !== null) emitSfx('snappy_button_5')
+    if (from !== null) emitSfx('ui.press')
 
     // Hand the new order over and clear the offsets in the same tick — split across
     // two, the row draws once back at its old spot and visibly snaps.
@@ -232,7 +232,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
       document.documentElement.scrollHeight - document.documentElement.clientHeight
     )
 
-    emitSfx('generic_button_15')
+    emitSfx('ui.press')
     document.body.style.userSelect = 'none'
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onEnd)

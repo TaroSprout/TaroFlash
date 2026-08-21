@@ -26,9 +26,9 @@ beforeEach(() => {
 })
 
 describe('SuccessPanel', () => {
-  test('[obligation] plays the success_1 sfx on mount', () => {
+  test('[obligation] plays the notice.success sfx on mount', () => {
     makeWrapper()
-    expect(mockEmitSfx).toHaveBeenCalledWith('success_1')
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.success')
   })
 
   test('[obligation] renders the passed icon, heading, and message props', () => {

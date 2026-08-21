@@ -7,7 +7,6 @@ import { cardEditorKey, type CardWithClientId } from '@/views/deck/composables'
 import { inject, computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ListItemCard from './list-item-card.vue'
-import { TYPE_SFX } from '@/sfx/config'
 
 type ListItemProps = {
   index: number
@@ -65,7 +64,7 @@ function onClick(e: MouseEvent) {
     <button
       data-testid="card-list-item__reorder"
       class="hidden h-12 w-12 cursor-grab touch-none items-center justify-center rounded-full bg-raised text-lg text-ink sm:flex group-focus-within/listitem:bg-surface row-span-2"
-      v-sfx="dragging ? {} : { hover: TYPE_SFX }"
+      v-sfx="dragging ? {} : { hover: 'ui.hover' }"
       @click.stop
       @pointerdown="emit('reorderPointerdown', $event)"
     >

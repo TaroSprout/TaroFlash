@@ -29,7 +29,7 @@ const current_label = computed(() => options.find((o) => o.value === modelValue)
 function onSelect(option: DropdownOption) {
   const value = option.value as T
 
-  emitSfx(value === modelValue ? 'digi_powerdown' : 'select')
+  emitSfx(value === modelValue ? 'ui.deselect' : 'ui.select')
   emit('update:modelValue', value)
 }
 </script>

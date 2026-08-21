@@ -186,15 +186,15 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('clicking the card flips front → back and emits transition_up sfx when not selecting', async () => {
+  test('clicking the card flips front → back and emits card.flip-away sfx when not selecting', async () => {
     const { wrapper } = mountGridItem({ props: { side: 'front' } })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('clicking again flips back → front and emits transition_down sfx', async () => {
+  test('clicking again flips back → front and emits card.flip-back sfx', async () => {
     const { wrapper } = mountGridItem({ props: { side: 'front' } })
     const card = wrapper.find('[data-testid="card-stub"]')
 
@@ -203,7 +203,31 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
 
     await card.trigger('click')
     expect(card.attributes('data-side')).toBe('front')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_down')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
+  })
+
+  // ── a back-facing grid reads its own `side` prop, not a hardcoded 'back' [obligation] ──
+
+  test('on a back-facing grid, flipping away from the default emits card.flip-away [obligation]', async () => {
+    const { wrapper } = mountGridItem({ props: { side: 'back' } })
+    const card = wrapper.find('[data-testid="card-stub"]')
+
+    await card.trigger('click')
+
+    expect(card.attributes('data-side')).toBe('front')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
+  })
+
+  test('on a back-facing grid, flipping back to the default emits card.flip-back [obligation]', async () => {
+    const { wrapper } = mountGridItem({ props: { side: 'back' } })
+    const card = wrapper.find('[data-testid="card-stub"]')
+
+    await card.trigger('click')
+    mockEmitSfx.mockClear()
+    await card.trigger('click')
+
+    expect(card.attributes('data-side')).toBe('back')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
   })
 
   test('clicking the card during selection calls onSelectCard with the card id and does not flip', async () => {
@@ -317,7 +341,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
 
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
-    expect(mockEmitSfx).toHaveBeenCalledWith('transition_up')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
 
     window.getSelection = origGetSelection
   })

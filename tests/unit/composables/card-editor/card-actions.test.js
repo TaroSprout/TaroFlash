@@ -128,7 +128,7 @@ describe('useCardActions', () => {
       actions.onSelectCard(7)
       expect(selection.toggleSelectCard).toHaveBeenCalledWith(7)
       expect(selection.enterSelection).toHaveBeenCalledOnce()
-      expect(emitSfxMock).toHaveBeenCalledWith('select')
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
     })
 
     test('without id, just enters selection mode', () => {
@@ -148,7 +148,7 @@ describe('useCardActions', () => {
       actions.onCancel()
       expect(exitMode).toHaveBeenCalledOnce()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
-      expect(emitSfxMock).toHaveBeenCalledWith('card_drop')
+      expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
     })
 
     test('does not refetch the deck', () => {
@@ -297,7 +297,7 @@ describe('useCardActions', () => {
         selection: makeSelection()
       })
       await actions.onMoveCards(7)
-      expect(emitSfxMock).toHaveBeenCalledWith('double_pop_up')
+      expect(emitSfxMock).toHaveBeenCalledWith('dialog.open')
     })
 
     test('runs cleanup after a successful move: exitSelection + refetch (mode unchanged)', async () => {
@@ -402,7 +402,7 @@ describe('useCardActions', () => {
       const { actions, selection } = makeActions()
       actions.onCancelSelection()
       expect(selection.exitSelection).toHaveBeenCalledOnce()
-      expect(emitSfxMock).toHaveBeenCalledWith('digi_powerdown')
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.deselect')
     })
   })
 

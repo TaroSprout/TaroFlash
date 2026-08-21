@@ -78,30 +78,30 @@ describe('UiTappable — sfx.press read at click time [obligation]', () => {
   test('uses sfx.press from the prop at mount time on first click', async () => {
     // Fine pointer so staged-tap fires audio immediately
     coarseRef.value = false
-    const wrapper = mountTappable({ sfx: { press: 'snappy_button_5' } })
+    const wrapper = mountTappable({ sfx: { press: 'ui.press' } })
     await wrapper.trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
   test('reflects sfx.press prop change on next click after mount [obligation]', async () => {
     coarseRef.value = false
-    const wrapper = mountTappable({ sfx: { press: 'snappy_button_5' } })
+    const wrapper = mountTappable({ sfx: { press: 'ui.press' } })
 
     // First click — plays the original sound
     await wrapper.trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('snappy_button_5', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
 
     // Change the prop after mount
-    await wrapper.setProps({ sfx: { press: 'digi_powerdown' } })
+    await wrapper.setProps({ sfx: { press: 'ui.deselect' } })
     vi.clearAllMocks()
 
     // Second click — must use the updated press sound, not the original
     await wrapper.trigger('click')
     await flushPromises()
-    expect(mockEmitSfx).toHaveBeenCalledWith('digi_powerdown', expect.anything())
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('snappy_button_5', expect.anything())
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.press')
   })
 
   test('plays no sfx when sfx.press is not set', async () => {
