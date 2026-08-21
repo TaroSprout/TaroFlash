@@ -14,6 +14,7 @@ import {
   KEBAB,
   SCOPED_FRONTMATTER,
   TOKEN,
+  corpusDeclarations,
   countLines,
   matchesAny,
   readConfig,
@@ -153,6 +154,30 @@ function checkUnfinished(root, files, unfinished) {
   )
 }
 
+/**
+ * A corpus declaration has to say its fact on its own line, because the PR
+ * digest quotes that line and nothing else. A slug whose line yields nothing —
+ * or yields `Nothing is derived` — reaches the reviewer as a line that says
+ * nothing. →[K:knowledge-declaration-statement]
+ */
+function checkStatements(root, config) {
+  const rule = config.slugs.statement
+  if (!rule) return { errors: [], warnings: [] }
+
+  const breaches = [...corpusDeclarations(root, config).values()]
+    .filter(({ statement }) => !statement || statement.split(/\s+/).length < rule.min_words)
+    .map(({ path, line, slug, statement }) =>
+      statement
+        ? `${path}:${line} — [K:${slug}] states "${statement}" — too thin to read on its own in the PR digest`
+        : `${path}:${line} — [K:${slug}] states nothing; declare it on a heading or a callout`
+    )
+
+  return {
+    errors: rule.enforced === false ? [] : breaches,
+    warnings: rule.enforced === false ? breaches : []
+  }
+}
+
 function checkLineCaps(root, files, alwaysOn) {
   const breaches = []
   const caps = alwaysOn.line_caps
@@ -220,6 +245,7 @@ export function lintKnowledge(root) {
     slugs.citation_exempt ?? []
   )
   const orphans = checkOrphanCitations(root, tokens)
+  const statements = checkStatements(root, config)
   const unfinished = checkUnfinished(root, files, config.unfinished)
   const caps = checkLineCaps(root, files, always_on)
 
@@ -231,10 +257,11 @@ export function lintKnowledge(root) {
       ...citations,
       ...uncited,
       ...orphans,
+      ...statements.errors,
       ...unfinished,
       ...caps.errors
     ],
-    warnings: caps.warnings,
+    warnings: [...statements.warnings, ...caps.warnings],
     stats: {
       declared: declarations.declared.size,
       retired: ledger.retired.size,
