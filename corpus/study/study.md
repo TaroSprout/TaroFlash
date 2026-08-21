@@ -23,9 +23,10 @@ lets one merged pile still treat every card by its own deck's rules.
 
 A session walks through four stages, in order:
 
-1. it **loads** the cards, then a cover card rises in;
-2. you **study** the pile;
-3. it shows a **summary** of how the run went.
+1. it **loads** the cards;
+2. a **cover** card rises in;
+3. you **study** the pile;
+4. it shows a **summary** of how the run went.
 
 > [!HAZARD] [K:unconfirmed-review-loss] **The session's verdict on a save is not the server's — and a rating only survives if the session hears back before the run ends.**
 > Rating a card advances the pile on the spot and sends the save off on its own,
