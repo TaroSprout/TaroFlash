@@ -37,7 +37,11 @@ const slots = defineSlots<{
       </div>
     </div>
 
-    <div v-if="slots.after" data-testid="dialog-card-header__after" class="w-full">
+    <div
+      v-if="slots.after"
+      data-testid="dialog-card-header__after"
+      class="mx-auto w-full max-w-(--content-grid-max-width)"
+    >
       <slot name="after"></slot>
     </div>
   </header>
