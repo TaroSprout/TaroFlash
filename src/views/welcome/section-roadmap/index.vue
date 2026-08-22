@@ -15,7 +15,7 @@ const items: RoadmapItem[] = [
   { key: 'build-study-decks', done: true },
   { key: 'dark-mode', done: true },
   { key: 'mobile-support', done: true },
-  { key: 'import-export', done: false },
+  { key: 'import-export', done: true },
   { key: 'card-audio', done: false },
   { key: 'community', done: false },
   { key: 'challenges', done: false },
