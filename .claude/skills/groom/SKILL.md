@@ -194,6 +194,11 @@ break some of your assumptions — that is the skill working, not failing. Rules
   reversal caught here is the cheapest it will ever be.
 - **Check before asserting.** If a question turns on a fact, go read it rather than answering from
   memory.
+- **An answer to the last open item is not a signal the design is settled.** Answering one decision
+  routinely surfaces a question about another — including one already presented as resolved. Don't
+  infer "the user is done" from "every item on my list has an answer"; that inference is yours, not
+  theirs. Move to WRITE, or even say you're about to, only once the user has said the design is
+  settled — silence or a pause is still open, not consent.
 - Iterate until the user is satisfied. There is no interruption budget here.
 
 ### 4. RESHAPE — split, park, or block
