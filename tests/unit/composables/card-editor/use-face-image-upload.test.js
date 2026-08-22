@@ -414,7 +414,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
     await flushPromises()
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
+    expect(mockEmitSfx).toHaveBeenCalledWith('file.accepted')
     expect(mockNoticeError).not.toHaveBeenCalled()
     unmount()
   })
@@ -427,7 +427,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     await flushPromises()
 
     expect(mockNoticeError).toHaveBeenCalledWith("Couldn't save image — try again")
-    expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.confirm')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('file.accepted')
     expect(result.pending.value).toBe(false)
     unmount()
   })

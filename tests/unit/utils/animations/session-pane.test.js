@@ -38,6 +38,26 @@ describe('sessionPaneLeave', () => {
     sessionPaneLeave(el, vi.fn())
     expect(mockTo.mock.calls[0][1].duration).toBeGreaterThan(0)
   })
+
+  // ── pins the leaving pane with explicit top/left/width/height [obligation] ─
+  // `inset: 0` collapses against a parent that's shrinking mid-swap — the
+  // measured height is written as an explicit pixel value instead.
+
+  test('pins position, top, left, width, height explicitly — never inset [obligation]', () => {
+    const node = document.createElement('div')
+    Object.defineProperty(node, 'getBoundingClientRect', {
+      value: () => ({ height: 240 })
+    })
+
+    sessionPaneLeave(node, vi.fn())
+
+    expect(node.style.position).toBe('absolute')
+    expect(node.style.top).toBe('0px')
+    expect(node.style.left).toBe('0px')
+    expect(node.style.width).toBe('100%')
+    expect(node.style.height).toBe('240px')
+    expect(node.style.inset).toBe('')
+  })
 })
 
 // ── sessionPaneEnter ──────────────────────────────────────────────────────────

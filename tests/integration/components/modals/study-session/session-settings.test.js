@@ -9,9 +9,7 @@ const {
   mockShowRatingButtons,
   mockShowButtonPreview,
   mockShowCardPreview,
-  mockMultiDeckOrdering,
-  mockPrefsAreDefault,
-  mockResetToDefaults
+  mockMultiDeckOrdering
 } = await vi.hoisted(async () => {
   const { ref } = await import('vue')
   return {
@@ -19,9 +17,7 @@ const {
     mockShowRatingButtons: ref(true),
     mockShowButtonPreview: ref(false),
     mockShowCardPreview: ref(true),
-    mockMultiDeckOrdering: ref('random'),
-    mockPrefsAreDefault: ref(true),
-    mockResetToDefaults: vi.fn()
+    mockMultiDeckOrdering: ref('random')
   }
 })
 
@@ -31,9 +27,7 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
     show_rating_buttons: mockShowRatingButtons,
     show_button_preview: mockShowButtonPreview,
     show_card_preview: mockShowCardPreview,
-    multi_deck_ordering: mockMultiDeckOrdering,
-    prefs_are_default: mockPrefsAreDefault,
-    resetToDefaults: mockResetToDefaults
+    multi_deck_ordering: mockMultiDeckOrdering
   })
 }))
 
@@ -70,8 +64,6 @@ describe('SessionSettings', () => {
     mockShowButtonPreview.value = false
     mockShowCardPreview.value = true
     mockMultiDeckOrdering.value = 'random'
-    mockPrefsAreDefault.value = true
-    mockResetToDefaults.mockClear()
     mediaState.is_coarse.value = false
     mediaState.is_mobile.value = false
   })
@@ -213,33 +205,6 @@ describe('SessionSettings', () => {
       const wrapper = mountSettings()
       await findOption(wrapper, 'Sequential').trigger('click')
       expect(mockMultiDeckOrdering.value).toBe('sequential')
-    })
-  })
-
-  // ── reset button ────────────────────────────────────────────────────────────
-
-  describe('reset button', () => {
-    test('is disabled when prefs_are_default is true', () => {
-      mockPrefsAreDefault.value = true
-      const wrapper = mountSettings()
-      expect(
-        wrapper.find('[data-testid="session-settings__reset"]').attributes('aria-disabled')
-      ).toBe('true')
-    })
-
-    test('is enabled when prefs_are_default is false', () => {
-      mockPrefsAreDefault.value = false
-      const wrapper = mountSettings()
-      expect(
-        wrapper.find('[data-testid="session-settings__reset"]').attributes('aria-disabled')
-      ).toBeUndefined()
-    })
-
-    test('pressing it calls resetToDefaults', async () => {
-      mockPrefsAreDefault.value = false
-      const wrapper = mountSettings()
-      await wrapper.find('[data-testid="session-settings__reset"]').trigger('click')
-      expect(mockResetToDefaults).toHaveBeenCalledOnce()
     })
   })
 })

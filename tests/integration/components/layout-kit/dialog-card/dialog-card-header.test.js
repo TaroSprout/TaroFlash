@@ -68,4 +68,20 @@ describe('DialogCardHeader', () => {
     expect(wrapper.find('[data-testid="dialog-card-header__start"]').text()).toBe('')
     expect(wrapper.find('[data-testid="dialog-card-header__end"]').text()).toBe('')
   })
+
+  // ── after slot [obligation] ────────────────────────────────────────────────
+
+  test('[obligation] renders the after slot content when provided', () => {
+    const wrapper = mountHeader({}, { after: () => h('div', { 'data-testid': 'after-content' }) })
+    expect(
+      wrapper
+        .find('[data-testid="dialog-card-header__after"] [data-testid="after-content"]')
+        .exists()
+    ).toBe(true)
+  })
+
+  test('[obligation] renders no after strip element at all when the slot is not provided', () => {
+    const wrapper = mountHeader()
+    expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(false)
+  })
 })

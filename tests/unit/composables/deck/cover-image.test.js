@@ -141,7 +141,7 @@ describe('useCoverImage — stageFile (via onFile) [obligation]', () => {
 
     await cover_image.onDrop(dropEvent(pngFile()))
 
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
+    expect(mockEmitSfx).toHaveBeenCalledWith('file.accepted')
     unmount()
   })
 

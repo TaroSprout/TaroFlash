@@ -76,12 +76,18 @@ const {
   is_selecting_ref,
   selected_count_ref,
   session_decks_ref,
+  editing_ref,
+  prefs_are_default_ref,
   mockRequestClose,
+  mockStartSession,
   mockStartEdit,
+  mockFlipCurrentCard,
+  mockStopEdit,
   mockOnMove,
   mockOnDelete,
   mockOpenSettings,
   mockCloseSettings,
+  mockResetToDefaults,
   mockOpenSummaryCategory,
   mockCloseSummaryCategory,
   mockStopSummaryEdit,
@@ -105,12 +111,18 @@ const {
   const is_selecting_ref = ref(false)
   const selected_count_ref = ref(0)
   const session_decks_ref = ref([{ id: 1, title: 'My Deck' }])
+  const editing_ref = ref(false)
+  const prefs_are_default_ref = ref(true)
   const mockRequestClose = vi.fn()
+  const mockStartSession = vi.fn()
   const mockStartEdit = vi.fn()
+  const mockFlipCurrentCard = vi.fn()
+  const mockStopEdit = vi.fn()
   const mockOnMove = vi.fn()
   const mockOnDelete = vi.fn()
   const mockOpenSettings = vi.fn()
   const mockCloseSettings = vi.fn()
+  const mockResetToDefaults = vi.fn()
   const mockOpenSummaryCategory = vi.fn()
   const mockCloseSummaryCategory = vi.fn()
   const mockStopSummaryEdit = vi.fn()
@@ -126,6 +138,7 @@ const {
     is_cover: is_cover_ref,
     can_edit: can_edit_ref,
     sessionDecks: session_decks_ref,
+    editing: editing_ref,
     active_page: active_page_ref,
     summary_category: summary_category_ref,
     summary_editing_card: summary_editing_card_ref,
@@ -137,12 +150,17 @@ const {
       exitSelection: mockExitSelection,
       clearSelectedCards: vi.fn()
     },
+    prefs_are_default: prefs_are_default_ref,
     requestClose: mockRequestClose,
+    startSession: mockStartSession,
     startEdit: mockStartEdit,
+    flipCurrentCard: mockFlipCurrentCard,
+    stopEdit: mockStopEdit,
     onMove: mockOnMove,
     onDelete: mockOnDelete,
     openSettings: mockOpenSettings,
     closeSettings: mockCloseSettings,
+    resetToDefaults: mockResetToDefaults,
     openSummaryCategory: mockOpenSummaryCategory,
     closeSummaryCategory: mockCloseSummaryCategory,
     stopSummaryEdit: mockStopSummaryEdit,
@@ -162,12 +180,18 @@ const {
     is_selecting_ref,
     selected_count_ref,
     session_decks_ref,
+    editing_ref,
+    prefs_are_default_ref,
     mockRequestClose,
+    mockStartSession,
     mockStartEdit,
+    mockFlipCurrentCard,
+    mockStopEdit,
     mockOnMove,
     mockOnDelete,
     mockOpenSettings,
     mockCloseSettings,
+    mockResetToDefaults,
     mockOpenSummaryCategory,
     mockCloseSummaryCategory,
     mockStopSummaryEdit,
@@ -213,10 +237,13 @@ const SessionSummaryStub = defineComponent({
   }
 })
 
+const mockFlipEditingCard = vi.fn()
+
 const SessionSummaryCategoryStub = defineComponent({
   name: 'SessionSummaryCategory',
   props: ['results', 'category'],
-  setup() {
+  setup(_props, { expose }) {
+    expose({ flipEditingCard: mockFlipEditingCard })
     return () => h('div', { 'data-testid': 'session-summary-category-stub' })
   }
 })
@@ -225,6 +252,25 @@ const SessionSettingsStub = defineComponent({
   name: 'SessionSettings',
   setup() {
     return () => h('div', { 'data-testid': 'session-settings-stub' })
+  }
+})
+
+// Rating buttons and the progress bar reach several session-controller fields
+// this file's controllerMock doesn't hydrate (rating times, preview flags,
+// current card index) — each has its own dedicated test file, so it's
+// stubbed here rather than fully hydrated.
+const RatingButtonsStub = defineComponent({
+  name: 'RatingButtons',
+  emits: ['started', 'rated'],
+  setup() {
+    return () => h('div', { 'data-testid': 'rating-buttons-stub' })
+  }
+})
+
+const SessionProgressStub = defineComponent({
+  name: 'SessionProgress',
+  setup() {
+    return () => h('div', { 'data-testid': 'session-progress-stub' })
   }
 })
 
@@ -243,7 +289,9 @@ function makeWrapper({ close = vi.fn(), deck_ids = [1] } = {}) {
           SessionStudying: SessionStudyingStub,
           SessionSummary: SessionSummaryStub,
           SessionSummaryCategory: SessionSummaryCategoryStub,
-          SessionSettings: SessionSettingsStub
+          SessionSettings: SessionSettingsStub,
+          RatingButtons: RatingButtonsStub,
+          SessionProgress: SessionProgressStub
         },
         provide: {
           [MODAL_ID_KEY]: TEST_MODAL_ID
@@ -287,11 +335,15 @@ describe('StudySession (index.vue)', () => {
     mockEmitStudySfx.mockClear()
     mockClearPersistedSession.mockClear()
     mockRequestClose.mockClear()
+    mockStartSession.mockClear()
     mockStartEdit.mockClear()
+    mockFlipCurrentCard.mockClear()
+    mockStopEdit.mockClear()
     mockOnMove.mockClear()
     mockOnDelete.mockClear()
     mockOpenSettings.mockClear()
     mockCloseSettings.mockClear()
+    mockResetToDefaults.mockClear()
     mockOpenSummaryCategory.mockClear()
     mockCloseSummaryCategory.mockClear()
     mockStopSummaryEdit.mockClear()
@@ -300,6 +352,7 @@ describe('StudySession (index.vue)', () => {
     mockSelectAllSummaryCards.mockClear()
     mockOnDeleteSummarySelected.mockClear()
     mockOnMoveSummarySelected.mockClear()
+    mockFlipEditingCard.mockClear()
     state_ref.value = 'studying'
     results_ref.value = []
     is_cover_ref.value = false
@@ -310,6 +363,8 @@ describe('StudySession (index.vue)', () => {
     is_selecting_ref.value = false
     selected_count_ref.value = 0
     session_decks_ref.value = [{ id: 1, title: 'My Deck' }]
+    editing_ref.value = false
+    prefs_are_default_ref.value = true
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
     capturedQueries.length = 0
@@ -499,6 +554,106 @@ describe('StudySession (index.vue)', () => {
 
       expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(false)
       expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
+    })
+  })
+
+  // ── toolbar_variant resolves per page/state [obligation] ───────────────────
+
+  describe('toolbar_variant [obligation]', () => {
+    test('studying + rating: shows rating-buttons, not the flip/done footer [obligation]', () => {
+      const { wrapper } = makeWrapper()
+
+      expect(wrapper.find('[data-testid="rating-buttons-stub"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(false)
+    })
+
+    test('studying + editing: shows the flip/done footer, wired to flipCurrentCard/stopEdit [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      editing_ref.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="rating-buttons-stub"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(true)
+
+      await wrapper.find('[data-testid="study-flip-done-footer__flip"]').trigger('click')
+      expect(mockFlipCurrentCard).toHaveBeenCalledOnce()
+
+      await wrapper.find('[data-testid="study-flip-done-footer__done"]').trigger('click')
+      expect(mockStopEdit).toHaveBeenCalledOnce()
+    })
+
+    test('settings: shows the reset button, disabled per prefs_are_default, wired to resetToDefaults [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await openSettingsPage()
+      prefs_are_default_ref.value = false
+      await nextTick()
+
+      const reset = wrapper.find('[data-testid="session-settings__reset"]')
+      expect(reset.exists()).toBe(true)
+      expect(reset.attributes('aria-disabled')).toBeUndefined()
+
+      await reset.trigger('click')
+      expect(mockResetToDefaults).toHaveBeenCalledOnce()
+    })
+
+    test('settings: the reset button is disabled when prefs_are_default is true [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await openSettingsPage()
+      prefs_are_default_ref.value = true
+      await nextTick()
+
+      expect(
+        wrapper.find('[data-testid="session-settings__reset"]').attributes('aria-disabled')
+      ).toBe('true')
+    })
+
+    test('summary (landing page): shows the summary close button [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+
+      expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(false)
+    })
+
+    test('category default (not selecting, not editing): shows the category close button, wired to onClosed [obligation]', async () => {
+      const { wrapper, close } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      const category_close = wrapper.find('[data-testid="session-summary-category__close"]')
+      expect(category_close.exists()).toBe(true)
+
+      await category_close.trigger('click')
+      expect(mockClearPersistedSession).toHaveBeenCalledOnce()
+      expect(close).toHaveBeenCalledOnce()
+    })
+
+    test('category editing: shows the flip/done footer, wired to flipEditingCard/stopSummaryEdit [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      summary_editing_card_ref.value = { id: 1, deck_id: 1 }
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary-category__close"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(true)
+
+      await wrapper.find('[data-testid="study-flip-done-footer__flip"]').trigger('click')
+      expect(mockFlipEditingCard).toHaveBeenCalledOnce()
+
+      await wrapper.find('[data-testid="study-flip-done-footer__done"]').trigger('click')
+      expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
+    })
+
+    test('category selecting: shows the bulk-actions bar, not the category close button [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      is_selecting_ref.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="session-summary-category__close"]').exists()).toBe(false)
     })
   })
 
