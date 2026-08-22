@@ -77,6 +77,9 @@ const {
   selected_count_ref,
   session_decks_ref,
   editing_ref,
+  saving_ref,
+  current_index_ref,
+  cards_ref,
   prefs_are_default_ref,
   mockRequestClose,
   mockStartSession,
@@ -112,6 +115,9 @@ const {
   const selected_count_ref = ref(0)
   const session_decks_ref = ref([{ id: 1, title: 'My Deck' }])
   const editing_ref = ref(false)
+  const saving_ref = ref(false)
+  const current_index_ref = ref(0)
+  const cards_ref = ref([])
   const prefs_are_default_ref = ref(true)
   const mockRequestClose = vi.fn()
   const mockStartSession = vi.fn()
@@ -139,6 +145,9 @@ const {
     can_edit: can_edit_ref,
     sessionDecks: session_decks_ref,
     editing: editing_ref,
+    saving: saving_ref,
+    current_index: current_index_ref,
+    cards: cards_ref,
     active_page: active_page_ref,
     summary_category: summary_category_ref,
     summary_editing_card: summary_editing_card_ref,
@@ -181,6 +190,9 @@ const {
     selected_count_ref,
     session_decks_ref,
     editing_ref,
+    saving_ref,
+    current_index_ref,
+    cards_ref,
     prefs_are_default_ref,
     mockRequestClose,
     mockStartSession,
@@ -364,6 +376,9 @@ describe('StudySession (index.vue)', () => {
     selected_count_ref.value = 0
     session_decks_ref.value = [{ id: 1, title: 'My Deck' }]
     editing_ref.value = false
+    saving_ref.value = false
+    current_index_ref.value = 0
+    cards_ref.value = []
     prefs_are_default_ref.value = true
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
@@ -1019,5 +1034,91 @@ describe('StudySession (index.vue)', () => {
     const { wrapper } = makeWrapper()
     const classes = wrapper.find('[data-testid="study-session__outlet"]').classes()
     expect(classes).not.toContain('overflow-hidden')
+  })
+
+  // ── header-after session-progress: floats out of flow, constant header height [obligation] ─
+
+  describe('header-after session-progress floats out of flow [obligation]', () => {
+    // Mounts the real session-progress (not the stub) so its own class bindings
+    // — set by this view, not by session-progress itself — are observable.
+    function mountWithRealProgress() {
+      return mount(StudySession, {
+        props: { deck_ids: [1], close: vi.fn() },
+        global: {
+          stubs: {
+            SessionStudying: SessionStudyingStub,
+            SessionSummary: SessionSummaryStub,
+            SessionSummaryCategory: SessionSummaryCategoryStub,
+            SessionSettings: SessionSettingsStub,
+            RatingButtons: RatingButtonsStub,
+            UiProgressBar: defineComponent({
+              name: 'UiProgressBar',
+              props: ['value', 'max', 'label'],
+              setup(props) {
+                return () => h('div', { 'data-testid': 'progress-bar-stub' }, props.label ?? '')
+              }
+            })
+          },
+          provide: { [MODAL_ID_KEY]: TEST_MODAL_ID }
+        },
+        attachTo: document.body
+      })
+    }
+
+    test('renders absolute inset-x-0 top-0, contributing zero flow height [obligation]', () => {
+      const wrapper = mountWithRealProgress()
+      const classes = wrapper.find('[data-testid="study-session__progress"]').classes()
+      expect(classes).toContain('absolute')
+      expect(classes).toContain('inset-x-0')
+      expect(classes).toContain('top-0')
+    })
+
+    test('carries no invisible class while on the studying page [obligation]', () => {
+      const wrapper = mountWithRealProgress()
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).not.toContain(
+        'invisible'
+      )
+    })
+
+    test('is invisible while the settings page is active [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      active_page_ref.value = 'settings'
+      await nextTick()
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
+        'invisible'
+      )
+    })
+
+    test('is invisible during the summary phase [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      await finishSession([])
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
+        'invisible'
+      )
+    })
+
+    test('is invisible on a summary category page [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      await finishSession([])
+      await openCategoryPage()
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
+        'invisible'
+      )
+    })
+
+    // Tailwind's stylesheet isn't loaded in this test's browser context (no
+    // global CSS import in setup-browser.js), so `invisible`'s visibility:hidden
+    // and `absolute`'s out-of-flow effect can't be measured via
+    // getComputedStyle/getBoundingClientRect here — only the class bindings
+    // driving them are assertable. See the Deferred coverage gap in the report.
+
+    test('session-progress never renders an interactive control that could leak a click through invisible [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      active_page_ref.value = 'settings'
+      await nextTick()
+
+      const progress = wrapper.find('[data-testid="study-session__progress"]')
+      expect(progress.findAll('button, a, input, [tabindex]')).toHaveLength(0)
+    })
   })
 })

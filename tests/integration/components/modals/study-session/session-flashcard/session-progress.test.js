@@ -195,4 +195,18 @@ describe('SessionProgress', () => {
       )
     })
   })
+
+  // ── fixed h-9 root height across sub-states [obligation] ───────────────────
+
+  describe('root height stays fixed at h-9 across sub-states [obligation]', () => {
+    test('h-9 while showing the progress bar (editing=false) [obligation]', () => {
+      const wrapper = mountProgress({ editing: false })
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain('h-9')
+    })
+
+    test('h-9 while showing the save-status row (editing=true) [obligation]', () => {
+      const wrapper = mountProgress({ editing: true })
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain('h-9')
+    })
+  })
 })
