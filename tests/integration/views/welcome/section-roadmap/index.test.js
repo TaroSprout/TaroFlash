@@ -76,7 +76,8 @@ const ROADMAP_KEYS = [
 ]
 
 const DONE_KEY = 'build-study-decks'
-const UPCOMING_KEY = 'import-export'
+const UPCOMING_KEY = 'card-audio'
+const IMPORT_EXPORT_KEY = 'import-export'
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
@@ -181,5 +182,26 @@ describe('SectionRoadmap', () => {
       `[data-testid="options-panel__card"][data-value="${UPCOMING_KEY}"]`
     )
     expect(upcomingItem.find('[data-testid="ui-icon"]').exists()).toBe(false)
+  })
+
+  // ── Import/export shipped ─────────────────────────────────────────────────
+
+  test('import-export item shows the done-label text, not upcoming-label [obligation]', () => {
+    const wrapper = mountRoadmap()
+    const importExportItem = wrapper.find(
+      `[data-testid="options-panel__card"][data-value="${IMPORT_EXPORT_KEY}"]`
+    )
+    expect(importExportItem.text()).toContain('Done')
+    expect(importExportItem.text()).not.toContain('Upcoming')
+  })
+
+  test('import-export item renders a check icon [obligation]', () => {
+    const wrapper = mountRoadmap()
+    const importExportItem = wrapper.find(
+      `[data-testid="options-panel__card"][data-value="${IMPORT_EXPORT_KEY}"]`
+    )
+    const icon = importExportItem.find('[data-testid="ui-icon"]')
+    expect(icon.exists()).toBe(true)
+    expect(icon.attributes('data-src')).toBe('check')
   })
 })
