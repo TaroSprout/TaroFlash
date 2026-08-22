@@ -17,15 +17,22 @@ describe('toolbar-swap animations', () => {
   })
 
   describe('toolbarEnter', () => {
-    test('tweens from positive y offset + faded to settled y 0', () => {
+    test('tweens opacity from 0 to 1, with no y/transform movement [obligation]', () => {
       const el = document.createElement('div')
       toolbarEnter(el, done)
       expect(mockFromTo).toHaveBeenCalledWith(
         el,
-        expect.objectContaining({ opacity: 0, y: expect.any(Number) }),
-        expect.objectContaining({ opacity: 1, y: 0 })
+        { opacity: 0 },
+        expect.objectContaining({ opacity: 1 })
       )
-      expect(mockFromTo.mock.calls[0][1].y).toBeGreaterThan(0)
+      expect(mockFromTo.mock.calls[0][1]).not.toHaveProperty('y')
+      expect(mockFromTo.mock.calls[0][2]).not.toHaveProperty('y')
+    })
+
+    test('clears only the opacity inline style, not transform [obligation]', () => {
+      const el = document.createElement('div')
+      toolbarEnter(el, done)
+      expect(mockFromTo.mock.calls[0][2].clearProps).toBe('opacity')
     })
 
     test('forwards done via onComplete', () => {
@@ -36,21 +43,18 @@ describe('toolbar-swap animations', () => {
   })
 
   describe('toolbarLeave', () => {
-    test('pins the node absolute mid-leave to prevent layout jump', () => {
+    test('pins the node absolute mid-leave to prevent layout jump [obligation]', () => {
       const el = document.createElement('div')
       toolbarLeave(el, done)
       expect(el.style.position).toBe('absolute')
       expect(el.style.inset).toBe('0')
     })
 
-    test('tweens to faded + negative y offset (slides up out of frame)', () => {
+    test('tweens opacity to 0, with no y/transform movement [obligation]', () => {
       const el = document.createElement('div')
       toolbarLeave(el, done)
-      expect(mockTo).toHaveBeenCalledWith(
-        el,
-        expect.objectContaining({ opacity: 0, y: expect.any(Number) })
-      )
-      expect(mockTo.mock.calls[0][1].y).toBeLessThan(0)
+      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ opacity: 0 }))
+      expect(mockTo.mock.calls[0][1]).not.toHaveProperty('y')
     })
 
     test('forwards done via onComplete', () => {
