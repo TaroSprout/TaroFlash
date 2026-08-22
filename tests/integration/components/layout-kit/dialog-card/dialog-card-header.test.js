@@ -84,4 +84,18 @@ describe('DialogCardHeader', () => {
     const wrapper = mountHeader()
     expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(false)
   })
+
+  test('[obligation] the after wrapper is relative, so an absolutely-positioned child anchors to it', () => {
+    const wrapper = mountHeader({}, { after: () => h('div', { 'data-testid': 'after-content' }) })
+    expect(wrapper.find('[data-testid="dialog-card-header__after"]').classes()).toContain(
+      'relative'
+    )
+  })
+
+  test('[obligation] the after wrapper caps and centres its content to --content-grid-max-width', () => {
+    const wrapper = mountHeader({}, { after: () => h('div', { 'data-testid': 'after-content' }) })
+    const classes = wrapper.find('[data-testid="dialog-card-header__after"]').classes()
+    expect(classes).toContain('max-w-(--content-grid-max-width)')
+    expect(classes).toContain('mx-auto')
+  })
 })
