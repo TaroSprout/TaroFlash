@@ -5,6 +5,11 @@
 - **NEVER write user-facing copy without my sign-off.** Any new or changed string a user reads — button labels, headings, empty states, toasts, alerts, error messages, ticket ACs quoting copy — stops and asks. Offer at least 3 reasonably-varied options per line and let me pick; never choose for me, never defer it to "wording TBD". Reusing an existing string is fine, but say which one. An unattended run that can't ask writes the literal `COPY-TBD`, which fails CI until I settle it (→[K:build-unfinished-markers]). This applies everywhere, not just in tickets. **Healing is the one exemption** — rule and skill prose a healing persona writes ships straight to the `self-heal` PR, where I review it; strings in the running app never are. [K:user-copy-signoff]
 - **Never verify visually in the browser.** Don't open Chrome, curl the dev server, or screenshot a page to check that a change "looks right" — I always confirm visually myself and will give you that feedback directly. Your visual read is worse than mine, so it adds false confidence rather than verification. Driving the browser to _debug_ something genuinely broken is fine and encouraged; the ban is on verification, not on debugging.
 - **Wiring logic doesn't license inventing UI.** When I ask you to wire up state, behaviour, or a composable, write the script side — refs, computeds, handlers — plus only the structural markup the logic actually needs. Building UI out of **existing paradigms** (`ui-kit` / `layout-kit` primitives, an established pattern from a sibling view) is fine. Inventing novel controls, layouts, or one-off styled elements I didn't ask for is not — expose the state and let me build it.
+- **A subagent call is background or foreground on purpose, never by accident.** Dispatch with
+  `run_in_background` whenever the subagent's work should outlive an interrupt — anything you don't
+  need synchronously to keep going, healing included. Only wait on a subagent in the foreground when
+  its result is the very next thing you need; an interrupt cancels whatever's still running there, so
+  a foreground call is a deliberate bet that you won't need to interrupt before it returns.
 - Always use translation strings (e.g. `t('deck.settings-modal.title')`) instead of hardcoded text.
 - Confirm this file loaded by printing message to console on startup.
 
