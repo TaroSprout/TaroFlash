@@ -7,10 +7,22 @@ const LEAVE_DURATION = 0.1
 /**
  * Pops the summary in over the finished flashcard pane.
  *
- * No height to animate — the session window is a fixed size and both panes
- * fill it.
+ * Pins the leaving pane out of flow at its measured height before fading, so
+ * a header or footer row that changes shape mid-swap can't shove it while
+ * it's still fading out. `inset: 0` and a `h-full` class both re-resolve
+ * against the resized layout on every frame, so the height is read once, up
+ * front, in pixels, and written as an explicit style instead.
  */
 export function sessionPaneLeave(el: Element, done: () => void) {
+  const node = el as HTMLElement
+  const { height } = node.getBoundingClientRect()
+
+  node.style.position = 'absolute'
+  node.style.top = '0'
+  node.style.left = '0'
+  node.style.width = '100%'
+  node.style.height = `${height}px`
+
   gsap.to(el, { opacity: 0, duration: LEAVE_DURATION, onComplete: done })
 }
 

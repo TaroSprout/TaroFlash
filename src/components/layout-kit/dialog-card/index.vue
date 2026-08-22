@@ -74,6 +74,8 @@ const slots = defineSlots<{
   header(): any
   'header-start'(): any
   'header-end'(): any
+  /** Below the header's title row, full width — a page-specific strip like a progress bar. */
+  'header-after'?(): any
   default(props: { viewport: DialogCardViewport }): any
   /** Pinned bottom row, outside the body's flow — action bars that must stay put while the body scrolls. */
   toolbar?(): any
@@ -155,6 +157,10 @@ defineExpose({ viewport })
 
         <template v-if="slots['header-end']" #end>
           <slot name="header-end"></slot>
+        </template>
+
+        <template v-if="slots['header-after']" #after>
+          <slot name="header-after"></slot>
         </template>
       </dialog-card-header>
     </slot>
