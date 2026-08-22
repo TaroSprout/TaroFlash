@@ -6,31 +6,43 @@ type DialogCardHeaderProps = {
 
 const { title, padded = true } = defineProps<DialogCardHeaderProps>()
 
-defineSlots<{
+const slots = defineSlots<{
   start(): any
   end(): any
+  /** Below the title row, full width — a page-specific strip like a progress bar. */
+  after(): any
 }>()
 </script>
 
 <template>
   <header
     data-testid="dialog-card-header"
-    class="w-full shrink-0 grid grid-cols-[1fr_auto_1fr] items-center gap-2"
+    class="w-full shrink-0 flex flex-col gap-2"
     :class="padded ? 'px-(--dialog-px) pt-(--dialog-px)' : ''"
   >
-    <div data-testid="dialog-card-header__start" class="justify-self-start">
-      <slot name="start"></slot>
+    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div data-testid="dialog-card-header__start" class="justify-self-start">
+        <slot name="start"></slot>
+      </div>
+
+      <h1
+        data-testid="dialog-card-header__title"
+        class="truncate text-center text-3xl font-bold text-ink"
+      >
+        {{ title }}
+      </h1>
+
+      <div data-testid="dialog-card-header__end" class="justify-self-end">
+        <slot name="end"></slot>
+      </div>
     </div>
 
-    <h1
-      data-testid="dialog-card-header__title"
-      class="truncate text-center text-3xl font-bold text-ink"
+    <div
+      v-if="slots.after"
+      data-testid="dialog-card-header__after"
+      class="relative mx-auto w-full max-w-(--content-grid-max-width)"
     >
-      {{ title }}
-    </h1>
-
-    <div data-testid="dialog-card-header__end" class="justify-self-end">
-      <slot name="end"></slot>
+      <slot name="after"></slot>
     </div>
   </header>
 </template>

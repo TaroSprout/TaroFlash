@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import SummaryCardEditor from '@/views/study-session/session-summary/category-page/summary-card-editor.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -65,11 +65,15 @@ describe('SummaryCardEditor', () => {
     )
   })
 
-  // ── flip ──────────────────────────────────────────────────────────────────
+  // ── exposed flip() [obligation] ──────────────────────────────────────────
+  // The Flip button now lives in the session's shared toolbar footer, which
+  // reaches this editor's flip() through a template ref — no in-component
+  // Flip/Done buttons anymore.
 
-  test('flip switches to the back side and plays a transition sfx [obligation]', async () => {
+  test('flip() switches to the back side and plays a transition sfx [obligation]', async () => {
     const wrapper = mountEditor()
-    await wrapper.find('[data-testid="session-summary__card-editor-flip"]').trigger('click')
+    wrapper.vm.flip()
+    await nextTick()
 
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
       'back'
@@ -77,12 +81,13 @@ describe('SummaryCardEditor', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('flipping twice returns to the front and plays the opposite sfx [obligation]', async () => {
+  test('calling flip() twice returns to the front and plays the opposite sfx [obligation]', async () => {
     const wrapper = mountEditor()
-    const flip = wrapper.find('[data-testid="session-summary__card-editor-flip"]')
 
-    await flip.trigger('click')
-    await flip.trigger('click')
+    wrapper.vm.flip()
+    await nextTick()
+    wrapper.vm.flip()
+    await nextTick()
 
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
       'front'
@@ -97,15 +102,5 @@ describe('SummaryCardEditor', () => {
     await wrapper.find('[data-testid="study-card-edit-stub__emit-update"]').trigger('click')
 
     expect(wrapper.emitted('update')).toEqual([['front', 'new text']])
-  })
-
-  // ── done ──────────────────────────────────────────────────────────────────
-
-  test('done emits "done" and plays its own sfx [obligation]', async () => {
-    const wrapper = mountEditor()
-    await wrapper.find('[data-testid="session-summary__card-editor-done"]').trigger('click')
-
-    expect(wrapper.emitted('done')).toHaveLength(1)
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.confirm')
   })
 })

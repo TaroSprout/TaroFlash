@@ -5,16 +5,22 @@ import SessionSummaryCategory from './session-summary/category-page/index.vue'
 import SessionSettings from './session-settings/index.vue'
 import SessionHeaderNavButton from './session-header-nav-button.vue'
 import SessionHeaderMenu from './session-header-menu.vue'
+import SessionProgress from './session-studying/session-progress.vue'
+import RatingButtons from './session-studying/rating-buttons/index.vue'
+import StudyFlipDoneFooter from './study-flip-done-footer.vue'
 import SummarySelectButton from './session-summary/summary-select-button.vue'
 import SummaryBulkActionsBar from './session-summary/bulk-actions-bar.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
+import { type Grade } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 import { emitSfx } from '@/sfx/bus'
+import { toolbarEnter, toolbarLeave } from '@/utils/animations/toolbar-swap'
 import { clearPersistedSession } from './composables/session-persistence'
 import { provideStudySessionController } from './composables/session-controller'
+import { providePrimedGrade } from './session-studying/card/primed-grade-context'
 import { useModalRequestClose } from '@/composables/modal'
 
 const { deck_ids, close } = defineProps<{
@@ -29,23 +35,35 @@ const {
   results,
   is_cover,
   can_edit,
+  editing,
   sessionDecks,
   active_page,
   summary_category,
   summary_selection,
   summary_editing_card,
+  prefs_are_default,
   requestClose,
+  startSession,
   startEdit,
+  flipCurrentCard,
+  stopEdit,
   onMove,
   onDelete,
   openSettings,
   closeSettings,
+  resetToDefaults,
   openSummaryCategory,
   closeSummaryCategory,
   stopSummaryEdit
 } = provideStudySessionController({ deck_ids, onClosed })
 
+const primed_grade = ref<Grade | null>(null)
+providePrimedGrade(primed_grade)
+
 const summary_seen = ref(false)
+
+const studying_pane = useTemplateRef('studying_pane')
+const summary_category_pane = useTemplateRef('summary_category_pane')
 
 const phase = computed<'studying' | 'summary'>(() =>
   state.value === 'summary' ? 'summary' : 'studying'
@@ -89,6 +107,28 @@ const show_summary_bulk_bar = computed(
   () => current_page.value === 'summary-category' && summary_selection.is_selecting.value
 )
 
+/** Which control set fills the session window's bottom row. */
+const toolbar_variant = computed<
+  | 'rating'
+  | 'edit'
+  | 'settings-reset'
+  | 'summary-edit'
+  | 'bulk'
+  | 'category-close'
+  | 'summary-close'
+>(() => {
+  if (current_page.value === 'settings') return 'settings-reset'
+
+  if (current_page.value === 'summary-category') {
+    if (summary_editing_card.value) return 'summary-edit'
+    return show_summary_bulk_bar.value ? 'bulk' : 'category-close'
+  }
+
+  if (current_page.value === 'summary') return 'summary-close'
+
+  return editing.value ? 'edit' : 'rating'
+})
+
 useModalRequestClose(onRequestClose)
 
 /** Early close (close button / backdrop / esc before any review). */
@@ -113,6 +153,16 @@ function onPaneEnterStart() {
 
   emitSfx(summary_seen.value ? 'ui.press' : 'session.complete')
   summary_seen.value = true
+}
+
+/** Rating buttons prime a grade; the fling animation runs on the card stage. */
+function onRated(grade: Grade) {
+  studying_pane.value?.rate(grade)
+}
+
+/** The session footer's Flip button, for a summary category card being edited. */
+function onFlipSummaryEditingCard() {
+  summary_category_pane.value?.flipEditingCard()
 }
 
 /** Studying → stop into summary (or dismiss on the cover); summary → dismiss. */
@@ -206,6 +256,13 @@ function onToggleSummarySelecting() {
       />
     </template>
 
+    <template #header-after>
+      <session-progress
+        class="absolute inset-x-0 top-0"
+        :class="{ invisible: current_page !== 'studying' }"
+      />
+    </template>
+
     <template #default>
       <div data-testid="study-session__outlet" class="relative w-full h-full">
         <dialog-card-pager
@@ -217,10 +274,15 @@ function onToggleSummarySelecting() {
             key="settings"
             class="absolute inset-0 z-10"
           />
-          <session-studying v-else-if="current_page === 'studying'" key="studying" />
+          <session-studying
+            v-else-if="current_page === 'studying'"
+            key="studying"
+            ref="studying_pane"
+          />
           <session-summary-category
             v-else-if="summary_category"
             key="summary-category"
+            ref="summary_category_pane"
             class="absolute inset-0 z-10"
             :results="results"
             :category="summary_category"
@@ -236,21 +298,72 @@ function onToggleSummarySelecting() {
       </div>
     </template>
 
-    <template v-if="current_page === 'summary'" #toolbar>
-      <ui-button
-        neutral
-        data-testid="session-summary__close"
-        full-width
-        size="xl"
-        class="mx-auto max-w-95"
-        :sfx="{ press: 'nav.page-forward' }"
-        @press="onClosed"
-      >
-        {{ t('session-summary.close-button') }}
-      </ui-button>
-    </template>
-    <template v-else-if="show_summary_bulk_bar" #toolbar>
-      <summary-bulk-actions-bar />
+    <template #toolbar>
+      <div class="relative w-full">
+        <Transition :css="false" @enter="toolbarEnter" @leave="toolbarLeave">
+          <rating-buttons
+            v-if="toolbar_variant === 'rating'"
+            key="rating"
+            class="mx-auto max-w-117"
+            @started="startSession"
+            @rated="onRated"
+          />
+          <study-flip-done-footer
+            v-else-if="toolbar_variant === 'edit'"
+            key="edit"
+            @flip="flipCurrentCard"
+            @done="stopEdit"
+          />
+          <ui-button
+            v-else-if="toolbar_variant === 'settings-reset'"
+            key="settings-reset"
+            neutral
+            data-testid="session-settings__reset"
+            icon-left="refresh"
+            full-width
+            size="xl"
+            class="mx-auto max-w-95"
+            :disabled="prefs_are_default"
+            :sfx="{ press: 'ui.press' }"
+            @press="resetToDefaults"
+          >
+            {{ t('study-session.settings.reset-button') }}
+          </ui-button>
+          <study-flip-done-footer
+            v-else-if="toolbar_variant === 'summary-edit'"
+            key="summary-edit"
+            @flip="onFlipSummaryEditingCard"
+            @done="stopSummaryEdit"
+          />
+          <summary-bulk-actions-bar v-else-if="toolbar_variant === 'bulk'" key="bulk" />
+          <ui-button
+            v-else-if="toolbar_variant === 'category-close'"
+            key="category-close"
+            neutral
+            data-testid="session-summary-category__close"
+            full-width
+            size="xl"
+            class="mx-auto max-w-95"
+            :sfx="{ press: 'nav.page-forward' }"
+            @press="onClosed"
+          >
+            {{ t('session-summary.close-button') }}
+          </ui-button>
+          <ui-button
+            v-else
+            key="summary-close"
+            neutral
+            data-testid="session-summary__close"
+            full-width
+            size="xl"
+            class="mx-auto max-w-95"
+            :sfx="{ press: 'nav.page-forward' }"
+            @press="onClosed"
+          >
+            {{ t('session-summary.close-button') }}
+          </ui-button>
+        </Transition>
+      </div>
     </template>
   </dialog-card>
 </template>

@@ -76,12 +76,21 @@ const {
   is_selecting_ref,
   selected_count_ref,
   session_decks_ref,
+  editing_ref,
+  saving_ref,
+  current_index_ref,
+  cards_ref,
+  prefs_are_default_ref,
   mockRequestClose,
+  mockStartSession,
   mockStartEdit,
+  mockFlipCurrentCard,
+  mockStopEdit,
   mockOnMove,
   mockOnDelete,
   mockOpenSettings,
   mockCloseSettings,
+  mockResetToDefaults,
   mockOpenSummaryCategory,
   mockCloseSummaryCategory,
   mockStopSummaryEdit,
@@ -105,12 +114,21 @@ const {
   const is_selecting_ref = ref(false)
   const selected_count_ref = ref(0)
   const session_decks_ref = ref([{ id: 1, title: 'My Deck' }])
+  const editing_ref = ref(false)
+  const saving_ref = ref(false)
+  const current_index_ref = ref(0)
+  const cards_ref = ref([])
+  const prefs_are_default_ref = ref(true)
   const mockRequestClose = vi.fn()
+  const mockStartSession = vi.fn()
   const mockStartEdit = vi.fn()
+  const mockFlipCurrentCard = vi.fn()
+  const mockStopEdit = vi.fn()
   const mockOnMove = vi.fn()
   const mockOnDelete = vi.fn()
   const mockOpenSettings = vi.fn()
   const mockCloseSettings = vi.fn()
+  const mockResetToDefaults = vi.fn()
   const mockOpenSummaryCategory = vi.fn()
   const mockCloseSummaryCategory = vi.fn()
   const mockStopSummaryEdit = vi.fn()
@@ -126,6 +144,10 @@ const {
     is_cover: is_cover_ref,
     can_edit: can_edit_ref,
     sessionDecks: session_decks_ref,
+    editing: editing_ref,
+    saving: saving_ref,
+    current_index: current_index_ref,
+    cards: cards_ref,
     active_page: active_page_ref,
     summary_category: summary_category_ref,
     summary_editing_card: summary_editing_card_ref,
@@ -137,12 +159,17 @@ const {
       exitSelection: mockExitSelection,
       clearSelectedCards: vi.fn()
     },
+    prefs_are_default: prefs_are_default_ref,
     requestClose: mockRequestClose,
+    startSession: mockStartSession,
     startEdit: mockStartEdit,
+    flipCurrentCard: mockFlipCurrentCard,
+    stopEdit: mockStopEdit,
     onMove: mockOnMove,
     onDelete: mockOnDelete,
     openSettings: mockOpenSettings,
     closeSettings: mockCloseSettings,
+    resetToDefaults: mockResetToDefaults,
     openSummaryCategory: mockOpenSummaryCategory,
     closeSummaryCategory: mockCloseSummaryCategory,
     stopSummaryEdit: mockStopSummaryEdit,
@@ -162,12 +189,21 @@ const {
     is_selecting_ref,
     selected_count_ref,
     session_decks_ref,
+    editing_ref,
+    saving_ref,
+    current_index_ref,
+    cards_ref,
+    prefs_are_default_ref,
     mockRequestClose,
+    mockStartSession,
     mockStartEdit,
+    mockFlipCurrentCard,
+    mockStopEdit,
     mockOnMove,
     mockOnDelete,
     mockOpenSettings,
     mockCloseSettings,
+    mockResetToDefaults,
     mockOpenSummaryCategory,
     mockCloseSummaryCategory,
     mockStopSummaryEdit,
@@ -213,10 +249,13 @@ const SessionSummaryStub = defineComponent({
   }
 })
 
+const mockFlipEditingCard = vi.fn()
+
 const SessionSummaryCategoryStub = defineComponent({
   name: 'SessionSummaryCategory',
   props: ['results', 'category'],
-  setup() {
+  setup(_props, { expose }) {
+    expose({ flipEditingCard: mockFlipEditingCard })
     return () => h('div', { 'data-testid': 'session-summary-category-stub' })
   }
 })
@@ -225,6 +264,25 @@ const SessionSettingsStub = defineComponent({
   name: 'SessionSettings',
   setup() {
     return () => h('div', { 'data-testid': 'session-settings-stub' })
+  }
+})
+
+// Rating buttons and the progress bar reach several session-controller fields
+// this file's controllerMock doesn't hydrate (rating times, preview flags,
+// current card index) — each has its own dedicated test file, so it's
+// stubbed here rather than fully hydrated.
+const RatingButtonsStub = defineComponent({
+  name: 'RatingButtons',
+  emits: ['started', 'rated'],
+  setup() {
+    return () => h('div', { 'data-testid': 'rating-buttons-stub' })
+  }
+})
+
+const SessionProgressStub = defineComponent({
+  name: 'SessionProgress',
+  setup() {
+    return () => h('div', { 'data-testid': 'session-progress-stub' })
   }
 })
 
@@ -243,7 +301,9 @@ function makeWrapper({ close = vi.fn(), deck_ids = [1] } = {}) {
           SessionStudying: SessionStudyingStub,
           SessionSummary: SessionSummaryStub,
           SessionSummaryCategory: SessionSummaryCategoryStub,
-          SessionSettings: SessionSettingsStub
+          SessionSettings: SessionSettingsStub,
+          RatingButtons: RatingButtonsStub,
+          SessionProgress: SessionProgressStub
         },
         provide: {
           [MODAL_ID_KEY]: TEST_MODAL_ID
@@ -287,11 +347,15 @@ describe('StudySession (index.vue)', () => {
     mockEmitStudySfx.mockClear()
     mockClearPersistedSession.mockClear()
     mockRequestClose.mockClear()
+    mockStartSession.mockClear()
     mockStartEdit.mockClear()
+    mockFlipCurrentCard.mockClear()
+    mockStopEdit.mockClear()
     mockOnMove.mockClear()
     mockOnDelete.mockClear()
     mockOpenSettings.mockClear()
     mockCloseSettings.mockClear()
+    mockResetToDefaults.mockClear()
     mockOpenSummaryCategory.mockClear()
     mockCloseSummaryCategory.mockClear()
     mockStopSummaryEdit.mockClear()
@@ -300,6 +364,7 @@ describe('StudySession (index.vue)', () => {
     mockSelectAllSummaryCards.mockClear()
     mockOnDeleteSummarySelected.mockClear()
     mockOnMoveSummarySelected.mockClear()
+    mockFlipEditingCard.mockClear()
     state_ref.value = 'studying'
     results_ref.value = []
     is_cover_ref.value = false
@@ -310,6 +375,11 @@ describe('StudySession (index.vue)', () => {
     is_selecting_ref.value = false
     selected_count_ref.value = 0
     session_decks_ref.value = [{ id: 1, title: 'My Deck' }]
+    editing_ref.value = false
+    saving_ref.value = false
+    current_index_ref.value = 0
+    cards_ref.value = []
+    prefs_are_default_ref.value = true
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
     capturedQueries.length = 0
@@ -499,6 +569,106 @@ describe('StudySession (index.vue)', () => {
 
       expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(false)
       expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
+    })
+  })
+
+  // ── toolbar_variant resolves per page/state [obligation] ───────────────────
+
+  describe('toolbar_variant [obligation]', () => {
+    test('studying + rating: shows rating-buttons, not the flip/done footer [obligation]', () => {
+      const { wrapper } = makeWrapper()
+
+      expect(wrapper.find('[data-testid="rating-buttons-stub"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(false)
+    })
+
+    test('studying + editing: shows the flip/done footer, wired to flipCurrentCard/stopEdit [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      editing_ref.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="rating-buttons-stub"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(true)
+
+      await wrapper.find('[data-testid="study-flip-done-footer__flip"]').trigger('click')
+      expect(mockFlipCurrentCard).toHaveBeenCalledOnce()
+
+      await wrapper.find('[data-testid="study-flip-done-footer__done"]').trigger('click')
+      expect(mockStopEdit).toHaveBeenCalledOnce()
+    })
+
+    test('settings: shows the reset button, disabled per prefs_are_default, wired to resetToDefaults [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await openSettingsPage()
+      prefs_are_default_ref.value = false
+      await nextTick()
+
+      const reset = wrapper.find('[data-testid="session-settings__reset"]')
+      expect(reset.exists()).toBe(true)
+      expect(reset.attributes('aria-disabled')).toBeUndefined()
+
+      await reset.trigger('click')
+      expect(mockResetToDefaults).toHaveBeenCalledOnce()
+    })
+
+    test('settings: the reset button is disabled when prefs_are_default is true [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await openSettingsPage()
+      prefs_are_default_ref.value = true
+      await nextTick()
+
+      expect(
+        wrapper.find('[data-testid="session-settings__reset"]').attributes('aria-disabled')
+      ).toBe('true')
+    })
+
+    test('summary (landing page): shows the summary close button [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+
+      expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(false)
+    })
+
+    test('category default (not selecting, not editing): shows the category close button, wired to onClosed [obligation]', async () => {
+      const { wrapper, close } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+
+      const category_close = wrapper.find('[data-testid="session-summary-category__close"]')
+      expect(category_close.exists()).toBe(true)
+
+      await category_close.trigger('click')
+      expect(mockClearPersistedSession).toHaveBeenCalledOnce()
+      expect(close).toHaveBeenCalledOnce()
+    })
+
+    test('category editing: shows the flip/done footer, wired to flipEditingCard/stopSummaryEdit [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      summary_editing_card_ref.value = { id: 1, deck_id: 1 }
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary-category__close"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(true)
+
+      await wrapper.find('[data-testid="study-flip-done-footer__flip"]').trigger('click')
+      expect(mockFlipEditingCard).toHaveBeenCalledOnce()
+
+      await wrapper.find('[data-testid="study-flip-done-footer__done"]').trigger('click')
+      expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
+    })
+
+    test('category selecting: shows the bulk-actions bar, not the category close button [obligation]', async () => {
+      const { wrapper } = makeWrapper()
+      await finishSession([])
+      await openCategoryPage()
+      is_selecting_ref.value = true
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="session-summary-category__close"]').exists()).toBe(false)
     })
   })
 
@@ -864,5 +1034,91 @@ describe('StudySession (index.vue)', () => {
     const { wrapper } = makeWrapper()
     const classes = wrapper.find('[data-testid="study-session__outlet"]').classes()
     expect(classes).not.toContain('overflow-hidden')
+  })
+
+  // ── header-after session-progress: floats out of flow, constant header height [obligation] ─
+
+  describe('header-after session-progress floats out of flow [obligation]', () => {
+    // Mounts the real session-progress (not the stub) so its own class bindings
+    // — set by this view, not by session-progress itself — are observable.
+    function mountWithRealProgress() {
+      return mount(StudySession, {
+        props: { deck_ids: [1], close: vi.fn() },
+        global: {
+          stubs: {
+            SessionStudying: SessionStudyingStub,
+            SessionSummary: SessionSummaryStub,
+            SessionSummaryCategory: SessionSummaryCategoryStub,
+            SessionSettings: SessionSettingsStub,
+            RatingButtons: RatingButtonsStub,
+            UiProgressBar: defineComponent({
+              name: 'UiProgressBar',
+              props: ['value', 'max', 'label'],
+              setup(props) {
+                return () => h('div', { 'data-testid': 'progress-bar-stub' }, props.label ?? '')
+              }
+            })
+          },
+          provide: { [MODAL_ID_KEY]: TEST_MODAL_ID }
+        },
+        attachTo: document.body
+      })
+    }
+
+    test('renders absolute inset-x-0 top-0, contributing zero flow height [obligation]', () => {
+      const wrapper = mountWithRealProgress()
+      const classes = wrapper.find('[data-testid="study-session__progress"]').classes()
+      expect(classes).toContain('absolute')
+      expect(classes).toContain('inset-x-0')
+      expect(classes).toContain('top-0')
+    })
+
+    test('carries no invisible class while on the studying page [obligation]', () => {
+      const wrapper = mountWithRealProgress()
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).not.toContain(
+        'invisible'
+      )
+    })
+
+    test('is invisible while the settings page is active [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      active_page_ref.value = 'settings'
+      await nextTick()
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
+        'invisible'
+      )
+    })
+
+    test('is invisible during the summary phase [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      await finishSession([])
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
+        'invisible'
+      )
+    })
+
+    test('is invisible on a summary category page [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      await finishSession([])
+      await openCategoryPage()
+      expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
+        'invisible'
+      )
+    })
+
+    // Tailwind's stylesheet isn't loaded in this test's browser context (no
+    // global CSS import in setup-browser.js), so `invisible`'s visibility:hidden
+    // and `absolute`'s out-of-flow effect can't be measured via
+    // getComputedStyle/getBoundingClientRect here — only the class bindings
+    // driving them are assertable. See the Deferred coverage gap in the report.
+
+    test('session-progress never renders an interactive control that could leak a click through invisible [obligation]', async () => {
+      const wrapper = mountWithRealProgress()
+      active_page_ref.value = 'settings'
+      await nextTick()
+
+      const progress = wrapper.find('[data-testid="study-session__progress"]')
+      expect(progress.findAll('button, a, input, [tabindex]')).toHaveLength(0)
+    })
   })
 })

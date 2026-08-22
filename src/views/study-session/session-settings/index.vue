@@ -6,7 +6,6 @@ import FieldRow from '@/components/layout-kit/field-row.vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import UiToggle from '@/components/ui-kit/toggle.vue'
 import UiOptionGroup from '@/components/ui-kit/option-group.vue'
-import UiButton from '@/components/ui-kit/button.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useInjectedStudySessionController } from '../composables/session-controller'
 
@@ -19,9 +18,7 @@ const {
   show_rating_buttons,
   show_button_preview,
   show_card_preview,
-  multi_deck_ordering,
-  prefs_are_default,
-  resetToDefaults
+  multi_deck_ordering
 } = useInjectedStudySessionController()
 
 const is_coarse = useMatchMedia('coarse')
@@ -124,19 +121,5 @@ const ordering_options = computed(() => [
         :size="option_size"
       />
     </labeled-section>
-
-    <ui-button
-      neutral
-      data-testid="session-settings__reset"
-      icon-left="refresh"
-      class="mt-auto"
-      size="lg"
-      full-width
-      :disabled="prefs_are_default"
-      :sfx="{ press: 'ui.press' }"
-      @press="resetToDefaults"
-    >
-      {{ t('study-session.settings.reset-button') }}
-    </ui-button>
   </scroll-region>
 </template>

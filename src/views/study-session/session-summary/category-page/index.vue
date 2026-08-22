@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import CategorySection from './category-section.vue'
@@ -22,10 +22,12 @@ type Section = {
 
 const { results, category } = defineProps<CategoryPageProps>()
 
+defineExpose({ flipEditingCard })
+
 const { t } = useI18n()
 const { thresholdFor } = useDeckResolution()
-const { cards, summary_editing_card, onSummaryEditUpdate, stopSummaryEdit } =
-  useInjectedStudySessionController()
+const { cards, summary_editing_card, onSummaryEditUpdate } = useInjectedStudySessionController()
+const card_editor = useTemplateRef('card_editor')
 
 const summary = computed(() => aggregateSession(results, thresholdFor))
 
@@ -58,15 +60,20 @@ function resolve(group: CardReviewResult[]): StudyCard[] {
     return card ? [card] : []
   })
 }
+
+/** The session footer's Flip button, reached through the mounted editor. */
+function flipEditingCard() {
+  card_editor.value?.flip()
+}
 </script>
 
 <template>
   <dialog-card-body data-testid="session-summary-category" overflow_bleed class="h-full w-full">
     <summary-card-editor
       v-if="summary_editing_card"
+      ref="card_editor"
       :card="summary_editing_card"
       @update="onSummaryEditUpdate"
-      @done="stopSummaryEdit"
     />
 
     <div v-else data-testid="session-summary-category__content" class="flex flex-col gap-6">

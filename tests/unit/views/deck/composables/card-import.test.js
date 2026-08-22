@@ -202,7 +202,7 @@ describe('useCardImport — sfx contract [obligation]', () => {
 
     await draft.loadFile(makeFile('deck.csv'))
 
-    expect(emitSfxMock).toHaveBeenCalledWith('dialog.confirm')
+    expect(emitSfxMock).toHaveBeenCalledWith('file.accepted')
   })
 
   test('loadFile does not chime music_plink_ok when the file is refused', async () => {
@@ -211,7 +211,7 @@ describe('useCardImport — sfx contract [obligation]', () => {
 
     await draft.loadFile(makeFile('virus.exe'))
 
-    expect(emitSfxMock).not.toHaveBeenCalledWith('dialog.confirm')
+    expect(emitSfxMock).not.toHaveBeenCalledWith('file.accepted')
   })
 
   test('loadText never chimes, even on a successful parse — it re-parses every keystroke', () => {
@@ -225,7 +225,7 @@ describe('useCardImport — sfx contract [obligation]', () => {
 
     draft.loadText('a,b')
 
-    expect(emitSfxMock).not.toHaveBeenCalledWith('dialog.confirm')
+    expect(emitSfxMock).not.toHaveBeenCalledWith('file.accepted')
   })
 
   test('toggleExpanded emits ui.press', () => {
