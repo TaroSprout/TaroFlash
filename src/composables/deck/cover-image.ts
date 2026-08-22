@@ -76,7 +76,7 @@ export function useCoverImage(
     staged_url = URL.createObjectURL(file)
     staged_file.value = file
     toValue(cover).image_path = staged_url
-    emitSfx('dialog.confirm')
+    emitSfx('file.accepted')
   }
 
   /** Clear the cover image — drops any staged file and reverts to palette/pattern/icon. */

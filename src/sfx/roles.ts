@@ -29,7 +29,6 @@ export const ROLES = {
   // The softer of the two opening cues; both close on 'dialog.close'.
   'dialog.open-chime': { sound: 'wooden_chime_ring' },
   'dialog.close': { sound: 'pop_up_close' },
-  'dialog.confirm': { sound: 'music_plink_ok' },
   'dialog.dismiss': { sound: 'digi_powerdown' },
 
   'phone.open': { sound: 'pop_window' },
@@ -46,6 +45,9 @@ export const ROLES = {
   'card.grade-again': { sound: 'music_plink_locancel' },
   'card.delete': { sound: 'trash_crumple_short' },
   'card.image-captured': { sound: 'etc_camera_shutter' },
+  'card.saved': { sound: 'success_3' },
+
+  'file.accepted': { sound: 'music_plink_ok' },
 
   'gesture.tick': { sound: 'tap_05' },
   'gesture.zone-cross': { sound: 'music_plink_mid' },

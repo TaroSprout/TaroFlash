@@ -104,7 +104,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
       return
     }
 
-    emitSfx('dialog.confirm')
+    emitSfx('file.accepted')
     reveal_pending = true
     pending.value = false
   }
