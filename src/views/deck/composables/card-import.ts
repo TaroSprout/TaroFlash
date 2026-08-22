@@ -112,7 +112,7 @@ export function useCardImport({ editor, shell }: Options) {
     applyResult('file', result)
 
     // Only the file lands with a chime — pasted text re-parses on every keystroke.
-    if (result.ok) emitSfx('dialog.confirm')
+    if (result.ok) emitSfx('file.accepted')
   }
 
   /** Re-read the pasted box; every keystroke re-previews what it holds. */

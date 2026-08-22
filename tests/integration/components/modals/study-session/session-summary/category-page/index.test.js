@@ -6,22 +6,17 @@ import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialo
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const {
-  mockThresholdFor,
-  mockCards,
-  mockEditingCard,
-  mockOnSummaryEditUpdate,
-  mockStopSummaryEdit
-} = await vi.hoisted(async () => {
-  const { ref } = await import('vue')
-  return {
-    mockThresholdFor: vi.fn(() => 24),
-    mockCards: ref([]),
-    mockEditingCard: ref(undefined),
-    mockOnSummaryEditUpdate: vi.fn(),
-    mockStopSummaryEdit: vi.fn()
+const { mockThresholdFor, mockCards, mockEditingCard, mockOnSummaryEditUpdate } = await vi.hoisted(
+  async () => {
+    const { ref } = await import('vue')
+    return {
+      mockThresholdFor: vi.fn(() => 24),
+      mockCards: ref([]),
+      mockEditingCard: ref(undefined),
+      mockOnSummaryEditUpdate: vi.fn()
+    }
   }
-})
+)
 
 vi.mock('@/views/study-session/deck-resolution', () => ({
   useDeckResolution: () => ({ thresholdFor: mockThresholdFor })
@@ -31,8 +26,7 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
   useInjectedStudySessionController: () => ({
     cards: mockCards,
     summary_editing_card: mockEditingCard,
-    onSummaryEditUpdate: mockOnSummaryEditUpdate,
-    stopSummaryEdit: mockStopSummaryEdit
+    onSummaryEditUpdate: mockOnSummaryEditUpdate
   })
 }))
 
@@ -55,11 +49,14 @@ const CategorySectionStub = defineComponent({
   }
 })
 
+const mockFlip = vi.fn()
+
 const SummaryCardEditorStub = defineComponent({
   name: 'SummaryCardEditor',
   props: ['card'],
-  emits: ['update', 'done'],
-  setup(props) {
+  emits: ['update'],
+  setup(props, { expose }) {
+    expose({ flip: mockFlip })
     return () =>
       h('div', {
         'data-testid': 'summary-card-editor-stub',
@@ -104,7 +101,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
     mockThresholdFor.mockReset().mockReturnValue(24)
     mockEditingCard.value = undefined
     mockOnSummaryEditUpdate.mockClear()
-    mockStopSummaryEdit.mockClear()
+    mockFlip.mockClear()
   })
 
   describe('card editor sub-state [obligation]', () => {
@@ -139,14 +136,26 @@ describe('CategoryPage (category-page/index.vue)', () => {
 
       expect(mockOnSummaryEditUpdate).toHaveBeenCalledWith('front', 'New front text')
     })
+  })
 
-    test('forwards the editor done event to stopSummaryEdit [obligation]', async () => {
+  // ── exposed flipEditingCard() reaches the mounted editor [obligation] ──────
+
+  describe('flipEditingCard()', () => {
+    test('calls flip() on the mounted card editor [obligation]', () => {
       mockEditingCard.value = makeCard({ id: 1 })
       const wrapper = mountPage({ results: [], category: 'new', cards: [] })
 
-      await wrapper.findComponent(SummaryCardEditorStub).vm.$emit('done')
+      wrapper.vm.flipEditingCard()
 
-      expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
+      expect(mockFlip).toHaveBeenCalledOnce()
+    })
+
+    test('does not throw when no card is being edited (editor unmounted) [obligation]', () => {
+      mockEditingCard.value = undefined
+      const wrapper = mountPage({ results: [], category: 'new', cards: [] })
+
+      expect(() => wrapper.vm.flipEditingCard()).not.toThrow()
+      expect(mockFlip).not.toHaveBeenCalled()
     })
   })
 

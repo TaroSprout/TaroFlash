@@ -46,4 +46,18 @@ describe('roleDef', () => {
   test('dialog.open-chime resolves to wooden_chime_ring [obligation]', () => {
     expect(roleDef('dialog.open-chime').sound).toBe('wooden_chime_ring')
   })
+
+  // ── card.saved / file.accepted / dialog.confirm retired [obligation] ──────
+
+  test('card.saved resolves to success_3 [obligation]', () => {
+    expect(roleDef('card.saved').sound).toBe('success_3')
+  })
+
+  test('file.accepted resolves to music_plink_ok [obligation]', () => {
+    expect(roleDef('file.accepted').sound).toBe('music_plink_ok')
+  })
+
+  test('dialog.confirm is not a defined role — the file/card-saved cues replaced it [obligation]', () => {
+    expect(Object.keys(ROLES)).not.toContain('dialog.confirm')
+  })
 })

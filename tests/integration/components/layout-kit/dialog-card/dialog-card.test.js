@@ -357,6 +357,24 @@ describe('DialogCard', () => {
     })
   })
 
+  // ── header-after slot [obligation] ────────────────────────────────────────
+
+  describe('#header-after slot [obligation]', () => {
+    test('renders header-after slot content when provided [obligation]', () => {
+      const wrapper = mountCard(
+        { title: 'x' },
+        { 'header-after': () => h('div', { 'data-testid': 'header-after-content' }) }
+      )
+      expect(wrapper.find('[data-testid="header-after-content"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(true)
+    })
+
+    test('omits the after strip entirely when no header-after slot is provided [obligation]', () => {
+      const wrapper = mountCard({ title: 'x' })
+      expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(false)
+    })
+  })
+
   // ── header slot override ─────────────────────────────────────────────────────
 
   describe('#header slot', () => {

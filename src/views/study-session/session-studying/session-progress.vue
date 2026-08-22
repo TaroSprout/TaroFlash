@@ -10,7 +10,7 @@ const total = computed(() => cards.value.length)
 </script>
 
 <template>
-  <div data-testid="study-session__progress" class="w-full">
+  <div data-testid="study-session__progress" class="h-9 w-full flex items-center justify-center">
     <div
       v-if="editing"
       data-testid="study-session__save-status"

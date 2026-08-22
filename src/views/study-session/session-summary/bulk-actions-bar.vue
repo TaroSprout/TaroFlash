@@ -44,7 +44,7 @@ function onToggleSelectAll() {
       data-testid="session-summary__bulk-actions-select-all"
       icon-only
       :icon-left="selection.all_cards_selected.value ? 'close-window-remove' : 'data-check'"
-      size="lg"
+      size="xl"
       @press="onToggleSelectAll"
     >
       {{ select_all_label }}
@@ -55,7 +55,7 @@ function onToggleSelectAll() {
       icon-left="move-item"
       data-palette="blue"
       full-width
-      size="lg"
+      size="xl"
       :disabled="!has_selection"
       @press="onMoveSummarySelected"
     >
@@ -67,7 +67,7 @@ function onToggleSelectAll() {
       icon-left="delete"
       data-palette="danger"
       full-width
-      size="lg"
+      size="xl"
       :disabled="!has_selection"
       @press="onDeleteSummarySelected"
     >
