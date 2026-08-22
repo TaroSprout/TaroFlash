@@ -256,8 +256,8 @@ function onToggleSummarySelecting() {
       />
     </template>
 
-    <template v-if="current_page === 'studying'" #header-after>
-      <session-progress />
+    <template #header-after>
+      <session-progress :class="{ invisible: current_page !== 'studying' }" />
     </template>
 
     <template #default>
