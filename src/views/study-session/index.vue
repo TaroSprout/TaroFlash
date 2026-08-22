@@ -257,7 +257,10 @@ function onToggleSummarySelecting() {
     </template>
 
     <template #header-after>
-      <session-progress :class="{ invisible: current_page !== 'studying' }" />
+      <session-progress
+        class="absolute inset-x-0 top-0"
+        :class="{ invisible: current_page !== 'studying' }"
+      />
     </template>
 
     <template #default>
