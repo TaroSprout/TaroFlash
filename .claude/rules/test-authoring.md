@@ -141,3 +141,9 @@ const Stub = defineComponent({
 - A silent early return (`if (!data) return`) that passes vacuously.
 - A broad assertion (`toBeDefined()`) where the value is the point.
 - A test that never exercises the changed lines.
+- **Hand-assigning the state an upstream effect is supposed to produce** — writing
+  `query.data.value = {...}` to stand in for a refetch, or seeding a store/cache with the exact row a
+  mutation is about to remove — instead of triggering the real fetch, mutation, or event that
+  produces it. This proves the downstream mechanism works given the precondition, never that the app
+  ever puts it there; drive the precondition through the real call and let the effect land on its
+  own.

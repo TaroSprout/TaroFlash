@@ -30,3 +30,8 @@ on.
    one working tree, which is never yours to discard — stash anything uncommitted
    (`git stash push -u -m "<tag>"`) first, regardless of how disposable the branch itself is. A
    `PreToolUse` hook blocks these commands outright while the tree is dirty.
+9. **Check a worktree before you remove it — yours or one you're merely tidying up.** `git status
+--short` inside it first; anything uncommitted stops the removal and gets reported, never forced
+   away with `--force`. This holds even for a worktree your own run created — a step that removes it
+   is an obligation of how the run ends, not a line that only runs once every earlier step succeeded;
+   a run that fails or is interrupted still checks and removes what it made before it stops.
