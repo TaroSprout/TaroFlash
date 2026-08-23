@@ -256,4 +256,20 @@ describe('AuthenticatedView', () => {
       expect(style).toContain('right')
     })
   })
+
+  // ── main bottom clearance [obligation] ──────────────────────────────────────
+  //
+  // The dashboard's last row used to sit under the mobile footer — clearance
+  // now comes from the shared <main>, not from any one view, so it must reserve
+  // room for a real dock height and collapse to zero once the dock is gone.
+
+  describe('main bottom clearance [obligation]', () => {
+    test('[obligation] carries the mobile-dock-height padding term, falling back to 0px when the dock is absent', () => {
+      const wrapper = mountAuthenticated()
+
+      expect(wrapper.find('[data-testid="authenticated__main"]').classes()).toContain(
+        'pb-[var(--mobile-dock-height,0px)]'
+      )
+    })
+  })
 })

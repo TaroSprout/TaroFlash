@@ -61,6 +61,7 @@ watch(
     <taro-phone />
 
     <main
+      data-testid="authenticated__main"
       class="relative overflow-clip w-full max-w-(--page-width) pb-[var(--mobile-dock-height,0px)]"
     >
       <router-view v-slot="{ Component, route }">
