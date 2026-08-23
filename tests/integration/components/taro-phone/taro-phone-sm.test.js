@@ -49,3 +49,31 @@ describe('TaroPhoneSm — station [obligation]', () => {
     expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('window')
   })
 })
+
+describe('TaroPhoneSm — collapsed colour roles [obligation]', () => {
+  test('the collapsed screen uses the ink-muted role, not well [obligation]', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="phone__screen"]').classes()).toContain('bg-ink-muted')
+    expect(wrapper.find('[data-testid="phone__screen"]').classes()).not.toContain('bg-well')
+  })
+
+  test('the home-button outline uses the ink-muted role, not well [obligation]', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="phone__home-button"]').classes()).toContain(
+      'outline-ink-muted'
+    )
+    expect(wrapper.find('[data-testid="phone__home-button"]').classes()).not.toContain(
+      'outline-well'
+    )
+  })
+
+  test('the chip body stays on the surface role [obligation]', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="phone"]').classes()).toContain('bg-surface')
+  })
+
+  test('carries no dark: variant override anywhere in the markup [obligation]', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.html()).not.toMatch(/\bdark:/)
+  })
+})
