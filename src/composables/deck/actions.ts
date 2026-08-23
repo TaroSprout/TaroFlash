@@ -1,5 +1,9 @@
 import { useI18n } from 'vue-i18n'
-import { useUpsertDeckMutation, DeckLimitError } from '@/api/decks'
+import { useUpsertDeckMutation } from '@/api/decks'
+// Straight from the defining module, not the barrel: the decks barrel and this
+// composable form an import cycle, and a class read back through it is still
+// uninitialised when the view loads.
+import { DeckLimitError } from '@/api/decks/mutations/upsert'
 import { useAlert } from '@/composables/alert'
 import { useModal } from '@/composables/modal'
 import { useCan } from '@/composables/can'
