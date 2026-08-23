@@ -144,7 +144,7 @@ describe('useUpsertDeckMutation', () => {
       getQueryDataMock.mockReturnValue([{ id: 1, title: 'existing' }])
       const { onMutate } = configFrom(useUpsertDeckMutation)
 
-      const client_key = onMutate({ title: 'brand new' })
+      const { client_key } = onMutate({ title: 'brand new' })
 
       expect(typeof client_key).toBe('string')
       expect(setQueryDataMock).toHaveBeenCalledWith(
@@ -159,7 +159,7 @@ describe('useUpsertDeckMutation', () => {
     test('an update (deck.id present) inserts nothing and returns no client_key [obligation]', () => {
       const { onMutate } = configFrom(useUpsertDeckMutation)
 
-      const client_key = onMutate({ id: 7, title: 'existing' })
+      const { client_key } = onMutate({ id: 7, title: 'existing' })
 
       expect(client_key).toBeUndefined()
       expect(setQueryDataMock).not.toHaveBeenCalled()
@@ -202,7 +202,7 @@ describe('useUpsertDeckMutation', () => {
       ])
       const { onSuccess } = configFrom(useUpsertDeckMutation)
 
-      onSuccess({ id: 42, title: 'brand new' }, { title: 'brand new' }, client_key)
+      onSuccess({ id: 42, title: 'brand new' }, { title: 'brand new' }, { client_key })
 
       expect(setQueryDataMock).toHaveBeenCalledWith(
         ['decks'],
@@ -215,14 +215,18 @@ describe('useUpsertDeckMutation', () => {
 
     test('does nothing when client_key is undefined (update path) [obligation]', () => {
       const { onSuccess } = configFrom(useUpsertDeckMutation)
-      onSuccess({ id: 42, title: 'updated' }, { id: 42, title: 'updated' }, undefined)
+      onSuccess(
+        { id: 42, title: 'updated' },
+        { id: 42, title: 'updated' },
+        { client_key: undefined }
+      )
       expect(setQueryDataMock).not.toHaveBeenCalled()
     })
 
     test('does nothing when the cache holds no list at all', () => {
       getQueryDataMock.mockReturnValue(undefined)
       const { onSuccess } = configFrom(useUpsertDeckMutation)
-      onSuccess({ id: 42, title: 'brand new' }, { title: 'brand new' }, 'some-key')
+      onSuccess({ id: 42, title: 'brand new' }, { title: 'brand new' }, { client_key: 'some-key' })
       expect(setQueryDataMock).not.toHaveBeenCalled()
     })
   })
@@ -236,21 +240,21 @@ describe('useUpsertDeckMutation', () => {
       ])
       const { onError } = configFrom(useUpsertDeckMutation)
 
-      onError(new Error('boom'), { title: 'brand new' }, client_key)
+      onError(new Error('boom'), { title: 'brand new' }, { client_key })
 
       expect(setQueryDataMock).toHaveBeenCalledWith(['decks'], [{ id: 2, title: 'other' }])
     })
 
     test('does nothing when client_key is undefined (update path) [obligation]', () => {
       const { onError } = configFrom(useUpsertDeckMutation)
-      onError(new Error('boom'), { id: 2, title: 'x' }, undefined)
+      onError(new Error('boom'), { id: 2, title: 'x' }, { client_key: undefined })
       expect(setQueryDataMock).not.toHaveBeenCalled()
     })
 
     test('does nothing when the cache holds no list at all', () => {
       getQueryDataMock.mockReturnValue(undefined)
       const { onError } = configFrom(useUpsertDeckMutation)
-      onError(new Error('boom'), { title: 'brand new' }, 'some-key')
+      onError(new Error('boom'), { title: 'brand new' }, { client_key: 'some-key' })
       expect(setQueryDataMock).not.toHaveBeenCalled()
     })
   })
