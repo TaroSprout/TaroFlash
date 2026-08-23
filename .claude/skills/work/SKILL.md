@@ -258,8 +258,8 @@ every live ticket branch. The home tree checks it out at step 0 and **stays on i
 run** — that is the tree the user's dev server points at, and it shows every wave at once. It is local
 only, never a PR, and re-derivable at any moment (re-merge `master` plus the live branches), so a
 merged PR or a new wave just rebuilds it. A merge that conflicts is a real cross-PR conflict, handled
-exactly as § 5b/c already handles one. A single-ticket or freeform run has no integration branch — the
-home tree checks out that one branch at tear-down instead (§ 5f), once the branch exists.
+exactly as § 5b/c already handles one. A single-ticket or freeform run has no integration branch — the home
+tree tracks that one branch instead, checked out the moment the builder reports (§ 4a).
 
 ## Review & feedback loop
 
