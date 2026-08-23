@@ -52,7 +52,7 @@ Return the final report defined in the workflow's Step 8. Do NOT commit anything
 
 The subagent returns its report and leaves all test changes **uncommitted** in the working tree. You own the decision of whether coverage is sufficient and the responsibility for committing it. Time-box the whole skill run — initial dispatch, your review, and at most **one** focused re-dispatch — to **~10 minutes**. Favour a single targeted re-dispatch over an open-ended loop; if gaps remain after one, commit what's solid and report the rest rather than iterating.
 
-### Review the report against reality — don't take it at face value
+### Review the report against reality — don't take it at face value (→[K:proxy-pass-not-evidence])
 
 The subagent works from a cold diff and can mis-scope or over-claim. Cross-check before trusting it:
 

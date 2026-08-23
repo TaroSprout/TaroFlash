@@ -154,8 +154,8 @@ grep lands in the right place. Then go further than `/triage` did, because decis
   this column read/write", "what does this component do at this breakpoint" are the ones that
   actually get skipped. Read the installed types (`node_modules/`, the Deno cache), the lockfile,
   `git log -S`/`-L`, the actual policy or migration. Cheap to check, expensive to get wrong.
-- **A subagent's report is not source.** Open the file an Explore agent's finding points to yourself
-  before asserting it as fact.
+- **A subagent's report is not source (→[K:proxy-pass-not-evidence]).** Open the file an Explore
+  agent's finding points to yourself before asserting it as fact.
 - **Supporting markup or CSS is not evidence the state it handles occurs** — see
   [`authoring.md` → Label a guess](../../rules/authoring.md). Never write an AC premised on a
   rendering state (overflow, clipping, a scrollbar showing) without confirming it against the real

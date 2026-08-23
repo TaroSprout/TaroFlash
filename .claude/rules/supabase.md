@@ -59,9 +59,9 @@ Gate role/plan-based access through named capability functions, not inline `auth
 
 Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/`.
 
-### `db diff` returning empty is necessary, not sufficient
+### `db diff` returning empty is necessary, not sufficient (→[K:proxy-pass-not-evidence])
 
-It compares a subset of the catalog, and is **silent** about the rest — an empty diff against a schema file that declares the missing thing reads as "no drift" and isn't. Two of these have already shipped bugs:
+It compares a subset of the catalog. Two blind spots have already shipped bugs:
 
 - **Function grants** — emits none, so a new `SECURITY DEFINER` function lands executable by `anon`. Hand-write the `REVOKE`s.
 - **View reloptions** — emits none. Any change forcing a view to be dropped and recreated resets `security_invoker`, and the generated `create or replace view` omits it; the view then runs as its owner and RLS stops applying per-caller.
