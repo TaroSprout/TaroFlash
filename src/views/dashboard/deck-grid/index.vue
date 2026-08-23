@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import DeckGridItem from './item.vue'
 import NewDeckCard from '@/components/deck/new-deck-card.vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { useDeckActions } from '@/composables/deck/actions'
-import { buildNewDeckPayload } from '@/utils/deck/defaults'
 import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useDeckGridReorder } from './use-deck-grid-reorder'
 import { useDeckGrace } from '@/composables/deck/grace'
+import { useNewDeckAction } from '../composables/new-deck-action'
 
 type DeckGridProps = {
   decks: Deck[]
@@ -22,12 +20,10 @@ const emit = defineEmits<{
   rearrange: []
 }>()
 
-const { t } = useI18n()
 const router = useRouter()
 const is_md = useMatchMedia('w>=md')
-const deck_actions = useDeckActions()
+const { creating_deck, createNewDeck } = useNewDeckAction()
 
-const creating_deck = ref(false)
 /**
  * Drives the reorder-grid geometry (cell width per breakpoint); the cards
  * themselves are fluid and just fill the positioned cells.
@@ -87,16 +83,13 @@ onMounted(() => {
 })
 
 function onDeckClicked(deck: Deck) {
+  if (deck.pending) return
   router.push({ name: 'deck', params: { id: deck.id } })
 }
 
-async function onCreateDeckClicked() {
-  if (creating_deck.value || editing) return
-  creating_deck.value = true
-
-  await deck_actions.createDeck(buildNewDeckPayload(t('deck.default-title')))
-
-  creating_deck.value = false
+function onCreateDeckClicked() {
+  if (editing) return
+  createNewDeck()
 }
 </script>
 
@@ -115,21 +108,21 @@ async function onCreateDeckClicked() {
     <transition-group tag="div" :css="false" @enter="popDeckIn" @leave="popDeckOut">
       <div
         v-for="(deck, index) in decks"
-        :key="deck.id"
+        :key="deck.client_key ?? deck.id"
         data-testid="deck-grid__item"
         :data-deck-id="deck.id"
         class="absolute top-0 left-0"
         :class="{
           'z-30': index === reorder.dragging_index.value,
           'cursor-grabbing': index === reorder.dragging_index.value,
-          'cursor-grab': editing && index !== reorder.dragging_index.value,
+          'cursor-grab': editing && !deck.pending && index !== reorder.dragging_index.value,
           'transition-transform duration-200 ease-out': reflowing
         }"
         :style="{
           width: `${reorder.cell_width.value}px`,
           transform: `translate(${reorder.itemPosition(index).x}px, ${reorder.itemPosition(index).y}px)`
         }"
-        @pointerdown="reorder.onItemPointerdown(index, $event)"
+        @pointerdown="!deck.pending && reorder.onItemPointerdown(index, $event)"
       >
         <div
           class="will-change-transform"
@@ -139,7 +132,8 @@ async function onCreateDeckClicked() {
           <DeckGridItem
             :deck="deck"
             :locked="lockedIds.has(deck.id)"
-            :rearranging="editing"
+            :pending="!!deck.pending"
+            :rearranging="editing && !deck.pending"
             :dragging="index === reorder.dragging_index.value"
             :style="reorder.jiggleStyle(index)"
             @press="onDeckClicked(deck)"
@@ -157,7 +151,7 @@ async function onCreateDeckClicked() {
           transform: `translate(${reorder.itemPosition(decks.length).x}px, ${reorder.itemPosition(decks.length).y}px)`
         }"
       >
-        <NewDeckCard :loading="creating_deck" :disabled="editing" @press="onCreateDeckClicked" />
+        <NewDeckCard :disabled="creating_deck || editing" @press="onCreateDeckClicked" />
       </div>
     </transition-group>
   </div>

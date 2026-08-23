@@ -36,8 +36,17 @@ const editing_decks = ref(false)
  * chosen sort.
  */
 const effective_sort = computed(() => (editing_decks.value ? 'custom' : sort_by.value))
+// Pending creates sit outside every sort, always last (→ new-deck-action.ts,
+// deck-grid/index.vue) — none of the comparators above have a real
+// created_at/updated_at/rank to place them by.
 const decks = computed(() => {
-  return [...(decks_data.value ?? [])].sort(DECK_SORT_COMPARATORS[effective_sort.value])
+  const all = decks_data.value ?? []
+  const settled = all
+    .filter((deck) => !deck.pending)
+    .sort(DECK_SORT_COMPARATORS[effective_sort.value])
+  const pending = all.filter((deck) => deck.pending)
+
+  return [...settled, ...pending]
 })
 
 watch(decks_error, (err) => {

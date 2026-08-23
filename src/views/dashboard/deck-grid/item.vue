@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import DeckThumbnail from '@/components/deck/deck-thumbnail.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
@@ -16,13 +17,16 @@ type DeckGridItemProps = {
   dragging?: boolean
   /** Downgrade-grace lock, rank-recomputed by the grid — dims and lock-badges the deck. */
   locked?: boolean
+  /** An optimistic create still in flight — dimmed, unopenable, no options. */
+  pending?: boolean
 }
 
 const {
   deck,
   rearranging = false,
   dragging = false,
-  locked = false
+  locked = false,
+  pending = false
 } = defineProps<DeckGridItemProps>()
 
 const emit = defineEmits<{
@@ -37,7 +41,7 @@ const dropdown = useTemplateRef<InstanceType<typeof UiDropdownButton>>('dropdown
 const options_hold = usePressHold()
 
 function onPress() {
-  if (rearranging) return
+  if (rearranging || pending) return
   emit('press')
 }
 
@@ -47,7 +51,7 @@ function onPress() {
  * pickup), and mouse holds stay inert — desktop opens the menu from the button.
  */
 function onPointerdown(event: PointerEvent) {
-  if (rearranging || event.pointerType === 'mouse') return
+  if (rearranging || pending || event.pointerType === 'mouse') return
   options_hold.arm(event, () => dropdown.value?.show())
 }
 
@@ -57,7 +61,11 @@ function onOptionSelect(option: DropdownOption) {
 </script>
 
 <template>
-  <div class="w-full" :class="{ jiggle: rearranging && !dragging }" @pointerdown="onPointerdown">
+  <div
+    class="relative w-full"
+    :class="{ jiggle: rearranging && !dragging }"
+    @pointerdown="onPointerdown"
+  >
     <DeckThumbnail
       :deck="deck"
       :locked="locked"
@@ -67,9 +75,10 @@ function onOptionSelect(option: DropdownOption) {
       :active="!!dropdown?.open"
       :sfx="{ press: 'ui.press' }"
       class="w-full"
+      :class="{ 'opacity-40 pointer-events-none': pending }"
       @press="onPress"
     >
-      <template #corner-action>
+      <template v-if="!pending" #corner-action>
         <DeckGridDeleteButton v-if="rearranging" :deck="deck" @pointerdown.stop />
         <div v-else data-testid="deck-grid-item__options-stop" @pointerdown.stop @click.stop>
           <ui-dropdown-button
@@ -85,6 +94,14 @@ function onOptionSelect(option: DropdownOption) {
         </div>
       </template>
     </DeckThumbnail>
+
+    <div
+      v-if="pending"
+      data-testid="deck-grid-item__pending"
+      class="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+    >
+      <ui-icon src="loading-dots" class="size-12 text-ink-muted" />
+    </div>
   </div>
 </template>
 
