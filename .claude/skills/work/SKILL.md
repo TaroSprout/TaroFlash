@@ -162,6 +162,16 @@ branch (§ 5c reuses this same stacking rule; don't invent a second mechanism). 
 concurrent builders** — split a larger wave into batches. The test pass (§ 4b) stays sequential across
 every wave.
 
+### 4a. LAND — the home tree updates the moment a builder reports back
+
+**A finished branch reaches the tree the user is looking at before anything else happens to it** —
+before the test pass, before PR prep, before CI runs at all. The instant a `ticket-builder` reports
+its branch done, merge it forward into the integration branch on the home tree (single-ticket or
+freeform run: `git checkout <branch>` directly, once the branch exists) — the same merge-forward the
+feedback loop already runs per fix (§ Review & feedback loop step 1), just starting here instead of
+at teardown. Never wait for the test pass to finish, CI to go green, or the PR to open before doing
+this.
+
 ### 4b. TEST PASS — one dispatch per branch, sequential
 
 Builders never touch tests, and the orchestrator never mines a conversation it wasn't part of. Once a
@@ -210,10 +220,8 @@ f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed
 builder's worktree (`git worktree remove <path>`) from the home tree, once you've confirmed via
 `pwd`/`git worktree list` you're not removing the one you're standing in. The branch lives on origin
 and its local ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its
-worktree (§ Stuck / blocked). **For a single-ticket or freeform run, `git checkout <branch>` on the
-home tree right after removal** — the branch's local ref survives, so this is the same-second next
-command, not a separate pass. Without it the home tree is still sitting on whatever it had at step 0,
-and the user has nothing of this run to look at without asking.
+worktree (§ Stuck / blocked). The home tree itself was already updated at step 4a, right after the
+build landed — teardown just reclaims the worktree, it doesn't gate what the user sees.
 
 **Copy never blocks the build.** A PR whose only red check is the knowledge check's `COPY-TBD` marker
 still opens, still counts as this run's output — it is not stuck, and the run does not wait on it.
