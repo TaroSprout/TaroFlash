@@ -69,4 +69,14 @@ describe('RouteSkeleton', () => {
     })
     expect(wrapper.find('[data-testid="route-skeleton"]').exists()).toBe(true)
   })
+
+  test('the fallback div carries neither animate-pulse nor shimmer [obligation]', () => {
+    const wrapper = shallowMount(RouteSkeleton, {
+      props: { name: 'unknown-route' },
+      global: { stubs }
+    })
+    const fallback = wrapper.find('[data-testid="route-skeleton"]')
+    expect(fallback.classes()).not.toContain('animate-pulse')
+    expect(fallback.classes()).not.toContain('shimmer')
+  })
 })

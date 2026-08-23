@@ -9,10 +9,12 @@
     ></div>
 
     <div
+      data-testid="dashboard-tip-card-skeleton__text-bar"
       class="h-6 w-24 bg-skeleton rounded-2 bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 bgx-color-(--color-skeleton-sheen)"
     ></div>
 
     <div
+      data-testid="dashboard-tip-card-skeleton__text-bar"
       class="h-10 w-full max-w-80 bg-skeleton rounded-2 bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 bgx-color-(--color-skeleton-sheen)"
     ></div>
   </div>

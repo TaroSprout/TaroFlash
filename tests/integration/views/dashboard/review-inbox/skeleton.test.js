@@ -61,4 +61,11 @@ describe('ReviewInboxSkeleton (views/dashboard/review-inbox/skeleton.vue) [oblig
       expect(card.props('shimmer')).toBe(true)
     }
   })
+
+  test('every label no longer carries animate-pulse [obligation]', () => {
+    const wrapper = mountSkeleton()
+    for (const label of wrapper.findAll('[data-testid="review-inbox-skeleton__label"]')) {
+      expect(label.classes()).not.toContain('animate-pulse')
+    }
+  })
 })

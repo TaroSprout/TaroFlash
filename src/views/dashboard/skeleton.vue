@@ -30,7 +30,12 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
         <dashboard-section loading :label="t('dashboard.deck-filter.all-label')">
           <template #subheader>
             <div data-testid="deck-grid-sort-options-skeleton" class="flex gap-8">
-              <div v-for="n in 3" :key="n" class="h-6 w-20 bg-skeleton rounded-2"></div>
+              <div
+                v-for="n in 3"
+                :key="n"
+                data-testid="deck-grid-sort-options-skeleton__item"
+                class="h-6 w-20 bg-skeleton rounded-2"
+              ></div>
             </div>
           </template>
 

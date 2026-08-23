@@ -91,4 +91,13 @@ describe('DeckHeroSkeleton (deck-hero/skeleton.vue)', () => {
     const bars = wrapper.find('[data-testid="deck-hero-skeleton__details"]').findAll('div')
     expect(bars).toHaveLength(3)
   })
+
+  // ── Fade retirement ───────────────────────────────────────────────────────
+
+  test('the wrapper no longer carries animate-pulse [obligation]', () => {
+    const wrapper = mountSkeleton()
+    expect(wrapper.find('[data-testid="deck-hero-skeleton"]').classes()).not.toContain(
+      'animate-pulse'
+    )
+  })
 })
