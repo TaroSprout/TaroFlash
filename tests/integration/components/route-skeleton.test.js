@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
