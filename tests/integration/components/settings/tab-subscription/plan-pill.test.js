@@ -85,4 +85,14 @@ describe('plan-pill — loading state', () => {
     const wrapper = makePlanPill({ loading: true })
     expect(wrapper.find('[data-testid="plan-pill__primary"]').exists()).toBe(false)
   })
+
+  // shimmer and bgx-diagonal-stripes must coexist on the loading body — the
+  // fix's premise is that the sweep now blends over a patterned host instead
+  // of the two being mutually exclusive.
+  test('keeps the shimmer variant alongside the bgx-diagonal-stripes pattern variant while loading [obligation]', () => {
+    const wrapper = makePlanPill({ loading: true })
+    const classes = wrapper.find('[data-testid="plan-pill__body"]').classes()
+    expect(classes).toContain('data-[loading=true]:shimmer')
+    expect(classes).toContain('data-[loading=true]:bgx-diagonal-stripes')
+  })
 })
