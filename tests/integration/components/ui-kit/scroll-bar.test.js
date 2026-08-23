@@ -193,6 +193,36 @@ describe('UiScrollBar — pointercancel and unmount leave dragging false with ca
   })
 })
 
+// ── Visibility variant [obligation] ──────────────────────────────────────────
+// The whole md-breakpoint fix rides on this one compound class — a plain
+// `pointer-fine:block` would show the bar below 832px again, and dropping the
+// `pointer-fine:` half would show it on a coarse (touch) pointer at any width.
+
+describe('UiScrollBar — track visibility class [obligation]', () => {
+  test('carries the compound md:pointer-fine:block variant alongside hidden', async () => {
+    const wrapper = mountScrollBar()
+    await waitForUpdate()
+
+    const classes = track(wrapper).classes()
+    expect(classes).toContain('md:pointer-fine:block')
+    expect(classes).toContain('hidden')
+  })
+
+  test('never regresses to a bare pointer-fine:block missing the md gate', async () => {
+    const wrapper = mountScrollBar()
+    await waitForUpdate()
+
+    expect(track(wrapper).classes()).not.toContain('pointer-fine:block')
+  })
+
+  test('never regresses to a bare md:block missing the coarse-pointer suppression', async () => {
+    const wrapper = mountScrollBar()
+    await waitForUpdate()
+
+    expect(track(wrapper).classes()).not.toContain('md:block')
+  })
+})
+
 // ── Track press [obligation] ─────────────────────────────────────────────────
 
 describe('UiScrollBar — track press centres the handle on the press point [obligation]', () => {

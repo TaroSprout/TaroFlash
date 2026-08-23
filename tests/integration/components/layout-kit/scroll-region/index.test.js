@@ -1,8 +1,15 @@
 import { describe, test, expect, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
+import { page } from 'vite-plus/test/browser/context'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
+
+// The default iframe viewport (414×896) sits below the `md` breakpoint the
+// scroll-region gutter now gates on — tests exercising the "gutter present"
+// path widen it explicitly and this restores it afterwards so later tests
+// don't inherit a wide viewport.
+const DEFAULT_VIEWPORT = [414, 896]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // Tailwind's utility classes aren't compiled in this test environment, so the
@@ -19,11 +26,12 @@ import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
 let _activeWrappers = []
 let _activeHosts = []
 
-afterEach(() => {
+afterEach(async () => {
   for (const w of _activeWrappers) w.unmount()
   _activeWrappers = []
   for (const h of _activeHosts) h.remove()
   _activeHosts = []
+  await page.viewport(...DEFAULT_VIEWPORT)
 })
 
 const waitForUpdate = waitForScrollSettle
@@ -135,7 +143,10 @@ describe('ScrollRegion — handle resizes when content grows with no scroll or r
 // content column lands somewhere the design never put it.
 
 describe('ScrollRegion — the handle band plus the published end padding equal the declared inset [obligation]', () => {
+  // These assert the inset/band split math, not the breakpoint gate itself —
+  // widen past `md` so the gutter these tests depend on is actually present.
   async function mountWithInset(inset) {
+    await page.viewport(900, 800)
     const wrapper = mountRegion({
       height: 100,
       contentHeight: 500,
@@ -168,6 +179,7 @@ describe('ScrollRegion — the handle band plus the published end padding equal 
   })
 
   test('a consumer that declares no inset gets the whole gutter as the band', async () => {
+    await page.viewport(900, 800)
     const wrapper = mountRegion({
       height: 100,
       contentHeight: 500,
@@ -185,6 +197,35 @@ describe('ScrollRegion — the handle band plus the published end padding equal 
     await waitForUpdate()
 
     expect(pxOf(scroller(wrapper).element, 'paddingInlineEnd')).toBe(0)
+  })
+})
+
+// ── The gutter costs nothing below the md breakpoint [obligation] ────────────
+// A real Chromium viewport resize genuinely re-evaluates the `@media
+// (min-width: 52rem)` rule, unlike jsdom — so this drives the actual gate
+// rather than reading the stylesheet text.
+
+describe('ScrollRegion — --scroll-gutter is width-gated at the md breakpoint [obligation]', () => {
+  test('below 832px the gutter is 0 even with a fine pointer', async () => {
+    await page.viewport(700, 800)
+    const wrapper = mountRegion({ height: 100, contentHeight: 500 })
+    await waitForUpdate()
+
+    const gutter = getComputedStyle(root(wrapper).element)
+      .getPropertyValue('--scroll-gutter')
+      .trim()
+    expect(['', '0px', '0']).toContain(gutter)
+  })
+
+  test('at 832px and above with a fine pointer the gutter is 2rem', async () => {
+    await page.viewport(900, 800)
+    const wrapper = mountRegion({ height: 100, contentHeight: 500 })
+    await waitForUpdate()
+
+    const gutter = getComputedStyle(root(wrapper).element)
+      .getPropertyValue('--scroll-gutter')
+      .trim()
+    expect(gutter).toBe('2rem')
   })
 })
 
