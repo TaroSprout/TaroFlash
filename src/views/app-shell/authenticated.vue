@@ -60,7 +60,9 @@ watch(
     <nav-bar />
     <taro-phone />
 
-    <main class="relative overflow-clip w-full max-w-(--page-width)">
+    <main
+      class="relative overflow-clip w-full max-w-(--page-width) pb-[var(--mobile-dock-height,0px)]"
+    >
       <router-view v-slot="{ Component, route }">
         <transition :css="false" @leave="onLeave" @enter="onEnter">
           <div :key="route.name as string" data-testid="route-container" class="relative">
