@@ -4,7 +4,7 @@ domain: decks
 status: current
 hazard: true
 related: [decks, cards]
-updated: 2026-08-08
+updated: 2026-08-23
 ---
 
 # Deck card editor
@@ -45,6 +45,11 @@ you were typing into stays exactly where it was.
 
 Losing that continuity would mean every fresh card blinks and drops focus the instant its first
 save lands — mid-keystroke, for the fastest typists.
+
+The placeholder is retired the moment the server's own copy shows up in the persisted list — from
+then on that copy renders the row, and the placeholder has no job left. Keeping it past that point
+is what resurrects a deleted card: the card leaves the persisted list, but the retired placeholder
+is still sitting there believing it's real, so it renders the row right back.
 
 ## Only one card can be waiting for focus at a time
 
