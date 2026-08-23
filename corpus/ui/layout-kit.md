@@ -26,17 +26,16 @@ should be versus a signup card versus an admin console, so it doesn't force
 one. What it does mean is every call site has to remember to cap it on
 non-mobile screens, or the window fills the viewport and looks wrong.
 
-Two shapes cover every current caller:
+Every caller falls into one of two shapes — the roster of who uses which
+isn't tracked here, since a new caller joins either shape without this topic
+needing to know:
 
 - **A fixed width breakpoint class**, when the content doesn't need to react
-  to `layout_mode` — `feedback-board.vue` (`sm:w-170`), `signup/index.vue`
-  (`sm:w-130`), `upload-lesson-modal/index.vue` (`sm:w-150`),
-  `admin/index.vue` (`sm:w-170 lg:w-200`).
+  to `layout_mode` — a plain `sm:w-*` (or similar) on a bare `app-window`.
 - **A `layout_mode`-driven width**, when the window also switches into
-  `paged-window`'s desktop sidebar layout — `settings/index.vue` and
-  `deck-settings/index.vue` both pick `w-248!` / `w-238!` on `desktop` and
-  fall back to `w-full! max-w-*` otherwise, `!` because `paged-window`'s own
-  layout classes would otherwise win.
+  `paged-window`'s desktop sidebar layout — a `desktop`-only width class
+  alongside a `w-full! max-w-*` fallback for the other modes, `!` because
+  `paged-window`'s own layout classes would otherwise win.
 
 ## Docking drops the body scroller
 
