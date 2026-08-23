@@ -106,7 +106,7 @@ const show_skeleton = computed(() => !deck.value)
           :class="
             fills_viewport
               ? 'xl:flex xl:flex-col xl:h-[calc(100dvh-var(--nav-height))]'
-              : 'pb-[calc(1rem+var(--mobile-dock-height,0px))]'
+              : 'pb-[1rem]'
           "
         >
           <div

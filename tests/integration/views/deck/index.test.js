@@ -318,6 +318,15 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(main.classes()).not.toContain('xl:h-[calc(100dvh-var(--nav-height))]')
   })
 
+  // The dock clearance moved to the shared <main> in authenticated.vue — a
+  // surviving dock term here would double the padding under the mobile dock.
+  test('non-fills_viewport padding is a flat 1rem with no mobile-dock-height term [obligation]', () => {
+    const wrapper = mount({ mode: 'view', editorOpts: { cards: [{ id: 1 }] } })
+    const main = wrapper.find('[data-testid="deck-view__main"]')
+    expect(main.classes()).toContain('pb-[1rem]')
+    expect(main.classes().some((c) => c.includes('mobile-dock-height'))).toBe(false)
+  })
+
   // ── toolbar-skeleton swap [obligation] ────────────────────────────────────
 
   test('shows mode-toolbar-skeleton when view_state is "empty" [obligation]', () => {

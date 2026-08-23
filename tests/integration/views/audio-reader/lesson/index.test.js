@@ -661,4 +661,20 @@ describe('LessonView', () => {
       expect(transcriptResumeMock).toHaveBeenCalledTimes(1)
     })
   })
+
+  // ── viewport height reserves room for the mobile dock [obligation] ─────────
+  //
+  // The dock now sits below this view rather than over it, so the lesson's
+  // own min-height must subtract the dock's published height or the dock
+  // pushes the lesson past one screen.
+
+  describe('viewport height reserves room for the mobile dock [obligation]', () => {
+    test('[obligation] min-height subtracts --mobile-dock-height from the nav-adjusted viewport', () => {
+      const wrapper = mountView()
+
+      expect(wrapper.find('[data-testid="lesson-view"]').classes()).toContain(
+        'min-h-[calc(100dvh-var(--nav-height)-var(--mobile-dock-height,0px))]'
+      )
+    })
+  })
 })
