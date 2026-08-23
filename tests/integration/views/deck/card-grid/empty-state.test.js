@@ -3,6 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import CardGridEmpty from '@/views/deck/card-grid/empty-state.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
+import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 
 // ── Module-level mocks ────────────────────────────────────────────────────────
@@ -36,20 +37,47 @@ const CardGridSkeletonStub = defineComponent({
   }
 })
 
-const UiButtonStub = defineComponent({
-  name: 'UiButton',
+// Renders a primary button (@click) plus one button per option (@select), so
+// tests can drive both the create-button's own body and its dropdown entries
+// without reaching into the real popover/menu machinery.
+const UiDropdownButtonStub = defineComponent({
+  name: 'UiDropdownButton',
   inheritAttrs: false,
-  emits: ['press'],
-  setup(_props, { attrs, slots, emit }) {
-    return () =>
-      h(
-        'button',
-        {
-          'data-testid': attrs['data-testid'] ?? 'ui-button-stub',
-          onClick: () => emit('press')
-        },
-        slots.default?.()
-      )
+  props: { options: { type: Array, default: () => [] } },
+  emits: ['click', 'select'],
+  setup(props, { attrs, slots, emit }) {
+    return () => {
+      const raw_testid = attrs['data-testid']
+      const testid = typeof raw_testid === 'string' ? raw_testid : 'ui-dropdown-button-stub'
+      return h('div', { 'data-testid': testid }, [
+        h(
+          'button',
+          { 'data-testid': `${testid}__primary`, onClick: (e) => emit('click', e) },
+          slots.default?.()
+        ),
+        ...props.options.map((option) =>
+          h(
+            'button',
+            {
+              'data-testid': `${testid}__option-${option.value}`,
+              onClick: () => emit('select', option)
+            },
+            option.label
+          )
+        ),
+        // Fires with a payload the real options list never offers, so a test
+        // can drive the select handler's non-import branch independent of
+        // whatever CardGridEmpty currently passes as `options`.
+        h(
+          'button',
+          {
+            'data-testid': `${testid}__option-forced-other`,
+            onClick: () => emit('select', { label: 'Other', value: 'other' })
+          },
+          'Other'
+        )
+      ])
+    }
   }
 })
 
@@ -69,7 +97,14 @@ function makeMobileEditor({ openNewCard } = {}) {
   return { openNewCard: openNewCard ?? vi.fn() }
 }
 
-function mount({ editor, mobileEditor, isCompact = false, isMobile = false, props = {} } = {}) {
+function mount({
+  editor,
+  mobileEditor,
+  isCompact = false,
+  isMobile = false,
+  props = {},
+  shell
+} = {}) {
   // isCompact drives w<sm (base vs md skeleton size); isMobile drives w<md
   // (desktop mode-stack vs mobile editor for the create button).
   matchMediaMock.mockImplementation((token) => {
@@ -77,16 +112,20 @@ function mount({ editor, mobileEditor, isCompact = false, isMobile = false, prop
     if (token === 'w<md') return ref(isMobile)
     return ref(false)
   })
+
+  const provide = {
+    [cardEditorKey]: editor ?? makeEditor(),
+    [mobileCardEditorKey]: mobileEditor ?? makeMobileEditor()
+  }
+  if (shell !== undefined) provide[deckViewShellKey] = shell
+
   return shallowMount(CardGridEmpty, {
     props,
     global: {
-      provide: {
-        [cardEditorKey]: editor ?? makeEditor(),
-        [mobileCardEditorKey]: mobileEditor ?? makeMobileEditor()
-      },
+      provide,
       stubs: {
         CardGridSkeleton: CardGridSkeletonStub,
-        UiButton: UiButtonStub,
+        UiDropdownButton: UiDropdownButtonStub,
         UiIcon: UiIconStub
       }
     }
@@ -156,7 +195,7 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
 
   // ── create button — desktop vs mobile [obligation] ────────────────────────
 
-  test('clicking the create button calls newCard (desktop editor) at desktop width [obligation]', async () => {
+  test('clicking the create button primary body calls newCard (desktop editor) at desktop width [obligation]', async () => {
     const newCard = vi.fn()
     const openNewCard = vi.fn()
     const wrapper = mount({
@@ -164,12 +203,12 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
       editor: makeEditor({ newCard }),
       mobileEditor: makeMobileEditor({ openNewCard })
     })
-    await wrapper.find('[data-testid="card-grid-empty__create-button"]').trigger('click')
+    await wrapper.find('[data-testid="card-grid-empty__create-button__primary"]').trigger('click')
     expect(newCard).toHaveBeenCalledOnce()
     expect(openNewCard).not.toHaveBeenCalled()
   })
 
-  test('clicking the create button calls mobile_editor.openNewCard at phone width [obligation]', async () => {
+  test('clicking the create button primary body calls mobile_editor.openNewCard at phone width [obligation]', async () => {
     const newCard = vi.fn()
     const openNewCard = vi.fn()
     const wrapper = mount({
@@ -177,9 +216,41 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
       editor: makeEditor({ newCard }),
       mobileEditor: makeMobileEditor({ openNewCard })
     })
-    await wrapper.find('[data-testid="card-grid-empty__create-button"]').trigger('click')
+    await wrapper.find('[data-testid="card-grid-empty__create-button__primary"]').trigger('click')
     expect(openNewCard).toHaveBeenCalledOnce()
     expect(newCard).not.toHaveBeenCalled()
+  })
+
+  // ── create button — import dropdown entry [obligation] ────────────────────
+  // The primary press → openNewCard regression risk is the handler moving from
+  // @press to @click during the ui-button → ui-dropdown-button swap; selecting
+  // the import option is a separate seam entirely, routed through the shell.
+
+  test('selecting the import option calls the injected shell setMode("import") [obligation]', async () => {
+    const setMode = vi.fn()
+    const wrapper = mount({ shell: { setMode } })
+    await wrapper
+      .find('[data-testid="card-grid-empty__create-button__option-import"]')
+      .trigger('click')
+    expect(setMode).toHaveBeenCalledWith('import')
+  })
+
+  test('selecting a non-import option does not call setMode [obligation]', async () => {
+    const setMode = vi.fn()
+    const wrapper = mount({ shell: { setMode } })
+    // Only "import" is offered today, but the handler branches on option.value —
+    // this guards against a future second option silently triggering import mode.
+    await wrapper
+      .find('[data-testid="card-grid-empty__create-button__option-forced-other"]')
+      .trigger('click')
+    expect(setMode).not.toHaveBeenCalled()
+  })
+
+  test('selecting the import option with no shell injected does not throw [obligation]', async () => {
+    const wrapper = mount({ shell: null })
+    await expect(
+      wrapper.find('[data-testid="card-grid-empty__create-button__option-import"]').trigger('click')
+    ).resolves.not.toThrow()
   })
 
   // ── heading uses i18n key [obligation] ────────────────────────────────────
@@ -232,9 +303,10 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     )
   })
 
-  test('show_button=false omits the create button entirely', () => {
+  test('show_button=false omits the create button entirely [obligation]', () => {
     const wrapper = mount({ props: { show_button: false } })
     expect(wrapper.find('[data-testid="card-grid-empty__create-button"]').exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'UiDropdownButton' }).exists()).toBe(false)
   })
 
   test('an explicit size overrides the viewport-derived skeleton size', () => {

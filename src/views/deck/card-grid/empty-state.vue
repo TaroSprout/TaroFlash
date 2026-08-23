@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import CardGridSkeleton from './skeleton.vue'
-import UiButton from '@/components/ui-kit/button.vue'
+import UiDropdownButton, {
+  type DropdownOption
+} from '@/components/ui-kit/dropdown-button/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { type CardGridSize } from '@/views/deck/composables/view-shell'
+import { deckViewShellKey, type CardGridSize } from '@/views/deck/composables/view-shell'
 import { useEditorSurface } from '@/views/deck/composables'
 
 type EmptyStateProps = {
@@ -22,11 +24,22 @@ const { icon = 'card-deck', message, show_button = true, size } = defineProps<Em
 const { t } = useI18n()
 
 const surface = useEditorSurface()
+const shell = inject(deckViewShellKey, null)
 
 // On the narrowest screens the md backdrop cards get cramped — drop to base.
 const is_compact = useMatchMedia('w<sm')
 
 const skeleton_size = computed<CardGridSize>(() => size ?? (is_compact.value ? 'base' : 'md'))
+
+// Mirrors the deck menu's own import entry, so the empty deck can reach
+// import without first forcing a hand-created card.
+const create_button_options = computed<DropdownOption[]>(() => [
+  { label: t('deck-view.actions.import-cards'), value: 'import', icon: 'card-place' }
+])
+
+function onCreateButtonSelect(option: DropdownOption) {
+  if (option.value === 'import') shell?.setMode('import')
+}
 </script>
 
 <template>
@@ -53,15 +66,17 @@ const skeleton_size = computed<CardGridSize>(() => size ?? (is_compact.value ? '
           {{ message ?? t('deck-view.empty-state.heading') }}
         </p>
 
-        <ui-button
+        <ui-dropdown-button
           v-if="show_button"
           data-testid="card-grid-empty__create-button"
           data-palette="brand"
           icon-left="card-add"
-          @press="surface.openNewCard"
+          :options="create_button_options"
+          @click="surface.openNewCard"
+          @select="onCreateButtonSelect"
         >
           {{ t('deck-view.empty-state.create-button') }}
-        </ui-button>
+        </ui-dropdown-button>
       </div>
     </div>
   </div>

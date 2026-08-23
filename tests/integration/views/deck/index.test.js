@@ -409,6 +409,49 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(hero.attributes('data-hide-actions')).toBe('false')
   })
 
+  // ── view_state stays "ready" for import mode on a zero-card deck [obligation] ──
+  // Regression: import mode used to fall through to the empty-deck's own
+  // "Make the first one!" branch instead of mounting the import pane, since
+  // both share the "no cards yet" precondition.
+
+  test('view_state is "ready" (not "empty") when shell.mode is import on a zero-card deck [obligation]', () => {
+    const wrapper = mount({
+      mode: 'import',
+      editorOpts: { cards: [], isLoading: false }
+    })
+    expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(false)
+  })
+
+  test('the toolbar-skeleton branch does not render in import mode on a zero-card deck [obligation]', () => {
+    const wrapper = mount({
+      mode: 'import',
+      editorOpts: { cards: [], isLoading: false }
+    })
+    expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
+    // The sticky toolbar wrapper itself is hidden for the whole of import
+    // mode, independent of view_state — see "hides the sticky toolbar
+    // entirely in import mode" above.
+    expect(wrapper.find('[data-testid="deck-view__toolbar"]').exists()).toBe(false)
+  })
+
+  test('deck-hero keeps its actions visible in import mode on a zero-card deck [obligation]', () => {
+    const wrapper = mount({
+      mode: 'import',
+      editorOpts: { cards: [], isLoading: false },
+      withHideActionsCheck: true
+    })
+    const hero = wrapper.find('[data-testid="deck-hero-stub"]')
+    expect(hero.attributes('data-hide-actions')).toBe('false')
+  })
+
+  test('a plain (non-import) empty deck still fills the viewport [obligation]', () => {
+    const wrapper = mount({ mode: 'view', editorOpts: { cards: [], isLoading: false } })
+    const main = wrapper.find('[data-testid="deck-view__main"]')
+    expect(main.classes()).toContain('xl:h-[calc(100dvh-var(--nav-height))]')
+  })
+
   // ── useCardSearch wiring [obligation] ─────────────────────────────────────
   // The search composable receives a shared query ref, the editor's all_cards,
   // and the editor's isLoading — no deck_id (filtering is now server-side).
