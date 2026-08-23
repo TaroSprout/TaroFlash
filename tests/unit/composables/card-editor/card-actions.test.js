@@ -60,10 +60,34 @@ function makeSelection({ selected_ids = [], select_all = false, deselected = [] 
   }
 }
 
-function makeList({ persisted = [] } = {}) {
+function makeList({ persisted = [], temp_entries = [] } = {}) {
   return {
     persisted_cards: ref(persisted),
-    findCard: (id) => persisted.find((c) => c.id === id)
+    findCard: (id) => persisted.find((c) => c.id === id),
+    temp_entries: ref(temp_entries),
+    // Mirrors src/views/deck/composables/virtual-list.ts: drop the placeholders
+    // standing in for `real_ids`, returning each with the slot it held.
+    retireTemps(real_ids) {
+      const ids = new Set(real_ids)
+      const retired = []
+
+      this.temp_entries.value = this.temp_entries.value.filter((entry, index) => {
+        const leaving = entry.real_id !== null && ids.has(entry.real_id)
+        if (leaving) retired.push({ index, entry })
+        return !leaving
+      })
+
+      return retired
+    },
+    // Mirrors virtual-list.ts: put retired placeholders back in the slots they held.
+    restoreTemps(retired) {
+      if (retired.length === 0) return
+
+      const entries = this.temp_entries.value.slice()
+      for (const { index, entry } of retired) entries.splice(index, 0, entry)
+
+      this.temp_entries.value = entries
+    }
   }
 }
 

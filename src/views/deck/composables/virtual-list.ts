@@ -1,4 +1,4 @@
-import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
+import { computed, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import uid from '@/utils/uid'
 import { resolveRankNeighbours, type RankNeighbours } from '@/utils/card/rank'
 import type { useCardsInDeckInfiniteQuery } from '@/api/cards'
@@ -15,6 +15,9 @@ export type CardEntry = {
   side: 'before' | 'after' | null
   real_id: number | null
 }
+
+/** A placeholder taken out of the list, with the slot it held. */
+export type RetiredTemp = { index: number; entry: CardEntry }
 
 let next_temp_id = 0
 
@@ -79,6 +82,15 @@ export function useVirtualCardList(
   const live_temps = computed<CardEntry[]>(() =>
     temp_entries.value.filter((e) => e.real_id === null || !persisted_id_set.value.has(e.real_id))
   )
+
+  // A promoted temp is retired the moment the persisted list carries its card:
+  // the server's copy renders the row from then on, and an entry kept past that
+  // point would put the card back on screen the next time it leaves the deck —
+  // deleted, or moved somewhere else. →[K:deck-temp-card-handoff]
+  watch(persisted_id_set, (ids) => {
+    const kept = temp_entries.value.filter((e) => e.real_id === null || !ids.has(e.real_id))
+    if (kept.length !== temp_entries.value.length) temp_entries.value = kept
+  })
 
   /** Wrap each persisted card with its memoised client_id. */
   function wrapPersisted(): CardWithClientId[] {
@@ -274,6 +286,42 @@ export function useVirtualCardList(
   }
 
   /**
+   * Take the placeholders standing in for `real_ids` back out of the list —
+   * the cards they were promoted against have left the deck. A card created
+   * blank this session never reaches the persisted list at all (its insert
+   * skips that reload on purpose), so its placeholder is the only thing
+   * rendering it and this is the only thing that ever takes it off screen.
+   * →[K:deck-temp-card-handoff]
+   *
+   * @returns Each removed entry with the slot it held, for `restoreTemps`.
+   */
+  function retireTemps(real_ids: Iterable<number>): RetiredTemp[] {
+    const ids = new Set(real_ids)
+    const retired: RetiredTemp[] = []
+
+    temp_entries.value = temp_entries.value.filter((entry, index) => {
+      const leaving = entry.real_id !== null && ids.has(entry.real_id)
+      if (leaving) retired.push({ index, entry })
+      return !leaving
+    })
+
+    return retired
+  }
+
+  /**
+   * Put retired placeholders back in the slots they held — the rollback for a
+   * delete the server refused. Ascending slots, so each lands where it was.
+   */
+  function restoreTemps(retired: RetiredTemp[]) {
+    if (retired.length === 0) return
+
+    const entries = temp_entries.value.slice()
+    for (const { index, entry } of retired) entries.splice(index, 0, entry)
+
+    temp_entries.value = entries
+  }
+
+  /**
    * Resolve a card-id back to a Card. Searches persisted first, then live
    * temp entries — mirrors the merge order in `all_cards`. Returns the
    * underlying Card (no `client_id` wrapper) so callers can spread it into
@@ -319,6 +367,8 @@ export function useVirtualCardList(
     findEntryByClientId,
     patchTemp,
     removeTemp,
+    retireTemps,
+    restoreTemps,
     findCard,
     promoteTemp
   }

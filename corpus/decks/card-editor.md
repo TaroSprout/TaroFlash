@@ -4,7 +4,7 @@ domain: decks
 status: current
 hazard: true
 related: [decks, cards]
-updated: 2026-08-08
+updated: 2026-08-23
 ---
 
 # Deck card editor
@@ -45,6 +45,15 @@ you were typing into stays exactly where it was.
 
 Losing that continuity would mean every fresh card blinks and drops focus the instant its first
 save lands — mid-keystroke, for the fastest typists.
+
+The placeholder is retired the moment the server's own copy shows up in the persisted list — but
+only for a card whose insert actually reloads that list. A card created blank never gets that
+reload: it skips on purpose, to protect the row you're mid-keystroke on, so the server's copy never
+lands in the persisted list at all. That placeholder is the only thing ever rendering the card, and
+nothing retires it automatically — every action that's meant to take the card off screen (delete,
+move) has to retire it explicitly instead. Assume the automatic path covers every card and a blank
+card's row survives its own deletion: the persisted list drops it, but the never-retired placeholder
+is still sitting there believing it's real, so it renders the row right back.
 
 ## Only one card can be waiting for focus at a time
 

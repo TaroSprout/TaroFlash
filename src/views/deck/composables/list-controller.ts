@@ -304,7 +304,11 @@ export function useCardListController(opts: Options) {
    */
   function persistEdit(id: number, staged: CardEntry | undefined, values: Partial<Card>) {
     const entry = staged && list.findEntryByClientId(staged.client_id)
-    if (staged && !entry) return
+
+    // An entry that left the list while its own insert ran was either refused
+    // by the cap — nothing to update — or retired because the server's copy
+    // arrived, in which case the edit belongs to that copy.
+    if (staged && !entry && staged.real_id === null) return
 
     if (entry?.real_id === null) return insertTemp(id, entry, values)
 
