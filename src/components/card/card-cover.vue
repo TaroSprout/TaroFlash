@@ -65,6 +65,9 @@ const icon_palette = computed(() => coverIconPalette(cover?.palette))
   border-radius: var(--face-radius);
   box-sizing: border-box;
   border: var(--face-border-width) solid var(--color-accent);
+  /* Lets the shimmer sweep bleed out past the padding box it defaults to, so
+     it crosses this cover's own border instead of stopping short of it. */
+  --shimmer-bleed: var(--face-border-width);
 }
 
 /* No palette → neutral cover: the border steps off the accent onto the raised
