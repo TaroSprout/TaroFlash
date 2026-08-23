@@ -45,6 +45,7 @@ export function installAudioLifecycle(): () => void {
 
   let forced_unlock = false
   let was_hidden = false
+  let was_blurred = false
 
   // Arm before resuming, and never await the resume — a blocked one stays
   // pending forever, so the gesture listener would never get armed at all.
@@ -95,6 +96,22 @@ export function installAudioLifecycle(): () => void {
     }
   }
 
+  const onBlur = () => {
+    was_blurred = true
+  }
+
+  // A window regaining focus after losing it is an interruption — never route
+  // it through `recover`, which trusts the context's own account of itself.
+  // →[K:ios-audio-interruption]
+  const onFocus = () => {
+    if (was_blurred) {
+      was_blurred = false
+      recoverFromBackground()
+    } else {
+      recover()
+    }
+  }
+
   const onVisibility = () => {
     if (document.visibilityState === 'hidden') {
       was_hidden = true
@@ -128,7 +145,8 @@ export function installAudioLifecycle(): () => void {
 
   document.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('pageshow', onPageShow)
-  window.addEventListener('focus', recover)
+  window.addEventListener('blur', onBlur)
+  window.addEventListener('focus', onFocus)
   const offStateChange = engine.onStateChange(onStateChange)
   const offPointerActivity = trackPointerActivity()
 
@@ -138,11 +156,13 @@ export function installAudioLifecycle(): () => void {
   return () => {
     document.removeEventListener('visibilitychange', onVisibility)
     window.removeEventListener('pageshow', onPageShow)
-    window.removeEventListener('focus', recover)
+    window.removeEventListener('blur', onBlur)
+    window.removeEventListener('focus', onFocus)
     offStateChange()
     offPointerActivity()
     removeGestureListeners()
     installed = false
     gesture_armed = false
+    was_blurred = false
   }
 }

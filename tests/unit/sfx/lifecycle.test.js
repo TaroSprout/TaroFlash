@@ -235,6 +235,24 @@ describe('installAudioLifecycle', () => {
     expect(engineMock.resume).not.toHaveBeenCalled()
   })
 
+  test('teardown removes the blur and focus listeners', async () => {
+    engineMock.state.mockReturnValue('running')
+    const install = await loadLifecycle()
+    teardown = install()
+    await flushMicrotasks()
+
+    teardown()
+    teardown = undefined
+
+    window.dispatchEvent(new Event('blur'))
+    window.dispatchEvent(new Event('focus'))
+    await flushMicrotasks()
+    window.dispatchEvent(new Event('click'))
+    await flushMicrotasks()
+
+    expect(engineMock.unlock).not.toHaveBeenCalled()
+  })
+
   test('a second install without teardown is a noop', async () => {
     const install = await loadLifecycle()
     teardown = install()
@@ -290,6 +308,25 @@ describe('installAudioLifecycle', () => {
       await flushMicrotasks()
 
       firePageShow(true)
+      await flushMicrotasks()
+
+      window.dispatchEvent(new Event('click'))
+      await flushMicrotasks()
+
+      expect(engineMock.unlock).toHaveBeenCalledWith(true)
+    })
+
+    test('blur then focus forces the rebuild even when the engine reports running [obligation]', async () => {
+      // Regression guard: desktop Safari never fires visibilitychange when the
+      // window loses focus to another app, so blur→focus is the only signal —
+      // and the context lies about being 'running' after an interruption.
+      engineMock.state.mockReturnValue('running')
+      const install = await loadLifecycle()
+      teardown = install()
+      await flushMicrotasks()
+
+      window.dispatchEvent(new Event('blur'))
+      window.dispatchEvent(new Event('focus'))
       await flushMicrotasks()
 
       window.dispatchEvent(new Event('click'))
