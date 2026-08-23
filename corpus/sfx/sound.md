@@ -10,7 +10,7 @@ updated: 2026-08-08
 # Sound
 
 The taps, chimes, and clicks the interface makes — and why they go silent on a
-phone when nothing looks wrong.
+phone, or a desktop tab that lost focus to another app, when nothing looks wrong.
 
 Every sound is a short clip, decoded once at startup and fired down a single
 audio channel the browser hands out. The channel is not always open. A browser
@@ -39,6 +39,12 @@ signal that the page has come back — the tab becoming visible, the window
 regaining focus, the page being restored from the browser's back-forward
 cache, the channel itself announcing a state change — and treats all of them
 the same way: assume audio is dead, and get ready for the next touch.
+
+Desktop Safari never fires the visibility signal for a window that merely
+loses focus to another app — the tab stays reported as visible the whole time,
+so a window regaining focus **after having lost it** is the only sign that an
+interruption happened there, and is treated as one. Focus that never lost the
+window first is the ordinary case and skips the forced rebuild.
 
 That readiness is the actual repair. A listener waits for the next completed
 gesture anywhere on the page, and when it fires, the old channel is discarded
