@@ -181,8 +181,8 @@ import DashboardIndex from '@/views/dashboard/index.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeDeck(id, { due_count = 0, rank = id, created_at, updated_at } = {}) {
-  return { id, title: `Deck ${id}`, due_count, rank, created_at, updated_at }
+function makeDeck(id, { due_count = 0, rank = id, created_at, updated_at, pending = false } = {}) {
+  return { id, title: `Deck ${id}`, due_count, rank, created_at, updated_at, pending }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -265,6 +265,69 @@ describe('DashboardIndex — deck ordering', () => {
         .props('decks')
         .map((d) => d.id)
     ).toEqual([2, 3, 1])
+  })
+})
+
+describe('DashboardIndex — pending decks always sort last [obligation]', () => {
+  test('a pending deck sits after every settled deck under rank sort, regardless of its own rank', () => {
+    decksDataRef.value = [
+      makeDeck(1, { rank: 10 }),
+      makeDeck(2, { rank: 20, pending: true }),
+      makeDeck(3, { rank: 30 })
+    ]
+    const wrapper = mountDashboard()
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([1, 3, 2])
+  })
+
+  test('a pending deck sits last under date-created sort too, regardless of its own created_at', async () => {
+    decksDataRef.value = [
+      makeDeck(1, { created_at: '2026-01-01' }),
+      makeDeck(2, { created_at: '2026-05-01', pending: true }),
+      makeDeck(3, { created_at: '2026-02-01' })
+    ]
+    const wrapper = mountDashboard()
+    wrapper.findComponent(DeckGridSortOptionsStub).vm.$emit('select', 'date-created')
+    await wrapper.vm.$nextTick()
+
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([3, 1, 2])
+  })
+
+  test('a pending deck still sits last while in edit mode (custom/rank sort)', async () => {
+    decksDataRef.value = [makeDeck(1, { rank: 10, pending: true }), makeDeck(2, { rank: 20 })]
+    const wrapper = mountDashboard()
+    await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
+
+    expect(
+      wrapper
+        .findComponent(DeckGridStub)
+        .props('decks')
+        .map((d) => d.id)
+    ).toEqual([2, 1])
+  })
+
+  test('multiple pending decks all land after the settled ones', () => {
+    decksDataRef.value = [
+      makeDeck(1, { rank: 10, pending: true }),
+      makeDeck(2, { rank: 20 }),
+      makeDeck(3, { rank: 5, pending: true })
+    ]
+    const wrapper = mountDashboard()
+    const ids = wrapper
+      .findComponent(DeckGridStub)
+      .props('decks')
+      .map((d) => d.id)
+    expect(ids.at(-1)).not.toBe(2)
+    expect(ids.indexOf(2)).toBe(0)
   })
 })
 

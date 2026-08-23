@@ -4,19 +4,13 @@ import { defineComponent, h, ref } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const {
-  routerPushMock,
-  createDeckMock,
-  deckSettingsOpenMock,
-  randomCoverConfigMock,
-  onItemPointerdownMock
-} = vi.hoisted(() => ({
+const { routerPushMock, createNewDeckMock, onItemPointerdownMock } = vi.hoisted(() => ({
   routerPushMock: vi.fn(),
-  createDeckMock: vi.fn(() => Promise.resolve({ id: 99 })),
-  deckSettingsOpenMock: vi.fn(),
-  randomCoverConfigMock: vi.fn(() => ({ theme: 'pink-400', pattern: 'wave', icon: 'flame' })),
+  createNewDeckMock: vi.fn(() => Promise.resolve()),
   onItemPointerdownMock: vi.fn()
 }))
+
+const creatingDeckRef = ref(false)
 
 const isMatchMediaRef = ref(true)
 
@@ -42,21 +36,12 @@ vi.mock('vue-router', () => ({
   useRoute: () => ({ name: 'dashboard', params: {} })
 }))
 
-vi.mock('@/composables/deck/actions', () => ({
-  useDeckActions: () => ({ createDeck: createDeckMock })
-}))
-
-vi.mock('@/composables/deck/settings-modal', () => ({
-  useDeckSettingsModal: () => ({ open: deckSettingsOpenMock })
+vi.mock('@/views/dashboard/composables/new-deck-action', () => ({
+  useNewDeckAction: () => ({ creating_deck: creatingDeckRef, createNewDeck: createNewDeckMock })
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => isMatchMediaRef
-}))
-
-vi.mock('@/utils/cover', async (importOriginal) => ({
-  ...(await importOriginal()),
-  randomCoverConfig: randomCoverConfigMock
 }))
 
 vi.mock('@/utils/animations/deck-grid', () => ({
@@ -86,7 +71,7 @@ vi.mock('@/views/dashboard/deck-grid/use-deck-grid-reorder', () => ({
 
 const DeckGridItemStub = defineComponent({
   name: 'DeckGridItem',
-  props: ['deck', 'size', 'rearranging', 'dragging', 'locked'],
+  props: ['deck', 'size', 'rearranging', 'dragging', 'locked', 'pending'],
   emits: ['press', 'rearrange'],
   setup(props, { emit }) {
     return () =>
@@ -104,13 +89,12 @@ const DeckGridItemStub = defineComponent({
 
 const NewDeckCardStub = defineComponent({
   name: 'NewDeckCard',
-  props: ['size', 'loading', 'disabled'],
+  props: ['size', 'disabled'],
   emits: ['press'],
   setup(props, { emit }) {
     return () =>
       h('div', {
         'data-testid': 'new-deck-card',
-        'data-loading': String(!!props.loading),
         'data-disabled': String(!!props.disabled),
         onClick: () => emit('press')
       })
@@ -123,8 +107,8 @@ import DeckGrid from '@/views/dashboard/deck-grid/index.vue'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeDeck(id, { rank = id, is_locked = false } = {}) {
-  return { id, title: `Deck ${id}`, due_count: 0, rank, is_locked }
+function makeDeck(id, { rank = id, is_locked = false, pending = false, client_key } = {}) {
+  return { id, title: `Deck ${id}`, due_count: 0, rank, is_locked, pending, client_key }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -140,8 +124,8 @@ function mount(decks, editing = false) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  createDeckMock.mockResolvedValue({ id: 99 })
-  randomCoverConfigMock.mockReturnValue({ theme: 'pink-400', pattern: 'wave', icon: 'flame' })
+  creatingDeckRef.value = false
+  createNewDeckMock.mockResolvedValue(undefined)
   reorderState.measured.value = true
   reorderState.row_count.value = 2
   reorderState.row_pitch.value = 300
@@ -182,52 +166,23 @@ describe('DeckGrid — deck press navigates to the deck route', () => {
 })
 
 describe('DeckGrid — create deck', () => {
-  test('clicking new-deck-card calls deck_actions.createDeck with default title, cover, and study config', async () => {
+  test('clicking new-deck-card calls useNewDeckAction().createNewDeck', async () => {
     const wrapper = mount([])
     await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
 
-    expect(createDeckMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'New Deck',
-        is_public: true,
-        study_config: {},
-        cover_config: { theme: 'pink-400', pattern: 'wave', icon: 'flame' }
-      })
-    )
+    expect(createNewDeckMock).toHaveBeenCalledTimes(1)
   })
 
-  test('sets creating_deck as the loading prop on new-deck-card while the create is in flight', async () => {
-    let resolve_create
-    createDeckMock.mockImplementation(() => new Promise((r) => (resolve_create = r)))
-    const wrapper = mount([])
-
-    await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
-    expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-loading')).toBe('true')
-
-    resolve_create({ id: 1 })
-    await Promise.resolve()
-    await Promise.resolve()
-  })
-
-  test('ignores a second press while creating_deck is already true', async () => {
-    let resolve_create
-    createDeckMock.mockImplementation(() => new Promise((r) => (resolve_create = r)))
-    const wrapper = mount([])
-
-    await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
-    await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
-
-    expect(createDeckMock).toHaveBeenCalledTimes(1)
-
-    resolve_create({ id: 1 })
-    await Promise.resolve()
-    await Promise.resolve()
-  })
-
-  test('does not call createDeck when editing is true, even bypassing the disabled UI state [obligation]', async () => {
+  test('does not call createNewDeck when editing is true, even bypassing the disabled UI state [obligation]', async () => {
     const wrapper = mount([], true)
     await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
-    expect(createDeckMock).not.toHaveBeenCalled()
+    expect(createNewDeckMock).not.toHaveBeenCalled()
+  })
+
+  test('passes disabled=true to new-deck-card when creating_deck is true, with no loading prop [obligation]', () => {
+    creatingDeckRef.value = true
+    const wrapper = mount([])
+    expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('true')
   })
 
   test('passes disabled=true to new-deck-card when editing [obligation]', () => {
@@ -235,9 +190,61 @@ describe('DeckGrid — create deck', () => {
     expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('true')
   })
 
-  test('passes disabled=false to new-deck-card when not editing [obligation]', () => {
+  test('passes disabled=false to new-deck-card when neither creating nor editing [obligation]', () => {
     const wrapper = mount([], false)
     expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('false')
+  })
+})
+
+describe('DeckGrid — pending deck guards [obligation]', () => {
+  test("a pending deck is keyed by client_key, not id — re-keying it doesn't replay the pop-in", () => {
+    const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
+    const wrapper = mount([pending_deck])
+    const item_wrapper = wrapper.find('[data-testid="deck-grid__item"]')
+    expect(item_wrapper.exists()).toBe(true)
+  })
+
+  test('clicking a pending deck does not navigate', async () => {
+    const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
+    const wrapper = mount([pending_deck])
+    await wrapper.find('[data-testid="deck-grid-item"]').trigger('click')
+    expect(routerPushMock).not.toHaveBeenCalled()
+  })
+
+  test('a settled deck still navigates on click', async () => {
+    const wrapper = mount([makeDeck(1)])
+    await wrapper.find('[data-testid="deck-grid-item"]').trigger('click')
+    expect(routerPushMock).toHaveBeenCalledWith({ name: 'deck', params: { id: 1 } })
+  })
+
+  test('pointerdown on a pending deck does not start a reorder drag', async () => {
+    const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
+    const wrapper = mount([pending_deck], true)
+    await wrapper.find('[data-testid="deck-grid__item"]').trigger('pointerdown')
+    expect(onItemPointerdownMock).not.toHaveBeenCalled()
+  })
+
+  test('a pending deck does not get cursor-grab even while editing', () => {
+    const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
+    const wrapper = mount([pending_deck], true)
+    expect(wrapper.find('[data-testid="deck-grid__item"]').classes()).not.toContain('cursor-grab')
+  })
+
+  test('a pending deck is not marked rearranging on DeckGridItem, even in edit mode', () => {
+    const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
+    const wrapper = mount([pending_deck], true)
+    expect(wrapper.findComponent(DeckGridItemStub).props('rearranging')).toBe(false)
+  })
+
+  test('forwards pending=true to DeckGridItem for a pending row', () => {
+    const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
+    const wrapper = mount([pending_deck])
+    expect(wrapper.findComponent(DeckGridItemStub).props('pending')).toBe(true)
+  })
+
+  test('forwards pending=false to DeckGridItem for a settled row', () => {
+    const wrapper = mount([makeDeck(1)])
+    expect(wrapper.findComponent(DeckGridItemStub).props('pending')).toBe(false)
   })
 })
 
