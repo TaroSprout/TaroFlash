@@ -563,6 +563,75 @@ describe('useCardListController', () => {
     })
   })
 
+  // ── persistEdit's vanished-entry guard — a staged entry can leave the list
+  // mid-flight either because it was retired (real_id already set) or refused
+  // by the cap (real_id still null); only the latter is a true no-op. ───────
+
+  describe('persistEdit — a staged entry vanishing from the list mid-edit', () => {
+    // [obligation] the entry is gone by the time persistEdit re-reads it — the
+    // persisted refetch retired the promoted placeholder in the same tick the
+    // keystroke landed — but its real_id already carries the server's copy, so
+    // the edit must still land as an UPDATE, not get silently dropped.
+    test('a keystroke landing as the persisted refetch retires the promoted placeholder still saves as an update [obligation]', async () => {
+      const query = makeCardsQuery([])
+      query.data = ref(query.data.value)
+      cardsInfiniteQueryMock.mockReturnValueOnce(query)
+      const dq = makeDeckQuery(0)
+      deckQueryMock.mockReturnValue(dq)
+
+      const controller = useCardListController({
+        deck_id: 10,
+        shell: makeShell(),
+        search_query: ref('')
+      })
+
+      const client_id = controller.list.addCard()
+      const temp_id = controller.list.findEntryByClientId(client_id).card.id
+      controller.list.promoteTemp(temp_id, 500, 'a0', {})
+
+      // Scheduling the persisted-list update before calling updateCard queues
+      // the retirement watch's flush ahead of updateCard's own `await pending`
+      // continuation, so the entry is gone by the time persistEdit re-reads it.
+      query.data.value = {
+        pages: [{ cards: [{ id: 500, front_text: '', back_text: '' }], next_rank: null }],
+        pageParams: [0]
+      }
+      const update_promise = controller.updateCard(500, { front_text: 'typed as refetch lands' })
+      await update_promise
+
+      expect(controller.list.findEntryByClientId(client_id)).toBeUndefined()
+      expect(insertCardMock).not.toHaveBeenCalled()
+      expect(saveCardMock).toHaveBeenCalledOnce()
+    })
+
+    // [obligation] complementary case: the staged entry vanished because the
+    // eager insert was refused by the cap, so real_id is still null — nothing
+    // was ever created server-side, and the edit stays a no-op.
+    test('a keystroke landing after the cap refuses the eager insert still bails, not a second insert [obligation]', async () => {
+      let rejectInsert
+      insertCardMock.mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          rejectInsert = () => reject({ code: 'PT402' })
+        })
+      )
+      handleLimitErrorMock.mockReturnValueOnce(true)
+
+      const { addCardAtTop, all_cards, updateCard } = makeController()
+      guardAddCardsMock.mockResolvedValue(true)
+      await addCardAtTop()
+
+      const temp_id = all_cards.value[0].id
+      const update_promise = updateCard(temp_id, { front_text: 'typed before rejection' })
+
+      rejectInsert()
+      await update_promise
+
+      expect(insertCardMock).toHaveBeenCalledOnce()
+      expect(saveCardMock).not.toHaveBeenCalled()
+      expect(all_cards.value).toHaveLength(0)
+    })
+  })
+
   // ── eager insert — stageCard fires the INSERT before any keystroke ─────────
 
   describe('eager insert on create', () => {

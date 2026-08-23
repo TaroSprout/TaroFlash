@@ -1,17 +1,20 @@
 import { describe, test, expect, beforeEach } from 'vite-plus/test'
+import { nextTick, ref } from 'vue'
 import { useVirtualCardList } from '@/views/deck/composables/virtual-list'
 
 function makeCardsQuery(pages = []) {
   return {
-    data: { value: { pages, pageParams: pages.map((_, i) => i) } }
+    data: ref({ pages, pageParams: pages.map((_, i) => i) })
   }
 }
 
 describe('useVirtualCardList', () => {
   let list
+  let cards_query
 
   beforeEach(() => {
-    list = useVirtualCardList(makeCardsQuery([]), 10)
+    cards_query = makeCardsQuery([])
+    list = useVirtualCardList(cards_query, 10)
   })
 
   // ── findEntryByClientId ───────────────────────────────────────────────────
@@ -108,6 +111,77 @@ describe('useVirtualCardList', () => {
 
       expect(list.findEntryByClientId(client_id)).toBeDefined()
       expect(list.all_cards.value).toHaveLength(1)
+    })
+  })
+
+  // ── promoted-placeholder retirement — the persisted refetch takes over ─────
+
+  describe('retiring a promoted temp once the persisted list carries its card', () => {
+    // [obligation] deleting a just-created card only removes the row from
+    // screen if the promoted placeholder standing in for it is retired —
+    // otherwise it renders the row right back once the persisted list drops it.
+    test('drops the promoted entry from temp_entries once its real_id appears in the persisted list [obligation]', async () => {
+      const client_id = list.addCard()
+      const temp_id = list.findEntryByClientId(client_id).card.id
+      list.promoteTemp(temp_id, 500, 'a0', { front_text: 'Q' })
+      expect(list.temp_entries.value).toHaveLength(1)
+
+      cards_query.data.value = {
+        pages: [{ cards: [{ id: 500, front_text: 'Q', back_text: '' }], next_rank: null }],
+        pageParams: [0]
+      }
+      await nextTick()
+
+      expect(list.findEntryByClientId(client_id)).toBeUndefined()
+      expect(list.temp_entries.value).toHaveLength(0)
+    })
+
+    test('renders the card exactly once after retirement, not duplicated by the leftover placeholder [obligation]', async () => {
+      const client_id = list.addCard()
+      const temp_id = list.findEntryByClientId(client_id).card.id
+      list.promoteTemp(temp_id, 500, 'a0', { front_text: 'Q' })
+
+      cards_query.data.value = {
+        pages: [{ cards: [{ id: 500, front_text: 'Q', back_text: '' }], next_rank: null }],
+        pageParams: [0]
+      }
+      await nextTick()
+
+      expect(list.all_cards.value).toHaveLength(1)
+      expect(list.all_cards.value[0].id).toBe(500)
+    })
+
+    // A delete on that same card removes it from the persisted list; the
+    // retired placeholder must not resurrect it.
+    test('a card removed from the persisted list after retirement does not come back via the placeholder [obligation]', async () => {
+      const client_id = list.addCard()
+      const temp_id = list.findEntryByClientId(client_id).card.id
+      list.promoteTemp(temp_id, 500, 'a0', { front_text: 'Q' })
+
+      cards_query.data.value = {
+        pages: [{ cards: [{ id: 500, front_text: 'Q', back_text: '' }], next_rank: null }],
+        pageParams: [0]
+      }
+      await nextTick()
+
+      // The delete's optimistic cache write drops the card from the persisted page.
+      cards_query.data.value = { pages: [{ cards: [], next_rank: null }], pageParams: [0] }
+      await nextTick()
+
+      expect(list.all_cards.value).toHaveLength(0)
+    })
+
+    test('leaves a not-yet-promoted temp in place when an unrelated card is persisted', async () => {
+      const client_id = list.addCard()
+
+      cards_query.data.value = {
+        pages: [{ cards: [{ id: 999, front_text: '', back_text: '' }], next_rank: null }],
+        pageParams: [0]
+      }
+      await nextTick()
+
+      expect(list.findEntryByClientId(client_id)).toBeDefined()
+      expect(list.all_cards.value.map((c) => c.client_id)).toContain(client_id)
     })
   })
 })
