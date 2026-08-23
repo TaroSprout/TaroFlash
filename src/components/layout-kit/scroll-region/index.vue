@@ -81,7 +81,9 @@ const { overflowing, progress, visible_fraction, scrollToProgress } =
   );
 }
 
-@media (pointer: fine) {
+/* Below `md` the bar costs more width than it earns, so both the gutter and the bar itself
+   (`ui-kit/scroll-bar.vue`'s `md:pointer-fine:block`) drop out together at this breakpoint. */
+@media (pointer: fine) and (min-width: 52rem) {
   .scroll-region {
     --scroll-gutter: 2rem;
   }
