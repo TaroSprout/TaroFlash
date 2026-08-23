@@ -68,6 +68,9 @@ useEditorBreakpointSync(shell, editor, mobile_editor)
 const view_state = computed<'loading' | 'empty' | 'ready'>(() => {
   if (editor.list.all_cards.value.length > 0) return 'ready'
   if (search.is_active.value) return 'ready'
+  // Import mode outranks the empty deck's own state, so its pane can mount
+  // and the incoming cards preview instead of "Make the first one!".
+  if (shell.mode.value === 'import') return 'ready'
   return editor.isLoading.value ? 'loading' : 'empty'
 })
 
