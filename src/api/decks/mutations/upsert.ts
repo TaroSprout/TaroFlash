@@ -63,6 +63,7 @@ export function useUpsertDeckMutation() {
     mutation: async (deck: Deck) => {
       if (deck.id === undefined) {
         await deck_count_query.refresh()
+        // Trap: decks barrel cycle drops runtime exports →[K:decks-barrel-cycle-drops-runtime-exports]
         // Mirrors useCan().createDeck — duplicated rather than imported, since
         // that composable pulls in this module's own barrel.
         const limit = member.deck_limit

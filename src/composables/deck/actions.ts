@@ -1,5 +1,6 @@
 import { useI18n } from 'vue-i18n'
 import { useUpsertDeckMutation } from '@/api/decks'
+// Trap: decks barrel cycle drops runtime exports →[K:decks-barrel-cycle-drops-runtime-exports]
 // Straight from the defining module, not the barrel: the decks barrel and this
 // composable form an import cycle, and a class read back through it is still
 // uninitialised when the view loads.
