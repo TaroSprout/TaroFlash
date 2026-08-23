@@ -30,5 +30,10 @@ Exception: `src/api/session.ts` stays flat; auth identity lives in `useSessionSt
 - Components, views, and composables import **hooks only**, from the domain barrel (`@/api/decks`, `@/api/cards`). Never import from `@/api/<domain>/db`.
 - `db/` is internal — only the domain's own `queries/` and `mutations/` import from it. Cross-domain `db/` imports are allowed when a compound operation needs to stitch calls together.
 - Mutations invalidate by query-key prefix in `onSettled`. Never clear the cache wholesale.
+- A mutation whose `onError` rolls back its optimistic write skips invalidation in `onSettled` on
+  that same failure (`if (error) return` before invalidating) — the rollback already reconciled
+  local state, so nothing server-side changed, and invalidating an active query refetches
+  immediately; that refetch failing too (e.g. offline) fires the query's own error toast on top of
+  the mutation's, doubling it for a write that touched nothing.
 - **The mutation owns invalidation end to end** — [`architecture/api-layer`](./architecture/api-layer.md) states the general rule this instantiates. If the hook needs caller context to invalidate fully (e.g. which source decks a bulk move emptied), extend the mutation **vars** to carry it — never leave half the invalidation in the calling composable's post-`await` code. Callers hand off and forget; composables are thin pass-throughs, not cache participants.
 - The member store (`useMemberStore`) is a Pinia projection of `useCurrentMemberQuery`. Its `id` field is sourced from `useSessionStore().user?.id`, **not** from the query data — sourcing from the query creates a race during auth restore where downstream api calls see `undefined`.
