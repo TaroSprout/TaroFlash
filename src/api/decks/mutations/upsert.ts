@@ -72,11 +72,11 @@ export function useUpsertDeckMutation() {
 
       return upsertDeck(deck)
     },
-    onMutate: (deck: Deck) => insertPendingDeck(queryCache, deck),
-    onSuccess: (created, _deck, client_key) => {
+    onMutate: (deck: Deck) => ({ client_key: insertPendingDeck(queryCache, deck) }),
+    onSuccess: (created, _deck, { client_key }) => {
       if (client_key) confirmPendingDeck(queryCache, client_key, created)
     },
-    onError: (_error, _deck, client_key) => {
+    onError: (_error, _deck, { client_key }) => {
       if (client_key) removePendingDeck(queryCache, client_key)
     },
     onSettled: (_data, _error, deck) => {
