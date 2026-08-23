@@ -80,7 +80,13 @@ export function useUpsertDeckMutation() {
     onError: (_error, _deck, { client_key }) => {
       if (client_key) removePendingDeck(queryCache, client_key)
     },
-    onSettled: (_data, _error, deck) => {
+    onSettled: (_data, error, deck) => {
+      // A failed write touched nothing server-side, and onError already undid
+      // the optimistic insert — refetching here only sends a doomed request
+      // while offline, which surfaces its own error toast on top of the one
+      // this failure already showed.
+      if (error) return
+
       queryCache.invalidateQueries({ key: ['decks'] })
       if (deck.id !== undefined) queryCache.invalidateQueries({ key: ['deck', deck.id] })
     }
