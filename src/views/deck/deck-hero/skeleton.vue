@@ -6,7 +6,7 @@ import { SKELETON_COVER } from '@/utils/cover'
 <template>
   <div
     data-testid="deck-hero-skeleton"
-    class="flex max-w-full flex-col items-center gap-6 md:flex-row md:items-end xl:w-max xl:flex-col xl:items-start animate-pulse"
+    class="flex max-w-full flex-col items-center gap-6 md:flex-row md:items-end xl:w-max xl:flex-col xl:items-start"
   >
     <card class="w-(--card-w-md)" side="cover" shimmer :cover_config="SKELETON_COVER" />
 
