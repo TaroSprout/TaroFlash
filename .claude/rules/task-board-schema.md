@@ -44,7 +44,8 @@ Add/remove/rename a field's **options** with `notion-update-data-source`
 first and verify with a row-level `WHERE id IN (…)` query — Notion's aggregate `COUNT/GROUP BY` reads
 lag row writes.
 
-**A create or update response is not proof the write landed — read it back.** [K:notion-write-verification]
+**A create or update response is not proof the write landed — read it back
+(→[K:proxy-pass-not-evidence]).** [K:notion-write-verification]
 `notion-create-pages` and `notion-update-page` echo what you sent even when the write never reached
 the board or the page: a page created without its parent set to the Task Board data source still
 returns `Status`/`Type`/`Epic` as if set, but they're ordinary page properties on a private page,

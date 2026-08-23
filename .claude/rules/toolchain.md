@@ -12,8 +12,8 @@ Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
 ## The type-check gate
 
 CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
-than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails. Run `pnpm type-check`
-before pushing anything that touches types; a green `vp check` is not evidence.
+than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails (→[K:proxy-pass-not-evidence]).
+Run `pnpm type-check` before pushing anything that touches types.
 
 ## Never `pnpm`
 

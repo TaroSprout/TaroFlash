@@ -14,6 +14,10 @@
   need synchronously to keep going, healing included. Only wait on a subagent in the foreground when
   its result is the very next thing you need; an interrupt cancels whatever's still running there, so
   a foreground call is a deliberate bet that you won't need to interrupt before it returns.
+- **A cheaper proxy's pass is not evidence for what it doesn't check — say so at the site that uses
+  it.** A quick check standing in for a slower one, a report standing in for opening the file
+  yourself, an echoed response standing in for confirmation: none of these prove anything beyond what
+  they actually inspect. [K:proxy-pass-not-evidence]
 - Always use translation strings (e.g. `t('deck.settings-modal.title')`) instead of hardcoded text.
 - Confirm this file loaded by printing message to console on startup.
 

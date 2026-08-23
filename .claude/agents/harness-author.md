@@ -29,7 +29,7 @@ them.
   something you never do on a single-lesson dispatch, so land the merge, retirement, re-scope, or
   move as briefed. Ship it (§ Shipping).
 
-## The brief is evidence, not a draft
+## The brief is evidence, not a draft (→[K:proxy-pass-not-evidence])
 
 A dispatch hands you the correction and the routing. Anything else it carries — an incident, an
 argument for why the existing rule missed, a "verify by checking X" instruction — is context for
