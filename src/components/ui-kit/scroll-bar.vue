@@ -119,7 +119,7 @@ function onTrackPointerDown(e: PointerEvent) {
   <div
     ref="track"
     data-testid="ui-kit-scroll-bar"
-    class="ui-kit-scroll-bar pointer-fine:block hidden"
+    class="ui-kit-scroll-bar md:pointer-fine:block hidden"
     @pointerdown.prevent="onTrackPointerDown"
   >
     <div
