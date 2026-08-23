@@ -22,7 +22,7 @@ const store = useTaroPhoneStore()
       class="absolute top-0 left-0 w-4 h-4 bg-(--color-accent) outline-4 outline-surface rounded-full"
     ></div>
 
-    <div class="w-full h-full bg-well rounded-2.5"></div>
-    <div class="w-2.75 h-2.75 rounded-full outline-1 outline-well shrink-0"></div>
+    <div class="w-full h-full bg-ink-muted rounded-2.5"></div>
+    <div class="w-2.75 h-2.75 rounded-full outline-1 outline-ink-muted shrink-0"></div>
   </div>
 </template>
