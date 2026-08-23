@@ -130,6 +130,9 @@ git worktree remove "$TMPDIR/prepare-pr-$$"
 ```
 
 Skip the scratch worktree only when `<branch>` is checked out **and** `git status --short` is empty.
+**Remove it even when the rewrite fails partway** — a failed `filter-branch` still leaves a worktree
+behind; check it per [`git-workflow`](../../rules/git-workflow.md) and remove it before you stop or
+report, not only on the path where the rewrite succeeded.
 
 Inside it, use `git filter-branch --msg-filter` with `case` on `$GIT_COMMIT` (pre-rewrite SHA). Preserves authorship, dates, trailers, parentage — only subject changes.
 
