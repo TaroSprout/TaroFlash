@@ -216,12 +216,18 @@ green/red. `prepare-pr` never checks a branch out, so PR prep can't move a tree 
 user.
 e. **HANDOFF**, dispatched — for each opened, green PR, `board-agent` with `HANDOFF` (`id`, `pr_url`):
 sets the ticket to `Review`, appends the PR URL into the ticket body.
-f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), remove its
-builder's worktree (`git worktree remove <path>`) from the home tree, once you've confirmed via
-`pwd`/`git worktree list` you're not removing the one you're standing in. The branch lives on origin
-and its local ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its
-worktree (§ Stuck / blocked). The home tree itself was already updated at step 4a, right after the
-build landed — teardown just reclaims the worktree, it doesn't gate what the user sees.
+f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), check the
+builder's worktree first (`git status --short` inside it, per
+[`git-workflow`](../../rules/git-workflow.md); anything uncommitted stops the removal and gets
+reported, never forced away with `--force`), then `git worktree remove <path>` from the home tree,
+once you've confirmed via `pwd`/`git worktree list` you're not removing the one you're standing in.
+The branch lives on origin and its local ref survives removal. Only tear down **successful** tickets
+here; a stuck one keeps its worktree (§ Stuck / blocked). The home tree itself was already updated at
+step 4a, right after the build landed — teardown just reclaims the worktree, it doesn't gate what the
+user sees. **This isn't gated on handoff succeeding** — removal is an obligation of how the run ends,
+not a line that only runs once every earlier step succeeds, so a run that fails or is interrupted
+before handoff still checks and removes every worktree it made (a stuck ticket's excepted, per
+above) before it stops.
 
 **Copy never blocks the build.** A PR whose only red check is the knowledge check's `COPY-TBD` marker
 still opens, still counts as this run's output — it is not stuck, and the run does not wait on it.
