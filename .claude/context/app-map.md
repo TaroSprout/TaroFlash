@@ -95,7 +95,7 @@ Use this first. Match words in the raw ticket to a starting path, then grep from
 
 ## Backend (`supabase/`)
 
-- **Migrations:** `supabase/migrations/` (~114 files). Editing rules: `.claude/rules/supabase.md`. Never `db reset`; apply with `supabase migrations up`.
+- **Migrations:** `supabase/migrations/` (~114 files). Editing rules: `.claude/rules/supabase.md`.
 - **Edge functions (`supabase/functions/`):** `cleanup-media`, `coverage`, `create-subscription`, `manage-subscription`, `stripe-webhook`, `transcribe-lesson`, `translate-term`, `translate-transcript`, `transliterate-transcript`, `_shared/`.
 
 ---
