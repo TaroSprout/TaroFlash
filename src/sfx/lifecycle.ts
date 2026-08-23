@@ -96,15 +96,13 @@ export function installAudioLifecycle(): () => void {
     }
   }
 
-  // Desktop Safari keeps the tab `visible` when the window loses focus to
-  // another app, so `visibilitychange` never fires and only `focus` is left to
-  // notice the return. The context comes back claiming to be running while
-  // producing nothing, so the non-forced `recover` bails on that claim and
-  // audio stays dead for the rest of the visit. →[K:ios-audio-interruption]
   const onBlur = () => {
     was_blurred = true
   }
 
+  // A window regaining focus after losing it is an interruption — never route
+  // it through `recover`, which trusts the context's own account of itself.
+  // →[K:ios-audio-interruption]
   const onFocus = () => {
     if (was_blurred) {
       was_blurred = false
