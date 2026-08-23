@@ -34,6 +34,18 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   const { confirmDelete, openMoveModal } = useCardPrompts()
   const all_cards_query = useAllCardsInDeckQuery(() => deck_id)
 
+  /**
+   * The promoted placeholders a deck-wide write clears: everything created
+   * this session that the write wasn't told to leave alone.
+   */
+  function promotedTempIdsExcept(except_ids: number[]): number[] {
+    const kept = new Set(except_ids)
+
+    return list.temp_entries.value
+      .map((entry) => entry.real_id)
+      .filter((id): id is number => id !== null && !kept.has(id))
+  }
+
   /** Cleanup applied after any successful delete: drop selection, refetch. */
   async function afterDelete() {
     selection.exitSelection()
@@ -60,12 +72,27 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     if (!resolved) return
     if (!(await confirmDelete(resolved.count))) return
 
+    // The cards' own placeholders go with them, in the same beat as the
+    // mutation's optimistic cache write — a card created this session has a
+    // placeholder standing in for it that no refetch can drop.
+    // →[K:deck-temp-card-handoff]
+    const retired =
+      'cards' in resolved.args ? list.retireTemps(resolved.args.cards.map((card) => card.id)) : []
+
     try {
       await mutations.deleteCards(resolved.args)
     } catch {
+      list.restoreTemps(retired)
       notice.error(t('toast.error.delete-cards-failed'))
       return
     }
+
+    // The deck-wide path stays un-optimistic, so its placeholders only go once
+    // the server has taken the cards.
+    if ('except_ids' in resolved.args) {
+      list.retireTemps(promotedTempIdsExcept(resolved.args.except_ids))
+    }
+
     await afterDelete()
   }
 
@@ -109,6 +136,14 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
 
     const target = await openMoveModal(resolved.preview_cards, resolved.count, deck_id, move)
     if (!target) return
+
+    // Same placeholder problem as delete: the source deck's refetch can't take
+    // away a row the persisted list never carried. →[K:deck-temp-card-handoff]
+    list.retireTemps(
+      'card_ids' in resolved.args
+        ? resolved.args.card_ids
+        : promotedTempIdsExcept(resolved.args.except_ids)
+    )
 
     await afterMove()
   }

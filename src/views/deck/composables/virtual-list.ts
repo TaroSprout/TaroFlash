@@ -16,6 +16,9 @@ export type CardEntry = {
   real_id: number | null
 }
 
+/** A placeholder taken out of the list, with the slot it held. */
+export type RetiredTemp = { index: number; entry: CardEntry }
+
 let next_temp_id = 0
 
 /** Mint a placeholder id for a temp card — diagnostics only, branching reads `entry.real_id`. */
@@ -283,6 +286,45 @@ export function useVirtualCardList(
   }
 
   /**
+   * Take the placeholders standing in for `real_ids` back out of the list —
+   * the cards they were promoted against have left the deck. A card created
+   * this session is usually on screen as its placeholder and nowhere else, so
+   * dropping it from the persisted list can't take its row away.
+   * →[K:deck-temp-card-handoff]
+   * [K:gap: a card created blank in the session never reaches the persisted card
+   * list at all — its insert deliberately skips the card-pages reload so the row
+   * being typed into isn't overwritten — so the placeholder is the only thing
+   * rendering it, and it only goes when the card is explicitly taken out]
+   *
+   * @returns Each removed entry with the slot it held, for `restoreTemps`.
+   */
+  function retireTemps(real_ids: Iterable<number>): RetiredTemp[] {
+    const ids = new Set(real_ids)
+    const retired: RetiredTemp[] = []
+
+    temp_entries.value = temp_entries.value.filter((entry, index) => {
+      const leaving = entry.real_id !== null && ids.has(entry.real_id)
+      if (leaving) retired.push({ index, entry })
+      return !leaving
+    })
+
+    return retired
+  }
+
+  /**
+   * Put retired placeholders back in the slots they held — the rollback for a
+   * delete the server refused. Ascending slots, so each lands where it was.
+   */
+  function restoreTemps(retired: RetiredTemp[]) {
+    if (retired.length === 0) return
+
+    const entries = temp_entries.value.slice()
+    for (const { index, entry } of retired) entries.splice(index, 0, entry)
+
+    temp_entries.value = entries
+  }
+
+  /**
    * Resolve a card-id back to a Card. Searches persisted first, then live
    * temp entries — mirrors the merge order in `all_cards`. Returns the
    * underlying Card (no `client_id` wrapper) so callers can spread it into
@@ -328,6 +370,8 @@ export function useVirtualCardList(
     findEntryByClientId,
     patchTemp,
     removeTemp,
+    retireTemps,
+    restoreTemps,
     findCard,
     promoteTemp
   }
