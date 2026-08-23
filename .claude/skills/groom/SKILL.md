@@ -184,7 +184,11 @@ terms**, not a technical brief. Keep it scannable; the detail arrives as the use
   for a user-facing ticket** — include at least one on what it looks like, not just how it works.
 - **Pushback surface** — anything in the spec that looks like a hole, is ambiguous, seems
   unnecessary, or that you would do differently. One line each; make it easy to cut or redirect
-  scope.
+  scope. **A recommendation to change behaviour is itself a claim about what the code currently
+  does** — read the file that implements the flow before floating it. Recommending a change to
+  behaviour already shipped isn't a neutral suggestion the user can decline for free; it spends
+  their attention re-deciding a settled question, and is exactly the claim §2 already required
+  verifying against source.
 
 Then **converse**. Expect the user to drill into individual decisions, and expect that drilling to
 break some of your assumptions — that is the skill working, not failing. Rules for the exchange:
