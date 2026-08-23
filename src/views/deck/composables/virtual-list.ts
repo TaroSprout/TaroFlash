@@ -288,13 +288,10 @@ export function useVirtualCardList(
   /**
    * Take the placeholders standing in for `real_ids` back out of the list —
    * the cards they were promoted against have left the deck. A card created
-   * this session is usually on screen as its placeholder and nowhere else, so
-   * dropping it from the persisted list can't take its row away.
+   * blank this session never reaches the persisted list at all (its insert
+   * skips that reload on purpose), so its placeholder is the only thing
+   * rendering it and this is the only thing that ever takes it off screen.
    * →[K:deck-temp-card-handoff]
-   * [K:gap: a card created blank in the session never reaches the persisted card
-   * list at all — its insert deliberately skips the card-pages reload so the row
-   * being typed into isn't overwritten — so the placeholder is the only thing
-   * rendering it, and it only goes when the card is explicitly taken out]
    *
    * @returns Each removed entry with the slot it held, for `restoreTemps`.
    */
