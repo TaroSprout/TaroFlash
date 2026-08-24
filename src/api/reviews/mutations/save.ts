@@ -11,19 +11,21 @@ export type SaveReviewVars = {
 
 // Trap: a missed invalidation fails silently →[K:silent-stale-cache]
 export function useSaveReviewMutation() {
-  const queryCache = useQueryCache()
   return useMutation({
-    mutation: (vars: SaveReviewVars) => saveReview(vars.card_id, vars.card, vars.log),
-    onSettled: () => {
-      queryCache.invalidateQueries({ key: ['decks'] })
-    }
+    mutation: (vars: SaveReviewVars) => saveReview(vars.card_id, vars.card, vars.log)
   })
 }
 
+/**
+ * Refreshes a deck's own data plus the dashboard's due counts. Fired once per
+ * deck when a study session reaches its summary, not per review, so a session
+ * of any length still costs one deck-list refetch rather than one per rating.
+ */
 export function useFlushDeckReviews() {
   const queryCache = useQueryCache()
   return (deck_id: number) => {
     queryCache.invalidateQueries({ key: ['deck', deck_id] })
     queryCache.invalidateQueries({ key: ['cards', deck_id] })
+    queryCache.invalidateQueries({ key: ['decks'] })
   }
 }
