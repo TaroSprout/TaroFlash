@@ -166,6 +166,11 @@ grep lands in the right place. Then go further than `/triage` did, because decis
 - **Label every fact spoken to the user, not just what lands in the body**, as
   `CONFIRMED (verified against <source>)` or `ASSUMED` — a claim in the checkpoint or the
   back-and-forth steers a decision before any AC is written.
+- **A premise folded into a scoping question is still a claim.** "Grid only, or the mobile editor
+  too?" asserts the mobile editor has the feature being scoped; "X does A today, Y does B — add a
+  step?" asserts the current behavior of both paths. Neither reads as an assertion needing a label,
+  because it's dressed as the frame around a question rather than an answer — verify it against
+  source before it goes into the question, the same as a standalone claim.
 - **Trace the failure modes.** For anything spanning two systems with no shared transaction, work
   out what breaks if one side succeeds and the other doesn't — the ordering is usually the decision.
 
