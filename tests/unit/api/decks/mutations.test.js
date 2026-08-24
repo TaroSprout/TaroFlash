@@ -278,6 +278,18 @@ describe('useUpsertDeckMutation', () => {
     const detailCalls = invalidateSpy.mock.calls.filter((c) => c[0].key[0] === 'deck')
     expect(detailCalls).toHaveLength(0)
   })
+
+  test('onSettled skips both invalidations on a failed create — nothing changed server-side [obligation]', () => {
+    const { onSettled } = configFrom(useUpsertDeckMutation)
+    onSettled(undefined, new Error('boom'), { title: 'x' })
+    expect(invalidateSpy).not.toHaveBeenCalled()
+  })
+
+  test('onSettled skips both invalidations on a failed update, including ["deck", id] [obligation]', () => {
+    const { onSettled } = configFrom(useUpsertDeckMutation)
+    onSettled(undefined, new Error('boom'), { id: 1, title: 'x' })
+    expect(invalidateSpy).not.toHaveBeenCalled()
+  })
 })
 
 describe('useDeleteDeckMutation', () => {
