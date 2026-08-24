@@ -143,6 +143,33 @@ describe('CardCover — image cover [obligation]', () => {
     const wrapper = mountCover({ icon: 'star' })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeUndefined()
   })
+
+  // ── shimmer bleed [obligation] ────────────────────────────────────────────
+  // The sweep's ::after defaults to the padding box (--shimmer-bleed: 0px in
+  // shimmer.css); the cover overrides it to its own border width so the sweep
+  // crosses the border instead of stopping short of it.
+
+  test('sets --shimmer-bleed to the resolved cover border width while loading [obligation]', () => {
+    // --face-border-width isn't defined by any station stylesheet in this
+    // isolated mount, so give it a concrete value on the attach point and
+    // confirm --shimmer-bleed tracks it — proves the property is wired to
+    // the border width, not left at the shimmer utility's own 0px default.
+    const container = document.createElement('div')
+    container.style.setProperty('--face-border-width', '3px')
+    document.body.appendChild(container)
+
+    const wrapper = shallowMount(CardCover, {
+      props: { cover: { image_path: 'https://cdn/cover.png' } },
+      attachTo: container
+    })
+    const cover = wrapper.find('[data-testid="card-cover"]')
+    expect(cover.attributes('data-loading')).toBe('true')
+    expect(cover.classes()).toContain('shimmer')
+    expect(getComputedStyle(cover.element).getPropertyValue('--shimmer-bleed').trim()).toBe('3px')
+
+    wrapper.unmount()
+    container.remove()
+  })
 })
 
 describe('CardCover — decode resolves [obligation]', () => {

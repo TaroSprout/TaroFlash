@@ -4,12 +4,19 @@
    conflict. */
 @utility shimmer {
   overflow: hidden;
+  /* inset: 0 lands the ::after on the padding box, so it stops short of a
+     host's own border. A bordered host overrides this to the border width so
+     the sweep bleeds out to the border box instead. */
+  --shimmer-bleed: 0px;
 
   &::after {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: calc(-1 * var(--shimmer-bleed));
     pointer-events: none;
+    /* Lightens whatever's underneath instead of painting over it, so a
+       bgx-* pattern's stripes stay visible through the sweep. */
+    mix-blend-mode: screen;
     /* The sheen is a station role, not white — a white sweep vanishes over a
        pale surface in light mode. */
     background: linear-gradient(
