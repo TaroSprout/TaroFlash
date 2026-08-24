@@ -182,6 +182,13 @@ describe('AvatarPickerModal', () => {
     expect(otter.findComponent(AvatarImage).exists()).toBe(false)
   })
 
+  test('the grid sizes tiles with an auto-fill column template, not a fixed column count [obligation]', () => {
+    const wrapper = mountModal()
+    const grid = wrapper.find('[data-testid="avatar-picker-modal__grid"]')
+    expect(grid.classes()).toContain('grid-cols-[repeat(auto-fill,min(6rem,100%))]')
+    expect(grid.classes()).not.toContain('grid-cols-4')
+  })
+
   test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
     const wrapper = mountModal({ selected: 'otter' })
     const tick = wrapper
