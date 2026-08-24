@@ -5,7 +5,7 @@ import DashboardActionsPanelShell from './shell.vue'
 <template>
   <dashboard-actions-panel-shell
     data-testid="dashboard-actions-panel-skeleton"
-    class="bg-skeleton animate-pulse bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 bgx-color-(--color-skeleton-sheen)"
+    class="bg-skeleton shimmer bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 bgx-color-(--color-skeleton-sheen)"
     body_class="bg-skeleton"
   >
     <template #polaroid>
@@ -14,17 +14,29 @@ import DashboardActionsPanelShell from './shell.vue'
         data-station="float"
         class="absolute top-1 -left-1 z-10 -rotate-12 select-none bg-surface rounded-2 w-30 p-2 pb-6"
       >
-        <div class="bg-skeleton rounded-1 aspect-square"></div>
+        <div
+          data-testid="dashboard-actions-panel-skeleton__photo"
+          class="relative bg-skeleton rounded-1 aspect-square shimmer"
+        ></div>
       </div>
     </template>
 
     <template #header>
-      <div class="h-11 w-40 bg-skeleton rounded-3"></div>
+      <div
+        data-testid="dashboard-actions-panel-skeleton__header-block"
+        class="h-11 w-40 bg-skeleton rounded-3 bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 bgx-color-(--color-skeleton-sheen)"
+      ></div>
     </template>
 
     <template #body>
-      <div class="h-30 w-full bg-skeleton rounded-4 max-mxl:hidden"></div>
-      <div class="h-14 w-full bg-skeleton rounded-4 max-mxl:hidden!"></div>
+      <div
+        data-testid="dashboard-actions-panel-skeleton__body-block"
+        class="relative h-30 w-full bg-skeleton rounded-4 max-mxl:hidden shimmer"
+      ></div>
+      <div
+        data-testid="dashboard-actions-panel-skeleton__body-block"
+        class="relative h-14 w-full bg-skeleton rounded-4 max-mxl:hidden! shimmer"
+      ></div>
     </template>
   </dashboard-actions-panel-shell>
 </template>

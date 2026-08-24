@@ -22,10 +22,7 @@ const { count = 6 } = defineProps<ReviewInboxSkeletonProps>()
     >
       <card side="cover" class="w-(--card-w-2xs)" shimmer :cover_config="SKELETON_COVER" />
 
-      <div
-        data-testid="review-inbox-skeleton__label"
-        class="h-5 w-16 bg-skeleton rounded-2 animate-pulse"
-      ></div>
+      <div data-testid="review-inbox-skeleton__label" class="h-5 w-16 bg-skeleton rounded-2"></div>
     </div>
   </div>
 </template>

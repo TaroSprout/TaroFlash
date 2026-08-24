@@ -73,6 +73,15 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     }
   })
 
+  test('the three sort-options placeholders no longer carry animate-pulse [obligation]', () => {
+    const wrapper = mountSkeleton()
+    const items = wrapper.findAll('[data-testid="deck-grid-sort-options-skeleton__item"]')
+    expect(items).toHaveLength(3)
+    for (const item of items) {
+      expect(item.classes()).not.toContain('animate-pulse')
+    }
+  })
+
   test('restores overflow after each mount/unmount cycle', () => {
     const a = mountSkeleton()
     expect(document.documentElement.style.overflow).toBe('hidden')
