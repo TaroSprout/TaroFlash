@@ -106,8 +106,11 @@ settling, phrased the way a user would experience them. **No filepaths, symbols,
 opening** — it should be scannable in seconds, never a wall of text.
 
 **Grooming is expensive for the user's attention — spend it only on decisions.** The checkpoint has
-a hard ceiling: a one-line framing plus the open decisions, nothing else. If a draft runs longer,
-it's carrying something the user didn't need — cut it before sending. Two things routinely bloat it:
+a hard ceiling: a one-line framing plus the open decisions, nothing else. **The framing line names
+the ticket — ID and title** (`#123 Add streak recovery banner: …`), never the ID alone; a session
+routinely covers several tickets and the ID alone forces a lookup for context. If a draft runs
+longer, it's carrying something the user didn't need — cut it before sending. Two things routinely
+bloat it:
 
 - **Don't re-narrate what the user already knows.** They read the ticket. On a re-groom they wrote
   it. Skip the "what this changes" recap unless a decision hinges on it — go straight to the forks.
