@@ -1,7 +1,7 @@
 import { computed, ref, watch, type InjectionKey } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUpsertDeckMutation, useDeleteDeckMutation } from '@/api/decks'
-import { useCardsInDeckInfiniteQuery } from '@/api/cards'
+import { useFirstCardInDeckQuery } from '@/api/cards'
 import { useResetDeckReviewsMutation } from '@/api/reviews'
 import { useDeckActions } from '@/composables/deck/actions'
 import { useCoverImage } from '@/composables/deck/cover-image'
@@ -50,7 +50,10 @@ export function useDeckEditor(deck?: Deck) {
 
   const { t } = useI18n()
   const notice = useNoticeStore()
-  const deck_actions = useDeckActions()
+  // Only a brand-new deck (no `deck` at all) ever reaches the create-deck
+  // guard below — an existing deck's edit never asks whether the member can
+  // create one, so the deck-count check that guard depends on stays unmounted.
+  const deck_actions = deck?.id ? undefined : useDeckActions()
   const upsert_mutation = useUpsertDeckMutation()
   const delete_mutation = useDeleteDeckMutation()
   const reset_reviews_mutation = useResetDeckReviewsMutation()
@@ -61,8 +64,8 @@ export function useDeckEditor(deck?: Deck) {
 
   // The design preview shows the deck's first card. Disabled for unsaved decks
   // (no id), so deck-create just falls back to placeholder text.
-  const cards_query = useCardsInDeckInfiniteQuery(() => deck?.id)
-  const first_card = computed(() => cards_query.data.value?.pages?.[0]?.cards?.[0])
+  const cards_query = useFirstCardInDeckQuery(() => deck?.id)
+  const first_card = computed(() => cards_query.data.value?.[0])
   const preview_front_text = computed(() => first_card.value?.front_text)
   const preview_back_text = computed(() => first_card.value?.back_text)
 
@@ -74,7 +77,7 @@ export function useDeckEditor(deck?: Deck) {
    * routes through `createDeck` for the plan-limit guard + post-create flow.
    */
   async function saveDeck(): Promise<Deck | null> {
-    if (!deck?.id) return deck_actions.createDeck({ id: deck?.id as number, ...draft })
+    if (!deck?.id) return deck_actions!.createDeck({ id: deck?.id as number, ...draft })
 
     // Uploads a staged cover before persisting cover_config; a failure aborts the save.
     try {
