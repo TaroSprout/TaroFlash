@@ -10,6 +10,7 @@ import {
 
 type ModeConfig = {
   containerClass: string
+  entryClass: string
   enter(el: Element, is_mobile: boolean, done: () => void): void
   leave(el: Element, is_mobile: boolean, done: () => void): void
 }
@@ -17,6 +18,7 @@ type ModeConfig = {
 export const MODAL_MODE_CONFIG: Record<ModalMode, ModeConfig> = {
   dialog: {
     containerClass: 'items-center',
+    entryClass: '',
     enter: (el, _, done) => slideUpFadeIn(el, done),
     leave: (el, _, done) => slideDownFadeOut(el, done)
   },
@@ -26,6 +28,11 @@ export const MODAL_MODE_CONFIG: Record<ModalMode, ModeConfig> = {
   'mobile-sheet': {
     containerClass:
       'items-center mobile-modal:flex-col mobile-modal:overflow-y-auto mobile-modal:overscroll-y-contain mobile-modal:justify-start mobile-modal:pt-4 mobile-modal:pointer-events-auto',
+    // The sheet container is a flex column, whose children shrink below their
+    // own height by default — a modal carrying a fixed height (`h-187`) would
+    // collapse to its content. Pinning the entry hands the overflow back to the
+    // container's `overflow-y-auto`.
+    entryClass: 'mobile-modal:shrink-0',
     enter: (el, is_mobile, done) =>
       is_mobile ? slideUpFromEdge(el, done) : slideUpFadeIn(el, done),
     leave: (el, is_mobile, done) =>
@@ -34,6 +41,7 @@ export const MODAL_MODE_CONFIG: Record<ModalMode, ModeConfig> = {
 
   popup: {
     containerClass: 'items-center',
+    entryClass: '',
     enter: (el, _, done) => springScaleIn(el, done),
     leave: (el, _, done) => scaleFadeOut(el, done)
   }
