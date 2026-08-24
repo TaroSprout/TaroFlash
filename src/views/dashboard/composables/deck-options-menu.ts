@@ -54,7 +54,7 @@ export function useDeckOptionsMenu({ onRearrange }: DeckOptionsMenuConfig) {
     try {
       await delete_mutation.mutateAsync(deck.id)
     } catch {
-      notice.error(t('toast.error.deck-delete-failed'), { variant: 'panel' })
+      notice.error(t('toast.error.deck-delete-failed'))
     }
   }
 

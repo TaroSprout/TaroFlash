@@ -92,8 +92,9 @@ describe('useDeckOptionsMenu — delete confirm flow [obligation]', () => {
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(mockNotice.error).toHaveBeenCalledWith(
-      'toast.error.deck-delete-failed',
+    expect(mockNotice.error).toHaveBeenCalledWith('toast.error.deck-delete-failed')
+    expect(mockNotice.error).not.toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ variant: 'panel' })
     )
   })

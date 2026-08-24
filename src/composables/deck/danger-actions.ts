@@ -62,7 +62,7 @@ export function useDeckDangerActions(
 
     const ok = await editor.deleteDeck()
     if (!ok) {
-      notice.error(t('toast.error.deck-delete-failed'), { variant: 'panel' })
+      notice.error(t('toast.error.deck-delete-failed'))
       return
     }
 

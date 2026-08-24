@@ -158,7 +158,7 @@ describe('useDeckDangerActions', () => {
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('failure path shows an error notice and does not close', async () => {
+    test('failure path shows a toast-variant error notice and bails [obligation]', async () => {
       const editor = makeEditor({ deleteOk: false })
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
@@ -166,7 +166,13 @@ describe('useDeckDangerActions', () => {
       await onDelete()
 
       expect(mockNotice.error).toHaveBeenCalledTimes(1)
+      expect(mockNotice.error).toHaveBeenCalledWith('toast.error.deck-delete-failed')
+      expect(mockNotice.error).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ variant: 'panel' })
+      )
       expect(close).not.toHaveBeenCalled()
+      expect(mockRouter.push).not.toHaveBeenCalled()
     })
   })
 
