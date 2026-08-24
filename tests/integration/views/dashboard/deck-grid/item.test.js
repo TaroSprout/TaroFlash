@@ -261,6 +261,49 @@ describe('DeckGridItem — dropdown select forwards to useDeckOptionsMenu.onSele
   })
 })
 
+describe('DeckGridItem — pending guards [obligation]', () => {
+  test('pressing the thumbnail while pending does not emit press', async () => {
+    const wrapper = mount({ deck: DECK, pending: true })
+    await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
+    expect(wrapper.emitted('press')).toBeFalsy()
+  })
+
+  test('a touch pointerdown while pending does not arm the press-hold, on top of the existing rearranging/mouse guards', async () => {
+    const wrapper = mount({ deck: DECK, pending: true })
+    await wrapper.trigger('pointerdown', { pointerType: 'touch' })
+    expect(pressHoldArmMock).not.toHaveBeenCalled()
+  })
+
+  test('renders no corner-action slot content at all while pending — no delete button, no options dropdown', () => {
+    const wrapper = mount({ deck: DECK, pending: true, rearranging: true })
+    expect(wrapper.findComponent(DeckGridDeleteButtonStub).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="dashboard__deck-options-button"]').exists()).toBe(false)
+  })
+
+  test('dims the thumbnail with opacity-40 and pointer-events-none while pending', () => {
+    const wrapper = mount({ deck: DECK, pending: true })
+    expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).toContain('opacity-40')
+    expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).toContain(
+      'pointer-events-none'
+    )
+  })
+
+  test('does not dim the thumbnail when not pending', () => {
+    const wrapper = mount({ deck: DECK })
+    expect(wrapper.find('[data-testid="deck-thumbnail"]').classes()).not.toContain('opacity-40')
+  })
+
+  test('renders the pending loading overlay', () => {
+    const wrapper = mount({ deck: DECK, pending: true })
+    expect(wrapper.find('[data-testid="deck-grid-item__pending"]').exists()).toBe(true)
+  })
+
+  test('does not render the pending loading overlay when not pending', () => {
+    const wrapper = mount({ deck: DECK })
+    expect(wrapper.find('[data-testid="deck-grid-item__pending"]').exists()).toBe(false)
+  })
+})
+
 describe('DeckGridItem — mode arbitration on pointerdown [obligation]', () => {
   test('a touch pointerdown in normal mode arms a hold that calls the dropdown show()', async () => {
     const wrapper = mount({ deck: DECK })

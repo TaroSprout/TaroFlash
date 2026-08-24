@@ -182,13 +182,12 @@ describe('DashboardActionsPanel — study button', () => {
 })
 
 describe('DashboardActionsPanel — onSelect only wires new-deck', () => {
-  test('selecting new-deck creates a deck and opens its settings modal [obligation]', async () => {
+  test('selecting new-deck creates a deck with a single argument, no options object [obligation]', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="entry-new-deck"]').trigger('click')
     await Promise.resolve()
-    expect(mockCreateDeck).toHaveBeenCalledWith(expect.objectContaining({ is_public: true }), {
-      openSettingsAfterCreate: true
-    })
+    expect(mockCreateDeck).toHaveBeenCalledWith(expect.objectContaining({ is_public: true }))
+    expect(mockCreateDeck.mock.calls[0]).toHaveLength(1)
   })
 
   test('selecting new-deck plays a press sfx', async () => {

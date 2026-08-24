@@ -51,6 +51,14 @@ type Deck = {
   is_locked?: boolean
   // Scheduled deletion date for a locked deck; null outside grace.
   locked_delete_at?: string | null
+  // Client-only: true while an optimistically-created deck's write is still
+  // in flight. Never set by the server, never sent to it.
+  pending?: boolean
+  // Client-only: a stable key an optimistic create is rendered under, so the
+  // grid doesn't re-key (and replay the pop-in) when the deck's `id` moves
+  // from its temporary placeholder to the server's real one. Carried forward
+  // across the refetch that follows, by `useMemberDecksQuery`.
+  client_key?: string
 }
 
 // Keyed by resolved field name; present key = pinned. Caps allow null (pinned

@@ -4,7 +4,7 @@ domain: decks
 status: current
 hazard: true
 related: [permissions, scheduling, cards]
-updated: 2026-07-23
+updated: 2026-08-23
 ---
 
 # Decks
@@ -96,6 +96,21 @@ The caps and the scheduling behind "due" belong to [[scheduling]].
 A deck isn't free to create without limit. Each member's plan sets a ceiling, and
 a new deck is refused once that ceiling is reached. Raising the ceiling is a
 billing matter — the deck itself doesn't know or care which plan paid for it.
+
+## The decks module cycles with its own composables
+
+> [!HAZARD] [K:decks-barrel-cycle-drops-runtime-exports] **`src/api/decks`'s barrel import-cycles with the composables that consume it — a class read back through that cycle comes back missing.**
+> A type surviving the same cycle is fine, because types vanish at compile time.
+> A runtime value — a class, a constant — does not: whatever imports the decks
+> barrel while the barrel is still mid-evaluation sees the module before that
+> export exists, and gets `undefined` instead of a helpful error. It's silent in
+> a unit test and in `vp check`, and only announces itself as a `SyntaxError` at
+> import time in an integration suite that renders the real component graph.
+> The fix each time has been the same shape: reach past the barrel, straight
+> into the file that defines the thing, or duplicate the logic rather than
+> import it. Neither undoes the cycle — the next runtime export added to this
+> corner will need the same workaround, or the same duplication, until the
+> cycle itself is broken.
 
 ## What this isn't
 

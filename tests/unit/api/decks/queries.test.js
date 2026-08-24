@@ -1,15 +1,23 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { useQuerySpy, fetchMemberDecksMock, fetchDeckMock, fetchMemberDeckCountMock } = vi.hoisted(
-  () => ({
-    useQuerySpy: vi.fn((cfg) => cfg),
-    fetchMemberDecksMock: vi.fn(),
-    fetchDeckMock: vi.fn(),
-    fetchMemberDeckCountMock: vi.fn()
-  })
-)
+const {
+  useQuerySpy,
+  fetchMemberDecksMock,
+  fetchDeckMock,
+  fetchMemberDeckCountMock,
+  getQueryDataMock
+} = vi.hoisted(() => ({
+  useQuerySpy: vi.fn((cfg) => cfg),
+  fetchMemberDecksMock: vi.fn(),
+  fetchDeckMock: vi.fn(),
+  fetchMemberDeckCountMock: vi.fn(),
+  getQueryDataMock: vi.fn()
+}))
 
-vi.mock('@pinia/colada', () => ({ useQuery: useQuerySpy }))
+vi.mock('@pinia/colada', () => ({
+  useQuery: useQuerySpy,
+  useQueryCache: () => ({ getQueryData: getQueryDataMock })
+}))
 
 vi.mock('@/api/decks/db', () => ({
   fetchMemberDecks: fetchMemberDecksMock,
@@ -23,6 +31,8 @@ import { useMemberDeckCountQuery } from '@/api/decks/queries/count'
 
 beforeEach(() => {
   useQuerySpy.mockClear()
+  getQueryDataMock.mockReset()
+  getQueryDataMock.mockReturnValue(undefined)
 })
 
 function configFrom(hook) {
@@ -36,9 +46,54 @@ describe('useMemberDecksQuery', () => {
     expect(key).toEqual(['decks'])
   })
 
-  test('delegates to fetchMemberDecks', () => {
+  test('fetches fresh decks and returns them unchanged when no cached row carries a client_key [obligation]', async () => {
+    fetchMemberDecksMock.mockResolvedValueOnce([{ id: 1, title: 'a' }])
+    getQueryDataMock.mockReturnValue([{ id: 1, title: 'a' }])
     const { query } = configFrom(useMemberDecksQuery)
-    expect(query).toBe(fetchMemberDecksMock)
+
+    const result = await query()
+
+    expect(result).toEqual([{ id: 1, title: 'a' }])
+  })
+
+  test('short-circuits to the fresh rows untouched when the cache holds no client_key at all [obligation]', async () => {
+    const fresh = [{ id: 1, title: 'a' }]
+    fetchMemberDecksMock.mockResolvedValueOnce(fresh)
+    getQueryDataMock.mockReturnValue(undefined)
+    const { query } = configFrom(useMemberDecksQuery)
+
+    const result = await query()
+
+    expect(result).toBe(fresh)
+  })
+
+  test('carries a cached client_key forward onto the freshly-fetched row with the matching id [obligation]', async () => {
+    fetchMemberDecksMock.mockResolvedValueOnce([
+      { id: 5, title: 'confirmed' },
+      { id: 6, title: 'untouched' }
+    ])
+    getQueryDataMock.mockReturnValue([{ id: 5, title: 'pending-cached', client_key: 'key-1' }])
+    const { query } = configFrom(useMemberDecksQuery)
+
+    const result = await query()
+
+    expect(result).toEqual([
+      { id: 5, title: 'confirmed', client_key: 'key-1' },
+      { id: 6, title: 'untouched' }
+    ])
+  })
+
+  test('rows with no prior client_key pass through untouched [obligation]', async () => {
+    fetchMemberDecksMock.mockResolvedValueOnce([{ id: 7, title: 'plain' }])
+    getQueryDataMock.mockReturnValue([
+      { id: 5, title: 'x', client_key: 'key-1' },
+      { id: 7, title: 'plain-cached' }
+    ])
+    const { query } = configFrom(useMemberDecksQuery)
+
+    const result = await query()
+
+    expect(result).toEqual([{ id: 7, title: 'plain' }])
   })
 })
 

@@ -29,6 +29,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:pin-is-presence-not-difference]             | [[pacing]]             | `src/api/review-pacing/`                                                                                                 |
 | →[K:closed-color-set-fails-bare]                | [[theming]]            | `src/utils/palette/`                                                                                                     |
 | →[K:public-is-read-only]                        | [[decks]]              | `src/api/decks/`                                                                                                         |
+| →[K:decks-barrel-cycle-drops-runtime-exports]   | [[decks]]              | `src/api/decks/mutations/upsert.ts`, `src/composables/deck/actions.ts`                                                   |
 | →[K:posts-hidden-until-published]               | [[feedback]]           | `src/api/feedback/`                                                                                                      |
 | →[K:text-editor-ghost-click-guard]              | [[cards]]              | `src/components/card/`                                                                                                   |
 | →[K:deck-focus-microtask-ordering]              | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`                                                                          |
