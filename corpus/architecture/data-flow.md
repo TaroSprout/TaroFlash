@@ -4,7 +4,7 @@ domain: architecture
 status: current
 hazard: true
 related: [permissions, cards]
-updated: 2026-08-10
+updated: 2026-08-24
 ---
 
 # Data flow
@@ -77,14 +77,16 @@ Not the screen. The write itself.
 
 Save a review, and the save is what says "the decks are stale now" — because the
 save is the only thing that knows a review just landed. The screen that called it
-stays dumb: it asks for the save and moves on, trusting that anything affected will
-refresh on its own.
+never decides that for itself; it trusts the write to have marked whatever's
+affected.
 
 > [!RULE]
-> The caller never refreshes the cache after a write. It calls the write and
-> stops. If a screen finds itself invalidating something a mutation already
-> changed, that's a bug — the responsibility got split, and now two places have to
-> stay in agreement or the cache drifts.
+> The caller never decides what's stale — that call belongs to the write
+> alone. A caller can still pull its own view forward with an explicit
+> refetch once its write settles; what it never does is invalidate a name the
+> write didn't already mark. If a screen finds itself deciding something is
+> stale that a mutation should have owned, that's a bug — the responsibility
+> got split, and now two places have to stay in agreement or the cache drifts.
 
 Why put it there and nowhere else? Because a single write can touch data three
 unrelated screens are showing. If each caller had to remember which names to

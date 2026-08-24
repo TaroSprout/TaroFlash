@@ -33,8 +33,9 @@ can overflow. Once wrapped, two things follow from where it sits:
 > cut off. `overflow_bleed` adds matching padding plus a negative margin on the
 > scrolling content div — the clip boundary widens into the surrounding
 > `--dialog-px` gutter while the slotted content's own visible position doesn't
-> move. It's horizontal only: the top edge isn't clipped, and bleeding it too
-> could collide with a header.
+> move. It's horizontal only — the top edge is clipped too, by the same
+> `overflow-y-auto`, and stays that way: bleeding it vertically would run the
+> content under the header sitting right above the scroll region.
 
 ## The toolbar slot isn't reactive to read from a computed
 

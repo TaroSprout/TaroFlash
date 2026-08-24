@@ -106,8 +106,11 @@ settling, phrased the way a user would experience them. **No filepaths, symbols,
 opening** — it should be scannable in seconds, never a wall of text.
 
 **Grooming is expensive for the user's attention — spend it only on decisions.** The checkpoint has
-a hard ceiling: a one-line framing plus the open decisions, nothing else. If a draft runs longer,
-it's carrying something the user didn't need — cut it before sending. Two things routinely bloat it:
+a hard ceiling: a one-line framing plus the open decisions, nothing else. **The framing line names
+the ticket — ID and title** (`#123 Add streak recovery banner: …`), never the ID alone; a session
+routinely covers several tickets and the ID alone forces a lookup for context. If a draft runs
+longer, it's carrying something the user didn't need — cut it before sending. Two things routinely
+bloat it:
 
 - **Don't re-narrate what the user already knows.** They read the ticket. On a re-groom they wrote
   it. Skip the "what this changes" recap unless a decision hinges on it — go straight to the forks.
@@ -163,6 +166,11 @@ grep lands in the right place. Then go further than `/triage` did, because decis
 - **Label every fact spoken to the user, not just what lands in the body**, as
   `CONFIRMED (verified against <source>)` or `ASSUMED` — a claim in the checkpoint or the
   back-and-forth steers a decision before any AC is written.
+- **A premise folded into a scoping question is still a claim.** "Grid only, or the mobile editor
+  too?" asserts the mobile editor has the feature being scoped; "X does A today, Y does B — add a
+  step?" asserts the current behavior of both paths. Neither reads as an assertion needing a label,
+  because it's dressed as the frame around a question rather than an answer — verify it against
+  source before it goes into the question, the same as a standalone claim.
 - **Trace the failure modes.** For anything spanning two systems with no shared transaction, work
   out what breaks if one side succeeds and the other doesn't — the ordering is usually the decision.
 
