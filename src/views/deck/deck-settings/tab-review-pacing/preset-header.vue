@@ -11,10 +11,6 @@ const { t } = useI18n()
 const { override_count, resetAllOverrides } = inject(pacingFieldsKey)!
 
 const has_overrides = computed(() => override_count.value > 0)
-
-const divergence_label = computed(() =>
-  t('deck.settings-modal.review-pacing.preset-diverged', override_count.value)
-)
 </script>
 
 <template>
@@ -29,28 +25,18 @@ const divergence_label = computed(() =>
 
       <div data-testid="preset-header__controls" class="flex shrink-0 items-center gap-2">
         <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
-          <div
+          <ui-button
             v-if="has_overrides"
-            data-testid="preset-header__divergence"
-            class="flex items-center gap-1"
+            neutral
+            data-testid="preset-header__reset-all"
+            variant="ghost"
+            size="sm"
+            icon-right="refresh"
+            :sfx="{ press: 'ui.press' }"
+            @press="resetAllOverrides"
           >
-            <span data-testid="preset-header__count" class="text-base text-ink-muted">
-              {{ divergence_label }}
-            </span>
-
-            <ui-button
-              neutral
-              data-testid="preset-header__reset-all"
-              variant="ghost"
-              size="sm"
-              icon-only
-              icon-left="refresh"
-              :sfx="{ press: 'ui.press' }"
-              @press="resetAllOverrides"
-            >
-              {{ t('deck.settings-modal.review-pacing.reset-all') }}
-            </ui-button>
-          </div>
+            {{ t('deck.settings-modal.review-pacing.reset-all', { count: override_count }) }}
+          </ui-button>
         </transition>
 
         <preset-chip />
