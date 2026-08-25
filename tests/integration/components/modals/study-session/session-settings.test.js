@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import SessionSettings from '@/views/study-session/session-settings/index.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -113,6 +113,23 @@ describe('SessionSettings', () => {
       await findOption(wrapper, 'Simple').trigger('click')
       expect(mockShowAllRatings.value).toBe(false)
     })
+  })
+
+  // ── ratings-mode tooltip copy, rewritten off the four rating-label names [obligation] ─
+
+  test('the ratings-mode tooltip renders the rewritten description [obligation]', async () => {
+    const wrapper = mountSettings()
+    const trigger = wrapper
+      .find('[data-testid="session-settings__rating"] [data-testid="field-row__label"]')
+      .find('.ui-tooltip-trigger')
+    trigger.element.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+    await flushPromises()
+
+    const tooltip = document.body.querySelector('[data-testid="ui-tooltip"]')
+    expect(tooltip).not.toBeNull()
+    expect(tooltip.textContent).toBe(
+      'Pick how finely you grade a card — a quick pass/fail, or a four-point scale.'
+    )
   })
 
   // ── show_rating_buttons toggle ─────────────────────────────────────────────

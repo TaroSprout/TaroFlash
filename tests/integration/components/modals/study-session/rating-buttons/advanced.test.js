@@ -152,6 +152,16 @@ describe('AdvancedRatingButtons', () => {
     expect(wrapper.emitted('rated')?.[0]).toEqual([Rating.Again])
   })
 
+  // ── success-group labels are untouched by the fail-button key swap [obligation] ─
+
+  test('renders Tough/Good/Easy on the success-group buttons when preview is off [obligation]', () => {
+    const wrapper = mountAdvanced()
+    const buttons = wrapper.findAll('[data-testid="ui-button-group__button"]')
+    expect(buttons[0].text()).toContain('Tough')
+    expect(buttons[1].text()).toContain('Good')
+    expect(buttons[2].text()).toContain('Easy')
+  })
+
   test('pressing a button in the success group emits rated with that grade [obligation]', async () => {
     const wrapper = mountAdvanced()
     // The button group has Hard/Good/Easy buttons ordered [Hard, Good, Easy].
