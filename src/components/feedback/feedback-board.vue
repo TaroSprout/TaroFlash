@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { useTemplateRef, watch, ref } from 'vue'
+import { useTemplateRef, watch } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import FeedbackCard from './feedback-card.vue'
@@ -17,31 +17,31 @@ const { t } = useI18n()
 const modal = useModal()
 const { data: items, status, refetch } = useFeedbackItemsQuery()
 const error_message = useTemplateRef<HTMLElement>('error_message')
-/** Distinguishes the error's first appearance (its own cue) from a repeat retry failure (shake + a different cue). */
-const has_shown_load_error = ref(false)
 
 function onSubmitPress() {
   emitSfx('dialog.open-chime')
   modal.open(FeedbackSubmitDialog, { backdrop: true, mode: 'popup' })
 }
 
-function onRetry() {
-  return refetch()
+// A retry that fails again leaves `status` at 'error' on both sides, so the
+// watch below never sees a change to react to — check it directly once the
+// refetch settles instead.
+async function onRetry() {
+  const was_already_error = status.value === 'error'
+  await refetch()
+  if (!was_already_error || status.value !== 'error') return
+
+  emitSfx('ui.rejected')
+  if (error_message.value) shake(error_message.value)
 }
 
-// The initial load failure gets its own cue as the message first appears; a
-// retry that fails again shakes the same message with the rejection cue
-// instead, since no new message appears.
+// Fires for the initial load failure, and for a failure that follows a
+// success — both are genuine transitions into 'error', so they get the
+// first-failure cue. A same-value error->error transition never reaches
+// here; onRetry above handles that repeat case directly.
 watch(status, (current) => {
   if (current !== 'error') return
 
-  if (has_shown_load_error.value) {
-    emitSfx('ui.rejected')
-    if (error_message.value) shake(error_message.value)
-    return
-  }
-
-  has_shown_load_error.value = true
   emitSfx('notice.error')
 })
 </script>
