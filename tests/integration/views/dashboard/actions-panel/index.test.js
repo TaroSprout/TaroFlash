@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, ref, useAttrs } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -9,6 +9,10 @@ const { mockStartStudy, mockCreateDeck, mockEmitSfx } = vi.hoisted(() => ({
   mockCreateDeck: vi.fn(() => Promise.resolve({ id: 1 })),
   mockEmitSfx: vi.fn()
 }))
+
+// Module-level (not inside vi.hoisted) so Vue's ref() is available — the
+// component's template auto-unwraps this only because it's a real ref.
+const mockDockOnScreen = ref(false)
 
 vi.mock('@/views/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: mockStartStudy })
@@ -25,6 +29,10 @@ vi.mock('@/stores/member', () => ({
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
   emitHoverSfx: vi.fn()
+}))
+
+vi.mock('@/composables/ui/media-query', () => ({
+  useMatchMedia: () => mockDockOnScreen
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -114,6 +122,7 @@ beforeEach(() => {
   mockCreateDeck.mockClear()
   mockCreateDeck.mockResolvedValue({ id: 1 })
   mockEmitSfx.mockClear()
+  mockDockOnScreen.value = false
 })
 
 describe('DashboardActionsPanel — header', () => {
@@ -139,45 +148,75 @@ describe('DashboardActionsPanel — header', () => {
 
 describe('DashboardActionsPanel — study button', () => {
   test('pressing the study button starts a study session with the due decks', async () => {
-    const due_decks = [{ id: 1 }, { id: 2 }]
+    const due_decks = [
+      { id: 1, due_count: 2 },
+      { id: 2, due_count: 1 }
+    ]
     const wrapper = mount(due_decks)
     await wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').trigger('click')
     expect(mockStartStudy).toHaveBeenCalledWith(due_decks.map((deck) => deck.id))
   })
 
   test('is disabled while editing_decks is true [obligation]', () => {
-    const wrapper = mount([], true)
+    const wrapper = mount([{ id: 1, due_count: 3 }], true)
     expect(
       wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
     ).not.toBeUndefined()
   })
 
-  test('is enabled when editing_decks is false and there are due decks [obligation]', () => {
-    const wrapper = mount([{ id: 1 }], false)
+  test('is enabled when editing_decks is false and there are due cards [obligation]', () => {
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
     expect(
       wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
     ).toBeUndefined()
   })
 
-  test('is disabled when there are no due decks, even with editing_decks false [obligation]', () => {
-    const wrapper = mount([], false)
-    expect(
-      wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
-    ).not.toBeUndefined()
+  // [obligation] zero due cards disables the button and swaps in the reused no-decks-due-label key.
+  test('is disabled and shows "No Cards Due" when the total due card count is zero [obligation]', () => {
+    const wrapper = mount([{ id: 1, due_count: 0 }], false)
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('disabled')).not.toBeUndefined()
+    expect(button.text()).toBe('No Cards Due')
   })
 
-  test('shows the no-decks-due label when due_decks is empty [obligation]', () => {
-    const wrapper = mount([], false)
+  // [obligation] singular branch of "Study {count} Card | Study {count} Cards".
+  test('shows the singular label for exactly one due card [obligation]', () => {
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
     expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toBe(
-      'No Decks Due'
+      'Study 1 Card'
     )
   })
 
-  test('shows the study label with count when due_decks is non-empty', () => {
-    const wrapper = mount([{ id: 1 }, { id: 2 }], false)
-    expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toContain(
-      '2'
+  // [obligation] plural branch, summed across decks.
+  test('shows the plural label with the summed due card count [obligation]', () => {
+    const wrapper = mount(
+      [
+        { id: 1, due_count: 3 },
+        { id: 2, due_count: 2 }
+      ],
+      false
     )
+    expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toBe(
+      'Study 5 Cards'
+    )
+  })
+})
+
+describe('DashboardActionsPanel — study button emphasis swap with the dock [obligation]', () => {
+  test('drops data-palette and goes neutral when the mobile dock is on screen', () => {
+    mockDockOnScreen.value = true
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('data-palette')).toBeUndefined()
+    expect(button.attributes('neutral')).toBe('true')
+  })
+
+  test('renders data-palette="brand" and drops neutral when the mobile dock is off screen', () => {
+    mockDockOnScreen.value = false
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('data-palette')).toBe('brand')
+    expect(button.attributes('neutral')).toBe('false')
   })
 })
 
