@@ -13,14 +13,15 @@ Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
 
 CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
 than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails (→[K:proxy-pass-not-evidence]).
-Run `pnpm type-check` before pushing anything that touches types.
+Run `pnpm type-check` before any point where a branch leaves your hands — pushing it yourself, or
+handing it back to whatever pushes it next.
 
 ## Never `pnpm`
 
 - **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm
   rewrites the lockfile importer spec away from the `@latest` override, and CI's frozen-lockfile
   check then fails with "specifiers in the lockfile don't match specifiers in package.json".
-- `pnpm type-check` is the sole exception, and only as the pre-push gate above.
+- `pnpm type-check` is the sole exception, and only as the gate above.
 - **Upgrade a tool rather than working around it.** If a CLI is too old for a feature we want, offer
   the upgrade — don't accumulate one-off `curl`/SQL workarounds. Work around only when upgrading is
   genuinely blocked, and say why.

@@ -205,7 +205,7 @@ node scripts/knowledge-lint.mjs
 node scripts/migration-knowledge-gate.mjs --base origin/<base>
 ```
 
-- **Type-check uses `pnpm type-check` (vue-tsc), not `vp`.** CI runs `pnpm type-check`, and vue-tsc is stricter than `vp check`'s type pass — a `vp`-clean tree can still fail CI on types. Use the same command CI uses so the gate actually matches it.
+- Why `pnpm type-check` and not `vp check`: [`toolchain → The type-check gate`](../../rules/toolchain.md#the-type-check-gate).
 - **The knowledge check runs on every branch, not just doc branches.** A pointer breaks when the code it names moves. `migration-knowledge-gate.mjs` only speaks when the branch adds a migration; its answer goes in that migration's header, per [`knowledge-addressing`](../../rules/knowledge-addressing.md).
 - If all clean → continue to the push.
 - If they report errors → fix them. Most lint hits are mechanical (unused import left by a refactor, `prefer-const`, missing return); `vp lint --fix` / `vp fmt <path>` handle the auto-fixable ones — name the paths you touched, per [`FE-formatting`](../../rules/FE-formatting.md). Type errors after a refactor are usually moved/renamed symbols or a changed signature — chase them to the changed call sites.
