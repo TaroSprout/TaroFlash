@@ -13,10 +13,7 @@ const bar = useTemplateRef<HTMLElement>('bar')
 const content_wrapper = useTemplateRef<HTMLElement>('content_wrapper')
 const content = useTemplateRef<HTMLElement>('content')
 
-// Only the full-width bar sitting on the screen edge needs the device's inset; as a
-// card inset from the corner it is already clear of it, and docked browser chrome
-// covers that strip on its own.
-// [K:gap: the dock's bottom edge allowance follows whether the bar is flush against the screen edge, never the visitor's pointer type — a desktop window narrowed to phone width is flush too]
+// Trap: the edge inset is earned by being flush against the screen edge, not by being on a touch device →[K:dock-edge-inset-follows-flush]
 const has_edge_allowance = computed(() => is_flush.value && !is_bottom_chrome_covering.value)
 
 /**

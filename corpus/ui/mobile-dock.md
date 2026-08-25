@@ -24,6 +24,17 @@ bar, watches whatever landed inside it, and grows or shrinks the bar to fit.
 > the inner one. The visible result is exactly what it sounds like — two
 > things animating at different speeds. See below.
 
+> [!HAZARD] [K:dock-edge-inset-follows-flush] **The device's bottom-edge inset is earned by sitting flush on the screen edge, not by being on a touch device.**
+> Below the `sm` breakpoint the bar spans the full width and sits on the
+> bottom edge, so it needs `env(safe-area-inset-bottom)` to clear the home
+> indicator or gesture bar. Above it the bar is a card inset from the corner
+> — already clear of the edge — so adding the inset there just pads it for
+> nothing. A desktop window narrowed to phone width is flush the same as a
+> phone is, and docked browser chrome (an installed PWA's own bottom bar)
+> covers the inset strip on its own, so the inset is skipped there too even
+> though the bar is flush. Keying the inset off "is this a phone" instead of
+> off the geometry gets both wrong.
+
 ## The dock watches, it doesn't get told
 
 `useAnimatedHeight` sits between the dock's wrapper and whatever content is
@@ -69,6 +80,17 @@ duration, the dock catches up to the settled result once the claim releases.
 > re-arms, and the bar stops resizing to its content for the rest of the
 > session. Every claim needs a release on every path out, including ones
 > that abort a swap early.
+
+## Visible and flush are different questions
+
+`useMobileDock()` exposes both, and they don't move together. `is_visible`
+answers whether the bar shows at all — below the claimed breakpoint and the
+on-screen keyboard closed. `is_flush` answers only whether the bar is
+currently the full-width, edge-pinned shape, which happens below the `sm`
+breakpoint regardless of what claimed the wider one. The host reads
+`is_flush` — combined with whether docked browser chrome is already covering
+that strip — to decide whether the bar's own bottom padding needs the
+device's safe-area inset added on top.
 
 ## What this isn't
 
