@@ -57,7 +57,10 @@ function removePendingDeck(queryCache: QueryCache, client_key: string) {
 export function useUpsertDeckMutation() {
   const queryCache = useQueryCache()
   const member = useMemberStore()
-  const deck_count_query = useMemberDeckCountQuery()
+  // Only ever consulted via the explicit `refresh()` below, right before a
+  // create's limit re-check — never needs its own automatic fetch on mount,
+  // which would otherwise fire for every deck upsert, including edits.
+  const deck_count_query = useMemberDeckCountQuery(false)
 
   return useMutation({
     mutation: async (deck: Deck) => {
