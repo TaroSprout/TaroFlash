@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import { cardEditorKey } from '@/views/deck/composables'
@@ -12,12 +12,17 @@ const { card_id } = defineProps<CardGridDeleteButtonProps>()
 
 const { t } = useI18n()
 const { actions } = inject(cardEditorKey)!
+const button = useTemplateRef<InstanceType<typeof UiButton>>('button')
 const deleting = ref(false)
 
 async function onDelete() {
+  const card_el = (button.value!.$el as HTMLElement).closest<HTMLElement>(
+    '[data-testid="grid-item"]'
+  )!
+
   deleting.value = true
   try {
-    await actions.onDeleteCardImmediate(card_id)
+    await actions.onDeleteCardImmediate(card_id, card_el)
   } finally {
     deleting.value = false
   }
@@ -26,6 +31,7 @@ async function onDelete() {
 
 <template>
   <ui-button
+    ref="button"
     neutral
     data-testid="card-grid-item__delete-button"
     icon-left="close"
