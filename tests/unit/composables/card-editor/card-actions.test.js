@@ -261,6 +261,74 @@ describe('useCardActions', () => {
     })
   })
 
+  // ── onDeleteCardImmediate ─────────────────────────────────────────────────
+  // The grid's reorder-mode corner button: no confirm alert, fires the delete
+  // cue directly. [obligation]
+
+  describe('onDeleteCardImmediate [obligation]', () => {
+    test('fires the card.delete sfx directly, without going through confirmDelete', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
+
+      await actions.onDeleteCardImmediate(1)
+
+      expect(emitSfxMock).toHaveBeenCalledWith('card.delete')
+      expect(alertWarnMock).not.toHaveBeenCalled()
+      expect(mutations.deleteCards).toHaveBeenCalledOnce()
+    })
+
+    test('calls mutations.deleteCards with the card in the cards array', async () => {
+      const persisted = [makeCard({ id: 5 })]
+      const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
+
+      await actions.onDeleteCardImmediate(5)
+
+      const [args] = mutations.deleteCards.mock.calls[0]
+      expect(args.cards.map((c) => c.id)).toEqual([5])
+    })
+
+    test('retires the card temp entry before the mutation and runs afterDelete on success', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const list = makeList({ persisted })
+      const retireTempsSpy = vi.spyOn(list, 'retireTemps')
+      const { actions, mutations, selection, deck_query } = makeActions({ list })
+
+      await actions.onDeleteCardImmediate(1)
+
+      expect(retireTempsSpy).toHaveBeenCalledWith([1])
+      expect(mutations.deleteCards).toHaveBeenCalledOnce()
+      expect(selection.exitSelection).toHaveBeenCalledOnce()
+      expect(deck_query.refetch).toHaveBeenCalledOnce()
+    })
+
+    test('restores the retired temp entry and shows an error notice when the mutation rejects', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const temp_entries = [{ index: 0, real_id: 1, card: { id: 1 } }]
+      const mutations = makeMutations()
+      mutations.deleteCards.mockRejectedValueOnce(new Error('boom'))
+      const list = makeList({ persisted, temp_entries })
+      const restoreTempsSpy = vi.spyOn(list, 'restoreTemps')
+      const { actions, selection, deck_query } = makeActions({ list, mutations })
+
+      await actions.onDeleteCardImmediate(1)
+
+      expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
+      expect(restoreTempsSpy).toHaveBeenCalledOnce()
+      expect(list.temp_entries.value).toEqual(temp_entries)
+      expect(selection.exitSelection).not.toHaveBeenCalled()
+      expect(deck_query.refetch).not.toHaveBeenCalled()
+    })
+
+    test('is a no-op when the card is not found', async () => {
+      const { actions, mutations } = makeActions({ list: makeList({ persisted: [] }) })
+
+      await actions.onDeleteCardImmediate(999)
+
+      expect(mutations.deleteCards).not.toHaveBeenCalled()
+      expect(emitSfxMock).not.toHaveBeenCalledWith('card.delete')
+    })
+  })
+
   // ── onMoveCards ───────────────────────────────────────────────────────────
 
   describe('onMoveCards', () => {

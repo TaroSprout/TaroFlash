@@ -107,7 +107,8 @@ function makeEditor({ is_selecting = false } = {}) {
     actions: {
       onSelectCard: vi.fn(),
       onMoveCards: vi.fn(),
-      onDeleteCards: vi.fn()
+      onDeleteCards: vi.fn(),
+      onDeleteCardImmediate: vi.fn()
     },
     editCard: vi.fn(),
     selection: {
@@ -512,6 +513,72 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
       const { wrapper } = mountGridItem({ props: { rearranging: true } })
       hoverRoot(wrapper)
       expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+  })
+
+  // ── reorder-mode corner delete button [obligation] ────────────────────────
+  // The button is a reorder-mode-only affordance — it must never appear
+  // alongside the selection radio or the idle-mode more-menu.
+
+  describe('reorder-mode corner delete button [obligation]', () => {
+    test('renders only when rearranging', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(true)
+    })
+
+    test('is absent while selecting', () => {
+      const editor = makeEditor({ is_selecting: true })
+      const { wrapper } = mountGridItem({ editor })
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
+    })
+
+    test('is absent in idle mode (not rearranging, not selecting)', () => {
+      const { wrapper } = mountGridItem()
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
+    })
+
+    test('clicking it calls onDeleteCardImmediate with the card id, never confirmDelete/onDeleteCards', async () => {
+      const editor = makeEditor()
+      const { wrapper } = mountGridItem({
+        props: { card: { id: 9, client_id: 'c9' }, rearranging: true },
+        editor
+      })
+
+      await wrapper.find('[data-testid="card-grid-item__delete-button"]').trigger('click')
+
+      expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(9)
+      expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
+    })
+
+    test('its pointerdown.stop keeps the ancestor grid drag-start listener from firing [obligation]', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      const outerAncestorHandler = vi.fn()
+      const outer = document.createElement('div')
+      outer.addEventListener('pointerdown', outerAncestorHandler)
+      outer.appendChild(wrapper.element)
+      document.body.appendChild(outer)
+
+      const button = wrapper.find('[data-testid="card-grid-item__delete-button"]').element
+      const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
+      button.dispatchEvent(event)
+
+      expect(outerAncestorHandler).not.toHaveBeenCalled()
+
+      outer.remove()
+    })
+  })
+
+  // ── card-menu delete path stays unchanged [obligation] ────────────────────
+
+  describe('card-menu delete path [obligation]', () => {
+    test('the more-menu delete option still routes through onDeleteCards, not onDeleteCardImmediate', async () => {
+      const editor = makeEditor({ is_selecting: false })
+      const { wrapper } = mountGridItem({ editor })
+
+      await wrapper.find('[data-testid="grid-item-menu-stub__delete"]').trigger('click')
+
+      expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
+      expect(editor.actions.onDeleteCardImmediate).not.toHaveBeenCalled()
     })
   })
 })
