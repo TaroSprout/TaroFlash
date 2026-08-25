@@ -17,25 +17,20 @@ corpus/` and read the topic before you change anything around it.
 [`corpus/hazards.md`](../../corpus/hazards.md) is the roll-call of every one — a slug and a topic
 per line, no prose to drift. Never hand-edit an entry's text; it lives in the topic.
 
-Pull the topic for the area you're in:
+Find the domain for the area you're in, then read that domain's `_map.md` for the topic:
+`corpus/<domain>/_map.md` — e.g. `corpus/cards/_map.md`. [`corpus/map.md`](../../corpus/map.md) is
+the root index across every domain.
 
-| Working in                                                     | Topic                              |
-| -------------------------------------------------------------- | ---------------------------------- |
-| `src/api/**`, cache invalidation, anything reading server data | `corpus/architecture/data-flow.md` |
-| `src/composables/can.ts`, RLS policies, any `can_` check       | `corpus/authz/permissions.md`      |
-| `src/api/cards/**`, `src/components/card/**`, card ordering    | `corpus/cards/cards.md`            |
-| `src/api/decks/**`, deck sharing / visibility                  | `corpus/decks/decks.md`            |
-| `src/api/feedback/**`, the public wall & moderation            | `corpus/feedback/feedback.md`      |
-| `src/api/media/**`, `supabase/functions/cleanup-media`         | `corpus/media/media.md`            |
-| `supabase/functions/transcribe-lesson`, lesson audio chains    | `corpus/media/audio-generation.md` |
-| `src/api/members/**`, `src/stores/member.ts`, signup           | `corpus/members/members.md`        |
-| `src/api/review-pacing/**`, per-deck dials & presets           | `corpus/pacing/pacing.md`          |
-| `src/composables/fsrs.ts`, `src/api/reviews/**`, FSRS          | `corpus/scheduling/scheduling.md`  |
-| `src/views/study-session/**`, a run through a pile             | `corpus/study/study.md`            |
-| `src/styles/**`, `src/stores/theme.ts`, palettes               | `corpus/theming/theming.md`        |
+A source path doesn't always name its domain — three exceptions worth knowing up front:
 
-[`corpus/map.md`](../../corpus/map.md) is the full index; [`corpus-authoring`](./corpus-authoring.md)
-covers how topics are written. The `corpus-author` agent owns edits — don't rewrite a topic in passing.
+| Working in                                                       | Domain         |
+| ------------------------------------------------------------------ | -------------- |
+| `src/composables/can.ts`, RLS policies, any `can_` check           | `authz`        |
+| `src/api/**`, cache invalidation, anything reading server data     | `architecture` |
+| `src/composables/fsrs.ts`, `src/api/reviews/**`, FSRS              | `scheduling`   |
+
+[`corpus-authoring`](./corpus-authoring.md) covers how topics are written. The `corpus-author` agent
+owns edits — don't rewrite a topic in passing.
 
 **A diff that contradicts a stated invariant is a bug.** A diff that changes one, or exposes a new
 hazard, is what wakes `corpus-author` — and when you can't reach it, the fact stays at the site as a
