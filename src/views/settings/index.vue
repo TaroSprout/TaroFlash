@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  provide,
+  ref,
+  useTemplateRef,
+  watch
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsAside from './settings-aside.vue'
 import SettingsSaveButton from './settings-save-button.vue'
@@ -84,9 +93,52 @@ const groups = computed<PagedWindowGroup[]>(() => [
 
 const header_title = computed(() => t('settings.header.title'))
 
+const preview_ref = useTemplateRef<HTMLElement>('preview_ref')
+const aside_ref = useTemplateRef<{ $el: HTMLElement }>('aside_ref')
+
+/** Air between the preview's lowest edge and the first aside control. */
+const PREVIEW_GAP = 32
+
+/*
+ * The pinned preview floats out of flow above the aside's own column, so the
+ * aside reserves the room the preview actually occupies — measured, because the
+ * card's height moves with its comment box and the header it hangs over.
+ */
+const aside_clearance = ref('0px')
+let preview_observer: ResizeObserver | undefined
+
+function measureAsideClearance() {
+  const preview = preview_ref.value
+  const aside = aside_ref.value?.$el
+  if (!preview || !aside) return
+
+  const reserve =
+    preview.getBoundingClientRect().bottom + PREVIEW_GAP - aside.getBoundingClientRect().top
+  aside_clearance.value = `${Math.max(0, Math.round(reserve))}px`
+}
+
+watch(
+  preview_ref,
+  (el) => {
+    preview_observer?.disconnect()
+    preview_observer = undefined
+    if (!el) return
+
+    preview_observer = new ResizeObserver(measureAsideClearance)
+    preview_observer.observe(el)
+    nextTick(measureAsideClearance)
+  },
+  { flush: 'post' }
+)
+
+watch(layout_mode, () => nextTick(measureAsideClearance), { flush: 'post' })
+
 // Open/close sfx live here, not per-callsite, so every launcher sounds identical — mirrors the deck-settings modal.
 onMounted(() => emitSfx('dialog.open'))
-onBeforeUnmount(() => emitSfx('dialog.close'))
+onBeforeUnmount(() => {
+  emitSfx('dialog.close')
+  preview_observer?.disconnect()
+})
 
 async function onClose() {
   if (!editor.is_dirty.value) return close()
@@ -133,6 +185,7 @@ watch(layout_mode, (mode) => {
     ]"
     :pages="pages"
     :groups="groups"
+    keep_docked_height
     phone_query="w<mlg"
     :pattern_config="{ pattern: 'diagonal-stripes', pattern_size: '48px', pattern_opacity: '0.15' }"
     v-model:active="active_page"
@@ -160,9 +213,11 @@ watch(layout_mode, (mode) => {
     <template #aside>
       <settings-aside
         v-if="layout_mode !== 'phone'"
+        ref="aside_ref"
         data-testid="settings__aside"
         class="shrink-0 self-end pb-8"
-        :class="layout_mode === 'tablet' ? 'w-110 pt-56 pl-10 pr-26' : 'w-100 pt-60 pl-8 pr-16'"
+        :class="layout_mode === 'tablet' ? 'w-110 pl-10 pr-26' : 'w-100 pl-8 pr-16'"
+        :style="{ paddingTop: aside_clearance }"
       />
     </template>
 
@@ -173,6 +228,7 @@ watch(layout_mode, (mode) => {
     <template #overlay>
       <div
         v-if="layout_mode !== 'phone'"
+        ref="preview_ref"
         data-testid="settings__pinned-preview"
         class="pointer-events-auto absolute right-(--window-px) top-6"
       >
