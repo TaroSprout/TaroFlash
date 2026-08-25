@@ -133,7 +133,7 @@ function onLeave(el: Element, done: () => void) {
     <div v-if="shimmer" class="card-shimmer shimmer" aria-hidden="true" />
 
     <transition mode="out-in" @enter="onEnter" @leave="onLeave">
-      <card-cover v-if="side === 'cover'" :cover="cover_config" />
+      <card-cover v-if="side === 'cover'" :cover="cover_config" :cover_image="cover_image" />
 
       <slot name="front" v-else-if="side === 'front'">
         <card-face
