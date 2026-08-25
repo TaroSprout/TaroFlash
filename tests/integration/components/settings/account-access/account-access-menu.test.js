@@ -66,8 +66,7 @@ const OptionsPanelStub = defineComponent({
 function makeWrapper() {
   return mount(AccountAccessMenu, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub, UiOptionsPanel: OptionsPanelStub },
-      directives: { sfx: {} }
+      stubs: { UiTooltip: UiTooltipStub, UiOptionsPanel: OptionsPanelStub }
     }
   })
 }

@@ -16,8 +16,7 @@ import ReviewInboxNavButton from '@/views/dashboard/review-inbox/nav-button.vue'
 
 function mountButton(props) {
   return mount(ReviewInboxNavButton, {
-    props,
-    global: { directives: { sfx: {} } }
+    props
   })
 }
 

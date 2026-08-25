@@ -169,8 +169,7 @@ function mountToolbar(props = {}) {
         UiIcon: UiIconStub,
         UiDropdownButton: UiDropdownButtonStub,
         Scrubber: ScrubberStub
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }

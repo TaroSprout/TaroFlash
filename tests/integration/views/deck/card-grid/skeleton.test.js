@@ -39,8 +39,7 @@ function mountSkeleton(props = {}) {
   return shallowMount(CardGridSkeleton, {
     props,
     global: {
-      stubs: { Card: CardStub },
-      directives: { sfx: {} }
+      stubs: { Card: CardStub }
     }
   })
 }

@@ -57,8 +57,7 @@ import ForgotPasswordModal from '@/views/welcome/forgot-password/index.vue'
 
 function makeWrapper(close = vi.fn()) {
   return mount(ForgotPasswordModal, {
-    props: { close },
-    global: { directives: { sfx: {} } }
+    props: { close }
   })
 }
 

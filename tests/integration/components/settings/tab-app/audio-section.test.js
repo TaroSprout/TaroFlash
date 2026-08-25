@@ -41,8 +41,7 @@ function mountSection(editor = makeEditor()) {
   const wrapper = mount(AudioSection, {
     attachTo: document.body,
     global: {
-      provide: { [memberEditorKey]: editor },
-      directives: { sfx: {} }
+      provide: { [memberEditorKey]: editor }
     }
   })
   return { wrapper, editor }

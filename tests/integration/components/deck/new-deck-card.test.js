@@ -65,7 +65,7 @@ describe('NewDeckCard', () => {
     // Card renders its #front slot only when fully mounted — Card is stubbed
     // (and its slot content discarded) under shallowMount.
     const wrapper = fullMount(NewDeckCard, {
-      global: { stubs: { UiTappable: UiTappableStub }, directives: { sfx: {} } }
+      global: { stubs: { UiTappable: UiTappableStub } }
     })
     const outline = wrapper.find('[data-testid="new-deck-card__outline"]')
     expect(outline.exists()).toBe(true)

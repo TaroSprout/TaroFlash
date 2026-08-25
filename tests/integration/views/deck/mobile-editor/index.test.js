@@ -86,8 +86,7 @@ function mountModal() {
   const wrapper = mount(ModalUiKit, {
     attachTo: document.body,
     global: {
-      stubs: { FaceEditor: FaceEditorStub, UiDropdownButton: UiDropdownButtonStub },
-      directives: { sfx: {} }
+      stubs: { FaceEditor: FaceEditorStub, UiDropdownButton: UiDropdownButtonStub }
     }
   })
   mounted.push(wrapper)

@@ -46,7 +46,7 @@ function mountButtonWithSlots(props = {}, slots = {}) {
   return shallowMount(UiButton, {
     props,
     slots,
-    global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+    global: { stubs: { UiTooltip: UiTooltipSlotStub } }
   })
 }
 
@@ -624,7 +624,7 @@ describe('UiButton', () => {
     test('clickWhenDisabled=true with disabled=true lets the click propagate to the handler [obligation]', async () => {
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: true },
-        global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+        global: { stubs: { UiTooltip: UiTooltipSlotStub } }
       })
       const event = new MouseEvent('click', { bubbles: true, cancelable: true })
       const stopSpy = vi.spyOn(event, 'stopImmediatePropagation')
@@ -640,7 +640,7 @@ describe('UiButton', () => {
     test('disabled=true without clickWhenDisabled swallows the click (calls preventDefault) [obligation]', async () => {
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: false },
-        global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+        global: { stubs: { UiTooltip: UiTooltipSlotStub } }
       })
       const event = new MouseEvent('click', { bubbles: true, cancelable: true })
       const preventSpy = vi.spyOn(event, 'preventDefault')
@@ -656,7 +656,7 @@ describe('UiButton', () => {
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: true },
         attrs: { onClick: vi.fn() },
-        global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+        global: { stubs: { UiTooltip: UiTooltipSlotStub } }
       })
       wrapper
         .find('[data-testid="ui-kit-button"]')

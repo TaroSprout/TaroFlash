@@ -100,7 +100,6 @@ function makeTab({ audio = {} } = {}) {
         LabeledSection: LabeledSectionStub,
         SettingsSaveButton: NullStub
       },
-      directives: { sfx: {} },
       mocks: { $t: (k) => k },
       provide: {
         [memberEditorKey]: editor,

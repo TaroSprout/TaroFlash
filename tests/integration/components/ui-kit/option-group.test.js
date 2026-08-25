@@ -38,8 +38,7 @@ const OPTIONS = [
 
 function mountOptionGroup(props = {}) {
   return mount(UiOptionGroup, {
-    props: { options: OPTIONS, value: 'simple', ...props },
-    global: { directives: { sfx: {} } }
+    props: { options: OPTIONS, value: 'simple', ...props }
   })
 }
 

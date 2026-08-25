@@ -41,8 +41,7 @@ function mountMenu(props = {}) {
       options: SAMPLE_OPTIONS,
       size: 'md',
       ...props
-    },
-    global: { directives: { sfx: {} } }
+    }
   })
 }
 
@@ -224,8 +223,7 @@ describe('DropdownMenu', () => {
     function mountMenuWithSlot(slotContent) {
       return mount(DropdownMenu, {
         props: { options: SAMPLE_OPTIONS, size: 'md' },
-        slots: { default: slotContent },
-        global: { directives: { sfx: {} } }
+        slots: { default: slotContent }
       })
     }
 

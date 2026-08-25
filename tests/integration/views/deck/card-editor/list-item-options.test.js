@@ -30,8 +30,7 @@ function mountOptions(props = {}) {
   return mount(ListItemOptions, {
     props,
     global: {
-      stubs: { UiButton: UiButtonStub },
-      directives: { sfx: {} }
+      stubs: { UiButton: UiButtonStub }
     }
   })
 }

@@ -10,6 +10,13 @@ const i18n = createI18n({
 
 config.global.plugins = [i18n]
 
+// The sound directive is registered on the real app (src/main.ts) but not in
+// this setup. Register a no-op default so a real "Failed to resolve
+// directive: sfx" warning stands out instead of being lost in the noise; a
+// test exercising real sound behaviour overrides this per-mount with the
+// real vSfx via `global.directives`.
+config.global.directives = { sfx: {} }
+
 // window.matchMedia is not implemented in jsdom. use-theme.ts calls it at
 // module scope, so the mock must live in setup (runs before any import).
 // Tests control `matches` via global.__matchMedia and fire the 'change'
