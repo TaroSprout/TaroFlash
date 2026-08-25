@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: [dialog-card]
-updated: 2026-08-16
+updated: 2026-08-25
 ---
 
 # The window family
@@ -39,14 +39,16 @@ needing to know:
 
 ## Docking drops the body scroller
 
-Docked to the bottom of a viewport too short to hold it, `app-window` drops
-whatever height its caller set and grows to fit its content instead — the
-modal sheet around it is then the only thing that scrolls. Docking is the
-`mobile-modal` variant in `src/styles/mobile-modal-variant.css`: pure media
-queries plus attribute selectors, no JS flag, so every part of this state is
-expressible as a CSS variant →[K:mid-gesture-mutation-kills-momentum-scroll].
+Docked to the bottom of a viewport too short or too narrow to hold it,
+`app-window` drops whatever height its caller set and grows to fit its
+content instead — the modal sheet around it is then the only thing that
+scrolls. Docking is the `mobile-modal` variant in
+`src/styles/mobile-modal-variant.css`: pure media queries plus attribute
+selectors, no JS flag, so every part of this state is expressible as a CSS
+variant →[K:mid-gesture-mutation-kills-momentum-scroll]. A caller can opt out
+of the height half of that release — see the hazard below.
 
-> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A docked window has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight.**
+> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A docked window has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight, unless the caller opted out.**
 > Two things get in the way of switching the body off. A caller's height cap
 > (feedback-board's `msm:h-196`, admin's `h-205`) is a same-property variant
 > utility whose cascade order against `mobile-modal:` isn't guaranteed, so the
@@ -59,6 +61,13 @@ expressible as a CSS variant →[K:mid-gesture-mutation-kills-momentum-scroll].
 > would stop scrolling too; there are none today, and "nothing inside a
 > docked window scrolls" is arguably the rule anyway, but the reach is wider
 > than the body scroller alone.
+>
+> `keep_docked_height` (default off) narrows the release to the width half of
+> docking — `mobile-modal-flush:` instead of `mobile-modal:`. A window docked
+> only because the viewport got _short_ then keeps its cap and keeps running
+> its own body scroller inside the sheet; a window docked because it ran out
+> of _width_ is unaffected either way. Settings is the one caller that sets it
+> today, for its fixed-height `h-187` window.
 
 With the cap gone, the scroller's `scrollHeight` equals its `clientHeight`,
 `use-scroll-metrics` reports not-overflowing, and the scroll handle needs no
