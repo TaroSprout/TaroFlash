@@ -11,7 +11,10 @@ on.
 2. **Check staleness.** At session start, verify the current branch isn't already merged (e.g.
    `gh pr view --json state,mergedAt` or `git log master..HEAD`). If merged, branch fresh off `master`.
 3. **Don't open PRs automatically.** Open or push a PR only when explicitly asked. Committing locally
-   is fine; surfacing the work as a PR is the user's call.
+   is fine; surfacing ad-hoc work as a PR is the user's call. Exempt: a flow whose own invocation
+   _is_ the ask — `prepare-pr` and `/work` (see their own skills) — and the standing `self-heal` PR,
+   pre-authorised in [`self-heal → shipping`](./self-heal/shipping.md), which the user reviews and
+   closes himself.
 4. **Check the PR isn't already merged before pushing follow-ups.** `gh pr view <num> --json state,mergedAt`
    first — pushing to a merged branch strands the commit where it will never reach `master`.
 5. **Force-push only your own feature branch**, and only with `--force-with-lease`. Never `master`.
