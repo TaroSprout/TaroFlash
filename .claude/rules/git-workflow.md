@@ -38,3 +38,12 @@ on.
    away with `--force`. This holds even for a worktree your own run created — a step that removes it
    is an obligation of how the run ends, not a line that only runs once every earlier step succeeded;
    a run that fails or is interrupted still checks and removes what it made before it stops.
+10. **Verify which tree a write lands in, and never let one land on the shared checkout.**
+    [K:worktree-write-target] Before the first edit or commit in a worktree you just created, check
+    the creating command's own exit status directly — never through a `tail`/`head`/`grep` pipe,
+    which swallows a failed `git worktree add` and lets a later command run against whatever tree the
+    shell was already in — then confirm with `pwd` or `git rev-parse --show-toplevel` that you
+    landed in the new worktree, not back in the main checkout. Reading a file in the shared checkout
+    to decide what to change is fine; writing to it is not, before the worktree exists or after — a
+    stray write there is reverted by you before you finish, reported, never left uncommitted for
+    someone else to find.

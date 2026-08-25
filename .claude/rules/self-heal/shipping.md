@@ -15,11 +15,9 @@ this run. You hold no state afterwards — the next heal is a fresh run that rep
 Several heals run concurrently, so **never check out the `self-heal` branch**: git refuses a branch
 already held by a sibling's worktree, and that is the failure this sequence avoids.
 
-**The main checkout is never yours to write to, before the worktree exists or after.** Reading a
-file there to decide what to change is fine; editing it — even a first draft you mean to redo in the
-worktree once it exists — leaves a stray diff that only the orchestrator can notice and clear. If one
-lands anyway, revert it yourself before you finish and say so in the report; don't leave it
-uncommitted for someone else to find.
+Verifying you're in the worktree before you write, and never the main checkout, is
+[`git-workflow`](../git-workflow.md)'s rule (→[K:worktree-write-target]) — it covers the
+revert-and-report obligation too.
 
 1. `git fetch origin`, then add a worktree at a path unique to this run —
    `.claude/worktrees/heal-$(date +%s)-$$` — **detached** at `origin/self-heal`, or at

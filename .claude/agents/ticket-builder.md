@@ -34,15 +34,16 @@ string from elsewhere in the app as a substitute. Name each one in your report.
 
 ## Your worktree, and only your worktree
 
-Run `pwd` first and confirm you are inside `.claude/worktrees/agent-<id>`. Every read, write, `cd`
-and git command runs from there, and **every file path is built from that worktree root** — a bare
-path outside it is the shared checkout a human may be editing live.
+Every read, write, `cd` and git command runs from `.claude/worktrees/agent-<id>`, and **every file
+path is built from that worktree root** — a bare path outside it is the shared checkout a human may
+be editing live. [`git-workflow`](../rules/git-workflow.md) owns verifying you're actually there
+before you write (→[K:worktree-write-target]).
 
 - **A fresh ticket or freeform build renames** the worktree's existing branch to a conventional name
   (`git branch -m feat/…`). Never `git checkout -b`, which orphans the placeholder branch as junk. **A
   fix is already on its target branch** — commit onto it as-is, no rename.
-- If a change ever lands on the shared checkout, **stop and report it**. Never `git checkout` /
-  `git restore` / revert a file there, and never bare `git stash` / `git stash pop`
+- If a change ever lands on the shared checkout, **stop and report it** — don't revert it yourself.
+  Never `git checkout` / `git restore` a file there, and never bare `git stash` / `git stash pop`
   ([`git-workflow`](../rules/git-workflow.md)) — the stash stack is shared across worktrees.
 
 ## Loop

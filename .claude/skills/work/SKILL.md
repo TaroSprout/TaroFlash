@@ -96,9 +96,9 @@ routing reads (§ Fix routing).
 ### 0. HOME TREE
 
 `pwd` and `git worktree list` once, at the start, and record the result as the run's home tree.
-Every git command for the rest of the run is checked against that path — **run `pwd` before every git
-command**, not once at entry. A single-ticket or freeform run stays on whatever branch the home tree
-already has checked out (or `master`, cutting a feature branch per
+Every git command for the rest of the run is checked against that path
+([`git-workflow`](../../rules/git-workflow.md)). A single-ticket or freeform run stays on whatever
+branch the home tree already has checked out (or `master`, cutting a feature branch per
 [`git-workflow`](../../rules/git-workflow.md)); a multi-PR run checks out its integration branch here
 (§ Integration branch) and never anything else for the rest of the run.
 
@@ -281,11 +281,12 @@ Every follow-up — user review feedback, a red CI run, or any other fix a PR ne
 same way:
 
 1. **Every fix is dispatched, never edited inline.** A `ticket-builder` works the fix on the owning
-   ticket branch, in a **throwaway worktree** (never the home tree) — it commits there and reports
-   back. The orchestrator then merges that branch forward into the **integration branch, in the home
-   tree** (single-PR runs: the checked-out branch). The fix lands on the correct PR _and_ appears
-   under the user without them moving anything. Fixes to different PRs no longer serialize — only the
-   merge-forward does.
+   ticket branch, in a **throwaway worktree** ([`git-workflow`](../../rules/git-workflow.md),
+   →[K:worktree-write-target]) — it commits there and reports back. The orchestrator then merges
+   that branch forward into the
+   **integration branch, in the home tree** (single-PR runs: the checked-out branch). The fix lands
+   on the correct PR _and_ appears under the user without them moving anything. Fixes to different
+   PRs no longer serialize — only the merge-forward does.
 2. **Routing is the run ledger's job.** Feedback left on a PR carries its number and routes itself.
    Feedback given in chat routes by matching subject and touched files against the ledger's file
    index; genuinely ambiguous feedback asks — safe here because this is all post-handoff, past the one
@@ -350,8 +351,7 @@ ticket PR. Specific to this skill:
 - The orchestrator runs from the **home tree** (§ 0) — a multi-PR run stays on its **integration
   branch** for the whole run (§ Integration branch); it never edits ticket code itself, builders do,
   in their own worktrees, torn down at handoff (except a stuck ticket's, left for inspection).
-  **Post-open fixes are dispatched to a throwaway worktree and merged forward into the tree the user
-  is on** — never edited on the home tree directly (§ Review & feedback loop).
+  Post-open fixes follow the same dispatch-and-merge-forward shape (§ Review & feedback loop).
 - Every PR must merge cleanly (vs `master` and vs the other in-flight PRs) and be CI-green (bar a lone
   `COPY-TBD`) before handoff. A conflict needing human judgment → raise it + `Blocked`; never guess.
 - Successful tickets leave **no worktree and no `worktree-agent-*` branch** behind — builders rename
