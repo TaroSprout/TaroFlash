@@ -38,8 +38,6 @@ const { data: decks, status, refetch } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const moving = ref(false)
 const error_message = useTemplateRef<HTMLElement>('error_message')
-/** Distinguishes the error's first appearance (its own cue) from a repeat retry failure (shake + a different cue). */
-const has_shown_load_error = ref(false)
 
 const title = computed(() => {
   const card = cards[0]
@@ -99,24 +97,25 @@ function onClose() {
   close(false)
 }
 
-function onRetry() {
-  return refetch()
-}
+// @pinia/colada's `status` never moves off 'error' on a repeat failure — only
+// `asyncStatus` does — so `watch(status, …)` below can't observe an
+// error->error transition. Snapshot it before calling `refetch()` and compare
+// after: still 'error' on both sides means the retry failed the same way, and
+// gets the shake + rejection cue since no new message appears.
+async function onRetry() {
+  const was_already_failed = status.value === 'error'
 
-// The initial load failure gets its own cue as the message first appears; a
-// retry that fails again shakes the same message with the rejection cue
-// instead, since no new message appears.
-watch(status, (current) => {
-  if (current !== 'error') return
+  await refetch()
 
-  if (has_shown_load_error.value) {
+  if (was_already_failed && status.value === 'error') {
     emitSfx('ui.rejected')
     if (error_message.value) shake(error_message.value)
-    return
   }
+}
 
-  has_shown_load_error.value = true
-  emitSfx('notice.error')
+// The initial load failure gets its own cue as the message first appears.
+watch(status, (current) => {
+  if (current === 'error') emitSfx('notice.error')
 })
 </script>
 
