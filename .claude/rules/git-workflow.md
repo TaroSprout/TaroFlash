@@ -27,7 +27,11 @@ on.
 7. **Never bare `git stash` / `git stash pop`.** The stack is shared across every worktree and
    session, so a pop can take another session's entry. Prefer a temporary WIP commit; if you must
    stash, tag it uniquely (`git stash push -u -m "<tag>"`) and restore by SHA
-   (`git stash apply <sha>`, never `pop`).
+   (`git stash apply <sha>`, never `pop`). **Drop your own entry (`git stash drop <sha>`) once you're
+   done with it, before your run ends** — an entry you pushed doesn't become inert just because the
+   worktree that made it is gone; the stack it sits on outlives every worktree, so "harmless, scoped
+   to my worktree" is never true of anything sitting in it. Leaving it for a later session to trip
+   over is the same failure as leaving an uncommitted worktree behind (rule 9).
 8. **A disposable target doesn't make the working tree disposable.** Rebuilding a throwaway or
    re-derivable branch (`reset --hard`, `checkout --`, `clean -f`, `restore`) still runs against the
    one working tree, which is never yours to discard — stash anything uncommitted
