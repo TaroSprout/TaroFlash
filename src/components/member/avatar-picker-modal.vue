@@ -43,7 +43,7 @@ function onAvatarSelect(avatar: string) {
     <dialog-card-body data-testid="avatar-picker-modal__scroll-area">
       <div
         data-testid="avatar-picker-modal__grid"
-        class="grid grid-cols-[repeat(auto-fill,min(6rem,100%))] gap-3 pt-2"
+        class="grid grid-cols-[repeat(auto-fill,min(7.5rem,100%))] gap-3 pt-2"
       >
         <button
           v-for="avatar in AVATAR_KEYS"
