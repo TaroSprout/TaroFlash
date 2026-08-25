@@ -43,10 +43,9 @@ owns its own look.
 - **window** — something laid over the page: a dialog, an app-window, a sheet.
 - **float** — chrome that floats over anything: a menu, a popover, a tooltip, a toast.
 
-## Nothing is derived [K:surface-stations-hand-authored]
+## Each station is tuned by hand, with no formula linking it to the others [K:surface-stations-hand-authored]
 
-Each station is tuned by hand, in both light and dark, with no formula linking it to the others. The
-payoff: retuning one station — making panels a shade darker, say — never nudges page, window, or
+Both light and dark are tuned separately. The payoff: retuning one station — making panels a shade darker, say — never nudges page, window, or
 float along with it, because none of them were computed from it in the first place. The cost is the
 mirror image — there's no shared source keeping the four in step, so staying visually coherent across
 stations is a judgment call made anew each time one is touched, not a guarantee the system enforces.

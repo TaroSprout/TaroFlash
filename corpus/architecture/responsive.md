@@ -18,7 +18,7 @@ the window too short for the tall variant. Those questions are written as tiny
 token queries — `w>=lg & fine`, `w<md | h<sm` — rather than as full CSS media
 queries spelled out at every call site.
 
-## The vocabulary [K:media-query-token-language]
+## Conditions are written as tiny token queries, not CSS media queries [K:media-query-token-language]
 
 An **atom** is one condition. There are four kinds:
 
