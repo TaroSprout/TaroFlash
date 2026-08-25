@@ -9,7 +9,6 @@ import { springScaleIn } from '@/utils/animations/modal'
 import { noticeToastListLeave } from '@/utils/animations/notice-toast'
 import { applyMemberVolumes, setupAudio } from '@/sfx/volume-seam'
 import { installAudioLifecycle } from '@/sfx/lifecycle'
-import { installSafeAreaPadding } from '@/composables/ui/safe-area'
 import { useSessionStore } from '@/stores/session'
 import { onMounted, onBeforeUnmount } from 'vue'
 import logger from '@/utils/logger'
@@ -62,7 +61,6 @@ watch(
 )
 
 let teardownAudioLifecycle: (() => void) | undefined
-let teardownSafeAreaPadding: (() => void) | undefined
 
 const scheduleIdle =
   typeof window !== 'undefined' && 'requestIdleCallback' in window
@@ -70,8 +68,6 @@ const scheduleIdle =
     : (cb: () => void) => setTimeout(cb, 0)
 
 onMounted(() => {
-  teardownSafeAreaPadding = installSafeAreaPadding()
-
   try {
     theme.load()
     session.startLoading()
@@ -92,7 +88,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   teardownAudioLifecycle?.()
-  teardownSafeAreaPadding?.()
 })
 </script>
 
