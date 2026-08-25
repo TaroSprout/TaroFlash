@@ -53,8 +53,12 @@ describe('AvatarImage', () => {
     const wrapper = await mountImage({ avatar: 'panda' })
 
     expect(mockLoadAvatarUrl).toHaveBeenCalledWith('panda')
-    expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(false)
     expect(wrapper.find('img').attributes('src')).toBe('/mock/panda.svg')
+    expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(true)
+
+    await wrapper.find('img').trigger('load')
+
+    expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(false)
   })
 
   test('a resolved avatar starts at opacity-0 and only reaches opacity-100 once the img fires load', async () => {
