@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
+import { computed } from 'vue'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useNewDeckAction } from '../composables/new-deck-action'
+import { totalDueCardCount } from '@/utils/deck/due'
 
 type DashboardFooterActionsProps = {
   due_decks: Deck[]
@@ -23,6 +25,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const study_session = useStudyModal()
 const { creating_deck, createNewDeck } = useNewDeckAction()
+
+const due_card_count = computed(() => totalDueCardCount(due_decks))
 
 function onStudyAll() {
   study_session.start(due_decks.map((deck) => deck.id))
@@ -48,16 +52,19 @@ function onStudyAll() {
     </ui-button>
 
     <ui-button
-      neutral
       data-testid="dashboard-footer-actions__study-button"
       icon-left="book-flip-page"
-      variant="ghost"
+      data-palette="brand"
       full-width
       size="lg"
-      :disabled="editing_decks"
+      :disabled="editing_decks || due_card_count === 0"
       @press="onStudyAll"
     >
-      {{ t('dashboard.mobile-footer.study-button', due_decks.length) }}
+      {{
+        due_card_count === 0
+          ? t('dashboard.actions-panel.no-decks-due-label')
+          : t('dashboard.mobile-footer.study-button', due_card_count)
+      }}
     </ui-button>
 
     <ui-button

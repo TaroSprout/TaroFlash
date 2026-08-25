@@ -9,6 +9,8 @@ import { useMemberStore } from '@/stores/member'
 import { memberCoverBindings } from '@/components/member/cover'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useNewDeckAction } from '../composables/new-deck-action'
+import { useMatchMedia } from '@/composables/ui/media-query'
+import { totalDueCardCount } from '@/utils/deck/due'
 
 type DashboardActionsPanelProps = {
   due_decks: Deck[]
@@ -30,8 +32,10 @@ const { t } = useI18n()
 const member_store = useMemberStore()
 const study_session = useStudyModal()
 const { creating_deck, createNewDeck } = useNewDeckAction()
+const dock_on_screen = useMatchMedia('w<mxl')
 
 const root_bindings = computed(() => memberCoverBindings(member_store.cover))
+const due_card_count = computed(() => totalDueCardCount(due_decks))
 
 const deck_entries = computed<OptionsPanelEntry[]>(() => [
   {
@@ -102,15 +106,16 @@ async function onSelect(value: string) {
         data-testid="dashboard-actions-panel__study-button"
         size="xl"
         icon-left="book-flip-page"
-        data-palette="brand"
+        :data-palette="dock_on_screen ? undefined : 'brand'"
+        :neutral="dock_on_screen"
         full-width
-        :disabled="editing_decks || due_decks.length === 0"
+        :disabled="editing_decks || due_card_count === 0"
         @press="onStudyAll"
       >
         {{
-          due_decks.length === 0
+          due_card_count === 0
             ? t('dashboard.actions-panel.no-decks-due-label')
-            : t('dashboard.actions-panel.study-button', due_decks.length)
+            : t('dashboard.actions-panel.study-button', due_card_count)
         }}
       </ui-button>
     </template>
