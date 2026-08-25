@@ -56,8 +56,15 @@ The app leans on outlines and shadows that overflow their element boxes; if the 
 ## A caller's class doesn't beat the component's own
 
 A component's root `class` merges with a caller's, but stylesheet order — not the merge — decides
-which utility wins. Never hardcode on the root a utility a caller is meant to override (`relative`
-vs. their `absolute`, a fixed `w-*`); put it on the inner element instead.
+which utility wins. **This holds however the component's declaration is written** — a hardcoded
+utility in the template (`class="relative"`) and a same-specificity rule in its own `<style>` block
+(`.some-root { position: relative }`) both beat a caller's override on that same root exactly the
+same way; neither form is safer than the other. `position` is the property that bites hardest,
+because it's also the property most callers pass in to place the component (`absolute`, `fixed`) —
+but the same cascade-order trap applies to any property a caller might reasonably expect to override
+(a fixed `w-*`, `z-*`, `overflow`). Never let the component's root itself declare a property a caller
+is meant to override, from either source; give the component an inner element to carry that
+property, leaving the root free.
 
 ## Shaped edges
 
