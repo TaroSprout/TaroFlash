@@ -328,6 +328,13 @@ describe('Card — cover-image edit layer [obligation]', () => {
     }
   }
 
+  test('passes cover_image to card-cover [obligation]', () => {
+    const cover_image = makeCoverImage()
+    const wrapper = mountCard({ side: 'cover', cover_image })
+    const coverStub = wrapper.findComponent({ name: 'CardCover' })
+    expect(coverStub.props('cover_image')).toEqual(cover_image)
+  })
+
   test('mounts cover-image-layer when cover_editing + cover_image are set on the cover side', () => {
     const wrapper = mountCard({ side: 'cover', cover_editing: true, cover_image: makeCoverImage() })
     expect(wrapper.findComponent({ name: 'CoverImageLayer' }).exists()).toBe(true)
