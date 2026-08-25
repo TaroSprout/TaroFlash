@@ -109,6 +109,35 @@ describe('ToastNotice', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(false)
   })
 
+  test('reserves a right inset on the body when closable on a fine pointer, so the message never runs under the close button [obligation]', async () => {
+    coarseRef.value = false
+    const wrapper = await mountToast(makeNotice({ closable: true }))
+    expect(wrapper.find('[data-testid="ui-kit-notice-toast__body"]').classes()).toContain('pr-8')
+  })
+
+  test('does not reserve a body inset when not closable, so the padding does not leak into the common case [obligation]', async () => {
+    coarseRef.value = false
+    const wrapper = await mountToast(makeNotice({ closable: false }))
+    expect(wrapper.find('[data-testid="ui-kit-notice-toast__body"]').classes()).not.toContain(
+      'pr-8'
+    )
+  })
+
+  test('does not reserve a body inset on a coarse pointer even when closable, since the close button is suppressed there [obligation]', async () => {
+    coarseRef.value = true
+    const wrapper = await mountToast(makeNotice({ closable: true }))
+    expect(wrapper.find('[data-testid="ui-kit-notice-toast__body"]').classes()).not.toContain(
+      'pr-8'
+    )
+  })
+
+  test('the close button reveal transitions opacity only, so the permanent inset never causes a layout shift [obligation]', async () => {
+    const wrapper = await mountToast(makeNotice({ closable: true }))
+    const close_button = wrapper.find('[data-testid="ui-kit-notice-toast__close"]')
+    expect(close_button.classes()).toContain('opacity-0')
+    expect(close_button.classes()).toContain('transition-opacity')
+  })
+
   test('clicking close emits the close event and calls onDismiss', async () => {
     const onDismiss = vi.fn()
     const notice = makeNotice({ onDismiss })
