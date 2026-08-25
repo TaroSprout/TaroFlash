@@ -115,7 +115,7 @@ describe('MemberPolaroid', () => {
   test('interactive defaults to false — no transition, no group-hover swing class [obligation]', () => {
     const wrapper = mountPolaroid()
     const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
-    expect(frame.classes()).not.toContain('group-hover:-rotate-5')
+    expect(frame.classes()).not.toContain('group-hover:-rotate-8')
     expect(frame.classes()).not.toContain('transition-transform')
   })
 
