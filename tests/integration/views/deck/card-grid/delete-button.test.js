@@ -40,14 +40,25 @@ describe('card-grid/delete-button', () => {
     expect(document.querySelector('[data-testid="ui-tooltip"]')?.textContent).toBe('Delete')
   })
 
-  test('clicking calls onDeleteCardImmediate with the card id [obligation]', async () => {
+  test('clicking calls onDeleteCardImmediate with the card id and its grid-item element [obligation]', async () => {
     const editor = makeEditor()
-    const { wrapper } = mountDeleteButton({ props: { card_id: 42 }, editor })
+    const grid_item_el = document.createElement('div')
+    grid_item_el.setAttribute('data-testid', 'grid-item')
+    document.body.appendChild(grid_item_el)
+
+    const wrapper = mount(CardGridDeleteButton, {
+      props: { card_id: 42 },
+      attachTo: grid_item_el,
+      global: { provide: { [cardEditorKey]: editor } }
+    })
 
     await wrapper.find('[data-testid="card-grid-item__delete-button"]').trigger('click')
     await flushPromises()
 
-    expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(42)
+    expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(42, grid_item_el)
+
+    wrapper.unmount()
+    grid_item_el.remove()
   })
 
   test('sets its own loading state while the delete is in flight, and clears it after [obligation]', async () => {

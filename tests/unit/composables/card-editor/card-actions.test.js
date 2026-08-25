@@ -9,6 +9,11 @@ const { modalOpenMock, alertWarnMock, emitSfxMock, mockT } = vi.hoisted(() => ({
   mockT: vi.fn((key) => key)
 }))
 
+const { mockFadeEnter, mockFadeLeave } = vi.hoisted(() => ({
+  mockFadeEnter: vi.fn((_el, done) => done?.()),
+  mockFadeLeave: vi.fn((_el, done) => done?.())
+}))
+
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
@@ -29,6 +34,10 @@ vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/api/cards', () => ({ useAllCardsInDeckQuery: mockUseAllCardsInDeckQuery }))
 vi.mock('@/utils/download', () => ({ downloadTextFile: mockDownloadTextFile }))
+vi.mock('@/utils/animations/fade', () => ({
+  fadeEnter: mockFadeEnter,
+  fadeLeave: mockFadeLeave
+}))
 vi.mock('@/utils/card/csv', () => ({
   cardsToCsv: mockCardsToCsv,
   deckExportFilename: (title) => `${title ?? 'deck'}.csv`
@@ -142,6 +151,8 @@ describe('useCardActions', () => {
     mockDownloadTextFile.mockReset()
     mockCardsToCsv.mockReset().mockReturnValue('csv-body')
     mockUseAllCardsInDeckQuery.mockReset()
+    mockFadeEnter.mockClear()
+    mockFadeLeave.mockClear()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -270,7 +281,7 @@ describe('useCardActions', () => {
       const persisted = [makeCard({ id: 1 })]
       const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
 
-      await actions.onDeleteCardImmediate(1)
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
 
       expect(emitSfxMock).toHaveBeenCalledWith('card.delete')
       expect(alertWarnMock).not.toHaveBeenCalled()
@@ -281,7 +292,7 @@ describe('useCardActions', () => {
       const persisted = [makeCard({ id: 5 })]
       const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
 
-      await actions.onDeleteCardImmediate(5)
+      await actions.onDeleteCardImmediate(5, document.createElement('div'))
 
       const [args] = mutations.deleteCards.mock.calls[0]
       expect(args.cards.map((c) => c.id)).toEqual([5])
@@ -293,7 +304,7 @@ describe('useCardActions', () => {
       const retireTempsSpy = vi.spyOn(list, 'retireTemps')
       const { actions, mutations, selection, deck_query } = makeActions({ list })
 
-      await actions.onDeleteCardImmediate(1)
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
 
       expect(retireTempsSpy).toHaveBeenCalledWith([1])
       expect(mutations.deleteCards).toHaveBeenCalledOnce()
@@ -310,7 +321,7 @@ describe('useCardActions', () => {
       const restoreTempsSpy = vi.spyOn(list, 'restoreTemps')
       const { actions, selection, deck_query } = makeActions({ list, mutations })
 
-      await actions.onDeleteCardImmediate(1)
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
 
       expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
       expect(restoreTempsSpy).toHaveBeenCalledOnce()
@@ -322,7 +333,7 @@ describe('useCardActions', () => {
     test('is a no-op when the card is not found', async () => {
       const { actions, mutations } = makeActions({ list: makeList({ persisted: [] }) })
 
-      await actions.onDeleteCardImmediate(999)
+      await actions.onDeleteCardImmediate(999, document.createElement('div'))
 
       expect(mutations.deleteCards).not.toHaveBeenCalled()
       expect(emitSfxMock).not.toHaveBeenCalledWith('card.delete')
