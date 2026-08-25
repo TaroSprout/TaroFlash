@@ -3,6 +3,12 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import PinnedPreview from '@/components/deck/pinned-preview.vue'
 
+// ui-pinned-card renders v-sfx when hover_lift is on; register the real
+// directive over a mocked bus so mounting doesn't warn or play sound.
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+
+import { vSfx } from '@/sfx/directive'
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 // Stub for DeckDesignPreview — captures props and can emit update:side.
@@ -48,7 +54,8 @@ function makeWrapper(props = {}) {
         DeckDesignPreview: DeckDesignPreviewStub,
         Card: true,
         UiIcon: true
-      }
+      },
+      directives: { sfx: vSfx }
     }
   })
 }
@@ -167,5 +174,28 @@ describe('PinnedPreview — cover_editing / cover_image pass-through', () => {
     // Props cross the browser-mode component boundary serialized, so identity
     // doesn't survive — compare structurally instead.
     expect(preview.props('cover_image')).toEqual(cover_image)
+  })
+})
+
+// ── hover_lift prop forwarding [obligation] ─────────────────────────────────────
+// ui-pinned-card is real (not stubbed) here, so the forwarded prop's own class
+// output is visible directly.
+
+describe('PinnedPreview — forwards hover_lift through to ui-pinned-card [obligation]', () => {
+  test('omitting hover_lift leaves the card wrapper without the hover rotate class', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-testid="ui-pinned-card__card"]').classes()).not.toContain(
+      'group-hover/pinned-card:rotate-1'
+    )
+  })
+
+  test('hover_lift: true forwards through, adding the hover rotate class', () => {
+    const wrapper = makeWrapper({ hover_lift: true })
+    expect(wrapper.find('[data-testid="ui-pinned-card__card"]').classes()).toContain(
+      'group-hover/pinned-card:rotate-1'
+    )
+    expect(wrapper.find('[data-testid="deck-pinned-preview"]').classes()).toContain(
+      'group/pinned-card'
+    )
   })
 })
