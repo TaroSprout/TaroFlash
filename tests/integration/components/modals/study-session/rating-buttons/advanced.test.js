@@ -60,7 +60,7 @@ describe('AdvancedRatingButtons', () => {
       const wrapper = mountAdvanced()
 
       expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).not.toBe('')
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Fail')
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope!')
     })
 
     test('shows the icon-word copy when preview is off, even with ready times [obligation]', () => {
@@ -76,7 +76,7 @@ describe('AdvancedRatingButtons', () => {
       }
       const wrapper = mountAdvanced()
 
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Fail')
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope!')
     })
   })
 
