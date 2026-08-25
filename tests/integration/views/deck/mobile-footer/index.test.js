@@ -7,6 +7,7 @@ const { claimHeightMock, releaseHeightMock } = vi.hoisted(() => ({
   releaseHeightMock: vi.fn()
 }))
 vi.mock('@/components/mobile-dock/use-mobile-dock', () => ({
+  DEFAULT_BREAKPOINT: 'xl',
   useMobileDock: () => ({ claimHeight: claimHeightMock, releaseHeight: releaseHeightMock })
 }))
 
