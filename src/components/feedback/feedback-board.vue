@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import FeedbackCard from './feedback-card.vue'
+import FeedbackSkeleton from './skeleton.vue'
 import FeedbackSubmitDialog from './feedback-submit-dialog.vue'
 import { useFeedbackItemsQuery } from '@/api/feedback'
 import { useModal } from '@/composables/modal'
@@ -12,7 +13,7 @@ const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
 const modal = useModal()
-const { data: items } = useFeedbackItemsQuery()
+const { data: items, status } = useFeedbackItemsQuery()
 
 function onSubmitPress() {
   emitSfx('dialog.open-chime')
@@ -38,7 +39,8 @@ function onSubmitPress() {
           {{ t('feedback-board.intro') }}
         </p>
 
-        <feedback-card v-for="item in items" :key="item.id" :item="item" />
+        <feedback-skeleton v-if="status === 'pending'" />
+        <feedback-card v-else v-for="item in items" :key="item.id" :item="item" />
       </div>
     </div>
 
