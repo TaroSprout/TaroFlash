@@ -54,15 +54,18 @@ describe('MemberPolaroid', () => {
   })
 
   // ── root positioning [obligation] ─────────────────────────────────────────
-  // The root carries `relative` so the paperclip sibling's `absolute` positions
-  // against it; it still carries no positioning-offset utility of its own, so a
-  // caller's own `absolute`/`top-*`/`left-*` merges on cleanly.
+  // `relative` lives on the inner positioner so the paperclip sibling's `absolute`
+  // positions against it; the root itself carries no position utility of its own,
+  // so a caller's own `absolute`/`top-*`/`left-*` lands unopposed.
 
-  test('root carries relative but no positioning-offset utility of its own [obligation]', () => {
+  test('root carries no position utility of its own, leaving it to a caller-supplied one [obligation]', () => {
     const wrapper = mountPolaroid()
     const classes = wrapper.find('[data-testid="member-polaroid"]').classes()
-    expect(classes).toContain('relative')
+    expect(classes).not.toContain('relative')
     expect(classes).not.toContain('absolute')
+    expect(wrapper.find('[data-testid="member-polaroid__positioner"]').classes()).toContain(
+      'relative'
+    )
   })
 
   test('a caller-supplied positioning class lands on the root untouched [obligation]', () => {
@@ -119,7 +122,7 @@ describe('MemberPolaroid', () => {
   test('interactive=true adds the group-hover swing class and its transition [obligation]', () => {
     const wrapper = mountPolaroid({ interactive: true })
     const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
-    expect(frame.classes()).toContain('group-hover:-rotate-5')
+    expect(frame.classes()).toContain('group-hover:-rotate-8')
     expect(frame.classes()).toContain('transition-transform')
     expect(frame.classes()).toContain('duration-150')
   })
