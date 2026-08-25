@@ -38,10 +38,7 @@ export default defineConfig({
     rules: {
       'no-console': 'warn',
       'no-floating-promises': 'off',
-      // `warn`, not `error`: 14 pre-existing sites (11 src/, 3 scripts/)
-      // already exceed depth 2, and this rule's owner can't touch source to
-      // clear them.
-      'max-depth': ['warn', 2]
+      'max-depth': ['error', 2]
     }
   },
   plugins: [
