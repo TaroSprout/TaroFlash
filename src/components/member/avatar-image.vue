@@ -9,16 +9,21 @@ type MemberAvatarImageProps = {
 
 const { avatar } = defineProps<MemberAvatarImageProps>()
 
-const lazyUrl = ref<string | null>(null)
+// `undefined` marks a key still resolving; `null` marks either no key or a
+// key that resolved to nothing — both fall back to the frog.
+const lazyUrl = ref<string | null | undefined>(undefined)
 const loaded = ref(false)
 
 watch(
   () => avatar,
   async (key) => {
-    lazyUrl.value = null
+    lazyUrl.value = key ? undefined : null
     loaded.value = false
-    const load = key ? loadAvatarUrl(key) : null
-    lazyUrl.value = load ? await load : null
+    const load = key ? await loadAvatarUrl(key) : null
+
+    if (key !== avatar) return // a newer key resolved first; this result is stale
+
+    lazyUrl.value = load
   },
   { immediate: true }
 )
@@ -26,7 +31,7 @@ watch(
 
 <template>
   <div
-    v-if="avatar && !lazyUrl"
+    v-if="avatar && lazyUrl === undefined"
     data-testid="avatar-image__placeholder"
     class="h-full w-full bg-skeleton bgx-diagonal-stripes shimmer"
   />
