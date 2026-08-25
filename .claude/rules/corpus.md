@@ -19,20 +19,20 @@ per line, no prose to drift. Never hand-edit an entry's text; it lives in the to
 
 Pull the topic for the area you're in:
 
-| Working in                                                     | Topic                              |
-| -------------------------------------------------------------- | ---------------------------------- |
-| `src/api/**`, cache invalidation, anything reading server data | `corpus/architecture/data-flow.md` |
-| `src/composables/can.ts`, RLS policies, any `can_` check       | `corpus/authz/permissions.md`      |
-| `src/api/cards/**`, `src/components/card/**`, card ordering    | `corpus/cards/cards.md`            |
-| `src/api/decks/**`, deck sharing / visibility                  | `corpus/decks/decks.md`            |
-| `src/api/feedback/**`, the public wall & moderation            | `corpus/feedback/feedback.md`      |
-| `src/api/media/**`, `supabase/functions/cleanup-media`         | `corpus/media/media.md`            |
-| `supabase/functions/transcribe-lesson`, lesson audio chains    | `corpus/media/audio-generation.md` |
-| `src/api/members/**`, `src/stores/member.ts`, signup           | `corpus/members/members.md`        |
-| `src/api/review-pacing/**`, per-deck dials & presets           | `corpus/pacing/pacing.md`          |
-| `src/composables/fsrs.ts`, `src/api/reviews/**`, FSRS          | `corpus/scheduling/scheduling.md`  |
-| `src/views/study-session/**`, a run through a pile             | `corpus/study/study.md`            |
-| `src/styles/**`, `src/stores/theme.ts`, palettes               | `corpus/theming/theming.md`        |
+| Working in                                                                | Topic                              |
+| ------------------------------------------------------------------------- | ---------------------------------- |
+| `src/api/**`, cache invalidation, anything reading server data            | `corpus/architecture/data-flow.md` |
+| `src/composables/can.ts`, RLS policies, any `can_` check                  | `corpus/authz/permissions.md`      |
+| `src/api/cards/**`, `src/components/card/**`, card ordering               | `corpus/cards/cards.md`            |
+| `src/api/decks/**`, deck sharing / visibility                             | `corpus/decks/decks.md`            |
+| `src/api/feedback/**`, the public wall & moderation                       | `corpus/feedback/feedback.md`      |
+| `src/api/media/**`, `supabase/functions/cleanup-media`                    | `corpus/media/media.md`            |
+| `supabase/functions/transcribe-lesson`, lesson audio chains               | `corpus/media/audio-generation.md` |
+| `src/api/members/**`, `src/stores/member.ts`, signup                      | `corpus/members/members.md`        |
+| `src/api/review-pacing/**`, per-deck dials & presets                      | `corpus/pacing/pacing.md`          |
+| `src/views/study-session/composables/fsrs.ts`, `src/api/reviews/**`, FSRS | `corpus/scheduling/scheduling.md`  |
+| `src/views/study-session/**`, a run through a pile                        | `corpus/study/study.md`            |
+| `src/styles/**`, `src/stores/theme.ts`, palettes                          | `corpus/theming/theming.md`        |
 
 [`corpus/map.md`](../../corpus/map.md) is the full index; [`corpus-authoring`](./corpus-authoring.md)
 covers how topics are written. The `corpus-author` agent owns edits — don't rewrite a topic in passing.
