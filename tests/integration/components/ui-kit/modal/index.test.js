@@ -205,6 +205,47 @@ describe('modal.vue', () => {
     })
   })
 
+  describe('entry class follows the mode config [obligation]', () => {
+    // A mobile-sheet's container is a flex column, so an entry carrying a fixed
+    // height (e.g. `h-187`) would otherwise shrink below it on a short viewport
+    // (TARO-391) unless it's pinned via mode-config's entryClass.
+    test('adds mobile-modal:shrink-0 in mobile-sheet mode, alongside the static pointer-events-auto class [obligation]', async () => {
+      const { open } = useModal()
+      open(ModalStub, { mode: 'mobile-sheet' })
+
+      const wrapper = mountModal()
+      await nextTick()
+
+      const classes = wrapper.find('[data-testid="modal-stub"]').classes()
+      expect(classes).toContain('mobile-modal:shrink-0')
+      expect(classes).toContain('pointer-events-auto')
+    })
+
+    test('adds no entry class in dialog mode, keeping pointer-events-auto [obligation]', async () => {
+      const { open } = useModal()
+      open(ModalStub, { mode: 'dialog' })
+
+      const wrapper = mountModal()
+      await nextTick()
+
+      const classes = wrapper.find('[data-testid="modal-stub"]').classes()
+      expect(classes).not.toContain('mobile-modal:shrink-0')
+      expect(classes).toContain('pointer-events-auto')
+    })
+
+    test('adds no entry class in popup mode, keeping pointer-events-auto [obligation]', async () => {
+      const { open } = useModal()
+      open(ModalStub, { mode: 'popup' })
+
+      const wrapper = mountModal()
+      await nextTick()
+
+      const classes = wrapper.find('[data-testid="modal-stub"]').classes()
+      expect(classes).not.toContain('mobile-modal:shrink-0')
+      expect(classes).toContain('pointer-events-auto')
+    })
+  })
+
   describe('simultaneous modals with different modes', () => {
     test('renders both modals when two are open', async () => {
       const { open } = useModal()
