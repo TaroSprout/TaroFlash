@@ -884,6 +884,8 @@
   "move-cards-modal.cancel": "Cancel",
   "move-cards-modal.confirm": "Move",
   "move-cards-modal.deck-full-label": "Full",
+  "move-cards-modal.load-error": "Something went wrong loading your decks",
+  "move-cards-modal.retry": "Try again",
   "privacy-policy.title": "Privacy Policy",
   "privacy-policy.intro": "TaroFlash respects your privacy and is committed to handling user data transparently and responsibly. This policy explains what information we collect, how it is used, and how it is stored.",
   "privacy-policy.section-1.title": "Information We Collect",

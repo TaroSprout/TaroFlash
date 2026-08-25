@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useMemberDecksQuery } from '@/api/decks'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import Card from '@/components/card/index.vue'
 import { useI18n } from 'vue-i18n'
 import UiRadio from '@/components/ui-kit/radio.vue'
@@ -12,6 +12,7 @@ import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 import { SKELETON_COVER } from '@/utils/cover'
+import { shake } from '@/utils/animations/shake'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -33,9 +34,12 @@ const { t } = useI18n()
 const SKELETON_ROW_COUNT = 4
 
 const can = useCan()
-const { data: decks, status } = useMemberDecksQuery()
+const { data: decks, status, refetch } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const moving = ref(false)
+const error_message = useTemplateRef<HTMLElement>('error_message')
+/** Distinguishes the error's first appearance (its own cue) from a repeat retry failure (shake + a different cue). */
+const has_shown_load_error = ref(false)
 
 const title = computed(() => {
   const card = cards[0]
@@ -94,6 +98,26 @@ function onClose() {
   emitSfx('dialog.close')
   close(false)
 }
+
+function onRetry() {
+  return refetch()
+}
+
+// The initial load failure gets its own cue as the message first appears; a
+// retry that fails again shakes the same message with the rejection cue
+// instead, since no new message appears.
+watch(status, (current) => {
+  if (current !== 'error') return
+
+  if (has_shown_load_error.value) {
+    emitSfx('ui.rejected')
+    if (error_message.value) shake(error_message.value)
+    return
+  }
+
+  has_shown_load_error.value = true
+  emitSfx('notice.error')
+})
 </script>
 
 <template>
@@ -112,6 +136,25 @@ function onClose() {
         <card class="w-[43px]" side="cover" shimmer :cover_config="SKELETON_COVER" />
         <div class="h-5 flex-1 rounded-2 bg-skeleton shimmer"></div>
       </div>
+    </div>
+
+    <div
+      v-else-if="status === 'error'"
+      data-testid="move-cards__deck-list-error"
+      class="my-4 flex min-h-0 flex-col items-center justify-center gap-4 text-center"
+    >
+      <p ref="error_message" data-testid="move-cards__deck-list-error-message">
+        {{ t('move-cards-modal.load-error') }}
+      </p>
+      <ui-button
+        data-testid="move-cards__retry"
+        variant="ghost"
+        data-palette="brand"
+        icon-left="refresh"
+        @press="onRetry"
+      >
+        {{ t('move-cards-modal.retry') }}
+      </ui-button>
     </div>
 
     <ui-options-panel
