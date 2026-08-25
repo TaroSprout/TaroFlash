@@ -97,6 +97,32 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
   }
 
   /**
+   * Delete one card with no confirmation — the grid's reorder-mode corner
+   * button. Reorder is already a destructive editing mode, so it skips
+   * `confirmDelete` and fires the delete cue directly instead of riding the
+   * confirm alert's `confirmAudio`. No-op when the card isn't found.
+   */
+  async function onDeleteCardImmediate(card_id: number) {
+    const card = list.findCard(card_id)
+    if (!card) return
+
+    const { review: _review, ...without_review } = card
+    const retired = list.retireTemps([card_id])
+
+    emitSfx('card.delete')
+
+    try {
+      await mutations.deleteCards({ cards: [without_review as Card] })
+    } catch {
+      list.restoreTemps(retired)
+      notice.error(t('toast.error.delete-cards-failed'))
+      return
+    }
+
+    await afterDelete()
+  }
+
+  /**
    * Toggle selection for `id` (when given) and enter selection mode. Used by
    * both the row checkbox click and the "select" item-options action — the
    * latter passes no id to enter selection mode without altering anything.
@@ -207,6 +233,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
 
   return {
     onDeleteCards,
+    onDeleteCardImmediate,
     onSelectCard,
     onMoveCards,
     onCancel,
