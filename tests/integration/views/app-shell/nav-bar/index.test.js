@@ -47,7 +47,7 @@ describe('NavBar — logo lockup responsive classes [obligation]', () => {
     const icon = wrapper.findComponent(UiIcon)
 
     expect(icon.exists()).toBe(true)
-    expect(icon.classes()).toContain('h-7')
+    expect(icon.classes()).toContain('h-8')
     expect(icon.classes()).toContain('sm:h-9')
   })
 
@@ -56,7 +56,7 @@ describe('NavBar — logo lockup responsive classes [obligation]', () => {
 
     const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
 
-    expect(lockup.classes()).toContain('text-2xl')
+    expect(lockup.classes()).toContain('text-3xl')
     expect(lockup.classes()).toContain('sm:text-4xl')
   })
 
