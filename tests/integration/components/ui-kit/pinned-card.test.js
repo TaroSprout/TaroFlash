@@ -115,9 +115,9 @@ describe('UiPinnedCard — hover_lift unset or false stays static [obligation]',
 
   test('the card wrapper carries no hover rotate class by default', () => {
     const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="ui-pinned-card__card"]').classes()).not.toContain(
-      'group-hover/pinned-card:rotate-1'
-    )
+    const classes = wrapper.find('[data-testid="ui-pinned-card__card"]').classes()
+    expect(classes).not.toContain('group-hover/pinned-card:rotate-0')
+    expect(classes).not.toContain('group-hover/pinned-card:origin-[88%_0%]')
   })
 
   test('hover_lift: false explicitly renders the same static markup', () => {
@@ -125,9 +125,9 @@ describe('UiPinnedCard — hover_lift unset or false stays static [obligation]',
     expect(wrapper.find('[data-testid="ui-pinned-card"]').classes()).not.toContain(
       'group/pinned-card'
     )
-    expect(wrapper.find('[data-testid="ui-pinned-card__card"]').classes()).not.toContain(
-      'group-hover/pinned-card:rotate-1'
-    )
+    const classes = wrapper.find('[data-testid="ui-pinned-card__card"]').classes()
+    expect(classes).not.toContain('group-hover/pinned-card:rotate-0')
+    expect(classes).not.toContain('group-hover/pinned-card:origin-[88%_0%]')
   })
 
   test('hovering the root plays no ui.hover sfx by default', () => {
