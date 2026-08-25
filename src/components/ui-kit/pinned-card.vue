@@ -39,7 +39,7 @@ defineSlots<{
       class="rotate-4 drop-shadow-sm"
       :class="
         hover_lift &&
-        'origin-[88%_0%] transition-transform duration-200 ease-out group-hover/pinned-card:rotate-1'
+        'transition-transform duration-200 ease-out group-hover/pinned-card:origin-[88%_0%] group-hover/pinned-card:rotate-0'
       "
     >
       <slot></slot>
