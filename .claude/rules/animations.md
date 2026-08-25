@@ -21,6 +21,15 @@ await new Promise((resolve) => {
 
 If a duration is referenced in more than one place, extract it as a named constant rather than repeating the magic number.
 
+## Transform cleanup
+
+A GSAP tween writes into the element's whole inline `transform` style, not just the property you
+named, and leaves that inline value in place after the tween completes — it permanently outranks any
+resting transform the element gets from its own classes (`rotate-6 scale-75`), even though those
+classes are still applied. Add `clearProps: 'transform'` to any tween that animates a
+transform-family property (`x`, `y`, `rotation`, `scale`, …) on an element that also carries a
+class-driven transform, so the resting state returns to CSS once the tween ends.
+
 ## File structure
 
 All animation functions should be in `src/utils/animations/` and named after the element or effect they animate (`modal.ts`, `phone.ts`, `blur.ts`).
