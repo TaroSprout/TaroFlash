@@ -145,14 +145,14 @@ describe('UiPinnedCard — hover_lift: true opts the card into the hover lift [o
     expect(wrapper.find('[data-testid="ui-pinned-card"]').classes()).toContain('group/pinned-card')
   })
 
-  test('the card wrapper carries the origin, transition and hover-rotate classes', () => {
+  test('the card wrapper carries the transition classes and hover-scoped origin and rotate', () => {
     const wrapper = makeWrapper({ hover_lift: true })
     const classes = wrapper.find('[data-testid="ui-pinned-card__card"]').classes()
-    expect(classes).toContain('origin-[88%_0%]')
+    expect(classes).toContain('group-hover/pinned-card:origin-[88%_0%]')
     expect(classes).toContain('transition-transform')
     expect(classes).toContain('duration-200')
     expect(classes).toContain('ease-out')
-    expect(classes).toContain('group-hover/pinned-card:rotate-1')
+    expect(classes).toContain('group-hover/pinned-card:rotate-0')
   })
 
   test('hovering the root plays the ui.hover sfx', () => {
@@ -188,11 +188,11 @@ describe('UiPinnedCard — tuck still works with hover_lift on [obligation]', ()
     const card = () => wrapper.find('[data-testid="ui-pinned-card__card"]')
 
     await wrapper.setProps({ tucked: true })
-    expect(card().classes()).toContain('group-hover/pinned-card:rotate-1')
-    expect(card().classes()).toContain('origin-[88%_0%]')
+    expect(card().classes()).toContain('group-hover/pinned-card:rotate-0')
+    expect(card().classes()).toContain('group-hover/pinned-card:origin-[88%_0%]')
 
     await wrapper.setProps({ tucked: false })
-    expect(card().classes()).toContain('group-hover/pinned-card:rotate-1')
+    expect(card().classes()).toContain('group-hover/pinned-card:rotate-0')
   })
 
   test('the tuck opacity lives on the paperclip, never on the hover-transformed card', () => {
