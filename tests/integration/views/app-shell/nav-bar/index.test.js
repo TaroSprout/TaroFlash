@@ -1,0 +1,91 @@
+import { describe, test, expect, afterEach } from 'vite-plus/test'
+import { shallowMount } from '@vue/test-utils'
+import { page } from 'vite-plus/test/browser/context'
+import NavBar from '@/views/app-shell/nav-bar/index.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+let wrapper
+let restore_client_height
+
+function mountNavBar() {
+  wrapper = shallowMount(NavBar)
+  return wrapper
+}
+
+// The onMounted handler reads the real `<nav>` element's clientHeight, which
+// depends on layout this environment doesn't produce (Tailwind isn't compiled
+// here — see scroll-region/index.test.js). Stubbing the getter lets the tests
+// pin a concrete box height instead of asserting on an unstyled 0.
+function stubClientHeight(px) {
+  const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'clientHeight')
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    configurable: true,
+    get: () => px
+  })
+  // Restored from afterEach rather than inline at the end of each test, so a
+  // failing assertion can't leak the stub into every test that follows.
+  restore_client_height = () => Object.defineProperty(Element.prototype, 'clientHeight', descriptor)
+}
+
+afterEach(async () => {
+  restore_client_height?.()
+  restore_client_height = undefined
+  wrapper?.unmount()
+  wrapper = undefined
+  document.documentElement.style.removeProperty('--nav-height')
+  await page.viewport(414, 896)
+})
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('NavBar — logo lockup responsive classes [obligation]', () => {
+  test('the logo icon carries both the mobile height and the desktop height class [obligation]', () => {
+    mountNavBar()
+
+    const icon = wrapper.findComponent(UiIcon)
+
+    expect(icon.exists()).toBe(true)
+    expect(icon.classes()).toContain('h-7')
+    expect(icon.classes()).toContain('sm:h-9')
+  })
+
+  test('the wordmark carries both the mobile text size and the desktop text size class [obligation]', () => {
+    mountNavBar()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(lockup.classes()).toContain('text-2xl')
+    expect(lockup.classes()).toContain('sm:text-4xl')
+  })
+
+  test('the lockup row carries min-h-9 to hold the line box across breakpoints [obligation]', () => {
+    mountNavBar()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(lockup.exists()).toBe(true)
+    expect(lockup.classes()).toContain('min-h-9')
+  })
+})
+
+describe('NavBar — --nav-height stays constant across breakpoints [obligation]', () => {
+  test('publishes --nav-height as clientHeight + 24px at a mobile viewport [obligation]', async () => {
+    await page.viewport(375, 812)
+    stubClientHeight(60)
+
+    mountNavBar()
+
+    expect(document.documentElement.style.getPropertyValue('--nav-height')).toBe('84px')
+  })
+
+  test('publishes the same --nav-height for the same row height at a desktop viewport [obligation]', async () => {
+    await page.viewport(1280, 900)
+    stubClientHeight(60)
+
+    mountNavBar()
+
+    expect(document.documentElement.style.getPropertyValue('--nav-height')).toBe('84px')
+  })
+})
