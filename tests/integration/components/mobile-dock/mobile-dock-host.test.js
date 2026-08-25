@@ -167,7 +167,7 @@ describe('MobileDockHost', () => {
     // has_edge_allowance's only observable effect in this environment (Tailwind
     // CSS isn't loaded for the test page) is whether the bound utility class
     // that sets --dock-pb's flush value is present on the footer's class list.
-    const ALLOWANCE_CLASS = '[--dock-pb:calc(0.5rem+env(safe-area-inset-bottom))]'
+    const ALLOWANCE_CLASS = '[--dock-pb:max(1rem,calc(0.5rem+env(safe-area-inset-bottom)))]'
 
     function footerHasAllowance(footer) {
       return footer.classList.contains(ALLOWANCE_CLASS)
