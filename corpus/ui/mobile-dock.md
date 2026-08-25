@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: []
-updated: 2026-08-10
+updated: 2026-08-25
 ---
 
 # The mobile dock
@@ -24,7 +24,7 @@ bar, watches whatever landed inside it, and grows or shrinks the bar to fit.
 > the inner one. The visible result is exactly what it sounds like — two
 > things animating at different speeds. See below.
 
-> [!HAZARD] [K:dock-edge-inset-follows-flush] **The device's bottom-edge inset is earned by sitting flush on the screen edge, not by being on a touch device.**
+> [!HAZARD] [K:dock-edge-inset-follows-flush] **The device's bottom-edge inset is earned by sitting flush on the screen edge, not by being on a touch device — and the inset alone isn't enough allowance, because it's `0px` everywhere that isn't a real device.**
 > Below the `sm` breakpoint the bar spans the full width and sits on the
 > bottom edge, so it needs `env(safe-area-inset-bottom)` to clear the home
 > indicator or gesture bar. Above it the bar is a card inset from the corner
@@ -33,7 +33,14 @@ bar, watches whatever landed inside it, and grows or shrinks the bar to fit.
 > phone is, and docked browser chrome (an installed PWA's own bottom bar)
 > covers the inset strip on its own, so the inset is skipped there too even
 > though the bar is flush. Keying the inset off "is this a phone" instead of
-> off the geometry gets both wrong.
+> off the geometry gets both wrong. `env(safe-area-inset-bottom)` resolves to
+> `0px` on every desktop browser, so a flush-state allowance written as
+> `calc(0.5rem + env(safe-area-inset-bottom))` computes to exactly the
+> `0.5rem` the dock already gets as a floating card at that width — correct
+> about when it applies, worth nothing where it applies. The allowance needs
+> a floor — `max(1rem, calc(0.5rem + env(safe-area-inset-bottom)))`, reusing
+> the dock's own `--dock-pt` value as the floor — so a real device inset
+> still wins where one is reported.
 
 ## The dock watches, it doesn't get told
 
