@@ -144,6 +144,6 @@ describe('back-button — resolved chrome [obligation]', () => {
   test('carries the on-accent text-color override class', () => {
     const wrapper = mountReal('deck')
     const class_list = wrapper.find('[data-testid="ui-kit-button"]').classes()
-    expect(class_list).toContain('[--btn-text-color:var(--color-accent-text)]!')
+    expect(class_list).toContain('[--btn-text-color:var(--color-accent)]!')
   })
 })
