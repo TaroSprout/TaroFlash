@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { ref } from 'vue'
 
 const {
   useQuerySpy,
@@ -138,5 +139,38 @@ describe('useMemberDeckCountQuery', () => {
   test('staleTime is 5 minutes, well past a card row mount [obligation]', () => {
     const { staleTime } = configFrom(useMemberDeckCountQuery)
     expect(staleTime).toBe(1000 * 60 * 5)
+  })
+
+  // [obligation] useCan() and subscription-actions.ts call this with no
+  // argument at all — they must keep auto-fetching exactly as before this
+  // param was added.
+  describe('enabled param', () => {
+    test('defaults to enabled when no argument is passed [obligation]', () => {
+      const { enabled } = configFrom(useMemberDeckCountQuery)
+      expect(enabled()).toBe(true)
+    })
+
+    test('a literal false disables the query [obligation]', () => {
+      const { enabled } = configFrom(() => useMemberDeckCountQuery(false))
+      expect(enabled()).toBe(false)
+    })
+
+    test('accepts a ref and re-reads its current value on each call [obligation]', () => {
+      const live = ref(false)
+      const { enabled } = configFrom(() => useMemberDeckCountQuery(live))
+
+      expect(enabled()).toBe(false)
+      live.value = true
+      expect(enabled()).toBe(true)
+    })
+
+    test('accepts a getter function and re-reads it on each call [obligation]', () => {
+      let live = false
+      const { enabled } = configFrom(() => useMemberDeckCountQuery(() => live))
+
+      expect(enabled()).toBe(false)
+      live = true
+      expect(enabled()).toBe(true)
+    })
   })
 })

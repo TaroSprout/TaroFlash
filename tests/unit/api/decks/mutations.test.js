@@ -9,18 +9,24 @@ const {
   deckCountData,
   deckLimit,
   getQueryDataMock,
-  setQueryDataMock
-} = vi.hoisted(() => ({
-  useMutationSpy: vi.fn((cfg) => cfg),
-  invalidateSpy: vi.fn(),
-  upsertDeckMock: vi.fn().mockResolvedValue(undefined),
-  deleteDeckMock: vi.fn().mockResolvedValue(undefined),
-  refreshMock: vi.fn().mockResolvedValue(undefined),
-  deckCountData: { value: 0 },
-  deckLimit: { value: null },
-  getQueryDataMock: vi.fn(),
-  setQueryDataMock: vi.fn()
-}))
+  setQueryDataMock,
+  useMemberDeckCountQuerySpy
+} = vi.hoisted(() => {
+  const refreshMock = vi.fn().mockResolvedValue(undefined)
+  const deckCountData = { value: 0 }
+  return {
+    useMutationSpy: vi.fn((cfg) => cfg),
+    invalidateSpy: vi.fn(),
+    upsertDeckMock: vi.fn().mockResolvedValue(undefined),
+    deleteDeckMock: vi.fn().mockResolvedValue(undefined),
+    refreshMock,
+    deckCountData,
+    deckLimit: { value: null },
+    getQueryDataMock: vi.fn(),
+    setQueryDataMock: vi.fn(),
+    useMemberDeckCountQuerySpy: vi.fn(() => ({ refresh: refreshMock, data: deckCountData }))
+  }
+})
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
@@ -37,7 +43,7 @@ vi.mock('@/api/decks/db', () => ({
 }))
 
 vi.mock('@/api/decks/queries/count', () => ({
-  useMemberDeckCountQuery: () => ({ refresh: refreshMock, data: deckCountData })
+  useMemberDeckCountQuery: useMemberDeckCountQuerySpy
 }))
 
 vi.mock('@/stores/member', () => ({
@@ -59,6 +65,7 @@ beforeEach(() => {
   upsertDeckMock.mockClear()
   deleteDeckMock.mockClear()
   refreshMock.mockClear()
+  useMemberDeckCountQuerySpy.mockClear()
   getQueryDataMock.mockReset()
   setQueryDataMock.mockReset()
   deckCountData.value = 0
@@ -71,6 +78,17 @@ function configFrom(hook) {
 }
 
 describe('useUpsertDeckMutation', () => {
+  // [obligation] useDeckEditor calls useUpsertDeckMutation() unconditionally,
+  // for both an existing deck's edit and a new deck's create. Passing
+  // `false` here is what keeps that mount from auto-fetching the deck count
+  // (see queries.test.js's `enabled param` suite for the false → no-fetch
+  // proof at the query layer) — the create-only limit check still runs it
+  // explicitly below via `.refresh()`.
+  test('instantiates useMemberDeckCountQuery with enabled=false [obligation]', () => {
+    configFrom(useUpsertDeckMutation)
+    expect(useMemberDeckCountQuerySpy).toHaveBeenCalledWith(false)
+  })
+
   test('mutation delegates to upsertDeck for an update (id present), skipping the count refresh', async () => {
     const { mutation } = configFrom(useUpsertDeckMutation)
     await mutation({ id: 1, title: 'new' })
