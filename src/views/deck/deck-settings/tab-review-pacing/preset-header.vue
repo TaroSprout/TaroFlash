@@ -31,7 +31,7 @@ const has_overrides = computed(() => override_count.value > 0)
             data-testid="preset-header__reset-all"
             variant="ghost"
             size="sm"
-            icon-right="refresh"
+            icon-left="refresh"
             :sfx="{ press: 'ui.press' }"
             @press="resetAllOverrides"
           >
