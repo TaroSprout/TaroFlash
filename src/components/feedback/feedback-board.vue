@@ -23,9 +23,9 @@ function onSubmitPress() {
   modal.open(FeedbackSubmitDialog, { backdrop: true, mode: 'popup' })
 }
 
-// A retry that fails again leaves `status` at 'error' on both sides, so the
-// watch below never sees a change to react to — check it directly once the
-// refetch settles instead.
+// Trap: a repeat failure holds `status` at 'error' on both sides, so the
+// watch below never sees a change to react to →[K:query-status-holds-through-repeat-failure]
+// — check it directly once the refetch settles instead.
 async function onRetry() {
   const was_already_error = status.value === 'error'
   await refetch()
