@@ -52,7 +52,10 @@ path outside it is the shared checkout a human may be editing live.
    instruction/fix as given.
 3. **Commit in batches of ~5 files**, conventional messages, explicit pathspecs, never `git add -A`
    ([`commit-authoring`](../rules/commit-authoring.md)). A run that stalls then costs one batch.
-4. `node scripts/knowledge-lint.mjs` before each commit; `vp check` green before you report.
+4. `node scripts/knowledge-lint.mjs` before each commit; `vp check` **and** `pnpm type-check` green
+   before you report — every ticket, including a one-line change. `vp check` can pass while
+   `vue-tsc` still fails ([`toolchain`](../rules/toolchain.md)), and diff size is never grounds to
+   skip either gate.
 
 **Partial and committed beats complete and parked — including the report.** Out of road means commit
 what you have, name what you never reached, and report anyway. There is never a turn that ends with
@@ -72,7 +75,8 @@ you waiting on something.
 
 ## Output
 
-Branch name; what changed per file; whether `node scripts/knowledge-lint.mjs` and `vp check` passed;
+Branch name; what changed per file; whether `node scripts/knowledge-lint.mjs`, `vp check`, and
+`pnpm type-check` passed;
 for a ticket, each acceptance criterion marked met or unmet with a one-line reason for any unmet; for
 a freeform build or fix, the instruction restated against what landed; what a test should cover;
 every `[K:gap: …]` and `COPY-TBD` you left, with its file and line.
