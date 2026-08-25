@@ -134,6 +134,15 @@ Skip the scratch worktree only when `<branch>` is checked out **and** `git statu
 behind; check it per [`git-workflow`](../../rules/git-workflow.md) and remove it before you stop or
 report, not only on the path where the rewrite succeeded.
 
+**`git worktree add` can fail** — most commonly because `<branch>` is already checked out in a
+sibling worktree. Check its own exit status directly; never pipe it through `tail`/`head`/`grep`
+first, which replaces that status with the filter's and lets `set -e` sail past a failed checkout.
+Then `cd` into the new path and verify you landed there (e.g. `pwd` matches the worktree path, or
+`git rev-parse --show-toplevel` resolves to it) before running anything from this step onward —
+`filter-branch`, `reset --soft`, or any commit. A `cd` into a directory that was never created also
+fails silently and leaves later commands running against whatever tree the shell was already in,
+which for `git reset --soft` / `git commit` means rewriting the user's own checked-out branch.
+
 Inside it, use `git filter-branch --msg-filter` with `case` on `$GIT_COMMIT` (pre-rewrite SHA). Preserves authorship, dates, trailers, parentage — only subject changes.
 
 ```sh
