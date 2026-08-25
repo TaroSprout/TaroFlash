@@ -3,9 +3,12 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 
 type UiPinnedCardProps = {
   tucked?: boolean
+  // Opt-in: swings the card toward upright on hover, pivoting at the clip.
+  // Off by default so member settings and the splash preview stay static.
+  hover_lift?: boolean
 }
 
-const { tucked = false } = defineProps<UiPinnedCardProps>()
+const { tucked = false, hover_lift = false } = defineProps<UiPinnedCardProps>()
 
 defineSlots<{
   backdrop(): any
@@ -14,7 +17,12 @@ defineSlots<{
 </script>
 
 <template>
-  <div data-testid="ui-pinned-card" class="relative">
+  <div
+    data-testid="ui-pinned-card"
+    class="relative"
+    :class="hover_lift && 'group/pinned-card'"
+    v-sfx="hover_lift ? { hover: 'ui.hover' } : undefined"
+  >
     <slot name="backdrop"></slot>
 
     <div
@@ -26,7 +34,14 @@ defineSlots<{
       <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-raised-shade" />
     </div>
 
-    <div data-testid="ui-pinned-card__card" class="rotate-4 drop-shadow-sm">
+    <div
+      data-testid="ui-pinned-card__card"
+      class="rotate-4 drop-shadow-sm"
+      :class="
+        hover_lift &&
+        'origin-[88%_0%] transition-transform duration-200 ease-out group-hover/pinned-card:rotate-1'
+      "
+    >
       <slot></slot>
     </div>
   </div>
