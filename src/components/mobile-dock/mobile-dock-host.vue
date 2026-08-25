@@ -4,6 +4,7 @@ import { gsap } from 'gsap'
 import { useMobileDock } from './use-mobile-dock'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
 import { useBottomChromeCover } from '@/composables/ui/safe-area'
+import { dockSlideIn, dockSlideOut } from '@/utils/animations/dock-slide'
 
 const { el, is_visible, is_flush, height_claims } = useMobileDock()
 
@@ -68,26 +69,28 @@ watch([is_visible, height_claims], publishHeight, { flush: 'post' })
 </script>
 
 <template>
-  <footer
-    v-show="is_visible"
-    ref="bar"
-    data-testid="mobile-dock-host"
-    data-station="panel"
-    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] ring-1 ring-line"
-    :class="has_edge_allowance && '[--dock-pb:calc(0.5rem+env(safe-area-inset-bottom))]'"
-  >
-    <div
-      mobile-dock-above
-      data-testid="mobile-dock-host__above"
-      class="pointer-events-none absolute inset-x-0 bottom-full flex justify-end px-(--dock-px) pb-3"
-    ></div>
-
-    <div
-      ref="content_wrapper"
-      data-testid="mobile-dock-host__content-wrapper"
-      class="relative w-full"
+  <Transition :css="false" @enter="dockSlideIn" @leave="dockSlideOut">
+    <footer
+      v-show="is_visible"
+      ref="bar"
+      data-testid="mobile-dock-host"
+      data-station="panel"
+      class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] ring-1 ring-line"
+      :class="has_edge_allowance && '[--dock-pb:calc(0.5rem+env(safe-area-inset-bottom))]'"
     >
-      <div ref="content" mobile-dock-content data-testid="mobile-dock-host__content"></div>
-    </div>
-  </footer>
+      <div
+        mobile-dock-above
+        data-testid="mobile-dock-host__above"
+        class="pointer-events-none absolute inset-x-0 bottom-full flex justify-end px-(--dock-px) pb-3"
+      ></div>
+
+      <div
+        ref="content_wrapper"
+        data-testid="mobile-dock-host__content-wrapper"
+        class="relative w-full"
+      >
+        <div ref="content" mobile-dock-content data-testid="mobile-dock-host__content"></div>
+      </div>
+    </footer>
+  </Transition>
 </template>
