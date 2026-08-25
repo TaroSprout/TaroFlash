@@ -49,21 +49,23 @@ export function parseDiff(text) {
   const touched = new Map()
   let path = null
 
-  for (const line of text.split('\n')) {
+  function recordLine(line) {
     const file = DIFF_FILE.exec(line)
     if (file) {
       path = file[1] === '/dev/null' ? null : file[1]
       if (path) touched.set(path, new Set())
-      continue
+      return
     }
 
     const hunk = path && DIFF_HUNK.exec(line)
-    if (!hunk) continue
+    if (!hunk) return
 
     const start = Number(hunk[1])
     const count = hunk[2] === undefined ? 1 : Number(hunk[2])
     for (let offset = 0; offset < count; offset++) touched.get(path).add(start + offset)
   }
+
+  for (const line of text.split('\n')) recordLine(line)
 
   return touched
 }
@@ -99,6 +101,16 @@ function linker(repo, sha) {
   }
 }
 
+/** Records `token`'s site under its slug, when it cites a declared fact this diff actually touched. */
+function recordStandingToken(bySlug, touched, declarations, path, token) {
+  if (!token.cites || !declarations.has(token.slug)) return
+  if (!touched.get(path).has(token.line)) return
+
+  const sites = bySlug.get(token.slug) ?? []
+  if (!sites.some((site) => site.path === path)) sites.push({ path, line: token.line })
+  bySlug.set(token.slug, sites)
+}
+
 /** Facts recorded about the very lines this change rewrote. */
 function standingOn(head, touched, declarations, config) {
   const bySlug = new Map()
@@ -110,12 +122,7 @@ function standingOn(head, touched, declarations, config) {
     if (!existsSync(absolute)) continue
 
     for (const token of collectTokens(path, readFileSync(absolute, 'utf8'))) {
-      if (!token.cites || !declarations.has(token.slug)) continue
-      if (!touched.get(path).has(token.line)) continue
-
-      const sites = bySlug.get(token.slug) ?? []
-      if (!sites.some((site) => site.path === path)) sites.push({ path, line: token.line })
-      bySlug.set(token.slug, sites)
+      recordStandingToken(bySlug, touched, declarations, path, token)
     }
   }
 

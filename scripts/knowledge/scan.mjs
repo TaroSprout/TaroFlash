@@ -218,6 +218,18 @@ function finish(statement) {
   return /[.!?]$/.test(statement) ? statement : `${statement}.`
 }
 
+/** Records one token's declaration, unless it's a citation or already declared. */
+function recordDeclaration(declarations, path, rows, token) {
+  if (token.cites || declarations.has(token.slug)) return
+
+  declarations.set(token.slug, {
+    slug: token.slug,
+    path,
+    line: token.line,
+    statement: statementAt(rows, token.line - 1)
+  })
+}
+
 /** Every slug declared under `corpus/`, with where it sits and what it says. */
 export function corpusDeclarations(root, config) {
   const declarations = new Map()
@@ -226,14 +238,7 @@ export function corpusDeclarations(root, config) {
     const rows = readFileSync(join(root, path), 'utf8').split('\n')
 
     for (const token of collectTokens(path, rows.join('\n'))) {
-      if (token.cites || declarations.has(token.slug)) continue
-
-      declarations.set(token.slug, {
-        slug: token.slug,
-        path,
-        line: token.line,
-        statement: statementAt(rows, token.line - 1)
-      })
+      recordDeclaration(declarations, path, rows, token)
     }
   }
 
