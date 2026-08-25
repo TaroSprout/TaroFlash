@@ -6,7 +6,10 @@ import { useTaroPhoneStore } from '@/stores/taro-phone'
 
 function makeWrapper() {
   return mount(TaroPhoneSm, {
-    global: { plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })] }
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
+      directives: { sfx: {} }
+    }
   })
 }
 
@@ -47,6 +50,39 @@ describe('TaroPhoneSm — station [obligation]', () => {
   test('stamps the constant data-station="window" [obligation]', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('window')
+  })
+})
+
+describe('TaroPhoneSm — hover rotation [obligation]', () => {
+  test('hover:rotate-2 rides the resting rotate-6, straightening rather than tilting further [obligation]', () => {
+    const wrapper = makeWrapper()
+    const classes = wrapper.find('[data-testid="phone"]').classes()
+    expect(classes).toContain('rotate-6')
+    expect(classes).toContain('hover:rotate-2')
+  })
+
+  test('the hover rotation change carries no colour or background class change [obligation]', () => {
+    const wrapper = makeWrapper()
+    const classes = wrapper.find('[data-testid="phone"]').classes()
+    expect(classes).toContain('bg-surface')
+    expect(classes.some((c) => /^hover:(bg|text|outline|border)-/.test(c))).toBe(false)
+  })
+})
+
+describe('TaroPhoneSm — hover sfx wiring [obligation]', () => {
+  test('v-sfx is bound with hover set to ui.hover [obligation]', () => {
+    let captured
+    const captureDirective = {
+      mounted: (_el, binding) => (captured = binding.value),
+      updated: (_el, binding) => (captured = binding.value)
+    }
+    mount(TaroPhoneSm, {
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
+        directives: { sfx: captureDirective }
+      }
+    })
+    expect(captured).toEqual({ hover: 'ui.hover' })
   })
 })
 
