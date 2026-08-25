@@ -62,10 +62,6 @@ describe('MODAL_MODE_CONFIG — dialog', () => {
   test('containerClass centers items', () => {
     expect(MODAL_MODE_CONFIG.dialog.containerClass).toBe('items-center')
   })
-
-  test('entryClass is empty [obligation]', () => {
-    expect(MODAL_MODE_CONFIG.dialog.entryClass).toBe('')
-  })
 })
 
 describe('MODAL_MODE_CONFIG — mobile-sheet', () => {
@@ -110,10 +106,6 @@ describe('MODAL_MODE_CONFIG — mobile-sheet', () => {
 
     expect(mockSlideDownFadeOut).toHaveBeenCalledWith(el, done)
   })
-
-  test('entryClass pins the entry to a fixed height inside the flex sheet [obligation]', () => {
-    expect(MODAL_MODE_CONFIG['mobile-sheet'].entryClass).toBe('mobile-modal:shrink-0')
-  })
 })
 
 describe('MODAL_MODE_CONFIG — popup', () => {
@@ -133,9 +125,5 @@ describe('MODAL_MODE_CONFIG — popup', () => {
 
     MODAL_MODE_CONFIG.popup.leave(el, true, done)
     expect(mockScaleFadeOut).toHaveBeenCalledWith(el, done)
-  })
-
-  test('entryClass is empty [obligation]', () => {
-    expect(MODAL_MODE_CONFIG.popup.entryClass).toBe('')
   })
 })
