@@ -60,9 +60,11 @@ Launch the blind agent and all four finders **in the same message** so they run 
 
 Reconstruct the feature in domain terms as if no code existed: its essential entities, invariants, states, and user-facing behavior. Sources are the _outside_ of the code — the rendered UI, DB schema/migrations, PR history — not the current module boundaries. Write 1–2 paragraphs, thorough on behavior: the blind agent designs from this alone, so under-description produces a toy design. Err on the side of more behavioral detail, not more structural detail.
 
+**Always name standing constraints, not just behavior.** The blind agent knows nothing outside the statement, so any constraint that shapes the design but isn't an entity/invariant/state/behavior of this one feature has to be said explicitly or the design ignores it: the platform and performance target (this app is mobile-first), and any established visual/motion language the design must stay inside (e.g. bespoke per-element animation, floating elements positioned partially outside their parent). State these even when the feature itself looks ordinary — a design blind to them converges on a generic web layout.
+
 **Launder it.** The description must not leak the current decomposition: no file names, component names, composable names, prop names, or locale keys (locale keys encode component structure in this repo). If you can't state the feature without naming current files, step back further.
 
-**Sign-off gate (blocking).** Print the domain statement and stop. Nothing dispatches until the user approves it — everything downstream is derived from this statement, so a wrong one wastes the whole run. Print it as a short concise summary, not the full text: scope line + 3–6 bullets covering entities, invariants/states, and user-facing behavior. Then ask the user to approve or correct. Apply corrections and re-print if the change is material; otherwise proceed straight to dispatch.
+**Sign-off gate (blocking).** Print the domain statement and stop. Nothing dispatches until the user approves it — everything downstream is derived from this statement, so a wrong one wastes the whole run. Print it as a short concise summary, not the full text: scope line + 3–6 bullets covering entities, invariants/states, user-facing behavior, and standing constraints. Then ask the user to approve or correct. Apply corrections and re-print if the change is material; otherwise proceed straight to dispatch.
 
 ### 2. Design the ideal shape blind (subagent, model per flag — default `fable`)
 
