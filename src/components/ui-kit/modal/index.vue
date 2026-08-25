@@ -72,7 +72,6 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
           :data-mobile-below-height="modal.mobile_below_height ?? DEFAULT_HEIGHT_KEY"
           :inert="receded_ids.has(modal.id)"
           class="pointer-events-auto"
-          :class="MODAL_MODE_CONFIG[modal.mode].entryClass"
         />
       </modal-slot>
     </div>
