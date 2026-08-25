@@ -7,6 +7,21 @@ import { setBelowBreakpoint, resetBreakpointMedia } from '../../../helpers/break
 import { setKeyboardOpen } from '../../../helpers/keyboard-open-mock'
 import { setChromeCovered } from '../../../helpers/chrome-cover-mock'
 
+// The footer's v-show is wrapped in a Transition delegating to these — mock them
+// so the enter/leave wiring is observable without waiting on a real GSAP tween.
+// Each auto-resolves its `done` callback so every existing display-toggle
+// assertion below keeps working; a test that needs to hold the leave open
+// overrides the implementation for that one call.
+const { mockDockSlideIn, mockDockSlideOut } = vi.hoisted(() => ({
+  mockDockSlideIn: vi.fn((_el, done) => done()),
+  mockDockSlideOut: vi.fn((_el, done) => done())
+}))
+
+vi.mock('@/utils/animations/dock-slide', () => ({
+  dockSlideIn: mockDockSlideIn,
+  dockSlideOut: mockDockSlideOut
+}))
+
 // The host reads `w<<breakpoint>` via useMatchMedia — mock it so the claimed
 // breakpoint's match state and the flush breakpoint (`w<sm`) are directly and
 // independently controllable per test.
@@ -38,7 +53,13 @@ let container
 const wrappers = []
 
 function mountHost() {
-  const wrapper = mount(MobileDockHost, { attachTo: document.body })
+  // @vue/test-utils stubs <Transition> by default (renders the slot straight
+  // through, skipping enter/leave hooks entirely) — turn that off so the
+  // footer's real slide wiring runs.
+  const wrapper = mount(MobileDockHost, {
+    attachTo: document.body,
+    global: { stubs: { transition: false } }
+  })
   wrappers.push(wrapper)
   return wrapper
 }
@@ -53,6 +74,8 @@ beforeEach(() => {
   setKeyboardOpen(false)
   setChromeCovered(false)
   resetBreakpointMedia()
+  mockDockSlideIn.mockClear()
+  mockDockSlideOut.mockClear()
 
   // Create the teleport target for mobile-dock-host.
   container = document.createElement('div')
@@ -312,6 +335,104 @@ describe('MobileDockHost', () => {
       await nextTick()
 
       expect(setPropertySpy).toHaveBeenCalledWith('--mobile-dock-height', expect.any(String))
+    })
+  })
+
+  describe('slide transition [obligation]', () => {
+    test('dockSlideIn fires when the footer transitions from hidden to visible [obligation]', async () => {
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, false)
+      mountHost()
+      await nextTick()
+
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
+      await nextTick()
+
+      expect(mockDockSlideIn).toHaveBeenCalled()
+      expect(mockDockSlideOut).not.toHaveBeenCalled()
+    })
+
+    test('dockSlideOut fires when the footer transitions from visible to hidden [obligation]', async () => {
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
+      mountHost()
+      await nextTick()
+
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, false)
+      await nextTick()
+
+      expect(mockDockSlideOut).toHaveBeenCalled()
+    })
+
+    test('dockSlideOut fires when the on-screen keyboard opens and hides the dock [obligation]', async () => {
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
+      mountHost()
+      await nextTick()
+
+      setKeyboardOpen(true)
+      await nextTick()
+
+      expect(mockDockSlideOut).toHaveBeenCalled()
+    })
+
+    test("footer keeps its display until the leave transition's done callback fires [obligation]", async () => {
+      let captured_done
+      mockDockSlideOut.mockImplementationOnce((_el, done) => {
+        captured_done = done
+      })
+
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
+      mountHost()
+      await nextTick()
+
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, false)
+      await nextTick()
+
+      const footer = document.querySelector('[data-testid="mobile-dock-host"]')
+      expect(footer.style.display).not.toBe('none')
+
+      captured_done()
+      await nextTick()
+
+      expect(footer.style.display).toBe('none')
+    })
+  })
+
+  describe('content-height tween [obligation]', () => {
+    let captured_resize_cb
+    let original_resize_observer
+
+    beforeEach(() => {
+      original_resize_observer = window.ResizeObserver
+      window.ResizeObserver = class {
+        constructor(cb) {
+          captured_resize_cb = cb
+        }
+        observe() {}
+        disconnect() {}
+      }
+    })
+
+    afterEach(() => {
+      window.ResizeObserver = original_resize_observer
+    })
+
+    test('content growing while is_visible stays true still tweens the wrapper height [obligation]', async () => {
+      setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
+      mountHost()
+      await nextTick()
+
+      const content = document.querySelector('[data-testid="mobile-dock-host__content"]')
+      const grown = document.createElement('div')
+      grown.style.height = '80px'
+      content.appendChild(grown)
+      captured_resize_cb()
+
+      // The animate-mode height tween sets overflow: hidden on the wrapper for
+      // the duration of the tween — a separate tween from the bar's own slide,
+      // and it must still fire while the bar itself stays visible throughout.
+      const content_wrapper = document.querySelector(
+        '[data-testid="mobile-dock-host__content-wrapper"]'
+      )
+      expect(content_wrapper.style.overflow).toBe('hidden')
     })
   })
 })
