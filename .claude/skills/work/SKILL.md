@@ -156,11 +156,15 @@ of it here puts a second copy in play that drifts from the role.
   ticket knows, so name it in the payload.
 
 **Epic mode fans out in waves**, not all at once. Wave 1 is every selected ticket with no in-epic
-blocker, branching off `master`. Wave N is the tickets whose blockers all landed in wave N-1; each
-wave-N builder's worktree is based on its blocker's branch, not `master` — its PR will stack on that
+blocker, branching off `master`. Wave N is the tickets whose blockers all **landed** in wave N-1 —
+landed means the blocker's own test pass (§ 4b) has committed, not merely that its build reported
+back (§ 4a) or merged forward into the integration branch. Cutting a wave-N worktree off a blocker
+branch that has reported but not yet finished § 4b bases it on a tip missing its own parent's test
+coverage, which a later merge-forward can't retroactively fix without a real conflict. Each wave-N
+builder's worktree is based on its blocker's branch, not `master` — its PR will stack on that
 branch (§ 5c reuses this same stacking rule; don't invent a second mechanism). **Cap a wave at ~4
 concurrent builders** — split a larger wave into batches. The test pass (§ 4b) stays sequential across
-every wave.
+every wave, and gates the next wave's fan-out the same way it gates § 5's PR step.
 
 ### 4a. LAND — the home tree updates the moment a builder reports back
 
