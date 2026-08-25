@@ -42,6 +42,51 @@ const PRIORITY = {
   critical: 4
 }
 
+/** Appends `shortcut`'s registry row to `items`, unless it's neither active nor advertised. */
+function pushRegistryEntry(
+  items: ShortcutRegistry[],
+  scope: Scope,
+  shortcut: Shortcut,
+  topScopeId: ScopeId | undefined
+) {
+  const active = shortcut.when ? !!shortcut.when() : true
+  const advertised = !!shortcut.advertise
+  if (!active && !advertised) return
+
+  items.push({
+    scopeId: scope.id,
+    id: shortcut.id,
+    combo: shortcut.combo,
+    description: shortcut.description,
+    group: shortcut.group,
+    active,
+    advertised,
+    topmost: scope.id === topScopeId
+  })
+}
+
+/** Runs `sc`'s handler if it matches `combo`, reporting whether the event was handled. */
+async function runShortcutIfMatch(
+  scope: Scope,
+  sc: Shortcut,
+  combo: KeyCombo,
+  ev: KeyboardEvent
+): Promise<boolean> {
+  if (sc.combo !== combo) return false
+
+  const active = sc.when ? !!sc.when() : true
+  if (!active) return false
+
+  const handled = (await sc.handler(ev)) ?? true
+  if (!handled) return false
+
+  ev.preventDefault()
+  ev.stopPropagation()
+  if (sc.once) scope.shortcuts.delete(sc.id)
+
+  return true
+}
+
 function normalizeComboFromEvent(ev: KeyboardEvent): KeyCombo {
   const mods: string[] = []
 
@@ -65,21 +110,7 @@ export const useShortcutStore = defineStore('shortcutStore', () => {
 
     for (const scope of stack) {
       for (const shortcut of scope.shortcuts.values()) {
-        const active = shortcut.when ? !!shortcut.when() : true
-        const advertised = !!shortcut.advertise
-
-        if (active || advertised) {
-          items.push({
-            scopeId: scope.id,
-            id: shortcut.id,
-            combo: shortcut.combo,
-            description: shortcut.description,
-            group: shortcut.group,
-            active,
-            advertised,
-            topmost: scope.id === topScopeId
-          })
-        }
+        pushRegistryEntry(items, scope, shortcut, topScopeId)
       }
     }
 
@@ -154,31 +185,27 @@ export const useShortcutStore = defineStore('shortcutStore', () => {
     stack.sort((a, b) => a.priority - b.priority)
   }
 
-  async function _handleKeyEvent(ev: KeyboardEvent) {
-    const combo = normalizeComboFromEvent(ev)
+  // Innermost scope first, so a dialog's key beats the page's behind it.
+  function orderedShortcuts() {
+    const pairs: { scope: Scope; sc: Shortcut }[] = []
 
-    // Innermost scope first, so a dialog's key beats the page's behind it.
     for (let i = filtered_stack.value.length - 1; i >= 0; i--) {
       const scope = filtered_stack.value[i]
 
       for (const sc of scope.shortcuts.values()) {
-        if (sc.combo !== combo) continue
-
-        const active = sc.when ? !!sc.when() : true
-        if (!active) continue
-
-        const handled = (await sc.handler(ev)) ?? true
-        if (handled) {
-          ev.preventDefault()
-          ev.stopPropagation()
-
-          if (sc.once) {
-            scope.shortcuts.delete(sc.id)
-          }
-
-          return
-        }
+        pairs.push({ scope, sc })
       }
+    }
+
+    return pairs
+  }
+
+  async function _handleKeyEvent(ev: KeyboardEvent) {
+    const combo = normalizeComboFromEvent(ev)
+
+    for (const { scope, sc } of orderedShortcuts()) {
+      const handled = await runShortcutIfMatch(scope, sc, combo, ev)
+      if (handled) return
     }
   }
 

@@ -77,18 +77,18 @@ class LoggerClass {
     const lines = stack.split('\n')
 
     for (const line of lines) {
-      if (!line.includes(skipFile)) {
-        const match = line.match(/\(?([^\s)]+:\d+:\d+)\)?$/)
-        if (match?.[1]) {
-          let url = match[1]
+      if (line.includes(skipFile)) continue
 
-          url = url.replace(/^https?:\/\/[^/]+\/?/, '')
-          url = url.replace(/\?.*?(?=:)/, '')
-          url = url.replace(/^webpack:\/\/customer-flows\/\./, '')
+      const match = line.match(/\(?([^\s)]+:\d+:\d+)\)?$/) // captures a trailing `path:line:col` reference
+      if (!match?.[1]) continue
 
-          return url
-        }
-      }
+      let url = match[1]
+
+      url = url.replace(/^https?:\/\/[^/]+\/?/, '')
+      url = url.replace(/\?.*?(?=:)/, '')
+      url = url.replace(/^webpack:\/\/customer-flows\/\./, '')
+
+      return url
     }
 
     return 'unknown'
