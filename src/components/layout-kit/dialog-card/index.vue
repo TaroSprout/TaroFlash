@@ -101,15 +101,11 @@ function bodyPaddingStyle() {
 /**
  * `--content-grid-padding` is set directly rather than via a Tailwind
  * arbitrary-value class. →[K:dialog-card-content-grid-padding]
- *
- * `--content-grid-max-width` caps to 100% on mobile so the content column
- * resolves to `100% - padding*2`, not a fixed desktop-sized max-width.
  */
 const card_style = computed(() => ({
   ...(dialog_px && { '--dialog-px': dialog_px }),
   '--content-grid-padding': 'var(--dialog-px)',
-  '--content-grid-max-width':
-    viewport.value === 'mobile' ? '100%' : (content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size]),
+  '--content-grid-max-width': content_max_width ?? SIZE_CONTENT_MAX_WIDTH[size],
   '--content-grid-breakout-max-width':
     content_breakout_max_width ?? SIZE_CONTENT_BREAKOUT_MAX_WIDTH[size]
 }))
