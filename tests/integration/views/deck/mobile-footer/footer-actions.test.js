@@ -95,6 +95,24 @@ describe('mobile-footer/footer-actions', () => {
     expect(shell.openPageSettings).toHaveBeenCalledOnce()
   })
 
+  test('renders the page-settings trigger with the ghost variant, not the default filled one [obligation]', () => {
+    const wrapper = mountFooterActions()
+    const trigger = wrapper.find('[data-testid="deck-footer-actions__page-settings"]')
+    expect(trigger.attributes('variant')).toBe('ghost')
+  })
+
+  test('the page-settings trigger matches its new-card and edit-menu siblings variant [obligation]', () => {
+    const wrapper = mountFooterActions(makeShell({ is_rearranging: false }))
+    const page_settings = wrapper.find('[data-testid="deck-footer-actions__page-settings"]')
+    const new_card = wrapper.find('[data-testid="deck-footer-actions__new-card"]')
+    const edit_menu = wrapper.find('[data-testid="deck-footer-actions__edit-menu"]')
+
+    // Anchored to 'ghost' so the comparison can't pass by all three being undefined.
+    expect(page_settings.attributes('variant')).toBe('ghost')
+    expect(new_card.attributes('variant')).toBe('ghost')
+    expect(edit_menu.attributes('variant')).toBe('ghost')
+  })
+
   // ── is_rearranging toggle ─────────────────────────────────────────────────
 
   test('shows stop-rearranging button when shell.is_rearranging is true [obligation]', () => {
@@ -113,6 +131,14 @@ describe('mobile-footer/footer-actions', () => {
     expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
       false
     )
+  })
+
+  test('stop-rearranging keeps its filled default variant with the yellow palette [obligation]', () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mountFooterActions(shell)
+    const stop_rearranging = wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]')
+    expect(stop_rearranging.attributes('variant')).toBeUndefined()
+    expect(stop_rearranging.attributes('data-palette')).toBe('yellow')
   })
 
   test('pressing stop-rearranging calls shell.toggleRearrange', async () => {
