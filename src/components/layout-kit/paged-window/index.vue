@@ -29,7 +29,12 @@ export type PagedWindowGroup = {
 
 type PagedWindowFrameProps = Pick<
   AppWindowProps,
-  'pattern_config' | 'title' | 'header_border' | 'show_close_button' | 'scroll_body'
+  | 'pattern_config'
+  | 'title'
+  | 'header_border'
+  | 'show_close_button'
+  | 'scroll_body'
+  | 'keep_docked_height'
 >
 
 export type PagedWindowProps = PagedWindowFrameProps & {
@@ -53,6 +58,7 @@ const {
   show_close_button = true,
   header_border = 'wave',
   scroll_body = false,
+  keep_docked_height = false,
   phone_query = 'w<md',
   desktop_query = 'w>=lg & fine',
   between,
@@ -169,6 +175,7 @@ function onDirectoryNavigate(value: string) {
     :close_icon="back_mode ? 'arrow-back' : 'close'"
     :header_border="header_border"
     :scroll_body="scroll_body"
+    :keep_docked_height="keep_docked_height"
     :window_px="window_px"
     :class="content_inset_class"
     @close="onFrameClose"
