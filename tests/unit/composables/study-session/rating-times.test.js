@@ -12,7 +12,7 @@ const { mockGetRatingTimeCompact, mockGetRatingTimeFormat } = vi.hoisted(() => (
   mockGetRatingTimeFormat: vi.fn((grade) => `label-${grade}`)
 }))
 
-vi.mock('@/composables/fsrs', () => ({
+vi.mock('@/views/study-session/composables/fsrs', () => ({
   useRatingFormat: () => ({
     getRatingTimeCompact: mockGetRatingTimeCompact,
     getRatingTimeFormat: mockGetRatingTimeFormat
