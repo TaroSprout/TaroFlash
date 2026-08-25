@@ -11,6 +11,7 @@ import { useCardLimitGate } from '@/composables/card/limit-gate'
 import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
+import { SKELETON_COVER } from '@/utils/cover'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -29,8 +30,10 @@ const { cards, current_deck_id, count, move, close } = defineProps<MoveCardsModa
 
 const { t } = useI18n()
 
+const SKELETON_ROW_COUNT = 4
+
 const can = useCan()
-const { data: decks } = useMemberDecksQuery()
+const { data: decks, status } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const moving = ref(false)
 
@@ -95,7 +98,24 @@ function onClose() {
 
 <template>
   <dialog-card data-testid="move-cards" size="md" :title="title" @close="onClose">
+    <div
+      v-if="status === 'pending'"
+      data-testid="move-cards__deck-list-skeleton"
+      class="my-4 flex min-h-0 flex-col gap-1 rounded-4 bg-well p-1"
+    >
+      <div
+        v-for="n in SKELETON_ROW_COUNT"
+        :key="n"
+        data-testid="move-cards__deck-list-skeleton-row"
+        class="flex items-center gap-3 px-5 py-3"
+      >
+        <card class="w-[43px]" side="cover" shimmer :cover_config="SKELETON_COVER" />
+        <div class="h-5 flex-1 rounded-2 bg-skeleton shimmer"></div>
+      </div>
+    </div>
+
     <ui-options-panel
+      v-else
       data-testid="move-cards__deck-list"
       scrollable
       class="my-4 min-h-0"
