@@ -23,28 +23,30 @@ const { avatar, size = 'base', interactive = false } = defineProps<MemberPolaroi
 </script>
 
 <template>
-  <div data-testid="member-polaroid" :data-size="size" class="relative select-none">
-    <ui-icon
-      src="paperclip"
-      class="text-ink-muted absolute z-10 rotate-188"
-      :class="SIZES[size].clip"
-    />
+  <div data-testid="member-polaroid" :data-size="size" class="select-none">
+    <div data-testid="member-polaroid__positioner" class="relative">
+      <ui-icon
+        src="paperclip"
+        class="text-ink-muted absolute z-10 rotate-188"
+        :class="SIZES[size].clip"
+      />
 
-    <div
-      data-testid="member-polaroid__frame"
-      data-station="float"
-      class="bg-surface rounded-2 shadow-xs -rotate-12"
-      :class="[
-        SIZES[size].frame,
-        interactive && 'transition-transform duration-150 group-hover:-rotate-5'
-      ]"
-      :style="{ transformOrigin: SIZES[size].origin }"
-    >
       <div
-        data-testid="member-polaroid__photo"
-        class="bg-mat rounded-1 aspect-square overflow-hidden"
+        data-testid="member-polaroid__frame"
+        data-station="float"
+        class="bg-surface rounded-2 shadow-xs -rotate-12"
+        :class="[
+          SIZES[size].frame,
+          interactive && 'transition-transform duration-150 group-hover:-rotate-8'
+        ]"
+        :style="{ transformOrigin: SIZES[size].origin }"
       >
-        <avatar-image :avatar="avatar" class="h-full w-full" />
+        <div
+          data-testid="member-polaroid__photo"
+          class="bg-mat rounded-1 aspect-square overflow-hidden"
+        >
+          <avatar-image :avatar="avatar" class="h-full w-full" />
+        </div>
       </div>
     </div>
   </div>
