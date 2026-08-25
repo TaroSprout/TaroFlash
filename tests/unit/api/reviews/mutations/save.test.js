@@ -60,15 +60,18 @@ describe('useSaveReviewMutation', () => {
 })
 
 describe('useFlushDeckReviews', () => {
-  // ['decks'] is the newly added key — it's what the dashboard's due counts read. [obligation]
-  test('invalidates ["deck", deck_id], ["cards", deck_id], and ["decks"] [obligation]', () => {
+  // ['decks'] is the newly added key — it's what the dashboard's due counts read.
+  // exact: true keeps it off ['decks', 'count'], which no review can ever change. [obligation]
+  test('invalidates ["deck", deck_id] and ["cards", deck_id] per deck, and ["decks"] exactly once [obligation]', () => {
     const flush = useFlushDeckReviews()
 
-    flush(7)
+    flush([7, 9])
 
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 7] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 7] })
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
-    expect(invalidateSpy).toHaveBeenCalledTimes(3)
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 9] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 9] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
+    expect(invalidateSpy).toHaveBeenCalledTimes(5)
   })
 })

@@ -364,9 +364,8 @@ describe('session-controller', () => {
       controller.requestClose()
       await Promise.resolve()
 
-      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
-      expect(mockFlushDeckReviews).toHaveBeenCalledWith(1)
-      expect(mockFlushDeckReviews).toHaveBeenCalledWith(2)
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(1)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith([1, 2])
     })
   })
 
@@ -379,9 +378,8 @@ describe('session-controller', () => {
       state.value = 'summary'
       await Promise.resolve()
 
-      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
-      expect(mockFlushDeckReviews).toHaveBeenCalledWith(1)
-      expect(mockFlushDeckReviews).toHaveBeenCalledWith(2)
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(1)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith([1, 2])
     })
 
     test('does not flush when state changes to something other than "summary"', async () => {
