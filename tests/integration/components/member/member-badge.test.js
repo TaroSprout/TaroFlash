@@ -3,9 +3,10 @@ import { shallowMount, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
 // Hoist shared mock refs before vi.mock calls
-const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
+const { coarseRef, mockEmitSfx, mockLoadAvatarUrl } = vi.hoisted(() => ({
   coarseRef: { value: false },
-  mockEmitSfx: vi.fn()
+  mockEmitSfx: vi.fn(),
+  mockLoadAvatarUrl: vi.fn()
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -17,6 +18,14 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
+vi.mock('@/components/member/avatars', () => ({
+  loadAvatarUrl: mockLoadAvatarUrl
+}))
+
+vi.mock('@/assets/avatars/frog.svg?url', () => ({
+  default: '/mock/frog.svg'
+}))
+
 vi.mock('gsap', () => ({
   gsap: {
     to: vi.fn((_el, opts) => opts?.onComplete?.()),
@@ -25,6 +34,7 @@ vi.mock('gsap', () => ({
 }))
 
 import MemberBadge from '@/components/member/member-badge.vue'
+import AvatarImageReal from '@/components/member/avatar-image.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 
 // AvatarImage stub
@@ -69,6 +79,7 @@ function mountBadge(props = {}) {
 describe('MemberBadge', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockLoadAvatarUrl.mockReset()
   })
 
   // ── data-testid structure ──────────────────────────────────────────────────
@@ -193,6 +204,24 @@ describe('MemberBadge', () => {
       expect(wrapper.find('[data-testid="avatar-image-stub"]').attributes('data-avatar')).toBe(
         'panda'
       )
+    })
+
+    // Mounts the real avatar-image so the placeholder/frog split lands through
+    // this surface, not just the component's own tests.
+    test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved [obligation]', async () => {
+      mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
+      const wrapper = shallowMount(MemberBadge, {
+        props: { cover: { palette: 'blue', pattern: 'wave', avatar: 'panda' } },
+        global: {
+          stubs: { UiTappable: UiTappableStub, UiButton: UiButtonStub, AvatarImage: false },
+          directives: { sfx: {} }
+        }
+      })
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(AvatarImageReal).exists()).toBe(true)
+      expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(true)
+      expect(wrapper.find('img').exists()).toBe(false)
     })
   })
 
