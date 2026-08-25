@@ -353,6 +353,21 @@ describe('session-controller', () => {
       expect(onClosed).not.toHaveBeenCalled()
       expect(state.value).toBe('summary')
     })
+
+    // Quit is a second path into `summary` besides running out of cards — a
+    // flush tied only to "the deck ran out of cards" would silently skip it. [obligation]
+    test('quitting after at least one rated card still triggers the deck flush [obligation]', async () => {
+      is_cover.value = false
+      reviewed_count.value = 1
+      const { controller } = makeController()
+
+      controller.requestClose()
+      await Promise.resolve()
+
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith(1)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith(2)
+    })
   })
 
   // ── review flush on reaching summary [obligation] ───────────────────────
@@ -373,6 +388,20 @@ describe('session-controller', () => {
       makeController()
 
       state.value = 'cover'
+      await Promise.resolve()
+
+      expect(mockFlushDeckReviews).not.toHaveBeenCalled()
+    })
+
+    // Guards against reintroducing a per-review flush/invalidation — rating
+    // cards must not touch the deck-flush seam while still mid-session. [obligation]
+    test('rating cards while state stays "studying" flushes zero decks [obligation]', async () => {
+      state.value = 'studying'
+      const { controller } = makeController()
+
+      await controller.onCardReviewed('good')
+      await controller.onCardReviewed('good')
+      await controller.onCardReviewed('good')
       await Promise.resolve()
 
       expect(mockFlushDeckReviews).not.toHaveBeenCalled()

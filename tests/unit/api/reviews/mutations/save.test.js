@@ -1,14 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { useMutationSpy, invalidateSpy, saveReviewMock } = vi.hoisted(() => ({
+const { useMutationSpy, useQueryCacheSpy, invalidateSpy, saveReviewMock } = vi.hoisted(() => ({
   useMutationSpy: vi.fn((cfg) => cfg),
+  useQueryCacheSpy: vi.fn(() => ({ invalidateQueries: invalidateSpy })),
   invalidateSpy: vi.fn(),
   saveReviewMock: vi.fn().mockResolvedValue(undefined)
 }))
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
-  useQueryCache: () => ({ invalidateQueries: invalidateSpy })
+  useQueryCache: useQueryCacheSpy
 }))
 
 vi.mock('@/api/reviews/db', () => ({
@@ -19,6 +20,7 @@ import { useSaveReviewMutation, useFlushDeckReviews } from '@/api/reviews/mutati
 
 beforeEach(() => {
   useMutationSpy.mockClear()
+  useQueryCacheSpy.mockClear()
   invalidateSpy.mockClear()
   saveReviewMock.mockClear()
   saveReviewMock.mockResolvedValue(undefined)
@@ -45,51 +47,28 @@ describe('useSaveReviewMutation', () => {
     expect(saveReviewMock).toHaveBeenCalledTimes(1)
   })
 
-  test('onSettled invalidates ["decks"] so dashboard due_count refreshes', () => {
-    const { onSettled } = configFrom(useSaveReviewMutation)
+  // Cache invalidation now lives entirely in useFlushDeckReviews, fired once
+  // per deck at session summary — a per-review onSettled here would refetch
+  // the deck list on every rating instead of once per session. [obligation]
+  test('does not touch the query cache at all — no onSettled, no useQueryCache call [obligation]', () => {
+    const config = configFrom(useSaveReviewMutation)
 
-    onSettled(undefined, undefined, { card_id: 1, deck_id: 7, card: {}, log: {} })
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
-  })
-
-  // Per-review saves must not invalidate ["deck", id] or ["cards", id]: those
-  // are active during a study session and refetching on every rating churns
-  // the full deck+cards join. The session flushes them once on close instead.
-  test('onSettled fires exactly one invalidation per review (no deck/cards refetch mid-session)', () => {
-    const { onSettled } = configFrom(useSaveReviewMutation)
-
-    onSettled(undefined, undefined, { card_id: 1, deck_id: 7, card: {}, log: {} })
-
-    expect(invalidateSpy).toHaveBeenCalledTimes(1)
-  })
-
-  test('invalidation still fires when the mutation itself errored', () => {
-    const { onSettled } = configFrom(useSaveReviewMutation)
-
-    onSettled(undefined, new Error('network'), { card_id: 1, deck_id: 7, card: {}, log: {} })
-
-    expect(invalidateSpy).toHaveBeenCalledTimes(1)
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+    expect(config.onSettled).toBeUndefined()
+    expect(useQueryCacheSpy).not.toHaveBeenCalled()
+    expect(invalidateSpy).not.toHaveBeenCalled()
   })
 })
 
 describe('useFlushDeckReviews', () => {
-  test('invalidates ["deck", deck_id] and ["cards", deck_id]', () => {
+  // ['decks'] is the newly added key — it's what the dashboard's due counts read. [obligation]
+  test('invalidates ["deck", deck_id], ["cards", deck_id], and ["decks"] [obligation]', () => {
     const flush = useFlushDeckReviews()
 
     flush(7)
 
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 7] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 7] })
-    expect(invalidateSpy).toHaveBeenCalledTimes(2)
-  })
-
-  test('does not invalidate ["decks"] — that is handled by the per-review mutation', () => {
-    const flush = useFlushDeckReviews()
-
-    flush(7)
-
-    expect(invalidateSpy).not.toHaveBeenCalledWith({ key: ['decks'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
+    expect(invalidateSpy).toHaveBeenCalledTimes(3)
   })
 })
