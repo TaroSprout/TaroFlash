@@ -53,6 +53,17 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     expect(wrapper.find('[data-testid="dashboard-skeleton"]').exists()).toBe(true)
   })
 
+  test('the root fills the viewport below the nav [obligation]', () => {
+    const wrapper = mountSkeleton()
+    const root = wrapper.find('[data-testid="dashboard-skeleton"]')
+    expect(root.classes()).toContain('min-h-[calc(100dvh-var(--nav-height))]')
+  })
+
+  test('renders no audio-reader-section element [obligation]', () => {
+    const wrapper = mountSkeleton()
+    expect(wrapper.find('[data-testid="audio-reader-section"]').exists()).toBe(false)
+  })
+
   test('includes DashboardActionsPanelSkeleton and DashboardTipCardSkeleton in the left column', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="actions-panel-skeleton-stub"]').exists()).toBe(true)
