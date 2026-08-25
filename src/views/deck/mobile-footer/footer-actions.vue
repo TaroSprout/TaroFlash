@@ -32,6 +32,7 @@ const edit_options = computed<DropdownOption[]>(() => [
       data-testid="deck-footer-actions__page-settings"
       icon-only
       icon-left="page-setting"
+      variant="ghost"
       size="lg"
       @press="shell.openPageSettings()"
     >
