@@ -96,7 +96,7 @@ watch(
       'pointer-fine:hover:scale-101': is_selecting,
       jiggle: rearranging && !dragging
     }"
-    v-sfx="{ hover: is_selecting || rearranging ? 'ui.hover' : undefined }"
+    v-sfx="{ hover: 'ui.hover' }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
     @pointerdown="onPointerdown"
