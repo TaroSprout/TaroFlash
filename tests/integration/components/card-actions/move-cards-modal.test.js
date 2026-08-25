@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, nextTick, ref } from 'vue'
 import { card } from '@tests/fixtures/card'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ vi.mock('@/sfx/bus', () => ({
   emitSfx: emitSfxMock
 }))
 
-const mockDecksData = { data: ref([]) }
+const mockDecksData = { data: ref([]), status: ref('success') }
 // `cardsPerDeckLimitRef` mirrors usePlanLimits().cardsPerDeckLimit: 200 for
 // free, null (unlimited) for paid — drives useCan().addCards' cap math.
 const cardsPerDeckLimitRef = ref(200)
@@ -182,11 +182,44 @@ describe('MoveCardsModal', () => {
     handleLimitErrorMock.mockReset().mockReturnValue(false)
     emitSfxMock.mockReset()
     cardsPerDeckLimitRef.value = 200
+    mockDecksData.status.value = 'success'
     mockDecksData.data.value = [
       { id: 10, title: 'Deck A', card_count: 0 },
       { id: 20, title: 'Deck B', card_count: 0 },
       { id: 30, title: 'Current Deck', card_count: 0 }
     ]
+  })
+
+  // ── Skeleton (pending decks query) ──────────────────────────────────────────
+
+  describe('pending decks query', () => {
+    test('renders exactly 4 skeleton rows and no real deck-list panel [obligation]', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      const rows = wrapper.findAll('[data-testid="move-cards__deck-list-skeleton-row"]')
+      expect(rows).toHaveLength(4)
+      expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(false)
+    })
+
+    test('swaps the skeleton for the real deck-list panel once the query succeeds [obligation]', async () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+      expect(wrapper.find('[data-testid="move-cards__deck-list-skeleton"]').exists()).toBe(true)
+
+      mockDecksData.status.value = 'success'
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="move-cards__deck-list-skeleton"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(true)
+    })
+
+    test('keeps the confirm button disabled throughout the pending state [obligation]', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
+    })
   })
 
   // ── Layout ──────────────────────────────────────────────────────────────────
