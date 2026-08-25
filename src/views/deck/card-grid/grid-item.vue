@@ -133,12 +133,9 @@ watch(
       @select="onMenuSelect"
     />
 
-    <card-grid-delete-button
-      v-if="rearranging"
-      :card_id="card.id!"
-      class="absolute -top-1 -right-1"
-      @pointerdown.stop
-    />
+    <div v-if="rearranging" class="absolute -top-1 -right-1">
+      <card-grid-delete-button :card_id="card.id!" @pointerdown.stop />
+    </div>
   </div>
 </template>
 
