@@ -57,8 +57,12 @@ Drive components through user interactions; assert on rendered output and emitte
   text, or a generated stub name: visible text breaks under i18n, roles are noisy, and tag and name
   attributes are implementation details. If the element you need has no `data-testid`, add one to
   the source (`component-name__section`) before writing the test.
-- Don't assert Tailwind utility classes; a semantic or BEM name is fine when it is the most direct
-  state signal.
+- Never assert a Tailwind utility class by literal string, `toContain` or `not.toContain` alike — a
+  semantic or BEM name is fine when it is the most direct state signal. Renaming the value
+  (`-rotate-5` → `-rotate-8`) drops a positive assertion's coverage and turns a negative one into a
+  no-op that keeps passing while guarding nothing, in both cases with no failing run to flag it.
+  Assert the computed style (`getComputedStyle`, inline style) instead when the class content itself
+  — not just its presence — is the point.
 - Find children with `findAllComponents(ImportedRef)`, or `{ name }` when `defineOptions({ name })`
   is set.
 - Assert that audio played, never which audio file.
