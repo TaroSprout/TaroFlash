@@ -1,6 +1,33 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
+import { createApp } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { useShortcutStore } from '@/stores/shortcut-store'
+
+/**
+ * Mounts a host component that calls `useShortcutStore()` during setup, so
+ * the store's `onMounted` key listener actually attaches to `document` —
+ * bare `useShortcutStore()` outside a component never fires it.
+ */
+function withMountedStore() {
+  let store
+  const app = createApp({
+    setup() {
+      store = useShortcutStore()
+      return () => {}
+    }
+  })
+  app.mount(document.createElement('div'))
+  return { store, app }
+}
+
+function keydown(key, opts = {}) {
+  const ev = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...opts })
+  vi.spyOn(ev, 'preventDefault')
+  vi.spyOn(ev, 'stopPropagation')
+  document.dispatchEvent(ev)
+  return ev
+}
 
 describe('useShortcutStore', () => {
   beforeEach(() => {
@@ -167,6 +194,126 @@ describe('useShortcutStore', () => {
       store.clearNamespace('modal')
       // After clearing, setActiveNamespace('modal') should work without error
       expect(() => store.setActiveNamespace('modal')).not.toThrow()
+    })
+  })
+
+  describe('key dispatch [obligation]', () => {
+    let app
+    let store
+
+    afterEach(() => {
+      app?.unmount()
+      app = undefined
+    })
+
+    test('innermost/topmost scope wins over an outer scope with the identical combo', async () => {
+      ;({ store, app } = withMountedStore())
+      const outer_handler = vi.fn(() => true)
+      const inner_handler = vi.fn(() => true)
+      store.pushScope('outer', 'low')
+      store.pushScope('inner', 'high')
+      store.register('outer', { combo: 'a', handler: outer_handler })
+      store.register('inner', { combo: 'a', handler: inner_handler })
+
+      keydown('a')
+      await flushPromises()
+
+      expect(inner_handler).toHaveBeenCalledTimes(1)
+      expect(outer_handler).not.toHaveBeenCalled()
+    })
+
+    test('stops after the first handler reports handled — no later-scope handler for the same combo runs', async () => {
+      ;({ store, app } = withMountedStore())
+      const outer_handler = vi.fn(() => true)
+      const inner_handler = vi.fn(() => true)
+      store.pushScope('outer', 'low')
+      store.pushScope('inner', 'high')
+      store.register('outer', { combo: 'ctrl+k', handler: outer_handler })
+      store.register('inner', { combo: 'ctrl+k', handler: inner_handler })
+
+      keydown('k', { ctrlKey: true })
+      await flushPromises()
+
+      expect(inner_handler).toHaveBeenCalledTimes(1)
+      expect(outer_handler).not.toHaveBeenCalled()
+    })
+
+    test('a handler returning false is skipped and dispatch continues to the next matching shortcut', async () => {
+      ;({ store, app } = withMountedStore())
+      const outer_handler = vi.fn(() => true)
+      const inner_handler = vi.fn(() => false)
+      store.pushScope('outer', 'low')
+      store.pushScope('inner', 'high')
+      store.register('outer', { combo: 'a', handler: outer_handler })
+      store.register('inner', { combo: 'a', handler: inner_handler })
+
+      keydown('a')
+      await flushPromises()
+
+      expect(inner_handler).toHaveBeenCalledTimes(1)
+      expect(outer_handler).toHaveBeenCalledTimes(1)
+    })
+
+    test('fires preventDefault and stopPropagation when a shortcut handles the event', async () => {
+      ;({ store, app } = withMountedStore())
+      store.pushScope('s')
+      store.register('s', { combo: 'a', handler: () => true })
+
+      const ev = keydown('a')
+      await flushPromises()
+
+      expect(ev.preventDefault).toHaveBeenCalled()
+      expect(ev.stopPropagation).toHaveBeenCalled()
+    })
+
+    test('does not preventDefault/stopPropagation when no shortcut handles the event', async () => {
+      ;({ store, app } = withMountedStore())
+      store.pushScope('s')
+      store.register('s', { combo: 'a', handler: () => false })
+
+      const ev = keydown('a')
+      await flushPromises()
+
+      expect(ev.preventDefault).not.toHaveBeenCalled()
+      expect(ev.stopPropagation).not.toHaveBeenCalled()
+    })
+
+    test('a `once` shortcut is removed from its scope after it handles the event', async () => {
+      ;({ store, app } = withMountedStore())
+      store.pushScope('s')
+      const id = store.register('s', { combo: 'a', handler: () => true, once: true })
+
+      keydown('a')
+      await flushPromises()
+
+      expect(store.stack[0].shortcuts.has(id)).toBe(false)
+    })
+
+    test('deleting a `once` shortcut mid-dispatch does not stop a later matching shortcut from running, and the once shortcut never runs again', async () => {
+      ;({ store, app } = withMountedStore())
+      const once_handler = vi.fn(() => true)
+      const outer_handler = vi.fn(() => true)
+      store.pushScope('outer', 'low')
+      store.pushScope('inner', 'high')
+      store.register('outer', { combo: 'a', handler: outer_handler })
+      const once_id = store.register('inner', { combo: 'a', handler: once_handler, once: true })
+
+      keydown('a')
+      await flushPromises()
+
+      // First event: the once shortcut (innermost) wins and is now deleted;
+      // the outer handler for the same combo never ran this time.
+      expect(once_handler).toHaveBeenCalledTimes(1)
+      expect(outer_handler).not.toHaveBeenCalled()
+      expect(store.stack.find((s) => s.id === 'inner').shortcuts.has(once_id)).toBe(false)
+
+      keydown('a')
+      await flushPromises()
+
+      // Second event: the once shortcut is gone, so the outer scope's
+      // handler now runs instead, and the deleted once handler never fires again.
+      expect(once_handler).toHaveBeenCalledTimes(1)
+      expect(outer_handler).toHaveBeenCalledTimes(1)
     })
   })
 })
