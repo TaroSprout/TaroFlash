@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: false
 related: [keyboard-detection]
-updated: 2026-08-08
+updated: 2026-08-28
 ---
 
 # Detecting whether browser chrome already covers the safe area
@@ -29,3 +29,13 @@ the _visual_ viewport shrinks to make room for that chrome. A gap between the
 two means chrome is currently covering the bottom strip and no extra padding
 is needed; no gap means the app has to supply its own via
 `env(safe-area-inset-bottom)`.
+
+The signal has one blind spot: mobile Safari's own bottom toolbar. Safari
+shrinks `window.innerHeight` in step with the visual viewport as that toolbar
+shows and hides, so the two never diverge and the gap reads zero even while
+the toolbar covers the strip. Nothing is lost by that, because Safari also
+reports `env(safe-area-inset-bottom)` as `0px` for as long as the toolbar is
+up — the inset itself already says the strip is covered, and only grows to the
+device's real inset once the toolbar collapses on scroll. So a consumer that
+adds the raw inset stays correct there without the gap signal's help; only a
+consumer that floors the inset to some minimum breaks.
