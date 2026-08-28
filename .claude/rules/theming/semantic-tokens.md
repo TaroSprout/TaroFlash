@@ -27,5 +27,5 @@ paths:
 - **Name a role for the job it does, never for its colour or its first caller** — `line`, not
   `brown-300`; `skeleton-sheen`, not `tip-card-shimmer`.
 - **A colour that must stay identical across stations is a fixed role, not a station role** — declare
-  it once in `@theme` with a `data-mode='dark'` counterpart, the way `card`, `mat` and `knockout` are
-  ([[surface-stations]] holds why each opts out).
+  it once in `@theme` with a `data-mode='dark'` counterpart ([[surface-stations]] holds which roles
+  are fixed and why each opts out).

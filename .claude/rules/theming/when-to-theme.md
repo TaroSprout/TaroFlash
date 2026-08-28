@@ -29,9 +29,10 @@ is a choice about which switch should move the element.
   goes illegible at body size; `accent-text` is the same identity darkened to read as text.
 - **Text on an accent fill uses `on-accent`** — pairing `text-ink` with an accent background hands
   the label a colour tuned for the station behind it, not for the fill it's actually sitting on.
-- **A role that isn't resting on a station doesn't take one.** A badge or ring on an accent fill uses
-  the fixed `knockout` / `card` / `mat` roles; borrowing a station role there looks right in one mode
-  and inverts in the other →[K:fixed-roles-skip-the-station].
+- **A role that isn't resting on a station doesn't take one.** A badge, ring, or line on a surface
+  outside the station system takes that surface's own fixed role instead ([[surface-stations]] names
+  the group); borrowing a station role there looks right in one mode and inverts in the other
+  →[K:fixed-roles-skip-the-station].
 
 Mixing both in one component is normal — a toggle's label and off-track stay neutral while the
 on-track takes `accent` / `on-accent`.
