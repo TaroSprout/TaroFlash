@@ -16,6 +16,13 @@ than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails (�
 Run `pnpm type-check` before any point where a branch leaves your hands — pushing it yourself, or
 handing it back to whatever pushes it next.
 
+## Node version
+
+`vp fmt` and `vp check` can fail on `vite.config.ts` with `ERR_UNKNOWN_FILE_EXTENSION`, quoting a
+Node engine minimum your version already satisfies (seen: fails on 22.14, works on 26) — the stated
+minimum is wrong, not the toolchain. Switch to a newer Node rather than debugging the config or the
+error message. `vp test` is unaffected.
+
 ## Never `pnpm`
 
 - **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm
