@@ -8,6 +8,7 @@ import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.v
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const mockItems = ref([])
+const mockStatus = ref('success')
 
 const { modalOpenMock, mockEmitSfx } = vi.hoisted(() => ({
   modalOpenMock: vi.fn(),
@@ -15,7 +16,7 @@ const { modalOpenMock, mockEmitSfx } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/api/feedback', () => ({
-  useFeedbackItemsQuery: () => ({ data: mockItems }),
+  useFeedbackItemsQuery: () => ({ data: mockItems, status: mockStatus }),
   useToggleFeedbackVoteMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
   useSubmitFeedbackMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } })
 }))
@@ -36,6 +37,13 @@ const FeedbackCardStub = defineComponent({
   }
 })
 
+const FeedbackSkeletonStub = defineComponent({
+  name: 'FeedbackSkeleton',
+  setup() {
+    return () => h('div', { 'data-testid': 'feedback-skeleton-stub' })
+  }
+})
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function mountBoard(close = vi.fn()) {
@@ -45,7 +53,12 @@ function mountBoard(close = vi.fn()) {
       props: { close },
       global: {
         renderStubDefaultSlot: true,
-        stubs: { AppWindow: false, UiButton: false, FeedbackCard: FeedbackCardStub }
+        stubs: {
+          AppWindow: false,
+          UiButton: false,
+          FeedbackCard: FeedbackCardStub,
+          FeedbackSkeleton: FeedbackSkeletonStub
+        }
       }
     })
   }
@@ -53,6 +66,7 @@ function mountBoard(close = vi.fn()) {
 
 beforeEach(() => {
   mockItems.value = []
+  mockStatus.value = 'success'
 })
 
 // ── Content ───────────────────────────────────────────────────────────────────
@@ -103,6 +117,45 @@ describe('FeedbackBoard — content', () => {
         .find('[data-testid="feedback-board__submit-button"]')
         .exists()
     ).toBe(false)
+  })
+})
+
+// ── Loading state [obligation] ───────────────────────────────────────────────
+
+describe('FeedbackBoard — loading state [obligation]', () => {
+  test('renders feedback-skeleton while the query status is pending, not the card list', () => {
+    mockStatus.value = 'pending'
+    mockItems.value = [{ id: 1 }]
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.findComponent(FeedbackSkeletonStub).exists()).toBe(true)
+    expect(wrapper.findAllComponents(FeedbackCardStub)).toHaveLength(0)
+  })
+
+  test('swaps to the feedback-card list once the query resolves', () => {
+    mockStatus.value = 'success'
+    mockItems.value = [{ id: 1 }, { id: 2 }]
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.findComponent(FeedbackSkeletonStub).exists()).toBe(false)
+    expect(wrapper.findAllComponents(FeedbackCardStub)).toHaveLength(2)
+  })
+
+  test('keys the placeholder off query status, not off an empty item list', () => {
+    mockStatus.value = 'success'
+    mockItems.value = []
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.findComponent(FeedbackSkeletonStub).exists()).toBe(false)
+  })
+
+  test('renders the title, intro text, and submit button while the query is pending', () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.findComponent(AppWindow).props('title')).toBe('Feedback')
+    expect(wrapper.find('[data-testid="feedback-board__intro"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
   })
 })
 
