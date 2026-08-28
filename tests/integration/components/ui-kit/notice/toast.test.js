@@ -1,6 +1,9 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
+// The reserved-room tests measure real padding rather than a utility class, so
+// the app stylesheet has to be live in the Chromium test page.
+import '@/styles/main.css'
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
@@ -62,13 +65,24 @@ function makeNotice(overrides = {}) {
   }
 }
 
+// Mounted into the document so `getComputedStyle` resolves real layout values;
+// `mounted_wrappers` is drained in `afterEach` to keep the page clean.
+const mounted_wrappers = []
+
 async function mountToast(notice) {
   const wrapper = shallowMount(ToastNotice, {
     props: { notice },
+    attachTo: document.body,
     global: { stubs: { UiIcon: UiIconStub, UiButton: UiButtonStub } }
   })
+  mounted_wrappers.push(wrapper)
   await flushPromises()
   return wrapper
+}
+
+function reservedRoomBesideMessage(wrapper) {
+  const body = wrapper.find('[data-testid="ui-kit-notice-toast__body"]').element
+  return parseFloat(getComputedStyle(body).paddingRight)
 }
 
 function getCallbacks() {
@@ -84,7 +98,10 @@ describe('ToastNotice', () => {
     coarseRef.value = false
   })
 
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {
+    vi.useRealTimers()
+    while (mounted_wrappers.length) mounted_wrappers.pop().unmount()
+  })
 
   test('close button is present when notice.closable is true', async () => {
     const wrapper = await mountToast(makeNotice({ closable: true }))
@@ -109,33 +126,36 @@ describe('ToastNotice', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(false)
   })
 
-  test('reserves a right inset on the body when closable on a fine pointer, so the message never runs under the close button [obligation]', async () => {
+  test('keeps room beside the message when closable on a fine pointer, so a long message never runs under the close button [obligation]', async () => {
     coarseRef.value = false
-    const wrapper = await mountToast(makeNotice({ closable: true }))
-    expect(wrapper.find('[data-testid="ui-kit-notice-toast__body"]').classes()).toContain('pr-8')
+    const wrapper = await mountToast(
+      makeNotice({ closable: true, message: 'A message long enough to reach the far edge' })
+    )
+    expect(reservedRoomBesideMessage(wrapper)).toBeGreaterThan(0)
   })
 
-  test('does not reserve a body inset when not closable, so the padding does not leak into the common case [obligation]', async () => {
+  test('gives the message the full width when there is no close button, so the room does not leak into the common case [obligation]', async () => {
     coarseRef.value = false
     const wrapper = await mountToast(makeNotice({ closable: false }))
-    expect(wrapper.find('[data-testid="ui-kit-notice-toast__body"]').classes()).not.toContain(
-      'pr-8'
-    )
+    expect(reservedRoomBesideMessage(wrapper)).toBe(0)
   })
 
-  test('does not reserve a body inset on a coarse pointer even when closable, since the close button is suppressed there [obligation]', async () => {
+  test('gives the message the full width on a coarse pointer even when closable, since the close button is suppressed there [obligation]', async () => {
     coarseRef.value = true
     const wrapper = await mountToast(makeNotice({ closable: true }))
-    expect(wrapper.find('[data-testid="ui-kit-notice-toast__body"]').classes()).not.toContain(
-      'pr-8'
-    )
+    expect(reservedRoomBesideMessage(wrapper)).toBe(0)
   })
 
-  test('the close button reveal transitions opacity only, so the permanent inset never causes a layout shift [obligation]', async () => {
+  test('holds the room while the close button is still invisible, so the message cannot shift when it fades in [obligation]', async () => {
+    coarseRef.value = false
     const wrapper = await mountToast(makeNotice({ closable: true }))
-    const close_button = wrapper.find('[data-testid="ui-kit-notice-toast__close"]')
-    expect(close_button.classes()).toContain('opacity-0')
-    expect(close_button.classes()).toContain('transition-opacity')
+    const close_button = wrapper.find('[data-testid="ui-kit-notice-toast__close"]').element
+
+    // Nothing is hovered here, so the button is fully transparent — the room
+    // beside the message is already held, and only opacity changes on reveal.
+    expect(getComputedStyle(close_button).opacity).toBe('0')
+    expect(reservedRoomBesideMessage(wrapper)).toBeGreaterThan(0)
+    expect(getComputedStyle(close_button).transitionProperty).toBe('opacity')
   })
 
   test('clicking close emits the close event and calls onDismiss', async () => {
