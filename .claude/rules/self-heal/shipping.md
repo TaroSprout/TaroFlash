@@ -38,7 +38,7 @@ revert-and-report obligation too.
    of the user with `open "<pr-url>"` (macOS `open`; fall back to `gh pr view <n> --web`) — a failure
    there is skipped silently, the URL still goes in the report. An already-open PR means the push was
    enough and nothing opens. **Never merge it** — the user closes that stream.
-6. `git worktree remove` your path (checked first per [`git-workflow`](../git-workflow.md)), then
-   report the PR link. **This step runs even when an earlier one failed** — a lesson you can't land
-   is still a worktree you must not strand; remove it before reporting the failure, the same as you
-   would before reporting success.
+6. `git worktree remove` your path, then report the PR link — checking it first, and running the
+   removal even after a failed earlier step, both follow
+   [`git-workflow`](../git-workflow.md)'s rule for a worktree your own run created
+   (→[K:worktree-removal-survives-failure]).

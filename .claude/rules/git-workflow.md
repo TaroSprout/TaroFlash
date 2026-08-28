@@ -31,7 +31,7 @@ on.
    done with it, before your run ends** — an entry you pushed doesn't become inert just because the
    worktree that made it is gone; the stack it sits on outlives every worktree, so "harmless, scoped
    to my worktree" is never true of anything sitting in it. Leaving it for a later session to trip
-   over is the same failure as leaving an uncommitted worktree behind (rule 9).
+   over is the same failure as leaving an uncommitted worktree behind →[K:worktree-removal-survives-failure].
 8. **A disposable target doesn't make the working tree disposable.** Rebuilding a throwaway or
    re-derivable branch (`reset --hard`, `checkout --`, `clean -f`, `restore`) still runs against the
    one working tree, which is never yours to discard — stash anything uncommitted
@@ -39,9 +39,10 @@ on.
    `PreToolUse` hook blocks these commands outright while the tree is dirty.
 9. **Check a worktree before you remove it — yours or one you're merely tidying up.** `git status
 --short` inside it first; anything uncommitted stops the removal and gets reported, never forced
-   away with `--force`. This holds even for a worktree your own run created — a step that removes it
-   is an obligation of how the run ends, not a line that only runs once every earlier step succeeded;
-   a run that fails or is interrupted still checks and removes what it made before it stops.
+   away with `--force`. [K:worktree-removal-survives-failure] This holds even for a worktree your own
+   run created — a step that removes it is an obligation of how the run ends, not a line that only
+   runs once every earlier step succeeded; a run that fails or is interrupted still checks and
+   removes what it made before it stops.
 10. **Verify which tree a write lands in, and never let one land on the shared checkout.**
     [K:worktree-write-target] Before the first edit or commit in a worktree you just created, check
     the creating command's own exit status directly — never through a `tail`/`head`/`grep` pipe,
