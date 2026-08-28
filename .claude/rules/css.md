@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-28T16:37:14Z
+lastUpdated: 2026-08-28T23:00:23Z
 paths:
   - 'src/**/*.vue'
 ---
@@ -49,6 +49,9 @@ Drop `cursor-pointer` and the hover affordances for the disabled branch and let 
 
 ## Clipping containers stay full-bleed
 
+One instance of "A class can bind its host to a contract" below: `overflow-hidden`'s clip is the
+contract, and the padding it would collide with is what moves off the host.
+
 Any container that clips overflow — height/crossfade transitions, `overflow-hidden` swap wrappers — carries **no padding of its own**. Define the padding as a CSS var on an owning parent and have the slotted children apply it (`px-(--window-px)`, `px-(--dock-px)`).
 
 The app leans on outlines and shadows that overflow their element boxes; if the clipping container holds the padding, those get cut off at its edge mid-tween. Insetting the children instead leaves the overflow room to render.
@@ -70,12 +73,15 @@ property, leaving the root free.
 
 `src/styles/border-utils.css` defines `wave-bottom-[<length>]`, `wave-top-[<length>]` and `cloud-bottom-[<length>]` — CSS masks that carve a shaped edge. Use them; don't hand-roll SVG.
 
-## A custom utility can bind its host to a contract
+## A class can bind its host to a contract
 
-A hand-rolled `@utility` in `src/styles/*.css` (`shimmer`, `bevel-*`, `content-grid`, `wave-*`, …)
-can require something of the element it's applied to — a positioning context it depends on, an
-`overflow` it sets and therefore clips — stated in that file's own header comment. A stock Tailwind
-utility never has this kind of hidden requirement, so it's easy to drop a custom one onto an element
-the same way and get a silent wrong render instead of an error. Read the header comment before
-applying the class, and check the host against it — including any child of that host that overhangs
-its bounds.
+Any class — stock Tailwind or a hand-rolled `@utility` in `src/styles/*.css` — can claim the element
+it lands on for a contract of its own: a positioning context it depends on, an `overflow` it sets and
+therefore clips, a stacking context, a fill it expects to own. `overflow-hidden` is stock and imposes
+exactly this ("Clipping containers stay full-bleed" above); a custom utility does too, and the way to
+find out is to read its own definition in `src/styles/*.css` — the header comment when the file has
+one (`shimmer.css`), the ruleset itself when it doesn't (`bg-utils.css` sets `position: relative` and
+`isolation: isolate` on `bgx-*`'s host with no header at all). Whatever the contract collides with on
+that host — padding, a fill, a caller's position override — moves to a child or a parent instead of
+being fought on the host itself, including a child that overhangs the host's own bounds.
+[`theming/bgx`](./theming/bgx.md) is the other instance, for `bgx-*`'s stacking.

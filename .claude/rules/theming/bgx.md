@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-28T00:00:00Z
+lastUpdated: 2026-08-28T23:00:23Z
 paths:
   - 'src/**/*.{vue,css}'
 ---
@@ -7,6 +7,9 @@ paths:
 # Textured backgrounds: `bgx-*`
 
 **Owns the `bgx-*` utilities in `src/styles/bg-utils.css` and which role fills the texture.**
+
+[`css → A class can bind its host to a contract`](../css.md#a-class-can-bind-its-host-to-a-contract)
+states the general rule; this is that rule for `bgx-*`'s stacking.
 
 The utility masks a repeating pattern into a `::before` layer stacked, via `isolation: isolate` and
 `z-index: -1`, **above the host's own background but below the host's descendant content.** A host
