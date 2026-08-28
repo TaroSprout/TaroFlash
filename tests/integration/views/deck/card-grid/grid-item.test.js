@@ -117,7 +117,13 @@ function makeMobileEditor() {
   return { open_at: vi.fn() }
 }
 
-function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } = {}) {
+function mountGridItem({
+  props = {},
+  editor,
+  mobile_editor,
+  is_mobile = false,
+  attachTo = document.body
+} = {}) {
   const ed = editor ?? makeEditor()
   const is_mobile_ref = ref(is_mobile)
   mockUseMatchMedia.mockReturnValue(is_mobile_ref)
@@ -131,7 +137,7 @@ function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } 
         selected: false,
         ...props
       },
-      attachTo: document.body,
+      attachTo,
       global: {
         provide,
         stubs: { Card: CardStub, UiRadio: UiRadioStub, UiDropdownButton: UiDropdownButtonStub }
@@ -498,17 +504,25 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
       expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
     })
 
-    test('clicking it calls onDeleteCardImmediate with the card id, never confirmDelete/onDeleteCards', async () => {
+    test('clicking it calls onDeleteCardImmediate with the card id and the positioned grid cell, never confirmDelete/onDeleteCards', async () => {
       const editor = makeEditor()
+      const grid_cell = document.createElement('div')
+      grid_cell.setAttribute('data-testid', 'card-grid__item')
+      document.body.appendChild(grid_cell)
+
       const { wrapper } = mountGridItem({
         props: { card: { id: 9, client_id: 'c9' }, rearranging: true },
-        editor
+        editor,
+        attachTo: grid_cell
       })
 
       await wrapper.find('[data-testid="card-grid-item__delete-button"]').trigger('click')
 
-      expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(9)
+      expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(9, grid_cell)
       expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
+
+      wrapper.unmount()
+      grid_cell.remove()
     })
 
     test('its pointerdown.stop keeps the ancestor grid drag-start listener from firing [obligation]', () => {
