@@ -1,8 +1,12 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount, flushPromises } from '@vue/test-utils'
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { shallowMount, mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h, nextTick, ref } from 'vue'
 import { card } from '@tests/fixtures/card'
+// Generates the real Tailwind utilities and stations.css roles this file's
+// theming obligations need — without it, `bg-well`/`bg-skeleton`/`shimmer`
+// resolve to nothing and every computed-style assertion below is vacuous.
+import '@/styles/main.css'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -45,7 +49,15 @@ vi.mock('@/composables/card/limit-gate', () => ({
 
 const CardStub = defineComponent({
   name: 'CardIndex',
-  props: ['size', 'coverConfig', 'side'],
+  props: {
+    size: {},
+    coverConfig: {},
+    side: {},
+    // Boolean-typed so a valueless `shimmer` template attribute casts to
+    // `true` instead of surviving as the empty string Vue leaves a plain
+    // string-array prop declaration with.
+    shimmer: { type: Boolean }
+  },
   setup() {
     return () => h('div', { 'data-testid': 'card-stub' })
   }
@@ -152,13 +164,22 @@ function makeCard(overrides = {}) {
 }
 
 function mountModal(opts = {}) {
-  const { cards = [], count, close = vi.fn(), move = vi.fn().mockResolvedValue(undefined) } = opts
+  const {
+    cards = [],
+    count,
+    close = vi.fn(),
+    move = vi.fn().mockResolvedValue(undefined),
+    // Live DOM attachment, needed only where a test reads computed/pseudo-element
+    // styles — everything else stays detached, which is cheaper.
+    attach = false
+  } = opts
   // A plain destructured default can't distinguish "omitted" from an explicit
   // `current_deck_id: undefined` (both fall back to it) — read straight off
   // `opts` so a test can exercise the real undefined (mixed-deck) case.
   const current_deck_id = 'current_deck_id' in opts ? opts.current_deck_id : 30
 
   const wrapper = shallowMount(MoveCardsModal, {
+    ...(attach ? { attachTo: document.body } : {}),
     props: { cards, current_deck_id, count, close, move },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
@@ -176,7 +197,65 @@ function mountModal(opts = {}) {
   return { wrapper, close, move }
 }
 
+/**
+ * Mounts with the real dialog-card (and, optionally, the real card) attached
+ * to a `position: fixed; inset: 0` host, mirroring the ui-kit modal overlay
+ * that always wraps this component in production — without an explicit-height
+ * ancestor, the dialog's mobile-viewport `h-full` has nothing to fill and
+ * collapses to its content height instead, which the real overlay never lets
+ * happen. `data-station`, `bg-*` roles, and the local colour remap all resolve
+ * to actual computed values here instead of stub markup.
+ */
+function mountRealModal(opts = {}) {
+  const {
+    cards = [makeCard()],
+    current_deck_id = 30,
+    close = vi.fn(),
+    move = vi.fn(),
+    real_card = false
+  } = opts
+
+  const host = document.createElement('div')
+  host.style.position = 'fixed'
+  host.style.inset = '0'
+  // `display: flex` (default `align-items: stretch`) is what the real modal
+  // overlay's flex wrapper gives the dialog — a definite height its own
+  // `h-full` can resolve against, through the extra wrapper div Vue Test
+  // Utils inserts between this host and the mounted component.
+  host.style.display = 'flex'
+  document.body.appendChild(host)
+
+  const wrapper = mount(MoveCardsModal, {
+    attachTo: host,
+    props: { cards, current_deck_id, close, move },
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
+      stubs: {
+        UiRadio: UiRadioStub,
+        UiButton: UiButtonStub,
+        UiOptionsPanel: UiOptionsPanelStub,
+        ScrollBar: ScrollBarStub,
+        DialogCard: false,
+        DialogCardHeader: false,
+        DialogCardBody: DialogCardBodyStub,
+        Card: real_card ? false : CardStub
+      }
+    }
+  })
+  return { wrapper, host }
+}
+
 describe('MoveCardsModal', () => {
+  let real_wrappers = []
+
+  afterEach(() => {
+    for (const { wrapper, host } of real_wrappers) {
+      wrapper.unmount()
+      host.remove()
+    }
+    real_wrappers = []
+  })
+
   beforeEach(() => {
     guardAddCardsMock.mockReset().mockResolvedValue(true)
     handleLimitErrorMock.mockReset().mockReturnValue(false)
@@ -219,6 +298,34 @@ describe('MoveCardsModal', () => {
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
       expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
+    })
+
+    test('never renders the skeleton and the real deck-list panel at the same time, in either state [obligation]', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+      const pendingSkeleton = wrapper
+        .find('[data-testid="move-cards__deck-list-skeleton"]')
+        .exists()
+      const pendingList = wrapper.find('[data-testid="move-cards__deck-list"]').exists()
+      expect(pendingSkeleton && pendingList).toBe(false)
+
+      mockDecksData.status.value = 'success'
+      const { wrapper: loaded } = mountModal({ cards: [makeCard()] })
+      const loadedSkeleton = loaded.find('[data-testid="move-cards__deck-list-skeleton"]').exists()
+      const loadedList = loaded.find('[data-testid="move-cards__deck-list"]').exists()
+      expect(loadedSkeleton && loadedList).toBe(false)
+    })
+
+    test('gives every skeleton row a shimmering cover and a shimmering label bar [obligation]', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      const rows = wrapper.findAll('[data-testid="move-cards__deck-list-skeleton-row"]')
+      rows.forEach((row) => {
+        const cover = row.findComponent(CardStub)
+        expect(cover.props('shimmer')).toBe(true)
+        expect(row.find('[data-testid="move-cards__deck-list-skeleton-label"]').exists()).toBe(true)
+      })
     })
   })
 
@@ -572,5 +679,101 @@ describe('MoveCardsModal', () => {
     const radios = wrapper.findAllComponents({ name: 'UiRadio' })
     await radios[1].trigger('click')
     expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeUndefined()
+  })
+
+  // ── Skeleton theming ──────────────────────────────────────────────────────
+
+  describe('skeleton theming [obligation]', () => {
+    test('the shimmering label bar establishes its own positioning context, containing the sweep', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper } = mountModal({ cards: [makeCard()], attach: true })
+
+      try {
+        const label = wrapper.find('[data-testid="move-cards__deck-list-skeleton-label"]')
+        const label_style = getComputedStyle(label.element)
+        // The sweep is an absolutely-positioned `::after` — a `static` host
+        // gives it no containing block of its own, so it resolves against the
+        // nearest positioned ancestor instead (the whole dialog).
+        expect(label_style.position).not.toBe('static')
+
+        const sweep_style = getComputedStyle(label.element, '::after')
+        expect(sweep_style.content).not.toBe('none')
+        expect(sweep_style.position).toBe('absolute')
+        // `--shimmer-bleed` is 0 here, so the sweep's inset sits flush with the
+        // label bar's own box rather than reaching past it.
+        expect(sweep_style.top).toBe('0px')
+        expect(sweep_style.left).toBe('0px')
+        expect(sweep_style.right).toBe('0px')
+        expect(sweep_style.bottom).toBe('0px')
+
+        // Confirms the containing block really is the bar, not the dialog:
+        // the bar is far narrower than the modal it sits inside.
+        const dialog_width = wrapper
+          .find('[data-testid="move-cards"]')
+          .element.getBoundingClientRect().width
+        const label_width = label.element.getBoundingClientRect().width
+        expect(label_width).toBeLessThan(dialog_width)
+      } finally {
+        wrapper.unmount()
+      }
+    })
+
+    test('the dialog, the skeleton container, and a placeholder each paint a different background', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper, host } = mountRealModal({ cards: [makeCard()] })
+      real_wrappers.push({ wrapper, host })
+
+      const dialog_bg = getComputedStyle(
+        wrapper.find('[data-testid="move-cards"]').element
+      ).backgroundColor
+      const skeleton_bg = getComputedStyle(
+        wrapper.find('[data-testid="move-cards__deck-list-skeleton"]').element
+      ).backgroundColor
+      const placeholder_bg = getComputedStyle(
+        wrapper.find('[data-testid="move-cards__deck-list-skeleton-label"]').element
+      ).backgroundColor
+
+      expect(dialog_bg).not.toBe(skeleton_bg)
+      expect(dialog_bg).not.toBe(placeholder_bg)
+      expect(skeleton_bg).not.toBe(placeholder_bg)
+    })
+
+    test('the local raised-role remap makes the skeleton cover match the placeholder, not the well it sits in', () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper, host } = mountRealModal({ cards: [makeCard()], real_card: true })
+      real_wrappers.push({ wrapper, host })
+
+      const well_bg = getComputedStyle(
+        wrapper.find('[data-testid="move-cards__deck-list-skeleton"]').element
+      ).backgroundColor
+      const placeholder_bg = getComputedStyle(
+        wrapper.find('[data-testid="move-cards__deck-list-skeleton-label"]').element
+      ).backgroundColor
+      const cover_bg = getComputedStyle(
+        wrapper.find('[data-testid="card-cover"]').element
+      ).backgroundColor
+
+      // `SKELETON_COVER` carries no palette, so the cover falls to
+      // `--color-raised` for its fill — the local `[--color-raised:var(--color-skeleton)]`
+      // remap is what makes that resolve to the same paint as the label bar
+      // instead of `well`, which is invisible against this container.
+      expect(cover_bg).toBe(placeholder_bg)
+      expect(cover_bg).not.toBe(well_bg)
+    })
+
+    test('the modal does not change height when the real deck list replaces the skeleton', async () => {
+      mockDecksData.status.value = 'pending'
+      const { wrapper, host } = mountRealModal({ cards: [makeCard()] })
+      real_wrappers.push({ wrapper, host })
+
+      const dialog = wrapper.find('[data-testid="move-cards"]').element
+      const pending_height = dialog.getBoundingClientRect().height
+
+      mockDecksData.status.value = 'success'
+      await nextTick()
+
+      const loaded_height = dialog.getBoundingClientRect().height
+      expect(loaded_height).toBe(pending_height)
+    })
   })
 })

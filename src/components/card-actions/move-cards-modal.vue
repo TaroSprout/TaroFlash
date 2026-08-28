@@ -123,7 +123,10 @@ function onClose() {
         />
         <!-- `relative` keeps the sweep's absolute ::after inside this bar; without it
              the sweep resolves against the dialog and runs across the whole modal. -->
-        <div class="relative h-5 flex-1 rounded-2 bg-skeleton shimmer"></div>
+        <div
+          data-testid="move-cards__deck-list-skeleton-label"
+          class="relative h-5 flex-1 rounded-2 bg-skeleton shimmer"
+        ></div>
       </div>
     </div>
 
