@@ -62,7 +62,7 @@ function onActionClick(action: NoticeAction) {
     <div
       data-testid="ui-kit-notice-toast__body"
       class="flex flex-1 flex-col"
-      :class="notice.closable && !is_coarse ? 'pr-8' : ''"
+      :class="notice.closable && !is_coarse ? 'pr-5.5' : ''"
     >
       <p class="text-lg">{{ notice.message }}</p>
       <p class="text-ink-muted" v-if="notice.subMessage">{{ notice.subMessage }}</p>
