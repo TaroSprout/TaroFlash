@@ -1,3 +1,8 @@
+// The hover_lift forwarding assertions read real computed styles, so the app's
+// stylesheet has to be present — without it every Tailwind utility resolves to
+// nothing and they pass vacuously.
+import '@/styles/main.css'
+
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
@@ -178,24 +183,39 @@ describe('PinnedPreview — cover_editing / cover_image pass-through', () => {
 })
 
 // ── hover_lift prop forwarding [obligation] ─────────────────────────────────────
-// ui-pinned-card is real (not stubbed) here, so the forwarded prop's own class
-// output is visible directly.
+// ui-pinned-card is real (not stubbed) here, so the forwarded prop shows up as
+// real rendered behaviour on the nested swing element: a hover transition and a
+// pivot moved off the element's own centre. ui-pinned-card's own suite owns the
+// swing's geometry and timing — all this needs to prove is that the prop
+// arrives.
 
 describe('PinnedPreview — forwards hover_lift through to ui-pinned-card [obligation]', () => {
-  test('omitting hover_lift leaves the card wrapper without the hover rotate class', () => {
-    const wrapper = makeWrapper()
-    expect(wrapper.find('[data-testid="ui-pinned-card__card"]').classes()).not.toContain(
-      'group-hover/pinned-card:rotate-1'
-    )
+  const swingStyle = (wrapper) => {
+    const host = document.createElement('div')
+    host.style.width = '400px'
+    document.body.appendChild(host)
+    host.appendChild(wrapper.element)
+
+    const swing = wrapper.find('[data-testid="ui-pinned-card__swing"]').element
+    const style = {
+      duration: getComputedStyle(swing).transitionDuration,
+      origin: getComputedStyle(swing).transformOrigin,
+      centre: `${swing.offsetWidth / 2}px ${swing.offsetHeight / 2}px`
+    }
+
+    host.remove()
+    return style
+  }
+
+  test('omitting hover_lift leaves the swing with no transition and its default pivot', () => {
+    const { duration, origin, centre } = swingStyle(makeWrapper())
+    expect(duration).toBe('0s')
+    expect(origin).toBe(centre)
   })
 
-  test('hover_lift: true forwards through, adding the hover rotate class', () => {
-    const wrapper = makeWrapper({ hover_lift: true })
-    expect(wrapper.find('[data-testid="ui-pinned-card__card"]').classes()).toContain(
-      'group-hover/pinned-card:rotate-1'
-    )
-    expect(wrapper.find('[data-testid="deck-pinned-preview"]').classes()).toContain(
-      'group/pinned-card'
-    )
+  test('hover_lift: true forwards through, arming the swing transition and pivot', () => {
+    const { duration, origin, centre } = swingStyle(makeWrapper({ hover_lift: true }))
+    expect(parseFloat(duration)).toBeGreaterThan(0)
+    expect(origin).not.toBe(centre)
   })
 })
