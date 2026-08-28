@@ -16,8 +16,11 @@ const button = useTemplateRef<InstanceType<typeof UiButton>>('button')
 const deleting = ref(false)
 
 async function onDelete() {
+  // The positioned cell, not the card inside it: the pop animates one level
+  // in, and the card itself is running the rearrange jiggle keyframes, which
+  // would win over any transform the pop sets on it.
   const card_el = (button.value!.$el as HTMLElement).closest<HTMLElement>(
-    '[data-testid="grid-item"]'
+    '[data-testid="card-grid__item"]'
   )!
 
   deleting.value = true
