@@ -271,10 +271,10 @@ describe('FeedbackBoard — error state [obligation]', () => {
     expect(wrapper.findAllComponents(FeedbackCardStub)).toHaveLength(1)
   })
 
-  // ⚠️ Suspected source bug — see the Bug found note in the report. Pinia
-  // Colada's `status` never revisits 'pending' on a refetch and stays at
-  // 'error' when a refetch of an already-errored query fails again, so the
-  // component's `watch(status, ...)` never re-fires and this never happens.
+  // The query layer holds `status` at 'error' across a repeat failure, so the
+  // component's `watch(status, ...)` never re-fires for this case — `onRetry`
+  // checks `was_already_error` directly against the pre-refetch value instead
+  // of relying on the watcher. →[K:query-status-holds-through-repeat-failure]
   test('retry that fails again shakes the error message and plays ui.rejected, without changing the message text [obligation]', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
@@ -291,16 +291,35 @@ describe('FeedbackBoard — error state [obligation]', () => {
     await wrapper.find('[data-testid="feedback-board__retry-button"]').trigger('click')
     await flushPromises()
 
+    // The tap press cue and the repeat-failure rejection are two distinct
+    // events at two distinct phases — both are expected on this one press.
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     expect(mockShake).toHaveBeenCalledOnce()
     expect(wrapper.find('[data-testid="feedback-board__error-message"]').text()).toBe(messageBefore)
   })
 
-  // ⚠️ Suspected source bug — see the Bug found note in the report.
-  // `has_shown_load_error` is only ever set to `true`, never reset on a
-  // successful load, so a failure after an intervening success is
-  // misclassified as a repeat and gets the ui.rejected/shake treatment
-  // instead of replaying the first-failure cue.
+  test('pressing the retry button plays the default press cue [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+    mockStatus.value = 'error'
+    await nextTick()
+
+    mockRefetch.mockImplementation(() => {
+      mockStatus.value = 'success'
+      mockItems.value = [{ id: 1 }]
+    })
+
+    await wrapper.find('[data-testid="feedback-board__retry-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
+  })
+
+  // `was_already_error` is read once, before the refetch, so a failure that
+  // follows an intervening success is a genuine 'success' -> 'error'
+  // transition — the watcher fires and plays the first-failure cue, not the
+  // repeat one.
   test('a failure -> success -> failure sequence replays the first-failure cue, not the repeat one [obligation]', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
