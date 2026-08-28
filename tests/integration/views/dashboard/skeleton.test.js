@@ -1,4 +1,5 @@
-import { describe, test, expect, afterEach } from 'vite-plus/test'
+import '@/styles/main.css'
+import { describe, test, expect, afterEach, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import DashboardSkeleton from '@/views/dashboard/skeleton.vue'
@@ -18,8 +19,9 @@ const DeckGridSkeletonStub = defineComponent({
   setup: () => () => h('div', { 'data-testid': 'deck-grid-skeleton-stub' })
 })
 
-function mountSkeleton() {
+function mountSkeleton(overrides = {}) {
   return mount(DashboardSkeleton, {
+    ...overrides,
     global: {
       stubs: {
         DashboardActionsPanelSkeleton: DashboardActionsPanelSkeletonStub,
@@ -31,8 +33,16 @@ function mountSkeleton() {
 }
 
 describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
+  beforeEach(() => {
+    // nav-bar sets this at runtime (src/views/app-shell/nav-bar/index.vue); a
+    // known value here lets the viewport-fill assertion resolve a real px
+    // number instead of an invalid calc() with an unset custom property.
+    document.documentElement.style.setProperty('--nav-height', '64px')
+  })
+
   afterEach(() => {
     document.documentElement.style.overflow = ''
+    document.documentElement.style.removeProperty('--nav-height')
   })
 
   test('sets document.documentElement.style.overflow to "hidden" on mount [obligation]', () => {
@@ -54,9 +64,12 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
   })
 
   test('the root fills the viewport below the nav [obligation]', () => {
-    const wrapper = mountSkeleton()
-    const root = wrapper.find('[data-testid="dashboard-skeleton"]')
-    expect(root.classes()).toContain('min-h-[calc(100dvh-var(--nav-height))]')
+    const wrapper = mountSkeleton({ attachTo: document.body })
+    const root = wrapper.find('[data-testid="dashboard-skeleton"]').element
+    const min_height = Number.parseFloat(getComputedStyle(root).minHeight)
+
+    expect(min_height).toBeCloseTo(window.innerHeight - 64, 0)
+    wrapper.unmount()
   })
 
   test('renders no audio-reader-section element [obligation]', () => {
@@ -84,6 +97,10 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     }
   })
 
+  // Not a computed-style check: `@theme { --*: initial }` in src/styles/main.css
+  // wipes Tailwind's default theme vars, so `animate-pulse` generates no
+  // animation at all and `animationName` reads "none" whether the class is
+  // present or not. The class itself is the only signal that bites here.
   test('the three sort-options placeholders no longer carry animate-pulse [obligation]', () => {
     const wrapper = mountSkeleton()
     const items = wrapper.findAll('[data-testid="deck-grid-sort-options-skeleton__item"]')
