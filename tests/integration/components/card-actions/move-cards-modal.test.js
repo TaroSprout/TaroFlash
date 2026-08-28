@@ -86,9 +86,13 @@ const UiRadioStub = defineComponent({
   }
 })
 
+// `sfx` is declared so it lands in props (not attrs) and stays readable via
+// `props('sfx')`. The real UiButton fires its press cue from inside its own
+// `tap()` handler, which this shallow stub doesn't model — so a call site here
+// can only assert it wired the role through, never that audio played.
 const UiButtonStub = defineComponent({
   name: 'UiButton',
-  props: ['disabled', 'iconLeft'],
+  props: ['disabled', 'iconLeft', 'sfx'],
   emits: ['press'],
   inheritAttrs: false,
   setup(props, { slots, emit, attrs }) {
@@ -309,6 +313,22 @@ describe('MoveCardsModal', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
+    // A ui-kit button is silent on press unless the call site names a role, so
+    // wiring the cue is this component's job and worth asserting here. That
+    // the named role actually plays is UiButton's own contract, covered in
+    // tests/integration/components/ui-kit/button.test.js — this asserts the
+    // wiring only, since the stub below can't reach the real tap() handler.
+    test('wires the default press cue onto the retry button [obligation]', () => {
+      mockDecksData.status.value = 'error'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      const retry = wrapper
+        .findAllComponents(UiButtonStub)
+        .find((button) => button.attributes('data-testid') === 'move-cards__retry')
+
+      expect(retry.props('sfx')).toEqual({ press: 'ui.press' })
+    })
+
     test('clicking retry calls refetch() [obligation]', async () => {
       mockDecksData.status.value = 'error'
       mockDecksData.refetch.mockResolvedValue(undefined)
@@ -366,6 +386,11 @@ describe('MoveCardsModal', () => {
         .find('[data-testid="move-cards__deck-list-error-message"]')
         .text()
       expect(messageAfter).toBe(messageBefore)
+      // Two distinct cues fire on this press in the real app: the button's own
+      // ui.press at tap time, then ui.rejected once the refetch fails. Only
+      // the second reaches emitSfxMock here — the first belongs to the real
+      // UiButton's tap() handler, which the stub replaces. Assert the role,
+      // never a total emission count, or that boundary reads as a bug.
       expect(emitSfxMock).toHaveBeenCalledWith('ui.rejected')
       // shake() is the only visible signal of the repeat failure — its gsap
       // timeline must have been built, not merely the cue emitted.
