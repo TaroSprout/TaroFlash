@@ -26,6 +26,15 @@ handing it back to whatever pushes it next.
   the upgrade — don't accumulate one-off `curl`/SQL workarounds. Work around only when upgrading is
   genuinely blocked, and say why.
 
+## Worktrees
+
+- **Install and invoke `vp` from inside the worktree, never a sibling checkout's binary.** Run
+  `vp install` there first, then call only that worktree's own `./node_modules/.bin/vp`. A pnpm
+  binary shim hardcodes `NODE_PATH` to the checkout it was generated in, so running another
+  checkout's `vp` with your cwd set to the worktree still resolves modules through the wrong
+  `node_modules` — Vitest loads two mismatched runner instances, and the failures (collection errors,
+  a `vi.mock` deadlock) look like broken test infra rather than a binary-path mistake.
+
 ## Imports
 
 - Build/config utilities from `vite-plus`, not `vite`: `import { defineConfig } from 'vite-plus'`
