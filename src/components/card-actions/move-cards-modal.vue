@@ -98,14 +98,12 @@ function onClose() {
 
 <template>
   <dialog-card data-testid="move-cards" size="md" :title="title" @close="onClose">
-    <!-- The loaded panel's `well` box is dropped here on purpose: in the window
-         station `well` and `raised` are the same colour, and the placeholder
-         cover is painted `raised` — it would be invisible inside that box.
-         →[K:station-roles-can-collide] -->
+    <!-- Same `well` box as the loaded options panel, so the container doesn't
+         change colour when the decks arrive. -->
     <div
       v-if="status === 'pending'"
       data-testid="move-cards__deck-list-skeleton"
-      class="my-4 flex min-h-0 flex-col gap-1 rounded-4 bg-surface p-1"
+      class="my-4 flex min-h-0 flex-col gap-1 rounded-4 bg-well p-1"
     >
       <div
         v-for="n in SKELETON_ROW_COUNT"
@@ -113,7 +111,16 @@ function onClose() {
         data-testid="move-cards__deck-list-skeleton-row"
         class="flex items-center gap-3 px-5 py-3"
       >
-        <card class="w-[43px]" side="cover" shimmer :cover_config="SKELETON_COVER" />
+        <!-- A palette-less cover paints its fill and border `raised`, which the
+             window station renders in the same colour as the `well` box above —
+             remapping the role to `skeleton` is what makes it a visible block
+             here, and matches the label bar beside it. →[K:station-roles-can-collide] -->
+        <card
+          class="w-[43px] [--color-raised:var(--color-skeleton)]"
+          side="cover"
+          shimmer
+          :cover_config="SKELETON_COVER"
+        />
         <!-- `relative` keeps the sweep's absolute ::after inside this bar; without it
              the sweep resolves against the dialog and runs across the whole modal. -->
         <div class="relative h-5 flex-1 rounded-2 bg-skeleton shimmer"></div>
