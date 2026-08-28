@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-15T00:00:00Z
+lastUpdated: 2026-08-28T00:00:00Z
 paths:
   - 'src/**/*.{vue,css}'
 ---
@@ -8,7 +8,11 @@ paths:
 
 **Owns the `bgx-*` utilities in `src/styles/bg-utils.css` and which role fills the texture.**
 
-The utility masks a repeating pattern into a `::before` layer behind the element's own background.
+The utility masks a repeating pattern into a `::before` layer stacked, via `isolation: isolate` and
+`z-index: -1`, **above the host's own background but below the host's descendant content.** A host
+that is also the filled box — its own `background-color` painting the fill — gets that fill painted
+over by the pattern; give the fill its own child element instead, and let the pattern host stay a
+plain wrapper.
 
 | Utility               | What it does                                                 |
 | --------------------- | ------------------------------------------------------------ |
