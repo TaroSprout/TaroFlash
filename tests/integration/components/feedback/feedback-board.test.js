@@ -157,6 +157,19 @@ describe('FeedbackBoard — loading state [obligation]', () => {
     expect(wrapper.find('[data-testid="feedback-board__intro"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
   })
+
+  test('the submit button stays pressable while the query is pending [obligation]', async () => {
+    mockStatus.value = 'pending'
+    modalOpenMock.mockReset()
+    const { wrapper } = mountBoard()
+
+    await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
+
+    expect(modalOpenMock).toHaveBeenCalledWith(FeedbackSubmitDialog, {
+      backdrop: true,
+      mode: 'popup'
+    })
+  })
 })
 
 // ── Fixed geometry [obligation] ───────────────────────────────────────────────
