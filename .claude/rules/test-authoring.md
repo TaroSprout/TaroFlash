@@ -126,6 +126,12 @@ const Stub = defineComponent({
 - **Always headless** — `headless: true` on the Integration project in `vite.config.ts`. Never pass
   `--browser.headless=false` and never run `vp test --ui`: a window stealing focus breaks the user's
   flow. Ask first if a flaky test genuinely needs a visual debug.
+- **`tests/setup-browser.js` loads no stylesheet** — an Integration file gets Tailwind's utilities
+  only if it imports `@/styles/main.css` itself. Without that import, `getComputedStyle` reads
+  unstyled values (`transform: none`, empty backgrounds) on every element, styled or not. A styled
+  value reading back empty means the import is missing, not that the value is unobservable — add the
+  import before concluding a color, transform, or layout outcome can't be asserted and falling back
+  to a class-string check.
 
 ## E2E
 
