@@ -33,9 +33,15 @@ is needed; no gap means the app has to supply its own via
 The signal has one blind spot: mobile Safari's own bottom toolbar. Safari
 shrinks `window.innerHeight` in step with the visual viewport as that toolbar
 shows and hides, so the two never diverge and the gap reads zero even while
-the toolbar covers the strip. Nothing is lost by that, because Safari also
-reports `env(safe-area-inset-bottom)` as `0px` for as long as the toolbar is
-up — the inset itself already says the strip is covered, and only grows to the
-device's real inset once the toolbar collapses on scroll. So a consumer that
-adds the raw inset stays correct there without the gap signal's help; only a
-consumer that floors the inset to some minimum breaks.
+the toolbar covers the strip. A consumer that adds the raw inset loses
+nothing by that, because Safari also reports `env(safe-area-inset-bottom)` as
+`0px` for as long as the toolbar is up, and only grows to the device's real
+inset once the toolbar collapses on scroll — the inset alone keeps such a
+consumer flush, no gap signal needed.
+
+A consumer that floors the inset to some minimum does lose something, and
+can't be rescued: a desktop window at phone width reports a zero inset and a zero gap too,
+so the two are indistinguishable and a floor written for one fires on the
+other. The mobile dock floors its bottom allowance anyway and accepts the
+padding above Safari's toolbar as the price of a visible allowance at small
+desktop width — see [[mobile-dock]] before treating that padding as a bug.

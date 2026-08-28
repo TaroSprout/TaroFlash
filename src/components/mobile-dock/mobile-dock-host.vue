@@ -14,7 +14,7 @@ const content_wrapper = useTemplateRef<HTMLElement>('content_wrapper')
 const content = useTemplateRef<HTMLElement>('content')
 
 // Trap: the edge inset is earned by being flush against the screen edge, not by being on a touch device →[K:dock-edge-inset-follows-flush]
-// No floor under the allowance: where the browser reports no inset the strip is already covered, and padding it there lifts the bar off the edge →[K:dock-edge-inset-follows-flush]
+// The allowance floors at the bar's own top padding, so a browser reporting no device inset still clears the edge →[K:dock-edge-inset-follows-flush]
 const has_edge_allowance = computed(() => is_flush.value && !is_bottom_chrome_covering.value)
 
 /**
@@ -75,7 +75,7 @@ watch([is_visible, height_claims], publishHeight, { flush: 'post' })
     data-testid="mobile-dock-host"
     data-station="panel"
     class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] ring-1 ring-line"
-    :class="has_edge_allowance && '[--dock-pb:calc(0.5rem+env(safe-area-inset-bottom))]'"
+    :class="has_edge_allowance && '[--dock-pb:max(1rem,calc(0.5rem+env(safe-area-inset-bottom)))]'"
   >
     <div
       mobile-dock-above
