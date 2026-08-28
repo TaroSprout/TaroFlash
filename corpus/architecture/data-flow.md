@@ -4,7 +4,7 @@ domain: architecture
 status: current
 hazard: true
 related: [permissions, cards]
-updated: 2026-08-24
+updated: 2026-08-28
 ---
 
 # Data flow
@@ -68,6 +68,18 @@ whole point of the copy.
 The name is also the handle a write uses later to say "throw that one out." So the
 names aren't decoration — they're the vocabulary the two jobs use to talk about
 the same data.
+
+> [!HAZARD] [K:shared-cache-entry-options-last-mount-wins] **The name doesn't just file the data — it files the settings too, and the last caller to read under that name sets them for everyone else already reading it.**
+> Two screens asking for "the same thing" share one cache entry, and options
+> like "don't bother fetching this" apply to the entry, not to whichever screen
+> asked. Mount a shared name with fetching turned off — even for a good local
+> reason, like a modal that shouldn't trigger a request — and whichever caller
+> mounts that name last wins for every other reader of it, in whatever order
+> the screens happen to mount in. A write marking that name stale then does
+> nothing visible: the entry is flagged stale but never refetched, because
+> refetching is gated on the entry's own settings, not the write's intent.
+> Nothing errors. The fix is never a per-call-site option on a shared name —
+> give a caller that genuinely needs different behavior its own name.
 
 ## A write owns its aftermath
 

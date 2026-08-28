@@ -12,6 +12,8 @@ const STALE_TIME = 1000 * 60 * 5
  * `useQuery`/`ensure` call overwrites the entry's options wholesale, so a
  * second definition carrying different options silently rewrites the behaviour
  * of the one already mounted — including whether an invalidation refetches it.
+ * Trap: last mount's options win for every reader of this key
+ * →[K:shared-cache-entry-options-last-mount-wins]
  */
 export const MEMBER_DECK_COUNT_QUERY = {
   key: ['decks', 'count'],
