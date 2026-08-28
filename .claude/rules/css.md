@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-05-06T00:00:00Z
+lastUpdated: 2026-08-28T16:37:14Z
 paths:
   - 'src/**/*.vue'
 ---
@@ -69,3 +69,13 @@ property, leaving the root free.
 ## Shaped edges
 
 `src/styles/border-utils.css` defines `wave-bottom-[<length>]`, `wave-top-[<length>]` and `cloud-bottom-[<length>]` — CSS masks that carve a shaped edge. Use them; don't hand-roll SVG.
+
+## A custom utility can bind its host to a contract
+
+A hand-rolled `@utility` in `src/styles/*.css` (`shimmer`, `bevel-*`, `content-grid`, `wave-*`, …)
+can require something of the element it's applied to — a positioning context it depends on, an
+`overflow` it sets and therefore clips — stated in that file's own header comment. A stock Tailwind
+utility never has this kind of hidden requirement, so it's easy to drop a custom one onto an element
+the same way and get a silent wrong render instead of an error. Read the header comment before
+applying the class, and check the host against it — including any child of that host that overhangs
+its bounds.
