@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MemberPolaroid from '@/components/member/member-polaroid.vue'
+
 type FeedbackSkeletonProps = {
   count?: number
 }
@@ -13,15 +15,15 @@ const { count = 4 } = defineProps<FeedbackSkeletonProps>()
     data-testid="feedback-skeleton__item"
     class="bg-raised rounded-8 relative flex w-full items-start gap-4 p-6"
   >
-    <div
+    <member-polaroid
       data-testid="feedback-skeleton__polaroid"
-      data-station="float"
-      class="bg-surface rounded-2 shadow-xs absolute top-2 left-0 z-10 w-24 -rotate-12 p-1.5 pb-5 select-none"
+      size="sm"
+      class="absolute top-2 left-0 z-10"
     >
-      <div class="bg-mat rounded-1 relative aspect-square overflow-hidden">
-        <div class="bg-skeleton shimmer absolute inset-0"></div>
-      </div>
-    </div>
+      <template #photo>
+        <div class="bg-skeleton shimmer relative h-full w-full"></div>
+      </template>
+    </member-polaroid>
 
     <div data-testid="feedback-skeleton__content" class="flex min-w-0 flex-1 flex-col gap-2 pl-24">
       <div class="bg-skeleton shimmer relative h-6 w-3/5 rounded-2"></div>
