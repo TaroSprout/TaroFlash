@@ -17,18 +17,26 @@ export const GRID_REFLOW_DURATION = 200
  * time would fight it (the dropped card would visibly slide from its
  * pre-persist slot to its post-persist one). Only the item count moving is a
  * real reflow.
+ *
+ * The list arriving is not. A grid whose items are still loading sits empty
+ * and then fills in one step, and sliding every cell in from the first slot
+ * would announce a page load as an edit — so an empty list filling up is
+ * skipped, once, and every later change animates.
  */
 export function useGridReflow(count: MaybeRefOrGetter<number>) {
   const reflowing = ref(false)
   let reflow_timeout = 0
-  // The first firing is the initial query resolving, not a real reflow.
-  let count_initialized = false
+  // Already holding items at setup means the list arrived before this grid
+  // rendered, so the next change is a real edit — never assume the first one
+  // is the load, or the first delete of the session is the one that jumps.
+  let arrived = toValue(count) > 0
 
   watch(
     () => toValue(count),
-    () => {
-      if (!count_initialized) {
-        count_initialized = true
+    (next) => {
+      // Empty until now: this is the list landing, not an edit to it.
+      if (!arrived) {
+        arrived = next > 0
         return
       }
 
