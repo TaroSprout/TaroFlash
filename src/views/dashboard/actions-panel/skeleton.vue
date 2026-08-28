@@ -14,7 +14,7 @@ import MemberPolaroid from '@/components/member/member-polaroid.vue'
       <template #header>
         <div
           data-testid="dashboard-actions-panel-skeleton__header-block"
-          class="bg-skeleton rounded-3 bgx-diagonal-stripes bgx-size-15 bgx-opacity-40 bgx-color-(--color-skeleton-sheen) h-11 w-40"
+          class="bg-skeleton rounded-3 h-11 w-40"
         ></div>
       </template>
 
