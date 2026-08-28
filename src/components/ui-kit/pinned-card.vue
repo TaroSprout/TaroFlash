@@ -34,15 +34,20 @@ defineSlots<{
       <ui-icon src="paperclip" class="w-16 h-16 -rotate-186 text-raised-shade" />
     </div>
 
-    <div
-      data-testid="ui-pinned-card__card"
-      class="rotate-4 drop-shadow-sm"
-      :class="
-        hover_lift &&
-        'transition-transform duration-200 ease-out group-hover/pinned-card:origin-[88%_0%] group-hover/pinned-card:rotate-0'
-      "
-    >
-      <slot></slot>
+    <div data-testid="ui-pinned-card__card" class="rotate-4 drop-shadow-sm">
+      <!-- The swing is a nested rotation so the clip pivot can be set at rest as well as on
+           hover: transform-origin isn't animatable, so an origin that only appears on hover
+           relocates the card in one frame before the rotation starts. The outer rotate-4 keeps
+           its own default origin, so the tuned resting position is untouched. -->
+      <div
+        data-testid="ui-pinned-card__swing"
+        :class="
+          hover_lift &&
+          'origin-[88%_0%] transition-transform duration-200 ease-out group-hover/pinned-card:-rotate-2'
+        "
+      >
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>
