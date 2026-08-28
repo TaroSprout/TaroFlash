@@ -1,5 +1,4 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { ref } from 'vue'
 
 const {
   useQuerySpy,
@@ -28,7 +27,7 @@ vi.mock('@/api/decks/db', () => ({
 
 import { useMemberDecksQuery } from '@/api/decks/queries/list'
 import { useDeckQuery } from '@/api/decks/queries/by-id'
-import { useMemberDeckCountQuery } from '@/api/decks/queries/count'
+import { useMemberDeckCountQuery, MEMBER_DECK_COUNT_QUERY } from '@/api/decks/queries/count'
 
 beforeEach(() => {
   useQuerySpy.mockClear()
@@ -141,36 +140,18 @@ describe('useMemberDeckCountQuery', () => {
     expect(staleTime).toBe(1000 * 60 * 5)
   })
 
-  // [obligation] useCan() and subscription-actions.ts call this with no
-  // argument at all — they must keep auto-fetching exactly as before this
-  // param was added.
-  describe('enabled param', () => {
-    test('defaults to enabled when no argument is passed [obligation]', () => {
-      const { enabled } = configFrom(useMemberDeckCountQuery)
-      expect(enabled()).toBe(true)
-    })
+  // [obligation] useMemberDeckCountQuery(), useCan(), and the upsert
+  // mutation's create-time re-check (via `queryCache.ensure`) must all reach
+  // the exact same options object — a second, differently-configured
+  // definition of this key would silently overwrite the first mount's
+  // options on the shared cache entry.
+  // →[K:shared-cache-entry-options-last-mount-wins]
+  test('useMemberDeckCountQuery() delegates straight to the exported MEMBER_DECK_COUNT_QUERY options object [obligation]', () => {
+    const config = configFrom(useMemberDeckCountQuery)
+    expect(config).toBe(MEMBER_DECK_COUNT_QUERY)
+  })
 
-    test('a literal false disables the query [obligation]', () => {
-      const { enabled } = configFrom(() => useMemberDeckCountQuery(false))
-      expect(enabled()).toBe(false)
-    })
-
-    test('accepts a ref and re-reads its current value on each call [obligation]', () => {
-      const live = ref(false)
-      const { enabled } = configFrom(() => useMemberDeckCountQuery(live))
-
-      expect(enabled()).toBe(false)
-      live.value = true
-      expect(enabled()).toBe(true)
-    })
-
-    test('accepts a getter function and re-reads it on each call [obligation]', () => {
-      let live = false
-      const { enabled } = configFrom(() => useMemberDeckCountQuery(() => live))
-
-      expect(enabled()).toBe(false)
-      live = true
-      expect(enabled()).toBe(true)
-    })
+  test('takes no arguments — every caller mounts with identical options [obligation]', () => {
+    expect(useMemberDeckCountQuery).toHaveLength(0)
   })
 })
