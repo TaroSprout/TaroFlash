@@ -19,6 +19,10 @@ Audio runs through a lightweight custom engine in `src/sfx/`, surfaced as the `v
 
 - **A trigger no listed role covers is a question for the user, not a new role you mint.** Adding a
   role is a decision about what the app sounds like; the catalogue is closed until they make it.
+- **A `PostToolUse` hook blocks an edit to `roles.ts` that stops referencing a sound `config.ts`
+  still declares.** Repointing a role away from its sound silently orphans that sound rather than
+  failing anything — the hook catches it because nothing else can. Delete the sound from `SOUNDS` in
+  the same change if you mean to retire it; give it a role otherwise.
 - **Volume, bus and debounce belong to the role, not the call.** `emitSfx` takes no options bar
   `preview_bus`, which the audio-settings sliders use to hear a drag on the dial it moves and which
   cannot change which sound plays.
