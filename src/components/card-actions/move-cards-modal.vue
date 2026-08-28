@@ -150,6 +150,7 @@ watch(status, (current) => {
         variant="ghost"
         data-palette="brand"
         icon-left="refresh"
+        :sfx="{ press: 'ui.press' }"
         @press="onRetry"
       >
         {{ t('move-cards-modal.retry') }}
