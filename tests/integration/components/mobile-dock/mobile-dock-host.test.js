@@ -164,25 +164,68 @@ describe('MobileDockHost', () => {
   })
 
   describe('bottom edge allowance [obligation]', () => {
-    // has_edge_allowance's only observable effect in this environment (Tailwind
-    // CSS isn't loaded for the test page) is whether the bound utility class
-    // that sets --dock-pb's flush value is present on the footer's class list.
-    const ALLOWANCE_CLASS = '[--dock-pb:max(1rem,calc(0.5rem+env(safe-area-inset-bottom)))]'
-
-    function footerHasAllowance(footer) {
-      return footer.classList.contains(ALLOWANCE_CLASS)
+    // Derive the applied --dock-pb from the footer's *actual rendered class list*
+    // rather than a copied literal — a literal survives editing the source back
+    // to match it (this exact thing happened mid-branch: b6e05208 dropped the
+    // floor, cc748bea "fixed" the test by editing the literal to match). Reading
+    // structural properties off the real class tokens means an unfloored
+    // `calc(0.5rem + env(safe-area-inset-bottom))` fails this test outright —
+    // there is no literal to quietly update to make it pass again.
+    const remValue = (text) => {
+      const match = text?.match(/(\d+(?:\.\d+)?)rem/)
+      return match ? Number.parseFloat(match[1]) : undefined
     }
 
-    test('present below sm on a fine (non-touch) pointer — pointer type never gates it [obligation]', async () => {
-      // The dock is flush below sm regardless of any claimed visibility breakpoint.
-      setBelowBreakpoint('sm', true)
+    /** The `--dock-*` custom-property tokens the footer is actually rendering right now. */
+    function dockPaddingTokens(footer) {
+      const tokens = Array.from(footer.classList)
+      return {
+        top: tokens.filter((c) => c.startsWith('[--dock-pt:')),
+        bottom: tokens.filter((c) => c.startsWith('[--dock-pb:'))
+      }
+    }
+
+    // A floor is a bare rem term at the *top level* of the value — one not wrapped
+    // in calc(), since a calc() term built on env(safe-area-inset-bottom) collapses
+    // to nothing on a browser reporting a zero inset. Stripping calc() first is what
+    // makes an unfloored value read as "no floor" rather than as its own 0.5rem term.
+    const floorRem = (token) => {
+      const value = token?.match(/^\[--dock-pb:(.+)\]$/)?.[1]
+      return value === undefined ? undefined : remValue(value.replace(/calc\([^)]*\)/g, ''))
+    }
+
+    test("present below sm and floored at least to the bar's own top padding — pointer type never gates it, and the floor survives a zero device inset [obligation]", async () => {
+      // Read the un-flush render first so the floating-card padding the flush state
+      // must beat comes from the component itself, not from a literal copied out of
+      // the source. A literal is what failed here before: b6e05208 dropped the floor
+      // and cc748bea "fixed" the test by editing its literal to match.
+      setBelowBreakpoint('sm', false)
       setChromeCovered(false)
 
       mountHost()
       await nextTick()
 
       const footer = document.querySelector('[data-testid="mobile-dock-host"]')
-      expect(footerHasAllowance(footer)).toBe(true)
+      const inset_card = dockPaddingTokens(footer)
+      expect(inset_card.bottom).toHaveLength(1)
+      const card_padding_rem = remValue(inset_card.bottom[0])
+      const bar_top_padding_rem = remValue(inset_card.top[0])
+
+      // The dock is flush below sm regardless of any claimed visibility breakpoint.
+      setBelowBreakpoint('sm', true)
+      await nextTick()
+
+      const flush = dockPaddingTokens(footer)
+      const allowance = flush.bottom.find((c) => !inset_card.bottom.includes(c))
+
+      // Going flush adds an allowance on top of the card padding...
+      expect(allowance).toBeDefined()
+      // ...it is floored, not a bare calc() that vanishes at a zero device inset...
+      expect(floorRem(allowance)).toBeDefined()
+      // ...the floor clears the bar's own top padding...
+      expect(floorRem(allowance)).toBeGreaterThanOrEqual(bar_top_padding_rem)
+      // ...and is strictly more than the card padding it would otherwise collapse to.
+      expect(floorRem(allowance)).toBeGreaterThan(card_padding_rem)
     })
 
     test('absent at or above sm — the bar is an inset card there, not flush [obligation]', async () => {
@@ -193,7 +236,8 @@ describe('MobileDockHost', () => {
       await nextTick()
 
       const footer = document.querySelector('[data-testid="mobile-dock-host"]')
-      expect(footerHasAllowance(footer)).toBe(false)
+      // Exactly the one static card-padding token — no allowance of any shape.
+      expect(dockPaddingTokens(footer).bottom).toHaveLength(1)
     })
 
     test('absent when the browser chrome already covers the bottom strip, even while flush [obligation]', async () => {
@@ -204,7 +248,7 @@ describe('MobileDockHost', () => {
       await nextTick()
 
       const footer = document.querySelector('[data-testid="mobile-dock-host"]')
-      expect(footerHasAllowance(footer)).toBe(false)
+      expect(dockPaddingTokens(footer).bottom).toHaveLength(1)
     })
   })
 
