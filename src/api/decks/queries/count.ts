@@ -1,5 +1,4 @@
 import { useQuery } from '@pinia/colada'
-import { toValue, type MaybeRefOrGetter } from 'vue'
 import { fetchMemberDeckCount } from '../db'
 
 // Long, because this is asked once per card row on screen. Creating, deleting or
@@ -7,17 +6,19 @@ import { fetchMemberDeckCount } from '../db'
 const STALE_TIME = 1000 * 60 * 5
 
 /**
- * `enabled` defaults to true for the common case (a live "can I create
- * another deck" read). A caller that only ever forces a fresh count right
- * before a create — `useUpsertDeckMutation`'s limit re-check — passes
- * `false` so mounting it doesn't also fire an automatic fetch; `.refresh()`
- * still works regardless of `enabled`.
+ * One shared definition of the count entry, so a non-mounting reader (the
+ * upsert mutation's limit re-check) can reach the same cache entry through
+ * `queryCache.ensure` instead of standing up a second `useQuery`. Every
+ * `useQuery`/`ensure` call overwrites the entry's options wholesale, so a
+ * second definition carrying different options silently rewrites the behaviour
+ * of the one already mounted — including whether an invalidation refetches it.
  */
-export function useMemberDeckCountQuery(enabled: MaybeRefOrGetter<boolean> = true) {
-  return useQuery({
-    key: ['decks', 'count'],
-    query: fetchMemberDeckCount,
-    staleTime: STALE_TIME,
-    enabled: () => toValue(enabled)
-  })
+export const MEMBER_DECK_COUNT_QUERY = {
+  key: ['decks', 'count'],
+  query: fetchMemberDeckCount,
+  staleTime: STALE_TIME
+}
+
+export function useMemberDeckCountQuery() {
+  return useQuery(MEMBER_DECK_COUNT_QUERY)
 }

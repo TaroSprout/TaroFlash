@@ -1,6 +1,6 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { upsertDeck } from '../db'
-import { useMemberDeckCountQuery } from '../queries/count'
+import { MEMBER_DECK_COUNT_QUERY } from '../queries/count'
 import { useMemberStore } from '@/stores/member'
 
 type QueryCache = ReturnType<typeof useQueryCache>
@@ -57,20 +57,22 @@ function removePendingDeck(queryCache: QueryCache, client_key: string) {
 export function useUpsertDeckMutation() {
   const queryCache = useQueryCache()
   const member = useMemberStore()
-  // Only ever consulted via the explicit `refresh()` below, right before a
-  // create's limit re-check — never needs its own automatic fetch on mount,
-  // which would otherwise fire for every deck upsert, including edits.
-  const deck_count_query = useMemberDeckCountQuery(false)
 
   return useMutation({
     mutation: async (deck: Deck) => {
       if (deck.id === undefined) {
-        await deck_count_query.refresh()
+        // Reached through the cache rather than a mounted `useQuery`: mounting
+        // one here fires a count fetch for every deck upsert, edits included,
+        // and its options would overwrite the live reader's on the shared
+        // entry. `fetch` always goes to the server, which is what an
+        // authoritative re-check wants.
+        const count_entry = queryCache.ensure(MEMBER_DECK_COUNT_QUERY)
+        await queryCache.fetch(count_entry)
         // Trap: decks barrel cycle drops runtime exports →[K:decks-barrel-cycle-drops-runtime-exports]
         // Mirrors useCan().createDeck — duplicated rather than imported, since
         // that composable pulls in this module's own barrel.
         const limit = member.deck_limit
-        const count = deck_count_query.data.value ?? 0
+        const count = count_entry.state.value.data ?? 0
         if (limit !== null && count >= limit) throw new DeckLimitError()
       }
 
