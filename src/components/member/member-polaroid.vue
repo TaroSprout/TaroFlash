@@ -15,6 +15,10 @@ const SIZES: Record<MemberPolaroidSize, { frame: string; clip: string }> = {
 }
 
 const { avatar, size = 'base' } = defineProps<MemberPolaroidProps>()
+
+// The photo is a slot so a skeleton can borrow the frame's real geometry and
+// positioning instead of copying the offsets into a placeholder that drifts.
+defineSlots<{ photo?: () => any }>()
 </script>
 
 <template>
@@ -35,7 +39,9 @@ const { avatar, size = 'base' } = defineProps<MemberPolaroidProps>()
         data-testid="member-polaroid__photo"
         class="bg-mat rounded-1 aspect-square overflow-hidden"
       >
-        <avatar-image :avatar="avatar" class="h-full w-full" />
+        <slot name="photo">
+          <avatar-image :avatar="avatar" class="h-full w-full" />
+        </slot>
       </div>
     </div>
   </div>
