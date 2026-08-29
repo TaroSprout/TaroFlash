@@ -10,23 +10,44 @@ import '@/styles/main.css'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { guardAddCardsMock, handleLimitErrorMock, emitSfxMock } = vi.hoisted(() => ({
-  guardAddCardsMock: vi.fn(),
-  handleLimitErrorMock: vi.fn(),
-  emitSfxMock: vi.fn()
-}))
+const { guardAddCardsMock, handleLimitErrorMock, emitSfxMock, gsapTimelineMock } = vi.hoisted(
+  () => ({
+    guardAddCardsMock: vi.fn(),
+    handleLimitErrorMock: vi.fn(),
+    emitSfxMock: vi.fn(),
+    gsapTimelineMock: vi.fn()
+  })
+)
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: emitSfxMock
 }))
 
-const mockDecksData = { data: ref([]), status: ref('success') }
+// `refetch` is a plain `vi.fn()` reassigned per test — real @pinia/colada
+// `status` never moves off 'error' on a repeat failure (only `asyncStatus`
+// does), so a refetch mock that "fixes" status back to 'success' models the
+// retry-succeeds case, and one that leaves status at 'error' models a
+// same-error repeat failure without fabricating a status transition.
+const mockDecksData = { data: ref([]), status: ref('success'), refetch: vi.fn() }
 // `cardsPerDeckLimitRef` mirrors usePlanLimits().cardsPerDeckLimit: 200 for
 // free, null (unlimited) for paid — drives useCan().addCards' cap math.
 const cardsPerDeckLimitRef = ref(200)
 
 vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => mockDecksData
+}))
+
+// shake()'s gsap.timeline().to().to().to().to() chain resolves its own
+// `onComplete` — fire it synchronously so shake()'s Promise settles.
+vi.mock('gsap', () => ({
+  gsap: {
+    timeline: (opts) => {
+      const tl = { to: () => tl }
+      gsapTimelineMock(opts)
+      opts?.onComplete?.()
+      return tl
+    }
+  }
 }))
 
 vi.mock('@/composables/can', () => ({
@@ -77,9 +98,13 @@ const UiRadioStub = defineComponent({
   }
 })
 
+// `sfx` is declared so it lands in props (not attrs) and stays readable via
+// `props('sfx')`. The real UiButton fires its press cue from inside its own
+// `tap()` handler, which this shallow stub doesn't model — so a call site here
+// can only assert it wired the role through, never that audio played.
 const UiButtonStub = defineComponent({
   name: 'UiButton',
-  props: ['disabled', 'iconLeft'],
+  props: ['disabled', 'iconLeft', 'sfx'],
   emits: ['press'],
   inheritAttrs: false,
   setup(props, { slots, emit, attrs }) {
@@ -163,6 +188,14 @@ function makeCard(overrides = {}) {
   return card.one({ overrides })
 }
 
+// `mockDecksData.status` is shared module state read by every mounted
+// instance's own `watch(status, …)` — a wrapper left mounted from an earlier
+// test keeps reacting to later status mutations (e.g. flipping to 'error'
+// re-fires *every* still-mounted instance's notice.error cue). Track every
+// wrapper and unmount them all after each test so only the wrapper under test
+// observes that test's mutation.
+const mounted_wrappers = []
+
 function mountModal(opts = {}) {
   const {
     cards = [],
@@ -194,6 +227,7 @@ function mountModal(opts = {}) {
       }
     }
   })
+  mounted_wrappers.push(wrapper)
   return { wrapper, close, move }
 }
 
@@ -260,13 +294,23 @@ describe('MoveCardsModal', () => {
     guardAddCardsMock.mockReset().mockResolvedValue(true)
     handleLimitErrorMock.mockReset().mockReturnValue(false)
     emitSfxMock.mockReset()
+    gsapTimelineMock.mockReset()
     cardsPerDeckLimitRef.value = 200
     mockDecksData.status.value = 'success'
+    mockDecksData.refetch.mockReset()
     mockDecksData.data.value = [
       { id: 10, title: 'Deck A', card_count: 0 },
       { id: 20, title: 'Deck B', card_count: 0 },
       { id: 30, title: 'Current Deck', card_count: 0 }
     ]
+  })
+
+  afterEach(() => {
+    mounted_wrappers.splice(0).forEach((wrapper) => {
+      // Some tests unmount manually to compare pre/post state; guard the
+      // sweep against unmounting an already-unmounted wrapper twice.
+      if (wrapper.vm) wrapper.unmount()
+    })
   })
 
   // ── Skeleton (pending decks query) ──────────────────────────────────────────
@@ -326,6 +370,138 @@ describe('MoveCardsModal', () => {
         expect(cover.props('shimmer')).toBe(true)
         expect(row.find('[data-testid="move-cards__deck-list-skeleton-label"]').exists()).toBe(true)
       })
+    })
+  })
+
+  // ── Error (decks query failure + retry) ─────────────────────────────────────
+
+  describe('decks query error', () => {
+    test('renders the error node and hides the deck list/skeleton when the decks query fails [obligation]', () => {
+      mockDecksData.status.value = 'error'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      expect(wrapper.find('[data-testid="move-cards__deck-list-error"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="move-cards__deck-list-skeleton"]').exists()).toBe(false)
+      expect(wrapper.findAll('[data-testid="move-cards__deck-list-skeleton-row"]')).toHaveLength(0)
+    })
+
+    test('plays notice.error exactly once when the decks query first surfaces an error [obligation]', async () => {
+      // `watch(status, …)` only fires on a change observed *after* setup —
+      // mount at 'success' first, then flip to 'error' so the transition
+      // itself is what the watcher sees, matching how a real query settles
+      // to 'error' only after the component is already mounted and watching.
+      mountModal({ cards: [makeCard()] })
+      mockDecksData.status.value = 'error'
+      await nextTick()
+
+      expect(emitSfxMock).toHaveBeenCalledTimes(1)
+      expect(emitSfxMock).toHaveBeenCalledWith('notice.error')
+    })
+
+    test('keeps the confirm button disabled in the error state — no deck can be selected [obligation]', () => {
+      mockDecksData.status.value = 'error'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
+    })
+
+    test('keeps the modal mounted, open, and its title unchanged on a decks-load failure [obligation]', () => {
+      const cards = [makeCard({ front_text: 'Q', back_text: 'A' })]
+      const success = mountModal({ cards })
+      const successTitle = success.wrapper.find('.move-cards__title').text()
+      success.wrapper.unmount()
+
+      mockDecksData.status.value = 'error'
+      const { wrapper, close } = mountModal({ cards })
+
+      expect(wrapper.find('[data-testid="move-cards"]').exists()).toBe(true)
+      expect(wrapper.find('.move-cards__title').text()).toBe(successTitle)
+      expect(close).not.toHaveBeenCalled()
+    })
+
+    // A ui-kit button is silent on press unless the call site names a role, so
+    // wiring the cue is this component's job and worth asserting here. That
+    // the named role actually plays is UiButton's own contract, covered in
+    // tests/integration/components/ui-kit/button.test.js — this asserts the
+    // wiring only, since the stub below can't reach the real tap() handler.
+    test('wires the default press cue onto the retry button [obligation]', () => {
+      mockDecksData.status.value = 'error'
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      const retry = wrapper
+        .findAllComponents(UiButtonStub)
+        .find((button) => button.attributes('data-testid') === 'move-cards__retry')
+
+      expect(retry.props('sfx')).toEqual({ press: 'ui.press' })
+    })
+
+    test('clicking retry calls refetch() [obligation]', async () => {
+      mockDecksData.status.value = 'error'
+      mockDecksData.refetch.mockResolvedValue(undefined)
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+
+      await wrapper.find('[data-testid="move-cards__retry"]').trigger('click')
+
+      expect(mockDecksData.refetch).toHaveBeenCalledTimes(1)
+    })
+
+    test('a successful retry swaps the error node for the real deck list [obligation]', async () => {
+      mockDecksData.status.value = 'error'
+      mockDecksData.refetch.mockImplementation(() => {
+        mockDecksData.status.value = 'success'
+        return Promise.resolve()
+      })
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+      expect(wrapper.find('[data-testid="move-cards__deck-list-error"]').exists()).toBe(true)
+
+      await wrapper.find('[data-testid="move-cards__retry"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="move-cards__deck-list-error"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(true)
+    })
+
+    // ⚠️ Known trap: @pinia/colada's `status` never moves off 'error' on a
+    // repeat failure — only `asyncStatus` toggles loading→idle. This mock
+    // reproduces that: the failed refetch leaves `status` at 'error' rather
+    // than fabricating an error→error transition through a reassignment. A
+    // `watch(status, …)` genuinely can't observe this, which is why the
+    // source detects a repeat-failure by comparing values inside the retry
+    // handler instead of watching `status` for a transition. If that
+    // detection regresses, the assertions below fail — that is the point,
+    // see the Bug found note in the report.
+    test('a repeat retry failure shakes the message and plays ui.rejected without changing the message text [obligation]', async () => {
+      // First failure: mount at 'success', then flip to 'error' so
+      // `watch(status, …)` actually observes the transition and the initial
+      // notice.error cue fires — same setup as the "first appearance" test.
+      mockDecksData.refetch.mockImplementation(() => Promise.resolve())
+      const { wrapper } = mountModal({ cards: [makeCard()] })
+      mockDecksData.status.value = 'error'
+      await nextTick()
+      const messageBefore = wrapper
+        .find('[data-testid="move-cards__deck-list-error-message"]')
+        .text()
+
+      // Real @pinia/colada semantics: a repeat failure leaves `status` at
+      // 'error' — the mock reflects that by never reassigning it, so
+      // `refetch()` itself produces no observable status change.
+      await wrapper.find('[data-testid="move-cards__retry"]').trigger('click')
+      await flushPromises()
+
+      const messageAfter = wrapper
+        .find('[data-testid="move-cards__deck-list-error-message"]')
+        .text()
+      expect(messageAfter).toBe(messageBefore)
+      // Two distinct cues fire on this press in the real app: the button's own
+      // ui.press at tap time, then ui.rejected once the refetch fails. Only
+      // the second reaches emitSfxMock here — the first belongs to the real
+      // UiButton's tap() handler, which the stub replaces. Assert the role,
+      // never a total emission count, or that boundary reads as a bug.
+      expect(emitSfxMock).toHaveBeenCalledWith('ui.rejected')
+      // shake() is the only visible signal of the repeat failure — its gsap
+      // timeline must have been built, not merely the cue emitted.
+      expect(gsapTimelineMock).toHaveBeenCalled()
     })
   })
 

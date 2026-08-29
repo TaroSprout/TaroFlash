@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useMemberDecksQuery } from '@/api/decks'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import Card from '@/components/card/index.vue'
 import { useI18n } from 'vue-i18n'
 import UiRadio from '@/components/ui-kit/radio.vue'
@@ -12,6 +12,7 @@ import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 import { SKELETON_COVER } from '@/utils/cover'
+import { shake } from '@/utils/animations/shake'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -33,9 +34,10 @@ const { t } = useI18n()
 const SKELETON_ROW_COUNT = 4
 
 const can = useCan()
-const { data: decks, status } = useMemberDecksQuery()
+const { data: decks, status, refetch } = useMemberDecksQuery()
 const selected_deck_id = ref<number | undefined>(undefined)
 const moving = ref(false)
+const error_message = useTemplateRef<HTMLElement>('error_message')
 
 const title = computed(() => {
   const card = cards[0]
@@ -94,6 +96,27 @@ function onClose() {
   emitSfx('dialog.close')
   close(false)
 }
+
+// @pinia/colada's `status` never moves off 'error' on a repeat failure — only
+// `asyncStatus` does — so `watch(status, …)` below can't observe an
+// error->error transition. Snapshot it before calling `refetch()` and compare
+// after: still 'error' on both sides means the retry failed the same way, and
+// gets the shake + rejection cue since no new message appears.
+async function onRetry() {
+  const was_already_failed = status.value === 'error'
+
+  await refetch()
+
+  if (was_already_failed && status.value === 'error') {
+    emitSfx('ui.rejected')
+    if (error_message.value) shake(error_message.value)
+  }
+}
+
+// The initial load failure gets its own cue as the message first appears.
+watch(status, (current) => {
+  if (current === 'error') emitSfx('notice.error')
+})
 </script>
 
 <template>
@@ -128,6 +151,26 @@ function onClose() {
           class="relative h-5 flex-1 rounded-2 bg-skeleton shimmer"
         ></div>
       </div>
+    </div>
+
+    <div
+      v-else-if="status === 'error'"
+      data-testid="move-cards__deck-list-error"
+      class="my-4 flex min-h-0 flex-col items-center justify-center gap-4 text-center"
+    >
+      <p ref="error_message" data-testid="move-cards__deck-list-error-message">
+        {{ t('move-cards-modal.load-error') }}
+      </p>
+      <ui-button
+        data-testid="move-cards__retry"
+        variant="ghost"
+        data-palette="brand"
+        icon-left="refresh"
+        :sfx="{ press: 'ui.press' }"
+        @press="onRetry"
+      >
+        {{ t('move-cards-modal.retry') }}
+      </ui-button>
     </div>
 
     <ui-options-panel
