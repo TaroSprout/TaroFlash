@@ -140,6 +140,16 @@ describe('FeedbackRow — rendering', () => {
     expect(polaroid.props('size')).toBe('sm')
   })
 
+  // ── REGRESSION GUARD — this call site stays decorative [obligation] ────────
+  // The dashboard is the only interactive polaroid; this one gets no click
+  // handler, no hover wiring, and renders at rest same as before.
+
+  test('member-polaroid is not interactive here — no hover swing wiring [obligation]', () => {
+    const wrapper = mountRow()
+    const polaroid = wrapper.findComponent(MemberPolaroid)
+    expect(polaroid.props('interactive')).toBeFalsy()
+  })
+
   test('passes size="sm" to the status select-menu [obligation]', () => {
     const wrapper = mountRow()
     expect(wrapper.find('[data-testid="admin-feedback-row__status"]').attributes('size')).toBe('sm')
