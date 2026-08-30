@@ -51,7 +51,12 @@ only shape allowed is a short, single trailing `//` line, same gates as anywhere
 
 Five, each failed on its own. Fail one, rewrite or delete.
 
-- **A competent stranger would otherwise get it wrong.** If they wouldn't, delete it.
+- **The reader is never a hypothetical stranger — it's an agent with your own knowledge, or the
+  user, who already has more context than either.** Test it as: would you, given only the code and
+  no memory of writing it, still get this wrong? If not, delete it. What survives is what neither
+  general language/framework/browser knowledge nor the code itself supplies — a decision this
+  codebase made, a value tied to something outside it, or a platform quirk obscure enough that
+  "well known" doesn't cover it.
 - **It prescribes rather than narrates** — what to do or not do, never what the code does.
 - **The opener completes the symbol's name, at that symbol's own altitude.** Never restate the name,
   never zoom out past it, never justify it.
@@ -59,7 +64,7 @@ Five, each failed on its own. Fail one, rewrite or delete.
   technical term is earned by being grounded, never led with.
 - **Everything past the first idea is load-bearing.** Cut whatever the first idea already bought.
 
-**A regex literal always fails the competent-stranger gate.** Its own syntax is never the intent, so
+**A regex literal always fails the actual-reader gate.** Its own syntax is never the intent, so
 it carries a comment in its position's shape naming what it matches, in plain words — not the regex
 syntax restated, not why it matches that.
 
