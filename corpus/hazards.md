@@ -40,6 +40,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:settled-transform-traps-overlays]           | [[layering]]           | `src/utils/animations/`                                                                                                  |
 | →[K:ios-audio-interruption]                     | [[sound]]              | `src/sfx/`                                                                                                               |
 | →[K:dock-height-single-owner]                   | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
+| →[K:dock-edge-inset-follows-flush]              | [[mobile-dock]]        | `src/components/mobile-dock/mobile-dock-host.vue`                                                                        |
 | →[K:fixed-roles-skip-the-station]               | [[surface-stations]]   | `src/styles/main.css`, `src/components/card/index.vue`                                                                   |
 | →[K:station-roles-can-collide]                  | [[surface-stations]]   | `src/styles/stations.css`, `src/components/ui-kit/options-panel/index.vue`                                               |
 | →[K:app-window-fills-full-width]                | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
