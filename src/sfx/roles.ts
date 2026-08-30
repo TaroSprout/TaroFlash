@@ -55,7 +55,7 @@ export const ROLES = {
   'nav.page-forward': { sound: 'slide_up' },
   'nav.page-back': { sound: 'slide_left' },
 
-  'session.intro': { sound: 'slide_up' },
+  'session.intro': { sound: 'music_plink_chordyes' },
   'session.complete': { sound: 'music_pizz_duo_hi' }
 } satisfies Record<string, RoleDef>
 

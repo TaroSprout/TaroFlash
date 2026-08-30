@@ -26,6 +26,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:client-owns-the-schedule]                   | [[scheduling]]         | `src/views/study-session/`                                                                                               |
 | →[K:silent-stale-cache]                         | [[data-flow]]          | `src/api/reviews/mutations/`                                                                                             |
 | →[K:postgrest-max-rows-truncates-silently]      | [[data-flow]]          | `src/api/**`                                                                                                             |
+| →[K:query-status-holds-through-repeat-failure]  | [[data-flow]]          | `src/components/feedback/feedback-board.vue`                                                                             |
 | →[K:shared-cache-entry-options-last-mount-wins] | [[data-flow]]          | `src/api/decks/queries/count.ts`                                                                                         |
 | →[K:pin-is-presence-not-difference]             | [[pacing]]             | `src/api/review-pacing/`                                                                                                 |
 | →[K:closed-color-set-fails-bare]                | [[theming]]            | `src/utils/palette/`                                                                                                     |
