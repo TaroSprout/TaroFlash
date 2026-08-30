@@ -205,8 +205,6 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="sidebar-content"]').exists()).toBe(true)
   })
 
-  // ── overflow + mobile-modal variant utilities ─────────────────────────────
-
   test('inner container clips with overflow-hidden + rounded corners', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-container"]').classes()
@@ -222,18 +220,24 @@ describe('AppWindow', () => {
     expect(classes).toContain('relative')
   })
 
-  // ── station [obligation] ──────────────────────────────────────────────────
-  // A window stamps a constant station — it never varies with whatever
-  // surface it happens to be mounted inside.
+  test('releases the height cap and the body scroller on width alone, for every window', () => {
+    const classes = mountWindow().find('[data-testid="app-window-root"]').classes()
+    expect(classes).toContain('mobile-modal-flush:h-auto!')
+    expect(classes).toContain('mobile-modal-flush:[--scroll-overflow:visible]')
+    expect(classes).not.toContain('mobile-modal:h-auto!')
+    expect(classes).not.toContain('mobile-modal:[--scroll-overflow:visible]')
+  })
 
-  test('stamps the constant data-station="window" with no ambient surface [obligation]', () => {
+  // A window stamps a constant station, never varying with the surface it is mounted inside.
+
+  test('stamps the constant data-station="window" with no ambient surface', () => {
     const wrapper = mountWindow()
     expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-station')).toBe(
       'window'
     )
   })
 
-  test('data-station="window" does not vary with a surrounding station [obligation]', () => {
+  test('data-station="window" does not vary with a surrounding station', () => {
     const wrapper = mountWindowInsideStation('panel')
     expect(wrapper.find('[data-testid="app-window-container"]').attributes('data-station')).toBe(
       'window'
@@ -272,13 +276,13 @@ describe('AppWindow', () => {
     )
   })
 
-  // ── scroll_body prop [obligation] ─────────────────────────────────────────
+  // ── scroll_body prop ─────────────────────────────────────────
   // The body becomes the scrolling region only when opted in, and the header
   // fill (an opaque strip meant to occlude a lowered overlay) must not render
   // alongside a scrolling body — rendering both was the regression that
   // occluded scrolled content on a straight line.
 
-  test('scroll_body off: body carries no data-scroll-body and the header fill renders [obligation]', () => {
+  test('scroll_body off: body carries no data-scroll-body and the header fill renders', () => {
     const wrapper = mountWindow({ title: 'x' })
     expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-scroll-body')).toBe(
       undefined
@@ -286,7 +290,7 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="app-window__header-fill"]').exists()).toBe(true)
   })
 
-  test('scroll_body on: body carries data-scroll-body and the header fill does not render [obligation]', () => {
+  test('scroll_body on: body carries data-scroll-body and the header fill does not render', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
     expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-scroll-body')).toBe(
       'true'
@@ -294,12 +298,12 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="app-window__header-fill"]').exists()).toBe(false)
   })
 
-  test('scroll_body on: renders a scroll region targeting the body [obligation]', () => {
+  test('scroll_body on: renders a scroll region targeting the body', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
     expect(wrapper.findComponent(ScrollRegion).exists()).toBe(true)
   })
 
-  test('scroll_body off: renders no scroll region [obligation]', () => {
+  test('scroll_body off: renders no scroll region', () => {
     const wrapper = mountWindow({ title: 'x' })
     expect(wrapper.findComponent(ScrollRegion).exists()).toBe(false)
   })
@@ -308,12 +312,12 @@ describe('AppWindow', () => {
   // content clear of the header rides on the scrolling box — putting it on the
   // body instead would scroll the gap away with the content.
 
-  test('scroll_body on: the region reserves its gutter inside the body [obligation]', () => {
+  test('scroll_body on: the region reserves its gutter inside the body', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
     expect(wrapper.findComponent(ScrollRegion).props('gutter')).toBe('inside')
   })
 
-  test('scroll_body on: the header depth pads the scrolling box, not the body [obligation]', () => {
+  test('scroll_body on: the header depth pads the scrolling box, not the body', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
     expect(wrapper.findComponent(ScrollRegion).props('scroller_class')).toContain(
       'pt-(--window-header-depth)'
@@ -323,51 +327,51 @@ describe('AppWindow', () => {
     )
   })
 
-  test('scroll_body on: publishes the header depth the handle and the padding both read [obligation]', () => {
+  test('scroll_body on: publishes the header depth the handle and the padding both read', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true })
     expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
       '--window-header-depth: 50px'
     )
   })
 
-  test('a headerless scrolling window publishes no header depth [obligation]', () => {
+  test('a headerless scrolling window publishes no header depth', () => {
     const wrapper = mountWindow({ scroll_body: true })
     expect(wrapper.find('[data-testid="app-window-root"]').attributes('style') ?? '').not.toContain(
       '--window-header-depth'
     )
   })
 
-  test('a header border with no fill strip publishes a zero depth [obligation]', () => {
+  test('a header border with no fill strip publishes a zero depth', () => {
     const wrapper = mountWindow({ title: 'x', scroll_body: true, header_border: 'none' })
     expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
       '--window-header-depth: 0px'
     )
   })
 
-  // ── bottom-edge track inset [obligation] ──────────────────────────────────
+  // ── bottom-edge track inset ──────────────────────────────────
   // The window clips on its bottom corner curve, so a handle drawn all the way
   // down loses its cap there. The body is marked as sitting on that edge only
   // when nothing else does — a footer is what takes the edge otherwise.
 
-  test('marks the body as the window bottom edge when no footer is passed [obligation]', () => {
+  test('marks the body as the window bottom edge when no footer is passed', () => {
     const wrapper = mountWindow()
     expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-window-edge')).toBe(
       'bottom'
     )
   })
 
-  test('leaves the bottom-edge mark off the body when a footer is passed [obligation]', () => {
+  test('leaves the bottom-edge mark off the body when a footer is passed', () => {
     const wrapper = mountWindow({}, { footer: '<div data-testid="footer-content">Footer</div>' })
     expect(wrapper.find('[data-testid="app-window__body"]').attributes('data-window-edge')).toBe(
       undefined
     )
   })
 
-  // ── footer slot [obligation] ──────────────────────────────────────────────
+  // ── footer slot ──────────────────────────────────────────────
   // A pinned action bar must not scroll away with the body, and an empty
   // footer must not occupy space.
 
-  test('renders footer slot content outside the scrolling body when filled [obligation]', () => {
+  test('renders footer slot content outside the scrolling body when filled', () => {
     const wrapper = mountWindow({}, { footer: '<div data-testid="footer-content">Footer</div>' })
     const footer = wrapper.find('[data-testid="app-window__footer"]')
     expect(footer.exists()).toBe(true)
@@ -380,17 +384,17 @@ describe('AppWindow', () => {
     ).toBe(false)
   })
 
-  test('does not render the footer element when no footer slot content is provided [obligation]', () => {
+  test('does not render the footer element when no footer slot content is provided', () => {
     const wrapper = mountWindow()
     expect(wrapper.find('[data-testid="app-window__footer"]').exists()).toBe(false)
   })
 
-  // ── header slot stacking [obligation] ─────────────────────────────────────
+  // ── header slot stacking ─────────────────────────────────────
   // The header slot wrapper must never carry its own z-index — that would
   // make it a stacking context and break a floating overlay elsewhere that
   // relies on ordering between the header (z-10) and the fill (z-20).
 
-  test('header slot wrapper carries no z-index utility class [obligation]', () => {
+  test('header slot wrapper carries no z-index utility class', () => {
     const wrapper = mountWindow({ title: 'x' })
     const classes = wrapper.find('[data-testid="app-window__header-slot"]').classes()
     expect(classes.some((c) => /(^|:)z-/.test(c))).toBe(false)
