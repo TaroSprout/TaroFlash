@@ -27,7 +27,7 @@ vi.mock('@/api/decks/db', () => ({
 
 import { useMemberDecksQuery } from '@/api/decks/queries/list'
 import { useDeckQuery } from '@/api/decks/queries/by-id'
-import { useMemberDeckCountQuery } from '@/api/decks/queries/count'
+import { useMemberDeckCountQuery, MEMBER_DECK_COUNT_QUERY } from '@/api/decks/queries/count'
 
 beforeEach(() => {
   useQuerySpy.mockClear()
@@ -138,5 +138,20 @@ describe('useMemberDeckCountQuery', () => {
   test('staleTime is 5 minutes, well past a card row mount [obligation]', () => {
     const { staleTime } = configFrom(useMemberDeckCountQuery)
     expect(staleTime).toBe(1000 * 60 * 5)
+  })
+
+  // [obligation] useMemberDeckCountQuery(), useCan(), and the upsert
+  // mutation's create-time re-check (via `queryCache.ensure`) must all reach
+  // the exact same options object — a second, differently-configured
+  // definition of this key would silently overwrite the first mount's
+  // options on the shared cache entry.
+  // →[K:shared-cache-entry-options-last-mount-wins]
+  test('useMemberDeckCountQuery() delegates straight to the exported MEMBER_DECK_COUNT_QUERY options object [obligation]', () => {
+    const config = configFrom(useMemberDeckCountQuery)
+    expect(config).toBe(MEMBER_DECK_COUNT_QUERY)
+  })
+
+  test('takes no arguments — every caller mounts with identical options [obligation]', () => {
+    expect(useMemberDeckCountQuery).toHaveLength(0)
   })
 })

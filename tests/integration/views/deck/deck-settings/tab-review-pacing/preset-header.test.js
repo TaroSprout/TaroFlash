@@ -5,7 +5,7 @@ import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/us
 import PresetHeader from '@/views/deck/deck-settings/tab-review-pacing/preset-header.vue'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
-// Fade transitions resolve instantly so the divergence block is present/absent
+// Fade transitions resolve instantly so the reset button is present/absent
 // synchronously under test.
 
 const { mockFadeEnter, mockFadeLeave } = vi.hoisted(() => ({
@@ -44,31 +44,35 @@ afterEach(() => {
   mounted_wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
 })
 
-// ── divergence visibility [obligation] ────────────────────────────────────────
+// ── reset button visibility [obligation] ────────────────────────────────────
 
-describe('PresetHeader — divergence block visibility [obligation]', () => {
-  test('hides the divergence block when override_count is 0 [obligation]', () => {
+describe('PresetHeader — reset button visibility [obligation]', () => {
+  test('hides the reset button when override_count is 0 [obligation]', () => {
     const { wrapper } = makeWrapper({ override_count: 0 })
-    expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="preset-header__reset-all"]').exists()).toBe(false)
   })
 
-  test('shows the divergence block when override_count > 0, derived locally (has_overrides was removed from the composable) [obligation]', () => {
+  test('shows the reset button when override_count > 0 [obligation]', () => {
     const { wrapper } = makeWrapper({ override_count: 1 })
-    expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="preset-header__reset-all"]').exists()).toBe(true)
   })
 })
 
-// ── pluralised count [obligation] ─────────────────────────────────────────────
+// ── reset button label [obligation] ─────────────────────────────────────────
 
-describe('PresetHeader — preset-header__count pluralisation [obligation]', () => {
-  test('singular phrasing for exactly one override', () => {
+describe('PresetHeader — reset button label [obligation]', () => {
+  test('renders "Reset (N)" with the current override_count, no singular/plural split [obligation]', () => {
     const { wrapper } = makeWrapper({ override_count: 1 })
-    expect(wrapper.find('[data-testid="preset-header__count"]').text()).toBe('1 change')
+    expect(wrapper.find('[data-testid="preset-header__reset-all"] .btn-label').text()).toBe(
+      'Reset (1)'
+    )
   })
 
-  test('plural phrasing for more than one override', () => {
+  test('renders the same "Reset (N)" shape for a count greater than one [obligation]', () => {
     const { wrapper } = makeWrapper({ override_count: 3 })
-    expect(wrapper.find('[data-testid="preset-header__count"]').text()).toBe('3 changes')
+    expect(wrapper.find('[data-testid="preset-header__reset-all"] .btn-label').text()).toBe(
+      'Reset (3)'
+    )
   })
 })
 
@@ -82,17 +86,15 @@ describe('PresetHeader — preset-header__reset-all [obligation]', () => {
 
     expect(resetAllOverrides).toHaveBeenCalledOnce()
   })
+})
 
-  test('exposes its reset-all-label translation as the icon-only button tooltip', async () => {
-    const { wrapper } = makeWrapper({ override_count: 1 })
+// ── removed markup [obligation] ──────────────────────────────────────────────
 
-    await wrapper
-      .find('[data-testid="preset-header__reset-all"]')
-      .trigger('pointerenter', { pointerType: 'mouse' })
-
-    expect(document.querySelector('[data-testid="ui-tooltip"]').textContent.trim()).toBe(
-      'Reset all'
-    )
+describe('PresetHeader — removed divergence markup [obligation]', () => {
+  test('never renders a preset-header__divergence or preset-header__count element [obligation]', () => {
+    const { wrapper } = makeWrapper({ override_count: 2 })
+    expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="preset-header__count"]').exists()).toBe(false)
   })
 })
 

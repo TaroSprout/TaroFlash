@@ -234,6 +234,7 @@ watch([preview_el, aside_el], ([preview]) => {
           :back_text="editor.preview_back_text.value"
           :cover_editing="displayed_page === 'design'"
           :cover_image="editor.cover_image"
+          hover_lift
           @update:side="onPreviewSide"
         />
       </div>

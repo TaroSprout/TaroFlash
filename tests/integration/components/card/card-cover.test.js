@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
+import { shallowRef } from 'vue'
 import CardCover from '@/components/card/card-cover.vue'
 
 const revealFaceImageMock = vi.fn()
@@ -12,8 +13,8 @@ vi.mock('@/utils/animations/face-image', () => ({
 const DECODABLE_IMAGE =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
 
-function mountCover(cover) {
-  return shallowMount(CardCover, { props: { cover } })
+function mountCover(cover, cover_image) {
+  return shallowMount(CardCover, { props: { cover, cover_image } })
 }
 
 describe('CardCover', () => {
@@ -211,5 +212,24 @@ describe('CardCover — decode resolves [obligation]', () => {
     const el = wrapper.find('[data-testid="card-cover"]')
     expect(el.classes()).not.toContain('pattern-mask')
     expect(el.attributes('data-palette')).toBeUndefined()
+  })
+})
+
+describe('CardCover — cover_image ref wiring [obligation]', () => {
+  // setImgEl feeds the rendered <img> into both useImageReveal's own img_el
+  // (already covered by the "decode resolves" suite above) and, when a
+  // cover_image staging interface is passed in, its image_el handle — the
+  // hook useCoverImage's onRemove uses to collapse the image before clearing it.
+
+  test('feeds the rendered <img> element into cover_image.image_el [obligation]', () => {
+    const cover_image = { image_el: shallowRef(null) }
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png' }, cover_image)
+
+    const img = wrapper.find('[data-testid="card-cover__image"]')
+    expect(cover_image.image_el.value).toBe(img.element)
+  })
+
+  test('tolerates cover_image being absent — most call sites do not pass it [obligation]', () => {
+    expect(() => mountCover({ image_path: 'https://cdn/cover.png' })).not.toThrow()
   })
 })

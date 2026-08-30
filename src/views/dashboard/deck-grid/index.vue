@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import DeckGridItem from './item.vue'
 import NewDeckCard from '@/components/deck/new-deck-card.vue'
@@ -8,6 +8,7 @@ import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useDeckGridReorder } from './use-deck-grid-reorder'
 import { useDeckGrace } from '@/composables/deck/grace'
 import { useNewDeckAction } from '../composables/new-deck-action'
+import { useGridReflow } from '@/composables/ui/grid-reflow'
 
 type DeckGridProps = {
   decks: Deck[]
@@ -44,43 +45,8 @@ const reorder = useDeckGridReorder(
  */
 const { lockedIds } = useDeckGrace(() => decks)
 
-/**
- * Animate a slot reflow only when the deck count itself changes
- * (delete/create) — a drag-drop reorder already has its own lift/drop settle
- * animation, and transitioning the resting position too would fight it (the
- * dropped card would visibly slide from its pre-persist slot to its
- * post-persist one).
- */
-const REFLOW_TRANSITION_DURATION = 200
-const reflowing = ref(false)
-let reflow_timeout = 0
-// The first firing is the initial query resolving, not a real reflow.
-let deck_count_initialized = false
-
-watch(
-  () => decks.length,
-  () => {
-    if (!deck_count_initialized) {
-      deck_count_initialized = true
-      return
-    }
-
-    reflowing.value = true
-    window.clearTimeout(reflow_timeout)
-    reflow_timeout = window.setTimeout(() => {
-      reflowing.value = false
-    }, REFLOW_TRANSITION_DURATION)
-  }
-)
-
-// TransitionGroup's `appear` never fires inside authenticated.vue's unresolved <Suspense> — play the reveal once by hand instead.
-onMounted(() => {
-  if (!container_el.value) return
-
-  container_el.value
-    .querySelectorAll('[data-testid="deck-grid__item"]')
-    .forEach((el) => popDeckIn(el, () => {}))
-})
+// Slots slide to their new positions whenever the deck count changes.
+const { reflowing } = useGridReflow(() => decks.length)
 
 function onDeckClicked(deck: Deck) {
   if (deck.pending) return

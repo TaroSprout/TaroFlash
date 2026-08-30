@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { useWindowVirtualizer, defaultRangeExtractor } from '@tanstack/vue-virtual'
 import { useParentScrollMargin } from '@/composables/ui/parent-scroll-margin'
 import { useReorderDrag } from '@/composables/use-reorder-drag'
+import { useGridReflow } from '@/composables/ui/grid-reflow'
 import { usePressHold } from '@/composables/ui/press-hold'
 import { liftListItem, dropListItem } from '@/utils/animations/list-item'
 
@@ -64,6 +65,10 @@ const reorder = useReorderDrag({
     position: itemPosition
   }
 })
+
+// Slots slide to their new positions whenever the card count changes — a
+// delete leaves a gap the survivors move into instead of jumping across it.
+const { reflowing } = useGridReflow(() => displayed_cards.value.length)
 
 const virtualizer = useWindowVirtualizer(
   computed(() => ({
@@ -197,7 +202,8 @@ watch(
         :class="{
           'z-30': item.index === reorder.dragging_index.value,
           'cursor-grabbing': item.index === reorder.dragging_index.value,
-          'cursor-grab': is_rearranging && item.index !== reorder.dragging_index.value
+          'cursor-grab': is_rearranging && item.index !== reorder.dragging_index.value,
+          'transition-transform duration-200 ease-out': reflowing
         }"
         :style="{ width: `${cell_width}px`, transform: `translate(${item.x}px, ${item.y}px)` }"
         @pointerdown="onItemPointerdown(item.index, $event)"

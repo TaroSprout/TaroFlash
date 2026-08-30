@@ -60,7 +60,7 @@ describe('AdvancedRatingButtons', () => {
       const wrapper = mountAdvanced()
 
       expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).not.toBe('')
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Fail')
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope!')
     })
 
     test('shows the icon-word copy when preview is off, even with ready times [obligation]', () => {
@@ -76,7 +76,7 @@ describe('AdvancedRatingButtons', () => {
       }
       const wrapper = mountAdvanced()
 
-      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Fail')
+      expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope!')
     })
   })
 
@@ -150,6 +150,16 @@ describe('AdvancedRatingButtons', () => {
     const wrapper = mountAdvanced()
     await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
     expect(wrapper.emitted('rated')?.[0]).toEqual([Rating.Again])
+  })
+
+  // ── success-group labels are untouched by the fail-button key swap [obligation] ─
+
+  test('renders Tough/Good/Easy on the success-group buttons when preview is off [obligation]', () => {
+    const wrapper = mountAdvanced()
+    const buttons = wrapper.findAll('[data-testid="ui-button-group__button"]')
+    expect(buttons[0].text()).toContain('Tough')
+    expect(buttons[1].text()).toContain('Good')
+    expect(buttons[2].text()).toContain('Easy')
   })
 
   test('pressing a button in the success group emits rated with that grade [obligation]', async () => {

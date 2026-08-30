@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: []
-updated: 2026-08-10
+updated: 2026-08-28
 ---
 
 # The mobile dock
@@ -23,6 +23,39 @@ bar, watches whatever landed inside it, and grows or shrinks the bar to fit.
 > that's still moving because its own resize watcher fires on every frame of
 > the inner one. The visible result is exactly what it sounds like — two
 > things animating at different speeds. See below.
+
+> [!HAZARD] [K:dock-edge-inset-follows-flush] **The device's bottom-edge inset is earned by sitting flush on the screen edge, not by being on a touch device — and the allowance is floored above that inset on purpose, because a reported `0px` doesn't tell you whether the strip is covered or just uninsettable.**
+> Below the `sm` breakpoint the bar spans the full width and sits on the
+> bottom edge, so it needs `env(safe-area-inset-bottom)` to clear the home
+> indicator or gesture bar. Above it the bar is a card inset from the corner
+> — already clear of the edge — so adding the inset there just pads it for
+> nothing. A desktop window narrowed to phone width is flush the same as a
+> phone is, and docked browser chrome (an installed PWA's own bottom bar)
+> covers the inset strip on its own, so the inset is skipped there too even
+> though the bar is flush. Keying the inset off "is this a phone" instead of
+> off the geometry gets both wrong. `env(safe-area-inset-bottom)` resolves to
+> `0px` on every desktop browser, so a flush-state allowance written as
+> `calc(0.5rem + env(safe-area-inset-bottom))` computes to exactly the
+> `0.5rem` the dock already gets as a floating card at that width — correct
+> about when it applies, worth nothing where it applies. So the allowance
+> carries a floor — `max(1rem, calc(0.5rem + env(safe-area-inset-bottom)))`,
+> reusing the dock's own `--dock-pt` value as the floor — and a real device
+> inset still wins wherever one is reported.
+>
+> The floor also fires on mobile Safari, and that is the accepted cost of
+> having it. Safari reports `env(safe-area-inset-bottom)` as `0px`
+> for as long as its bottom toolbar is up, because that toolbar is what sits
+> over the home-indicator strip; the inset only grows to the device's real
+> value once the toolbar collapses on scroll. The viewport-gap signal doesn't
+> catch that toolbar either — Safari shrinks `window.innerHeight` in step
+> with the visual viewport, so the gap stays zero and the dock still counts
+> as uncovered (see [[safe-area-chrome-detection]]). A desktop window at
+> phone width and a phone with its toolbar up therefore report exactly the
+> same thing, and no floor can be scoped to only the first of them. Given the
+> choice, the visible allowance at small desktop width was kept and the
+> padding above Safari's toolbar accepted. Removing the floor makes Safari
+> flush again and takes the desktop allowance back down to nothing — that is
+> the same trade re-decided, not a bug fixed.
 
 ## The dock watches, it doesn't get told
 
@@ -69,6 +102,17 @@ duration, the dock catches up to the settled result once the claim releases.
 > re-arms, and the bar stops resizing to its content for the rest of the
 > session. Every claim needs a release on every path out, including ones
 > that abort a swap early.
+
+## Visible and flush are different questions
+
+`useMobileDock()` exposes both, and they don't move together. `is_visible`
+answers whether the bar shows at all — below the claimed breakpoint and the
+on-screen keyboard closed. `is_flush` answers only whether the bar is
+currently the full-width, edge-pinned shape, which happens below the `sm`
+breakpoint regardless of what claimed the wider one. The host reads
+`is_flush` — combined with whether docked browser chrome is already covering
+that strip — to decide whether the bar's own bottom padding needs the
+device's safe-area inset added on top.
 
 ## What this isn't
 

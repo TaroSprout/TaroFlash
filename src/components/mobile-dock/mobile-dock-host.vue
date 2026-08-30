@@ -2,26 +2,27 @@
 import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { gsap } from 'gsap'
 import { useMobileDock } from './use-mobile-dock'
-import { useKeyboardOpen } from '@/composables/ui/keyboard'
 import { useAnimatedHeight } from '@/composables/ui/animated-height'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { useBottomChromeCover } from '@/composables/ui/safe-area'
 
-const { el, breakpoint, height_claims } = useMobileDock()
+const { el, is_visible, is_flush, height_claims } = useMobileDock()
 
-const { is_open: is_keyboard_open } = useKeyboardOpen()
-const is_mobile = computed(() => useMatchMedia(`w<${breakpoint.value}`).value)
+const { is_covered: is_bottom_chrome_covering } = useBottomChromeCover()
 
 const bar = useTemplateRef<HTMLElement>('bar')
 const content_wrapper = useTemplateRef<HTMLElement>('content_wrapper')
 const content = useTemplateRef<HTMLElement>('content')
+
+// Trap: the edge inset is earned by being flush against the screen edge, not by being on a touch device →[K:dock-edge-inset-follows-flush]
+// The allowance floors at the bar's own top padding, so a browser reporting no device inset still clears the edge →[K:dock-edge-inset-follows-flush]
+const has_edge_allowance = computed(() => is_flush.value && !is_bottom_chrome_covering.value)
 
 /**
  * Publishes the dock's live height to `--mobile-dock-height` on `:root`, so any view can
  * pad content clear of the bar. Reports 0 while the dock is hidden, collapsing the gap.
  */
 function publishHeight() {
-  const visible = is_mobile.value && !is_keyboard_open.value
-  const height = visible ? (content.value?.offsetHeight ?? 0) : 0
+  const height = is_visible.value ? (content.value?.offsetHeight ?? 0) : 0
   document.documentElement.style.setProperty('--mobile-dock-height', `${height}px`)
 }
 
@@ -30,7 +31,7 @@ function publishHeight() {
 useAnimatedHeight(
   content_wrapper,
   content,
-  () => is_mobile.value && !is_keyboard_open.value && height_claims.value === 0,
+  () => is_visible.value && height_claims.value === 0,
   publishHeight,
   true
 )
@@ -64,16 +65,17 @@ watch(height_claims, (claims) => {
   if (claims > 0) releaseHeightControl()
 })
 
-watch([is_mobile, is_keyboard_open, height_claims], publishHeight, { flush: 'post' })
+watch([is_visible, height_claims], publishHeight, { flush: 'post' })
 </script>
 
 <template>
   <footer
-    v-show="is_mobile && !is_keyboard_open"
+    v-show="is_visible"
     ref="bar"
     data-testid="mobile-dock-host"
     data-station="panel"
-    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] max-sm:[--dock-pb:calc(0.5rem+var(--edge-safe-padding))] ring-1 ring-line"
+    class="fixed bottom-0 left-0 z-30 w-full rounded-t-6 bg-surface contain-[layout_style] transform-[translateZ(0)] sm:bottom-3 sm:left-auto sm:right-3 sm:w-96 sm:rounded-6 [--dock-px:1.25rem] [--dock-pt:1rem] [--dock-pb:0.5rem] ring-1 ring-line"
+    :class="has_edge_allowance && '[--dock-pb:max(1rem,calc(0.5rem+env(safe-area-inset-bottom)))]'"
   >
     <div
       mobile-dock-above

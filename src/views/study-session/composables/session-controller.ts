@@ -197,7 +197,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   watch(
     () => engine.state.value,
     (state) => {
-      if (state === 'summary') for (const id of deck_ids) flushDeckReviews(id)
+      if (state === 'summary') flushDeckReviews(deck_ids)
     }
   )
 

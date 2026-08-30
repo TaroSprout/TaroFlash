@@ -8,6 +8,15 @@ import { defineComponent, h, ref, nextTick } from 'vue'
 // we need real Vue refs — created at module level after imports so the template
 // reactive system sees them as refs and auto-unwraps them correctly.
 
+// Drives `useMatchMedia('w>=xl')` — false = mobile (term in dock), true = desktop
+// (term in sidebar). Defaults mobile; desktop tests flip it. Hoisted as a real Vue
+// ref because `use-mobile-dock` resolves its media queries at module-import time,
+// which runs before this file's top-level statements.
+const { isDesktopRef } = await vi.hoisted(async () => {
+  const { ref: vueRef } = await import('vue')
+  return { isDesktopRef: vueRef(false) }
+})
+
 const {
   lessonRef,
   paragraphsRef,
@@ -52,9 +61,6 @@ const {
 // `ref()` is available. The vi.mock factories below close over these variables.
 const selectionRef = ref(null)
 const popoverOpenRef = ref(false)
-// Drives `useMatchMedia('w>=xl')` — false = mobile (term in dock), true = desktop
-// (term in sidebar). Defaults mobile; desktop tests flip it.
-const isDesktopRef = ref(false)
 
 vi.mock('@/composables/audio-reader/lesson-reader', () => ({
   useLessonReader: () => ({

@@ -13,6 +13,9 @@ export function slideDownBlurIn(el: Element, done: () => void) {
       filter: 'blur(0)',
       duration: 0.1,
       ease: 'expo.out',
+      // Drop the inline transform once done, or it permanently overrides a resting
+      // transform (e.g. rotate-6) the element carries as a class.
+      clearProps: 'transform',
       onComplete: done
     }
   )
@@ -39,6 +42,9 @@ export function slideUpBlurIn(el: Element, done: () => void) {
       filter: 'blur(0)',
       duration: 0.1,
       ease: 'expo.out',
+      // Drop the inline transform once done, or it permanently overrides a resting
+      // transform (e.g. rotate-6) the element carries as a class.
+      clearProps: 'transform',
       onComplete: done
     }
   )

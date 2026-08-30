@@ -128,7 +128,7 @@ describe('TabReviewPacing — usePacingFields is provided once and shared [oblig
   test('preset-header shows no divergence and limits-section resolves caps off the same shared instance [obligation]', () => {
     const { wrapper } = makeWrapper({ review_pacing_preset_id: 2 })
 
-    expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="preset-header__reset-all"]').exists()).toBe(false)
     const spinbox_input = wrapper
       .find('[data-testid="tab-review-pacing__max-reviews-spinbox"]')
       .find('[data-testid="ui-kit-spinbox__input"]')

@@ -1,5 +1,6 @@
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
+import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useNoticeStore } from '@/stores/notice-store'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
@@ -91,6 +92,37 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     // the server has taken the cards.
     if ('except_ids' in resolved.args) {
       list.retireTemps(promotedTempIdsExcept(resolved.args.except_ids))
+    }
+
+    await afterDelete()
+  }
+
+  /**
+   * Delete one card with no confirmation — the grid's reorder-mode corner
+   * button. Reorder is already a destructive editing mode, so it skips
+   * `confirmDelete` and fires the delete cue directly instead of riding the
+   * confirm alert's `confirmAudio`. Shrinks `card_el` — the positioned grid
+   * cell — away before the mutation fires, the same pop the dashboard's deck
+   * grid uses, so the card visibly leaves and the survivors slide into the gap
+   * it opens rather than jumping across it. No-op when the card isn't found.
+   */
+  async function onDeleteCardImmediate(card_id: number, card_el: HTMLElement) {
+    const card = list.findCard(card_id)
+    if (!card) return
+
+    const { review: _review, ...without_review } = card
+    const retired = list.retireTemps([card_id])
+
+    emitSfx('card.delete')
+    await new Promise<void>((resolve) => popDeckOut(card_el, resolve))
+
+    try {
+      await mutations.deleteCards({ cards: [without_review as Card] })
+    } catch {
+      list.restoreTemps(retired)
+      popDeckIn(card_el, () => {})
+      notice.error(t('toast.error.delete-cards-failed'))
+      return
     }
 
     await afterDelete()
@@ -207,6 +239,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
 
   return {
     onDeleteCards,
+    onDeleteCardImmediate,
     onSelectCard,
     onMoveCards,
     onCancel,
