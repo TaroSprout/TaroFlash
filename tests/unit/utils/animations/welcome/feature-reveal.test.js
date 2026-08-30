@@ -49,8 +49,8 @@ describe('createFeatureReveal', () => {
     expect(handle.kill).toBeTypeOf('function')
   })
 
-  // [obligation] onEnter fires setActive(index, true) for each index in order
-  test('onEnter calls setActive(index, true) for each index in array order [obligation]', () => {
+  // onEnter fires setActive(index, true) for each index in order
+  test('onEnter calls setActive(index, true) for each index in array order', () => {
     const setActive = vi.fn()
     createFeatureReveal(trigger, [0, 1, 2], setActive)
 
@@ -63,8 +63,8 @@ describe('createFeatureReveal', () => {
     ])
   })
 
-  // [obligation] onEnterBack fires active=true when re-entering from below
-  test('onEnterBack calls setActive(index, true) for each index [obligation]', () => {
+  // onEnterBack fires active=true when re-entering from below
+  test('onEnterBack calls setActive(index, true) for each index', () => {
     const setActive = vi.fn()
     createFeatureReveal(trigger, [0, 1, 2], setActive)
 
@@ -77,8 +77,8 @@ describe('createFeatureReveal', () => {
     ])
   })
 
-  // [obligation] onLeave fires active=false when leaving the band above
-  test('onLeave calls setActive(index, false) for each index [obligation]', () => {
+  // onLeave fires active=false when leaving the band above
+  test('onLeave calls setActive(index, false) for each index', () => {
     const setActive = vi.fn()
     createFeatureReveal(trigger, [0, 1, 2], setActive)
 
@@ -91,8 +91,8 @@ describe('createFeatureReveal', () => {
     ])
   })
 
-  // [obligation] onLeaveBack fires active=false when scrolling back past the top
-  test('onLeaveBack calls setActive(index, false) for each index [obligation]', () => {
+  // onLeaveBack fires active=false when scrolling back past the top
+  test('onLeaveBack calls setActive(index, false) for each index', () => {
     const setActive = vi.fn()
     createFeatureReveal(trigger, [0, 1, 2], setActive)
 
@@ -117,8 +117,8 @@ describe('createFeatureReveal', () => {
     expect(delays[2]).toBeGreaterThan(delays[1])
   })
 
-  // [obligation] only the passed indices fire — a subset triggers only those cards
-  test('only the passed indices fire, in array order [obligation]', () => {
+  // only the passed indices fire — a subset triggers only those cards
+  test('only the passed indices fire, in array order', () => {
     const setActive = vi.fn()
     // Only indices [1, 3] — a subset of a 4-card row (tablet grid row)
     createFeatureReveal(trigger, [1, 3], setActive)

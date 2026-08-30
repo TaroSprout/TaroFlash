@@ -54,19 +54,19 @@ beforeEach(() => {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('provideWelcomeLayout', () => {
-  // ── width axis — three tiers [obligation] ──────────────────────────────────
+  // ── width axis — three tiers ──────────────────────────────────
 
   describe('width computed', () => {
-    // [obligation] desktop at/above xl (w<xl=false)
-    test('is "desktop" when viewport is at/above xl [obligation]', () => {
+    // desktop at/above xl (w<xl=false)
+    test('is "desktop" when viewport is at/above xl', () => {
       belowXl.value = false
       const [{ width }, app] = withProvideLayout(provideWelcomeLayout)
       expect(width.value).toBe('desktop')
       app.unmount()
     })
 
-    // [obligation] tablet between sm and xl
-    test('is "tablet" when viewport is below xl but at/above sm [obligation]', () => {
+    // tablet between sm and xl
+    test('is "tablet" when viewport is below xl but at/above sm', () => {
       belowXl.value = true
       belowSm.value = false
       const [{ width }, app] = withProvideLayout(provideWelcomeLayout)
@@ -74,8 +74,8 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    // [obligation] mobile below sm — was previously unreachable, now must work
-    test('is "mobile" when viewport is below sm [obligation]', () => {
+    // mobile below sm — was previously unreachable, now must work
+    test('is "mobile" when viewport is below sm', () => {
       belowXl.value = true
       belowSm.value = true
       const [{ width }, app] = withProvideLayout(provideWelcomeLayout)
@@ -83,8 +83,8 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    // [obligation] boundary: xl not lg — desktop only unwraps at xl
-    test('uses w<xl (not w<lg) as the desktop boundary [obligation]', () => {
+    // boundary: xl not lg — desktop only unwraps at xl
+    test('uses w<xl (not w<lg) as the desktop boundary', () => {
       // Verify the query key is w<xl — mock only returns belowXl for that key.
       // If the source used w<lg instead, this ref would stay false and width
       // would read as 'desktop' even when we set belowXl=true.
@@ -94,8 +94,8 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    // [obligation] boundary: sm for mobile — not md or xs
-    test('uses w<sm as the mobile boundary [obligation]', () => {
+    // boundary: sm for mobile — not md or xs
+    test('uses w<sm as the mobile boundary', () => {
       belowXl.value = true
       belowSm.value = true
       const [{ width }, app] = withProvideLayout(provideWelcomeLayout)
@@ -103,7 +103,7 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    test('width updates reactively when belowXl changes [obligation]', () => {
+    test('width updates reactively when belowXl changes', () => {
       belowXl.value = false
       const [{ width }, app] = withProvideLayout(provideWelcomeLayout)
       expect(width.value).toBe('desktop')
@@ -113,7 +113,7 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    test('width updates reactively when belowSm changes [obligation]', () => {
+    test('width updates reactively when belowSm changes', () => {
       belowXl.value = true
       belowSm.value = false
       const [{ width }, app] = withProvideLayout(provideWelcomeLayout)
@@ -125,24 +125,24 @@ describe('provideWelcomeLayout', () => {
     })
   })
 
-  // ── height axis [obligation] ───────────────────────────────────────────────
+  // ── height axis ───────────────────────────────────────────────
 
   describe('height computed', () => {
-    test('is "tall" when viewport height is at/above md [obligation]', () => {
+    test('is "tall" when viewport height is at/above md', () => {
       belowMd.value = false
       const [{ height }, app] = withProvideLayout(provideWelcomeLayout)
       expect(height.value).toBe('tall')
       app.unmount()
     })
 
-    test('is "short" when viewport height is below md [obligation]', () => {
+    test('is "short" when viewport height is below md', () => {
       belowMd.value = true
       const [{ height }, app] = withProvideLayout(provideWelcomeLayout)
       expect(height.value).toBe('short')
       app.unmount()
     })
 
-    test('height updates reactively when belowMd changes [obligation]', () => {
+    test('height updates reactively when belowMd changes', () => {
       belowMd.value = false
       const [{ height }, app] = withProvideLayout(provideWelcomeLayout)
       expect(height.value).toBe('tall')
@@ -153,10 +153,10 @@ describe('provideWelcomeLayout', () => {
     })
   })
 
-  // ── return shape [obligation] ──────────────────────────────────────────────
+  // ── return shape ──────────────────────────────────────────────
 
   describe('return shape', () => {
-    test('returns both width and height computed refs [obligation]', () => {
+    test('returns both width and height computed refs', () => {
       const [result, app] = withProvideLayout(provideWelcomeLayout)
       expect(result).toHaveProperty('width')
       expect(result).toHaveProperty('height')
@@ -165,7 +165,7 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    test('width and height are independent axes [obligation]', () => {
+    test('width and height are independent axes', () => {
       belowXl.value = true
       belowSm.value = false
       belowMd.value = false
@@ -175,7 +175,7 @@ describe('provideWelcomeLayout', () => {
       app.unmount()
     })
 
-    test('mobile width and short height are independent [obligation]', () => {
+    test('mobile width and short height are independent', () => {
       belowXl.value = true
       belowSm.value = true
       belowMd.value = true
@@ -190,7 +190,7 @@ describe('provideWelcomeLayout', () => {
 // ── useWelcomeWidth / useWelcomeHeight inject helpers ──────────────────────────
 
 describe('useWelcomeWidth', () => {
-  test('returns the injected width computed ref [obligation]', () => {
+  test('returns the injected width computed ref', () => {
     let injected
     const app = createApp({
       setup() {
@@ -210,7 +210,7 @@ describe('useWelcomeWidth', () => {
 })
 
 describe('useWelcomeHeight', () => {
-  test('returns the injected height computed ref [obligation]', () => {
+  test('returns the injected height computed ref', () => {
     let injected
     const app = createApp({
       setup() {

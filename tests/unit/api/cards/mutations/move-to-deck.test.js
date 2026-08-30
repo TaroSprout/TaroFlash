@@ -46,7 +46,7 @@ describe('useMoveCardsToDeckMutation — mutation()', () => {
 })
 
 describe('useMoveCardsToDeckMutation — onSettled()', () => {
-  test('invalidates every source deck with refetch_inactive [obligation]', () => {
+  test('invalidates every source deck with refetch_inactive', () => {
     const { onSettled } = config()
     onSettled(undefined, undefined, {
       target_deck_id: 20,
@@ -68,7 +68,7 @@ describe('useMoveCardsToDeckMutation — onSettled()', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 10] }, 'all')
   })
 
-  test('invalidates the target deck with refetch_inactive — user may be on neither deck [obligation]', () => {
+  test('invalidates the target deck with refetch_inactive — user may be on neither deck', () => {
     const { onSettled } = config()
     onSettled(undefined, undefined, { target_deck_id: 20, card_ids: [1], source_deck_ids: [5] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 20] }, 'all')

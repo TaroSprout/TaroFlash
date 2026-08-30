@@ -179,7 +179,7 @@ describe('installAudioLifecycle', () => {
     expect(engineMock.unlock).toHaveBeenCalledTimes(1)
   })
 
-  test('gesture unlock fires even when a bubble-phase stopPropagation blocks the event [obligation]', async () => {
+  test('gesture unlock fires even when a bubble-phase stopPropagation blocks the event', async () => {
     // Regression guard: the lifecycle listener must be in CAPTURE phase so that a
     // descendant's @click.stop (bubble-phase stopPropagation) cannot swallow the
     // event before window sees it. Capture runs window→target, ahead of any
@@ -269,7 +269,7 @@ describe('installAudioLifecycle', () => {
     noopTeardown()
   })
 
-  describe('background recovery (hidden→visible) — unconditional forced unlock [obligation]', () => {
+  describe('background recovery (hidden→visible) — unconditional forced unlock', () => {
     test('arms a forced gesture retry even when the engine reports running', async () => {
       engineMock.state.mockReturnValue('running')
       const install = await loadLifecycle()
@@ -316,7 +316,7 @@ describe('installAudioLifecycle', () => {
       expect(engineMock.unlock).toHaveBeenCalledWith(true)
     })
 
-    test('blur then focus forces the rebuild even when the engine reports running [obligation]', async () => {
+    test('blur then focus forces the rebuild even when the engine reports running', async () => {
       // Regression guard: desktop Safari never fires visibilitychange when the
       // window loses focus to another app, so blur→focus is the only signal —
       // and the context lies about being 'running' after an interruption.
@@ -362,7 +362,7 @@ describe('installAudioLifecycle', () => {
     })
   })
 
-  describe('navigator.userActivation gate on opportunistic resume() [obligation]', () => {
+  describe('navigator.userActivation gate on opportunistic resume()', () => {
     test('does not call resume() when hasBeenActive is false', async () => {
       setUserActivation(false)
       const install = await loadLifecycle()
@@ -420,11 +420,11 @@ describe('installAudioLifecycle', () => {
     })
   })
 
-  describe('self-healing re-arm on a failed unlock attempt [obligation]', () => {
+  describe('self-healing re-arm on a failed unlock attempt', () => {
     // Fake timers here (rather than the file's real-time flushMicrotasks
     // helper) so the UNLOCK_CHECK_MS wait can't bleed into other tests' own
     // pending self-heal timeouts sharing the same real clock.
-    test('re-arms the gesture retry when isUnlocked() is still false UNLOCK_CHECK_MS after a gesture unlock [obligation]', async () => {
+    test('re-arms the gesture retry when isUnlocked() is still false UNLOCK_CHECK_MS after a gesture unlock', async () => {
       vi.useFakeTimers()
       engineMock.isUnlocked.mockReturnValue(false)
       const install = await loadLifecycle()
@@ -446,7 +446,7 @@ describe('installAudioLifecycle', () => {
       vi.useRealTimers()
     })
 
-    test('does NOT re-arm when isUnlocked() reports true within the check window [obligation]', async () => {
+    test('does NOT re-arm when isUnlocked() reports true within the check window', async () => {
       vi.useFakeTimers()
       engineMock.isUnlocked.mockReturnValue(true)
       const install = await loadLifecycle()

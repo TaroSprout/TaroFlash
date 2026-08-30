@@ -55,7 +55,7 @@ describe('UiThemePicker', () => {
     expect(mockEmitSfx).toHaveBeenCalledTimes(1)
   })
 
-  test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
+  test('colours the selection tick with the accent-text token, not a fixed neutral', () => {
     const wrapper = makePicker({ palette: 'blue' })
     const tick = wrapper.find('[data-testid="theme-picker__option-blue"]').findComponent(UiIcon)
     expect(tick.classes()).toContain('text-(--color-accent-text)')

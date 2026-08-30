@@ -55,7 +55,7 @@ describe('readPersistedSession', () => {
     expect(readPersistedSession()).toEqual(makeSnapshot())
   })
 
-  test('returns undefined after clearPersistedSession() [obligation]', async () => {
+  test('returns undefined after clearPersistedSession()', async () => {
     usePersistedSession().value = makeSnapshot()
     await nextTick()
     expect(readPersistedSession()).toBeDefined()
@@ -65,12 +65,12 @@ describe('readPersistedSession', () => {
     expect(readPersistedSession()).toBeUndefined()
   })
 
-  // ── Stale snapshot rejection [obligation] ──────────────────────────────────
+  // ── Stale snapshot rejection ──────────────────────────────────
   // An older build's sessionStorage shape (mode/config_override instead of a
   // boolean `completed`) must never be resumed from — reading it clears the
   // key and returns undefined instead of handing back a stale-shaped object.
 
-  test('clears and returns undefined for an old-shape snapshot (mode + config_override, no completed) [obligation]', async () => {
+  test('clears and returns undefined for an old-shape snapshot (mode + config_override, no completed)', async () => {
     sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -86,7 +86,7 @@ describe('readPersistedSession', () => {
     expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
   })
 
-  test('rejects a snapshot missing deck_ids entirely [obligation]', () => {
+  test('rejects a snapshot missing deck_ids entirely', () => {
     sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ card_ids: [10], results: [], completed: false })
@@ -96,7 +96,7 @@ describe('readPersistedSession', () => {
     expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
   })
 
-  test('rejects a snapshot whose completed field is not a boolean [obligation]', () => {
+  test('rejects a snapshot whose completed field is not a boolean', () => {
     sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ deck_ids: [1], card_ids: [10], results: [], completed: 'studying' })
@@ -113,8 +113,8 @@ describe('readPersistedSession', () => {
   })
 })
 
-describe('clearPersistedSession [obligation]', () => {
-  test('removes the sessionStorage key entirely, not just resets to a JSON "undefined" string [obligation]', async () => {
+describe('clearPersistedSession', () => {
+  test('removes the sessionStorage key entirely, not just resets to a JSON "undefined" string', async () => {
     usePersistedSession().value = makeSnapshot()
     await nextTick()
     expect(sessionStorage.getItem(STORAGE_KEY)).not.toBeNull()

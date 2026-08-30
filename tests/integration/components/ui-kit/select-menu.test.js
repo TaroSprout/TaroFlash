@@ -109,28 +109,28 @@ describe('UiSelectMenu', () => {
     expect(wrapper.emitted('update:modelValue')[0]).toEqual(['default'])
   })
 
-  // ── Sfx [obligation] ──────────────────────────────────────────────────────
+  // ── Sfx ──────────────────────────────────────────────────────
 
-  test('picking a different option plays ui.select [obligation]', async () => {
+  test('picking a different option plays ui.select', async () => {
     const wrapper = mountSelectMenu({ modelValue: 'default' })
     await wrapper.find('[data-testid="fire-select-alt"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('picking the already-selected option plays ui.deselect [obligation]', async () => {
+  test('picking the already-selected option plays ui.deselect', async () => {
     const wrapper = mountSelectMenu({ modelValue: 'default' })
     await wrapper.find('[data-testid="fire-select"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.deselect')
   })
 
-  // ── size prop [obligation] ────────────────────────────────────────────────
+  // ── size prop ────────────────────────────────────────────────
 
-  test('defaults size to "base" on the dropdown button [obligation]', () => {
+  test('defaults size to "base" on the dropdown button', () => {
     const wrapper = mountSelectMenu()
     expect(wrapper.findComponent(UiDropdownButtonStub).props('size')).toBe('base')
   })
 
-  test('forwards an explicit size to the dropdown button [obligation]', () => {
+  test('forwards an explicit size to the dropdown button', () => {
     const wrapper = mountSelectMenu({ size: 'sm' })
     expect(wrapper.findComponent(UiDropdownButtonStub).props('size')).toBe('sm')
   })

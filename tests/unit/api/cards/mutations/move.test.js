@@ -84,7 +84,7 @@ describe('useMoveCardMutation — mutation()', () => {
 // ── onMutate — optimistic cache reorder ───────────────────────────────────────
 
 describe('useMoveCardMutation — onMutate()', () => {
-  test('re-keys the moved card and re-sorts by rank [obligation]', () => {
+  test('re-keys the moved card and re-sorts by rank', () => {
     cached_data = makeSnapshot([[card(1, 'a0'), card(2, 'a1'), card(3, 'a2')]])
     const { onMutate } = config()
 
@@ -95,7 +95,7 @@ describe('useMoveCardMutation — onMutate()', () => {
     expect(pages[0].cards.map((c) => c.id)).toEqual([2, 1, 3])
   })
 
-  test('ties on identical rank break by ascending id [obligation]', () => {
+  test('ties on identical rank break by ascending id', () => {
     cached_data = makeSnapshot([[card(2, 'a0'), card(3, 'a0')]])
     const { onMutate } = config()
 
@@ -124,7 +124,7 @@ describe('useMoveCardMutation — onMutate()', () => {
     expect(pages[1].cards.map((c) => c.id)).toEqual([2, 3])
   })
 
-  test('preserves next_rank on each refilled page [obligation]', () => {
+  test('preserves next_rank on each refilled page', () => {
     cached_data = {
       pages: [{ cards: [card(1, 'a0'), card(2, 'a1')], next_rank: 'z9' }],
       pageParams: [0]
@@ -137,7 +137,7 @@ describe('useMoveCardMutation — onMutate()', () => {
     expect(pages[0].next_rank).toBe('z9')
   })
 
-  test('is a no-op and returns { snapshot: undefined } when the deck is not cached [obligation]', () => {
+  test('is a no-op and returns { snapshot: undefined } when the deck is not cached', () => {
     cached_data = undefined
     const { onMutate } = config()
 
@@ -171,7 +171,7 @@ describe('useMoveCardMutation — onMutate()', () => {
 // ── onError — rollback ────────────────────────────────────────────────────────
 
 describe('useMoveCardMutation — onError()', () => {
-  test('restores the pre-mutate snapshot when the mutation errors [obligation]', () => {
+  test('restores the pre-mutate snapshot when the mutation errors', () => {
     const snapshot = makeSnapshot([[card(1, 'a0'), card(2, 'a1')]])
     const { onError } = config()
 
@@ -195,13 +195,13 @@ describe('useMoveCardMutation — onError()', () => {
 // ── onSettled — invalidation ──────────────────────────────────────────────────
 
 describe('useMoveCardMutation — onSettled()', () => {
-  test('invalidates the deck query on settle [obligation]', () => {
+  test('invalidates the deck query on settle', () => {
     const { onSettled } = config()
     onSettled(undefined, undefined, { deck_id: 10 })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 10] })
   })
 
-  test('invalidates the cards query on settle [obligation]', () => {
+  test('invalidates the cards query on settle', () => {
     const { onSettled } = config()
     onSettled(undefined, undefined, { deck_id: 10 })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })

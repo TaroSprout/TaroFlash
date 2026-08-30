@@ -58,7 +58,7 @@ describe('auth/callback', () => {
     expect(mocks.getSession).toHaveBeenCalledTimes(1)
   })
 
-  test('closes the window and does not navigate when consumeOAuthPopupFlag returns true [obligation]', async () => {
+  test('closes the window and does not navigate when consumeOAuthPopupFlag returns true', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(true)
     mount(Callback)
     await flushPromises()
@@ -66,7 +66,7 @@ describe('auth/callback', () => {
     expect(mocks.push).not.toHaveBeenCalled()
   })
 
-  test('navigates to the dashboard when consumeOAuthPopupFlag returns false and no destination was captured [obligation]', async () => {
+  test('navigates to the dashboard when consumeOAuthPopupFlag returns false and no destination was captured', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(false)
     mocks.consumeReturnDestination.mockReturnValue(null)
     mount(Callback)
@@ -75,9 +75,9 @@ describe('auth/callback', () => {
     expect(closeSpy).not.toHaveBeenCalled()
   })
 
-  // [obligation] a full-redirect OAuth round trip lands on the destination
+  // a full-redirect OAuth round trip lands on the destination
   // stashed before the redirect, not always the dashboard.
-  test('navigates to the consumed return destination when one was captured [obligation]', async () => {
+  test('navigates to the consumed return destination when one was captured', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(false)
     mocks.consumeReturnDestination.mockReturnValue('/deck/123')
     mount(Callback)
@@ -86,14 +86,14 @@ describe('auth/callback', () => {
     expect(mocks.push).not.toHaveBeenCalledWith({ name: 'dashboard' })
   })
 
-  test('does not consume the return destination when the popup flow closes the window [obligation]', async () => {
+  test('does not consume the return destination when the popup flow closes the window', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(true)
     mount(Callback)
     await flushPromises()
     expect(mocks.consumeReturnDestination).not.toHaveBeenCalled()
   })
 
-  test('popup leg never checks isNewAccountSession or fires Signup Completed — the opener owns that [obligation]', async () => {
+  test('popup leg never checks isNewAccountSession or fires Signup Completed — the opener owns that', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(true)
     mocks.isNewAccountSession.mockResolvedValue(true)
     mount(Callback)
@@ -102,7 +102,7 @@ describe('auth/callback', () => {
     expect(mocks.trackSignupCompleted).not.toHaveBeenCalled()
   })
 
-  test('redirect leg fires Signup Completed when isNewAccountSession() resolves true [obligation]', async () => {
+  test('redirect leg fires Signup Completed when isNewAccountSession() resolves true', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(false)
     mocks.isNewAccountSession.mockResolvedValue(true)
     mount(Callback)
@@ -110,7 +110,7 @@ describe('auth/callback', () => {
     expect(mocks.trackSignupCompleted).toHaveBeenCalledOnce()
   })
 
-  test('redirect leg does NOT fire Signup Completed when isNewAccountSession() resolves false — a returning account [obligation]', async () => {
+  test('redirect leg does NOT fire Signup Completed when isNewAccountSession() resolves false — a returning account', async () => {
     mocks.consumeOAuthPopupFlag.mockReturnValue(false)
     mocks.isNewAccountSession.mockResolvedValue(false)
     mount(Callback)

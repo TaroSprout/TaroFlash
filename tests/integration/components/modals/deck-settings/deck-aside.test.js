@@ -134,7 +134,7 @@ describe('DeckAside — layout', () => {
     expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('maxlength')).toBe('15')
   })
 
-  test('title input error reflects editor.title_error (destructured, no .value) [obligation]', () => {
+  test('title input error reflects editor.title_error (destructured, no .value)', () => {
     const { wrapper } = makeAside({ title: '', title_error: 'Give this deck a title' })
     expect(wrapper.find('[data-testid="ui-kit-input"]').attributes('data-error')).toBe(
       'Give this deck a title'

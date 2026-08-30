@@ -76,10 +76,10 @@ describe('SessionProgress', () => {
     cards.value = []
   })
 
-  // ── editing=false: renders progress bar [obligation] ──────────────────────
+  // ── editing=false: renders progress bar ──────────────────────
 
   describe('editing=false: progress bar shown', () => {
-    test('renders the progress bar when editing is false [obligation]', () => {
+    test('renders the progress bar when editing is false', () => {
       const wrapper = mountProgress({ editing: false, reviewed: 0, total: 50 })
       expect(wrapper.find('[data-testid="progress-bar-stub"]').exists()).toBe(true)
     })
@@ -89,7 +89,7 @@ describe('SessionProgress', () => {
       expect(wrapper.find('[data-testid="study-session__save-status"]').exists()).toBe(false)
     })
 
-    test('bar label is "current_index/total" — "0/50" when current_index=0 [obligation]', () => {
+    test('bar label is "current_index/total" — "0/50" when current_index=0', () => {
       mountProgress({ editing: false, reviewed: 0, total: 50 })
       expect(capturedBarProps.label).toBe('0/50')
     })
@@ -110,15 +110,15 @@ describe('SessionProgress', () => {
     })
   })
 
-  // ── editing=true: renders save-status [obligation] ────────────────────────
+  // ── editing=true: renders save-status ────────────────────────
 
   describe('editing=true: save-status shown', () => {
-    test('renders save-status region when editing is true [obligation]', () => {
+    test('renders save-status region when editing is true', () => {
       const wrapper = mountProgress({ editing: true, saving: false })
       expect(wrapper.find('[data-testid="study-session__save-status"]').exists()).toBe(true)
     })
 
-    test('does not render progress bar when editing is true [obligation]', () => {
+    test('does not render progress bar when editing is true', () => {
       const wrapper = mountProgress({ editing: true })
       expect(wrapper.find('[data-testid="progress-bar-stub"]').exists()).toBe(false)
     })
@@ -144,44 +144,44 @@ describe('SessionProgress', () => {
     })
   })
 
-  // ── editing=false, is_cover crossfade [obligation] ─────────────────────────
+  // ── editing=false, is_cover crossfade ─────────────────────────
 
   describe('editing=false: is_cover crossfade between studying-count and progress bar', () => {
-    test('is_cover=true shows the studying-count label as opaque [obligation]', () => {
+    test('is_cover=true shows the studying-count label as opaque', () => {
       const wrapper = mountProgress({ editing: false, is_cover: true })
       const label = wrapper.find('[data-testid="study-session__studying-count"]')
       expect(label.classes()).toContain('opacity-100')
     })
 
-    test('is_cover=true shows the pluralized studying-count for the total [obligation]', () => {
+    test('is_cover=true shows the pluralized studying-count for the total', () => {
       const wrapper = mountProgress({ editing: false, is_cover: true, total: 1 })
       expect(wrapper.find('[data-testid="study-session__studying-count"]').text()).toBe(
         'Studying 1 Card'
       )
     })
 
-    test('is_cover=true shows the pluralized studying-count for multiple cards [obligation]', () => {
+    test('is_cover=true shows the pluralized studying-count for multiple cards', () => {
       const wrapper = mountProgress({ editing: false, is_cover: true, total: 50 })
       expect(wrapper.find('[data-testid="study-session__studying-count"]').text()).toBe(
         'Studying 50 Cards'
       )
     })
 
-    test('is_cover=true fades out the progress bar but keeps it mounted in the DOM [obligation]', () => {
+    test('is_cover=true fades out the progress bar but keeps it mounted in the DOM', () => {
       const wrapper = mountProgress({ editing: false, is_cover: true })
       const bar = wrapper.find('[data-testid="progress-bar-stub"]')
       expect(bar.exists()).toBe(true)
       expect(bar.classes()).toContain('opacity-0')
     })
 
-    test('is_cover=false shows the progress bar as opaque [obligation]', () => {
+    test('is_cover=false shows the progress bar as opaque', () => {
       const wrapper = mountProgress({ editing: false, is_cover: false, reviewed: 10, total: 50 })
       const bar = wrapper.find('[data-testid="progress-bar-stub"]')
       expect(bar.exists()).toBe(true)
       expect(bar.classes()).toContain('opacity-100')
     })
 
-    test('is_cover=false fades out the studying-count label but keeps it mounted in the DOM [obligation]', () => {
+    test('is_cover=false fades out the studying-count label but keeps it mounted in the DOM', () => {
       const wrapper = mountProgress({ editing: false, is_cover: false })
       const label = wrapper.find('[data-testid="study-session__studying-count"]')
       expect(label.exists()).toBe(true)
@@ -196,15 +196,15 @@ describe('SessionProgress', () => {
     })
   })
 
-  // ── fixed h-9 root height across sub-states [obligation] ───────────────────
+  // ── fixed h-9 root height across sub-states ───────────────────
 
-  describe('root height stays fixed at h-9 across sub-states [obligation]', () => {
-    test('h-9 while showing the progress bar (editing=false) [obligation]', () => {
+  describe('root height stays fixed at h-9 across sub-states', () => {
+    test('h-9 while showing the progress bar (editing=false)', () => {
       const wrapper = mountProgress({ editing: false })
       expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain('h-9')
     })
 
-    test('h-9 while showing the save-status row (editing=true) [obligation]', () => {
+    test('h-9 while showing the save-status row (editing=true)', () => {
       const wrapper = mountProgress({ editing: true })
       expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain('h-9')
     })

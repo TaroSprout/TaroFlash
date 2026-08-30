@@ -71,8 +71,8 @@ beforeEach(() => {
 
 // ── confirm ───────────────────────────────────────────────────────────────────
 
-describe('UiPrompt — confirm [obligation]', () => {
-  test('confirm resolves the trimmed string, not the raw input value [obligation]', async () => {
+describe('UiPrompt — confirm', () => {
+  test('confirm resolves the trimmed string, not the raw input value', async () => {
     const { wrapper, close } = makeWrapper()
     await input(wrapper).setValue('  My Preset  ')
 
@@ -81,7 +81,7 @@ describe('UiPrompt — confirm [obligation]', () => {
     expect(close).toHaveBeenCalledWith('My Preset')
   })
 
-  test('a whitespace-only value blocks confirm — close is never called [obligation]', async () => {
+  test('a whitespace-only value blocks confirm — close is never called', async () => {
     const { wrapper, close } = makeWrapper()
     await input(wrapper).setValue('   ')
 
@@ -90,7 +90,7 @@ describe('UiPrompt — confirm [obligation]', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('an empty value blocks confirm — close is never called [obligation]', async () => {
+  test('an empty value blocks confirm — close is never called', async () => {
     const { wrapper, close } = makeWrapper()
 
     await confirmButton(wrapper).trigger('click')
@@ -98,12 +98,12 @@ describe('UiPrompt — confirm [obligation]', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('the required error is absent before the field is touched, even though the value is empty [obligation]', () => {
+  test('the required error is absent before the field is touched, even though the value is empty', () => {
     makeWrapper()
     expect(errorTooltipText()).toBe('')
   })
 
-  test('the required error surfaces only after a blocked confirm makes the field dirty [obligation]', async () => {
+  test('the required error surfaces only after a blocked confirm makes the field dirty', async () => {
     const { wrapper } = makeWrapper()
 
     await confirmButton(wrapper).trigger('click')
@@ -121,7 +121,7 @@ describe('UiPrompt — confirm [obligation]', () => {
   })
 })
 
-// ── sound effects [obligation] ──────────────────────────────────────────────────
+// ── sound effects ──────────────────────────────────────────────────
 
 describe('UiPrompt — sound effects', () => {
   test('confirm plays confirmAudio when provided', async () => {
@@ -179,10 +179,10 @@ describe('UiPrompt — message', () => {
   })
 })
 
-// ── station [obligation] ────────────────────────────────────────────────────
+// ── station ────────────────────────────────────────────────────
 
-describe('UiPrompt — station [obligation]', () => {
-  test('stamps the constant data-station="window" [obligation]', () => {
+describe('UiPrompt — station', () => {
+  test('stamps the constant data-station="window"', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="ui-kit-prompt"]').attributes('data-station')).toBe('window')
   })
@@ -191,7 +191,7 @@ describe('UiPrompt — station [obligation]', () => {
 // ── cancel ────────────────────────────────────────────────────────────────────
 
 describe('UiPrompt — cancel', () => {
-  test('cancel resolves undefined [obligation]', async () => {
+  test('cancel resolves undefined', async () => {
     const { wrapper, close } = makeWrapper()
 
     await cancelButton(wrapper).trigger('click')
@@ -210,8 +210,8 @@ describe('UiPrompt — cancel', () => {
 
 // ── dismissal via modal machinery ─────────────────────────────────────────────
 
-describe('UiPrompt — request-close dismissal [obligation]', () => {
-  test('registers a request-close handler (backdrop click / esc) that resolves undefined, like cancel [obligation]', () => {
+describe('UiPrompt — request-close dismissal', () => {
+  test('registers a request-close handler (backdrop click / esc) that resolves undefined, like cancel', () => {
     const { close, modalId } = makeWrapper()
 
     // The modal host invokes this handler on backdrop click or esc.
@@ -220,7 +220,7 @@ describe('UiPrompt — request-close dismissal [obligation]', () => {
     expect(close).toHaveBeenCalledWith(undefined)
   })
 
-  test('clicking inside the prompt box does not close it [obligation]', async () => {
+  test('clicking inside the prompt box does not close it', async () => {
     const { wrapper, close } = makeWrapper()
 
     await wrapper.find('[data-testid="ui-kit-prompt"]').trigger('click')

@@ -117,9 +117,9 @@ describe('TextEditor', () => {
     expect(wrapper.emitted('update')).toEqual([['typed']])
   })
 
-  // ── Empty normalization [obligation] ───────────────────────────────────────
+  // ── Empty normalization ───────────────────────────────────────
 
-  test('on_input collapses whitespace-only innerText to empty string [obligation]', async () => {
+  test('on_input collapses whitespace-only innerText to empty string', async () => {
     const wrapper = makeEditor({ content: 'hello' })
     const el = getEditorEl(wrapper)
     // Simulate innerText after select-all+delete — browser leaves a trailing newline
@@ -128,7 +128,7 @@ describe('TextEditor', () => {
     expect(wrapper.emitted('update')).toEqual([['']])
   })
 
-  test('on_input sets has_content false for whitespace-only input so placeholder reappears [obligation]', async () => {
+  test('on_input sets has_content false for whitespace-only input so placeholder reappears', async () => {
     const wrapper = makeEditor({ placeholder: 'Type here...' })
     const el = getEditorEl(wrapper)
     // First type something so placeholder hides
@@ -142,7 +142,7 @@ describe('TextEditor', () => {
     expect(getPlaceholder(wrapper).exists()).toBe(true)
   })
 
-  test('has_content seeds from trimmed content prop so whitespace-only content shows placeholder [obligation]', () => {
+  test('has_content seeds from trimmed content prop so whitespace-only content shows placeholder', () => {
     const wrapper = makeEditor({ placeholder: 'Type here...', content: '   ' })
     expect(getPlaceholder(wrapper).exists()).toBe(true)
   })
@@ -210,9 +210,9 @@ describe('TextEditor', () => {
     expect(getPlaceholder(wrapper).exists()).toBe(false)
   })
 
-  // ── onContainerPointerDown [obligation] ─────────────────────────────────────
+  // ── onContainerPointerDown ─────────────────────────────────────
 
-  test('pointerdown on the container (not editable) focuses the editor [obligation]', async () => {
+  test('pointerdown on the container (not editable) focuses the editor', async () => {
     const wrapper = makeEditor()
     const container = getContainer(wrapper)
     const editorEl = getEditorEl(wrapper).element
@@ -231,7 +231,7 @@ describe('TextEditor', () => {
     expect(focused).toBe(true)
   })
 
-  test('pointerdown on the container is a no-op when disabled [obligation]', async () => {
+  test('pointerdown on the container is a no-op when disabled', async () => {
     const wrapper = makeEditor({ disabled: true })
     const container = getContainer(wrapper)
 
@@ -245,7 +245,7 @@ describe('TextEditor', () => {
     expect(focused).toBe(false)
   })
 
-  test('pointerdown whose target IS the editable is a no-op (native caret placement) [obligation]', async () => {
+  test('pointerdown whose target IS the editable is a no-op (native caret placement)', async () => {
     const wrapper = makeEditor()
     const editorEl = getEditorEl(wrapper).element
 
@@ -262,7 +262,7 @@ describe('TextEditor', () => {
     expect(focused).toBe(false)
   })
 
-  // ── Ghost-event guard [obligation] ────────────────────────────────────────
+  // ── Ghost-event guard ────────────────────────────────────────
   // Regression guard for a real mobile bug: after a forwarded-focus tap, iOS
   // can dispatch a stray compatibility mousedown on a wholly different element
   // (e.g. a button elsewhere on screen) that steals focus back and/or fires an
@@ -296,7 +296,7 @@ describe('TextEditor', () => {
     }
   }
 
-  test('after a forwarded-focus tap, a mousedown anywhere in the document is swallowed [obligation]', () => {
+  test('after a forwarded-focus tap, a mousedown anywhere in the document is swallowed', () => {
     const wrapper = makeEditor()
     dispatchContainerPointerDown(wrapper)
 
@@ -306,7 +306,7 @@ describe('TextEditor', () => {
     expect(result.reachedTarget).toBe(false)
   })
 
-  test('after a forwarded-focus tap, a mouseup anywhere in the document is swallowed [obligation]', () => {
+  test('after a forwarded-focus tap, a mouseup anywhere in the document is swallowed', () => {
     const wrapper = makeEditor()
     dispatchContainerPointerDown(wrapper)
 
@@ -316,7 +316,7 @@ describe('TextEditor', () => {
     expect(result.reachedTarget).toBe(false)
   })
 
-  test('after a forwarded-focus tap, a click anywhere in the document is swallowed [obligation]', () => {
+  test('after a forwarded-focus tap, a click anywhere in the document is swallowed', () => {
     const wrapper = makeEditor()
     dispatchContainerPointerDown(wrapper)
 
@@ -326,7 +326,7 @@ describe('TextEditor', () => {
     expect(result.reachedTarget).toBe(false)
   })
 
-  test('the guard disarms on the next click, not on mousedown/mouseup alone [obligation]', () => {
+  test('the guard disarms on the next click, not on mousedown/mouseup alone', () => {
     const wrapper = makeEditor()
     dispatchContainerPointerDown(wrapper)
 
@@ -344,7 +344,7 @@ describe('TextEditor', () => {
     expect(after.reachedTarget).toBe(true)
   })
 
-  test('the guard disarms on its own after the fixed window elapses, even with no click [obligation]', async () => {
+  test('the guard disarms on its own after the fixed window elapses, even with no click', async () => {
     vi.useFakeTimers()
     const wrapper = makeEditor()
     dispatchContainerPointerDown(wrapper)
@@ -357,7 +357,7 @@ describe('TextEditor', () => {
     vi.useRealTimers()
   })
 
-  test('pointerdown whose target IS the editable does not arm the ghost-event guard [obligation]', () => {
+  test('pointerdown whose target IS the editable does not arm the ghost-event guard', () => {
     const wrapper = makeEditor()
     const editorEl = getEditorEl(wrapper).element
 

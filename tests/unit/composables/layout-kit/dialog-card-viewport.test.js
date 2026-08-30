@@ -103,9 +103,9 @@ describe('dialog-card-viewport', () => {
       expect(returnedViewport.value).toBe('desktop')
     })
 
-    // ── query prop is forwarded verbatim, not hardcoded [obligation] ──────────
+    // ── query prop is forwarded verbatim, not hardcoded ──────────
 
-    test('[obligation] forwards the "w<sm" query given by a caller to useMatchMedia', async () => {
+    test('forwards the "w<sm" query given by a caller to useMatchMedia', async () => {
       const { useMatchMedia } = await import('@/composables/ui/media-query')
       const { provideDialogCardViewport } =
         await import('@/components/layout-kit/dialog-card/dialog-card-viewport')
@@ -113,7 +113,7 @@ describe('dialog-card-viewport', () => {
       expect(useMatchMedia).toHaveBeenCalledWith('w<sm')
     })
 
-    test('[obligation] forwards a different query verbatim — does not collapse onto a shared default', async () => {
+    test('forwards a different query verbatim — does not collapse onto a shared default', async () => {
       const { useMatchMedia } = await import('@/composables/ui/media-query')
       const { provideDialogCardViewport } =
         await import('@/components/layout-kit/dialog-card/dialog-card-viewport')

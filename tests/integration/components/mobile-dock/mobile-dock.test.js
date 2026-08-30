@@ -59,8 +59,8 @@ afterEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('MobileDock', () => {
-  describe('breakpoint claim [obligation]', () => {
-    test('claims its breakpoint prop on mount, observable via is_visible [obligation]', async () => {
+  describe('breakpoint claim', () => {
+    test('claims its breakpoint prop on mount, observable via is_visible', async () => {
       const { is_visible } = useMobileDock()
 
       mountFill({}, { breakpoint: 'md' })
@@ -70,7 +70,7 @@ describe('MobileDock', () => {
       expect(is_visible.value).toBe(true)
     })
 
-    test('defaults to DEFAULT_BREAKPOINT when no breakpoint prop is passed [obligation]', async () => {
+    test('defaults to DEFAULT_BREAKPOINT when no breakpoint prop is passed', async () => {
       const { is_visible } = useMobileDock()
 
       mountFill()
@@ -80,7 +80,7 @@ describe('MobileDock', () => {
       expect(is_visible.value).toBe(true)
     })
 
-    test('releases its claim on unmount, falling back to DEFAULT_BREAKPOINT [obligation]', async () => {
+    test('releases its claim on unmount, falling back to DEFAULT_BREAKPOINT', async () => {
       const { is_visible } = useMobileDock()
       const wrapper = mountFill({}, { breakpoint: 'md' })
 

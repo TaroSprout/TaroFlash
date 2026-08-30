@@ -155,7 +155,7 @@ describe('DashboardActionsPanel — header', () => {
     expect(polaroid.attributes('data-interactive')).toBe('true')
   })
 
-  test('the wrapper div carries the positioning classes moved off the polaroid [obligation]', () => {
+  test('the wrapper div carries the positioning classes moved off the polaroid', () => {
     const wrapper = mount()
     const polaroid_wrapper = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
     expect(polaroid_wrapper.classes()).toContain('absolute')
@@ -167,26 +167,26 @@ describe('DashboardActionsPanel — header', () => {
   // `group` is load-bearing: the polaroid's swing is a `group-hover:` class, so
   // it only ever fires if the wrapper opens the group. `cursor-pointer` is the
   // affordance that says the polaroid is clickable at all.
-  test('the wrapper div opens the hover group and shows the click affordance [obligation]', () => {
+  test('the wrapper div opens the hover group and shows the click affordance', () => {
     const wrapper = mount()
     const polaroid_wrapper = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
     expect(polaroid_wrapper.classes()).toContain('group')
     expect(polaroid_wrapper.classes()).toContain('cursor-pointer')
   })
 
-  test('clicking the polaroid wrapper opens the settings modal on its default tab [obligation]', async () => {
+  test('clicking the polaroid wrapper opens the settings modal on its default tab', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]').trigger('click')
     expect(mockOpenSettings).toHaveBeenCalledWith()
   })
 
-  test('clicking the polaroid wrapper plays no sound [obligation]', async () => {
+  test('clicking the polaroid wrapper plays no sound', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]').trigger('click')
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('the polaroid wrapper wires v-sfx hover to ui.hover, with no click channel [obligation]', () => {
+  test('the polaroid wrapper wires v-sfx hover to ui.hover, with no click channel', () => {
     let captured
     const captureDirective = {
       mounted: (_el, binding) => (captured = binding.value),

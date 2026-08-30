@@ -75,12 +75,12 @@ describe('deepEqual', () => {
     expect(deepEqual({ nested: { b: 2 } }, { nested: { b: 3 } })).toBe(false)
   })
 
-  test('undefined-valued keys are ignored on both sides [obligation]', () => {
+  test('undefined-valued keys are ignored on both sides', () => {
     expect(deepEqual({ a: 1, b: undefined }, { a: 1 })).toBe(true)
     expect(deepEqual({ a: 1 }, { a: 1, b: undefined })).toBe(true)
   })
 
-  test('null-valued keys COUNT as a real value, unlike undefined [obligation]', () => {
+  test('null-valued keys COUNT as a real value, unlike undefined', () => {
     expect(deepEqual({ a: null }, {})).toBe(false)
     expect(deepEqual({}, { a: null })).toBe(false)
     expect(deepEqual({ a: null }, { a: null })).toBe(true)

@@ -36,7 +36,7 @@ describe('fetchCardsPageByDeckId', () => {
     expect(orderMock).toHaveBeenCalledWith('rank', { ascending: true })
   })
 
-  // [obligation] both .order() calls in sequence — rank primary, id tiebreak
+  // both .order() calls in sequence — rank primary, id tiebreak
   test('applies id as secondary sort key after rank so duplicate ranks paginate deterministically', async () => {
     rangeMock.mockResolvedValueOnce({ data: [], error: null })
     await fetchCardsPageByDeckId({ deck_id: 10, offset: 0, limit: 50 })

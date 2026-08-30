@@ -52,7 +52,7 @@ describe('MemberPolaroid', () => {
 
   // Mounts the real avatar-image so the placeholder/frog split lands through
   // this surface, not just the component's own tests.
-  test('shows the shimmer placeholder rather than the frog while the avatar is unresolved [obligation]', async () => {
+  test('shows the shimmer placeholder rather than the frog while the avatar is unresolved', async () => {
     mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
     const wrapper = shallowMount(MemberPolaroid, {
       props: { avatar: 'panda' },
@@ -72,24 +72,24 @@ describe('MemberPolaroid', () => {
     )
   })
 
-  // ── size prop [obligation] ────────────────────────────────────────────────
+  // ── size prop ────────────────────────────────────────────────
 
-  test('defaults to size "base" and reflects it on the root data-size attribute [obligation]', () => {
+  test('defaults to size "base" and reflects it on the root data-size attribute', () => {
     const wrapper = mountPolaroid()
     expect(wrapper.find('[data-testid="member-polaroid"]').attributes('data-size')).toBe('base')
   })
 
-  test('size="sm" reflects on the root data-size attribute [obligation]', () => {
+  test('size="sm" reflects on the root data-size attribute', () => {
     const wrapper = mountPolaroid({ size: 'sm' })
     expect(wrapper.find('[data-testid="member-polaroid"]').attributes('data-size')).toBe('sm')
   })
 
-  // ── root positioning [obligation] ─────────────────────────────────────────
+  // ── root positioning ─────────────────────────────────────────
   // `relative` lives on the inner positioner so the paperclip sibling's `absolute`
   // positions against it; the root itself carries no position utility of its own,
   // so a caller's own `absolute`/`top-*`/`left-*` lands unopposed.
 
-  test('the root positions statically, leaving placement to the caller [obligation]', () => {
+  test('the root positions statically, leaving placement to the caller', () => {
     const wrapper = mount(MemberPolaroid, {
       attachTo: document.body,
       global: { stubs: { AvatarImage: AvatarImageStub } }
@@ -99,7 +99,7 @@ describe('MemberPolaroid', () => {
     wrapper.unmount()
   })
 
-  test('a caller-supplied positioning class takes effect on the root [obligation]', () => {
+  test('a caller-supplied positioning class takes effect on the root', () => {
     const host = document.createElement('div')
     host.style.position = 'relative'
     document.body.appendChild(host)
@@ -119,7 +119,7 @@ describe('MemberPolaroid', () => {
     host.remove()
   })
 
-  // ── photo slot [obligation] ─────────────────────────────────────────────────
+  // ── photo slot ─────────────────────────────────────────────────
   // A skeleton borrows this frame's real geometry via the slot instead of
   // hand-rolling a copy of it — the slot content must render inside the same
   // photo container the real avatar occupies, at that container's own size.
@@ -133,7 +133,7 @@ describe('MemberPolaroid', () => {
     ).toBe(true)
   })
 
-  test('renders photo slot content inside the real photo container instead of the fallback avatar [obligation]', () => {
+  test('renders photo slot content inside the real photo container instead of the fallback avatar', () => {
     const wrapper = mount(MemberPolaroid, {
       global: { stubs: { AvatarImage: AvatarImageStub } },
       slots: { photo: '<div data-testid="custom-photo"></div>' }
@@ -143,7 +143,7 @@ describe('MemberPolaroid', () => {
     expect(photo_container.find('[data-testid="avatar-image-stub"]').exists()).toBe(false)
   })
 
-  test('the photo slot content is sized by the real photo container, not by itself [obligation]', () => {
+  test('the photo slot content is sized by the real photo container, not by itself', () => {
     const wrapper = mount(MemberPolaroid, {
       attachTo: document.body,
       global: { stubs: { AvatarImage: AvatarImageStub } },
@@ -161,18 +161,18 @@ describe('MemberPolaroid', () => {
     wrapper.unmount()
   })
 
-  // ── photo slot [obligation] ────────────────────────────────────────────────
+  // ── photo slot ────────────────────────────────────────────────
   // The photo is a defaulted slot so a skeleton can borrow the frame's real
   // geometry — every existing caller that never fills it still needs its
   // avatar-image fallback, and a caller that does fill it needs the fallback gone.
 
-  test('with no photo slot content, renders the avatar image inside the photo container [obligation]', () => {
+  test('with no photo slot content, renders the avatar image inside the photo container', () => {
     const wrapper = mountPolaroid({ avatar: 'panda' })
     const photo = wrapper.find('[data-testid="member-polaroid__photo"]')
     expect(photo.find('[data-testid="avatar-image-stub"]').exists()).toBe(true)
   })
 
-  test('photo slot content overrides the default avatar image [obligation]', () => {
+  test('photo slot content overrides the default avatar image', () => {
     const wrapper = mount(MemberPolaroid, {
       slots: { photo: '<div data-testid="custom-photo">shimmer</div>' },
       global: { stubs: { AvatarImage: AvatarImageStub } }
@@ -182,12 +182,12 @@ describe('MemberPolaroid', () => {
     expect(photo.find('[data-testid="avatar-image-stub"]').exists()).toBe(false)
   })
 
-  // ── paperclip is an unrotated sibling of the frame [obligation] ───────────
+  // ── paperclip is an unrotated sibling of the frame ───────────
   // The clip used to sit nested inside the rotated frame and inherit its -12°;
   // now it's a sibling with the combined angle baked into its own class, so the
   // frame can swing on hover without dragging the clip along.
 
-  test('the clip is a sibling of the frame, not nested inside it [obligation]', () => {
+  test('the clip is a sibling of the frame, not nested inside it', () => {
     const wrapper = mountPolaroid()
     const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
     expect(frame.findComponent(UiIcon).exists()).toBe(false)
@@ -198,7 +198,7 @@ describe('MemberPolaroid', () => {
     ['base', { frame: 'w-30 p-2 pb-6', clip: '-top-3 left-12 size-10', origin: '57% 6%' }],
     ['sm', { frame: 'w-24 p-1.5 pb-5', clip: '-top-3 left-11 size-9', origin: '65% 5%' }]
   ])(
-    'size=%s reproduces the old geometry algebraically on the frame and the clip [obligation]',
+    'size=%s reproduces the old geometry algebraically on the frame and the clip',
     (size, expected) => {
       const wrapper = mountPolaroid({ size })
       const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
@@ -213,17 +213,17 @@ describe('MemberPolaroid', () => {
     }
   )
 
-  // ── interactive prop [obligation] ─────────────────────────────────────────
+  // ── interactive prop ─────────────────────────────────────────
   // `interactive` gates the hover swing; decorative call sites leave it off.
 
-  test('interactive defaults to false — no transition, no group-hover swing class [obligation]', () => {
+  test('interactive defaults to false — no transition, no group-hover swing class', () => {
     const wrapper = mountPolaroid()
     const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
     expect(frame.classes()).not.toContain('group-hover:-rotate-8')
     expect(frame.classes()).not.toContain('transition-transform')
   })
 
-  test('interactive=true adds the group-hover swing class and its transition [obligation]', () => {
+  test('interactive=true adds the group-hover swing class and its transition', () => {
     const wrapper = mountPolaroid({ interactive: true })
     const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
     expect(frame.classes()).toContain('group-hover:-rotate-8')

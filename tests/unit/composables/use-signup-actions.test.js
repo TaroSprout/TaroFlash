@@ -69,25 +69,25 @@ describe('useSignupActions', () => {
   // ── all_filled ────────────────────────────────────────────────────────────
 
   describe('all_filled', () => {
-    test('is false when all fields are empty [obligation]', () => {
+    test('is false when all fields are empty', () => {
       const auth = useSignupActions()
       expect(auth.all_filled).toBe(false)
     })
 
-    test('is false when only some fields are filled [obligation]', () => {
+    test('is false when only some fields are filled', () => {
       const auth = useSignupActions()
       auth.username = 'Alice'
       auth.email = 'alice@example.com'
       expect(auth.all_filled).toBe(false)
     })
 
-    test('is true only when all four fields are non-empty [obligation]', () => {
+    test('is true only when all four fields are non-empty', () => {
       const auth = useSignupActions()
       fillValidFields(auth)
       expect(auth.all_filled).toBe(true)
     })
 
-    test('is false when username is only whitespace [obligation]', () => {
+    test('is false when username is only whitespace', () => {
       const auth = useSignupActions()
       auth.username = '   '
       auth.email = 'alice@example.com'
@@ -100,12 +100,12 @@ describe('useSignupActions', () => {
   // ── field errors gated on tried_submit ────────────────────────────────────
 
   describe('errors before first submit', () => {
-    test('errors are empty before any submit attempt [obligation]', () => {
+    test('errors are empty before any submit attempt', () => {
       const auth = useSignupActions()
       expect(Object.keys(auth.errors)).toHaveLength(0)
     })
 
-    test('errors populate after the first submit attempt [obligation]', async () => {
+    test('errors populate after the first submit attempt', async () => {
       const auth = useSignupActions()
       await auth.submit()
       await nextTick()
@@ -116,26 +116,26 @@ describe('useSignupActions', () => {
   // ── submit() — invalid path (no network call) ─────────────────────────────
 
   describe('submit() — validation failure', () => {
-    test('returns "invalid" without calling the store when fields are empty [obligation]', async () => {
+    test('returns "invalid" without calling the store when fields are empty', async () => {
       const auth = useSignupActions()
       const result = await auth.submit()
       expect(result).toBe('invalid')
       expect(mockSignupEmail).not.toHaveBeenCalled()
     })
 
-    test('does NOT fire Signup Completed on a validation failure [obligation]', async () => {
+    test('does NOT fire Signup Completed on a validation failure', async () => {
       const auth = useSignupActions()
       await auth.submit()
       expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
     })
 
-    test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
+    test('emits digi_powerdown sfx on validation failure', async () => {
       const auth = useSignupActions()
       await auth.submit()
       expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     })
 
-    test('sets tried_submit so errors populate [obligation]', async () => {
+    test('sets tried_submit so errors populate', async () => {
       const auth = useSignupActions()
       await auth.submit()
       await nextTick()
@@ -183,7 +183,7 @@ describe('useSignupActions', () => {
   // ── submit() — success path ───────────────────────────────────────────────
 
   describe('submit() — success', () => {
-    test('returns "success" when store outcome is "success" [obligation]', async () => {
+    test('returns "success" when store outcome is "success"', async () => {
       mockSignupEmail.mockResolvedValueOnce('success')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -191,7 +191,7 @@ describe('useSignupActions', () => {
       expect(result).toBe('success')
     })
 
-    test('fires Signup Completed on the "success" outcome, and only then [obligation]', async () => {
+    test('fires Signup Completed on the "success" outcome, and only then', async () => {
       mockSignupEmail.mockResolvedValueOnce('success')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -224,7 +224,7 @@ describe('useSignupActions', () => {
   // ── submit() — email-taken path ───────────────────────────────────────────
 
   describe('submit() — email taken', () => {
-    test('returns "invalid" when store outcome is "email-taken" [obligation]', async () => {
+    test('returns "invalid" when store outcome is "email-taken"', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -232,7 +232,7 @@ describe('useSignupActions', () => {
       expect(result).toBe('invalid')
     })
 
-    test('sets inline email error when email is taken [obligation]', async () => {
+    test('sets inline email error when email is taken', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -241,7 +241,7 @@ describe('useSignupActions', () => {
       expect(auth.errors.email).toBeDefined()
     })
 
-    test('emits etc_woodblock_stuck sfx when email is taken [obligation]', async () => {
+    test('emits etc_woodblock_stuck sfx when email is taken', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -249,7 +249,7 @@ describe('useSignupActions', () => {
       expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
-    test('does NOT fire Signup Completed when the email is already taken [obligation]', async () => {
+    test('does NOT fire Signup Completed when the email is already taken', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -315,7 +315,7 @@ describe('useSignupActions', () => {
   // ── submit() — error path ─────────────────────────────────────────────────
 
   describe('submit() — error', () => {
-    test('returns "error" when store outcome is "error" [obligation]', async () => {
+    test('returns "error" when store outcome is "error"', async () => {
       mockSignupEmail.mockResolvedValueOnce('error')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -323,7 +323,7 @@ describe('useSignupActions', () => {
       expect(result).toBe('error')
     })
 
-    test('does NOT emit sfx on store error [obligation]', async () => {
+    test('does NOT emit sfx on store error', async () => {
       mockSignupEmail.mockResolvedValueOnce('error')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -331,7 +331,7 @@ describe('useSignupActions', () => {
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
 
-    test('does NOT fire Signup Completed when the store outcome is "error" [obligation]', async () => {
+    test('does NOT fire Signup Completed when the store outcome is "error"', async () => {
       mockSignupEmail.mockResolvedValueOnce('error')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -340,10 +340,10 @@ describe('useSignupActions', () => {
     })
   })
 
-  // ── clear-on-type [obligation] ────────────────────────────────────────────
+  // ── clear-on-type ────────────────────────────────────────────
 
   describe('clear-on-type', () => {
-    test('typing in email clears errors.email including backend email-taken message [obligation]', async () => {
+    test('typing in email clears errors.email including backend email-taken message', async () => {
       mockSignupEmail.mockResolvedValueOnce('email-taken')
       const auth = useSignupActions()
       fillValidFields(auth)
@@ -369,7 +369,7 @@ describe('useSignupActions', () => {
       expect(auth.errors.username).toBeUndefined()
     })
 
-    test('clearing one field does not clear other fields errors [obligation]', async () => {
+    test('clearing one field does not clear other fields errors', async () => {
       const auth = useSignupActions()
       await auth.submit()
       await nextTick()
@@ -386,9 +386,9 @@ describe('useSignupActions', () => {
   // ── submitOAuth ────────────────────────────────────────────────────────────
 
   describe('submitOAuth', () => {
-    // [obligation] submitOAuth passes only the provider — the store/api own the
+    // submitOAuth passes only the provider — the store/api own the
     // redirect URL; a caller-supplied redirectTo was the original signup bug.
-    test('delegates to session.signInOAuth with only the provider [obligation]', () => {
+    test('delegates to session.signInOAuth with only the provider', () => {
       mockSignInOAuth.mockResolvedValueOnce('success')
       const auth = useSignupActions()
       auth.submitOAuth('google')

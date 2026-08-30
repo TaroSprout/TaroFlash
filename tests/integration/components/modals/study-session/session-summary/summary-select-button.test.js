@@ -21,12 +21,12 @@ describe('SummarySelectButton', () => {
     while (mounted_wrappers.length > 0) mounted_wrappers.pop().unmount()
   })
 
-  test('renders the select button [obligation]', () => {
+  test('renders the select button', () => {
     const wrapper = mountButton()
     expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(true)
   })
 
-  test('defaults to not-selecting (data-check icon, "Select" tooltip) [obligation]', async () => {
+  test('defaults to not-selecting (data-check icon, "Select" tooltip)', async () => {
     const wrapper = mountButton()
     const button = wrapper.find('[data-testid="session-summary__select-button"]')
     hover(button.element)
@@ -36,7 +36,7 @@ describe('SummarySelectButton', () => {
     expect(tooltip?.textContent).toContain('Select')
   })
 
-  test('is_selecting=true shows the "Done" tooltip instead [obligation]', async () => {
+  test('is_selecting=true shows the "Done" tooltip instead', async () => {
     const wrapper = mountButton({ is_selecting: true })
     const button = wrapper.find('[data-testid="session-summary__select-button"]')
     hover(button.element)
@@ -47,7 +47,7 @@ describe('SummarySelectButton', () => {
     expect(tooltip?.textContent).not.toContain('Select')
   })
 
-  test('emits "press" on click regardless of is_selecting [obligation]', async () => {
+  test('emits "press" on click regardless of is_selecting', async () => {
     const wrapper = mountButton({ is_selecting: true })
     await wrapper.find('[data-testid="session-summary__select-button"]').trigger('click')
     expect(wrapper.emitted('press')).toHaveLength(1)

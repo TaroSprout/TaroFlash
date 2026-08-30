@@ -49,10 +49,10 @@ describe('card-import/source-panel', () => {
     narrowRef.value = false
   })
 
-  // ── text-option disabled: coarse AND narrow only [obligation] ─────────────
+  // ── text-option disabled: coarse AND narrow only ─────────────
 
-  describe('text option disabled state [obligation]', () => {
-    test('enabled when the pointer is fine, even on a narrow viewport [obligation]', () => {
+  describe('text option disabled state', () => {
+    test('enabled when the pointer is fine, even on a narrow viewport', () => {
       coarseRef.value = false
       narrowRef.value = true
       const wrapper = mount(makeDraft())
@@ -60,7 +60,7 @@ describe('card-import/source-panel', () => {
       expect(options.find((o) => o.value === 'text').disabled).toBe(false)
     })
 
-    test('enabled when the viewport is wide, even with a coarse pointer [obligation]', () => {
+    test('enabled when the viewport is wide, even with a coarse pointer', () => {
       coarseRef.value = true
       narrowRef.value = false
       const wrapper = mount(makeDraft())
@@ -68,7 +68,7 @@ describe('card-import/source-panel', () => {
       expect(options.find((o) => o.value === 'text').disabled).toBe(false)
     })
 
-    test('disabled only when the pointer is coarse AND the viewport is narrow [obligation]', () => {
+    test('disabled only when the pointer is coarse AND the viewport is narrow', () => {
       coarseRef.value = true
       narrowRef.value = true
       const wrapper = mount(makeDraft())
@@ -139,7 +139,7 @@ describe('card-import/source-panel', () => {
     expect(wrapper.find('[data-testid="card-import-source__skipped-notice"]').exists()).toBe(false)
   })
 
-  test('shows the skipped-lines button when lines were skipped, and clicking opens them [obligation]', async () => {
+  test('shows the skipped-lines button when lines were skipped, and clicking opens them', async () => {
     const draft = makeDraft({ skipped: ref([{ line: 1, text: 'bad' }]) })
     const wrapper = mount(draft)
     const button = findButton(wrapper, 'card-import-source__skipped-notice')

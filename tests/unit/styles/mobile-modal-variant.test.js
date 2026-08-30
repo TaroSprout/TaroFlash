@@ -27,7 +27,7 @@ function widthTiers(variant_name) {
     .trim()
 }
 
-describe('mobile-modal-variant.css — mobile-modal-flush width tiers [obligation]', () => {
+describe('mobile-modal-variant.css — mobile-modal-flush width tiers', () => {
   test('duplicate the width tiers of mobile-modal verbatim', () => {
     expect(widthTiers('mobile-modal-flush')).toBe(widthTiers('mobile-modal'))
   })

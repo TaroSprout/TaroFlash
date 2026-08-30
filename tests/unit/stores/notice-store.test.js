@@ -144,34 +144,34 @@ describe('useNoticeStore', () => {
     })
   })
 
-  // ── return value [obligation] ────────────────────────────────────────────
+  // ── return value ────────────────────────────────────────────
 
-  describe('addNotice / warn / success / error / info return the created Notice [obligation]', () => {
-    test('warn() returns the notice it just pushed [obligation]', () => {
+  describe('addNotice / warn / success / error / info return the created Notice', () => {
+    test('warn() returns the notice it just pushed', () => {
       const store = useNoticeStore()
       const notice = store.warn('careful')
       expect(notice).toEqual(store.notices[0])
     })
 
-    test('success() returns the notice it just pushed [obligation]', () => {
+    test('success() returns the notice it just pushed', () => {
       const store = useNoticeStore()
       const notice = store.success('yay')
       expect(notice).toEqual(store.notices[0])
     })
 
-    test('error() returns the notice it just pushed [obligation]', () => {
+    test('error() returns the notice it just pushed', () => {
       const store = useNoticeStore()
       const notice = store.error('broke')
       expect(notice).toEqual(store.notices[0])
     })
 
-    test('info() returns the notice it just pushed [obligation]', () => {
+    test('info() returns the notice it just pushed', () => {
       const store = useNoticeStore()
       const notice = store.info('fyi')
       expect(notice).toEqual(store.notices[0])
     })
 
-    test('a caller can dismiss the returned notice via removeNotice [obligation]', () => {
+    test('a caller can dismiss the returned notice via removeNotice', () => {
       const store = useNoticeStore()
       const notice = store.success('yay')
 

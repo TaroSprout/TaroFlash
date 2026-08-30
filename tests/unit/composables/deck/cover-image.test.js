@@ -134,10 +134,10 @@ describe('useCoverImage — has_image', () => {
   })
 })
 
-// ── stageFile via onFile [obligation] ──────────────────────────────────────────
+// ── stageFile via onFile ──────────────────────────────────────────
 
-describe('useCoverImage — stageFile (via onFile) [obligation]', () => {
-  test('a validated file sets cover.image_path to a fresh objectURL [obligation]', async () => {
+describe('useCoverImage — stageFile (via onFile)', () => {
+  test('a validated file sets cover.image_path to a fresh objectURL', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     const file = pngFile()
@@ -159,7 +159,7 @@ describe('useCoverImage — stageFile (via onFile) [obligation]', () => {
     unmount()
   })
 
-  test('commit() later uploads the staged file (proof the File is held, not just its URL) [obligation]', async () => {
+  test('commit() later uploads the staged file (proof the File is held, not just its URL)', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(7))
     const file = pngFile()
@@ -174,10 +174,10 @@ describe('useCoverImage — stageFile (via onFile) [obligation]', () => {
   })
 })
 
-// ── onRemove [obligation] ───────────────────────────────────────────────────────
+// ── onRemove ───────────────────────────────────────────────────────
 
-describe('useCoverImage — onRemove [obligation]', () => {
-  test('clears the staged file and deletes cover.image_path [obligation]', async () => {
+describe('useCoverImage — onRemove', () => {
+  test('clears the staged file and deletes cover.image_path', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     await cover_image.onDrop(dropEvent(pngFile()))
@@ -190,7 +190,7 @@ describe('useCoverImage — onRemove [obligation]', () => {
     unmount()
   })
 
-  test('removing an already-uploaded cover (no staged file) also deletes image_path [obligation]', () => {
+  test('removing an already-uploaded cover (no staged file) also deletes image_path', () => {
     const cover = reactive({ image_path: 'https://cdn/existing.png' })
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
 
@@ -210,7 +210,7 @@ describe('useCoverImage — onRemove [obligation]', () => {
     unmount()
   })
 
-  test('emits ui.press before card.delete, in that order [obligation]', async () => {
+  test('emits ui.press before card.delete, in that order', async () => {
     const cover = reactive({ image_path: 'https://cdn/existing.png' })
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
 
@@ -223,7 +223,7 @@ describe('useCoverImage — onRemove [obligation]', () => {
     unmount()
   })
 
-  test('awaits collapseFaceImage before clearing image_path when an <img> is mounted [obligation]', async () => {
+  test('awaits collapseFaceImage before clearing image_path when an <img> is mounted', async () => {
     const cover = reactive({ image_path: 'https://cdn/existing.png' })
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     cover_image.image_el.value = document.createElement('img')
@@ -242,7 +242,7 @@ describe('useCoverImage — onRemove [obligation]', () => {
     unmount()
   })
 
-  test('revokes the staged object URL and clears the staged file on remove [obligation]', async () => {
+  test('revokes the staged object URL and clears the staged file on remove', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     await cover_image.onDrop(dropEvent(pngFile()))
@@ -254,7 +254,7 @@ describe('useCoverImage — onRemove [obligation]', () => {
     unmount()
   })
 
-  test('clears synchronously without throwing or calling collapseFaceImage when no <img> is mounted [obligation]', () => {
+  test('clears synchronously without throwing or calling collapseFaceImage when no <img> is mounted', () => {
     const cover = reactive({ image_path: 'https://cdn/existing.png' })
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     expect(cover_image.image_el.value).toBeNull()
@@ -267,10 +267,10 @@ describe('useCoverImage — onRemove [obligation]', () => {
   })
 })
 
-// ── reset restores a removed cover [obligation] ─────────────────────────────────
+// ── reset restores a removed cover ─────────────────────────────────
 
-describe('useCoverImage — reset restores a removed cover [obligation]', () => {
-  test('restoring image_path after onRemove brings has_image back — removal is draft-local until save [obligation]', async () => {
+describe('useCoverImage — reset restores a removed cover', () => {
+  test('restoring image_path after onRemove brings has_image back — removal is draft-local until save', async () => {
     const cover = reactive({ image_path: 'https://cdn/existing.png' })
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
 
@@ -286,9 +286,9 @@ describe('useCoverImage — reset restores a removed cover [obligation]', () => 
   })
 })
 
-// ── commit() with a staged file [obligation] ────────────────────────────────────
+// ── commit() with a staged file ────────────────────────────────────
 
-describe('useCoverImage — commit() with a staged file [obligation]', () => {
+describe('useCoverImage — commit() with a staged file', () => {
   async function stageAndCommit(deck_id = 7) {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(deck_id))
@@ -298,7 +298,7 @@ describe('useCoverImage — commit() with a staged file [obligation]', () => {
     return { cover, cover_image, unmount }
   }
 
-  test('uploads via useUploadImageMutation, then insertMedia with a content-addressed path [obligation]', async () => {
+  test('uploads via useUploadImageMutation, then insertMedia with a content-addressed path', async () => {
     const { unmount } = await stageAndCommit(7)
 
     expect(mockUploadMutateAsync).toHaveBeenCalledWith({
@@ -315,7 +315,7 @@ describe('useCoverImage — commit() with a staged file [obligation]', () => {
     unmount()
   })
 
-  test('sets cover.image_path to the uploaded public URL on success [obligation]', async () => {
+  test('sets cover.image_path to the uploaded public URL on success', async () => {
     mockUploadMutateAsync.mockResolvedValueOnce('https://cdn/published-cover.png')
     const { cover, unmount } = await stageAndCommit(7)
 
@@ -323,7 +323,7 @@ describe('useCoverImage — commit() with a staged file [obligation]', () => {
     unmount()
   })
 
-  test('upload failure throws an Error with cause "upload" and never calls insertMedia [obligation]', async () => {
+  test('upload failure throws an Error with cause "upload" and never calls insertMedia', async () => {
     mockUploadMutateAsync.mockRejectedValueOnce(new Error('network down'))
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(7))
@@ -334,7 +334,7 @@ describe('useCoverImage — commit() with a staged file [obligation]', () => {
     unmount()
   })
 
-  test('insertMedia failure throws an Error with cause "insert" [obligation]', async () => {
+  test('insertMedia failure throws an Error with cause "insert"', async () => {
     mockInsertMedia.mockRejectedValueOnce(new Error('rls denied'))
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(7))
@@ -344,7 +344,7 @@ describe('useCoverImage — commit() with a staged file [obligation]', () => {
     unmount()
   })
 
-  test('returns early (no throw, no calls) when there is no deck id [obligation]', async () => {
+  test('returns early (no throw, no calls) when there is no deck id', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(undefined))
     await cover_image.onDrop(dropEvent(pngFile()))
@@ -356,10 +356,10 @@ describe('useCoverImage — commit() with a staged file [obligation]', () => {
   })
 })
 
-// ── commit() with no staged file (removal) [obligation] ─────────────────────────
+// ── commit() with no staged file (removal) ─────────────────────────
 
-describe('useCoverImage — commit() with no staged file [obligation]', () => {
-  test('with no staged file and no image_path, calls deleteDeckCoverImage(deck_id) [obligation]', async () => {
+describe('useCoverImage — commit() with no staged file', () => {
+  test('with no staged file and no image_path, calls deleteDeckCoverImage(deck_id)', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(7))
 
@@ -369,7 +369,7 @@ describe('useCoverImage — commit() with no staged file [obligation]', () => {
     unmount()
   })
 
-  test('is idempotent — deleteDeckCoverImage runs even when there was never an active cover [obligation]', async () => {
+  test('is idempotent — deleteDeckCoverImage runs even when there was never an active cover', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(7))
 
@@ -389,16 +389,16 @@ describe('useCoverImage — commit() with no staged file [obligation]', () => {
   })
 })
 
-// ── no paid-plan gate [obligation] ──────────────────────────────────────────────
+// ── no paid-plan gate ──────────────────────────────────────────────
 
-describe('useCoverImage — no paid-plan gate [obligation]', () => {
-  test('useImageDropzone is wired with no `guard` option [obligation]', () => {
+describe('useCoverImage — no paid-plan gate', () => {
+  test('useImageDropzone is wired with no `guard` option', () => {
     const { unmount } = withCoverImage(reactive({}), ref(1))
     expect(captured_dropzone_opts.guard).toBeUndefined()
     unmount()
   })
 
-  test('openPicker calls browse() unconditionally (no guard check) [obligation]', () => {
+  test('openPicker calls browse() unconditionally (no guard check)', () => {
     const { cover_image, unmount } = withCoverImage(reactive({}), ref(1))
     const click = vi.fn()
     cover_image.file_input.value = { click }
@@ -410,7 +410,7 @@ describe('useCoverImage — no paid-plan gate [obligation]', () => {
     unmount()
   })
 
-  test('a free member (no plan check anywhere) can stage a file via onFile [obligation]', async () => {
+  test('a free member (no plan check anywhere) can stage a file via onFile', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
 
@@ -421,14 +421,14 @@ describe('useCoverImage — no paid-plan gate [obligation]', () => {
   })
 })
 
-// ── validation errors — COVER_IMAGE_MAX_BYTES / invalid type [obligation] ───────
+// ── validation errors — COVER_IMAGE_MAX_BYTES / invalid type ───────
 
-describe('useCoverImage — validation errors [obligation]', () => {
-  test('COVER_IMAGE_MAX_BYTES is 5 MiB [obligation]', () => {
+describe('useCoverImage — validation errors', () => {
+  test('COVER_IMAGE_MAX_BYTES is 5 MiB', () => {
     expect(COVER_IMAGE_MAX_BYTES).toBe(5 * 1024 * 1024)
   })
 
-  test('a file over 5 MiB stages nothing and sets error "too-large" [obligation]', async () => {
+  test('a file over 5 MiB stages nothing and sets error "too-large"', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     const big_file = pngFile(COVER_IMAGE_MAX_BYTES + 1)
@@ -441,7 +441,7 @@ describe('useCoverImage — validation errors [obligation]', () => {
     unmount()
   })
 
-  test('a non-image type stages nothing and sets error "invalid-type" [obligation]', async () => {
+  test('a non-image type stages nothing and sets error "invalid-type"', async () => {
     const cover = reactive({})
     const { cover_image, unmount } = withCoverImage(cover, ref(1))
     const bad_file = new File(['x'], 'notes.txt', { type: 'text/plain' })
@@ -464,10 +464,10 @@ describe('useCoverImage — validation errors [obligation]', () => {
   })
 })
 
-// ── drag cue [obligation] ────────────────────────────────────────────────────
+// ── drag cue ────────────────────────────────────────────────────
 
-describe('useCoverImage — drag cue [obligation]', () => {
-  test('onDragEnter chimes gesture.zone-cross since dragCue is omitted (defaults to true) [obligation]', () => {
+describe('useCoverImage — drag cue', () => {
+  test('onDragEnter chimes gesture.zone-cross since dragCue is omitted (defaults to true)', () => {
     const { cover_image, unmount } = withCoverImage(reactive({}), ref(1))
 
     cover_image.onDragEnter({ preventDefault: vi.fn() })

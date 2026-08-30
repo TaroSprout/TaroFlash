@@ -45,7 +45,7 @@ describe('useSessionBootstrapQuery', () => {
     expect(fetchSessionBootstrapMock).toHaveBeenCalledWith([1, 2, 3])
   })
 
-  test('enabled resolves to false — auto-fetch is off, the bootstrap runs manually via refetch() [obligation]', () => {
+  test('enabled resolves to false — auto-fetch is off, the bootstrap runs manually via refetch()', () => {
     const { enabled } = configFrom(() => useSessionBootstrapQuery(() => [1]))
     expect(enabled()).toBe(false)
   })

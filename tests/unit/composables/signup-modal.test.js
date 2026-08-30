@@ -46,7 +46,7 @@ beforeEach(() => {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('useSignupModal', () => {
-  test('emits snappy_button_3 immediately on open [obligation]', () => {
+  test('emits snappy_button_3 immediately on open', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -55,7 +55,7 @@ describe('useSignupModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('fires Signup Started on open [obligation]', () => {
+  test('fires Signup Started on open', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -64,7 +64,7 @@ describe('useSignupModal', () => {
     expect(mockTrackSignupStarted).toHaveBeenCalledOnce()
   })
 
-  test('fires Signup Started again on a second fresh open — no dedup [obligation]', () => {
+  test('fires Signup Started again on a second fresh open — no dedup', () => {
     const first = makeModalResult()
     const second = makeModalResult()
     mockOpen.mockReturnValueOnce(first.result).mockReturnValueOnce(second.result)
@@ -75,7 +75,7 @@ describe('useSignupModal', () => {
     expect(mockTrackSignupStarted).toHaveBeenCalledTimes(2)
   })
 
-  test('emits snappy_button_3 before pop_up_close (ordering) [obligation]', async () => {
+  test('emits snappy_button_3 before pop_up_close (ordering)', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -87,7 +87,7 @@ describe('useSignupModal', () => {
     expect(calls.indexOf('dialog.open')).toBeLessThan(calls.indexOf('dialog.close'))
   })
 
-  test('opens modal with mode mobile-sheet [obligation]', () => {
+  test('opens modal with mode mobile-sheet', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -99,7 +99,7 @@ describe('useSignupModal', () => {
     )
   })
 
-  test('opens modal with mobile_below_width sm [obligation]', () => {
+  test('opens modal with mobile_below_width sm', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -111,7 +111,7 @@ describe('useSignupModal', () => {
     )
   })
 
-  test('opens modal with backdrop [obligation]', () => {
+  test('opens modal with backdrop', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -120,7 +120,7 @@ describe('useSignupModal', () => {
     expect(mockOpen).toHaveBeenCalledWith(SignupDialog, expect.objectContaining({ backdrop: true }))
   })
 
-  test('passes payment prop through to the modal [obligation]', () => {
+  test('passes payment prop through to the modal', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -144,7 +144,7 @@ describe('useSignupModal', () => {
     )
   })
 
-  test('emits pop_up_close when the modal response resolves [obligation]', async () => {
+  test('emits pop_up_close when the modal response resolves', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 

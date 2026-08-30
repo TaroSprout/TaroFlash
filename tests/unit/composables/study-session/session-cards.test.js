@@ -96,7 +96,7 @@ describe('useSessionCards', () => {
 
   // ── Empty deck ids ─────────────────────────────────────────────────────────
 
-  test('calls onMissingDeck and bails when deckIds() is empty [obligation]', async () => {
+  test('calls onMissingDeck and bails when deckIds() is empty', async () => {
     const seed = vi.fn()
     const onMissingDeck = vi.fn()
 
@@ -112,7 +112,7 @@ describe('useSessionCards', () => {
     expect(bootstrapRefetchImpl.current).not.toHaveBeenCalled()
   })
 
-  test('loading stays true when deckIds() is empty [obligation]', async () => {
+  test('loading stays true when deckIds() is empty', async () => {
     const setup = withSetup(() =>
       useSessionCards({
         deckIds: () => [],
@@ -128,9 +128,9 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(true)
   })
 
-  // ── Successful bootstrap (no persisted session) — awaits refetch() [obligation] ─
+  // ── Successful bootstrap (no persisted session) — awaits refetch() ─
 
-  test('seeds cards from the awaited refetch() result, not a synchronously-cached value [obligation]', async () => {
+  test('seeds cards from the awaited refetch() result, not a synchronously-cached value', async () => {
     const cards = card.many(3)
     const decks = [makeDeck({ id: 42 })]
     bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess(decks, cards))
@@ -152,7 +152,7 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('exposes the resolved sessionDecks from the bootstrap [obligation]', async () => {
+  test('exposes the resolved sessionDecks from the bootstrap', async () => {
     const decks = [makeDeck({ id: 1 }), makeDeck({ id: 2 })]
     bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess(decks, []))
 
@@ -208,7 +208,7 @@ describe('useSessionCards', () => {
 
   // ── Non-success bootstrap ──────────────────────────────────────────────────
 
-  test('resets loading to false and does NOT seed when the bootstrap returns non-success [obligation]', async () => {
+  test('resets loading to false and does NOT seed when the bootstrap returns non-success', async () => {
     bootstrapRefetchImpl.current = vi
       .fn()
       .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
@@ -227,7 +227,7 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('fires a panel notice with a Retry action when the bootstrap fetch fails [obligation]', async () => {
+  test('fires a panel notice with a Retry action when the bootstrap fetch fails', async () => {
     bootstrapRefetchImpl.current = vi
       .fn()
       .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
@@ -254,7 +254,7 @@ describe('useSessionCards', () => {
     )
   })
 
-  test('clicking the Retry action re-invokes the bootstrap fetch [obligation]', async () => {
+  test('clicking the Retry action re-invokes the bootstrap fetch', async () => {
     bootstrapRefetchImpl.current = vi
       .fn()
       .mockResolvedValue({ status: 'error', data: null, error: 'oops' })
@@ -301,9 +301,9 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(true)
   })
 
-  // ── Restore path (refresh-resume) — restore queue lock [obligation] ───────
+  // ── Restore path (refresh-resume) — restore queue lock ───────
 
-  test('fetches every persisted card id — including already-reviewed ones [obligation]', async () => {
+  test('fetches every persisted card id — including already-reviewed ones', async () => {
     const persisted = {
       deck_ids: [1],
       card_ids: [10, 11, 12, 13],
@@ -356,7 +356,7 @@ describe('useSessionCards', () => {
     expect(restore).toHaveBeenCalledWith([], persisted)
   })
 
-  test('calls restore with the fetched remainder and the persisted snapshot on success [obligation]', async () => {
+  test('calls restore with the fetched remainder and the persisted snapshot on success', async () => {
     const persisted = { deck_ids: [1], card_ids: [10, 11], results: [], completed: false }
     readPersistedSessionMock.mockReturnValue(persisted)
     bootstrapRefetchImpl.current = vi.fn().mockResolvedValue(bootstrapSuccess([makeDeck()], []))
@@ -378,7 +378,7 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('still fetches every persisted card even when all of them were already reviewed [obligation]', async () => {
+  test('still fetches every persisted card even when all of them were already reviewed', async () => {
     const persisted = {
       deck_ids: [1],
       card_ids: [10, 11],
@@ -426,7 +426,7 @@ describe('useSessionCards', () => {
     expect(setup.result.loading.value).toBe(false)
   })
 
-  test('does NOT call restore, but does clear loading, when the remainder fetch does not succeed [obligation]', async () => {
+  test('does NOT call restore, but does clear loading, when the remainder fetch does not succeed', async () => {
     readPersistedSessionMock.mockReturnValue({
       deck_ids: [1],
       card_ids: [10],
@@ -453,7 +453,7 @@ describe('useSessionCards', () => {
     )
   })
 
-  test('a failing bootstrap fetch does not seed and reports the load error even when a persisted session exists [obligation]', async () => {
+  test('a failing bootstrap fetch does not seed and reports the load error even when a persisted session exists', async () => {
     readPersistedSessionMock.mockReturnValue({
       deck_ids: [1],
       card_ids: [10],

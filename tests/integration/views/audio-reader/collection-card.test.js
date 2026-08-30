@@ -35,7 +35,7 @@ describe('CollectionCard', () => {
       expect(wrapper.find('[data-testid="collection-card__date"]').text()).not.toBe('')
     })
 
-    test('stamps the constant data-station="panel" [obligation]', () => {
+    test('stamps the constant data-station="panel"', () => {
       const wrapper = mountCard()
       expect(wrapper.find('[data-testid="collection-card"]').attributes('data-station')).toBe(
         'panel'

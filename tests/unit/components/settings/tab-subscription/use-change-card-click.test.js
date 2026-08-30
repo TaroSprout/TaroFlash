@@ -74,7 +74,7 @@ beforeEach(() => {
 
 // ── default_card fallback ────────────────────────────────────────────────────
 
-describe('useChangeCcClick — default_card [obligation]', () => {
+describe('useChangeCcClick — default_card', () => {
   test('falls back to the first payment method when none matches defaultPaymentMethodId', () => {
     queryState.data = {
       paymentMethods: [card('pm_1', 'visa', '4242'), card('pm_2', 'mastercard', '5555')],
@@ -93,7 +93,7 @@ describe('useChangeCcClick — default_card [obligation]', () => {
 
 // ── mutation flow ─────────────────────────────────────────────────────────────
 
-describe('useChangeCcClick — mutation flow [obligation]', () => {
+describe('useChangeCcClick — mutation flow', () => {
   test('sets the new default and detaches every other previously-known id', async () => {
     queryState.data = {
       paymentMethods: [card('pm_old_1'), card('pm_old_2'), card('pm_old_3')],
@@ -196,7 +196,7 @@ describe('useChangeCcClick — mutation flow [obligation]', () => {
     expect(detachMutateMock).not.toHaveBeenCalled()
   })
 
-  test('does not call any mutation when added is true but paymentMethodId is missing [obligation]', async () => {
+  test('does not call any mutation when added is true but paymentMethodId is missing', async () => {
     queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
     modalOpenMock.mockReturnValue({
       response: Promise.resolve({ added: true, paymentMethodId: null })

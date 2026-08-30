@@ -45,9 +45,9 @@ describe('useAdminModal — call shape', () => {
     expect(returned).toBe(result)
   })
 
-  // ── sfx [obligation] ───────────────────────────────────────────────────────
+  // ── sfx ───────────────────────────────────────────────────────
 
-  test('plays snappy_button_3 sfx synchronously when opening [obligation]', () => {
+  test('plays snappy_button_3 sfx synchronously when opening', () => {
     mockOpen.mockReturnValueOnce({ response: Promise.resolve(undefined) })
 
     const { open } = useAdminModal()
@@ -56,7 +56,7 @@ describe('useAdminModal — call shape', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('plays pop_up_close sfx once the modal resolves [obligation]', async () => {
+  test('plays pop_up_close sfx once the modal resolves', async () => {
     let resolve
     const response = new Promise((res) => {
       resolve = res

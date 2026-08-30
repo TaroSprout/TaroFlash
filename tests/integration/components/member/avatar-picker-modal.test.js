@@ -136,7 +136,7 @@ describe('AvatarPickerModal', () => {
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('renders avatar-image for every tile unconditionally, with no per-tile skeleton of its own [obligation]', () => {
+  test('renders avatar-image for every tile unconditionally, with no per-tile skeleton of its own', () => {
     mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
     const wrapper = mountModal()
 
@@ -145,7 +145,7 @@ describe('AvatarPickerModal', () => {
     expect(option.findComponent(AvatarImage).exists()).toBe(true)
   })
 
-  test("passes each tile's own avatar key through to avatar-image, unresolved or not [obligation]", () => {
+  test("passes each tile's own avatar key through to avatar-image, unresolved or not", () => {
     mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
     const wrapper = mountModal()
 
@@ -153,18 +153,18 @@ describe('AvatarPickerModal', () => {
     expect(option.findComponent(AvatarImage).props('avatar')).toBe('panda')
   })
 
-  // ── dialog-card-body migration [obligation] ────────────────────────────────
+  // ── dialog-card-body migration ────────────────────────────────
   // Scrolling now belongs to dialog-card-body; the grid itself no longer owns
   // a template ref or a viewport-driven data-full-bleed attribute.
 
-  test('the grid no longer carries a data-full-bleed attribute [obligation]', () => {
+  test('the grid no longer carries a data-full-bleed attribute', () => {
     const wrapper = mountModal()
     expect(
       wrapper.find('[data-testid="avatar-picker-modal__grid"]').attributes('data-full-bleed')
     ).toBeUndefined()
   })
 
-  test('the scroll area is rendered by dialog-card-body, not a hand-rolled overflow div [obligation]', () => {
+  test('the scroll area is rendered by dialog-card-body, not a hand-rolled overflow div', () => {
     const wrapper = mountModal()
     expect(wrapper.findComponent(DialogCardBodyStub).exists()).toBe(true)
     expect(wrapper.findComponent(DialogCardBodyStub).attributes('data-testid')).toBe(
@@ -173,7 +173,7 @@ describe('AvatarPickerModal', () => {
   })
 
 
-  test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
+  test('colours the selection tick with the accent-text token, not a fixed neutral', () => {
     const wrapper = mountModal({ selected: 'otter' })
     const tick = wrapper
       .find('[data-testid="avatar-picker-modal__option-otter"]')
@@ -182,7 +182,7 @@ describe('AvatarPickerModal', () => {
   })
 })
 
-// ── tile grid reflow [obligation] ───────────────────────────────────────────
+// ── tile grid reflow ───────────────────────────────────────────
 // The tile itself stays a fixed size at every container width; the column
 // count is what bends, and the resulting block of tiles centers within the
 // leftover width. Asserted against real Chromium layout (getBoundingClientRect),
@@ -234,7 +234,7 @@ describe('AvatarPickerModal tile grid reflow', () => {
     return wrapper
   }
 
-  test('tile width is identical across container widths while the column count differs [obligation]', () => {
+  test('tile width is identical across container widths while the column count differs', () => {
     const narrow = firstRow(tileRects(mount(300)))
     const medium = firstRow(tileRects(mount(600)))
     const wide = firstRow(tileRects(mount(900)))
@@ -247,7 +247,7 @@ describe('AvatarPickerModal tile grid reflow', () => {
     expect(wide[0].width).toBeCloseTo(narrow_width, 0)
   })
 
-  test('leftover width splits evenly on either side of the tile block [obligation]', () => {
+  test('leftover width splits evenly on either side of the tile block', () => {
     const wrapper = mount(600)
     const host = hosts[0]
     const host_rect = host.getBoundingClientRect()
@@ -259,7 +259,7 @@ describe('AvatarPickerModal tile grid reflow', () => {
     expect(Math.abs(gap_before - gap_after)).toBeLessThanOrEqual(ROW_TOLERANCE_PX)
   })
 
-  test('tiles within a row sit left-to-right, one gap apart, including on a partial last row [obligation]', () => {
+  test('tiles within a row sit left-to-right, one gap apart, including on a partial last row', () => {
     const wrapper = mount(600)
     const rects = tileRects(wrapper)
     const row = firstRow(rects)
@@ -281,7 +281,7 @@ describe('AvatarPickerModal tile grid reflow', () => {
     }
   })
 
-  test('a container narrower than one tile shrinks the tile to fit instead of overflowing [obligation]', () => {
+  test('a container narrower than one tile shrinks the tile to fit instead of overflowing', () => {
     const wrapper = mount(80)
     const host = hosts[0]
     const row = firstRow(tileRects(wrapper))

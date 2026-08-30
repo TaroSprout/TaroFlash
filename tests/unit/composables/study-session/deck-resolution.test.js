@@ -124,7 +124,7 @@ describe('schedulerFor', () => {
   })
 })
 
-describe('startingSideFor [obligation]', () => {
+describe('startingSideFor', () => {
   test('returns each deck own starting_side value', () => {
     const { resolution } = withDecks([
       makeDeck({ id: 1, starting_side: 'front' }),
@@ -140,12 +140,12 @@ describe('startingSideFor [obligation]', () => {
     expect(resolution.startingSideFor(1)).toBe('random')
   })
 
-  test('falls back to "front" for an unknown deck_id [obligation]', () => {
+  test('falls back to "front" for an unknown deck_id', () => {
     const { resolution } = withDecks([makeDeck({ id: 1, starting_side: 'back' })])
     expect(resolution.startingSideFor(999)).toBe('front')
   })
 
-  test('falls back to "front" for an undefined deck_id (a card whose deck hasn\'t landed yet) [obligation]', () => {
+  test('falls back to "front" for an undefined deck_id (a card whose deck hasn\'t landed yet)', () => {
     const { resolution } = withDecks([makeDeck({ id: 1, starting_side: 'back' })])
     expect(resolution.startingSideFor(undefined)).toBe('front')
   })
@@ -199,7 +199,7 @@ describe('covers', () => {
   })
 })
 
-// ── orderCards [obligation] ──────────────────────────────────────────────────
+// ── orderCards ──────────────────────────────────────────────────
 // Two orthogonal axes: (1) each deck's own `shuffle` flag governs its INTERNAL
 // order, independent of (2) the cross-deck `ordering` strategy that merges the
 // per-deck slices.
@@ -208,8 +208,8 @@ function makeCards(deck_id, ids) {
   return ids.map((id) => ({ id, deck_id }))
 }
 
-describe('orderCards — sequential strategy [obligation]', () => {
-  test('returns cards grouped deck-by-deck in first-seen deck order (exact concat) [obligation]', () => {
+describe('orderCards — sequential strategy', () => {
+  test('returns cards grouped deck-by-deck in first-seen deck order (exact concat)', () => {
     const { resolution } = withDecks(
       [makeDeck({ id: 1, shuffle: false }), makeDeck({ id: 2, shuffle: false })],
       'sequential'
@@ -222,7 +222,7 @@ describe('orderCards — sequential strategy [obligation]', () => {
     expect(ordered.map((c) => c.id)).toEqual([101, 102, 103, 201])
   })
 
-  test('a single-deck session returns the one deck slice verbatim — strategy is moot [obligation]', () => {
+  test('a single-deck session returns the one deck slice verbatim — strategy is moot', () => {
     const { resolution } = withDecks([makeDeck({ id: 1, shuffle: false })], 'sequential')
     const cards = makeCards(1, [1, 2, 3])
 
@@ -230,8 +230,8 @@ describe('orderCards — sequential strategy [obligation]', () => {
   })
 })
 
-describe.each(['even_spread', 'random'])('orderCards — %s strategy [obligation]', (strategy) => {
-  test('preserves each deck internal relative order and the full card multiset (no drops/dupes) [obligation]', () => {
+describe.each(['even_spread', 'random'])('orderCards — %s strategy', (strategy) => {
+  test('preserves each deck internal relative order and the full card multiset (no drops/dupes)', () => {
     const { resolution } = withDecks(
       [makeDeck({ id: 1, shuffle: false }), makeDeck({ id: 2, shuffle: false })],
       strategy
@@ -256,7 +256,7 @@ describe.each(['even_spread', 'random'])('orderCards — %s strategy [obligation
     }
   })
 
-  test('a single-deck session returns the one deck slice verbatim — strategy is moot [obligation]', () => {
+  test('a single-deck session returns the one deck slice verbatim — strategy is moot', () => {
     const { resolution } = withDecks([makeDeck({ id: 1, shuffle: false })], strategy)
     const cards = makeCards(1, [1, 2, 3])
 
@@ -264,8 +264,8 @@ describe.each(['even_spread', 'random'])('orderCards — %s strategy [obligation
   })
 })
 
-describe('orderCards — per-deck shuffle flag governs internal order independently [obligation]', () => {
-  test('shuffle=false keeps server order for that deck even under the "random" cross-deck strategy [obligation]', () => {
+describe('orderCards — per-deck shuffle flag governs internal order independently', () => {
+  test('shuffle=false keeps server order for that deck even under the "random" cross-deck strategy', () => {
     const { resolution } = withDecks(
       [makeDeck({ id: 1, shuffle: false }), makeDeck({ id: 2, shuffle: false })],
       'random'
@@ -281,7 +281,7 @@ describe('orderCards — per-deck shuffle flag governs internal order independen
     }
   })
 
-  test('shuffle=true reorders a deck internal order, but preserves its full multiset [obligation]', () => {
+  test('shuffle=true reorders a deck internal order, but preserves its full multiset', () => {
     const { resolution } = withDecks([makeDeck({ id: 1, shuffle: true })], 'sequential')
     const cards = makeCards(1, [1, 2, 3, 4, 5, 6, 7, 8])
 

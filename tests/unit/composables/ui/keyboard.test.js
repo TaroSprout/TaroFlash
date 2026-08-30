@@ -70,7 +70,7 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(false)
   })
 
-  test('is_open becomes true once the viewport shrinks past the threshold from its running max [obligation]', async () => {
+  test('is_open becomes true once the viewport shrinks past the threshold from its running max', async () => {
     setCoarse(true)
     focusInput()
     const { is_open } = useKeyboardOpen()
@@ -81,13 +81,13 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(true)
   })
 
-  // ── hasEditableFocus gate [obligation] ──────────────────────────────────────
+  // ── hasEditableFocus gate ──────────────────────────────────────
   // Mobile Chrome's own URL bar hides/reveals on scroll, shrinking the visual
   // viewport just like the keyboard does. Gating on an editable element having
   // focus tells the two apart — a real on-screen keyboard is never open
   // without a focused text surface.
 
-  test('stays false on a coarse-pointer shrink past the threshold when nothing editable has focus [obligation]', () => {
+  test('stays false on a coarse-pointer shrink past the threshold when nothing editable has focus', () => {
     setCoarse(true)
     const { is_open } = useKeyboardOpen()
 
@@ -97,7 +97,7 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(false)
   })
 
-  test('becomes true on a coarse-pointer shrink past the threshold when an <input> has focus [obligation]', () => {
+  test('becomes true on a coarse-pointer shrink past the threshold when an <input> has focus', () => {
     setCoarse(true)
     focusInput()
     const { is_open } = useKeyboardOpen()
@@ -108,7 +108,7 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(true)
   })
 
-  test('becomes true when a contenteditable element has focus [obligation]', () => {
+  test('becomes true when a contenteditable element has focus', () => {
     setCoarse(true)
     // jsdom doesn't compute isContentEditable from the contenteditable
     // attribute, so stub document.activeElement directly with an element
@@ -130,7 +130,7 @@ describe('useKeyboardOpen', () => {
     delete document.activeElement
   })
 
-  test('a burst of resize events debounces to a single settle after ~120ms [obligation]', () => {
+  test('a burst of resize events debounces to a single settle after ~120ms', () => {
     setCoarse(true)
     focusInput()
     const { is_open } = useKeyboardOpen()
@@ -148,7 +148,7 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(true)
   })
 
-  test('running max keeps growing so a later, larger viewport height raises the baseline [obligation]', () => {
+  test('running max keeps growing so a later, larger viewport height raises the baseline', () => {
     setCoarse(true)
     focusInput()
     const { is_open } = useKeyboardOpen()
@@ -175,7 +175,7 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(false)
   })
 
-  test('a fine pointer (desktop) shrinking the viewport does not set is_open true [obligation]', () => {
+  test('a fine pointer (desktop) shrinking the viewport does not set is_open true', () => {
     const { is_open } = useKeyboardOpen()
 
     resize(500)
@@ -184,7 +184,7 @@ describe('useKeyboardOpen', () => {
     expect(is_open.value).toBe(false)
   })
 
-  test('re-evaluates on a pointer-type change without a new resize event [obligation]', async () => {
+  test('re-evaluates on a pointer-type change without a new resize event', async () => {
     setCoarse(true)
     focusInput()
     const { is_open } = useKeyboardOpen()

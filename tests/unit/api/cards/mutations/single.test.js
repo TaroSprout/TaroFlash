@@ -50,7 +50,7 @@ describe('useUpsertCardMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 10] })
   })
 
-  test('onSettled invalidates card index — upserted front text changes highlights [obligation]', () => {
+  test('onSettled invalidates card index — upserted front text changes highlights', () => {
     const { onSettled } = configFrom(useUpsertCardMutation)
     onSettled(undefined, undefined, { id: 1, deck_id: 10 })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
@@ -58,7 +58,7 @@ describe('useUpsertCardMutation', () => {
 })
 
 describe('useInsertCardMutation', () => {
-  test('mutation delegates to insertCard (plain table write, no RPC) [obligation]', async () => {
+  test('mutation delegates to insertCard (plain table write, no RPC)', async () => {
     const { mutation } = configFrom(useInsertCardMutation)
     const params = { deck_id: 10, rank: 'a5', front_text: 'Q', back_text: 'A' }
     await mutation(params)
@@ -79,7 +79,7 @@ describe('useInsertCardMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
-  test('onSettled invalidates card index — new front text must appear in highlights [obligation]', () => {
+  test('onSettled invalidates card index — new front text must appear in highlights', () => {
     const { onSettled } = configFrom(useInsertCardMutation)
     onSettled({ id: 9, rank: 'a5' }, undefined, {
       deck_id: 10,

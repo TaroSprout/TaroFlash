@@ -93,60 +93,60 @@ describe('deck-hero/index', () => {
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
   })
 
-  // ── bulk-actions overlay gated to true desktop [obligation] ─────────────────
+  // ── bulk-actions overlay gated to true desktop ─────────────────
 
-  test('keeps default actions mounted (not swapped) below xl while selecting [obligation]', () => {
+  test('keeps default actions mounted (not swapped) below xl while selecting', () => {
     const wrapper = mount({ editor: makeEditor({ is_selecting: true }), is_desktop: false })
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
   })
 
-  test('passes isSelecting through to actions below xl while selecting [obligation]', () => {
+  test('passes isSelecting through to actions below xl while selecting', () => {
     const wrapper = mount({ editor: makeEditor({ is_selecting: true }), is_desktop: false })
     const actions = wrapper.findComponent({ name: 'Actions' })
     expect(actions.props('isSelecting')).toBe(true)
   })
 
-  test('mounts bulk-actions overlay only at true desktop while selecting [obligation]', () => {
+  test('mounts bulk-actions overlay only at true desktop while selecting', () => {
     const wrapper = mount({ editor: makeEditor({ is_selecting: true }), is_desktop: true })
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
   })
 
-  // ── hideActions prop [obligation] ──────────────────────────────────────────
+  // ── hideActions prop ──────────────────────────────────────────
 
-  test('hides deck-hero__actions-wrap when hideActions=true [obligation]', () => {
+  test('hides deck-hero__actions-wrap when hideActions=true', () => {
     const wrapper = mount({ hideActions: true })
     expect(wrapper.find('[data-testid="deck-hero__actions-wrap"]').exists()).toBe(false)
   })
 
-  test('shows deck-hero__actions-wrap when hideActions=false (explicit) [obligation]', () => {
+  test('shows deck-hero__actions-wrap when hideActions=false (explicit)', () => {
     const wrapper = mount({ editor: makeEditor(), hideActions: false })
     expect(wrapper.find('[data-testid="deck-hero__actions-wrap"]').exists()).toBe(true)
   })
 
-  test('shows deck-hero__actions-wrap when hideActions is omitted (default false) [obligation]', () => {
+  test('shows deck-hero__actions-wrap when hideActions is omitted (default false)', () => {
     const wrapper = mount({ editor: makeEditor() })
     expect(wrapper.find('[data-testid="deck-hero__actions-wrap"]').exists()).toBe(true)
   })
 
-  test('hides both actions and bulk-actions when hideActions=true [obligation]', () => {
+  test('hides both actions and bulk-actions when hideActions=true', () => {
     const wrapper = mount({ editor: makeEditor({ is_selecting: true }), hideActions: true })
     expect(wrapper.find('[data-testid="deck-hero__actions-wrap"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
   })
 
-  // ── panel selection: exactly one of actions / bulk-actions / import-panel [obligation] ──
+  // ── panel selection: exactly one of actions / bulk-actions / import-panel ──
 
-  test('renders the import panel and hides actions when shell.mode is import [obligation]', () => {
+  test('renders the import panel and hides actions when shell.mode is import', () => {
     const wrapper = mount({ shell: makeShell('import') })
     expect(wrapper.find('[data-testid="importpanel-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="bulkactions-stub"]').exists()).toBe(false)
   })
 
-  test('import mode wins over bulk-select: import panel shown, bulk-actions hidden [obligation]', () => {
+  test('import mode wins over bulk-select: import panel shown, bulk-actions hidden', () => {
     const wrapper = mount({
       editor: makeEditor({ is_selecting: true }),
       shell: makeShell('import'),
@@ -157,24 +157,24 @@ describe('deck-hero/index', () => {
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(false)
   })
 
-  test('falls back to default actions when shell.mode is view (no import panel) [obligation]', () => {
+  test('falls back to default actions when shell.mode is view (no import panel)', () => {
     const wrapper = mount({ shell: makeShell('view') })
     expect(wrapper.find('[data-testid="importpanel-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="actions-stub"]').exists()).toBe(true)
   })
 
-  test('the import panel is hidden below md [obligation]', () => {
+  test('the import panel is hidden below md', () => {
     const wrapper = mount({ shell: makeShell('import') })
     expect(wrapper.find('[data-testid="importpanel-stub"]').classes()).toContain('max-md:hidden')
   })
 
-  test('renders the import toolbar (mode-import) above the actions panel, hidden below md [obligation]', () => {
+  test('renders the import toolbar (mode-import) above the actions panel, hidden below md', () => {
     const wrapper = mount({ shell: makeShell('import') })
     expect(wrapper.find('[data-testid="modeimport-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="modeimport-stub"]').classes()).toContain('max-md:hidden')
   })
 
-  test('does not render the import toolbar when shell.mode is view [obligation]', () => {
+  test('does not render the import toolbar when shell.mode is view', () => {
     const wrapper = mount({ shell: makeShell('view') })
     expect(wrapper.find('[data-testid="modeimport-stub"]').exists()).toBe(false)
   })

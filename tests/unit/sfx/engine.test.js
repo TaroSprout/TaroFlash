@@ -149,14 +149,14 @@ describe('unlock() when context is already running', () => {
     engine = await loadFreshEngine()
   })
 
-  test('does not close or rebuild the context [obligation]', () => {
+  test('does not close or rebuild the context', () => {
     engine.unlock()
 
     expect(contexts.length).toBe(1)
     expect(contexts[0].close).not.toHaveBeenCalled()
   })
 
-  test('fires the onUnlock callback immediately [obligation]', () => {
+  test('fires the onUnlock callback immediately', () => {
     const cb = vi.fn()
     engine.onUnlock(cb)
 
@@ -166,9 +166,9 @@ describe('unlock() when context is already running', () => {
   })
 })
 
-// ─── unlock(force) — bypasses the running-state shortcut [obligation] ────────
+// ─── unlock(force) — bypasses the running-state shortcut ────────
 
-describe('unlock(force) when context is already running [obligation]', () => {
+describe('unlock(force) when context is already running', () => {
   let engine
   let contexts
 
@@ -209,7 +209,7 @@ describe('unlock() when context is suspended — rebuild path', () => {
     engine = await loadFreshEngine()
   })
 
-  test('removes statechange listener from old context and closes it [obligation]', () => {
+  test('removes statechange listener from old context and closes it', () => {
     engine.unlock()
 
     const old_ctx = contexts[0]
@@ -217,14 +217,14 @@ describe('unlock() when context is suspended — rebuild path', () => {
     expect(old_ctx.close).toHaveBeenCalledTimes(1)
   })
 
-  test('creates a fresh AudioContext [obligation]', () => {
+  test('creates a fresh AudioContext', () => {
     engine.unlock()
 
     // ensureContext() creates context[0]; createContext() inside rebuild creates context[1]
     expect(contexts.length).toBe(2)
   })
 
-  test('fires onUnlock via statechange once fresh context reaches running [obligation]', () => {
+  test('fires onUnlock via statechange once fresh context reaches running', () => {
     const cb = vi.fn()
     engine.onUnlock(cb)
 
@@ -238,7 +238,7 @@ describe('unlock() when context is suspended — rebuild path', () => {
     expect(cb).toHaveBeenCalledTimes(1)
   })
 
-  test('marks unlocked synchronously when fresh context is born running [obligation]', async () => {
+  test('marks unlocked synchronously when fresh context is born running', async () => {
     const contexts2 = []
     // First call => suspended (ensureContext), second => running (fresh rebuild)
     installCtor(makeCtorWithContexts(contexts2, ['suspended', 'running']))
@@ -255,7 +255,7 @@ describe('unlock() when context is suspended — rebuild path', () => {
 
 // ─── primeOutput guard ────────────────────────────────────────────────────────
 
-describe('unlock() — primeOutput is fully guarded [obligation]', () => {
+describe('unlock() — primeOutput is fully guarded', () => {
   test('unlock() does not throw and completes rebuild when priming calls throw', async () => {
     const contexts = []
     let call_count = 0
@@ -282,7 +282,7 @@ describe('unlock() — primeOutput is fully guarded [obligation]', () => {
 
 // ─── markUnlocked — one-shot ──────────────────────────────────────────────────
 
-describe('markUnlocked — one-shot [obligation]', () => {
+describe('markUnlocked — one-shot', () => {
   let engine
   let contexts
 
@@ -317,7 +317,7 @@ describe('markUnlocked — one-shot [obligation]', () => {
 // ─── onUnlock ────────────────────────────────────────────────────────────────
 
 describe('onUnlock()', () => {
-  test('invokes callback immediately if already unlocked [obligation]', async () => {
+  test('invokes callback immediately if already unlocked', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['running']))
     const engine = await loadFreshEngine()
@@ -384,7 +384,7 @@ describe('onStateChange()', () => {
 // ─── play() ──────────────────────────────────────────────────────────────────
 
 describe('play()', () => {
-  test('resolves without starting playback when context is not running [obligation]', async () => {
+  test('resolves without starting playback when context is not running', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
     const engine = await loadFreshEngine()
@@ -404,7 +404,7 @@ describe('play()', () => {
     expect(fresh.createBufferSource.mock.calls.length).toBe(calls_before)
   })
 
-  test('wires BufferSource→GainNode(volume)→destination, calls start(), resolves on onended [obligation]', async () => {
+  test('wires BufferSource→GainNode(volume)→destination, calls start(), resolves on onended', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['running']))
     const engine = await loadFreshEngine()
@@ -441,7 +441,7 @@ describe('play()', () => {
     expect(gain_node.disconnect).toHaveBeenCalled()
   })
 
-  test('disconnects both source and gain via the fallback timer when onended never fires [obligation]', async () => {
+  test('disconnects both source and gain via the fallback timer when onended never fires', async () => {
     vi.useFakeTimers()
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['running']))
@@ -471,7 +471,7 @@ describe('play()', () => {
 // ─── resume() ────────────────────────────────────────────────────────────────
 
 describe('resume()', () => {
-  test('returns true immediately when already running — no context.resume() call [obligation]', async () => {
+  test('returns true immediately when already running — no context.resume() call', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['running']))
     const engine = await loadFreshEngine()
@@ -484,7 +484,7 @@ describe('resume()', () => {
     expect(contexts[0].resume).not.toHaveBeenCalled()
   })
 
-  test('awaits context.resume() and returns true when state becomes running [obligation]', async () => {
+  test('awaits context.resume() and returns true when state becomes running', async () => {
     const contexts = []
     function ResumingCtor() {
       const ctx = makeFakeContext('suspended')
@@ -503,7 +503,7 @@ describe('resume()', () => {
     expect(contexts[0].resume).toHaveBeenCalledTimes(1)
   })
 
-  test('returns false when context.resume() rejects [obligation]', async () => {
+  test('returns false when context.resume() rejects', async () => {
     const contexts = []
     function RejectingCtor() {
       const ctx = makeFakeContext('suspended')
@@ -519,7 +519,7 @@ describe('resume()', () => {
     expect(result).toBe(false)
   })
 
-  test('returns false when no AudioContext exists [obligation]', async () => {
+  test('returns false when no AudioContext exists', async () => {
     delete window.AudioContext
     delete window.webkitAudioContext
     const engine = await loadFreshEngine()
@@ -531,7 +531,7 @@ describe('resume()', () => {
 // ─── decode() ────────────────────────────────────────────────────────────────
 
 describe('decode()', () => {
-  test('fetches url, calls decodeAudioData on arraybuffer, returns AudioBuffer [obligation]', async () => {
+  test('fetches url, calls decodeAudioData on arraybuffer, returns AudioBuffer', async () => {
     const fake_array_buffer = new ArrayBuffer(8)
     const fake_audio_buffer = { duration: 0.5, numberOfChannels: 1 }
 
@@ -571,7 +571,7 @@ describe('decode()', () => {
 
 // ─── notifyState() — recovery cycle ──────────────────────────────────────────
 
-describe('notifyState() recovery cycle [obligation]', () => {
+describe('notifyState() recovery cycle', () => {
   test('unlock listener fires twice across running→suspended→running', async () => {
     // Both suspended: unlock() creates ctx[0] (ensureContext) + ctx[1] (rebuild)
     const contexts = []
@@ -595,7 +595,7 @@ describe('notifyState() recovery cycle [obligation]', () => {
     expect(cb).toHaveBeenCalledTimes(2)
   })
 
-  test('cb registered while already unlocked still fires on the next recovery cycle [obligation]', async () => {
+  test('cb registered while already unlocked still fires on the next recovery cycle', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
     const engine = await loadFreshEngine()
@@ -623,7 +623,7 @@ describe('notifyState() recovery cycle [obligation]', () => {
 
 // ─── isUnlocked() ────────────────────────────────────────────────────────────
 
-describe('isUnlocked() [obligation]', () => {
+describe('isUnlocked()', () => {
   test('returns false before context reaches running', async () => {
     const contexts = []
     installCtor(makeCtorWithContexts(contexts, ['suspended', 'suspended']))
@@ -664,7 +664,7 @@ describe('isUnlocked() [obligation]', () => {
 
 // ─── resume() timeout & clearTimeout ─────────────────────────────────────────
 
-describe('resume() — timeout & clearTimeout [obligation]', () => {
+describe('resume() — timeout & clearTimeout', () => {
   test('returns false and does not hang when context.resume() never settles', async () => {
     vi.useFakeTimers()
     const contexts = []

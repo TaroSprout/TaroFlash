@@ -89,19 +89,19 @@ describe('UiInput', () => {
 
   // ── maxLength ──────────────────────────────────────────────────────────────
 
-  test('sets maxlength attribute on the <input> when maxLength prop is provided [obligation]', () => {
+  test('sets maxlength attribute on the <input> when maxLength prop is provided', () => {
     const wrapper = mountInput({ maxLength: 12 })
     expect(wrapper.find('input').attributes('maxlength')).toBe('12')
   })
 
-  test('does not set maxlength attribute when maxLength prop is omitted [obligation]', () => {
+  test('does not set maxlength attribute when maxLength prop is omitted', () => {
     const wrapper = mountInput()
     expect(wrapper.find('input').attributes('maxlength')).toBeUndefined()
   })
 
   // ── sfx on focus ──────────────────────────────────────────────────────────
 
-  test('plays ui.focus sfx when the <input> receives focus [obligation]', async () => {
+  test('plays ui.focus sfx when the <input> receives focus', async () => {
     const wrapper = mountInput()
     await wrapper.find('input').trigger('focus')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.focus')

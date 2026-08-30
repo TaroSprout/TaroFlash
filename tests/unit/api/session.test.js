@@ -99,7 +99,7 @@ describe('getSession', () => {
     await expect(getSession()).rejects.toThrow('nope')
   })
 
-  test('resolves with the session when supabase.auth.getSession() settles before the timeout [obligation]', async () => {
+  test('resolves with the session when supabase.auth.getSession() settles before the timeout', async () => {
     vi.useFakeTimers()
     const session = { user: { id: 'u1' } }
     mocks.getSession.mockResolvedValueOnce({ data: { session }, error: null })
@@ -111,7 +111,7 @@ describe('getSession', () => {
     vi.useRealTimers()
   })
 
-  test('rejects once the 2s timeout elapses when supabase.auth.getSession() never resolves [obligation]', async () => {
+  test('rejects once the 2s timeout elapses when supabase.auth.getSession() never resolves', async () => {
     vi.useFakeTimers()
     mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
 
@@ -154,12 +154,12 @@ describe('isNewAccountSession', () => {
     vi.useRealTimers()
   })
 
-  test('returns false when there is no session [obligation]', async () => {
+  test('returns false when there is no session', async () => {
     mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
     await expect(isNewAccountSession()).resolves.toBe(false)
   })
 
-  test('returns true when created_at is 29_999ms before now, just inside the 30_000ms window [obligation]', async () => {
+  test('returns true when created_at is 29_999ms before now, just inside the 30_000ms window', async () => {
     const created_at = new Date(NOW - 29_999).toISOString()
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { created_at } } },
@@ -168,7 +168,7 @@ describe('isNewAccountSession', () => {
     await expect(isNewAccountSession()).resolves.toBe(true)
   })
 
-  test('returns false when created_at is exactly 30_000ms before now, at the boundary [obligation]', async () => {
+  test('returns false when created_at is exactly 30_000ms before now, at the boundary', async () => {
     const created_at = new Date(NOW - 30_000).toISOString()
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { created_at } } },
@@ -177,7 +177,7 @@ describe('isNewAccountSession', () => {
     await expect(isNewAccountSession()).resolves.toBe(false)
   })
 
-  test('returns false when created_at is well before the 30_000ms window, a returning account [obligation]', async () => {
+  test('returns false when created_at is well before the 30_000ms window, a returning account', async () => {
     const created_at = new Date(NOW - 60_000).toISOString()
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { created_at } } },
@@ -188,13 +188,13 @@ describe('isNewAccountSession', () => {
 })
 
 describe('login', () => {
-  test('returns "success" when signInWithPassword succeeds [obligation]', async () => {
+  test('returns "success" when signInWithPassword succeeds', async () => {
     mocks.signInWithPassword.mockResolvedValueOnce({ data: { session: {} }, error: null })
     await expect(login('e@x.com', 'pw')).resolves.toBe('success')
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({ email: 'e@x.com', password: 'pw' })
   })
 
-  test('returns "invalid-credentials" for invalid_credentials error code [obligation]', async () => {
+  test('returns "invalid-credentials" for invalid_credentials error code', async () => {
     mocks.signInWithPassword.mockResolvedValueOnce({
       data: null,
       error: { code: 'invalid_credentials', message: 'bad', status: 400 }
@@ -202,7 +202,7 @@ describe('login', () => {
     await expect(login('e@x.com', 'pw')).resolves.toBe('invalid-credentials')
   })
 
-  test('returns "email-not-confirmed" for email_not_confirmed error code [obligation]', async () => {
+  test('returns "email-not-confirmed" for email_not_confirmed error code', async () => {
     mocks.signInWithPassword.mockResolvedValueOnce({
       data: null,
       error: { code: 'email_not_confirmed', message: 'confirm', status: 400 }
@@ -210,7 +210,7 @@ describe('login', () => {
     await expect(login('e@x.com', 'pw')).resolves.toBe('email-not-confirmed')
   })
 
-  test('returns "rate-limited" when status is 429 [obligation]', async () => {
+  test('returns "rate-limited" when status is 429', async () => {
     mocks.signInWithPassword.mockResolvedValueOnce({
       data: null,
       error: { code: 'over_request_rate_limit', message: 'slow down', status: 429 }
@@ -218,7 +218,7 @@ describe('login', () => {
     await expect(login('e@x.com', 'pw')).resolves.toBe('rate-limited')
   })
 
-  test('returns "error" for any other error [obligation]', async () => {
+  test('returns "error" for any other error', async () => {
     mocks.signInWithPassword.mockResolvedValueOnce({
       data: null,
       error: { code: 'server_error', message: 'boom', status: 500 }
@@ -226,7 +226,7 @@ describe('login', () => {
     await expect(login('e@x.com', 'pw')).resolves.toBe('error')
   })
 
-  test('returns "error" when signInWithPassword throws [obligation]', async () => {
+  test('returns "error" when signInWithPassword throws', async () => {
     mocks.signInWithPassword.mockRejectedValueOnce(new Error('network failure'))
     await expect(login('e@x.com', 'pw')).resolves.toBe('error')
   })
@@ -244,60 +244,60 @@ describe('logout', () => {
   })
 })
 
-describe('signOutLocal [obligation]', () => {
-  test('calls supabase.auth.signOut scoped to local [obligation]', async () => {
+describe('signOutLocal', () => {
+  test('calls supabase.auth.signOut scoped to local', async () => {
     mocks.signOut.mockResolvedValueOnce({ error: null })
     await signOutLocal()
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' })
   })
 
-  test('swallows the error and logs it rather than throwing [obligation]', async () => {
+  test('swallows the error and logs it rather than throwing', async () => {
     mocks.signOut.mockResolvedValueOnce({ error: { message: 'already gone' } })
     await expect(signOutLocal()).resolves.toBeUndefined()
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('already gone'))
   })
 })
 
-describe('signOutOthers [obligation]', () => {
-  test('calls supabase.auth.signOut scoped to "others" [obligation]', async () => {
+describe('signOutOthers', () => {
+  test('calls supabase.auth.signOut scoped to "others"', async () => {
     mocks.signOut.mockResolvedValueOnce({ error: null })
     await signOutOthers()
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'others' })
   })
 
-  test('swallows the error and logs it rather than throwing [obligation]', async () => {
+  test('swallows the error and logs it rather than throwing', async () => {
     mocks.signOut.mockResolvedValueOnce({ error: { message: 'no other sessions' } })
     await expect(signOutOthers()).resolves.toBeUndefined()
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('no other sessions'))
   })
 })
 
-describe('requestAccountDeletion [obligation]', () => {
-  test('resolves with the deleteAt returned by the edge function [obligation]', async () => {
+describe('requestAccountDeletion', () => {
+  test('resolves with the deleteAt returned by the edge function', async () => {
     mocks.invoke.mockResolvedValueOnce({ data: { deleteAt: '2026-08-05T00:00:00Z' }, error: null })
     await expect(requestAccountDeletion()).resolves.toBe('2026-08-05T00:00:00Z')
     expect(mocks.invoke).toHaveBeenCalledWith('request-account-deletion', { body: {} })
   })
 
-  test('throws when the edge function returns an error [obligation]', async () => {
+  test('throws when the edge function returns an error', async () => {
     mocks.invoke.mockResolvedValueOnce({ data: null, error: new Error('boom') })
     await expect(requestAccountDeletion()).rejects.toThrow('boom')
   })
 
-  test('throws when the edge function returns no deleteAt [obligation]', async () => {
+  test('throws when the edge function returns no deleteAt', async () => {
     mocks.invoke.mockResolvedValueOnce({ data: {}, error: null })
     await expect(requestAccountDeletion()).rejects.toThrow()
   })
 })
 
-describe('restoreAccount [obligation]', () => {
-  test('calls the restore_account RPC and resolves on success [obligation]', async () => {
+describe('restoreAccount', () => {
+  test('calls the restore_account RPC and resolves on success', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: null, error: null })
     await expect(restoreAccount()).resolves.toBeUndefined()
     expect(mocks.rpc).toHaveBeenCalledWith('restore_account')
   })
 
-  test('throws when the RPC errors (not pending, or grace period expired) [obligation]', async () => {
+  test('throws when the RPC errors (not pending, or grace period expired)', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'Grace period expired' } })
     await expect(restoreAccount()).rejects.toThrow('Grace period expired')
   })
@@ -328,7 +328,7 @@ describe('signupEmail', () => {
     await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
   })
 
-  test('returns "error" when supabase.auth.signUp throws [obligation]', async () => {
+  test('returns "error" when supabase.auth.signUp throws', async () => {
     mocks.signUp.mockRejectedValueOnce(new Error('network failure'))
     await expect(signupEmail('e@x.com', 'pw')).resolves.toBe('error')
   })
@@ -346,7 +346,7 @@ describe('isDisplayNameAvailable', () => {
     await expect(isDisplayNameAvailable('Alice')).resolves.toBe(false)
   })
 
-  test('fails open (returns true) when the RPC errors [obligation]', async () => {
+  test('fails open (returns true) when the RPC errors', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
     await expect(isDisplayNameAvailable('Alice')).resolves.toBe(true)
   })
@@ -389,11 +389,11 @@ describe('signInOAuth', () => {
       expect(openSpy).not.toHaveBeenCalled()
     })
 
-    // [obligation] signInOAuth takes only a provider — the redirectTo is always
+    // signInOAuth takes only a provider — the redirectTo is always
     // the registered callback URL, never caller-suppliable. The original bug was
     // signup passing redirectTo:'/dashboard', which overrode the callback URL and
     // skipped the popup self-close path; this also closes an open-redirect hole.
-    test('always uses the registered callback redirectTo, never a caller-suppliable route [obligation]', async () => {
+    test('always uses the registered callback redirectTo, never a caller-suppliable route', async () => {
       global.__matchMedia.matches = true
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
 
@@ -403,7 +403,7 @@ describe('signInOAuth', () => {
       expect(arg.options.redirectTo).toBe('http://localhost:5173/auth/callback')
     })
 
-    test('signInOAuth does not accept a second argument [obligation]', async () => {
+    test('signInOAuth does not accept a second argument', async () => {
       global.__matchMedia.matches = true
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
 
@@ -411,19 +411,19 @@ describe('signInOAuth', () => {
       await signInOAuth('google')
     })
 
-    test('returns "error" (does not throw) when the redirect call errors [obligation]', async () => {
+    test('returns "error" (does not throw) when the redirect call errors', async () => {
       global.__matchMedia.matches = true
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: new Error('boom') })
       await expect(signInOAuth('google')).resolves.toBe('error')
     })
 
-    test('returns "success" when the redirect call succeeds [obligation]', async () => {
+    test('returns "success" when the redirect call succeeds', async () => {
       global.__matchMedia.matches = true
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
       await expect(signInOAuth('google')).resolves.toBe('success')
     })
 
-    test('clears a stale oauth-popup-pending flag left by an abandoned popup [obligation]', async () => {
+    test('clears a stale oauth-popup-pending flag left by an abandoned popup', async () => {
       global.__matchMedia.matches = true
       window.localStorage.setItem('oauth-popup-pending', '1')
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: null })
@@ -445,7 +445,7 @@ describe('signInOAuth', () => {
       return { get: () => cb, unsubscribe }
     }
 
-    test('sets the oauth-popup-pending flag when a genuine popup opens [obligation]', async () => {
+    test('sets the oauth-popup-pending flag when a genuine popup opens', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({
         data: { url: 'https://auth.x/login' },
         error: null
@@ -461,7 +461,7 @@ describe('signInOAuth', () => {
       expect(consumeOAuthPopupFlag()).toBe(false)
     })
 
-    test('does not set the oauth-popup-pending flag when window.open is blocked [obligation]', async () => {
+    test('does not set the oauth-popup-pending flag when window.open is blocked', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({
         data: { url: 'https://auth.x' },
         error: null
@@ -560,9 +560,9 @@ describe('signInOAuth', () => {
       await expect(promise).resolves.toBe('success')
     })
 
-    // [obligation] signInOAuth never throws — the timeout is caught internally
+    // signInOAuth never throws — the timeout is caught internally
     // and mapped to the 'error' outcome so callers can't misread a void promise.
-    test('resolves "error" (does not throw) after the 5-minute timeout [obligation]', async () => {
+    test('resolves "error" (does not throw) after the 5-minute timeout', async () => {
       vi.useFakeTimers()
       mocks.signInWithOAuth.mockResolvedValueOnce({
         data: { url: 'https://auth.x' },
@@ -609,12 +609,12 @@ describe('signInOAuth', () => {
       expect(locationStub.href).toBe('https://auth.x')
     })
 
-    test('resolves "error" (does not throw) when signInWithOAuth returns an error [obligation]', async () => {
+    test('resolves "error" (does not throw) when signInWithOAuth returns an error', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: null, error: new Error('oauth fail') })
       await expect(signInOAuth('google')).resolves.toBe('error')
     })
 
-    test('resolves "error" (does not throw) when signInWithOAuth returns no url [obligation]', async () => {
+    test('resolves "error" (does not throw) when signInWithOAuth returns no url', async () => {
       mocks.signInWithOAuth.mockResolvedValueOnce({ data: {}, error: null })
       await expect(signInOAuth('google')).resolves.toBe('error')
     })
@@ -656,7 +656,7 @@ describe('linkGoogleIdentity', () => {
     )
   })
 
-  test('[obligation] resolves via popup.closed polling, not onAuthStateChange', async () => {
+  test('resolves via popup.closed polling, not onAuthStateChange', async () => {
     mocks.linkIdentity.mockResolvedValueOnce({ data: { url: 'https://auth.x/link' }, error: null })
     mocks.refreshSession.mockResolvedValueOnce({ error: null })
     const popup = { closed: false }
@@ -677,7 +677,7 @@ describe('linkGoogleIdentity', () => {
     expect(settled).toBe(true)
   })
 
-  test('[obligation] calls refreshSession after the popup closes, before resolving', async () => {
+  test('calls refreshSession after the popup closes, before resolving', async () => {
     mocks.linkIdentity.mockResolvedValueOnce({ data: { url: 'https://auth.x/link' }, error: null })
     mocks.refreshSession.mockResolvedValueOnce({ error: null })
     const popup = { closed: false }
@@ -811,9 +811,9 @@ describe('updatePassword', () => {
     await expect(updatePassword('hunter22')).resolves.toBe('error')
   })
 
-  // [obligation] updatePassword calls signOutOthers() ONLY on a successful
+  // updatePassword calls signOutOthers() ONLY on a successful
   // updateUser — asserted not-called on every other outcome.
-  test('[obligation] calls signOutOthers (scope: "others") on success, after updateUser succeeds', async () => {
+  test('calls signOutOthers (scope: "others") on success, after updateUser succeeds', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: null })
     mocks.signOut.mockResolvedValueOnce({ error: null })
 
@@ -822,33 +822,33 @@ describe('updatePassword', () => {
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'others' })
   })
 
-  test('[obligation] does NOT call signOutOthers on "weak-password"', async () => {
+  test('does NOT call signOutOthers on "weak-password"', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: { code: 'weak_password', message: 'weak' } })
     await updatePassword('weak')
     expect(mocks.signOut).not.toHaveBeenCalled()
   })
 
-  test('[obligation] does NOT call signOutOthers on "same-password"', async () => {
+  test('does NOT call signOutOthers on "same-password"', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: { code: 'same_password', message: 'same' } })
     await updatePassword('hunter22')
     expect(mocks.signOut).not.toHaveBeenCalled()
   })
 
-  test('[obligation] does NOT call signOutOthers on any other error outcome', async () => {
+  test('does NOT call signOutOthers on any other error outcome', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: { code: 'server_error', message: 'boom' } })
     await updatePassword('hunter22')
     expect(mocks.signOut).not.toHaveBeenCalled()
   })
 
-  test('[obligation] does NOT call signOutOthers when updateUser throws', async () => {
+  test('does NOT call signOutOthers when updateUser throws', async () => {
     mocks.updateUser.mockRejectedValueOnce(new Error('network failure'))
     await updatePassword('hunter22')
     expect(mocks.signOut).not.toHaveBeenCalled()
   })
 
-  // [obligation] a failing signOutOthers() must NOT downgrade a successful
+  // a failing signOutOthers() must NOT downgrade a successful
   // password change — outcome stays 'success', error logged and swallowed.
-  test('[obligation] a failing signOutOthers does not downgrade the "success" outcome; error is logged and swallowed', async () => {
+  test('a failing signOutOthers does not downgrade the "success" outcome; error is logged and swallowed', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: null })
     mocks.signOut.mockResolvedValueOnce({ error: { message: 'revoke failed' } })
 
@@ -857,11 +857,11 @@ describe('updatePassword', () => {
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('revoke failed'))
   })
 
-  // [obligation] regression guard — updatePassword must never send a nonce.
+  // regression guard — updatePassword must never send a nonce.
   // Verified against local GoTrue: a deliberately wrong nonce still changes
   // the password when secure_password_change is off, so the nonce gates
   // nothing. Identity is verified before this call, never via GoTrue's nonce.
-  test('[obligation] never sends a nonce — updateUser is called with only { password }', async () => {
+  test('never sends a nonce — updateUser is called with only { password }', async () => {
     mocks.updateUser.mockResolvedValueOnce({ error: null })
     mocks.signOut.mockResolvedValueOnce({ error: null })
 
@@ -873,8 +873,8 @@ describe('updatePassword', () => {
   })
 })
 
-describe('fetchHasPassword [obligation]', () => {
-  test('returns true when the RPC resolves true [obligation]', async () => {
+describe('fetchHasPassword', () => {
+  test('returns true when the RPC resolves true', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: true, error: null })
     await expect(fetchHasPassword()).resolves.toBe(true)
     expect(mocks.rpc).toHaveBeenCalledWith('member_has_password')
@@ -885,10 +885,10 @@ describe('fetchHasPassword [obligation]', () => {
     await expect(fetchHasPassword()).resolves.toBe(false)
   })
 
-  // [obligation] falls back to false on error — false routes to the emailed-code
+  // falls back to false on error — false routes to the emailed-code
   // proof, which is still a real re-proof; true would wrongly offer a
   // current-password field to someone with no password.
-  test('[obligation] falls back to false when the RPC errors', async () => {
+  test('falls back to false when the RPC errors', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
     await expect(fetchHasPassword()).resolves.toBe(false)
   })
@@ -899,7 +899,7 @@ describe('fetchHasPassword [obligation]', () => {
   })
 })
 
-describe('verifyPassword [obligation]', () => {
+describe('verifyPassword', () => {
   test('signs in again with the session email and the given password, returning "success"', async () => {
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { email: 'e@x.com' } } },
@@ -949,11 +949,11 @@ describe('verifyPassword [obligation]', () => {
     await expect(verifyPassword('hunter22')).resolves.toBe('error')
   })
 
-  // [obligation] the same-account guard: the email is read off the live session,
+  // the same-account guard: the email is read off the live session,
   // never accepted as an argument. No email on the session → 'error' WITHOUT
   // calling signInWithPassword — a caller can't hand in a different address and
   // have a sign-in to someone else's account read as proof.
-  test('[obligation] no email on the session → returns "error" WITHOUT calling signInWithPassword', async () => {
+  test('no email on the session → returns "error" WITHOUT calling signInWithPassword', async () => {
     mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
 
     await expect(verifyPassword('hunter22')).resolves.toBe('error')
@@ -961,12 +961,12 @@ describe('verifyPassword [obligation]', () => {
     expect(mocks.signInWithPassword).not.toHaveBeenCalled()
   })
 
-  test('[obligation] verifyPassword does not accept an email argument — only takes the password', () => {
+  test('verifyPassword does not accept an email argument — only takes the password', () => {
     expect(verifyPassword).toHaveLength(1)
   })
 })
 
-describe('requestReauthCode [obligation]', () => {
+describe('requestReauthCode', () => {
   test('emails an OTP to the session email and returns "success"', async () => {
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { email: 'e@x.com' } } },
@@ -982,9 +982,9 @@ describe('requestReauthCode [obligation]', () => {
     })
   })
 
-  // [obligation] shouldCreateUser: false — a stray address must not quietly mint
+  // shouldCreateUser: false — a stray address must not quietly mint
   // a new account.
-  test('[obligation] always passes shouldCreateUser: false', async () => {
+  test('always passes shouldCreateUser: false', async () => {
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { email: 'e@x.com' } } },
       error: null
@@ -1027,8 +1027,8 @@ describe('requestReauthCode [obligation]', () => {
     await expect(requestReauthCode()).resolves.toBe('error')
   })
 
-  // [obligation] same session-email guard as verifyPassword.
-  test('[obligation] no email on the session → returns "error" WITHOUT calling signInWithOtp', async () => {
+  // same session-email guard as verifyPassword.
+  test('no email on the session → returns "error" WITHOUT calling signInWithOtp', async () => {
     mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
 
     await expect(requestReauthCode()).resolves.toBe('error')
@@ -1037,7 +1037,7 @@ describe('requestReauthCode [obligation]', () => {
   })
 })
 
-describe('verifyReauthCode [obligation]', () => {
+describe('verifyReauthCode', () => {
   test('signs in with the emailed code against the session email, returning "success"', async () => {
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { email: 'e@x.com' } } },
@@ -1054,9 +1054,9 @@ describe('verifyReauthCode [obligation]', () => {
     })
   })
 
-  // [obligation] GoTrue answers a wrong code and an expired one identically —
+  // GoTrue answers a wrong code and an expired one identically —
   // both collapse into 'invalid-code'.
-  test('[obligation] maps otp_expired to "invalid-code" (wrong and expired codes are indistinguishable)', async () => {
+  test('maps otp_expired to "invalid-code" (wrong and expired codes are indistinguishable)', async () => {
     mocks.getSession.mockResolvedValueOnce({
       data: { session: { user: { email: 'e@x.com' } } },
       error: null
@@ -1086,8 +1086,8 @@ describe('verifyReauthCode [obligation]', () => {
     await expect(verifyReauthCode('123456')).resolves.toBe('error')
   })
 
-  // [obligation] same session-email guard as verifyPassword/requestReauthCode.
-  test('[obligation] no email on the session → returns "error" WITHOUT calling verifyOtp', async () => {
+  // same session-email guard as verifyPassword/requestReauthCode.
+  test('no email on the session → returns "error" WITHOUT calling verifyOtp', async () => {
     mocks.getSession.mockResolvedValueOnce({ data: { session: null }, error: null })
 
     await expect(verifyReauthCode('123456')).resolves.toBe('error')
@@ -1096,30 +1096,30 @@ describe('verifyReauthCode [obligation]', () => {
   })
 })
 
-describe('isPasswordRecoveryUrl [obligation]', () => {
+describe('isPasswordRecoveryUrl', () => {
   afterEach(() => {
     window.location.hash = ''
   })
 
-  test('returns true when the hash contains type=recovery [obligation]', () => {
+  test('returns true when the hash contains type=recovery', () => {
     window.location.hash = '#access_token=abc&type=recovery'
     expect(isPasswordRecoveryUrl()).toBe(true)
   })
 
-  test('returns true when the ?type=recovery query param is present [obligation]', () => {
+  test('returns true when the ?type=recovery query param is present', () => {
     vi.stubGlobal('location', { hash: '', search: '?type=recovery' })
     expect(isPasswordRecoveryUrl()).toBe(true)
     vi.unstubAllGlobals()
   })
 
-  test('returns false for a normal page load with no hash/query [obligation]', () => {
+  test('returns false for a normal page load with no hash/query', () => {
     vi.stubGlobal('location', { hash: '', search: '' })
     expect(isPasswordRecoveryUrl()).toBe(false)
     vi.unstubAllGlobals()
   })
 })
 
-describe('waitForPasswordRecovery [obligation]', () => {
+describe('waitForPasswordRecovery', () => {
   afterEach(() => {
     vi.useRealTimers()
   })
@@ -1134,7 +1134,7 @@ describe('waitForPasswordRecovery [obligation]', () => {
     return { get: () => cb, unsubscribe }
   }
 
-  test('resolves true when PASSWORD_RECOVERY fires [obligation]', async () => {
+  test('resolves true when PASSWORD_RECOVERY fires', async () => {
     const cb = captureAuthCallback()
     const promise = waitForPasswordRecovery()
 
@@ -1143,7 +1143,7 @@ describe('waitForPasswordRecovery [obligation]', () => {
     await expect(promise).resolves.toBe(true)
   })
 
-  test('unsubscribes and clears the timeout when the event fires [obligation]', async () => {
+  test('unsubscribes and clears the timeout when the event fires', async () => {
     vi.useFakeTimers()
     const clearSpy = vi.spyOn(window, 'clearTimeout')
     const cb = captureAuthCallback()
@@ -1156,7 +1156,7 @@ describe('waitForPasswordRecovery [obligation]', () => {
     expect(clearSpy).toHaveBeenCalled()
   })
 
-  test('ignores auth events that are not PASSWORD_RECOVERY [obligation]', async () => {
+  test('ignores auth events that are not PASSWORD_RECOVERY', async () => {
     const cb = captureAuthCallback()
     const promise = waitForPasswordRecovery()
 
@@ -1171,7 +1171,7 @@ describe('waitForPasswordRecovery [obligation]', () => {
     await expect(promise).resolves.toBe(true)
   })
 
-  test('resolves false after an 8s timeout when the event never fires [obligation]', async () => {
+  test('resolves false after an 8s timeout when the event never fires', async () => {
     vi.useFakeTimers()
     const cb = captureAuthCallback()
     const promise = waitForPasswordRecovery()
@@ -1182,7 +1182,7 @@ describe('waitForPasswordRecovery [obligation]', () => {
     expect(cb.unsubscribe).toHaveBeenCalledOnce()
   })
 
-  test('does not resolve before the 8s timeout elapses [obligation]', async () => {
+  test('does not resolve before the 8s timeout elapses', async () => {
     vi.useFakeTimers()
     captureAuthCallback()
     const promise = waitForPasswordRecovery()
@@ -1196,37 +1196,37 @@ describe('waitForPasswordRecovery [obligation]', () => {
   })
 })
 
-describe('isAuthError [obligation]', () => {
-  test('returns true for a 401 status error [obligation]', () => {
+describe('isAuthError', () => {
+  test('returns true for a 401 status error', () => {
     expect(isAuthError({ status: 401 })).toBe(true)
   })
 
-  test('returns true for a PGRST301 code error [obligation]', () => {
+  test('returns true for a PGRST301 code error', () => {
     expect(isAuthError({ code: 'PGRST301' })).toBe(true)
   })
 
-  test('returns true for an AuthApiError name [obligation]', () => {
+  test('returns true for an AuthApiError name', () => {
     expect(isAuthError({ name: 'AuthApiError' })).toBe(true)
   })
 
-  test('returns false for an unrelated error shape [obligation]', () => {
+  test('returns false for an unrelated error shape', () => {
     expect(isAuthError({ status: 500, code: 'server_error', message: 'boom' })).toBe(false)
   })
 
-  test('returns false for null [obligation]', () => {
+  test('returns false for null', () => {
     expect(isAuthError(null)).toBe(false)
   })
 
-  test('returns false for undefined [obligation]', () => {
+  test('returns false for undefined', () => {
     expect(isAuthError(undefined)).toBe(false)
   })
 
-  test('returns false for a plain non-auth error [obligation]', () => {
+  test('returns false for a plain non-auth error', () => {
     expect(isAuthError(new Error('generic failure'))).toBe(false)
   })
 })
 
-describe('onSignedOut [obligation]', () => {
+describe('onSignedOut', () => {
   function captureAuthCallback() {
     let cb
     const unsubscribe = vi.fn()
@@ -1237,7 +1237,7 @@ describe('onSignedOut [obligation]', () => {
     return { get: () => cb, unsubscribe }
   }
 
-  test('invokes the callback when SIGNED_OUT fires [obligation]', () => {
+  test('invokes the callback when SIGNED_OUT fires', () => {
     const cb = captureAuthCallback()
     const callback = vi.fn()
     onSignedOut(callback)
@@ -1247,7 +1247,7 @@ describe('onSignedOut [obligation]', () => {
     expect(callback).toHaveBeenCalledOnce()
   })
 
-  test('does not invoke the callback for SIGNED_IN [obligation]', () => {
+  test('does not invoke the callback for SIGNED_IN', () => {
     const cb = captureAuthCallback()
     const callback = vi.fn()
     onSignedOut(callback)
@@ -1257,7 +1257,7 @@ describe('onSignedOut [obligation]', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 
-  test('does not invoke the callback for TOKEN_REFRESHED [obligation]', () => {
+  test('does not invoke the callback for TOKEN_REFRESHED', () => {
     const cb = captureAuthCallback()
     const callback = vi.fn()
     onSignedOut(callback)
@@ -1267,7 +1267,7 @@ describe('onSignedOut [obligation]', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 
-  test('returned unsubscribe function unsubscribes from the auth listener [obligation]', () => {
+  test('returned unsubscribe function unsubscribes from the auth listener', () => {
     const cb = captureAuthCallback()
     const unsubscribeFn = onSignedOut(vi.fn())
 
@@ -1277,34 +1277,34 @@ describe('onSignedOut [obligation]', () => {
   })
 })
 
-describe('consumeOAuthPopupFlag [obligation]', () => {
+describe('consumeOAuthPopupFlag', () => {
   afterEach(() => {
     window.localStorage.removeItem('oauth-popup-pending')
   })
 
-  test('returns true when the flag is exactly "1" [obligation]', () => {
+  test('returns true when the flag is exactly "1"', () => {
     window.localStorage.setItem('oauth-popup-pending', '1')
     expect(consumeOAuthPopupFlag()).toBe(true)
   })
 
-  test('returns false when the flag is absent [obligation]', () => {
+  test('returns false when the flag is absent', () => {
     expect(consumeOAuthPopupFlag()).toBe(false)
   })
 
-  test('returns false for any non-"1" value [obligation]', () => {
+  test('returns false for any non-"1" value', () => {
     window.localStorage.setItem('oauth-popup-pending', 'true')
     expect(consumeOAuthPopupFlag()).toBe(false)
   })
 
-  test('clears the flag as a side effect, so a second call returns false [obligation]', () => {
+  test('clears the flag as a side effect, so a second call returns false', () => {
     window.localStorage.setItem('oauth-popup-pending', '1')
     expect(consumeOAuthPopupFlag()).toBe(true)
     expect(consumeOAuthPopupFlag()).toBe(false)
   })
 })
 
-describe('requestPasswordReset [obligation]', () => {
-  test('returns "success" and calls resetPasswordForEmail with the email and a redirect URL [obligation]', async () => {
+describe('requestPasswordReset', () => {
+  test('returns "success" and calls resetPasswordForEmail with the email and a redirect URL', async () => {
     mocks.resetPasswordForEmail.mockResolvedValueOnce({ error: null })
 
     await expect(requestPasswordReset('e@x.com')).resolves.toBe('success')
@@ -1314,7 +1314,7 @@ describe('requestPasswordReset [obligation]', () => {
     })
   })
 
-  test('returns "error" when supabase returns an error — no account-existence-specific outcome [obligation]', async () => {
+  test('returns "error" when supabase returns an error — no account-existence-specific outcome', async () => {
     mocks.resetPasswordForEmail.mockResolvedValueOnce({
       error: { message: 'rate limited' }
     })
@@ -1322,7 +1322,7 @@ describe('requestPasswordReset [obligation]', () => {
     await expect(requestPasswordReset('e@x.com')).resolves.toBe('error')
   })
 
-  test('returns "error" when resetPasswordForEmail throws [obligation]', async () => {
+  test('returns "error" when resetPasswordForEmail throws', async () => {
     mocks.resetPasswordForEmail.mockRejectedValueOnce(new Error('network failure'))
     await expect(requestPasswordReset('e@x.com')).resolves.toBe('error')
   })

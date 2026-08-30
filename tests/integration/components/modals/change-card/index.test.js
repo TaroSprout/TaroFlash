@@ -52,17 +52,17 @@ beforeEach(() => {
   mockOnSubmit.mockReset()
 })
 
-// ── has_existing_card locale switching [obligation] ─────────────────────────────
+// ── has_existing_card locale switching ─────────────────────────────
 
-describe('ChangeCardModal — has_existing_card locale switching [obligation]', () => {
-  test('[obligation] uses the add-title / add-submit keys when has_existing_card is false', () => {
+describe('ChangeCardModal — has_existing_card locale switching', () => {
+  test('uses the add-title / add-submit keys when has_existing_card is false', () => {
     const wrapper = mountChangeCardModal({ has_existing_card: false })
 
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('Add a card')
     expect(wrapper.find('[data-testid="change-card-modal__submit"]').text()).toBe('Save card')
   })
 
-  test('[obligation] uses the change-title / change-submit keys when has_existing_card is true', () => {
+  test('uses the change-title / change-submit keys when has_existing_card is true', () => {
     const wrapper = mountChangeCardModal({ has_existing_card: true })
 
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('Change card')

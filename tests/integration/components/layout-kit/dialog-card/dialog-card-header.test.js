@@ -24,23 +24,23 @@ describe('DialogCardHeader', () => {
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('')
   })
 
-  // ── padded [obligation] ────────────────────────────────────────────────────
+  // ── padded ────────────────────────────────────────────────────
 
-  test('[obligation] applies px-(--dialog-px) and pt-(--dialog-px) when padded is omitted (defaults true)', () => {
+  test('applies px-(--dialog-px) and pt-(--dialog-px) when padded is omitted (defaults true)', () => {
     const wrapper = mountHeader()
     const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
     expect(classes).toContain('px-(--dialog-px)')
     expect(classes).toContain('pt-(--dialog-px)')
   })
 
-  test('[obligation] applies px-(--dialog-px) and pt-(--dialog-px) when padded is explicitly true', () => {
+  test('applies px-(--dialog-px) and pt-(--dialog-px) when padded is explicitly true', () => {
     const wrapper = mountHeader({ padded: true })
     const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
     expect(classes).toContain('px-(--dialog-px)')
     expect(classes).toContain('pt-(--dialog-px)')
   })
 
-  test('[obligation] omits px-(--dialog-px) and pt-(--dialog-px) when padded is false', () => {
+  test('omits px-(--dialog-px) and pt-(--dialog-px) when padded is false', () => {
     const wrapper = mountHeader({ padded: false })
     const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
     expect(classes).not.toContain('px-(--dialog-px)')
@@ -69,9 +69,9 @@ describe('DialogCardHeader', () => {
     expect(wrapper.find('[data-testid="dialog-card-header__end"]').text()).toBe('')
   })
 
-  // ── after slot [obligation] ────────────────────────────────────────────────
+  // ── after slot ────────────────────────────────────────────────
 
-  test('[obligation] renders the after slot content when provided', () => {
+  test('renders the after slot content when provided', () => {
     const wrapper = mountHeader({}, { after: () => h('div', { 'data-testid': 'after-content' }) })
     expect(
       wrapper
@@ -80,19 +80,19 @@ describe('DialogCardHeader', () => {
     ).toBe(true)
   })
 
-  test('[obligation] renders no after strip element at all when the slot is not provided', () => {
+  test('renders no after strip element at all when the slot is not provided', () => {
     const wrapper = mountHeader()
     expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(false)
   })
 
-  test('[obligation] the after wrapper is relative, so an absolutely-positioned child anchors to it', () => {
+  test('the after wrapper is relative, so an absolutely-positioned child anchors to it', () => {
     const wrapper = mountHeader({}, { after: () => h('div', { 'data-testid': 'after-content' }) })
     expect(wrapper.find('[data-testid="dialog-card-header__after"]').classes()).toContain(
       'relative'
     )
   })
 
-  test('[obligation] the after wrapper caps and centres its content to --content-grid-max-width', () => {
+  test('the after wrapper caps and centres its content to --content-grid-max-width', () => {
     const wrapper = mountHeader({}, { after: () => h('div', { 'data-testid': 'after-content' }) })
     const classes = wrapper.find('[data-testid="dialog-card-header__after"]').classes()
     expect(classes).toContain('max-w-(--content-grid-max-width)')

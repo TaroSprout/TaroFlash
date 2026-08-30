@@ -29,7 +29,7 @@ describe('moveCardsToDeck', () => {
     ranksBetweenMock.mockReturnValue(['a1'])
   })
 
-  test('explicit selection: mints exactly card_ids.length keys, no count lookup [obligation]', async () => {
+  test('explicit selection: mints exactly card_ids.length keys, no count lookup', async () => {
     rpcMock.mockResolvedValueOnce({ error: null })
     ranksBetweenMock.mockReturnValueOnce(['a1', 'a2'])
 
@@ -38,7 +38,7 @@ describe('moveCardsToDeck', () => {
     expect(ranksBetweenMock).toHaveBeenCalledWith({ prev: 'a0', next: null }, 2)
   })
 
-  test('whole-deck move: mints the caller-supplied count of keys, not a queried count [obligation]', async () => {
+  test('whole-deck move: mints the caller-supplied count of keys, not a queried count', async () => {
     rpcMock.mockResolvedValueOnce({ error: null })
     ranksBetweenMock.mockReturnValueOnce(Array.from({ length: 7 }, () => 'a1'))
 
@@ -52,7 +52,7 @@ describe('moveCardsToDeck', () => {
     expect(ranksBetweenMock).toHaveBeenCalledWith({ prev: 'a0', next: null }, 7)
   })
 
-  test('mints ranks after the target deck tail [obligation]', async () => {
+  test('mints ranks after the target deck tail', async () => {
     rpcMock.mockResolvedValueOnce({ error: null })
     tailRankMock.mockResolvedValueOnce('z5')
 
@@ -69,7 +69,7 @@ describe('moveCardsToDeck', () => {
     expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  test('explicit mode: calls move_cards_to_deck with p_card_ids set, p_source_deck_id undefined [obligation]', async () => {
+  test('explicit mode: calls move_cards_to_deck with p_card_ids set, p_source_deck_id undefined', async () => {
     rpcMock.mockResolvedValueOnce({ error: null })
     ranksBetweenMock.mockReturnValueOnce(['a1', 'a2'])
 
@@ -84,7 +84,7 @@ describe('moveCardsToDeck', () => {
     })
   })
 
-  test('whole-deck mode: calls move_cards_to_deck with p_source_deck_id set, p_card_ids undefined [obligation]', async () => {
+  test('whole-deck mode: calls move_cards_to_deck with p_source_deck_id set, p_card_ids undefined', async () => {
     rpcMock.mockResolvedValueOnce({ error: null })
 
     await moveCardsToDeck({

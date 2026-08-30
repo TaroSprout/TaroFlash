@@ -23,13 +23,13 @@ describe('useTracking', () => {
     expect(mockTrackPageview).toHaveBeenCalledOnce()
   })
 
-  test('trackSignupStarted fires a "Signup Started" event with no second argument [obligation]', () => {
+  test('trackSignupStarted fires a "Signup Started" event with no second argument', () => {
     useTracking().trackSignupStarted()
     expect(mockTrackEvent).toHaveBeenCalledWith('Signup Started')
     expect(mockTrackEvent.mock.calls[0]).toHaveLength(1)
   })
 
-  test('trackSignupCompleted fires a "Signup Completed" event with no second argument [obligation]', () => {
+  test('trackSignupCompleted fires a "Signup Completed" event with no second argument', () => {
     useTracking().trackSignupCompleted()
     expect(mockTrackEvent).toHaveBeenCalledWith('Signup Completed')
     expect(mockTrackEvent.mock.calls[0]).toHaveLength(1)

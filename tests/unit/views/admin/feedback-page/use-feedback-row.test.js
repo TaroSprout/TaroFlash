@@ -60,7 +60,7 @@ describe('useFeedbackRow — onPublishedChange', () => {
     expect(published.value).toBe(true)
   })
 
-  test('sends both the new visibility and the current status in one call [obligation]', async () => {
+  test('sends both the new visibility and the current status in one call', async () => {
     mutateAsyncMock.mockResolvedValue({})
     const { onPublishedChange } = useFeedbackRow(
       makeItem({ id: 7, visibility: 'internal', status: 'accepted' })
@@ -75,7 +75,7 @@ describe('useFeedbackRow — onPublishedChange', () => {
     })
   })
 
-  test('on failure, reverts published to its prior value and shows the error toast [obligation]', async () => {
+  test('on failure, reverts published to its prior value and shows the error toast', async () => {
     mutateAsyncMock.mockRejectedValue(new Error('boom'))
     const { published, onPublishedChange } = useFeedbackRow(makeItem({ visibility: 'internal' }))
 
@@ -85,7 +85,7 @@ describe('useFeedbackRow — onPublishedChange', () => {
     expect(mockNotice.error).toHaveBeenCalledWith('toast.error.admin-feedback-update-failed')
   })
 
-  test('a failed Published toggle leaves status untouched [obligation]', async () => {
+  test('a failed Published toggle leaves status untouched', async () => {
     mutateAsyncMock.mockRejectedValue(new Error('boom'))
     const { status, onPublishedChange } = useFeedbackRow(
       makeItem({ visibility: 'internal', status: 'accepted' })
@@ -107,7 +107,7 @@ describe('useFeedbackRow — onStatusChange', () => {
     expect(status.value).toBe('done')
   })
 
-  test('sends both the new status and the current visibility in one call [obligation]', async () => {
+  test('sends both the new status and the current visibility in one call', async () => {
     mutateAsyncMock.mockResolvedValue({})
     const { onStatusChange } = useFeedbackRow(
       makeItem({ id: 9, visibility: 'public', status: 'new' })
@@ -122,7 +122,7 @@ describe('useFeedbackRow — onStatusChange', () => {
     })
   })
 
-  test('on failure, reverts status to its prior value and shows the error toast [obligation]', async () => {
+  test('on failure, reverts status to its prior value and shows the error toast', async () => {
     mutateAsyncMock.mockRejectedValue(new Error('boom'))
     const { status, onStatusChange } = useFeedbackRow(makeItem({ status: 'new' }))
 
@@ -132,7 +132,7 @@ describe('useFeedbackRow — onStatusChange', () => {
     expect(mockNotice.error).toHaveBeenCalledWith('toast.error.admin-feedback-update-failed')
   })
 
-  test('a failed status change leaves the Published value untouched [obligation]', async () => {
+  test('a failed status change leaves the Published value untouched', async () => {
     mutateAsyncMock.mockRejectedValue(new Error('boom'))
     const { published, onStatusChange } = useFeedbackRow(
       makeItem({ visibility: 'public', status: 'new' })

@@ -39,7 +39,7 @@ beforeEach(() => {
   }))
 })
 
-describe('LogoutApp — confirm flow [obligation]', () => {
+describe('LogoutApp — confirm flow', () => {
   test('clicking shows a confirm alert', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="phone-app"]').trigger('click')

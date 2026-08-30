@@ -59,7 +59,7 @@ describe('DashboardTipCard', () => {
     expect(tape.props('label')).toBe(wrapper.vm.$t('dashboard.tip-card.tape-label'))
   })
 
-  test('stamps the constant data-station="float" [obligation]', () => {
+  test('stamps the constant data-station="float"', () => {
     Math.random.mockReturnValue(0)
     const wrapper = shallowMount(DashboardTipCard)
     expect(wrapper.find('[data-testid="dashboard-tip-card"]').attributes('data-station')).toBe(

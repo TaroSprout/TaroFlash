@@ -270,7 +270,7 @@ describe('TermCard', () => {
     })
   })
 
-  describe('add-card-control visibility [obligation]', () => {
+  describe('add-card-control visibility', () => {
     test('add-card-control is rendered once translation loads (show_back=false)', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: false })
@@ -288,14 +288,14 @@ describe('TermCard', () => {
       expect(wrapper.findComponent(AddCardControlStub).exists()).toBe(true)
     })
 
-    test('add-card-control in show_back row is disabled while result is null (loading) [obligation]', () => {
+    test('add-card-control in show_back row is disabled while result is null (loading)', () => {
       mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
       const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
 
       expect(wrapper.findComponent(AddCardControlStub).props('disabled')).toBe(true)
     })
 
-    test('add-card-control in show_back row is enabled after translation loads [obligation]', async () => {
+    test('add-card-control in show_back row is enabled after translation loads', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test', show_back: true })
       await flushPromises()
@@ -304,7 +304,7 @@ describe('TermCard', () => {
     })
   })
 
-  describe('add card inline panel [obligation]', () => {
+  describe('add card inline panel', () => {
     test('onAddCard sets the adding draft and shows AddCardPanel instead of the face', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
@@ -318,7 +318,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(false)
     })
 
-    test('add-card-panel back is translation + "\\n\\n" + reading when reading is present [obligation]', async () => {
+    test('add-card-panel back is translation + "\\n\\n" + reading when reading is present', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -331,7 +331,7 @@ describe('TermCard', () => {
       expect(panel.attributes('data-back')).toBe('cat\n\nねこ')
     })
 
-    test('add-card-panel back is just translation (no trailing blank lines) when reading is absent [obligation]', async () => {
+    test('add-card-panel back is just translation (no trailing blank lines) when reading is absent', async () => {
       const no_reading_result = { translation: 'cat', reading: '', pos: 'noun', description: '' }
       mutateAsyncMock.mockResolvedValueOnce(no_reading_result)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
@@ -344,7 +344,7 @@ describe('TermCard', () => {
       expect(panel.attributes('data-back')).toBe('cat')
     })
 
-    test('panel saved emits close and does NOT slide back to the term face [obligation]', async () => {
+    test('panel saved emits close and does NOT slide back to the term face', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -360,7 +360,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(false)
     })
 
-    test('panel cancel slides back to term card and does NOT emit close [obligation]', async () => {
+    test('panel cancel slides back to term card and does NOT emit close', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -392,7 +392,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="term-card__face"]').exists()).toBe(true)
     })
 
-    test('add-card-panel receives description as note from the translation result [obligation]', async () => {
+    test('add-card-panel receives description as note from the translation result', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -404,7 +404,7 @@ describe('TermCard', () => {
       expect(panel.attributes('data-note')).toBe(TRANSLATION_RESULT.description)
     })
 
-    test('onAddCard does nothing when result is null (no translation yet) [obligation]', async () => {
+    test('onAddCard does nothing when result is null (no translation yet)', async () => {
       // Use show_back=true so the add-card-control is always present in the controls row.
       // Mutation never resolves — result stays null.
       mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
@@ -417,7 +417,7 @@ describe('TermCard', () => {
       expect(wrapper.find('[data-testid="add-card-panel-stub"]').exists()).toBe(false)
     })
 
-    test('term-card does NOT emit close immediately on add-card event [obligation]', async () => {
+    test('term-card does NOT emit close immediately on add-card event', async () => {
       mutateAsyncMock.mockResolvedValueOnce(TRANSLATION_RESULT)
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
@@ -472,7 +472,7 @@ describe('TermCard', () => {
     })
   })
 
-  describe('difficulty_tier tag [obligation]', () => {
+  describe('difficulty_tier tag', () => {
     // Helper to mount and resolve with a specific difficulty score.
     async function mountWithDifficulty(difficulty) {
       mutateAsyncMock.mockResolvedValueOnce({ ...TRANSLATION_RESULT, difficulty })
@@ -481,13 +481,13 @@ describe('TermCard', () => {
       return wrapper
     }
 
-    test('ui-tag is NOT rendered when result is null (no translation yet) [obligation]', () => {
+    test('ui-tag is NOT rendered when result is null (no translation yet)', () => {
       mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       expect(wrapper.findComponent(UiTagStub).exists()).toBe(false)
     })
 
-    test('ui-tag is NOT rendered when result has no difficulty field [obligation]', async () => {
+    test('ui-tag is NOT rendered when result has no difficulty field', async () => {
       mutateAsyncMock.mockResolvedValueOnce({
         translation: 'cat',
         reading: 'ねこ',
@@ -499,68 +499,68 @@ describe('TermCard', () => {
       expect(wrapper.findComponent(UiTagStub).exists()).toBe(false)
     })
 
-    test('ui-tag is NOT rendered when difficulty is null [obligation]', async () => {
+    test('ui-tag is NOT rendered when difficulty is null', async () => {
       mutateAsyncMock.mockResolvedValueOnce({ ...TRANSLATION_RESULT, difficulty: null })
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
       await flushPromises()
       expect(wrapper.findComponent(UiTagStub).exists()).toBe(false)
     })
 
-    // Exact tier boundary: score 2 → beginner (max: 2) [obligation]
-    test('score 2 → beginner tier — data-palette green [obligation]', async () => {
+    // Exact tier boundary: score 2 → beginner (max: 2)
+    test('score 2 → beginner tier — data-palette green', async () => {
       const wrapper = await mountWithDifficulty(2)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('green')
     })
 
-    // Score 3 → elementary (max: 4) [obligation]
-    test('score 3 → elementary tier — data-palette green [obligation]', async () => {
+    // Score 3 → elementary (max: 4)
+    test('score 3 → elementary tier — data-palette green', async () => {
       const wrapper = await mountWithDifficulty(3)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('green')
     })
 
-    // Score 1 and score 4 share green palette [obligation]
-    test('score 1 → data-palette green (same as score 4) [obligation]', async () => {
+    // Score 1 and score 4 share green palette
+    test('score 1 → data-palette green (same as score 4)', async () => {
       const wrapper = await mountWithDifficulty(1)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.attributes('data-palette')).toBe('green')
     })
 
-    test('score 4 → data-palette green (same as score 1) [obligation]', async () => {
+    test('score 4 → data-palette green (same as score 1)', async () => {
       const wrapper = await mountWithDifficulty(4)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.attributes('data-palette')).toBe('green')
     })
 
-    // Score 6 → intermediate (max: 6) [obligation]
-    test('score 6 → intermediate tier — data-palette yellow [obligation]', async () => {
+    // Score 6 → intermediate (max: 6)
+    test('score 6 → intermediate tier — data-palette yellow', async () => {
       const wrapper = await mountWithDifficulty(6)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('yellow')
     })
 
-    // Score 8 → advanced (max: 8) [obligation]
-    test('score 8 → advanced tier — data-palette red [obligation]', async () => {
+    // Score 8 → advanced (max: 8)
+    test('score 8 → advanced tier — data-palette red', async () => {
       const wrapper = await mountWithDifficulty(8)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('red')
     })
 
-    // Score 9 → expert (max: 10) [obligation]
-    test('score 9 → expert tier — data-palette red [obligation]', async () => {
+    // Score 9 → expert (max: 10)
+    test('score 9 → expert tier — data-palette red', async () => {
       const wrapper = await mountWithDifficulty(9)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('red')
     })
 
-    // Score 8 and score 9 share red palette [obligation]
-    test('score 8 and score 9 both produce data-palette red [obligation]', async () => {
+    // Score 8 and score 9 share red palette
+    test('score 8 and score 9 both produce data-palette red', async () => {
       const w8 = await mountWithDifficulty(8)
       const w9 = await mountWithDifficulty(9)
       expect(w8.findComponent(UiTagStub).attributes('data-palette')).toBe(
@@ -568,24 +568,24 @@ describe('TermCard', () => {
       )
     })
 
-    // Score 10 → expert (max: 10) [obligation]
-    test('score 10 → expert tier — data-palette red [obligation]', async () => {
+    // Score 10 → expert (max: 10)
+    test('score 10 → expert tier — data-palette red', async () => {
       const wrapper = await mountWithDifficulty(10)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('red')
     })
 
-    // Fallback to last tier (expert) for scores > 10 [obligation]
-    test('score > 10 falls back to expert tier via DIFFICULTY_TIERS.at(-1) [obligation]', async () => {
+    // Fallback to last tier (expert) for scores > 10
+    test('score > 10 falls back to expert tier via DIFFICULTY_TIERS.at(-1)', async () => {
       const wrapper = await mountWithDifficulty(15)
       const tag = wrapper.findComponent(UiTagStub)
       expect(tag.exists()).toBe(true)
       expect(tag.attributes('data-palette')).toBe('red')
     })
 
-    // POS tag removed — difficulty_tier renders the difficulty label, not result.pos [obligation]
-    test('renders the translated difficulty label in the tag, not a raw pos string [obligation]', async () => {
+    // POS tag removed — difficulty_tier renders the difficulty label, not result.pos
+    test('renders the translated difficulty label in the tag, not a raw pos string', async () => {
       const wrapper = await mountWithDifficulty(3)
       const tag = wrapper.findComponent(UiTagStub)
       // Real i18n is active in browser mode; score 3 → elementary tier → "Elementary".

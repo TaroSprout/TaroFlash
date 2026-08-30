@@ -81,7 +81,7 @@ describe('saveReview', () => {
     )
   })
 
-  test('passes learning_steps under p_card sourced from card.learning_steps [obligation]', async () => {
+  test('passes learning_steps under p_card sourced from card.learning_steps', async () => {
     // Persists ts-fsrs's learning_steps step-index so a card resuming mid
     // learning/relearning sequence doesn't silently restart at step 0.
     mocks.rpcMock.mockResolvedValue({ error: null })

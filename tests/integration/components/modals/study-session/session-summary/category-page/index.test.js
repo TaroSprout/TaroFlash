@@ -104,8 +104,8 @@ describe('CategoryPage (category-page/index.vue)', () => {
     mockFlip.mockClear()
   })
 
-  describe('card editor sub-state [obligation]', () => {
-    test('renders the grid, not the editor, when nothing is being edited [obligation]', () => {
+  describe('card editor sub-state', () => {
+    test('renders the grid, not the editor, when nothing is being edited', () => {
       const cards = [makeCard({ id: 1 })]
       const results = [makeResult({ card_id: 1, is_new: true })]
       const wrapper = mountPage({ results, category: 'new', cards })
@@ -114,7 +114,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
       expect(wrapper.find('[data-testid="summary-card-editor-stub"]').exists()).toBe(false)
     })
 
-    test('renders the editor instead of the grid when summary_editing_card is set [obligation]', () => {
+    test('renders the editor instead of the grid when summary_editing_card is set', () => {
       const cards = [makeCard({ id: 1 })]
       const results = [makeResult({ card_id: 1, is_new: true })]
       mockEditingCard.value = makeCard({ id: 1 })
@@ -126,7 +126,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary-category__content"]').exists()).toBe(false)
     })
 
-    test('forwards the editor update event to onSummaryEditUpdate [obligation]', async () => {
+    test('forwards the editor update event to onSummaryEditUpdate', async () => {
       mockEditingCard.value = makeCard({ id: 1 })
       const wrapper = mountPage({ results: [], category: 'new', cards: [] })
 
@@ -138,10 +138,10 @@ describe('CategoryPage (category-page/index.vue)', () => {
     })
   })
 
-  // ── exposed flipEditingCard() reaches the mounted editor [obligation] ──────
+  // ── exposed flipEditingCard() reaches the mounted editor ──────
 
   describe('flipEditingCard()', () => {
-    test('calls flip() on the mounted card editor [obligation]', () => {
+    test('calls flip() on the mounted card editor', () => {
       mockEditingCard.value = makeCard({ id: 1 })
       const wrapper = mountPage({ results: [], category: 'new', cards: [] })
 
@@ -150,7 +150,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
       expect(mockFlip).toHaveBeenCalledOnce()
     })
 
-    test('does not throw when no card is being edited (editor unmounted) [obligation]', () => {
+    test('does not throw when no card is being edited (editor unmounted)', () => {
       mockEditingCard.value = undefined
       const wrapper = mountPage({ results: [], category: 'new', cards: [] })
 
@@ -159,7 +159,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
     })
   })
 
-  describe('correct category [obligation]', () => {
+  describe('correct category', () => {
     test('renders two sections: correct and incorrect', () => {
       const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
       const results = [
@@ -191,7 +191,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
     })
   })
 
-  describe('non-correct categories [obligation]', () => {
+  describe('non-correct categories', () => {
     test('renders a single unlabelled section for a non-correct category', () => {
       const cards = [makeCard({ id: 1 })]
       const results = [makeResult({ card_id: 1, is_new: true })]
@@ -204,7 +204,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
     })
   })
 
-  describe('result → card resolution [obligation]', () => {
+  describe('result → card resolution', () => {
     test('resolves results to real cards from the injected controller by id', () => {
       const cards = [makeCard({ id: 5 }), makeCard({ id: 6 })]
       const results = [
@@ -218,7 +218,7 @@ describe('CategoryPage (category-page/index.vue)', () => {
       ).toBe('5,6')
     })
 
-    test('silently drops a result whose card is absent from the injected cards [obligation]', () => {
+    test('silently drops a result whose card is absent from the injected cards', () => {
       const cards = [makeCard({ id: 5 })]
       const results = [
         makeResult({ card_id: 5, is_new: true }),

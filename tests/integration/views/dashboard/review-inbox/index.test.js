@@ -103,7 +103,7 @@ beforeEach(() => {
   canScrollNextRef.value = false
 })
 
-describe('ReviewInbox — editing mode disables item interaction [obligation]', () => {
+describe('ReviewInbox — editing mode disables item interaction', () => {
   test('passes disabled=true to every item when editing is true', () => {
     const wrapper = mountInbox(makeDecks(3), true)
     wrapper.findAllComponents(ReviewInboxItemStub).forEach((item) => {
@@ -111,7 +111,7 @@ describe('ReviewInbox — editing mode disables item interaction [obligation]', 
     })
   })
 
-  test('clicking an item while editing plays ui.rejected and does not start a study session [obligation]', async () => {
+  test('clicking an item while editing plays ui.rejected and does not start a study session', async () => {
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks, true)
 
@@ -188,7 +188,7 @@ describe('ReviewInbox — clicking an item starts a study session for just that 
     expect(studyStartMock).toHaveBeenCalledWith([decks[1].id])
   })
 
-  test('does not play digi_powerdown when not editing [obligation]', async () => {
+  test('does not play digi_powerdown when not editing', async () => {
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks)
     await wrapper.findAll('[data-testid="review-inbox-item"]')[1].trigger('click')
@@ -196,7 +196,7 @@ describe('ReviewInbox — clicking an item starts a study session for just that 
   })
 })
 
-describe('ReviewInbox — clicking an item while editing [obligation]', () => {
+describe('ReviewInbox — clicking an item while editing', () => {
   test('plays ui.rejected and does not start a study session', async () => {
     const decks = makeDecks(3)
     const wrapper = mountInbox(decks, true)
@@ -206,7 +206,7 @@ describe('ReviewInbox — clicking an item while editing [obligation]', () => {
   })
 })
 
-describe('ReviewInbox — forwards editing as the disabled prop to each item [obligation]', () => {
+describe('ReviewInbox — forwards editing as the disabled prop to each item', () => {
   test('forwards disabled=true to items when editing', () => {
     const wrapper = mountInbox(makeDecks(2), true)
     const items = wrapper.findAllComponents(ReviewInboxItemStub)

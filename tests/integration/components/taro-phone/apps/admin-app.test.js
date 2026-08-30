@@ -19,7 +19,7 @@ vi.mock('@/composables/admin/use-admin-modal', () => ({
   useAdminModal: () => ({ open: mockAdminModalOpen })
 }))
 
-describe('AdminApp — openApp wiring [obligation]', () => {
+describe('AdminApp — openApp wiring', () => {
   test('pressing the app launches the admin modal through phone.openApp', async () => {
     const modal_result = { response: Promise.resolve(undefined) }
     mockAdminModalOpen.mockReturnValueOnce(modal_result)

@@ -41,8 +41,8 @@ beforeEach(() => {
 
 // ── confirmDelete ─────────────────────────────────────────────────────────────
 
-describe('useCardPrompts — confirmDelete [obligation]', () => {
-  test('calls alert.warn with the pluralized delete-card keys (count=1) [obligation]', async () => {
+describe('useCardPrompts — confirmDelete', () => {
+  test('calls alert.warn with the pluralized delete-card keys (count=1)', async () => {
     alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
     const { confirmDelete } = useCardPrompts()
 
@@ -57,7 +57,7 @@ describe('useCardPrompts — confirmDelete [obligation]', () => {
     )
   })
 
-  test('calls alert.warn with count passed to i18n (count=3) [obligation]', async () => {
+  test('calls alert.warn with count passed to i18n (count=3)', async () => {
     alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(false) })
     const { confirmDelete } = useCardPrompts()
 
@@ -68,7 +68,7 @@ describe('useCardPrompts — confirmDelete [obligation]', () => {
     expect(args.message).toContain('"count":3')
   })
 
-  test('resolves to true when user confirms [obligation]', async () => {
+  test('resolves to true when user confirms', async () => {
     alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
     const { confirmDelete } = useCardPrompts()
 
@@ -77,7 +77,7 @@ describe('useCardPrompts — confirmDelete [obligation]', () => {
     expect(result).toBe(true)
   })
 
-  test('resolves to false when user dismisses [obligation]', async () => {
+  test('resolves to false when user dismisses', async () => {
     alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(false) })
     const { confirmDelete } = useCardPrompts()
 
@@ -100,8 +100,8 @@ describe('useCardPrompts — confirmDelete [obligation]', () => {
 
 // ── openMoveModal ─────────────────────────────────────────────────────────────
 
-describe('useCardPrompts — openMoveModal [obligation]', () => {
-  test('opens the modal with the provided cards, count, and current_deck_id [obligation]', async () => {
+describe('useCardPrompts — openMoveModal', () => {
+  test('opens the modal with the provided cards, count, and current_deck_id', async () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
@@ -116,7 +116,7 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     )
   })
 
-  test('forwards the move callback into the modal props [obligation]', async () => {
+  test('forwards the move callback into the modal props', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
     const move = async () => {}
@@ -139,7 +139,7 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     )
   })
 
-  test('emits dialog.open before the modal opens [obligation]', async () => {
+  test('emits dialog.open before the modal opens', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
@@ -148,7 +148,7 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('does not emit any sfx when the returned response promise resolves [obligation]', async () => {
+  test('does not emit any sfx when the returned response promise resolves', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
@@ -161,7 +161,7 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     expect(emitSfxMock).not.toHaveBeenCalled()
   })
 
-  test('resolves to the chosen deck when user confirms [obligation]', async () => {
+  test('resolves to the chosen deck when user confirms', async () => {
     const target = { deck_id: 99 }
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(target) })
     const { openMoveModal } = useCardPrompts()
@@ -171,7 +171,7 @@ describe('useCardPrompts — openMoveModal [obligation]', () => {
     expect(result).toEqual(target)
   })
 
-  test('resolves to undefined when modal is dismissed [obligation]', async () => {
+  test('resolves to undefined when modal is dismissed', async () => {
     modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 

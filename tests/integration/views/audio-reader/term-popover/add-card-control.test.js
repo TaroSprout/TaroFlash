@@ -116,8 +116,8 @@ beforeEach(() => {
 })
 
 describe('AddCardControl', () => {
-  describe('default deck label [obligation]', () => {
-    test('labels the primary button with the remembered last deck [obligation]', () => {
+  describe('default deck label', () => {
+    test('labels the primary button with the remembered last deck', () => {
       lastDeckState.id = 2
       const wrapper = mountControl()
       expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(
@@ -125,14 +125,14 @@ describe('AddCardControl', () => {
       )
     })
 
-    test('falls back to the first deck when nothing is remembered [obligation]', () => {
+    test('falls back to the first deck when nothing is remembered', () => {
       const wrapper = mountControl()
       expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(
         'Deck Alpha'
       )
     })
 
-    test('falls back to the generic label when there are no decks [obligation]', () => {
+    test('falls back to the generic label when there are no decks', () => {
       decksDataRef.value = []
       const wrapper = mountControl()
       // In browser mode i18n is real — the fallback key resolves to 'Add flashcard'
@@ -141,7 +141,7 @@ describe('AddCardControl', () => {
       )
     })
 
-    test('a deck with no title falls back to the add-card label [obligation]', () => {
+    test('a deck with no title falls back to the add-card label', () => {
       decksDataRef.value = [{ id: 1, title: null }]
       lastDeckState.id = 1
       const wrapper = mountControl()
@@ -152,8 +152,8 @@ describe('AddCardControl', () => {
     })
   })
 
-  describe('emitting add via primary click [obligation]', () => {
-    test('primary click emits add with the default (last-used) deck id [obligation]', async () => {
+  describe('emitting add via primary click', () => {
+    test('primary click emits add with the default (last-used) deck id', async () => {
       lastDeckState.id = 2
       const wrapper = mountControl()
       await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
@@ -161,14 +161,14 @@ describe('AddCardControl', () => {
       expect(wrapper.emitted('add')).toEqual([[2]])
     })
 
-    test('primary click emits add with the first deck when no last deck [obligation]', async () => {
+    test('primary click emits add with the first deck when no last deck', async () => {
       const wrapper = mountControl()
       await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
 
       expect(wrapper.emitted('add')).toEqual([[1]])
     })
 
-    test('primary click emits add with null when there are no decks [obligation]', async () => {
+    test('primary click emits add with null when there are no decks', async () => {
       decksDataRef.value = []
       const wrapper = mountControl()
       await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
@@ -177,13 +177,13 @@ describe('AddCardControl', () => {
     })
   })
 
-  describe('emitting add via deck option selection [obligation]', () => {
-    test('renders one option per deck in the dropdown menu [obligation]', () => {
+  describe('emitting add via deck option selection', () => {
+    test('renders one option per deck in the dropdown menu', () => {
       const wrapper = mountControl()
       expect(optionButtons(wrapper)).toHaveLength(TEST_DECKS.length)
     })
 
-    test('selecting a deck option emits add with that deck id [obligation]', async () => {
+    test('selecting a deck option emits add with that deck id', async () => {
       const wrapper = mountControl()
       const options = optionButtons(wrapper)
 
@@ -192,7 +192,7 @@ describe('AddCardControl', () => {
       expect(wrapper.emitted('add')).toEqual([[2]])
     })
 
-    test('selecting the first deck option emits add with that deck id [obligation]', async () => {
+    test('selecting the first deck option emits add with that deck id', async () => {
       const wrapper = mountControl()
       await optionButtons(wrapper)[0].trigger('click')
 
@@ -200,8 +200,8 @@ describe('AddCardControl', () => {
     })
   })
 
-  describe('disabled prop [obligation]', () => {
-    test('forwards disabled as aria-disabled to the root button [obligation]', () => {
+  describe('disabled prop', () => {
+    test('forwards disabled as aria-disabled to the root button', () => {
       const wrapper = mountControl({ disabled: true })
       // The component passes :aria-disabled="disabled || undefined"
       expect(
@@ -209,7 +209,7 @@ describe('AddCardControl', () => {
       ).toBeDefined()
     })
 
-    test('no aria-disabled when disabled=false [obligation]', () => {
+    test('no aria-disabled when disabled=false', () => {
       const wrapper = mountControl({ disabled: false })
       expect(
         wrapper.find('[data-testid="add-card-control__primary"]').attributes('aria-disabled')
@@ -217,22 +217,22 @@ describe('AddCardControl', () => {
     })
   })
 
-  // ── existing_decks — already-a-card state [obligation] ────────────────────
+  // ── existing_decks — already-a-card state ────────────────────
 
-  describe('existing_decks — already-a-card state [obligation]', () => {
-    test('when existing_decks is non-empty, clicking primary does NOT emit add [obligation]', async () => {
+  describe('existing_decks — already-a-card state', () => {
+    test('when existing_decks is non-empty, clicking primary does NOT emit add', async () => {
       const wrapper = mountControl({ existing_decks: [1] })
       await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
       expect(wrapper.emitted('add')).toBeFalsy()
     })
 
-    test('when existing_decks is empty, primary click emits add [obligation]', async () => {
+    test('when existing_decks is empty, primary click emits add', async () => {
       const wrapper = mountControl({ existing_decks: [] })
       await wrapper.find('[data-testid="add-card-control__primary"]').trigger('click')
       expect(wrapper.emitted('add')).toBeTruthy()
     })
 
-    test('selecting a deck NOT in existing_decks emits add with that deck id [obligation]', async () => {
+    test('selecting a deck NOT in existing_decks emits add with that deck id', async () => {
       // Deck 1 is existing; selecting deck 2 (not existing) should emit
       const wrapper = mountControl({ existing_decks: [1] })
       const options = optionButtons(wrapper)
@@ -241,7 +241,7 @@ describe('AddCardControl', () => {
       expect(wrapper.emitted('add')).toEqual([[2]])
     })
 
-    test('selecting a deck that IS in existing_decks does NOT emit add [obligation]', async () => {
+    test('selecting a deck that IS in existing_decks does NOT emit add', async () => {
       // Deck 1 is in existing_decks — selecting it should be a no-op
       const wrapper = mountControl({ existing_decks: [1] })
       const options = optionButtons(wrapper)
@@ -250,7 +250,7 @@ describe('AddCardControl', () => {
       expect(wrapper.emitted('add')).toBeFalsy()
     })
 
-    test('deck options for existing decks show the check icon [obligation]', () => {
+    test('deck options for existing decks show the check icon', () => {
       const wrapper = mountControl({ existing_decks: [1] })
       // The UiDropdownButton stub receives options with icon: 'check' for deck 1
       // We verify the options prop passed to the stub
@@ -260,7 +260,7 @@ describe('AddCardControl', () => {
       expect(existing_opt?.icon).toBe('check')
     })
 
-    test('deck options for non-existing decks show the card-deck icon [obligation]', () => {
+    test('deck options for non-existing decks show the card-deck icon', () => {
       const wrapper = mountControl({ existing_decks: [1] })
       const stub = wrapper.findComponent(UiDropdownButtonStub)
       const opts = stub.props('options')
@@ -269,10 +269,10 @@ describe('AddCardControl', () => {
     })
   })
 
-  // ── primary_deck: naming the owning deck [obligation] ─────────────────────
+  // ── primary_deck: naming the owning deck ─────────────────────
 
-  describe('primary_deck label — names the owning deck [obligation]', () => {
-    test('when in exactly one deck, primary label is THAT deck title [obligation]', () => {
+  describe('primary_deck label — names the owning deck', () => {
+    test('when in exactly one deck, primary label is THAT deck title', () => {
       const wrapper = mountControl({ existing_decks: [2] })
       // primary_deck should be Deck Beta (id=2)
       expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(
@@ -280,7 +280,7 @@ describe('AddCardControl', () => {
       )
     })
 
-    test('when in multiple decks, primary label falls back to the default (last-used) deck [obligation]', () => {
+    test('when in multiple decks, primary label falls back to the default (last-used) deck', () => {
       lastDeckState.id = 1
       const wrapper = mountControl({ existing_decks: [1, 2] })
       // Multiple decks → falls back to last-used (Deck Alpha, id=1)
@@ -289,7 +289,7 @@ describe('AddCardControl', () => {
       )
     })
 
-    test('when in multiple decks and no last deck, falls back to first deck [obligation]', () => {
+    test('when in multiple decks and no last deck, falls back to first deck', () => {
       lastDeckState.id = null
       const wrapper = mountControl({ existing_decks: [1, 2] })
       expect(wrapper.find('[data-testid="add-card-control__primary"]').text()).toContain(

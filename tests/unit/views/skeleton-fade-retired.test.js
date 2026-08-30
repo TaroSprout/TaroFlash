@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
-// ── the fade is retired from every skeleton.vue [obligation] ────────────────
+// ── the fade is retired from every skeleton.vue ────────────────
 
 function listSkeletonFiles(dir) {
   const files = []

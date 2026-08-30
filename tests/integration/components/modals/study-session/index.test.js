@@ -395,29 +395,29 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-settings-stub"]').exists()).toBe(false)
   })
 
-  // ── deck_ids wiring [obligation] ────────────────────────────────────────────
+  // ── deck_ids wiring ────────────────────────────────────────────
 
-  test('passes the deck_ids prop straight through to provideStudySessionController [obligation]', () => {
+  test('passes the deck_ids prop straight through to provideStudySessionController', () => {
     makeWrapper({ deck_ids: [4, 5] })
     expect(capturedControllerOptions.current.deck_ids).toEqual([4, 5])
   })
 
-  // ── nav_mode: close vs stop vs back [obligation] ───────────────────────────
+  // ── nav_mode: close vs stop vs back ───────────────────────────
 
-  describe('header-start nav_mode [obligation]', () => {
-    test('renders "close" when is_cover is true (studying phase) [obligation]', () => {
+  describe('header-start nav_mode', () => {
+    test('renders "close" when is_cover is true (studying phase)', () => {
       is_cover_ref.value = true
       const { wrapper } = makeWrapper()
       expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
     })
 
-    test('renders "stop" when not is_cover during studying [obligation]', () => {
+    test('renders "stop" when not is_cover during studying', () => {
       is_cover_ref.value = false
       const { wrapper } = makeWrapper()
       expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(true)
     })
 
-    test('renders "close" during the summary phase, regardless of is_cover [obligation]', async () => {
+    test('renders "close" during the summary phase, regardless of is_cover', async () => {
       is_cover_ref.value = false
       const { wrapper } = makeWrapper()
 
@@ -426,7 +426,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
     })
 
-    test('renders "back" while the settings page is active, even mid-cover [obligation]', async () => {
+    test('renders "back" while the settings page is active, even mid-cover', async () => {
       is_cover_ref.value = true
       const { wrapper } = makeWrapper()
 
@@ -436,7 +436,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
     })
 
-    test('renders "back" while a summary category page is open [obligation]', async () => {
+    test('renders "back" while a summary category page is open', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -446,20 +446,20 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── header-end menu: only during studying, never on settings [obligation] ──
+  // ── header-end menu: only during studying, never on settings ──
 
-  test('header-end (menu) renders during the studying phase [obligation]', () => {
+  test('header-end (menu) renders during the studying phase', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
   })
 
-  test('header-end (menu) is absent during the summary phase [obligation]', async () => {
+  test('header-end (menu) is absent during the summary phase', async () => {
     const { wrapper } = makeWrapper()
     await finishSession([])
     expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
   })
 
-  test('header-end (menu) is absent while the settings page is active [obligation]', async () => {
+  test('header-end (menu) is absent while the settings page is active', async () => {
     const { wrapper } = makeWrapper()
     await openSettingsPage()
     expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(false)
@@ -482,10 +482,10 @@ describe('StudySession (index.vue)', () => {
     expect(mockOpenSettings).toHaveBeenCalledOnce()
   })
 
-  // ── header-end select button: category page only [obligation] ─────────────
+  // ── header-end select button: category page only ─────────────
 
-  describe('header-end select button [obligation]', () => {
-    test('is absent during studying and on the summary landing page [obligation]', async () => {
+  describe('header-end select button', () => {
+    test('is absent during studying and on the summary landing page', async () => {
       const { wrapper } = makeWrapper()
       expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
 
@@ -493,7 +493,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
     })
 
-    test('renders on a summary category page [obligation]', async () => {
+    test('renders on a summary category page', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -501,7 +501,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(true)
     })
 
-    test('is absent on a category page while its card editor is open [obligation]', async () => {
+    test('is absent on a category page while its card editor is open', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -511,7 +511,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__select-button"]').exists()).toBe(false)
     })
 
-    test('pressing it calls enterSelection when not already selecting, and plays the ui.select sfx [obligation]', async () => {
+    test('pressing it calls enterSelection when not already selecting, and plays the ui.select sfx', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -524,7 +524,7 @@ describe('StudySession (index.vue)', () => {
       expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
     })
 
-    test('pressing it calls exitSelection while already selecting, and plays ui.deselect [obligation]', async () => {
+    test('pressing it calls exitSelection while already selecting, and plays ui.deselect', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -540,10 +540,10 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── toolbar bulk-actions bar: category page while selecting [obligation] ──
+  // ── toolbar bulk-actions bar: category page while selecting ──
 
-  describe('toolbar bulk-actions bar [obligation]', () => {
-    test('is absent on a category page while not selecting [obligation]', async () => {
+  describe('toolbar bulk-actions bar', () => {
+    test('is absent on a category page while not selecting', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -551,7 +551,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(false)
     })
 
-    test('renders on a category page while selecting [obligation]', async () => {
+    test('renders on a category page while selecting', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -561,7 +561,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(true)
     })
 
-    test('is absent on the summary landing page even while selecting [obligation]', async () => {
+    test('is absent on the summary landing page even while selecting', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       is_selecting_ref.value = true
@@ -572,17 +572,17 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── toolbar_variant resolves per page/state [obligation] ───────────────────
+  // ── toolbar_variant resolves per page/state ───────────────────
 
-  describe('toolbar_variant [obligation]', () => {
-    test('studying + rating: shows rating-buttons, not the flip/done footer [obligation]', () => {
+  describe('toolbar_variant', () => {
+    test('studying + rating: shows rating-buttons, not the flip/done footer', () => {
       const { wrapper } = makeWrapper()
 
       expect(wrapper.find('[data-testid="rating-buttons-stub"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(false)
     })
 
-    test('studying + editing: shows the flip/done footer, wired to flipCurrentCard/stopEdit [obligation]', async () => {
+    test('studying + editing: shows the flip/done footer, wired to flipCurrentCard/stopEdit', async () => {
       const { wrapper } = makeWrapper()
       editing_ref.value = true
       await nextTick()
@@ -597,7 +597,7 @@ describe('StudySession (index.vue)', () => {
       expect(mockStopEdit).toHaveBeenCalledOnce()
     })
 
-    test('settings: shows the reset button, disabled per prefs_are_default, wired to resetToDefaults [obligation]', async () => {
+    test('settings: shows the reset button, disabled per prefs_are_default, wired to resetToDefaults', async () => {
       const { wrapper } = makeWrapper()
       await openSettingsPage()
       prefs_are_default_ref.value = false
@@ -611,7 +611,7 @@ describe('StudySession (index.vue)', () => {
       expect(mockResetToDefaults).toHaveBeenCalledOnce()
     })
 
-    test('settings: the reset button is disabled when prefs_are_default is true [obligation]', async () => {
+    test('settings: the reset button is disabled when prefs_are_default is true', async () => {
       const { wrapper } = makeWrapper()
       await openSettingsPage()
       prefs_are_default_ref.value = true
@@ -622,7 +622,7 @@ describe('StudySession (index.vue)', () => {
       ).toBe('true')
     })
 
-    test('summary (landing page): shows the summary close button [obligation]', async () => {
+    test('summary (landing page): shows the summary close button', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
 
@@ -630,7 +630,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(false)
     })
 
-    test('category default (not selecting, not editing): shows the category close button, wired to onClosed [obligation]', async () => {
+    test('category default (not selecting, not editing): shows the category close button, wired to onClosed', async () => {
       const { wrapper, close } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -643,7 +643,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).toHaveBeenCalledOnce()
     })
 
-    test('category editing: shows the flip/done footer, wired to flipEditingCard/stopSummaryEdit [obligation]', async () => {
+    test('category editing: shows the flip/done footer, wired to flipEditingCard/stopSummaryEdit', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -660,7 +660,7 @@ describe('StudySession (index.vue)', () => {
       expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
     })
 
-    test('category selecting: shows the bulk-actions bar, not the category close button [obligation]', async () => {
+    test('category selecting: shows the bulk-actions bar, not the category close button', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -672,10 +672,10 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── onHeaderStop is page/phase-aware [obligation] ──────────────────────────
+  // ── onHeaderStop is page/phase-aware ──────────────────────────
 
-  describe('onHeaderStop: settings/category back vs phase-aware close/stop [obligation]', () => {
-    test('while on the settings page, the back button calls closeSettings — not requestClose/onClosed [obligation]', async () => {
+  describe('onHeaderStop: settings/category back vs phase-aware close/stop', () => {
+    test('while on the settings page, the back button calls closeSettings — not requestClose/onClosed', async () => {
       const { wrapper, close } = makeWrapper()
       await openSettingsPage()
 
@@ -686,7 +686,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('while a summary category page is open, the back button calls closeSummaryCategory [obligation]', async () => {
+    test('while a summary category page is open, the back button calls closeSummaryCategory', async () => {
       const { wrapper, close } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -698,7 +698,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('while a summary card editor is open, the back button calls stopSummaryEdit — not closeSummaryCategory [obligation]', async () => {
+    test('while a summary card editor is open, the back button calls stopSummaryEdit — not closeSummaryCategory', async () => {
       const { wrapper, close } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -712,7 +712,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('during studying, the stop button calls the controller requestClose(), not onClosed directly [obligation]', async () => {
+    test('during studying, the stop button calls the controller requestClose(), not onClosed directly', async () => {
       const { wrapper, close } = makeWrapper()
 
       await wrapper.find('[data-testid="session-header__stop"]').trigger('click')
@@ -722,7 +722,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('during summary, the close button calls onClosed() directly — sfx, clear persisted session, close() [obligation]', async () => {
+    test('during summary, the close button calls onClosed() directly — sfx, clear persisted session, close()', async () => {
       const { wrapper, close } = makeWrapper()
       await finishSession([])
 
@@ -735,10 +735,10 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── useModalRequestClose (backdrop/esc) — settings/category-aware [obligation] ─
+  // ── useModalRequestClose (backdrop/esc) — settings/category-aware ─
 
-  describe('useModalRequestClose (backdrop/esc) [obligation]', () => {
-    test('on the settings page while still on the cover, backdrop/esc dismisses the session (onClosed) [obligation]', async () => {
+  describe('useModalRequestClose (backdrop/esc)', () => {
+    test('on the settings page while still on the cover, backdrop/esc dismisses the session (onClosed)', async () => {
       is_cover_ref.value = true
       const { close } = makeWrapper()
       await openSettingsPage()
@@ -751,7 +751,7 @@ describe('StudySession (index.vue)', () => {
       expect(mockCloseSettings).not.toHaveBeenCalled()
     })
 
-    test('on the settings page mid-session (not cover), backdrop/esc returns to the session (closeSettings) [obligation]', async () => {
+    test('on the settings page mid-session (not cover), backdrop/esc returns to the session (closeSettings)', async () => {
       is_cover_ref.value = false
       const { close } = makeWrapper()
       await openSettingsPage()
@@ -762,7 +762,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('with a summary category page open, backdrop/esc returns to the summary stats list (closeSummaryCategory) [obligation]', async () => {
+    test('with a summary category page open, backdrop/esc returns to the summary stats list (closeSummaryCategory)', async () => {
       const { close } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -774,7 +774,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('with a summary card editor open, backdrop/esc returns to the category page (stopSummaryEdit) — not closeSummaryCategory [obligation]', async () => {
+    test('with a summary card editor open, backdrop/esc returns to the category page (stopSummaryEdit) — not closeSummaryCategory', async () => {
       const { close } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -788,7 +788,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('during studying (no settings page), esc/backdrop calls the controller requestClose() [obligation]', () => {
+    test('during studying (no settings page), esc/backdrop calls the controller requestClose()', () => {
       const { close } = makeWrapper()
 
       request_close_handlers.get(TEST_MODAL_ID)()
@@ -797,7 +797,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('during summary, esc/backdrop calls onClosed() — sfx + clearPersistedSession + close() [obligation]', async () => {
+    test('during summary, esc/backdrop calls onClosed() — sfx + clearPersistedSession + close()', async () => {
       const { close } = makeWrapper()
       await finishSession([])
 
@@ -810,9 +810,9 @@ describe('StudySession (index.vue)', () => {
     })
   })
 
-  // ── current_page: settings/category takes precedence over phase [obligation] ─
+  // ── current_page: settings/category takes precedence over phase ─
 
-  test('current_page renders the settings pane when active_page is "settings", regardless of phase [obligation]', async () => {
+  test('current_page renders the settings pane when active_page is "settings", regardless of phase', async () => {
     const { wrapper } = makeWrapper()
     await openSettingsPage()
 
@@ -820,7 +820,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-studying-stub"]').exists()).toBe(false)
   })
 
-  test('current_page renders the summary-category pane when summary_category is set [obligation]', async () => {
+  test('current_page renders the summary-category pane when summary_category is set', async () => {
     const { wrapper } = makeWrapper()
     await finishSession([])
     await openCategoryPage('new')
@@ -829,7 +829,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(false)
   })
 
-  test('state === "summary" switches phase to summary [obligation]', async () => {
+  test('state === "summary" switches phase to summary', async () => {
     const { wrapper } = makeWrapper()
 
     await finishSession([])
@@ -838,7 +838,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-studying-stub"]').exists()).toBe(false)
   })
 
-  test('state === "loading" still renders the studying pane, not summary [obligation]', async () => {
+  test('state === "loading" still renders the studying pane, not summary', async () => {
     state_ref.value = 'loading'
     const { wrapper } = makeWrapper()
     await nextTick()
@@ -847,7 +847,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(false)
   })
 
-  test('state === "cover" still renders the studying pane, not summary [obligation]', async () => {
+  test('state === "cover" still renders the studying pane, not summary', async () => {
     state_ref.value = 'cover'
     const { wrapper } = makeWrapper()
     await nextTick()
@@ -856,7 +856,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary-stub"]').exists()).toBe(false)
   })
 
-  test('controller results are forwarded to session-summary [obligation]', async () => {
+  test('controller results are forwarded to session-summary', async () => {
     const { wrapper } = makeWrapper()
     const results = [{ card_id: 1, passed: true }]
 
@@ -865,7 +865,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.findComponent({ name: 'SessionSummary' }).props('results')).toEqual(results)
   })
 
-  test('controller results and the opened category are forwarded to session-summary-category [obligation]', async () => {
+  test('controller results and the opened category are forwarded to session-summary-category', async () => {
     const { wrapper } = makeWrapper()
     const results = [{ card_id: 1, passed: false }]
 
@@ -877,9 +877,9 @@ describe('StudySession (index.vue)', () => {
     expect(category_page.props('category')).toBe('stuck')
   })
 
-  // ── summary open-category forwards to the controller [obligation] ─────────
+  // ── summary open-category forwards to the controller ─────────
 
-  test('summary open-category event calls the controller openSummaryCategory [obligation]', async () => {
+  test('summary open-category event calls the controller openSummaryCategory', async () => {
     const { wrapper } = makeWrapper()
 
     await finishSession([])
@@ -888,11 +888,11 @@ describe('StudySession (index.vue)', () => {
     expect(mockOpenSummaryCategory).toHaveBeenCalledWith('stuck')
   })
 
-  // ── Toolbar close button [obligation] ──────────────────────────────────────
+  // ── Toolbar close button ──────────────────────────────────────
   // The close button lives in study-session/index.vue's #toolbar now — moved
   // out of session-summary/index.vue, which no longer emits close.
 
-  test('renders a toolbar close button only on the summary stats page, not on a category page [obligation]', async () => {
+  test('renders a toolbar close button only on the summary stats page, not on a category page', async () => {
     const { wrapper } = makeWrapper()
     await finishSession([])
 
@@ -902,7 +902,7 @@ describe('StudySession (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(false)
   })
 
-  test('the toolbar close button calls onClosed (sfx + clear + close) [obligation]', async () => {
+  test('the toolbar close button calls onClosed (sfx + clear + close)', async () => {
     const { wrapper, close } = makeWrapper()
 
     await finishSession([])
@@ -915,7 +915,7 @@ describe('StudySession (index.vue)', () => {
 
   // ── Title computation: settings vs category vs single-deck vs multi-deck ──
 
-  test('title is the settings i18n key while the settings page is active [obligation]', async () => {
+  test('title is the settings i18n key while the settings page is active', async () => {
     const { wrapper } = makeWrapper()
     await openSettingsPage()
 
@@ -924,7 +924,7 @@ describe('StudySession (index.vue)', () => {
     expect(title).not.toBe('My Deck')
   })
 
-  test('title is the category-specific i18n key while a summary category page is open [obligation]', async () => {
+  test('title is the category-specific i18n key while a summary category page is open', async () => {
     const { wrapper } = makeWrapper()
     await finishSession([])
     await openCategoryPage('stuck')
@@ -934,13 +934,13 @@ describe('StudySession (index.vue)', () => {
     expect(title).not.toBe('My Deck')
   })
 
-  test('title equals sessionDecks[0].title when exactly one session deck is resolved [obligation]', () => {
+  test('title equals sessionDecks[0].title when exactly one session deck is resolved', () => {
     session_decks_ref.value = [{ id: 1, title: 'My Deck' }]
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('My Deck')
   })
 
-  test('title is the multiple-decks i18n key when more than one session deck is resolved [obligation]', () => {
+  test('title is the multiple-decks i18n key when more than one session deck is resolved', () => {
     session_decks_ref.value = [
       { id: 1, title: 'Deck One' },
       { id: 2, title: 'Deck Two' }
@@ -953,7 +953,7 @@ describe('StudySession (index.vue)', () => {
     expect(title.length).toBeGreaterThan(0)
   })
 
-  test('falls back to the multiple-decks i18n key before any session deck has resolved [obligation]', () => {
+  test('falls back to the multiple-decks i18n key before any session deck has resolved', () => {
     session_decks_ref.value = []
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('Multiple Decks')
@@ -967,9 +967,9 @@ describe('StudySession (index.vue)', () => {
     expect(capturedQueries).not.toContain('w<sm | h<sm')
   })
 
-  // ── emitStudySfx fires in pane enter's onStart, not at phase-flip [obligation] ─
+  // ── emitStudySfx fires in pane enter's onStart, not at phase-flip ─
 
-  test('session.complete sfx is NOT emitted directly when state flips to summary [obligation]', async () => {
+  test('session.complete sfx is NOT emitted directly when state flips to summary', async () => {
     const { wrapper } = makeWrapper()
 
     await finishSession([])
@@ -978,13 +978,13 @@ describe('StudySession (index.vue)', () => {
     expect(mockEmitStudySfx).not.toHaveBeenCalledWith('session.complete')
   })
 
-  // ── Jingle fires only on first summary entry [obligation] ─────────────────
+  // ── Jingle fires only on first summary entry ─────────────────
   // The pager's own enter/leave hooks run through real GSAP-backed animation
   // helpers with a wall-clock delay — instead of waiting it out, drive the
   // pager's `enter-start` event directly (the same event onPaneEnterStart
   // wires up to) and assert the sfx it dispatches per page/summary_seen.
 
-  test('enter-start on a non-summary page (studying) plays its own light click, not the jingle [obligation]', () => {
+  test('enter-start on a non-summary page (studying) plays its own light click, not the jingle', () => {
     const { wrapper } = makeWrapper()
 
     const pager = wrapper.findComponent({ name: 'DialogCardPager' })
@@ -994,7 +994,7 @@ describe('StudySession (index.vue)', () => {
     expect(mockEmitSfx).not.toHaveBeenCalledWith('session.complete')
   })
 
-  test('the pager is not instant on the first arrival at the summary, and enter-start plays the jingle [obligation]', async () => {
+  test('the pager is not instant on the first arrival at the summary, and enter-start plays the jingle', async () => {
     const { wrapper } = makeWrapper()
     await finishSession([])
 
@@ -1005,7 +1005,7 @@ describe('StudySession (index.vue)', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('session.complete')
   })
 
-  test('returning to the summary from a category page is instant and enter-start plays the light click, not the jingle again [obligation]', async () => {
+  test('returning to the summary from a category page is instant and enter-start plays the light click, not the jingle again', async () => {
     const { wrapper } = makeWrapper()
     await finishSession([])
 
@@ -1036,9 +1036,9 @@ describe('StudySession (index.vue)', () => {
     expect(classes).not.toContain('overflow-hidden')
   })
 
-  // ── header-after session-progress: floats out of flow, constant header height [obligation] ─
+  // ── header-after session-progress: floats out of flow, constant header height ─
 
-  describe('header-after session-progress floats out of flow [obligation]', () => {
+  describe('header-after session-progress floats out of flow', () => {
     // Mounts the real session-progress (not the stub) so its own class bindings
     // — set by this view, not by session-progress itself — are observable.
     function mountWithRealProgress() {
@@ -1065,7 +1065,7 @@ describe('StudySession (index.vue)', () => {
       })
     }
 
-    test('renders absolute inset-x-0 top-0, contributing zero flow height [obligation]', () => {
+    test('renders absolute inset-x-0 top-0, contributing zero flow height', () => {
       const wrapper = mountWithRealProgress()
       const classes = wrapper.find('[data-testid="study-session__progress"]').classes()
       expect(classes).toContain('absolute')
@@ -1073,14 +1073,14 @@ describe('StudySession (index.vue)', () => {
       expect(classes).toContain('top-0')
     })
 
-    test('carries no invisible class while on the studying page [obligation]', () => {
+    test('carries no invisible class while on the studying page', () => {
       const wrapper = mountWithRealProgress()
       expect(wrapper.find('[data-testid="study-session__progress"]').classes()).not.toContain(
         'invisible'
       )
     })
 
-    test('is invisible while the settings page is active [obligation]', async () => {
+    test('is invisible while the settings page is active', async () => {
       const wrapper = mountWithRealProgress()
       active_page_ref.value = 'settings'
       await nextTick()
@@ -1089,7 +1089,7 @@ describe('StudySession (index.vue)', () => {
       )
     })
 
-    test('is invisible during the summary phase [obligation]', async () => {
+    test('is invisible during the summary phase', async () => {
       const wrapper = mountWithRealProgress()
       await finishSession([])
       expect(wrapper.find('[data-testid="study-session__progress"]').classes()).toContain(
@@ -1097,7 +1097,7 @@ describe('StudySession (index.vue)', () => {
       )
     })
 
-    test('is invisible on a summary category page [obligation]', async () => {
+    test('is invisible on a summary category page', async () => {
       const wrapper = mountWithRealProgress()
       await finishSession([])
       await openCategoryPage()
@@ -1112,7 +1112,7 @@ describe('StudySession (index.vue)', () => {
     // getComputedStyle/getBoundingClientRect here — only the class bindings
     // driving them are assertable. See the Deferred coverage gap in the report.
 
-    test('session-progress never renders an interactive control that could leak a click through invisible [obligation]', async () => {
+    test('session-progress never renders an interactive control that could leak a click through invisible', async () => {
       const wrapper = mountWithRealProgress()
       active_page_ref.value = 'settings'
       await nextTick()

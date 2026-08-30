@@ -70,21 +70,21 @@ beforeEach(() => {
 // ── Routing based on subscription DTO ─────────────────────────────────────────
 
 describe('plan-actions — subscription routing', () => {
-  test('shows upgrade button when subscription is null (free member) [obligation]', () => {
+  test('shows upgrade button when subscription is null (free member)', () => {
     const wrapper = makePlanActions(null)
     expect(wrapper.find('[data-testid="tab-subscription__upgrade"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="billing-settings__plan-cancel"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="billing-settings__plan-resume"]').exists()).toBe(false)
   })
 
-  test('shows cancel button when sub present and !cancelAtPeriodEnd [obligation]', () => {
+  test('shows cancel button when sub present and !cancelAtPeriodEnd', () => {
     const wrapper = makePlanActions(activeSub)
     expect(wrapper.find('[data-testid="billing-settings__plan-cancel"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-subscription__upgrade"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="billing-settings__plan-resume"]').exists()).toBe(false)
   })
 
-  test('shows resume button when sub present and cancelAtPeriodEnd=true [obligation]', () => {
+  test('shows resume button when sub present and cancelAtPeriodEnd=true', () => {
     const wrapper = makePlanActions({ ...activeSub, cancelAtPeriodEnd: true })
     expect(wrapper.find('[data-testid="billing-settings__plan-resume"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="tab-subscription__upgrade"]').exists()).toBe(false)

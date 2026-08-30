@@ -18,14 +18,14 @@ function makeCard(overrides = {}) {
 }
 
 describe('cardsToCsv', () => {
-  test('starts with the two importer header lines [obligation]', () => {
+  test('starts with the two importer header lines', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'a', back_text: 'b' })])
     const lines = csv.split('\r\n')
     expect(lines[0]).toBe('#separator:,')
     expect(lines[1]).toBe('#html:false')
   })
 
-  test('emits one row per card, front then back, in input order [obligation]', () => {
+  test('emits one row per card, front then back, in input order', () => {
     const cards = [
       makeCard({ front_text: 'first-front', back_text: 'first-back' }),
       makeCard({ front_text: 'second-front', back_text: 'second-back' })
@@ -34,37 +34,37 @@ describe('cardsToCsv', () => {
     expect(lines.slice(2)).toEqual(['first-front,first-back', 'second-front,second-back'])
   })
 
-  test('a field with no comma, quote, or line break is left untouched [obligation]', () => {
+  test('a field with no comma, quote, or line break is left untouched', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'plain front', back_text: 'plain back' })])
     expect(csv.split('\r\n')[2]).toBe('plain front,plain back')
   })
 
-  test('quotes a front field containing a comma [obligation]', () => {
+  test('quotes a front field containing a comma', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'a, b', back_text: 'plain' })])
     expect(csv.split('\r\n')[2]).toBe('"a, b",plain')
   })
 
-  test('quotes a back field containing a comma [obligation]', () => {
+  test('quotes a back field containing a comma', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'plain', back_text: 'a, b' })])
     expect(csv.split('\r\n')[2]).toBe('plain,"a, b"')
   })
 
-  test('quotes a field containing a double quote and doubles the embedded quote [obligation]', () => {
+  test('quotes a field containing a double quote and doubles the embedded quote', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'say "hi"', back_text: 'plain' })])
     expect(csv.split('\r\n')[2]).toBe('"say ""hi""",plain')
   })
 
-  test('quotes a field containing a line break (LF) [obligation]', () => {
+  test('quotes a field containing a line break (LF)', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'line1\nline2', back_text: 'plain' })])
     expect(csv.split('\r\n')[2]).toBe('"line1\nline2",plain')
   })
 
-  test('quotes a field containing a line break (CR) [obligation]', () => {
+  test('quotes a field containing a line break (CR)', () => {
     const csv = cardsToCsv([makeCard({ front_text: 'line1\rline2', back_text: 'plain' })])
     expect(csv.split('\r\n')[2]).toBe('"line1\rline2",plain')
   })
 
-  test('never emits notes, image paths, or review fields even when the card carries them [obligation]', () => {
+  test('never emits notes, image paths, or review fields even when the card carries them', () => {
     const c = makeCard({
       front_text: 'front',
       back_text: 'back',
@@ -103,7 +103,7 @@ describe('deckExportFilename', () => {
   })
 })
 
-describe('parseCardText — separator sniffing [obligation]', () => {
+describe('parseCardText — separator sniffing', () => {
   test('a comma-separated file and a tab-separated file with the same content parse into the same cards', () => {
     const commaResult = parseCardText('front1,back1\nfront2,back2')
     const tabResult = parseCardText('front1\tback1\nfront2\tback2')
@@ -129,7 +129,7 @@ describe('parseCardText — separator sniffing [obligation]', () => {
   })
 })
 
-describe('parseCardText / cardsToCsv round-trip [obligation]', () => {
+describe('parseCardText / cardsToCsv round-trip', () => {
   test('a file written by the exporter round-trips: header lines are skipped silently, every card comes back', () => {
     const cards = [
       makeCard({ front_text: 'front1', back_text: 'back1' }),
@@ -146,7 +146,7 @@ describe('parseCardText / cardsToCsv round-trip [obligation]', () => {
   })
 })
 
-describe('parseCardText — ignorable lines [obligation]', () => {
+describe('parseCardText — ignorable lines', () => {
   test('blank lines and a leading # line are skipped without being reported in skipped', () => {
     const text = '#separator:,\n\nfront1,back1\n\nfront2,back2'
     const result = parseCardText(text)
@@ -159,7 +159,7 @@ describe('parseCardText — ignorable lines [obligation]', () => {
   })
 })
 
-describe('parseCardText — column count edge cases [obligation]', () => {
+describe('parseCardText — column count edge cases', () => {
   test('a row with more than two columns imports its first two and reports nothing', () => {
     const result = parseCardText('front1,back1,extra1,extra2')
     expect(result.ok).toBe(true)
@@ -175,7 +175,7 @@ describe('parseCardText — column count edge cases [obligation]', () => {
   })
 })
 
-describe('parseCardText — multi-line quoted fields [obligation]', () => {
+describe('parseCardText — multi-line quoted fields', () => {
   test('a quoted field spanning several lines stays one card, with newlines intact, and the next record line number accounts for them', () => {
     const text = '"line1\nline2\nline3",back1\nfront2,back2'
     const result = parseCardText(text)
@@ -218,7 +218,7 @@ describe('parseCardText — multi-line quoted fields [obligation]', () => {
   })
 })
 
-describe('parseCardText — import limit [obligation]', () => {
+describe('parseCardText — import limit', () => {
   test('over CARD_IMPORT_LIMIT cards returns ok:false, refusal:too-many, and no cards', () => {
     const lines = Array.from(
       { length: CARD_IMPORT_LIMIT + 1 },
@@ -238,7 +238,7 @@ describe('parseCardText — import limit [obligation]', () => {
   })
 })
 
-describe('parseCardImport — UTF-8 decoding [obligation]', () => {
+describe('parseCardImport — UTF-8 decoding', () => {
   test('refuses a buffer whose bytes do not decode as UTF-8, detected via the replacement character', () => {
     // 0xFF 0xFE is not valid UTF-8 and decodes to U+FFFD.
     const buffer = new Uint8Array([0xff, 0xfe, 0x61]).buffer
@@ -254,7 +254,7 @@ describe('parseCardImport — UTF-8 decoding [obligation]', () => {
   })
 })
 
-describe('isImportableCardFile [obligation]', () => {
+describe('isImportableCardFile', () => {
   test('accepts a text/* MIME type', () => {
     expect(isImportableCardFile(makeFile('a', { name: 'foo.dat', type: 'text/csv' }))).toBe(true)
     expect(

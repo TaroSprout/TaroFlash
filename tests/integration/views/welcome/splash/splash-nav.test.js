@@ -62,14 +62,14 @@ function mountSplashNav({ height = 'tall' } = {}) {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('SplashNav', () => {
-  // ── Responsive visibility [obligation] ─────────────────────────────────────
+  // ── Responsive visibility ─────────────────────────────────────
 
-  test('renders the nav when height is "tall" [obligation]', () => {
+  test('renders the nav when height is "tall"', () => {
     const wrapper = mountSplashNav({ height: 'tall' })
     expect(wrapper.find('[data-testid="welcome-hero__nav"]').exists()).toBe(true)
   })
 
-  test('does NOT render the nav when height is "short" [obligation]', () => {
+  test('does NOT render the nav when height is "short"', () => {
     const wrapper = mountSplashNav({ height: 'short' })
     expect(wrapper.find('[data-testid="welcome-hero__nav"]').exists()).toBe(false)
   })
@@ -86,16 +86,16 @@ describe('SplashNav', () => {
     expect(wrapper.find('[data-testid="welcome-hero__beta"]').exists()).toBe(true)
   })
 
-  test('the beta pill carries data-palette="pink" [obligation]', () => {
+  test('the beta pill carries data-palette="pink"', () => {
     const wrapper = mountSplashNav()
     expect(wrapper.find('[data-testid="welcome-hero__beta"]').attributes('data-palette')).toBe(
       'pink'
     )
   })
 
-  // ── Login component [obligation] ──────────────────────────────────────────
+  // ── Login component ──────────────────────────────────────────
 
-  test('renders the LoginDialogue component in the nav [obligation]', () => {
+  test('renders the LoginDialogue component in the nav', () => {
     const wrapper = mountSplashNav()
     // LoginDialogue is a stub — its data-testid from the stub confirms it renders
     expect(wrapper.findComponent(LoginDialogueStub).exists()).toBe(true)

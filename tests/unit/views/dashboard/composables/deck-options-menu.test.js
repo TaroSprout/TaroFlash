@@ -30,14 +30,14 @@ beforeEach(() => {
   mockSettingsModal.open.mockReset()
 })
 
-describe('useDeckOptionsMenu — options [obligation]', () => {
+describe('useDeckOptionsMenu — options', () => {
   test('exposes exactly settings, rearrange, and delete, in that order', () => {
     const { options } = useDeckOptionsMenu({ onRearrange: vi.fn() })
     expect(options.value.map((o) => o.value)).toEqual(['settings', 'rearrange', 'delete'])
   })
 })
 
-describe('useDeckOptionsMenu — onSelect dispatch [obligation]', () => {
+describe('useDeckOptionsMenu — onSelect dispatch', () => {
   test('settings option opens the settings modal with the deck', () => {
     const { onSelect } = useDeckOptionsMenu({ onRearrange: vi.fn() })
     onSelect({ label: 'Settings', value: 'settings' }, DECK)
@@ -59,7 +59,7 @@ describe('useDeckOptionsMenu — onSelect dispatch [obligation]', () => {
   })
 })
 
-describe('useDeckOptionsMenu — delete confirm flow [obligation]', () => {
+describe('useDeckOptionsMenu — delete confirm flow', () => {
   test('declined confirm does not call the delete mutation', async () => {
     const { onSelect } = useDeckOptionsMenu({ onRearrange: vi.fn() })
     confirmResponse(false)
@@ -82,7 +82,7 @@ describe('useDeckOptionsMenu — delete confirm flow [obligation]', () => {
     expect(mockDeleteMutation.mutateAsync).toHaveBeenCalledWith(DECK.id)
   })
 
-  test('mutation rejection shows an error notice (no post-delete navigation) [obligation]', async () => {
+  test('mutation rejection shows an error notice (no post-delete navigation)', async () => {
     mockDeleteMutation.mutateAsync.mockRejectedValueOnce(new Error('network'))
     const { onSelect } = useDeckOptionsMenu({ onRearrange: vi.fn() })
     confirmResponse(true)

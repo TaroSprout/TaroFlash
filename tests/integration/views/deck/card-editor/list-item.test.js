@@ -149,8 +149,8 @@ describe('ListItem', () => {
 
   // ── Drag handle — data-dragging attribute and reorderPointerdown emit ────────
 
-  // [obligation] data-dragging reflects the dragging prop on the row root
-  test('data-dragging is "true" when dragging prop is true [obligation]', () => {
+  // data-dragging reflects the dragging prop on the row root
+  test('data-dragging is "true" when dragging prop is true', () => {
     const wrapper = mount({ dragging: true })
     expect(wrapper.find('[data-testid="card-list-item"]').attributes('data-dragging')).toBe('true')
   })

@@ -316,7 +316,7 @@ describe('MoveCardsModal', () => {
   // ── Skeleton (pending decks query) ──────────────────────────────────────────
 
   describe('pending decks query', () => {
-    test('renders exactly 4 skeleton rows and no real deck-list panel [obligation]', () => {
+    test('renders exactly 4 skeleton rows and no real deck-list panel', () => {
       mockDecksData.status.value = 'pending'
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
@@ -325,7 +325,7 @@ describe('MoveCardsModal', () => {
       expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(false)
     })
 
-    test('swaps the skeleton for the real deck-list panel once the query succeeds [obligation]', async () => {
+    test('swaps the skeleton for the real deck-list panel once the query succeeds', async () => {
       mockDecksData.status.value = 'pending'
       const { wrapper } = mountModal({ cards: [makeCard()] })
       expect(wrapper.find('[data-testid="move-cards__deck-list-skeleton"]').exists()).toBe(true)
@@ -337,14 +337,14 @@ describe('MoveCardsModal', () => {
       expect(wrapper.find('[data-testid="move-cards__deck-list"]').exists()).toBe(true)
     })
 
-    test('keeps the confirm button disabled throughout the pending state [obligation]', () => {
+    test('keeps the confirm button disabled throughout the pending state', () => {
       mockDecksData.status.value = 'pending'
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
       expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
     })
 
-    test('never renders the skeleton and the real deck-list panel at the same time, in either state [obligation]', () => {
+    test('never renders the skeleton and the real deck-list panel at the same time, in either state', () => {
       mockDecksData.status.value = 'pending'
       const { wrapper } = mountModal({ cards: [makeCard()] })
       const pendingSkeleton = wrapper
@@ -360,7 +360,7 @@ describe('MoveCardsModal', () => {
       expect(loadedSkeleton && loadedList).toBe(false)
     })
 
-    test('gives every skeleton row a shimmering cover and a shimmering label bar [obligation]', () => {
+    test('gives every skeleton row a shimmering cover and a shimmering label bar', () => {
       mockDecksData.status.value = 'pending'
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
@@ -376,7 +376,7 @@ describe('MoveCardsModal', () => {
   // ── Error (decks query failure + retry) ─────────────────────────────────────
 
   describe('decks query error', () => {
-    test('renders the error node and hides the deck list/skeleton when the decks query fails [obligation]', () => {
+    test('renders the error node and hides the deck list/skeleton when the decks query fails', () => {
       mockDecksData.status.value = 'error'
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
@@ -386,7 +386,7 @@ describe('MoveCardsModal', () => {
       expect(wrapper.findAll('[data-testid="move-cards__deck-list-skeleton-row"]')).toHaveLength(0)
     })
 
-    test('plays notice.error exactly once when the decks query first surfaces an error [obligation]', async () => {
+    test('plays notice.error exactly once when the decks query first surfaces an error', async () => {
       // `watch(status, …)` only fires on a change observed *after* setup —
       // mount at 'success' first, then flip to 'error' so the transition
       // itself is what the watcher sees, matching how a real query settles
@@ -399,14 +399,14 @@ describe('MoveCardsModal', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('notice.error')
     })
 
-    test('keeps the confirm button disabled in the error state — no deck can be selected [obligation]', () => {
+    test('keeps the confirm button disabled in the error state — no deck can be selected', () => {
       mockDecksData.status.value = 'error'
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
       expect(wrapper.find('[data-testid="move-cards__move"]').attributes('disabled')).toBeDefined()
     })
 
-    test('keeps the modal mounted, open, and its title unchanged on a decks-load failure [obligation]', () => {
+    test('keeps the modal mounted, open, and its title unchanged on a decks-load failure', () => {
       const cards = [makeCard({ front_text: 'Q', back_text: 'A' })]
       const success = mountModal({ cards })
       const successTitle = success.wrapper.find('.move-cards__title').text()
@@ -425,7 +425,7 @@ describe('MoveCardsModal', () => {
     // the named role actually plays is UiButton's own contract, covered in
     // tests/integration/components/ui-kit/button.test.js — this asserts the
     // wiring only, since the stub below can't reach the real tap() handler.
-    test('wires the default press cue onto the retry button [obligation]', () => {
+    test('wires the default press cue onto the retry button', () => {
       mockDecksData.status.value = 'error'
       const { wrapper } = mountModal({ cards: [makeCard()] })
 
@@ -436,7 +436,7 @@ describe('MoveCardsModal', () => {
       expect(retry.props('sfx')).toEqual({ press: 'ui.press' })
     })
 
-    test('clicking retry calls refetch() [obligation]', async () => {
+    test('clicking retry calls refetch()', async () => {
       mockDecksData.status.value = 'error'
       mockDecksData.refetch.mockResolvedValue(undefined)
       const { wrapper } = mountModal({ cards: [makeCard()] })
@@ -446,7 +446,7 @@ describe('MoveCardsModal', () => {
       expect(mockDecksData.refetch).toHaveBeenCalledTimes(1)
     })
 
-    test('a successful retry swaps the error node for the real deck list [obligation]', async () => {
+    test('a successful retry swaps the error node for the real deck list', async () => {
       mockDecksData.status.value = 'error'
       mockDecksData.refetch.mockImplementation(() => {
         mockDecksData.status.value = 'success'
@@ -471,7 +471,7 @@ describe('MoveCardsModal', () => {
     // handler instead of watching `status` for a transition. If that
     // detection regresses, the assertions below fail — that is the point,
     // see the Bug found note in the report.
-    test('a repeat retry failure shakes the message and plays ui.rejected without changing the message text [obligation]', async () => {
+    test('a repeat retry failure shakes the message and plays ui.rejected without changing the message text', async () => {
       // First failure: mount at 'success', then flip to 'error' so
       // `watch(status, …)` actually observes the transition and the initial
       // notice.error cue fires — same setup as the "first appearance" test.
@@ -521,7 +521,7 @@ describe('MoveCardsModal', () => {
     expect(items).toHaveLength(3)
   })
 
-  test('no longer wraps the deck list in a dialog-card-body — the panel owns its own scroll handle [obligation]', () => {
+  test('no longer wraps the deck list in a dialog-card-body — the panel owns its own scroll handle', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards })
     expect(wrapper.find('[data-testid="move-cards__deck-list-wrap"]').exists()).toBe(false)
@@ -531,7 +531,7 @@ describe('MoveCardsModal', () => {
 
   // dialog-card's `content-grid` gives grid-column: content to its own direct
   // children only — a wrapper in between would have opted the deck list out.
-  test('the deck list is a direct child of dialog-card, landing in the same content-grid column as before [obligation]', () => {
+  test('the deck list is a direct child of dialog-card, landing in the same content-grid column as before', () => {
     const cards = [makeCard()]
     const wrapper = shallowMount(MoveCardsModal, {
       props: { cards, current_deck_id: 30, close: vi.fn(), move: vi.fn() },
@@ -563,7 +563,7 @@ describe('MoveCardsModal', () => {
     expect(items[1].attributes('class')).not.toContain('pointer-events-none')
   })
 
-  test('disables no deck when current_deck_id is undefined (mixed-deck selection) [obligation]', () => {
+  test('disables no deck when current_deck_id is undefined (mixed-deck selection)', () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards, current_deck_id: undefined })
     const items = wrapper.findAll('[data-testid="options-panel__card"]')
@@ -571,7 +571,7 @@ describe('MoveCardsModal', () => {
     items.forEach((item) => expect(item.attributes('class')).not.toContain('pointer-events-none'))
   })
 
-  test('every deck stays selectable when current_deck_id is undefined [obligation]', async () => {
+  test('every deck stays selectable when current_deck_id is undefined', async () => {
     const cards = [makeCard()]
     const { wrapper } = mountModal({ cards, current_deck_id: undefined })
 
@@ -604,7 +604,7 @@ describe('MoveCardsModal', () => {
     expect(titleText).toContain('2')
   })
 
-  test('moving_count (guard math) uses count, not cards.length, even with a single blank preview card [obligation]', async () => {
+  test('moving_count (guard math) uses count, not cards.length, even with a single blank preview card', async () => {
     // A single blank placeholder card zeroes out the title's effective_count,
     // but the authoritative moving_count must still drive the limit guard —
     // resolveMoveArgs' count (200, from select-all mode), not cards.length (1).
@@ -621,7 +621,7 @@ describe('MoveCardsModal', () => {
   // ── Guard 1: onMove calls guardAddCards before closing ───────────────────────
 
   describe('Guard 1 — guardAddCards', () => {
-    test('calls guardAddCards with moving_count against the selected deck [obligation]', async () => {
+    test('calls guardAddCards with moving_count against the selected deck', async () => {
       const cards = [makeCard()]
       const { wrapper } = mountModal({ cards, current_deck_id: 30 })
       await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
@@ -630,7 +630,7 @@ describe('MoveCardsModal', () => {
       expect(guardAddCardsMock).toHaveBeenCalledWith(1)
     })
 
-    test('does not close the modal when guardAddCards resolves false [obligation]', async () => {
+    test('does not close the modal when guardAddCards resolves false', async () => {
       guardAddCardsMock.mockResolvedValue(false)
       const cards = [makeCard()]
       const { wrapper, close } = mountModal({ cards, current_deck_id: 30 })
@@ -654,7 +654,7 @@ describe('MoveCardsModal', () => {
   // ── Guard 2: isDeckFull ───────────────────────────────────────────────────────
 
   describe('Guard 2 — full deck rows', () => {
-    test('shows the "Full" label instead of a radio for a full deck [obligation]', () => {
+    test('shows the "Full" label instead of a radio for a full deck', () => {
       mockDecksData.data.value = [
         { id: 10, title: 'Deck A', card_count: 200 },
         { id: 20, title: 'Deck B', card_count: 0 },
@@ -667,7 +667,7 @@ describe('MoveCardsModal', () => {
       expect(items[0].find('[data-testid="move-cards__deck-radio"]').exists()).toBe(false)
     })
 
-    test('clicking a full deck row does not change selected_deck_id [obligation]', async () => {
+    test('clicking a full deck row does not change selected_deck_id', async () => {
       mockDecksData.data.value = [
         { id: 10, title: 'Deck A', card_count: 200 },
         { id: 20, title: 'Deck B', card_count: 0 },
@@ -702,7 +702,7 @@ describe('MoveCardsModal', () => {
       expect(items[0].find('[data-testid="move-cards__deck-full-label"]').exists()).toBe(false)
     })
 
-    test('the current deck row never shows the "Full" label even when its math would flag it full [obligation]', () => {
+    test('the current deck row never shows the "Full" label even when its math would flag it full', () => {
       mockDecksData.data.value = [
         { id: 10, title: 'Deck A', card_count: 0 },
         { id: 20, title: 'Deck B', card_count: 0 },
@@ -758,7 +758,7 @@ describe('MoveCardsModal', () => {
     expect(close).toHaveBeenCalledWith(false)
   })
 
-  test('dialog-card close emits pop_up_close [obligation]', async () => {
+  test('dialog-card close emits pop_up_close', async () => {
     const { wrapper } = mountModal({ cards: [makeCard()] })
     await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
     expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
@@ -767,7 +767,7 @@ describe('MoveCardsModal', () => {
   // ── onMove failure handling ──────────────────────────────────────────────────
 
   describe('onMove failure handling', () => {
-    test('sets moving true before awaiting move, then resets it back to false on success [obligation]', async () => {
+    test('sets moving true before awaiting move, then resets it back to false on success', async () => {
       let resolve_move
       const move = vi.fn(() => new Promise((resolve) => (resolve_move = resolve)))
       const { wrapper } = mountModal({ cards: [makeCard()], move })
@@ -783,7 +783,7 @@ describe('MoveCardsModal', () => {
       expect(wrapper.find('[data-testid="move-cards__move"]').attributes('loading')).toBe('false')
     })
 
-    test('calls close({ deck_id }) with the selected deck id when move resolves [obligation]', async () => {
+    test('calls close({ deck_id }) with the selected deck id when move resolves', async () => {
       const move = vi.fn().mockResolvedValue(undefined)
       const { wrapper, close } = mountModal({ cards: [makeCard()], move })
       await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
@@ -794,7 +794,7 @@ describe('MoveCardsModal', () => {
       expect(close).toHaveBeenCalledWith({ deck_id: 20 })
     })
 
-    test('shows a success toast with the moved-card count before closing [obligation]', async () => {
+    test('shows a success toast with the moved-card count before closing', async () => {
       const move = vi.fn().mockResolvedValue(undefined)
       const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
       const { wrapper } = mountModal({ cards, move })
@@ -807,7 +807,7 @@ describe('MoveCardsModal', () => {
       expect(notice.notices[0].state).toBe('success')
     })
 
-    test('when move rejects with a plan-limit error, does not close, calls handleLimitError, and does not show the generic notice [obligation]', async () => {
+    test('when move rejects with a plan-limit error, does not close, calls handleLimitError, and does not show the generic notice', async () => {
       const error = { code: 'PT402' }
       const move = vi.fn().mockRejectedValue(error)
       handleLimitErrorMock.mockReturnValue(true)
@@ -822,7 +822,7 @@ describe('MoveCardsModal', () => {
       expect(notice.notices).toHaveLength(0)
     })
 
-    test('when move rejects and handleLimitError returns false, shows the generic move-failed notice and does not close [obligation]', async () => {
+    test('when move rejects and handleLimitError returns false, shows the generic move-failed notice and does not close', async () => {
       const error = new Error('network down')
       const move = vi.fn().mockRejectedValue(error)
       handleLimitErrorMock.mockReturnValue(false)
@@ -838,7 +838,7 @@ describe('MoveCardsModal', () => {
       expect(notice.notices[0].state).toBe('error')
     })
 
-    test('resets moving back to false after a failed move [obligation]', async () => {
+    test('resets moving back to false after a failed move', async () => {
       const move = vi.fn().mockRejectedValue(new Error('nope'))
       const { wrapper } = mountModal({ cards: [makeCard()], move })
       await wrapper.findAll('[data-testid="options-panel__card"]')[1].trigger('click')
@@ -859,7 +859,7 @@ describe('MoveCardsModal', () => {
 
   // ── Skeleton theming ──────────────────────────────────────────────────────
 
-  describe('skeleton theming [obligation]', () => {
+  describe('skeleton theming', () => {
     test('the shimmering label bar establishes its own positioning context, containing the sweep', () => {
       mockDecksData.status.value = 'pending'
       const { wrapper } = mountModal({ cards: [makeCard()], attach: true })

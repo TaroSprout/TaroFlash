@@ -44,8 +44,8 @@ describe('UiDivider', () => {
     })
   })
 
-  describe('start/end slots [obligation]', () => {
-    test('renders content in the start slot to the left of the rule [obligation]', () => {
+  describe('start/end slots', () => {
+    test('renders content in the start slot to the left of the rule', () => {
       const wrapper = mountDivider(
         {},
         { start: () => h('span', { 'data-testid': 'start-content' }, 'Left') }
@@ -54,7 +54,7 @@ describe('UiDivider', () => {
       expect(wrapper.find('[data-testid="start-content"]').text()).toBe('Left')
     })
 
-    test('renders content in the end slot to the right of the rule [obligation]', () => {
+    test('renders content in the end slot to the right of the rule', () => {
       const wrapper = mountDivider(
         {},
         { end: () => h('span', { 'data-testid': 'end-content' }, 'Right') }
@@ -63,7 +63,7 @@ describe('UiDivider', () => {
       expect(wrapper.find('[data-testid="end-content"]').text()).toBe('Right')
     })
 
-    test('renders both start and end slots simultaneously [obligation]', () => {
+    test('renders both start and end slots simultaneously', () => {
       const wrapper = mountDivider(
         {},
         {

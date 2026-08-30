@@ -221,9 +221,9 @@ describe('UiPopover', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
-  // ── anchor_el — a click inside it never reads as outside [obligation] ─────
+  // ── anchor_el — a click inside it never reads as outside ─────
 
-  test('a click inside anchor_el does not emit close [obligation]', async () => {
+  test('a click inside anchor_el does not emit close', async () => {
     const anchor = document.createElement('button')
     document.body.appendChild(anchor)
 
@@ -237,7 +237,7 @@ describe('UiPopover', () => {
     expect(wrapper.emitted('close')).toBeFalsy()
   })
 
-  test('a click outside both the container and anchor_el still emits close [obligation]', async () => {
+  test('a click outside both the container and anchor_el still emits close', async () => {
     const anchor = document.createElement('button')
     document.body.appendChild(anchor)
 
@@ -254,9 +254,9 @@ describe('UiPopover', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
-  // ── teleported layer class [obligation] ────────────────────────────────────
+  // ── teleported layer class ────────────────────────────────────
 
-  test('a teleported popover carries the teleported layer class [obligation]', () => {
+  test('a teleported popover carries the teleported layer class', () => {
     mountPopover({ open: true, teleport: true })
     const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
     expect(panel.classList.contains('ui-kit-popover--teleported')).toBe(true)
@@ -270,7 +270,7 @@ describe('UiPopover', () => {
 
   // ── default (no teleport) — panel renders inline ───────────────────────────
 
-  test('default: panel renders inside the container (not teleported) [obligation]', () => {
+  test('default: panel renders inside the container (not teleported)', () => {
     const wrapper = mountPopover({ open: true })
     // The panel must be a descendant of the container — content stays inline
     // when teleport is not set (default disabled teleport).
@@ -280,7 +280,7 @@ describe('UiPopover', () => {
 
   // ── teleport=true — panel renders to body ─────────────────────────────────
 
-  test('panel renders to <body> and is present when open=true with teleport=true [obligation]', () => {
+  test('panel renders to <body> and is present when open=true with teleport=true', () => {
     mountPopover({ open: true, teleport: true })
     const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
     expect(panel).not.toBeNull()
@@ -294,7 +294,7 @@ describe('UiPopover', () => {
 
   // ── teleport + click-outside ───────────────────────────────────────────────
 
-  test('click-outside closes a teleported popover [obligation]', async () => {
+  test('click-outside closes a teleported popover', async () => {
     const wrapper = mountPopover({ open: false, mode: 'click', teleport: true })
     await wrapper.setProps({ open: true })
 
@@ -307,7 +307,7 @@ describe('UiPopover', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
-  test('click inside the teleported panel does NOT close the popover [obligation]', async () => {
+  test('click inside the teleported panel does NOT close the popover', async () => {
     const wrapper = mountPopover({ open: false, mode: 'click', teleport: true })
     await wrapper.setProps({ open: true })
 
@@ -320,20 +320,20 @@ describe('UiPopover', () => {
     expect(wrapper.emitted('close')).toBeFalsy()
   })
 
-  // ── match_reference_width prop — size middleware wiring [obligation] ─────────
+  // ── match_reference_width prop — size middleware wiring ─────────
 
-  test('match_reference_width=true causes the size middleware to be included [obligation]', () => {
+  test('match_reference_width=true causes the size middleware to be included', () => {
     mountPopover({ open: true, match_reference_width: true })
     // The `size` middleware factory must have been called to build the middleware array
     expect(sizeMock).toHaveBeenCalledOnce()
   })
 
-  test('match_reference_width=false (default) does NOT include the size middleware [obligation]', () => {
+  test('match_reference_width=false (default) does NOT include the size middleware', () => {
     mountPopover({ open: true })
     expect(sizeMock).not.toHaveBeenCalled()
   })
 
-  test('match_reference_width=false leaves the popover with no inline minWidth set [obligation]', () => {
+  test('match_reference_width=false leaves the popover with no inline minWidth set', () => {
     // Without the size middleware the floating element carries no minWidth from
     // floating-ui — the mock returns empty floatingStyles so nothing is injected.
     const wrapper = mountPopover({ open: true, match_reference_width: false })
@@ -342,13 +342,13 @@ describe('UiPopover', () => {
     expect(style).not.toContain('min-width')
   })
 
-  // ── teleport restates the trigger's palette, never a depth [obligation] ────
+  // ── teleport restates the trigger's palette, never a depth ────
   // Teleporting to <body> severs DOM inheritance for data-palette, so the
   // popover restates it explicitly on the teleported node. It no longer walks
   // an ancestor data-depth — that concept is gone.
 
-  describe('teleported palette inheritance [obligation]', () => {
-    test('restates the trigger-ancestor data-palette on the teleported node when open [obligation]', async () => {
+  describe('teleported palette inheritance', () => {
+    test('restates the trigger-ancestor data-palette on the teleported node when open', async () => {
       const Parent = defineComponent({
         setup() {
           return () =>
@@ -371,13 +371,13 @@ describe('UiPopover', () => {
       expect(panel.getAttribute('data-palette')).toBe('mint')
     })
 
-    test('the teleported node carries no data-depth attribute [obligation]', () => {
+    test('the teleported node carries no data-depth attribute', () => {
       mountPopover({ open: true, teleport: true })
       const panel = document.body.querySelector('[data-testid="ui-kit-popover"]')
       expect(panel.hasAttribute('data-depth')).toBe(false)
     })
 
-    test('non-teleported (inline) popovers get no inherited_context restated [obligation]', () => {
+    test('non-teleported (inline) popovers get no inherited_context restated', () => {
       const wrapper = mountPopover({ open: true, teleport: false })
       const panel = wrapper.find('[data-testid="ui-kit-popover"]')
       expect(panel.attributes('data-palette')).toBeUndefined()

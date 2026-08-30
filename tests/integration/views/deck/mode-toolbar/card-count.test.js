@@ -34,17 +34,17 @@ describe('mode-toolbar/card-count', () => {
     expect(wrapper.find('[data-testid="card-count"]').exists()).toBe(true)
   })
 
-  test('shows singular label for 1 card [obligation]', () => {
+  test('shows singular label for 1 card', () => {
     const wrapper = mount(makeEditor({ card_count: 1 }))
     expect(wrapper.find('[data-testid="card-count"]').text()).toContain('1 Card')
   })
 
-  test('shows plural label for 197 cards [obligation]', () => {
+  test('shows plural label for 197 cards', () => {
     const wrapper = mount(makeEditor({ card_count: 197 }))
     expect(wrapper.find('[data-testid="card-count"]').text()).toContain('197 Cards')
   })
 
-  test('reads card_count from the injected card-editor controller, not list.all_cards.length [obligation]', () => {
+  test('reads card_count from the injected card-editor controller, not list.all_cards.length', () => {
     // The controller exposes `card_count` (server total), not a loaded-card list length.
     // Injecting a controller without any all_cards list confirms the component only
     // touches card_count.

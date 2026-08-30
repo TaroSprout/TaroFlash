@@ -103,7 +103,7 @@ describe('useCardImport — is_expanded', () => {
   })
 })
 
-describe('useCardImport — setSource keeps each source draft [obligation]', () => {
+describe('useCardImport — setSource keeps each source draft', () => {
   test('typing text, switching to file, and switching back preserves the typed draft', () => {
     const { draft } = setup()
     draft.setSource('text')
@@ -140,7 +140,7 @@ describe('useCardImport — setSource keeps each source draft [obligation]', () 
   })
 })
 
-describe('useCardImport — cards/skipped/refusal are per-source computeds [obligation]', () => {
+describe('useCardImport — cards/skipped/refusal are per-source computeds', () => {
   test('with text loaded but the file source active, has_cards reads false off the empty file draft', () => {
     const { draft } = setup()
     draft.setSource('text')
@@ -190,7 +190,7 @@ describe('useCardImport — loadFile / isImportableCardFile', () => {
   })
 })
 
-describe('useCardImport — sfx contract [obligation]', () => {
+describe('useCardImport — sfx contract', () => {
   test('loadFile chimes music_plink_ok only when the parse succeeds', async () => {
     isImportableCardFileMock.mockReturnValue(true)
     parseCardImportMock.mockReturnValue({
@@ -305,7 +305,7 @@ describe('useCardImport — commit', () => {
     expect(draft.has_cards.value).toBe(false)
   })
 
-  test('a successful commit exits via close(), with no sfx argument — never the refusal chime [obligation]', async () => {
+  test('a successful commit exits via close(), with no sfx argument — never the refusal chime', async () => {
     const exitMode = vi.fn()
     const shell = makeShell({ exitMode })
     const { draft } = setup({ shell })
@@ -350,7 +350,7 @@ describe('useCardImport — duplicate cards are never de-duplicated against the 
   })
 })
 
-describe('useCardImport — clear resets only the active source [obligation]', () => {
+describe('useCardImport — clear resets only the active source', () => {
   test('clearing a loaded file leaves typed text intact', () => {
     const { draft } = setup()
     draft.setSource('text')
@@ -420,7 +420,7 @@ describe('useCardImport — dismissRefusal / toggleExpanded', () => {
     expect(draft.refusal.value).toBeNull()
   })
 
-  test('dismissRefusal is a silent no-op when there is no refusal [obligation]', () => {
+  test('dismissRefusal is a silent no-op when there is no refusal', () => {
     const { draft } = setup()
     expect(draft.refusal.value).toBeNull()
 
@@ -487,7 +487,7 @@ describe('useCardImport — dismissRefusal / toggleExpanded', () => {
   })
 })
 
-describe('useCardImport — close / dismiss exit paths [obligation]', () => {
+describe('useCardImport — close / dismiss exit paths', () => {
   test('close() drops both sources and exits with the default mode chime', async () => {
     const exitMode = vi.fn()
     const shell = makeShell({ exitMode })

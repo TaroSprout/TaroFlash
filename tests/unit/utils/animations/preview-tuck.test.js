@@ -54,9 +54,9 @@ function el() {
   return document.createElement('div')
 }
 
-// ── onEdgeOn fires at the 90° midpoint, not at completion [obligation] ────────
+// ── onEdgeOn fires at the 90° midpoint, not at completion ────────
 
-describe('tuckPinnedPreview / untuckPinnedPreview — onEdgeOn fires at the 90° midpoint [obligation]', () => {
+describe('tuckPinnedPreview / untuckPinnedPreview — onEdgeOn fires at the 90° midpoint', () => {
   test('tuckPinnedPreview wires onEdgeOn as the onComplete of the first half-turn tween only', () => {
     const onEdgeOn = vi.fn()
     tuckPinnedPreview(el(), onEdgeOn)

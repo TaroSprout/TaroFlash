@@ -53,21 +53,21 @@ describe('useWindowLayout — layout_mode', () => {
     expect(layout_mode.value).toBe('desktop')
   })
 
-  test('phone wins over desktop when both queries match simultaneously [obligation]', () => {
+  test('phone wins over desktop when both queries match simultaneously', () => {
     phoneRef.value = true
     desktopRef.value = true
     const { layout_mode } = useWindowLayout({ phone_query: 'w<md', desktop_query: 'w>=lg & fine' })
     expect(layout_mode.value).toBe('phone')
   })
 
-  test('never returns "desktop" when desktop_query is omitted [obligation]', () => {
+  test('never returns "desktop" when desktop_query is omitted', () => {
     phoneRef.value = false
     const { layout_mode } = useWindowLayout({ phone_query: 'w<md' })
     expect(layout_mode.value).not.toBe('desktop')
     expect(layout_mode.value).toBe('tablet')
   })
 
-  test('never returns "desktop" when called with no options at all [obligation]', () => {
+  test('never returns "desktop" when called with no options at all', () => {
     phoneRef.value = false
     const { layout_mode } = useWindowLayout()
     expect(layout_mode.value).not.toBe('desktop')

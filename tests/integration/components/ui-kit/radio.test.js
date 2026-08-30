@@ -33,12 +33,12 @@ describe('UiRadio', () => {
 
   // ── data-active ────────────────────────────────────────────────────────────
 
-  test('mirrors the active prop onto data-active [obligation]', () => {
+  test('mirrors the active prop onto data-active', () => {
     const wrapper = mountRadio({ checked: false, active: true })
     expect(wrapper.find('[data-testid="ui-kit-radio"]').attributes('data-active')).toBe('true')
   })
 
-  test('data-active is not set when active is false and not being pressed [obligation]', () => {
+  test('data-active is not set when active is false and not being pressed', () => {
     const wrapper = mountRadio({ checked: false, active: false })
     expect(wrapper.find('[data-testid="ui-kit-radio"]').attributes('data-active')).toBeUndefined()
   })
@@ -89,20 +89,20 @@ describe('UiRadio', () => {
 
   // ── sfx prop ───────────────────────────────────────────────────────────────
 
-  test('plays the "ui.select" press sfx by default [obligation]', async () => {
+  test('plays the "ui.select" press sfx by default', async () => {
     const wrapper = mountRadio({ checked: false })
     await wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('overrides the press sfx via the sfx prop [obligation]', async () => {
+  test('overrides the press sfx via the sfx prop', async () => {
     const wrapper = mountRadio({ checked: false, sfx: { press: 'ui.press' } })
     await wrapper.find('[data-testid="ui-kit-radio"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
     expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
-  test('forwards hover sfx to the v-sfx directive [obligation]', () => {
+  test('forwards hover sfx to the v-sfx directive', () => {
     const wrapper = mountRadio({ checked: false, sfx: { hover: 'ui.focus' } })
     wrapper
       .find('[data-testid="ui-kit-radio"]')
@@ -110,7 +110,7 @@ describe('UiRadio', () => {
     expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.focus')
   })
 
-  test('forwards focus sfx to the v-sfx directive [obligation]', async () => {
+  test('forwards focus sfx to the v-sfx directive', async () => {
     const wrapper = mountRadio({ checked: false, sfx: { focus: 'ui.focus' } })
     await wrapper.find('[data-testid="ui-kit-radio"]').trigger('focus')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.focus')

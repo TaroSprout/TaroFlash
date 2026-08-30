@@ -86,9 +86,9 @@ describe('toRelative', () => {
   })
 })
 
-// ── toShortDuration [obligation] ────────────────────────────────────────────
+// ── toShortDuration ────────────────────────────────────────────
 
-describe('toShortDuration [obligation]', () => {
+describe('toShortDuration', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'))
@@ -98,7 +98,7 @@ describe('toShortDuration [obligation]', () => {
     vi.useRealTimers()
   })
 
-  test('magnitude only — no "in"/"ago" direction [obligation]', () => {
+  test('magnitude only — no "in"/"ago" direction', () => {
     const inOneDay = new Date(Date.now() + 86_400_000)
     const agoOneDay = new Date(Date.now() - 86_400_000)
 
@@ -111,12 +111,12 @@ describe('toShortDuration [obligation]', () => {
     expect(toShortDuration(inOneDay)).not.toMatch(/\.$/)
   })
 
-  test('weeks are omitted — a 6-day interval reads "6d", never "1w" [obligation]', () => {
+  test('weeks are omitted — a 6-day interval reads "6d", never "1w"', () => {
     const sixDays = new Date(Date.now() + 6 * 86_400_000)
     expect(toShortDuration(sixDays)).toBe('6d')
   })
 
-  test('a 7-day interval also reads in days, not weeks [obligation]', () => {
+  test('a 7-day interval also reads in days, not weeks', () => {
     const sevenDays = new Date(Date.now() + 7 * 86_400_000)
     expect(toShortDuration(sevenDays)).toBe('7d')
   })
@@ -174,12 +174,12 @@ describe('toShortDuration [obligation]', () => {
   })
 })
 
-// ── toRelativeDistinct [obligation] ─────────────────────────────────────────
+// ── toRelativeDistinct ─────────────────────────────────────────
 
-describe('toRelativeDistinct [obligation]', () => {
+describe('toRelativeDistinct', () => {
   const day = 86_400 * 1000
 
-  test('demotes two colliding dates to distinct day-level labels [obligation]', () => {
+  test('demotes two colliding dates to distinct day-level labels', () => {
     // 7.6 and 8.6 days out both naturally round to "in 1 week".
     const a = new Date(Date.now() + 7.6 * day)
     const b = new Date(Date.now() + 8.6 * day)
@@ -191,7 +191,7 @@ describe('toRelativeDistinct [obligation]', () => {
     expect(labelB).toBe('in 9 days')
   })
 
-  test('leaves non-colliding dates at their natural unit, including sub-day granularity [obligation]', () => {
+  test('leaves non-colliding dates at their natural unit, including sub-day granularity', () => {
     const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
     const inThreeHours = new Date(Date.now() + 3 * 60 * 60 * 1000)
 
@@ -201,7 +201,7 @@ describe('toRelativeDistinct [obligation]', () => {
     expect(labelB).toBe('in 3 hours')
   })
 
-  test('a collision between two dates bumps every date in the batch to day granularity, except a sub-day sibling which renders in hours [obligation]', () => {
+  test('a collision between two dates bumps every date in the batch to day granularity, except a sub-day sibling which renders in hours', () => {
     // Regression: this used to demote only the colliding pair (a, b) and leave
     // the third, non-colliding date at its natural unit. Now one collision
     // anywhere in the batch bumps the whole group together — but a date under
@@ -218,7 +218,7 @@ describe('toRelativeDistinct [obligation]', () => {
     expect(labelC).toBe('in 0 hours')
   })
 
-  test('within a colliding batch, a date under 24h away renders hour-granularity while day-level siblings stay at day granularity [obligation]', () => {
+  test('within a colliding batch, a date under 24h away renders hour-granularity while day-level siblings stay at day granularity', () => {
     const under_a_day = new Date(Date.now() + 5 * 60 * 60 * 1000) // in 5 hours
     const a = new Date(Date.now() + 7.6 * day)
     const b = new Date(Date.now() + 8.6 * day)
@@ -232,7 +232,7 @@ describe('toRelativeDistinct [obligation]', () => {
     expect(labelB).toBe('in 9 days')
   })
 
-  test('when every date in a colliding batch is >= 1 day away, all bump to day granularity together (no hour exemption applies) [obligation]', () => {
+  test('when every date in a colliding batch is >= 1 day away, all bump to day granularity together (no hour exemption applies)', () => {
     const a = new Date(Date.now() + 7.6 * day)
     const b = new Date(Date.now() + 8.6 * day)
     const c = new Date(Date.now() + 1.2 * day)
@@ -244,7 +244,7 @@ describe('toRelativeDistinct [obligation]', () => {
     expect(labelC).toBe('in 1 day')
   })
 
-  test('preserves each date at its natural granularity when no two labels collide [obligation]', () => {
+  test('preserves each date at its natural granularity when no two labels collide', () => {
     const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
     const inThreeHours = new Date(Date.now() + 3 * 60 * 60 * 1000)
     const inTwoDays = new Date(Date.now() + 2 * day)

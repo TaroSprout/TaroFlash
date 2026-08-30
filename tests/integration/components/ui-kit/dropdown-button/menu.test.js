@@ -48,12 +48,12 @@ function mountMenu(props = {}) {
 describe('DropdownMenu', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  // ── station [obligation] ──────────────────────────────────────────────────
+  // ── station ──────────────────────────────────────────────────
   // A dropdown menu is always a float station regardless of where its trigger
   // sits — it no longer takes a depth/float prop.
 
-  describe('station [obligation]', () => {
-    test('always stamps data-station="float", unconditionally [obligation]', () => {
+  describe('station', () => {
+    test('always stamps data-station="float", unconditionally', () => {
       const wrapper = mountMenu()
       expect(wrapper.find('[data-testid="dropdown-button__menu"]').attributes('data-station')).toBe(
         'float'
@@ -101,7 +101,7 @@ describe('DropdownMenu', () => {
       expect(wrapper.emitted('select')[0][0]).toEqual(SAMPLE_OPTIONS[0])
     })
 
-    test('fine-pointer click does NOT call emitSfx at all [obligation]', async () => {
+    test('fine-pointer click does NOT call emitSfx at all', async () => {
       const wrapper = mountMenu()
       await wrapper.findAll('[data-testid="dropdown-button__option"]')[0].trigger('click')
       // menu.vue removed the hard-coded emitSfx('snappy_button_5') call — option-select
@@ -120,10 +120,10 @@ describe('DropdownMenu', () => {
     // the headless Chromium runner. Deferred.
   })
 
-  // ── disabled options [obligation] ─────────────────────────────────────────
+  // ── disabled options ─────────────────────────────────────────
 
-  describe('disabled options [obligation]', () => {
-    test('clicking a disabled option does NOT emit select [obligation]', async () => {
+  describe('disabled options', () => {
+    test('clicking a disabled option does NOT emit select', async () => {
       const wrapper = mountMenu({
         options: [
           { value: 'copy', label: 'Copy', disabled: true },
@@ -134,7 +134,7 @@ describe('DropdownMenu', () => {
       expect(wrapper.emitted('select')).toBeFalsy()
     })
 
-    test('clicking an enabled option emits select with that option [obligation]', async () => {
+    test('clicking an enabled option emits select with that option', async () => {
       const enabled_option = { value: 'delete', label: 'Delete' }
       const wrapper = mountMenu({
         options: [{ value: 'copy', label: 'Copy', disabled: true }, enabled_option]
@@ -153,13 +153,13 @@ describe('DropdownMenu', () => {
     })
   })
 
-  // ── data-active / data-tapping [obligation] ───────────────────────────────
+  // ── data-active / data-tapping ───────────────────────────────
   // data-active now means SELECTED only (flat fill); data-tapping is the
   // separate transient tap-sweep signal. These were previously conflated on
   // data-active.
 
-  describe('data-active / data-tapping [obligation]', () => {
-    test('data-active is true for the option marked selected [obligation]', () => {
+  describe('data-active / data-tapping', () => {
+    test('data-active is true for the option marked selected', () => {
       const wrapper = mountMenu({
         options: [
           { value: 'copy', label: 'Copy', selected: true },
@@ -171,7 +171,7 @@ describe('DropdownMenu', () => {
       expect(options[1].attributes('data-active')).toBeUndefined()
     })
 
-    test('selected option reads lighter than its siblings via bg-raised-tint [obligation]', () => {
+    test('selected option reads lighter than its siblings via bg-raised-tint', () => {
       const wrapper = mountMenu({
         options: [
           { value: 'copy', label: 'Copy', selected: true },
@@ -182,13 +182,13 @@ describe('DropdownMenu', () => {
       expect(options[0].classes()).toContain('data-[active=true]:bg-raised-tint')
     })
 
-    test('data-tapping is unset before any tap [obligation]', () => {
+    test('data-tapping is unset before any tap', () => {
       const wrapper = mountMenu()
       const option = wrapper.find('[data-testid="dropdown-button__option"]')
       expect(option.attributes('data-tapping')).toBeUndefined()
     })
 
-    test('clicking an unselected option does not set data-active [obligation]', async () => {
+    test('clicking an unselected option does not set data-active', async () => {
       const wrapper = mountMenu()
       const option = wrapper.findAll('[data-testid="dropdown-button__option"]')[0]
       await option.trigger('click')
@@ -196,10 +196,10 @@ describe('DropdownMenu', () => {
     })
   })
 
-  // ── separator rows [obligation] ───────────────────────────────────────────
+  // ── separator rows ───────────────────────────────────────────
 
-  describe('separator rows [obligation]', () => {
-    test('renders a separator divider above an option flagged separator [obligation]', () => {
+  describe('separator rows', () => {
+    test('renders a separator divider above an option flagged separator', () => {
       const wrapper = mountMenu({
         options: [
           { value: 'copy', label: 'Copy' },
@@ -209,17 +209,17 @@ describe('DropdownMenu', () => {
       expect(wrapper.findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(1)
     })
 
-    test('renders no separator divider when no option is flagged separator [obligation]', () => {
+    test('renders no separator divider when no option is flagged separator', () => {
       const wrapper = mountMenu()
       expect(wrapper.findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(0)
     })
   })
 
-  // ── default slot override (panel slot path) [obligation] ──────────────────
+  // ── default slot override (panel slot path) ──────────────────
   // When a #default slot is provided to DropdownMenu (via the parent's #panel
   // slot bridge), it replaces the option list entirely.
 
-  describe('default slot override [obligation]', () => {
+  describe('default slot override', () => {
     function mountMenuWithSlot(slotContent) {
       return mount(DropdownMenu, {
         props: { options: SAMPLE_OPTIONS, size: 'md' },
@@ -227,7 +227,7 @@ describe('DropdownMenu', () => {
       })
     }
 
-    test('custom default slot content renders inside dropdown-button__menu [obligation]', () => {
+    test('custom default slot content renders inside dropdown-button__menu', () => {
       const wrapper = mountMenuWithSlot(() =>
         h('div', { 'data-testid': 'custom-panel-content' }, 'Custom')
       )
@@ -235,14 +235,14 @@ describe('DropdownMenu', () => {
       expect(wrapper.find('[data-testid="custom-panel-content"]').exists()).toBe(true)
     })
 
-    test('custom default slot: NO option rows are rendered [obligation]', () => {
+    test('custom default slot: NO option rows are rendered', () => {
       const wrapper = mountMenuWithSlot(() =>
         h('div', { 'data-testid': 'custom-panel-content' }, 'Custom')
       )
       expect(wrapper.findAll('[data-testid="dropdown-button__option"]')).toHaveLength(0)
     })
 
-    test('without a default slot, options prop renders option rows (fallback preserved) [obligation]', () => {
+    test('without a default slot, options prop renders option rows (fallback preserved)', () => {
       const wrapper = mountMenu()
       expect(wrapper.findAll('[data-testid="dropdown-button__option"]')).toHaveLength(
         SAMPLE_OPTIONS.length

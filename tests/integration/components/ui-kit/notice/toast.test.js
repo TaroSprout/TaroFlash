@@ -108,25 +108,25 @@ describe('ToastNotice', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(true)
   })
 
-  test('stamps the constant data-station="float" [obligation]', async () => {
+  test('stamps the constant data-station="float"', async () => {
     const wrapper = await mountToast(makeNotice({}))
     expect(wrapper.find('[data-testid="ui-kit-notice-toast"]').attributes('data-station')).toBe(
       'float'
     )
   })
 
-  test('close button is entirely omitted when notice.closable is false [obligation]', async () => {
+  test('close button is entirely omitted when notice.closable is false', async () => {
     const wrapper = await mountToast(makeNotice({ closable: false }))
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(false)
   })
 
-  test('close button is hidden entirely on a coarse pointer, even when closable is true [obligation]', async () => {
+  test('close button is hidden entirely on a coarse pointer, even when closable is true', async () => {
     coarseRef.value = true
     const wrapper = await mountToast(makeNotice({ closable: true }))
     expect(wrapper.find('[data-testid="ui-kit-notice-toast__close"]').exists()).toBe(false)
   })
 
-  test('keeps room beside the message when closable on a fine pointer, so a long message never runs under the close button [obligation]', async () => {
+  test('keeps room beside the message when closable on a fine pointer, so a long message never runs under the close button', async () => {
     coarseRef.value = false
     const wrapper = await mountToast(
       makeNotice({ closable: true, message: 'A message long enough to reach the far edge' })
@@ -134,19 +134,19 @@ describe('ToastNotice', () => {
     expect(reservedRoomBesideMessage(wrapper)).toBeGreaterThan(0)
   })
 
-  test('gives the message the full width when there is no close button, so the room does not leak into the common case [obligation]', async () => {
+  test('gives the message the full width when there is no close button, so the room does not leak into the common case', async () => {
     coarseRef.value = false
     const wrapper = await mountToast(makeNotice({ closable: false }))
     expect(reservedRoomBesideMessage(wrapper)).toBe(0)
   })
 
-  test('gives the message the full width on a coarse pointer even when closable, since the close button is suppressed there [obligation]', async () => {
+  test('gives the message the full width on a coarse pointer even when closable, since the close button is suppressed there', async () => {
     coarseRef.value = true
     const wrapper = await mountToast(makeNotice({ closable: true }))
     expect(reservedRoomBesideMessage(wrapper)).toBe(0)
   })
 
-  test('holds the room while the close button is still invisible, so the message cannot shift when it fades in [obligation]', async () => {
+  test('holds the room while the close button is still invisible, so the message cannot shift when it fades in', async () => {
     coarseRef.value = false
     const wrapper = await mountToast(makeNotice({ closable: true }))
     const close_button = wrapper.find('[data-testid="ui-kit-notice-toast__close"]').element
@@ -170,7 +170,7 @@ describe('ToastNotice', () => {
     expect(wrapper.emitted('close')[0]).toEqual([notice])
   })
 
-  test('an action without closesOnClick runs onClick but leaves the notice open [obligation]', async () => {
+  test('an action without closesOnClick runs onClick but leaves the notice open', async () => {
     const onClick = vi.fn()
     const onDismiss = vi.fn()
     const notice = makeNotice({
@@ -187,7 +187,7 @@ describe('ToastNotice', () => {
     expect(wrapper.emitted('close')).toBeFalsy()
   })
 
-  test('an action with closesOnClick runs onClick then closes through the same path as the close button [obligation]', async () => {
+  test('an action with closesOnClick runs onClick then closes through the same path as the close button', async () => {
     const onClick = vi.fn()
     const onDismiss = vi.fn()
     const notice = makeNotice({
@@ -206,13 +206,13 @@ describe('ToastNotice', () => {
   })
 
   describe('swipe to dismiss', () => {
-    test('does not register the drag handler on a fine pointer [obligation]', async () => {
+    test('does not register the drag handler on a fine pointer', async () => {
       coarseRef.value = false
       await mountToast(makeNotice())
       expect(mockRegister).not.toHaveBeenCalled()
     })
 
-    test('swiping up past the threshold on a coarse pointer dismisses [obligation]', async () => {
+    test('swiping up past the threshold on a coarse pointer dismisses', async () => {
       coarseRef.value = true
       const onDismiss = vi.fn()
       const wrapper = await mountToast(makeNotice({ onDismiss }))
@@ -225,7 +225,7 @@ describe('ToastNotice', () => {
       expect(wrapper.emitted('close')).toBeTruthy()
     })
 
-    test('swiping down past the threshold does not dismiss (toast only swipes up) [obligation]', async () => {
+    test('swiping down past the threshold does not dismiss (toast only swipes up)', async () => {
       coarseRef.value = true
       const onDismiss = vi.fn()
       const wrapper = await mountToast(makeNotice({ onDismiss }))
@@ -240,7 +240,7 @@ describe('ToastNotice', () => {
   })
 
   describe('hover pauses auto-dismiss', () => {
-    test('pointerenter pauses the timer so the delay elapsing does not dismiss [obligation]', async () => {
+    test('pointerenter pauses the timer so the delay elapsing does not dismiss', async () => {
       vi.useFakeTimers()
       const onDismiss = vi.fn()
       const wrapper = await mountToast(makeNotice({ onDismiss, delay: 1000, persist: false }))
@@ -251,7 +251,7 @@ describe('ToastNotice', () => {
       expect(onDismiss).not.toHaveBeenCalled()
     })
 
-    test('pointerleave resumes with the remaining time and eventually dismisses [obligation]', async () => {
+    test('pointerleave resumes with the remaining time and eventually dismisses', async () => {
       vi.useFakeTimers()
       const onDismiss = vi.fn()
       const wrapper = await mountToast(makeNotice({ onDismiss, delay: 1000, persist: false }))

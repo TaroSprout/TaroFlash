@@ -43,16 +43,16 @@ describe('SessionStudying (index.vue)', () => {
     expect(wrapper.find('[data-testid="card-stage-stub"]').exists()).toBe(true)
   })
 
-  // ── clears the floating progress bar [obligation] ──────────────────────────
+  // ── clears the floating progress bar ──────────────────────────
 
-  test('carries pt-9 so its content clears the floating header progress bar [obligation]', () => {
+  test('carries pt-9 so its content clears the floating header progress bar', () => {
     const wrapper = mountSessionStudying()
     expect(wrapper.find('[data-testid="session-flashcard"]').classes()).toContain('pt-9')
   })
 
-  // ── exposed rate() delegates to the card stage [obligation] ────────────────
+  // ── exposed rate() delegates to the card stage ────────────────
 
-  test('rate() forwards the grade to the mounted card stage [obligation]', () => {
+  test('rate() forwards the grade to the mounted card stage', () => {
     const wrapper = mountSessionStudying()
     wrapper.vm.rate(3)
     expect(mockRate).toHaveBeenCalledWith(3)

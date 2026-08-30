@@ -63,7 +63,7 @@ describe('useOpenCollection', () => {
     expect(mockRouterPush).not.toHaveBeenCalled()
   })
 
-  test('[obligation] shows an error notice and does NOT open the edit modal or navigate when resolveCollectionEntryLesson throws', async () => {
+  test('shows an error notice and does NOT open the edit modal or navigate when resolveCollectionEntryLesson throws', async () => {
     mockResolveEntry.mockRejectedValueOnce(new Error('network error'))
     const { openCollection } = useOpenCollection()
 

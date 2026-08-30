@@ -76,19 +76,19 @@ describe('CardFace', () => {
   // ── Image region and text region render simultaneously ───────────────────────
   // Core feature: old XOR behavior gone; both regions always render.
 
-  test('renders both image-region and text-region when only image is present [obligation]', () => {
+  test('renders both image-region and text-region when only image is present', () => {
     const wrapper = mountFace({ image: 'https://example.com/img.jpg' })
     expect(wrapper.find('[data-testid="card-face__image-region"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-face__text-region"]').exists()).toBe(true)
   })
 
-  test('renders both image-region and text-region when only text is present [obligation]', () => {
+  test('renders both image-region and text-region when only text is present', () => {
     const wrapper = mountFace({ text: 'hello' })
     expect(wrapper.find('[data-testid="card-face__image-region"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-face__text-region"]').exists()).toBe(true)
   })
 
-  test('renders both image-region and text-region when both image and text are present [obligation]', () => {
+  test('renders both image-region and text-region when both image and text are present', () => {
     const wrapper = mountFace({ image: 'https://example.com/img.jpg', text: 'hello' })
     expect(wrapper.find('[data-testid="card-face__image-region"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="card-face__text-region"]').exists()).toBe(true)

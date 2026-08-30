@@ -102,9 +102,9 @@ describe('LoginDialog (login/dialog.vue)', () => {
 
   // ── onSubmit — success ─────────────────────────────────────────────────────
 
-  // [obligation] on success the dialog delegates to session.onAuthenticated()
+  // on success the dialog delegates to session.onAuthenticated()
   // (the single post-auth funnel) instead of pushing + calling close itself.
-  test('calls session.onAuthenticated() on a successful submit [obligation]', async () => {
+  test('calls session.onAuthenticated() on a successful submit', async () => {
     mockSubmit.mockResolvedValueOnce('success')
     const close = vi.fn()
     const wrapper = mountDialog({ close })
@@ -116,7 +116,7 @@ describe('LoginDialog (login/dialog.vue)', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('does not call onAuthenticated on a failed submit [obligation]', async () => {
+  test('does not call onAuthenticated on a failed submit', async () => {
     mockSubmit.mockResolvedValueOnce('invalid')
     const close = vi.fn()
     const wrapper = mountDialog({ close })
@@ -158,10 +158,10 @@ describe('LoginDialog (login/dialog.vue)', () => {
     expect(mockSubmitOAuth).toHaveBeenCalledWith('google')
   })
 
-  // ── onForgotPassword [obligation] ─────────────────────────────────────────
+  // ── onForgotPassword ─────────────────────────────────────────
 
-  describe('forgot-password wiring [obligation]', () => {
-    test('closes the login dialog and opens the forgot-password modal [obligation]', async () => {
+  describe('forgot-password wiring', () => {
+    test('closes the login dialog and opens the forgot-password modal', async () => {
       const close = vi.fn()
       const wrapper = mountDialog({ close })
 
@@ -171,7 +171,7 @@ describe('LoginDialog (login/dialog.vue)', () => {
       expect(mockForgotOpen).toHaveBeenCalledOnce()
     })
 
-    test('does not throw when close is omitted [obligation]', async () => {
+    test('does not throw when close is omitted', async () => {
       const wrapper = mountDialog()
 
       await expect(

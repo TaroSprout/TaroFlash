@@ -226,7 +226,7 @@ describe('AddCardPanel', () => {
     })
   })
 
-  describe('flip [obligation]', () => {
+  describe('flip', () => {
     test('clicking flip-button switches to the back side', async () => {
       const wrapper = mountPanel()
       expect(wrapper.findComponent(CardFaceFieldStub).props('side')).toBe('front')
@@ -244,7 +244,7 @@ describe('AddCardPanel', () => {
       expect(wrapper.findComponent(CardFaceFieldStub).props('side')).toBe('front')
     })
 
-    test('flipping to back emits card.flip-away [obligation]', async () => {
+    test('flipping to back emits card.flip-away', async () => {
       const wrapper = mountPanel()
       emitSfxMock.mockClear()
 
@@ -254,7 +254,7 @@ describe('AddCardPanel', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('card.flip-away')
     })
 
-    test('flipping to front emits card.flip-back [obligation]', async () => {
+    test('flipping to front emits card.flip-back', async () => {
       const wrapper = mountPanel()
 
       // Flip to back first, then back to front
@@ -266,8 +266,8 @@ describe('AddCardPanel', () => {
     })
   })
 
-  describe('focus cue [obligation]', () => {
-    test('focusin on a contenteditable target emits nav.page-forward [obligation]', async () => {
+  describe('focus cue', () => {
+    test('focusin on a contenteditable target emits nav.page-forward', async () => {
       const wrapper = mountPanel()
       emitSfxMock.mockClear()
 
@@ -284,7 +284,7 @@ describe('AddCardPanel', () => {
       editable.remove()
     })
 
-    test('focusin on a non-editable element does NOT emit ui.slide_up [obligation]', async () => {
+    test('focusin on a non-editable element does NOT emit ui.slide_up', async () => {
       const wrapper = mountPanel()
       emitSfxMock.mockClear()
 
@@ -301,8 +301,8 @@ describe('AddCardPanel', () => {
     })
   })
 
-  describe('deck dropdown [obligation]', () => {
-    test('deck_options excludes the currently-selected deck [obligation]', async () => {
+  describe('deck dropdown', () => {
+    test('deck_options excludes the currently-selected deck', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ deck_id: 1 })
       await flushPromises()
@@ -314,7 +314,7 @@ describe('AddCardPanel', () => {
       expect(options[0].value).toBe(2)
     })
 
-    test('selecting a deck option sets deck_id via onSelectDeck [obligation]', async () => {
+    test('selecting a deck option sets deck_id via onSelectDeck', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel()
       await flushPromises()
@@ -327,20 +327,20 @@ describe('AddCardPanel', () => {
       expect(options.every((o) => o.value !== 1)).toBe(true)
     })
 
-    test('deck dropdown opens centered below the trigger (position="bottom") [obligation]', () => {
+    test('deck dropdown opens centered below the trigger (position="bottom")', () => {
       const wrapper = mountPanel()
       const dropdown = wrapper.findComponent(UiDropdownButtonStub)
       expect(dropdown.props('position')).toBe('bottom')
     })
 
-    test('deck dropdown shows a caret-down trailing icon [obligation]', () => {
+    test('deck dropdown shows a caret-down trailing icon', () => {
       const wrapper = mountPanel()
       const dropdown = wrapper.findComponent(UiDropdownButtonStub)
       expect(dropdown.props('iconRight')).toBe('carat-down')
     })
   })
 
-  describe('can_save guard [obligation]', () => {
+  describe('can_save guard', () => {
     test('save button is disabled when no deck is selected', () => {
       const wrapper = mountPanel()
       expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
@@ -374,8 +374,8 @@ describe('AddCardPanel', () => {
     })
   })
 
-  describe('save action [obligation]', () => {
-    test('calls mutateAsync with deck_id and both face texts, no rank — nothing on screen to resolve neighbours from [obligation]', async () => {
+  describe('save action', () => {
+    test('calls mutateAsync with deck_id and both face texts, no rank — nothing on screen to resolve neighbours from', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ front: 'Dog', back: '犬' })
       await flushPromises()
@@ -393,7 +393,7 @@ describe('AddCardPanel', () => {
       expect('rank' in mutateAsyncMock.mock.calls[0][0]).toBe(false)
     })
 
-    test('remembers the saved deck as the last-used deck [obligation]', async () => {
+    test('remembers the saved deck as the last-used deck', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ deck_id: 1 })
       await flushPromises()
@@ -404,7 +404,7 @@ describe('AddCardPanel', () => {
       expect(setLastDeckMock).toHaveBeenCalledWith(1)
     })
 
-    test('emits saved after successful mutateAsync [obligation]', async () => {
+    test('emits saved after successful mutateAsync', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel()
       await flushPromises()
@@ -438,7 +438,7 @@ describe('AddCardPanel', () => {
       expect(errorMock).toHaveBeenCalled()
     })
 
-    test('forwards a provided note prop into mutateAsync [obligation]', async () => {
+    test('forwards a provided note prop into mutateAsync', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ front: 'Dog', back: '犬', note: 'some context' })
       await flushPromises()
@@ -471,7 +471,7 @@ describe('AddCardPanel', () => {
       )
     })
 
-    test('pre-selects the deck passed via deck_id prop [obligation]', async () => {
+    test('pre-selects the deck passed via deck_id prop', async () => {
       decksDataRef.value = TEST_DECKS
       const wrapper = mountPanel({ deck_id: 2 })
       await flushPromises()
@@ -486,8 +486,8 @@ describe('AddCardPanel', () => {
     })
   })
 
-  describe('cancel [obligation]', () => {
-    test('back button emits cancel [obligation]', async () => {
+  describe('cancel', () => {
+    test('back button emits cancel', async () => {
       const wrapper = mountPanel()
       await wrapper.find('[data-testid="add-card-panel__back"]').trigger('click')
 
@@ -495,7 +495,7 @@ describe('AddCardPanel', () => {
     })
   })
 
-  describe('card-limit gate [obligation]', () => {
+  describe('card-limit gate', () => {
     test('does not call mutateAsync when guardAddCards resolves false', async () => {
       guardAddCardsMock.mockResolvedValue(false)
       decksDataRef.value = TEST_DECKS

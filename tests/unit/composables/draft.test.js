@@ -20,7 +20,7 @@ describe('useDraft', () => {
       expect(is_dirty.value).toBe(true)
     })
 
-    test('is exact — restoring the original value after a mutation clears is_dirty again [obligation]', () => {
+    test('is exact — restoring the original value after a mutation clears is_dirty again', () => {
       const { state, is_dirty } = useDraft(() => ({ a: 1, nested: { b: 2 } }))
 
       state.a = 2
@@ -70,7 +70,7 @@ describe('useDraft', () => {
       expect(is_dirty.value).toBe(false)
     })
 
-    test('preserves nested object identity — a reference captured before reset still reads the reset values [obligation]', () => {
+    test('preserves nested object identity — a reference captured before reset still reads the reset values', () => {
       const { state, reset } = useDraft(() => ({ nested: { b: 2 } }))
 
       const nested_ref = state.nested
@@ -93,7 +93,7 @@ describe('useDraft', () => {
   })
 
   describe('rebase', () => {
-    test('adopts the current state as the new base, so is_dirty goes false without a further mutation [obligation]', () => {
+    test('adopts the current state as the new base, so is_dirty goes false without a further mutation', () => {
       const { state, is_dirty, rebase } = useDraft(() => ({ a: 1 }))
 
       state.a = 2
@@ -119,8 +119,8 @@ describe('useDraft', () => {
     // action writing the deck's pacing sidecar) rebases just that slice —
     // adopting the whole state would silently commit the user's other staged
     // edits without them ever pressing Save.
-    describe('partial rebase (keys) [obligation]', () => {
-      test('rebase([key]) leaves other dirty keys still reported dirty by is_dirty [obligation]', () => {
+    describe('partial rebase (keys)', () => {
+      test('rebase([key]) leaves other dirty keys still reported dirty by is_dirty', () => {
         const { state, is_dirty, rebase } = useDraft(() => ({ a: 1, b: 1 }))
 
         state.a = 2

@@ -23,8 +23,8 @@ function scroller(wrapper) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('DialogCardBody', () => {
-  describe('always self-scrolls and forwards bleed onto the region [obligation]', () => {
-    test('the body always self-scrolls — no scroll_target prop exists to override it [obligation]', () => {
+  describe('always self-scrolls and forwards bleed onto the region', () => {
+    test('the body always self-scrolls — no scroll_target prop exists to override it', () => {
       const wrapper = mountBody()
       expect(root(wrapper).attributes('data-scroll')).toBe('self')
     })

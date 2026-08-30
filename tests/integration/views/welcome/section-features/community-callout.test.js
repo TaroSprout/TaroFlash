@@ -80,16 +80,16 @@ describe('CommunityCallout', () => {
     expect(wrapper.find('[data-testid="community-callout__text"]').exists()).toBe(true)
   })
 
-  // ── seeRoadmap prop forwarding [obligation] ────────────────────────────────
+  // ── seeRoadmap prop forwarding ────────────────────────────────
 
-  // [obligation] roadmap link exists
-  test('renders the roadmap link button [obligation]', () => {
+  // roadmap link exists
+  test('renders the roadmap link button', () => {
     const wrapper = mountCallout()
     expect(wrapper.find('[data-testid="community-callout__roadmap-link"]').exists()).toBe(true)
   })
 
-  // [obligation] pressing the roadmap link calls seeRoadmap
-  test('pressing the roadmap link calls the seeRoadmap prop [obligation]', async () => {
+  // pressing the roadmap link calls seeRoadmap
+  test('pressing the roadmap link calls the seeRoadmap prop', async () => {
     const seeRoadmap = vi.fn()
     const wrapper = mountCallout({ seeRoadmap })
 
@@ -98,13 +98,13 @@ describe('CommunityCallout', () => {
     expect(seeRoadmap).toHaveBeenCalledTimes(1)
   })
 
-  test('seeRoadmap is not called until the link is pressed [obligation]', () => {
+  test('seeRoadmap is not called until the link is pressed', () => {
     const seeRoadmap = vi.fn()
     mountCallout({ seeRoadmap })
     expect(seeRoadmap).not.toHaveBeenCalled()
   })
 
-  test('different seeRoadmap callbacks are each invoked independently [obligation]', async () => {
+  test('different seeRoadmap callbacks are each invoked independently', async () => {
     const first = vi.fn()
     const second = vi.fn()
 

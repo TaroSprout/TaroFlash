@@ -54,7 +54,7 @@ describe('resolveCollectionEntryLesson', () => {
       expect(result).toBe(10)
     })
 
-    test('calls refresh (not fetch) against the ensured entry so a warm cache skips the refetch [obligation]', async () => {
+    test('calls refresh (not fetch) against the ensured entry so a warm cache skips the refetch', async () => {
       const entry = Symbol('entry')
       ensureMock.mockReturnValue(entry)
       refreshMock.mockResolvedValue({ data: [{ id: 10 }] })

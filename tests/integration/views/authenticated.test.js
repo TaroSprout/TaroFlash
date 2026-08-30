@@ -112,7 +112,7 @@ describe('AuthenticatedView', () => {
     activeWrapper = undefined
   })
 
-  test('calls useResumeStudySession on setup, so refresh mid-session reopens the study modal [obligation]', () => {
+  test('calls useResumeStudySession on setup, so refresh mid-session reopens the study modal', () => {
     mountAuthenticated()
 
     expect(mockUseResumeStudySession).toHaveBeenCalledOnce()
@@ -140,10 +140,10 @@ describe('AuthenticatedView', () => {
     expect(wrapper.findComponent({ name: 'FakeRouteComponent' }).exists()).toBe(true)
   })
 
-  // ── pending-deletion watcher [obligation] ───────────────────────────────────
+  // ── pending-deletion watcher ───────────────────────────────────
 
-  describe('pending-deletion watcher [obligation]', () => {
-    test('[obligation] opens the pending-deletion notice immediately on a cold load of an already-suspended member', async () => {
+  describe('pending-deletion watcher', () => {
+    test('opens the pending-deletion notice immediately on a cold load of an already-suspended member', async () => {
       mockMemberStore.pending_deletion = true
 
       mountAuthenticated()
@@ -161,10 +161,10 @@ describe('AuthenticatedView', () => {
       expect(mockOpenNotice).not.toHaveBeenCalled()
     })
 
-    // [obligation] the member row resolves after the shell has already mounted
+    // the member row resolves after the shell has already mounted
     // (query lands async) — the watcher must react to that later flip, not
     // just the immediate value at mount time.
-    test('[obligation] opens the notice when pending_deletion flips true after mount', async () => {
+    test('opens the notice when pending_deletion flips true after mount', async () => {
       mountAuthenticated()
       await flushPromises()
       expect(mockOpenNotice).not.toHaveBeenCalled()
@@ -175,10 +175,10 @@ describe('AuthenticatedView', () => {
       expect(mockOpenNotice).toHaveBeenCalledOnce()
     })
 
-    // [obligation] the checkpoint no longer diverts a pending-deletion member to
+    // the checkpoint no longer diverts a pending-deletion member to
     // welcome — the shell renders the route skeleton underneath the panel
     // instead of redirecting away.
-    test('[obligation] the route-container still renders for a pending-deletion member — no redirect away from the shell', async () => {
+    test('the route-container still renders for a pending-deletion member — no redirect away from the shell', async () => {
       mockMemberStore.pending_deletion = true
 
       const wrapper = mountAuthenticated()
@@ -188,14 +188,14 @@ describe('AuthenticatedView', () => {
     })
   })
 
-  // ── route-skeleton overlay [obligation] ─────────────────────────────────────
+  // ── route-skeleton overlay ─────────────────────────────────────
   //
   // The overlay must mask a pending-deletion member's real route content —
   // decks are RLS-zeroed, but the dashboard/account section itself still
   // painted behind the restore dialog before the fix.
 
-  describe('route-skeleton overlay [obligation]', () => {
-    test('[obligation] a pending-deletion member sees the route-skeleton overlay over their real route content', async () => {
+  describe('route-skeleton overlay', () => {
+    test('a pending-deletion member sees the route-skeleton overlay over their real route content', async () => {
       mockMemberStore.pending_deletion = true
 
       const wrapper = mountAuthenticated({ renderRouteSlot: true })
@@ -215,26 +215,26 @@ describe('AuthenticatedView', () => {
     })
   })
 
-  // ── page scroll region [obligation] ─────────────────────────────────────────
+  // ── page scroll region ─────────────────────────────────────────
   //
   // The shell mounts the only page-level scroll region; a pane elsewhere in
   // the tree can claim its right edge, but nothing does by default.
 
-  describe('page scroll region [obligation]', () => {
-    test('[obligation] renders exactly one page-scroll-region', () => {
+  describe('page scroll region', () => {
+    test('renders exactly one page-scroll-region', () => {
       const wrapper = mountAuthenticated()
 
       expect(wrapper.findAll('[data-testid="page-scroll-region"]')).toHaveLength(1)
     })
 
-    test('[obligation] carries no inline right style while nothing claims the anchor', () => {
+    test('carries no inline right style while nothing claims the anchor', () => {
       const wrapper = mountAuthenticated()
 
       const style = wrapper.find('[data-testid="page-scroll-region"]').attributes('style') ?? ''
       expect(style).not.toContain('right')
     })
 
-    test('[obligation] sets an inline right style once a pane claims the anchor', async () => {
+    test('sets an inline right style once a pane claims the anchor', async () => {
       const ClaimingPane = defineComponent({
         name: 'ClaimingPane',
         setup() {
@@ -257,14 +257,14 @@ describe('AuthenticatedView', () => {
     })
   })
 
-  // ── main bottom clearance [obligation] ──────────────────────────────────────
+  // ── main bottom clearance ──────────────────────────────────────
   //
   // The dashboard's last row used to sit under the mobile footer — clearance
   // now comes from the shared <main>, not from any one view, so it must reserve
   // room for a real dock height and collapse to zero once the dock is gone.
 
-  describe('main bottom clearance [obligation]', () => {
-    test('[obligation] carries the mobile-dock-height padding term, falling back to 0px when the dock is absent', () => {
+  describe('main bottom clearance', () => {
+    test('carries the mobile-dock-height padding term, falling back to 0px when the dock is absent', () => {
       const wrapper = mountAuthenticated()
 
       expect(wrapper.find('[data-testid="authenticated__main"]').classes()).toContain(

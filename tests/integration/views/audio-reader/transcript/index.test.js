@@ -155,8 +155,8 @@ describe('TranscriptView', () => {
     })
   })
 
-  describe('dismiss event [obligation]', () => {
-    test('a touch tap on empty space emits dismiss [obligation]', async () => {
+  describe('dismiss event', () => {
+    test('a touch tap on empty space emits dismiss', async () => {
       const wrapper = mountView()
       const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
       // Map clientX → word element; anything beyond the word count returns null (empty space)
@@ -189,7 +189,7 @@ describe('TranscriptView', () => {
       expect(wrapper.emitted('select')).toBeFalsy()
     })
 
-    test('a touch tap ON a word emits select and does NOT emit dismiss [obligation]', async () => {
+    test('a touch tap ON a word emits select and does NOT emit dismiss', async () => {
       const wrapper = mountView()
       const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
       vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
@@ -280,7 +280,7 @@ describe('TranscriptView', () => {
     })
   })
 
-  describe('sentence marking for repeated terms [obligation]', () => {
+  describe('sentence marking for repeated terms', () => {
     function tap(wrapper, wordIndex) {
       const wordEls = wrapper.findAll('[data-testid="transcript-word"]').map((w) => w.element)
       vi.spyOn(document, 'elementFromPoint').mockImplementation((x) => wordEls[x] ?? null)
@@ -335,8 +335,8 @@ describe('TranscriptView', () => {
     })
   })
 
-  describe('readerActiveWordKey provide [obligation]', () => {
-    test('provides readerActiveWordKey to child words reflecting active_word prop [obligation]', async () => {
+  describe('readerActiveWordKey provide', () => {
+    test('provides readerActiveWordKey to child words reflecting active_word prop', async () => {
       const wrapper = mountView({ active_word: 3 })
       // paintActiveWord awaits ensureWordMounted (a microtask, even when the
       // word is already mounted) — let it settle before inspecting the DOM.
@@ -349,7 +349,7 @@ describe('TranscriptView', () => {
       expect(words[3].attributes('data-playing')).toBe('true')
     })
 
-    test('words that are not the active word have data-playing absent [obligation]', async () => {
+    test('words that are not the active word have data-playing absent', async () => {
       const wrapper = mountView({ active_word: 3 })
       await flushPromises()
       const words = wrapper.findAll('[data-testid="transcript-word"]')

@@ -49,7 +49,7 @@ describe('show_skeleton_overlay — initial state', () => {
 
 // ── show_skeleton_overlay — all three flags required (obligation 3) ───────────
 
-describe('show_skeleton_overlay — requires all three flags [obligation]', () => {
+describe('show_skeleton_overlay — requires all three flags', () => {
   test('is false after navigation alone (animation_done set false, others reset)', () => {
     const { show_skeleton_overlay, navigate } = setup()
 
@@ -67,7 +67,7 @@ describe('show_skeleton_overlay — requires all three flags [obligation]', () =
     expect(show_skeleton_overlay.value).toBe(false)
   })
 
-  test('is false when suspense resolved but pending was never emitted [obligation]', () => {
+  test('is false when suspense resolved but pending was never emitted', () => {
     const { show_skeleton_overlay, navigate, onSuspenseResolve } = setup()
 
     navigate({ name: 'deck' })
@@ -103,7 +103,7 @@ describe('show_skeleton_overlay — requires all three flags [obligation]', () =
 
 // ── fallback_shown — stays false without @pending (obligation 4) ──────────────
 
-describe('fallback_shown — no-pending (cached data) path [obligation]', () => {
+describe('fallback_shown — no-pending (cached data) path', () => {
   test('show_skeleton_overlay is false when suspense resolves without a pending event', () => {
     const { show_skeleton_overlay, navigate, onSuspenseResolve } = setup()
 
@@ -117,7 +117,7 @@ describe('fallback_shown — no-pending (cached data) path [obligation]', () => 
 
 // ── animation_done reset (obligation 5) ───────────────────────────────────────
 
-describe('animation_done — reset by router.beforeEach [obligation]', () => {
+describe('animation_done — reset by router.beforeEach', () => {
   test('beforeEach causes show_skeleton_overlay to be reachable again', () => {
     // Verifies animation_done is reset to false on each navigation, allowing
     // the overlay to become truthy again after the next pending + resolve cycle.

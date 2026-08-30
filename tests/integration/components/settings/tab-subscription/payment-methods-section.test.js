@@ -120,7 +120,7 @@ describe('payment-methods-section — card state', () => {
 
 // ── Click forwarding ─────────────────────────────────────────────────────────
 
-describe('payment-methods-section — click forwarding [obligation]', () => {
+describe('payment-methods-section — click forwarding', () => {
   test('forwards the button press to onChangeCardClick from useChangeCcClick', async () => {
     const wrapper = await makePaymentMethodsSection()
     await wrapper.find('[data-testid="billing-settings__payment-methods-change"]').trigger('click')

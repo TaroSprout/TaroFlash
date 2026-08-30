@@ -100,7 +100,7 @@ describe('NoticePanel', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
   })
 
-  test('stamps the constant data-station="float" [obligation]', async () => {
+  test('stamps the constant data-station="float"', async () => {
     const wrapper = await mountPanel(makeNotice({}))
     expect(wrapper.find('[data-testid="ui-kit-notice-panel"]').attributes('data-station')).toBe(
       'float'
@@ -113,7 +113,7 @@ describe('NoticePanel', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
   })
 
-  test('close button is entirely omitted when notice.closable is false [obligation]', async () => {
+  test('close button is entirely omitted when notice.closable is false', async () => {
     const wrapper = await mountPanel(makeNotice({ closable: false }))
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(false)
   })
@@ -127,7 +127,7 @@ describe('NoticePanel', () => {
     expect(onDismiss).toHaveBeenCalledOnce()
   })
 
-  test('closing runs the leave transition and emits close with the notice [obligation]', async () => {
+  test('closing runs the leave transition and emits close with the notice', async () => {
     const notice = makeNotice()
     const wrapper = await mountPanel(notice)
 
@@ -139,7 +139,7 @@ describe('NoticePanel', () => {
     expect(wrapper.emitted('close')[0]).toEqual([notice])
   })
 
-  test('auto-dismisses via the delay timeout when the notice is not persisted [obligation]', async () => {
+  test('auto-dismisses via the delay timeout when the notice is not persisted', async () => {
     vi.useFakeTimers()
     const onDismiss = vi.fn()
     const notice = makeNotice({ onDismiss, delay: 1000, persist: false })
@@ -167,7 +167,7 @@ describe('NoticePanel', () => {
     wrapper.unmount()
   })
 
-  test('an action without closesOnClick runs onClick but leaves the notice open [obligation]', async () => {
+  test('an action without closesOnClick runs onClick but leaves the notice open', async () => {
     const onClick = vi.fn()
     const onDismiss = vi.fn()
     const notice = makeNotice({
@@ -184,7 +184,7 @@ describe('NoticePanel', () => {
     expect(wrapper.find('[data-testid="ui-kit-notice-panel"]').exists()).toBe(true)
   })
 
-  test('an action with closesOnClick runs onClick then closes through the same path as the close button [obligation]', async () => {
+  test('an action with closesOnClick runs onClick then closes through the same path as the close button', async () => {
     const onClick = vi.fn()
     const onDismiss = vi.fn()
     const notice = makeNotice({
@@ -202,13 +202,13 @@ describe('NoticePanel', () => {
   })
 
   describe('swipe to dismiss', () => {
-    test('does not register the drag handler on a fine pointer [obligation]', async () => {
+    test('does not register the drag handler on a fine pointer', async () => {
       coarseRef.value = false
       await mountPanel(makeNotice())
       expect(mockRegister).not.toHaveBeenCalled()
     })
 
-    test('swiping up past the threshold dismisses [obligation]', async () => {
+    test('swiping up past the threshold dismisses', async () => {
       coarseRef.value = true
       const onDismiss = vi.fn()
       await mountPanel(makeNotice({ onDismiss }))
@@ -220,7 +220,7 @@ describe('NoticePanel', () => {
       expect(onDismiss).toHaveBeenCalledOnce()
     })
 
-    test('swiping down past the threshold dismisses [obligation]', async () => {
+    test('swiping down past the threshold dismisses', async () => {
       coarseRef.value = true
       const onDismiss = vi.fn()
       await mountPanel(makeNotice({ onDismiss }))
@@ -232,7 +232,7 @@ describe('NoticePanel', () => {
       expect(onDismiss).toHaveBeenCalledOnce()
     })
 
-    test('a drag below the threshold snaps back without dismissing [obligation]', async () => {
+    test('a drag below the threshold snaps back without dismissing', async () => {
       coarseRef.value = true
       const onDismiss = vi.fn()
       await mountPanel(makeNotice({ onDismiss }))
@@ -247,7 +247,7 @@ describe('NoticePanel', () => {
   })
 
   describe('hover pauses auto-dismiss', () => {
-    test('pointerenter pauses the timer so the delay elapsing does not dismiss [obligation]', async () => {
+    test('pointerenter pauses the timer so the delay elapsing does not dismiss', async () => {
       vi.useFakeTimers()
       const onDismiss = vi.fn()
       const wrapper = await mountPanel(makeNotice({ onDismiss, delay: 1000, persist: false }))
@@ -258,7 +258,7 @@ describe('NoticePanel', () => {
       expect(onDismiss).not.toHaveBeenCalled()
     })
 
-    test('pointerleave resumes with the remaining time and eventually dismisses [obligation]', async () => {
+    test('pointerleave resumes with the remaining time and eventually dismisses', async () => {
       vi.useFakeTimers()
       const onDismiss = vi.fn()
       const wrapper = await mountPanel(makeNotice({ onDismiss, delay: 1000, persist: false }))

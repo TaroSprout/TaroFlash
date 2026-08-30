@@ -47,7 +47,7 @@ describe('useDeckSettingsModal', () => {
     })
   })
 
-  test('open(deck, { tab, side }) forwards tab as initial_page and side as initial_side in props [obligation]', () => {
+  test('open(deck, { tab, side }) forwards tab as initial_page and side as initial_side in props', () => {
     const deck = { id: 7 }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
@@ -62,7 +62,7 @@ describe('useDeckSettingsModal', () => {
     )
   })
 
-  test('open(deck) with no options passes undefined for initial_page and initial_side [obligation]', () => {
+  test('open(deck) with no options passes undefined for initial_page and initial_side', () => {
     const deck = { id: 8 }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 
@@ -77,7 +77,7 @@ describe('useDeckSettingsModal', () => {
     )
   })
 
-  test('open(deck, { tab }) forwards tab but leaves initial_side undefined [obligation]', () => {
+  test('open(deck, { tab }) forwards tab but leaves initial_side undefined', () => {
     const deck = { id: 9 }
     mockOpen.mockReturnValueOnce(makeModalResult(undefined))
 

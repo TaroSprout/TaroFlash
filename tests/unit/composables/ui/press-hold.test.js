@@ -66,7 +66,7 @@ describe('usePressHold — arm/hold lifecycle', () => {
     expect(onHold).toHaveBeenCalledTimes(1)
   })
 
-  test('a quick release before duration cancels — onHold never fires [obligation]', () => {
+  test('a quick release before duration cancels — onHold never fires', () => {
     vi.useFakeTimers()
     let hold
     ;({ app, result: hold } = withSetup(() => usePressHold({ duration: 200 })))
@@ -79,7 +79,7 @@ describe('usePressHold — arm/hold lifecycle', () => {
     expect(onHold).not.toHaveBeenCalled()
   })
 
-  test('the click following a cancelled (quick tap) hold is NOT swallowed — tap path regression-free [obligation]', () => {
+  test('the click following a cancelled (quick tap) hold is NOT swallowed — tap path regression-free', () => {
     vi.useFakeTimers()
     let hold
     ;({ app, result: hold } = withSetup(() => usePressHold({ duration: 200 })))
@@ -96,7 +96,7 @@ describe('usePressHold — arm/hold lifecycle', () => {
     document.removeEventListener('click', click_handler)
   })
 
-  test('pointer movement beyond tolerance cancels the pending hold — scroll gestures win [obligation]', () => {
+  test('pointer movement beyond tolerance cancels the pending hold — scroll gestures win', () => {
     vi.useFakeTimers()
     let hold
     ;({ app, result: hold } = withSetup(() => usePressHold({ duration: 200, tolerance: 8 })))
@@ -164,7 +164,7 @@ describe('usePressHold — arm/hold lifecycle', () => {
     expect(second).toHaveBeenCalledTimes(1)
   })
 
-  test('arming does not mutate the armed element touch-action — idle cards keep scrolling the page [obligation]', () => {
+  test('arming does not mutate the armed element touch-action — idle cards keep scrolling the page', () => {
     vi.useFakeTimers()
     let hold
     ;({ app, result: hold } = withSetup(() => usePressHold()))
@@ -182,7 +182,7 @@ describe('usePressHold — arm/hold lifecycle', () => {
 
 // ── click-swallow contract after a completed hold ──────────────────────────
 
-describe('usePressHold — click swallow after a completed hold [obligation]', () => {
+describe('usePressHold — click swallow after a completed hold', () => {
   test('a completed hold swallows the very next click at document capture', () => {
     vi.useFakeTimers()
     let hold
@@ -216,7 +216,7 @@ describe('usePressHold — click swallow after a completed hold [obligation]', (
     document.removeEventListener('click', click_handler)
   })
 
-  test('a capture listener registered AFTER the hold completes does not see the swallowed click [obligation]', () => {
+  test('a capture listener registered AFTER the hold completes does not see the swallowed click', () => {
     // Regression: with plain stopPropagation, another document-capture
     // listener registered after this one (e.g. the popover's outside-click
     // close) still ran on the release click and closed the menu instantly.

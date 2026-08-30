@@ -39,7 +39,7 @@ describe('card-import/pane', () => {
     expect(wrapper.findComponent({ name: 'PreviewGrid' }).exists()).toBe(false)
   })
 
-  test('a narrow screen always shows the grid preview, even when layout is list [obligation]', () => {
+  test('a narrow screen always shows the grid preview, even when layout is list', () => {
     const wrapper = mount(makeDraft({ has_cards: true, layout: 'list' }), true)
     expect(wrapper.findComponent({ name: 'PreviewGrid' }).exists()).toBe(true)
     expect(wrapper.findComponent({ name: 'PreviewList' }).exists()).toBe(false)

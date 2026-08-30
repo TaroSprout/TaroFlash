@@ -7,7 +7,7 @@ import { t, currentLocale, i18n } from '@/i18n'
 // component anywhere in this file — that's the point being covered.
 
 describe('t()', () => {
-  test('resolves a real message key without a mounted component [obligation]', () => {
+  test('resolves a real message key without a mounted component', () => {
     expect(t('member.account-deleted')).toBe('This account no longer exists')
   })
 
@@ -21,7 +21,7 @@ describe('t()', () => {
 })
 
 describe('currentLocale()', () => {
-  test('resolves the active locale tag without a mounted component [obligation]', () => {
+  test('resolves the active locale tag without a mounted component', () => {
     expect(currentLocale()).toBe('en-us')
   })
 })

@@ -126,7 +126,7 @@ describe('TabDesign — inline preview visibility', () => {
     expect(editor.setActiveSide).toHaveBeenCalledWith('front')
   })
 
-  // ── cover_editing / cover_image wiring [obligation] ─────────────────────────
+  // ── cover_editing / cover_image wiring ─────────────────────────
 
   test('always passes cover_editing=true to the inline preview', () => {
     const { wrapper } = makeWrapper(makeEditor(), 'phone')

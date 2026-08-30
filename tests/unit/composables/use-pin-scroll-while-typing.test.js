@@ -98,9 +98,9 @@ describe('usePinScrollWhileTyping', () => {
     scrollToSpy.mockRestore()
   })
 
-  // ── Anchor capture [obligation] ────────────────────────────────────────────
+  // ── Anchor capture ────────────────────────────────────────────
 
-  test('beforeinput from a contenteditable inside the container captures scrollY [obligation]', () => {
+  test('beforeinput from a contenteditable inside the container captures scrollY', () => {
     window.scrollY = 200
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -114,7 +114,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).toHaveBeenCalledWith(0, 200)
   })
 
-  test('subsequent beforeinputs in the same burst do NOT re-capture scrollY [obligation]', () => {
+  test('subsequent beforeinputs in the same burst do NOT re-capture scrollY', () => {
     window.scrollY = 100
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -132,7 +132,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).toHaveBeenCalledWith(0, 100)
   })
 
-  test('beforeinput from outside the container does not arm the anchor [obligation]', () => {
+  test('beforeinput from outside the container does not arm the anchor', () => {
     window.scrollY = 300
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -152,7 +152,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  test('beforeinput from a plain <input> inside the container arms the anchor [obligation]', () => {
+  test('beforeinput from a plain <input> inside the container arms the anchor', () => {
     window.scrollY = 220
     const input = makeInput()
     container.appendChild(input)
@@ -168,7 +168,7 @@ describe('usePinScrollWhileTyping', () => {
     input.remove()
   })
 
-  test('beforeinput from a non-contenteditable element does not arm the anchor [obligation]', () => {
+  test('beforeinput from a non-contenteditable element does not arm the anchor', () => {
     window.scrollY = 300
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -183,9 +183,9 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  // ── Scroll restoration [obligation] ───────────────────────────────────────
+  // ── Scroll restoration ───────────────────────────────────────
 
-  test('scroll event while armed restores scrollY to the captured value [obligation]', () => {
+  test('scroll event while armed restores scrollY to the captured value', () => {
     window.scrollY = 500
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -198,7 +198,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).toHaveBeenCalledWith(0, 500)
   })
 
-  test('scroll event while not armed (no anchor) does nothing [obligation]', () => {
+  test('scroll event while not armed (no anchor) does nothing', () => {
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
 
@@ -208,9 +208,9 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  // ── Release via wheel / touchmove / focusout [obligation] ─────────────────
+  // ── Release via wheel / touchmove / focusout ─────────────────
 
-  test('wheel event releases the anchor so next scroll is not intercepted [obligation]', () => {
+  test('wheel event releases the anchor so next scroll is not intercepted', () => {
     window.scrollY = 400
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -225,7 +225,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  test('touchmove event releases the anchor so next scroll is not intercepted [obligation]', () => {
+  test('touchmove event releases the anchor so next scroll is not intercepted', () => {
     window.scrollY = 400
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -239,7 +239,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  test('focusout event releases the anchor [obligation]', () => {
+  test('focusout event releases the anchor', () => {
     window.scrollY = 400
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -253,7 +253,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  test('after wheel release, the next beforeinput re-anchors at the new scrollY [obligation]', () => {
+  test('after wheel release, the next beforeinput re-anchors at the new scrollY', () => {
     window.scrollY = 100
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -272,9 +272,9 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).toHaveBeenCalledWith(0, 300)
   })
 
-  // ── Unmount cleanup [obligation] ───────────────────────────────────────────
+  // ── Unmount cleanup ───────────────────────────────────────────
 
-  test('all listeners are removed on unmount [obligation]', () => {
+  test('all listeners are removed on unmount', () => {
     window.scrollY = 200
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -293,7 +293,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).not.toHaveBeenCalled()
   })
 
-  test('beforeinput after unmount does not re-arm [obligation]', () => {
+  test('beforeinput after unmount does not re-arm', () => {
     window.scrollY = 200
     const containerRef = ref(container)
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(containerRef)))
@@ -312,7 +312,7 @@ describe('usePinScrollWhileTyping', () => {
 
   // ── MaybeRefOrGetter support ───────────────────────────────────────────────
 
-  test('accepts a getter function instead of a ref [obligation]', () => {
+  test('accepts a getter function instead of a ref', () => {
     window.scrollY = 150
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(() => container)))
 
@@ -324,7 +324,7 @@ describe('usePinScrollWhileTyping', () => {
     expect(scrollToSpy).toHaveBeenCalledWith(0, 150)
   })
 
-  test('resolves a null getter gracefully — beforeinput does not arm [obligation]', () => {
+  test('resolves a null getter gracefully — beforeinput does not arm', () => {
     ;({ unmount } = withSetup(() => usePinScrollWhileTyping(() => null)))
 
     fireBeforeInput(editable)

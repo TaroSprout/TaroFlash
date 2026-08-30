@@ -52,7 +52,7 @@ describe('bulkInsertCardsInDeck', () => {
     ])
   })
 
-  test('mints one key per card, after the deck tail [obligation]', async () => {
+  test('mints one key per card, after the deck tail', async () => {
     tailRankMock.mockResolvedValueOnce('a0')
     ranksBetweenMock.mockReturnValueOnce(['a1', 'a2', 'a3'])
     selectMock.mockResolvedValueOnce({ data: [], error: null })

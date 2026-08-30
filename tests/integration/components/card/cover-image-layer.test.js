@@ -141,8 +141,8 @@ describe('CoverImageLayer — add button (empty state)', () => {
   })
 })
 
-describe('CoverImageLayer — replace/remove controls (image set) [obligation]', () => {
-  test('renders its own replace/remove buttons once an image is set, not the dropzone [obligation]', () => {
+describe('CoverImageLayer — replace/remove controls (image set)', () => {
+  test('renders its own replace/remove buttons once an image is set, not the dropzone', () => {
     const cover_image = makeCoverImage({ has_image: { value: true } })
     const wrapper = mountLayer({ cover_image })
     expect(wrapper.find('[data-testid="cover-image-layer__replace"]').exists()).toBe(true)
@@ -167,7 +167,7 @@ describe('CoverImageLayer — replace/remove controls (image set) [obligation]',
     expect(wrapper.find('[data-testid="cover-image-layer__remove"]').exists()).toBe(false)
   })
 
-  test('replace click calls openPicker [obligation]', async () => {
+  test('replace click calls openPicker', async () => {
     const cover_image = makeCoverImage({ has_image: { value: true } })
     const wrapper = mountLayer({ cover_image })
 
@@ -176,7 +176,7 @@ describe('CoverImageLayer — replace/remove controls (image set) [obligation]',
     expect(cover_image.openPicker).toHaveBeenCalled()
   })
 
-  test('remove click calls onRemove [obligation]', async () => {
+  test('remove click calls onRemove', async () => {
     const cover_image = makeCoverImage({ has_image: { value: true } })
     const wrapper = mountLayer({ cover_image })
 
@@ -243,7 +243,7 @@ describe('CoverImageLayer — hidden file input', () => {
     expect(cover_image.onFileChange).toHaveBeenCalled()
   })
 
-  test('a click on the input does not bubble to a parent click handler [obligation]', async () => {
+  test('a click on the input does not bubble to a parent click handler', async () => {
     const container = document.createElement('div')
     document.body.appendChild(container)
     const parentClick = vi.fn()
@@ -259,7 +259,7 @@ describe('CoverImageLayer — hidden file input', () => {
   })
 })
 
-describe('CoverImageLayer — root listener wiring [obligation]', () => {
+describe('CoverImageLayer — root listener wiring', () => {
   test('attaches drag listeners to the passed-in root element', async () => {
     const cover_image = makeCoverImage()
     const root = document.createElement('div')

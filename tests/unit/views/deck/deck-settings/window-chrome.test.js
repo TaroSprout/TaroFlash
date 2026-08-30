@@ -63,7 +63,7 @@ beforeEach(() => {
   })
 })
 
-// ── is_tucked flips at the onEdgeOn midpoint [obligation] ─────────────────────
+// ── is_tucked flips at the onEdgeOn midpoint ─────────────────────
 
 describe('useWindowChrome — is_tucked flips at the animation midpoint, not on promise resolution', () => {
   test('tuck(): is_tucked flips true exactly when onEdgeOn fires, before the tween promise resolves', async () => {
@@ -114,9 +114,9 @@ describe('useWindowChrome — is_tucked flips at the animation midpoint, not on 
   })
 })
 
-// ── no-op guards + single sfx emission [obligation] ────────────────────────────
+// ── no-op guards + single sfx emission ────────────────────────────
 
-describe('useWindowChrome — tuck/restore are no-ops when already in that state [obligation]', () => {
+describe('useWindowChrome — tuck/restore are no-ops when already in that state', () => {
   test('tuck() called twice only animates and emits sfx once', async () => {
     const { chrome } = makeChrome()
 
@@ -211,7 +211,7 @@ describe('useWindowChrome — snap jumps straight to a pose with no animation', 
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('snap() is unguarded — it re-applies even when already in that state [obligation]', () => {
+  test('snap() is unguarded — it re-applies even when already in that state', () => {
     const { chrome } = makeChrome()
 
     chrome.snap(true)

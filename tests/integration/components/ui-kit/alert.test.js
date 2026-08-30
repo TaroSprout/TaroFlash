@@ -45,8 +45,8 @@ beforeEach(() => {
 
 // ── cancel ────────────────────────────────────────────────────────────────────
 
-describe('UiAlert — cancel [obligation]', () => {
-  test('cancel resolves false [obligation]', async () => {
+describe('UiAlert — cancel', () => {
+  test('cancel resolves false', async () => {
     const { wrapper, close } = makeWrapper()
 
     await cancelButton(wrapper).trigger('click')
@@ -57,8 +57,8 @@ describe('UiAlert — cancel [obligation]', () => {
 
 // ── confirm ───────────────────────────────────────────────────────────────────
 
-describe('UiAlert — confirm [obligation]', () => {
-  test('confirm resolves true [obligation]', async () => {
+describe('UiAlert — confirm', () => {
+  test('confirm resolves true', async () => {
     const { wrapper, close } = makeWrapper({ confirmLabel: 'Delete it' })
 
     await confirmButton(wrapper).trigger('click')
@@ -69,8 +69,8 @@ describe('UiAlert — confirm [obligation]', () => {
 
 // ── dismissal via modal machinery ─────────────────────────────────────────────
 
-describe('UiAlert — request-close dismissal [obligation]', () => {
-  test('registers a request-close handler (backdrop click / esc) that resolves false, like cancel — never confirm [obligation]', () => {
+describe('UiAlert — request-close dismissal', () => {
+  test('registers a request-close handler (backdrop click / esc) that resolves false, like cancel — never confirm', () => {
     const { close, modalId } = makeWrapper({ confirmLabel: 'Delete it' })
 
     // The modal host invokes this handler on backdrop click or esc.
@@ -79,7 +79,7 @@ describe('UiAlert — request-close dismissal [obligation]', () => {
     expect(close).toHaveBeenCalledWith(false)
   })
 
-  test('clicking inside the alert box does not close it [obligation]', async () => {
+  test('clicking inside the alert box does not close it', async () => {
     const { wrapper, close } = makeWrapper({ confirmLabel: 'Delete it' })
 
     await wrapper.find('[data-testid="ui-kit-alert"]').trigger('click')
@@ -113,7 +113,7 @@ describe('UiAlert — arrow-key focus nav', () => {
     expect(document.activeElement).toBe(cancelButton(wrapper).element)
   })
 
-  test('other keys do not move focus [obligation]', async () => {
+  test('other keys do not move focus', async () => {
     const { wrapper } = makeWrapper({ confirmLabel: 'Delete it' })
     cancelButton(wrapper).element.focus()
 
@@ -123,10 +123,10 @@ describe('UiAlert — arrow-key focus nav', () => {
   })
 })
 
-// ── station [obligation] ────────────────────────────────────────────────────
+// ── station ────────────────────────────────────────────────────
 
-describe('UiAlert — station [obligation]', () => {
-  test('stamps the constant data-station="float" [obligation]', () => {
+describe('UiAlert — station', () => {
+  test('stamps the constant data-station="float"', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="ui-kit-alert"]').attributes('data-station')).toBe('float')
   })

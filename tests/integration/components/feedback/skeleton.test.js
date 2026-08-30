@@ -75,12 +75,12 @@ describe('FeedbackSkeleton (components/feedback/skeleton.vue)', () => {
     expect(wrapper.findAll('[data-testid="feedback-skeleton__vote-wrap"]')).toHaveLength(2)
   })
 
-  // ── real member-polaroid, not a hand-rolled copy [obligation] ──────────────
+  // ── real member-polaroid, not a hand-rolled copy ──────────────
   // The regression is a duplicated offset drifting from the real component —
   // guard that every item renders the actual MemberPolaroid instance, sized
   // "sm", not a div reproducing its geometry.
 
-  test('renders the polaroid in every item through the real MemberPolaroid component [obligation]', () => {
+  test('renders the polaroid in every item through the real MemberPolaroid component', () => {
     const wrapper = mountSkeleton({ count: 3 })
     expect(wrapper.findAllComponents(MemberPolaroid)).toHaveLength(3)
 
@@ -93,32 +93,32 @@ describe('FeedbackSkeleton (components/feedback/skeleton.vue)', () => {
     }
   })
 
-  test('the photo placeholder fills the real member-polaroid photo slot, not the fallback avatar [obligation]', () => {
+  test('the photo placeholder fills the real member-polaroid photo slot, not the fallback avatar', () => {
     const wrapper = mountSkeleton({ count: 1 })
     const photo_container = wrapper.find('[data-testid="member-polaroid__photo"]')
     expect(photo_container.find('[data-testid="avatar-image-stub"]').exists()).toBe(false)
     expect(photo_container.find('[data-testid="feedback-skeleton__photo"]').exists()).toBe(true)
   })
 
-  test('the polaroid stamps the constant data-station="float" via the real component [obligation]', () => {
+  test('the polaroid stamps the constant data-station="float" via the real component', () => {
     const wrapper = mountSkeleton({ count: 1 })
     expect(wrapper.find('[data-testid="member-polaroid__frame"]').attributes('data-station')).toBe(
       'float'
     )
   })
 
-  // ── real polaroid, not a duplicated copy [obligation] ───────────────────────
+  // ── real polaroid, not a duplicated copy ───────────────────────
   // skeleton.vue used to hand-roll a flattened copy of the polaroid's frame
   // markup and offsets, which drifted from feedback-card.vue's real polaroid.
   // The guard has to fail if either side moves independently, so it compares
   // both sides at test time rather than hard-coding either one's offsets.
 
-  test('mounts the real MemberPolaroid component, not a hand-rolled copy [obligation]', () => {
+  test('mounts the real MemberPolaroid component, not a hand-rolled copy', () => {
     const wrapper = mountSkeleton({ count: 1 })
     expect(wrapper.findComponent(MemberPolaroid).exists()).toBe(true)
   })
 
-  test('the skeleton polaroid matches the real feedback row polaroid: same size, same positioning classes [obligation]', () => {
+  test('the skeleton polaroid matches the real feedback row polaroid: same size, same positioning classes', () => {
     const skeleton_polaroid = mountSkeleton({ count: 1 }).findComponent(MemberPolaroid)
     const row_polaroid = mountFeedbackCardRow().findComponent(MemberPolaroid)
 

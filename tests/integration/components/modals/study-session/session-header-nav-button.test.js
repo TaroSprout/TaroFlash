@@ -22,23 +22,23 @@ describe('SessionHeaderNavButton', () => {
     while (mounted_wrappers.length > 0) mounted_wrappers.pop().unmount()
   })
 
-  // ── mode → matching data-testid [obligation] ──────────────────────────────
+  // ── mode → matching data-testid ──────────────────────────────
 
-  test('mode="close" renders session-header__close only [obligation]', () => {
+  test('mode="close" renders session-header__close only', () => {
     const wrapper = mountButton({ mode: 'close' })
     expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="session-header__back"]').exists()).toBe(false)
   })
 
-  test('mode="stop" renders session-header__stop only [obligation]', () => {
+  test('mode="stop" renders session-header__stop only', () => {
     const wrapper = mountButton({ mode: 'stop' })
     expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="session-header__back"]').exists()).toBe(false)
   })
 
-  test('mode="back" renders session-header__back only [obligation]', () => {
+  test('mode="back" renders session-header__back only', () => {
     const wrapper = mountButton({ mode: 'back' })
     expect(wrapper.find('[data-testid="session-header__back"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="session-header__close"]').exists()).toBe(false)
@@ -50,21 +50,21 @@ describe('SessionHeaderNavButton', () => {
     expect(wrapper.find('[data-testid="session-header__stop"]').exists()).toBe(true)
   })
 
-  // ── every mode emits a single "press" [obligation] ────────────────────────
+  // ── every mode emits a single "press" ────────────────────────
 
-  test('mode="close" emits "press" on click [obligation]', async () => {
+  test('mode="close" emits "press" on click', async () => {
     const wrapper = mountButton({ mode: 'close' })
     await wrapper.find('[data-testid="session-header__close"]').trigger('click')
     expect(wrapper.emitted('press')).toHaveLength(1)
   })
 
-  test('mode="stop" emits "press" on click [obligation]', async () => {
+  test('mode="stop" emits "press" on click', async () => {
     const wrapper = mountButton({ mode: 'stop' })
     await wrapper.find('[data-testid="session-header__stop"]').trigger('click')
     expect(wrapper.emitted('press')).toHaveLength(1)
   })
 
-  test('mode="back" emits "press" on click [obligation]', async () => {
+  test('mode="back" emits "press" on click', async () => {
     const wrapper = mountButton({ mode: 'back' })
     await wrapper.find('[data-testid="session-header__back"]').trigger('click')
     expect(wrapper.emitted('press')).toHaveLength(1)

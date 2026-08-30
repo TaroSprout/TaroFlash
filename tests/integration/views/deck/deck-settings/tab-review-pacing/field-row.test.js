@@ -50,23 +50,23 @@ describe('FieldRow', () => {
     expect(wrapper.findComponent(UiTooltip).exists()).toBe(true)
   })
 
-  describe('reset button [obligation]', () => {
-    test('does not render when field.overridden is false [obligation]', () => {
+  describe('reset button', () => {
+    test('does not render when field.overridden is false', () => {
       const wrapper = makeWrapper({ label: 'Max reviews', field: makeField({ overridden: false }) })
       expect(wrapper.find('[data-testid="field-row__reset"]').exists()).toBe(false)
     })
 
-    test('does not render when the field prop is not passed [obligation]', () => {
+    test('does not render when the field prop is not passed', () => {
       const wrapper = makeWrapper({ label: 'Max reviews' })
       expect(wrapper.find('[data-testid="field-row__reset"]').exists()).toBe(false)
     })
 
-    test('renders when field.overridden is true [obligation]', () => {
+    test('renders when field.overridden is true', () => {
       const wrapper = makeWrapper({ label: 'Max reviews', field: makeField({ overridden: true }) })
       expect(wrapper.find('[data-testid="field-row__reset"]').exists()).toBe(true)
     })
 
-    test('clicking it calls field.reset directly — no confirmation dialog, no emitted event [obligation]', async () => {
+    test('clicking it calls field.reset directly — no confirmation dialog, no emitted event', async () => {
       const reset = vi.fn()
       const wrapper = makeWrapper({
         label: 'Max reviews',

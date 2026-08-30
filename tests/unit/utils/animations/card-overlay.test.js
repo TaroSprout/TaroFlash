@@ -78,7 +78,7 @@ describe('card-overlay animations', () => {
       return el
     }
 
-    test('above-stack regime: settle_y === from_y when user is scrolled above the stack [obligation]', () => {
+    test('above-stack regime: settle_y === from_y when user is scrolled above the stack', () => {
       // from_y=50, stack_top=50+200=250, header_bottom=60 → stack_top-header_bottom=190
       // min(50, max(0,190)) = min(50,190) = 50 → settle_y === from_y
       window.scrollY = 50
@@ -88,7 +88,7 @@ describe('card-overlay animations', () => {
       expect(vp.settle_y).toBe(vp.from_y)
     })
 
-    test('deep-scroll regime: settle_y === stack_top - header_bottom when scrolled past stack [obligation]', () => {
+    test('deep-scroll regime: settle_y === stack_top - header_bottom when scrolled past stack', () => {
       // from_y=600, rect.top at scroll 600 is -200 (stack_top absolute=400), header_bottom=60
       // max(0, 400-60)=340, min(600,340)=340 → settle_y = stack_top - header_bottom
       window.scrollY = 600
@@ -126,14 +126,14 @@ describe('card-overlay animations', () => {
   // ── distanceToViewportBottom ──────────────────────────────────────────────
 
   describe('distanceToViewportBottom', () => {
-    test('returns settle_y + innerHeight - stack_top when positive [obligation]', () => {
+    test('returns settle_y + innerHeight - stack_top when positive', () => {
       window.innerHeight = 800
       // settle_y=0, stack_top=600 → 0+800-600=200
       const vp = makeVp({ settle_y: 0, stack_top: 600 })
       expect(distanceToViewportBottom(vp)).toBe(200)
     })
 
-    test('clamps to 0 when stack_top is below viewport bottom [obligation]', () => {
+    test('clamps to 0 when stack_top is below viewport bottom', () => {
       window.innerHeight = 800
       // settle_y=0, stack_top=900 → 0+800-900=-100 → clamped to 0
       const vp = makeVp({ settle_y: 0, stack_top: 900 })
@@ -305,7 +305,7 @@ describe('card-overlay animations', () => {
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ y: 800 }))
     })
 
-    test('opacity stays 1 when scrollCompensation >= 0 (pane top already off-screen) [obligation]', () => {
+    test('opacity stays 1 when scrollCompensation >= 0 (pane top already off-screen)', () => {
       // from_y=100, settle_y=100 → compensation=0 → opacity=1 (no early fade)
       const vp = makeVp({ from_y: 100, settle_y: 100 })
       slideOverlayDown(el, vp, done)
@@ -314,7 +314,7 @@ describe('card-overlay animations', () => {
       expect(opts.opacity).toBe(1)
     })
 
-    test('opacity is 0 when scrollCompensation < 0 (pane top cannot clear screen in one viewport) [obligation]', () => {
+    test('opacity is 0 when scrollCompensation < 0 (pane top cannot clear screen in one viewport)', () => {
       // from_y=200, settle_y=100 → compensation=-100 → opacity=0
       const vp = makeVp({ from_y: 200, settle_y: 100 })
       slideOverlayDown(el, vp, done)
@@ -348,12 +348,12 @@ describe('card-overlay animations', () => {
   // ── cancelOverlayAnimation ────────────────────────────────────────────────
 
   describe('cancelOverlayAnimation', () => {
-    test('calls gsap.killTweensOf on the element [obligation]', () => {
+    test('calls gsap.killTweensOf on the element', () => {
       cancelOverlayAnimation(el)
       expect(mockKillTweensOf).toHaveBeenCalledWith(el)
     })
 
-    test('does not call gsap.to or gsap.set (kill only, no new animation) [obligation]', () => {
+    test('does not call gsap.to or gsap.set (kill only, no new animation)', () => {
       cancelOverlayAnimation(el)
       expect(mockTo).not.toHaveBeenCalled()
       expect(mockSet).not.toHaveBeenCalled()

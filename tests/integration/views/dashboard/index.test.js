@@ -221,7 +221,7 @@ beforeEach(() => {
 })
 
 describe('DashboardIndex — deck ordering', () => {
-  test('sorts decks by rank ascending before passing to DeckGrid [obligation]', () => {
+  test('sorts decks by rank ascending before passing to DeckGrid', () => {
     decksDataRef.value = [
       makeDeck(3, { rank: 30 }),
       makeDeck(1, { rank: 10 }),
@@ -236,7 +236,7 @@ describe('DashboardIndex — deck ordering', () => {
     ).toEqual([1, 2, 3])
   })
 
-  test('sorts decks by created_at descending when sort-options emits date-created [obligation]', async () => {
+  test('sorts decks by created_at descending when sort-options emits date-created', async () => {
     decksDataRef.value = [
       makeDeck(1, { created_at: '2026-01-01' }),
       makeDeck(2, { created_at: '2026-03-01' }),
@@ -254,7 +254,7 @@ describe('DashboardIndex — deck ordering', () => {
     ).toEqual([2, 3, 1])
   })
 
-  test('sorts decks by updated_at descending when sort-options emits last-updated [obligation]', async () => {
+  test('sorts decks by updated_at descending when sort-options emits last-updated', async () => {
     decksDataRef.value = [
       makeDeck(1, { updated_at: '2026-01-01' }),
       makeDeck(2, { updated_at: '2026-03-01' }),
@@ -273,7 +273,7 @@ describe('DashboardIndex — deck ordering', () => {
   })
 })
 
-describe('DashboardIndex — pending decks always sort last [obligation]', () => {
+describe('DashboardIndex — pending decks always sort last', () => {
   test('a pending deck sits after every settled deck under rank sort, regardless of its own rank', () => {
     decksDataRef.value = [
       makeDeck(1, { rank: 10 }),
@@ -336,7 +336,7 @@ describe('DashboardIndex — pending decks always sort last [obligation]', () =>
   })
 })
 
-describe('DashboardIndex — edit mode forces rank order [obligation]', () => {
+describe('DashboardIndex — edit mode forces rank order', () => {
   test('entering edit mode reorders the grid to rank ascending regardless of the chosen sort, and leaving restores it', async () => {
     decksDataRef.value = [
       makeDeck(3, { rank: 30, created_at: '2026-03-01' }),
@@ -378,7 +378,7 @@ describe('DashboardIndex — edit-decks toggle', () => {
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
   })
 
-  test('toggle-edit-decks from the actions panel flips editing on, and again flips it off [obligation]', async () => {
+  test('toggle-edit-decks from the actions panel flips editing on, and again flips it off', async () => {
     const wrapper = mountDashboard()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(true)
@@ -387,7 +387,7 @@ describe('DashboardIndex — edit-decks toggle', () => {
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
   })
 
-  test('emits dialog.open sfx when editing_decks flips true, and dialog.close when it flips false [obligation]', async () => {
+  test('emits dialog.open sfx when editing_decks flips true, and dialog.close when it flips false', async () => {
     const wrapper = mountDashboard()
     await wrapper.find('[data-testid="dashboard-actions-panel"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
@@ -398,7 +398,7 @@ describe('DashboardIndex — edit-decks toggle', () => {
   })
 })
 
-describe('DashboardIndex — rearrange wiring [obligation]', () => {
+describe('DashboardIndex — rearrange wiring', () => {
   test('selecting Rearrange while not editing enters edit mode', async () => {
     const wrapper = mountDashboard()
     expect(wrapper.findComponent(DeckGridStub).props('editing')).toBe(false)
@@ -431,7 +431,7 @@ describe('DashboardIndex — due decks derivation', () => {
     expect(wrapper.findComponent(ReviewInboxStub).props('due_decks')).toHaveLength(2)
   })
 
-  test('sorts due decks by due_count descending [obligation]', () => {
+  test('sorts due decks by due_count descending', () => {
     decksDataRef.value = [
       makeDeck(1, { due_count: 2 }),
       makeDeck(2, { due_count: 9 }),
@@ -492,7 +492,7 @@ describe('DashboardIndex — decks error watch', () => {
   })
 })
 
-describe('DashboardIndex — skeleton gating [obligation]', () => {
+describe('DashboardIndex — skeleton gating', () => {
   test('renders dashboard-skeleton while useMemberDecksQuery data is undefined', () => {
     decksDataRef.value = undefined
     const wrapper = mountDashboard()

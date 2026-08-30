@@ -40,8 +40,8 @@ afterEach(async () => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('NavBar — logo lockup responsive classes [obligation]', () => {
-  test('the logo icon carries both the mobile height and the desktop height class [obligation]', () => {
+describe('NavBar — logo lockup responsive classes', () => {
+  test('the logo icon carries both the mobile height and the desktop height class', () => {
     mountNavBar()
 
     const icon = wrapper.findComponent(UiIcon)
@@ -51,7 +51,7 @@ describe('NavBar — logo lockup responsive classes [obligation]', () => {
     expect(icon.classes()).toContain('sm:h-9')
   })
 
-  test('the wordmark carries both the mobile text size and the desktop text size class [obligation]', () => {
+  test('the wordmark carries both the mobile text size and the desktop text size class', () => {
     mountNavBar()
 
     const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
@@ -60,7 +60,7 @@ describe('NavBar — logo lockup responsive classes [obligation]', () => {
     expect(lockup.classes()).toContain('sm:text-4xl')
   })
 
-  test('the lockup row carries min-h-9 to hold the line box across breakpoints [obligation]', () => {
+  test('the lockup row carries min-h-9 to hold the line box across breakpoints', () => {
     mountNavBar()
 
     const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
@@ -70,8 +70,8 @@ describe('NavBar — logo lockup responsive classes [obligation]', () => {
   })
 })
 
-describe('NavBar — --nav-height stays constant across breakpoints [obligation]', () => {
-  test('publishes --nav-height as clientHeight + 24px at a mobile viewport [obligation]', async () => {
+describe('NavBar — --nav-height stays constant across breakpoints', () => {
+  test('publishes --nav-height as clientHeight + 24px at a mobile viewport', async () => {
     await page.viewport(375, 812)
     stubClientHeight(60)
 
@@ -80,7 +80,7 @@ describe('NavBar — --nav-height stays constant across breakpoints [obligation]
     expect(document.documentElement.style.getPropertyValue('--nav-height')).toBe('84px')
   })
 
-  test('publishes the same --nav-height for the same row height at a desktop viewport [obligation]', async () => {
+  test('publishes the same --nav-height for the same row height at a desktop viewport', async () => {
     await page.viewport(1280, 900)
     stubClientHeight(60)
 

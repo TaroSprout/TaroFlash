@@ -91,7 +91,7 @@ describe('useAudioPlayer', () => {
       expect(result.duration.value).toBe(0)
     })
 
-    test('loaded starts as false [obligation]', () => {
+    test('loaded starts as false', () => {
       const [result, a] = withSetup(() => useAudioPlayer(ref(null)))
       app = a
       expect(result.loaded.value).toBe(false)
@@ -163,7 +163,7 @@ describe('useAudioPlayer', () => {
       expect(result.duration.value).toBe(180)
     })
 
-    test('loaded becomes true when loadedmetadata event fires [obligation]', async () => {
+    test('loaded becomes true when loadedmetadata event fires', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -177,7 +177,7 @@ describe('useAudioPlayer', () => {
       expect(result.loaded.value).toBe(true)
     })
 
-    test('loaded returns to false and duration resets to 0 on emptied event (src swap) [obligation]', async () => {
+    test('loaded returns to false and duration resets to 0 on emptied event (src swap)', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -196,7 +196,7 @@ describe('useAudioPlayer', () => {
       expect(result.duration.value).toBe(0)
     })
 
-    test('loaded returns to false on unbind (target ref becomes null) [obligation]', async () => {
+    test('loaded returns to false on unbind (target ref becomes null)', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -212,7 +212,7 @@ describe('useAudioPlayer', () => {
       expect(result.loaded.value).toBe(false)
     })
 
-    test('loaded returns to false on unmount [obligation]', async () => {
+    test('loaded returns to false on unmount', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
 
@@ -226,7 +226,7 @@ describe('useAudioPlayer', () => {
       expect(result.loaded.value).toBe(false)
     })
 
-    test('attaches emptied event listener when element is bound [obligation]', async () => {
+    test('attaches emptied event listener when element is bound', async () => {
       const target = ref(null)
       const [, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -349,7 +349,7 @@ describe('useAudioPlayer', () => {
     })
   })
 
-  describe('resumeAt() — deferred resume seek [obligation]', () => {
+  describe('resumeAt() — deferred resume seek', () => {
     test('reflects the position immediately but does not seek the element yet', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
@@ -459,8 +459,8 @@ describe('useAudioPlayer', () => {
     })
   })
 
-  describe('play() failure handling [obligation]', () => {
-    test('shows an error notice when el.play() rejects with a non-AbortError [obligation]', async () => {
+  describe('play() failure handling', () => {
+    test('shows an error notice when el.play() rejects with a non-AbortError', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -477,7 +477,7 @@ describe('useAudioPlayer', () => {
       expect(mockNotice.error).toHaveBeenCalledWith('audio-reader.player.play-error')
     })
 
-    test('silently ignores an AbortError rejection (no notice) [obligation]', async () => {
+    test('silently ignores an AbortError rejection (no notice)', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -496,7 +496,7 @@ describe('useAudioPlayer', () => {
       expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
-    test('playClip() shows an error notice when el.play() rejects with a non-AbortError [obligation]', async () => {
+    test('playClip() shows an error notice when el.play() rejects with a non-AbortError', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -513,7 +513,7 @@ describe('useAudioPlayer', () => {
       expect(mockNotice.error).toHaveBeenCalledWith('audio-reader.player.play-error')
     })
 
-    test('playClip() silently ignores an AbortError rejection (no notice) [obligation]', async () => {
+    test('playClip() silently ignores an AbortError rejection (no notice)', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -662,7 +662,7 @@ describe('useAudioPlayer', () => {
   })
 
   describe('skip()', () => {
-    test('seeks to current_time + delta for a normal in-bounds jump [obligation]', async () => {
+    test('seeks to current_time + delta for a normal in-bounds jump', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -681,7 +681,7 @@ describe('useAudioPlayer', () => {
       expect(result.current_time.value).toBe(40)
     })
 
-    test('clamps skip(+delta) past the end to duration [obligation]', async () => {
+    test('clamps skip(+delta) past the end to duration', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -704,7 +704,7 @@ describe('useAudioPlayer', () => {
       expect(el.currentTime).toBe(120)
     })
 
-    test('clamps skip(-delta) below 0 to 0 [obligation]', async () => {
+    test('clamps skip(-delta) below 0 to 0', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -720,7 +720,7 @@ describe('useAudioPlayer', () => {
       expect(result.current_time.value).toBe(0)
     })
 
-    test('skip clears clip_end by going through seek [obligation]', async () => {
+    test('skip clears clip_end by going through seek', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -747,7 +747,7 @@ describe('useAudioPlayer', () => {
   })
 
   describe('setPlaybackRate()', () => {
-    test('sets playback_rate ref to the given rate [obligation]', async () => {
+    test('sets playback_rate ref to the given rate', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -761,7 +761,7 @@ describe('useAudioPlayer', () => {
       expect(result.playback_rate.value).toBe(1.5)
     })
 
-    test('applies the rate to the bound element live [obligation]', async () => {
+    test('applies the rate to the bound element live', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -775,7 +775,7 @@ describe('useAudioPlayer', () => {
       expect(el.playbackRate).toBe(2)
     })
 
-    test('rate set while bound survives an element re-bind [obligation]', async () => {
+    test('rate set while bound survives an element re-bind', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -794,7 +794,7 @@ describe('useAudioPlayer', () => {
       expect(el2.playbackRate).toBe(1.5)
     })
 
-    test('bind() applies playback_rate to a freshly-bound element [obligation]', async () => {
+    test('bind() applies playback_rate to a freshly-bound element', async () => {
       const target = ref(null)
       const [result, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -852,7 +852,7 @@ describe('useAudioPlayer', () => {
       expect(docAddSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
     })
 
-    test('snaps current_time to el.currentTime immediately when page returns to foreground [obligation]', async () => {
+    test('snaps current_time to el.currentTime immediately when page returns to foreground', async () => {
       const { result, el } = await setupWithEl()
 
       // Simulate audio advancing while the tab was hidden
@@ -866,7 +866,7 @@ describe('useAudioPlayer', () => {
       Object.defineProperty(document, 'hidden', { value: false, configurable: true })
     })
 
-    test('does not touch current_time when visibilitychange fires while document.hidden is true [obligation]', async () => {
+    test('does not touch current_time when visibilitychange fires while document.hidden is true', async () => {
       const { result, el } = await setupWithEl()
 
       // current_time starts at 0 — confirm it stays there
@@ -880,7 +880,7 @@ describe('useAudioPlayer', () => {
       Object.defineProperty(document, 'hidden', { value: false, configurable: true })
     })
 
-    test('revives the rAF tick loop on foreground return when still playing [obligation]', async () => {
+    test('revives the rAF tick loop on foreground return when still playing', async () => {
       const { result, el } = await setupWithEl()
 
       // Start playing so is_playing = true
@@ -898,7 +898,7 @@ describe('useAudioPlayer', () => {
       Object.defineProperty(document, 'hidden', { value: false, configurable: true })
     })
 
-    test('does not revive rAF loop on foreground return when paused [obligation]', async () => {
+    test('does not revive rAF loop on foreground return when paused', async () => {
       const { result, el } = await setupWithEl()
 
       // Stay paused (is_playing = false by default)
@@ -913,7 +913,7 @@ describe('useAudioPlayer', () => {
       Object.defineProperty(document, 'hidden', { value: false, configurable: true })
     })
 
-    test('removes visibilitychange listener from document when target ref becomes null [obligation]', async () => {
+    test('removes visibilitychange listener from document when target ref becomes null', async () => {
       const target = ref(null)
       const [, a] = withSetup(() => useAudioPlayer(target))
       app = a
@@ -928,7 +928,7 @@ describe('useAudioPlayer', () => {
       expect(docRemoveSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
     })
 
-    test('removes visibilitychange listener from document on unmount [obligation]', async () => {
+    test('removes visibilitychange listener from document on unmount', async () => {
       const target = ref(null)
       const [, a] = withSetup(() => useAudioPlayer(target))
       app = a

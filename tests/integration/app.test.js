@@ -77,8 +77,8 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('App', () => {
-  describe('member.error watcher [obligation]', () => {
-    test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy [obligation]', async () => {
+  describe('member.error watcher', () => {
+    test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy', async () => {
       const wrapper = mountApp()
       const notice = useNoticeStore()
 

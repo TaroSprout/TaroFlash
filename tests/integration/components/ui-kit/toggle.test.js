@@ -74,7 +74,7 @@ describe('UiToggle', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('sfx.press: false suppresses the select sfx on change [obligation]', async () => {
+  test('sfx.press: false suppresses the select sfx on change', async () => {
     const { wrapper } = makeToggle({ checked: false, sfx: { press: false } })
     await wrapper.find('input[type="checkbox"]').setValue(true)
     expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
@@ -84,7 +84,7 @@ describe('UiToggle', () => {
     el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
   }
 
-  test('sfx.hover: false suppresses the hover sfx [obligation]', async () => {
+  test('sfx.hover: false suppresses the hover sfx', async () => {
     const { wrapper } = makeToggle({ checked: false, sfx: { hover: false } })
     pointerEnter(wrapper.find('[data-testid="ui-kit-toggle"]').element)
     expect(mockEmitHoverSfx).not.toHaveBeenCalled()
@@ -102,27 +102,27 @@ describe('UiToggle', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  // ── disabled [obligation] ───────────────────────────────────────────────────
+  // ── disabled ───────────────────────────────────────────────────
 
   describe('disabled', () => {
-    test('sets data-disabled=true on the root [obligation]', () => {
+    test('sets data-disabled=true on the root', () => {
       const { wrapper } = makeToggle({ checked: false, disabled: true })
       expect(wrapper.find('[data-testid="ui-kit-toggle"]').attributes('data-disabled')).toBe('true')
     })
 
-    test('data-disabled defaults to false when the prop is not passed [obligation]', () => {
+    test('data-disabled defaults to false when the prop is not passed', () => {
       const { wrapper } = makeToggle({ checked: false })
       expect(wrapper.find('[data-testid="ui-kit-toggle"]').attributes('data-disabled')).toBe(
         'false'
       )
     })
 
-    test('sets the native checkbox input disabled [obligation]', () => {
+    test('sets the native checkbox input disabled', () => {
       const { wrapper } = makeToggle({ checked: false, disabled: true })
       expect(wrapper.find('input[type="checkbox"]').element.disabled).toBe(true)
     })
 
-    test('a genuine click on the disabled input does not toggle checked or emit update:checked [obligation]', async () => {
+    test('a genuine click on the disabled input does not toggle checked or emit update:checked', async () => {
       const { wrapper, getChecked } = makeToggle({ checked: false, disabled: true })
       await wrapper.find('input[type="checkbox"]').trigger('click')
 
@@ -130,7 +130,7 @@ describe('UiToggle', () => {
       expect(wrapper.emitted('update:checked')).toBeFalsy()
     })
 
-    test('a genuine click on the disabled input suppresses the select sfx [obligation]', async () => {
+    test('a genuine click on the disabled input suppresses the select sfx', async () => {
       const { wrapper } = makeToggle({ checked: false, disabled: true })
       await wrapper.find('input[type="checkbox"]').trigger('click')
 

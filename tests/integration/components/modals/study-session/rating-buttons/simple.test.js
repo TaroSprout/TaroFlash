@@ -35,10 +35,10 @@ describe('SimpleRatingButtons', () => {
     rating_times.value = { bare: {}, label: {} }
   })
 
-  // ── show_button_preview swaps icon-words for projected intervals [obligation] ─
+  // ── show_button_preview swaps icon-words for projected intervals ─
 
-  describe('button preview [obligation]', () => {
-    test('shows the projected interval label instead of icon-word copy when preview is on and ready [obligation]', () => {
+  describe('button preview', () => {
+    test('shows the projected interval label instead of icon-word copy when preview is on and ready', () => {
       show_button_preview.value = true
       rating_times.value = { bare: { [Rating.Again]: '1d', [Rating.Good]: '3d' }, label: {} }
       const wrapper = mountSimple()
@@ -47,7 +47,7 @@ describe('SimpleRatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__good"]').text()).toContain('3d')
     })
 
-    test('falls back to icon-word copy when preview is on but the frozen times are not ready [obligation]', () => {
+    test('falls back to icon-word copy when preview is on but the frozen times are not ready', () => {
       show_button_preview.value = true
       rating_times.value = { bare: {}, label: {} }
       const wrapper = mountSimple()
@@ -55,7 +55,7 @@ describe('SimpleRatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__again"]').text()).toContain('Nope')
     })
 
-    test('shows the icon-word copy when preview is off, even with ready times [obligation]', () => {
+    test('shows the icon-word copy when preview is off, even with ready times', () => {
       show_button_preview.value = false
       rating_times.value = { bare: { [Rating.Again]: '1d', [Rating.Good]: '3d' }, label: {} }
       const wrapper = mountSimple()
@@ -65,59 +65,59 @@ describe('SimpleRatingButtons', () => {
     })
   })
 
-  // ── Unconditional rendering [obligation] ───────────────────────────────────
+  // ── Unconditional rendering ───────────────────────────────────
   // Single grid row with again + good buttons.
 
-  test('renders the again button unconditionally [obligation]', () => {
+  test('renders the again button unconditionally', () => {
     const wrapper = mountSimple()
     expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
   })
 
-  test('renders the good button unconditionally [obligation]', () => {
+  test('renders the good button unconditionally', () => {
     const wrapper = mountSimple()
     expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
   })
 
-  test('again and good buttons are siblings in the simple grid container [obligation]', () => {
+  test('again and good buttons are siblings in the simple grid container', () => {
     const wrapper = mountSimple()
     const container = wrapper.find('[data-testid="rating-buttons__simple"]')
     expect(container.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
     expect(container.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
   })
 
-  // ── primed_grade → again button active [obligation] ───────────────────────
+  // ── primed_grade → again button active ───────────────────────
 
-  test('primed_grade=Rating.Again marks again button as active [obligation]', () => {
+  test('primed_grade=Rating.Again marks again button as active', () => {
     const wrapper = mountSimple({ primed_grade: Rating.Again })
     expect(wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')).toBe(
       'true'
     )
   })
 
-  test('primed_grade !== Rating.Again leaves again button inactive [obligation]', () => {
+  test('primed_grade !== Rating.Again leaves again button inactive', () => {
     const wrapper = mountSimple({ primed_grade: Rating.Good })
     expect(
       wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')
     ).toBeUndefined()
   })
 
-  // ── primed_grade → good button active [obligation] ────────────────────────
+  // ── primed_grade → good button active ────────────────────────
 
-  test('primed_grade=Rating.Good marks good button as active [obligation]', () => {
+  test('primed_grade=Rating.Good marks good button as active', () => {
     const wrapper = mountSimple({ primed_grade: Rating.Good })
     expect(wrapper.find('[data-testid="rating-buttons__good"]').attributes('data-active')).toBe(
       'true'
     )
   })
 
-  test('primed_grade !== Rating.Good leaves good button inactive [obligation]', () => {
+  test('primed_grade !== Rating.Good leaves good button inactive', () => {
     const wrapper = mountSimple({ primed_grade: Rating.Again })
     expect(
       wrapper.find('[data-testid="rating-buttons__good"]').attributes('data-active')
     ).toBeUndefined()
   })
 
-  test('primed_grade=null leaves both buttons inactive [obligation]', () => {
+  test('primed_grade=null leaves both buttons inactive', () => {
     const wrapper = mountSimple({ primed_grade: null })
     expect(
       wrapper.find('[data-testid="rating-buttons__again"]').attributes('data-active')

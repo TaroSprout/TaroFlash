@@ -30,8 +30,8 @@ describe('deck-grid animations', () => {
       )
     })
 
-    // [obligation] animates the innermost DOM child, not the position-carrying wrapper
-    test('animates the first child instead of the wrapper el when el has children [obligation]', () => {
+    // animates the innermost DOM child, not the position-carrying wrapper
+    test('animates the first child instead of the wrapper el when el has children', () => {
       const wrapper = document.createElement('div')
       const inner = document.createElement('div')
       wrapper.appendChild(inner)
@@ -72,8 +72,8 @@ describe('deck-grid animations', () => {
       expect(done).toHaveBeenCalledTimes(1)
     })
 
-    // [obligation] same first-child targeting as popDeckIn
-    test('animates the first child instead of the wrapper el when el has children [obligation]', () => {
+    // same first-child targeting as popDeckIn
+    test('animates the first child instead of the wrapper el when el has children', () => {
       const wrapper = document.createElement('div')
       const inner = document.createElement('div')
       wrapper.appendChild(inner)

@@ -17,7 +17,7 @@ describe('toolbar-swap animations', () => {
   })
 
   describe('toolbarEnter', () => {
-    test('tweens opacity from 0 to 1, with no y/transform movement [obligation]', () => {
+    test('tweens opacity from 0 to 1, with no y/transform movement', () => {
       const el = document.createElement('div')
       toolbarEnter(el, done)
       expect(mockFromTo).toHaveBeenCalledWith(
@@ -29,7 +29,7 @@ describe('toolbar-swap animations', () => {
       expect(mockFromTo.mock.calls[0][2]).not.toHaveProperty('y')
     })
 
-    test('clears only the opacity inline style, not transform [obligation]', () => {
+    test('clears only the opacity inline style, not transform', () => {
       const el = document.createElement('div')
       toolbarEnter(el, done)
       expect(mockFromTo.mock.calls[0][2].clearProps).toBe('opacity')
@@ -43,14 +43,14 @@ describe('toolbar-swap animations', () => {
   })
 
   describe('toolbarLeave', () => {
-    test('pins the node absolute mid-leave to prevent layout jump [obligation]', () => {
+    test('pins the node absolute mid-leave to prevent layout jump', () => {
       const el = document.createElement('div')
       toolbarLeave(el, done)
       expect(el.style.position).toBe('absolute')
       expect(el.style.inset).toBe('0')
     })
 
-    test('tweens opacity to 0, with no y/transform movement [obligation]', () => {
+    test('tweens opacity to 0, with no y/transform movement', () => {
       const el = document.createElement('div')
       toolbarLeave(el, done)
       expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ opacity: 0 }))

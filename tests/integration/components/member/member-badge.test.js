@@ -84,27 +84,27 @@ describe('MemberBadge', () => {
   // ── data-testid structure ──────────────────────────────────────────────────
 
   describe('data-testid attributes', () => {
-    test('renders member-badge root element [obligation]', () => {
+    test('renders member-badge root element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__avatar element [obligation]', () => {
+    test('renders member-badge__avatar element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__avatar"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__info element [obligation]', () => {
+    test('renders member-badge__info element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__info"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__name element [obligation]', () => {
+    test('renders member-badge__name element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__name"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__description element [obligation]', () => {
+    test('renders member-badge__description element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__description"]').exists()).toBe(true)
     })
@@ -113,12 +113,12 @@ describe('MemberBadge', () => {
   // ── i18n fallbacks ─────────────────────────────────────────────────────────
 
   describe('i18n fallbacks when props are absent', () => {
-    test('shows name-placeholder when displayName is absent [obligation]', () => {
+    test('shows name-placeholder when displayName is absent', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__name"]').text()).toBe('Member Name')
     })
 
-    test('shows description-fallback when description is absent [obligation]', () => {
+    test('shows description-fallback when description is absent', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__description"]').text()).toBe(
         'No description yet'
@@ -207,7 +207,7 @@ describe('MemberBadge', () => {
 
     // Mounts the real avatar-image so the placeholder/frog split lands through
     // this surface, not just the component's own tests.
-    test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved [obligation]', async () => {
+    test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved', async () => {
       mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
       const wrapper = shallowMount(MemberBadge, {
         props: { cover: { palette: 'blue', pattern: 'wave', avatar: 'panda' } },
@@ -224,9 +224,9 @@ describe('MemberBadge', () => {
     })
   })
 
-  // ── editable / edit-avatar [obligation] ──────────────────────────────────
+  // ── editable / edit-avatar ──────────────────────────────────
 
-  describe('editable [obligation]', () => {
+  describe('editable', () => {
     test('the edit-avatar button is absent when editable is unset', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__avatar-edit"]').exists()).toBe(false)
@@ -253,7 +253,7 @@ describe('MemberBadge', () => {
     // Real UiTappable + UiButton so the native click actually bubbles through
     // the DOM — this is the only way to catch a regression in the
     // e.stopPropagation() guard onEditAvatar relies on.
-    test('the click does not bubble to the badge tappable in a real DOM tree [obligation]', async () => {
+    test('the click does not bubble to the badge tappable in a real DOM tree', async () => {
       const wrapper = mount(MemberBadge, {
         props: { editable: true },
         global: { stubs: { AvatarImage: AvatarImageStub } }

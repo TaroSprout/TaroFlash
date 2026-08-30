@@ -66,7 +66,7 @@ describe('UiPatternPicker', () => {
     expect(swatch.attributes('style') || '').toContain('--bgx-size')
   })
 
-  test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
+  test('colours the selection tick with the accent-text token, not a fixed neutral', () => {
     const wrapper = makePicker({ selected_pattern: 'wave' })
     const tick = wrapper.find('[data-testid="pattern-picker__option-wave"]').findComponent(UiIcon)
     expect(tick.classes()).toContain('text-(--color-accent-text)')

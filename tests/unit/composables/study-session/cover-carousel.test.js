@@ -62,9 +62,9 @@ describe('useCoverCarousel', () => {
     unmount?.()
   })
 
-  // ── current_cover is undefined when idle [obligation] ─────────────────────
+  // ── current_cover is undefined when idle ─────────────────────
 
-  test('current_cover is undefined when there is only one cover [obligation]', async () => {
+  test('current_cover is undefined when there is only one cover', async () => {
     const cover = { bg_color: 'blue-500' }
     const covers = ref([cover])
     const is_active = ref(true)
@@ -84,7 +84,7 @@ describe('useCoverCarousel', () => {
     expect(result.current_cover.value).toBeUndefined()
   })
 
-  test('current_cover is undefined when isActive() returns false [obligation]', async () => {
+  test('current_cover is undefined when isActive() returns false', async () => {
     const cover1 = { bg_color: 'red-500' }
     const cover2 = { bg_color: 'blue-500' }
     const covers = ref([cover1, cover2])
@@ -120,9 +120,9 @@ describe('useCoverCarousel', () => {
     expect(result.current_cover.value).toBeUndefined()
   })
 
-  // ── current_cover cycles when active with >1 covers [obligation] ──────────
+  // ── current_cover cycles when active with >1 covers ──────────
 
-  test('current_cover is the first cover when active with multiple covers [obligation]', async () => {
+  test('current_cover is the first cover when active with multiple covers', async () => {
     const cover1 = { bg_color: 'red-500' }
     const cover2 = { bg_color: 'blue-500' }
     const covers = ref([cover1, cover2])

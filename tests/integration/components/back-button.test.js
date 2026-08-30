@@ -59,7 +59,7 @@ function mountStubbed(routeName) {
 
 // ── Visibility by route name (obligation 6) ───────────────────────────────────
 
-describe('back-button — visibility [obligation]', () => {
+describe('back-button — visibility', () => {
   test('is hidden (v-if removes it) when on the dashboard route', () => {
     const wrapper = mountStubbed('dashboard')
     expect(wrapper.findComponent(UiButton).exists()).toBe(false)
@@ -98,7 +98,7 @@ describe('back-button — press handler', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  test('falls back to the dashboard route when history.state.back is falsy [obligation]', async () => {
+  test('falls back to the dashboard route when history.state.back is falsy', async () => {
     mockHistoryState.back = null
     const wrapper = mountStubbed('deck')
     await wrapper.findComponent(UiButtonStub).trigger('click')
@@ -128,7 +128,7 @@ function mountReal(routeName) {
   })
 }
 
-describe('back-button — resolved chrome [obligation]', () => {
+describe('back-button — resolved chrome', () => {
   test('does not carry the neutral/raised chrome variant class', () => {
     const wrapper = mountReal('deck')
     const class_list = wrapper.find('[data-testid="ui-kit-button"]').classes()

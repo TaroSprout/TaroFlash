@@ -88,16 +88,16 @@ describe('SessionSummary (index.vue)', () => {
     expect(() => mountSummary()).not.toThrow()
   })
 
-  // ── Close button removed [obligation] ─────────────────────────────────────
+  // ── Close button removed ─────────────────────────────────────
   // The close button moved up into study-session/index.vue's #toolbar;
   // session-summary no longer renders it or emits close.
 
-  test('does not render a close button [obligation]', () => {
+  test('does not render a close button', () => {
     const wrapper = mountSummary()
     expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(false)
   })
 
-  test('does not emit close [obligation]', () => {
+  test('does not emit close', () => {
     const wrapper = mountSummary()
     expect(wrapper.emitted('close')).toBeUndefined()
   })
@@ -115,11 +115,11 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.emitted('open-category')).toEqual([['stuck']])
   })
 
-  // ── thresholdFor(deck_id) threading [obligation] ──────────────────────────
+  // ── thresholdFor(deck_id) threading ──────────────────────────
   // session-summary passes DeckResolution's thresholdFor into aggregateSession —
   // a different threshold on the same results must change the derived summary.
 
-  test('passes thresholdFor into aggregateSession, changing the stuck group for the same results [obligation]', () => {
+  test('passes thresholdFor into aggregateSession, changing the stuck group for the same results', () => {
     const results = [makeResult({ card_id: 1, passed: false, lapses: 10 })]
 
     mockThresholdFor.mockReturnValue(8)
@@ -136,7 +136,7 @@ describe('SessionSummary (index.vue)', () => {
     ).toBe('0')
   })
 
-  test('resolves each result own deck threshold via thresholdFor(deck_id), per deck [obligation]', () => {
+  test('resolves each result own deck threshold via thresholdFor(deck_id), per deck', () => {
     const threshold_by_deck = { 1: 4, 2: 30 }
     mockThresholdFor.mockImplementation((deck_id) => threshold_by_deck[deck_id])
 

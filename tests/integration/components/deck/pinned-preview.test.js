@@ -128,9 +128,9 @@ describe('PinnedPreview — props forwarding', () => {
   })
 })
 
-// ── update:side forwarding [obligation] ───────────────────────────────────────
+// ── update:side forwarding ───────────────────────────────────────
 
-describe('PinnedPreview — update:side emit [obligation]', () => {
+describe('PinnedPreview — update:side emit', () => {
   test('forwards update:side emit from DeckDesignPreview to parent', async () => {
     const wrapper = makeWrapper({ side: 'cover' })
 
@@ -142,12 +142,12 @@ describe('PinnedPreview — update:side emit [obligation]', () => {
   })
 })
 
-// ── tucked prop forwarding [obligation] ─────────────────────────────────────────
+// ── tucked prop forwarding ─────────────────────────────────────────
 // The DOM contract moved from an ancestor's `group-data-[tucked=true]` selector
 // to an explicit `tucked` prop on ui-pinned-card — assert PinnedPreview forwards
 // it through, and that the paperclip reflects it via data-tucked.
 
-describe('PinnedPreview — forwards tucked through to ui-pinned-card [obligation]', () => {
+describe('PinnedPreview — forwards tucked through to ui-pinned-card', () => {
   test('defaults the paperclip data-tucked to false when the prop is omitted', () => {
     const wrapper = makeWrapper()
     expect(
@@ -182,14 +182,14 @@ describe('PinnedPreview — cover_editing / cover_image pass-through', () => {
   })
 })
 
-// ── hover_lift prop forwarding [obligation] ─────────────────────────────────────
+// ── hover_lift prop forwarding ─────────────────────────────────────
 // ui-pinned-card is real (not stubbed) here, so the forwarded prop shows up as
 // real rendered behaviour on the nested swing element: a hover transition and a
 // pivot moved off the element's own centre. ui-pinned-card's own suite owns the
 // swing's geometry and timing — all this needs to prove is that the prop
 // arrives.
 
-describe('PinnedPreview — forwards hover_lift through to ui-pinned-card [obligation]', () => {
+describe('PinnedPreview — forwards hover_lift through to ui-pinned-card', () => {
   const swingStyle = (wrapper) => {
     const host = document.createElement('div')
     host.style.width = '400px'

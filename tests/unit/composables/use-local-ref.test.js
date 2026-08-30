@@ -14,7 +14,7 @@ afterEach(() => {
 describe('useLocalRef', () => {
   // ── First-run fallback ────────────────────────────────────────────────────
 
-  test('returns defaultValue when the key is absent in localStorage [obligation]', () => {
+  test('returns defaultValue when the key is absent in localStorage', () => {
     const state = useLocalRef('test-key', 'fallback')
     expect(state.value).toBe('fallback')
   })
@@ -26,7 +26,7 @@ describe('useLocalRef', () => {
 
   // ── Rehydration ───────────────────────────────────────────────────────────
 
-  test('returns the stored value (JSON-parsed) when the key exists [obligation]', () => {
+  test('returns the stored value (JSON-parsed) when the key exists', () => {
     localStorage.setItem('test-key', JSON.stringify('stored-value'))
     const state = useLocalRef('test-key', 'fallback')
     expect(state.value).toBe('stored-value')
@@ -46,7 +46,7 @@ describe('useLocalRef', () => {
 
   // ── Corrupt-storage resilience ────────────────────────────────────────────
 
-  test('falls back to defaultValue when stored JSON is malformed [obligation]', () => {
+  test('falls back to defaultValue when stored JSON is malformed', () => {
     localStorage.setItem('test-key', 'not valid json {{')
     const state = useLocalRef('test-key', 'default-safe')
     expect(state.value).toBe('default-safe')
@@ -60,7 +60,7 @@ describe('useLocalRef', () => {
 
   // ── Deep-watch persistence ────────────────────────────────────────────────
 
-  test('writes the new value to localStorage (JSON-stringified) when the ref changes [obligation]', async () => {
+  test('writes the new value to localStorage (JSON-stringified) when the ref changes', async () => {
     const state = useLocalRef('test-key', 'initial')
     state.value = 'updated'
     await nextTick()

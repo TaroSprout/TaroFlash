@@ -111,7 +111,7 @@ describe('usePageTransition — onPageEnter routing', () => {
   })
 })
 
-// ── onPageLeave — routing + between hook [obligation] ─────────────────────────
+// ── onPageLeave — routing + between hook ─────────────────────────
 
 describe('usePageTransition — onPageLeave routing', () => {
   test('routes to tabSlideLeave on phone mode', () => {
@@ -164,7 +164,7 @@ describe('usePageTransition — onPageLeave routing', () => {
   })
 })
 
-describe('usePageTransition — between hook [obligation]', () => {
+describe('usePageTransition — between hook', () => {
   test('awaits `between` in the gap after the leave animation, before calling done, on every page change', async () => {
     const { layout_mode } = makeLayout('tablet')
     const outlet = ref(document.createElement('div'))
@@ -190,7 +190,7 @@ describe('usePageTransition — between hook [obligation]', () => {
     expect(done).toHaveBeenCalledOnce()
   })
 
-  test('is safe to call when `between` is a no-op-guarded function that resolves immediately with nothing changed [obligation]', async () => {
+  test('is safe to call when `between` is a no-op-guarded function that resolves immediately with nothing changed', async () => {
     const { layout_mode } = makeLayout('tablet')
     const outlet = ref(document.createElement('div'))
     const between = vi.fn(() => Promise.resolve())

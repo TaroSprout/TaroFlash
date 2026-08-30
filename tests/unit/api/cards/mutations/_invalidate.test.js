@@ -48,26 +48,26 @@ describe('invalidateDeck', () => {
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['cards', 42] }, 'all')
   })
 
-  // [obligation] card_pages defaults to true — a caller that doesn't pass it
+  // card_pages defaults to true — a caller that doesn't pass it
   // still gets its card pages refetched (the pre-eager-insert behaviour).
-  test('card_pages defaults to true — cards key is invalidated unless explicitly suppressed [obligation]', () => {
+  test('card_pages defaults to true — cards key is invalidated unless explicitly suppressed', () => {
     invalidateDeck(cache, 42)
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['cards', 42] })
     expect(cache.invalidateQueries).toHaveBeenCalledTimes(2)
   })
 
-  // [obligation] the eager-insert caller already holds the written row on
+  // the eager-insert caller already holds the written row on
   // screen — only the deck's own counts need re-reading, so card_pages: false
   // must skip the ['cards', id] invalidation entirely.
-  test('card_pages: false skips the ["cards", id] invalidation, only the deck key fires [obligation]', () => {
+  test('card_pages: false skips the ["cards", id] invalidation, only the deck key fires', () => {
     invalidateDeck(cache, 42, { card_pages: false })
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['deck', 42] })
     expect(cache.invalidateQueries).toHaveBeenCalledTimes(1)
   })
 
-  // [obligation] the refetch_inactive rewrite must still cover both branches —
+  // the refetch_inactive rewrite must still cover both branches —
   // 'all' propagates to the deck invalidation even when card_pages is false.
-  test('refetch_inactive + card_pages: false still passes "all" to the deck invalidation [obligation]', () => {
+  test('refetch_inactive + card_pages: false still passes "all" to the deck invalidation', () => {
     invalidateDeck(cache, 42, { refetch_inactive: true, card_pages: false })
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['deck', 42] }, 'all')
     expect(cache.invalidateQueries).toHaveBeenCalledTimes(1)
@@ -90,28 +90,28 @@ describe('invalidateAllCardCounts', () => {
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
-  // [obligation] a bare `['decks']` prefix filter also matches `['decks', 'count']`
+  // a bare `['decks']` prefix filter also matches `['decks', 'count']`
   // — the member's *deck* count, which no card write can change. `exact: true`
   // is the guard against refiring that query on every card insert/delete/move.
-  test('decks invalidation is exact, not a prefix — does not also match ["decks", "count"] [obligation]', () => {
+  test('decks invalidation is exact, not a prefix — does not also match ["decks", "count"]', () => {
     invalidateAllCardCounts(cache)
     expect(cache.invalidateQueries).not.toHaveBeenCalledWith({ key: ['decks'] })
     expect(cache.invalidateQueries).not.toHaveBeenCalledWith({ key: ['decks', 'count'] })
   })
 })
 
-describe('invalidateCardIndex [obligation]', () => {
+describe('invalidateCardIndex', () => {
   let cache
   beforeEach(() => {
     cache = makeCache()
   })
 
-  test('invalidates ["cards", "index"] — the member-wide term→decks lookup [obligation]', () => {
+  test('invalidates ["cards", "index"] — the member-wide term→decks lookup', () => {
     invalidateCardIndex(cache)
     expect(cache.invalidateQueries).toHaveBeenCalledWith({ key: ['cards', 'index'] })
   })
 
-  test('fires exactly one invalidation (narrow key, not a broad sweep) [obligation]', () => {
+  test('fires exactly one invalidation (narrow key, not a broad sweep)', () => {
     invalidateCardIndex(cache)
     expect(cache.invalidateQueries).toHaveBeenCalledTimes(1)
   })

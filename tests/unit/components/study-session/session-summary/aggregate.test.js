@@ -40,9 +40,9 @@ describe('aggregateSession — empty results', () => {
   })
 })
 
-// ── total / bucketing basics [obligation] ───────────────────────────────────
+// ── total / bucketing basics ───────────────────────────────────
 
-describe('aggregateSession — total & correct/incorrect bucketing [obligation]', () => {
+describe('aggregateSession — total & correct/incorrect bucketing', () => {
   test('total = results.length regardless of pass/fail', () => {
     const results = [makeResult({ passed: false }), makeResult({ passed: false })]
     const data = aggregateSession(results, thresholdFor)
@@ -50,7 +50,7 @@ describe('aggregateSession — total & correct/incorrect bucketing [obligation]'
     expect(data.total).toBe(2)
   })
 
-  test('passed results land in groups.correct [obligation]', () => {
+  test('passed results land in groups.correct', () => {
     const passed = makeResult({ passed: true })
     const data = aggregateSession([passed], thresholdFor)
 
@@ -58,7 +58,7 @@ describe('aggregateSession — total & correct/incorrect bucketing [obligation]'
     expect(data.incorrect).toEqual([])
   })
 
-  test('!passed results land in incorrect, not groups.correct [obligation]', () => {
+  test('!passed results land in incorrect, not groups.correct', () => {
     const failed = makeResult({ passed: false })
     const data = aggregateSession([failed], thresholdFor)
 
@@ -69,8 +69,8 @@ describe('aggregateSession — total & correct/incorrect bucketing [obligation]'
 
 // ── is_new / groups.new ──────────────────────────────────────────────────────
 
-describe('aggregateSession — new_count [obligation]', () => {
-  test('groups.new = results where is_new is true [obligation]', () => {
+describe('aggregateSession — new_count', () => {
+  test('groups.new = results where is_new is true', () => {
     const a = makeResult({ is_new: true })
     const b = makeResult({ is_new: true })
     const c = makeResult({ is_new: false })
@@ -80,7 +80,7 @@ describe('aggregateSession — new_count [obligation]', () => {
     expect(ids(data.groups.new)).toEqual([a.card_id, b.card_id])
   })
 
-  test('new cards short-circuit with continue — never land in strengthened [obligation]', () => {
+  test('new cards short-circuit with continue — never land in strengthened', () => {
     // New card from forming→familiar boundary; must NOT count as strengthened
     const result = makeResult({ is_new: true, before_interval: 1, after_interval: 10 })
 
@@ -90,7 +90,7 @@ describe('aggregateSession — new_count [obligation]', () => {
     expect(data.groups.strengthened).toEqual([])
   })
 
-  test('new cards short-circuit with continue — never land in weakened [obligation]', () => {
+  test('new cards short-circuit with continue — never land in weakened', () => {
     const result = makeResult({
       is_new: true,
       before_interval: 10,
@@ -107,7 +107,7 @@ describe('aggregateSession — new_count [obligation]', () => {
 
 // ── maturity bands ────────────────────────────────────────────────────────────
 
-describe('aggregateSession — maturity band thresholds [obligation]', () => {
+describe('aggregateSession — maturity band thresholds', () => {
   // forming < 7d, familiar 7–29d, strong 30–89d, mastered >=90d
 
   test('interval 6 is forming (below 7 threshold) — no band change', () => {
@@ -140,8 +140,8 @@ describe('aggregateSession — maturity band thresholds [obligation]', () => {
 
 // ── strengthened ──────────────────────────────────────────────────────────────
 
-describe('aggregateSession — strengthened [obligation]', () => {
-  test('strengthened when after band > before band [obligation]', () => {
+describe('aggregateSession — strengthened', () => {
+  test('strengthened when after band > before band', () => {
     const result = makeResult({ is_new: false, before_interval: 4, after_interval: 8 })
     const data = aggregateSession([result], thresholdFor)
 
@@ -149,7 +149,7 @@ describe('aggregateSession — strengthened [obligation]', () => {
     expect(data.groups.weakened).toEqual([])
   })
 
-  test('within-band improvement does NOT strengthen [obligation]', () => {
+  test('within-band improvement does NOT strengthen', () => {
     const result = makeResult({ is_new: false, before_interval: 9, after_interval: 21 })
     const data = aggregateSession([result], thresholdFor)
 
@@ -168,8 +168,8 @@ describe('aggregateSession — strengthened [obligation]', () => {
 
 // ── weakened ──────────────────────────────────────────────────────────────────
 
-describe('aggregateSession — weakened [obligation]', () => {
-  test('weakened when after band < before band [obligation]', () => {
+describe('aggregateSession — weakened', () => {
+  test('weakened when after band < before band', () => {
     const result = makeResult({
       is_new: false,
       before_interval: 10,
@@ -183,7 +183,7 @@ describe('aggregateSession — weakened [obligation]', () => {
     expect(data.groups.strengthened).toEqual([])
   })
 
-  test('within-band decline does NOT weaken [obligation]', () => {
+  test('within-band decline does NOT weaken', () => {
     const result = makeResult({
       is_new: false,
       before_interval: 21,
@@ -197,7 +197,7 @@ describe('aggregateSession — weakened [obligation]', () => {
     expect(data.groups.strengthened).toEqual([])
   })
 
-  test('EDGE: failed card already in forming that drops to a smaller forming interval is NOT weakened [obligation]', () => {
+  test('EDGE: failed card already in forming that drops to a smaller forming interval is NOT weakened', () => {
     const result = makeResult({
       is_new: false,
       before_interval: 4,
@@ -211,34 +211,34 @@ describe('aggregateSession — weakened [obligation]', () => {
   })
 })
 
-// ── stuck [obligation] ──────────────────────────────────────────────────────
+// ── stuck ──────────────────────────────────────────────────────
 // leech_threshold is a required per-deck-resolved param (was a hardcoded 24) —
 // the threshold used here (24) matches the old hardcoded constant, pinning the
 // same bucketing behaviour plus the threshold-is-a-param contract.
 
-describe('aggregateSession — stuck [obligation]', () => {
-  test('!passed && lapses >= leech_threshold → stuck [obligation]', () => {
+describe('aggregateSession — stuck', () => {
+  test('!passed && lapses >= leech_threshold → stuck', () => {
     const result = makeResult({ passed: false, lapses: 24 })
     const data = aggregateSession([result], () => 24)
 
     expect(ids(data.groups.stuck)).toEqual([result.card_id])
   })
 
-  test('lapses one below threshold → NOT stuck [obligation]', () => {
+  test('lapses one below threshold → NOT stuck', () => {
     const result = makeResult({ passed: false, lapses: 23 })
     const data = aggregateSession([result], () => 24)
 
     expect(data.groups.stuck).toEqual([])
   })
 
-  test('passed with lapses >= leech_threshold → NOT stuck [obligation]', () => {
+  test('passed with lapses >= leech_threshold → NOT stuck', () => {
     const result = makeResult({ passed: true, lapses: 24 })
     const data = aggregateSession([result], () => 24)
 
     expect(data.groups.stuck).toEqual([])
   })
 
-  test('a lower leech_threshold counts a result as stuck that a higher one would not [obligation]', () => {
+  test('a lower leech_threshold counts a result as stuck that a higher one would not', () => {
     const results = [
       makeResult({ passed: false, lapses: 10 }),
       makeResult({ passed: false, lapses: 24 })
@@ -251,7 +251,7 @@ describe('aggregateSession — stuck [obligation]', () => {
     expect(with_threshold_24.groups.stuck).toHaveLength(1)
   })
 
-  test('EDGE: failed card in forming drops to smaller forming interval — also stuck when lapses >= leech_threshold [obligation]', () => {
+  test('EDGE: failed card in forming drops to smaller forming interval — also stuck when lapses >= leech_threshold', () => {
     const result = makeResult({
       is_new: false,
       before_interval: 4,
@@ -266,7 +266,7 @@ describe('aggregateSession — stuck [obligation]', () => {
     expect(data.groups.weakened).toEqual([])
   })
 
-  test('EDGE: card that both drops a band AND is stuck — lands in both groups [obligation]', () => {
+  test('EDGE: card that both drops a band AND is stuck — lands in both groups', () => {
     const result = makeResult({
       is_new: false,
       before_interval: 10,
@@ -281,7 +281,7 @@ describe('aggregateSession — stuck [obligation]', () => {
     expect(ids(data.groups.stuck)).toEqual([result.card_id])
   })
 
-  test('new cards with lapses >= leech_threshold that failed are still stuck — is_new does not short-circuit stuck bucketing [obligation]', () => {
+  test('new cards with lapses >= leech_threshold that failed are still stuck — is_new does not short-circuit stuck bucketing', () => {
     const result = makeResult({ is_new: true, passed: false, lapses: 24 })
     const data = aggregateSession([result], () => 24)
 
@@ -290,13 +290,13 @@ describe('aggregateSession — stuck [obligation]', () => {
   })
 })
 
-// ── Per-deck leech threshold [obligation] ───────────────────────────────────
+// ── Per-deck leech threshold ───────────────────────────────────
 // thresholdFor is a per-result lookup keyed by each result's own deck_id — two
 // decks with different thresholds in the same session must bucket "stuck"
 // cards using each result's own deck, not a single session-wide scalar.
 
-describe('aggregateSession — per-deck leech threshold [obligation]', () => {
-  test('resolves each result own deck threshold via thresholdFor(result.deck_id) [obligation]', () => {
+describe('aggregateSession — per-deck leech threshold', () => {
+  test('resolves each result own deck threshold via thresholdFor(result.deck_id)', () => {
     const threshold_by_deck = { 1: 4, 2: 20 }
     const threshold_for = (deck_id) => threshold_by_deck[deck_id]
 
@@ -309,7 +309,7 @@ describe('aggregateSession — per-deck leech threshold [obligation]', () => {
     expect(ids(data.groups.stuck)).toEqual([deck_1.card_id])
   })
 
-  test('the same lapses count is stuck under one deck threshold but not the other, in one session [obligation]', () => {
+  test('the same lapses count is stuck under one deck threshold but not the other, in one session', () => {
     const threshold_by_deck = { 1: 2, 2: 30 }
     const threshold_for = (deck_id) => threshold_by_deck[deck_id]
 
@@ -321,7 +321,7 @@ describe('aggregateSession — per-deck leech threshold [obligation]', () => {
     expect(ids(data.groups.stuck)).toEqual([deck_1_result.card_id])
   })
 
-  test('both decks count as stuck when both cross their own (different) thresholds [obligation]', () => {
+  test('both decks count as stuck when both cross their own (different) thresholds', () => {
     const threshold_by_deck = { 1: 2, 2: 5 }
     const threshold_for = (deck_id) => threshold_by_deck[deck_id]
 

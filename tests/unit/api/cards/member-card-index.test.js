@@ -27,8 +27,8 @@ function configFrom() {
   return useQuerySpy.mock.calls.at(-1)[0]
 }
 
-describe('useMemberCardIndexQuery [obligation]', () => {
-  test('is keyed exactly ["cards", "index"] [obligation]', () => {
+describe('useMemberCardIndexQuery', () => {
+  test('is keyed exactly ["cards", "index"]', () => {
     const { key } = configFrom()
     expect(key()).toEqual(['cards', 'index'])
   })

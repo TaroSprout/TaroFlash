@@ -50,10 +50,10 @@ afterEach(() => {
   mounted_wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
 })
 
-// ── restored state paints at rest, no animation [obligation] ──────────────────
+// ── restored state paints at rest, no animation ──────────────────
 
-describe('AdvancedReveal — restored revealed state paints at rest on first render [obligation]', () => {
-  test('a restored revealed=true renders the fields visible on first paint without calling popScrimReveal [obligation]', () => {
+describe('AdvancedReveal — restored revealed state paints at rest on first render', () => {
+  test('a restored revealed=true renders the fields visible on first paint without calling popScrimReveal', () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
     const { wrapper } = makeWrapper()
 
@@ -68,10 +68,10 @@ describe('AdvancedReveal — restored revealed state paints at rest on first ren
   })
 })
 
-// ── toggling flips persistence [obligation] ───────────────────────────────────
+// ── toggling flips persistence ───────────────────────────────────
 
-describe('AdvancedReveal — toggling flips persistence [obligation]', () => {
-  test('clicking the scrim persists revealed=true under deck-settings-advanced-revealed [obligation]', async () => {
+describe('AdvancedReveal — toggling flips persistence', () => {
+  test('clicking the scrim persists revealed=true under deck-settings-advanced-revealed', async () => {
     const { wrapper } = makeWrapper()
 
     await wrapper.find('[data-testid="advanced-reveal__scrim"]').trigger('click')
@@ -79,7 +79,7 @@ describe('AdvancedReveal — toggling flips persistence [obligation]', () => {
     expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('true')
   })
 
-  test('clicking the badge after reveal persists revealed=false [obligation]', async () => {
+  test('clicking the badge after reveal persists revealed=false', async () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, 'true')
     const { wrapper } = makeWrapper()
 
@@ -111,10 +111,10 @@ describe('AdvancedReveal — toggling flips persistence [obligation]', () => {
   })
 })
 
-// ── collapse passed only on phone [obligation] ────────────────────────────────
+// ── collapse passed only on phone ────────────────────────────────
 
-describe('AdvancedReveal — collapse option passed only on phone [obligation]', () => {
-  test('passes collapse: true to popScrimReveal on phone layout [obligation]', async () => {
+describe('AdvancedReveal — collapse option passed only on phone', () => {
+  test('passes collapse: true to popScrimReveal on phone layout', async () => {
     mockIsPhone.value = true
     const { wrapper } = makeWrapper()
 
@@ -129,7 +129,7 @@ describe('AdvancedReveal — collapse option passed only on phone [obligation]',
     )
   })
 
-  test('passes collapse: false to popScrimReveal off phone [obligation]', async () => {
+  test('passes collapse: false to popScrimReveal off phone', async () => {
     mockIsPhone.value = false
     const { wrapper } = makeWrapper()
 
@@ -157,23 +157,23 @@ describe('AdvancedReveal — structure', () => {
   })
 })
 
-// ── badge reads as a notch into the window [obligation] ────────────────────────
+// ── badge reads as a notch into the window ────────────────────────
 
-describe('AdvancedReveal — badge reads as a notch into the window [obligation]', () => {
-  test('badge carries data-station="window" [obligation]', () => {
+describe('AdvancedReveal — badge reads as a notch into the window', () => {
+  test('badge carries data-station="window"', () => {
     const { wrapper } = makeWrapper()
     const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
     expect(badge.attributes('data-station')).toBe('window')
   })
 
-  test('badge carries bg-surface and no longer carries bg-well [obligation]', () => {
+  test('badge carries bg-surface and no longer carries bg-well', () => {
     const { wrapper } = makeWrapper()
     const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
     expect(badge.classes()).toContain('bg-surface')
     expect(badge.classes()).not.toContain('bg-well')
   })
 
-  test('badge classes hold the same shape whether revealed or not [obligation]', async () => {
+  test('badge classes hold the same shape whether revealed or not', async () => {
     const { wrapper } = makeWrapper()
     const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
     expect(badge.classes()).toContain('bg-surface')
@@ -184,13 +184,13 @@ describe('AdvancedReveal — badge reads as a notch into the window [obligation]
     expect(badge.classes()).not.toContain('bg-well')
   })
 
-  test('no raw colour value appears in the component source [obligation]', () => {
+  test('no raw colour value appears in the component source', () => {
     const rawColourPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|\b(?:bg|text)-\[[^\]]+\]/
 
     expect(advancedRevealSource).not.toMatch(rawColourPattern)
   })
 
-  test('badge content still renders the eye-close icon, the advanced-label text and text-ink-muted [obligation]', () => {
+  test('badge content still renders the eye-close icon, the advanced-label text and text-ink-muted', () => {
     const { wrapper } = makeWrapper()
     const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
     const content = wrapper.find('[data-testid="advanced-reveal__badge-content"]')
@@ -201,7 +201,7 @@ describe('AdvancedReveal — badge reads as a notch into the window [obligation]
     expect(content.text()).toContain('Advanced')
   })
 
-  test('badge gained no hover, active or group-hover treatment [obligation]', () => {
+  test('badge gained no hover, active or group-hover treatment', () => {
     const { wrapper } = makeWrapper()
     const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
 
@@ -210,7 +210,7 @@ describe('AdvancedReveal — badge reads as a notch into the window [obligation]
     expect(badge.classes().some((c) => c.startsWith('group-hover:'))).toBe(false)
   })
 
-  test("badge's :class binding still only toggles pointer-events-none on the not-revealed state [obligation]", async () => {
+  test("badge's :class binding still only toggles pointer-events-none on the not-revealed state", async () => {
     const { wrapper } = makeWrapper()
     const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
 

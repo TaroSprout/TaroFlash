@@ -105,7 +105,7 @@ describe('createLessonCollection (contract)', () => {
 })
 
 describe('setCollectionProgress (contract)', () => {
-  test('writes last_lesson_id and last_position_seconds to the collection row [obligation]', async () => {
+  test('writes last_lesson_id and last_position_seconds to the collection row', async () => {
     const collection = await createCollectionDirect(session.client)
     const lesson = await createLessonDirect(session.client, collection.id)
 
@@ -122,7 +122,7 @@ describe('setCollectionProgress (contract)', () => {
     expect(data.last_position_seconds).toBe(37)
   })
 
-  test('defaults position_seconds to 0 when caller omits it [obligation]', async () => {
+  test('defaults position_seconds to 0 when caller omits it', async () => {
     // First set a non-zero position, then call without position_seconds to confirm it resets to 0.
     const collection = await createCollectionDirect(session.client)
     const lesson = await createLessonDirect(session.client, collection.id)

@@ -296,7 +296,7 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('a window-blur/refocus round trip stays silent (no sfx) on the restoring focusin [obligation]', async () => {
+  test('a window-blur/refocus round trip stays silent (no sfx) on the restoring focusin', async () => {
     const wrapper = mountWithFocusStubs({ card: { id: 42 } })
     const contenteditable = wrapper.find('[data-testid="front-input"]').element
 
@@ -313,7 +313,7 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('the programmatic autofocus from claimFocus stays silent on its own focusin [obligation]', () => {
+  test('the programmatic autofocus from claimFocus stays silent on its own focusin', () => {
     mocks.claimFocusMock.mockReturnValue(true)
     const wrapper = shallowMount(ListItemCard, {
       attachTo: document.body,
@@ -368,13 +368,13 @@ describe('ListItemCard', () => {
 
   // ── onMounted grow-in — gated on claimGrow, not claimFocus ─────────────────
 
-  test('does NOT run expandListItemIn when claimGrow returns false (scroll-mounted row) [obligation]', () => {
+  test('does NOT run expandListItemIn when claimGrow returns false (scroll-mounted row)', () => {
     mocks.claimGrowMock.mockReturnValue(false)
     mount({ card: { id: 99, client_id: 'c99' } })
     expect(mocks.gsapFromMock).not.toHaveBeenCalled()
   })
 
-  test('runs expandListItemIn on the root element when claimGrow returns true (freshly-added card) [obligation]', () => {
+  test('runs expandListItemIn on the root element when claimGrow returns true (freshly-added card)', () => {
     mocks.claimGrowMock.mockReturnValue(true)
     const wrapper = shallowMount(ListItemCard, {
       attachTo: document.body,
@@ -388,7 +388,7 @@ describe('ListItemCard', () => {
     wrapper.unmount()
   })
 
-  test('focuses without the grow-in when claimFocus is true but claimGrow is false (edit navigation) [obligation]', () => {
+  test('focuses without the grow-in when claimFocus is true but claimGrow is false (edit navigation)', () => {
     mocks.claimFocusMock.mockReturnValue(true)
     mocks.claimGrowMock.mockReturnValue(false)
     const wrapper = shallowMount(ListItemCard, {
@@ -423,7 +423,7 @@ describe('ListItemCard', () => {
     expect(editors[1].props('error')).toBe(true)
   })
 
-  test('save_failed AND notice.error both fire when updateCard rejects [obligation]', async () => {
+  test('save_failed AND notice.error both fire when updateCard rejects', async () => {
     mocks.updateCardMock.mockRejectedValueOnce(new Error('boom'))
     const wrapper = mount({ card: { id: 42 } })
     const notice = useNoticeStore()

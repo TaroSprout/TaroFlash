@@ -26,11 +26,11 @@ describe('StudyFlipDoneFooter', () => {
     expect(wrapper.find('[data-testid="study-flip-done-footer__done"]').exists()).toBe(true)
   })
 
-  // ── emits, no internal flip sfx of its own [obligation] ─────────────────────
+  // ── emits, no internal flip sfx of its own ─────────────────────
   // The Flip button carries no :sfx prop — whoever handles @flip decides
   // whether and what to play. Only Done carries its own cue (card.saved).
 
-  test('clicking flip emits "flip" and nothing else, and plays no press sound [obligation]', async () => {
+  test('clicking flip emits "flip" and nothing else, and plays no press sound', async () => {
     const wrapper = mountFooter()
     await wrapper.find('[data-testid="study-flip-done-footer__flip"]').trigger('click')
 
@@ -39,7 +39,7 @@ describe('StudyFlipDoneFooter', () => {
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('clicking done emits "done" and nothing else, and plays card.saved [obligation]', async () => {
+  test('clicking done emits "done" and nothing else, and plays card.saved', async () => {
     const wrapper = mountFooter()
     await wrapper.find('[data-testid="study-flip-done-footer__done"]').trigger('click')
 

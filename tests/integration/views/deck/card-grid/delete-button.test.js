@@ -40,7 +40,7 @@ describe('card-grid/delete-button', () => {
     expect(document.querySelector('[data-testid="ui-tooltip"]')?.textContent).toBe('Delete')
   })
 
-  test('clicking calls onDeleteCardImmediate with the card id and its positioned grid cell [obligation]', async () => {
+  test('clicking calls onDeleteCardImmediate with the card id and its positioned grid cell', async () => {
     const editor = makeEditor()
     const grid_item_el = document.createElement('div')
     grid_item_el.setAttribute('data-testid', 'card-grid__item')
@@ -61,7 +61,7 @@ describe('card-grid/delete-button', () => {
     grid_item_el.remove()
   })
 
-  test('sets its own loading state while the delete is in flight, and clears it after [obligation]', async () => {
+  test('sets its own loading state while the delete is in flight, and clears it after', async () => {
     let resolveDelete
     const onDeleteCardImmediate = vi.fn(
       () =>

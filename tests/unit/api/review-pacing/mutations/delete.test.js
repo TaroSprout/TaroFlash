@@ -37,7 +37,7 @@ describe('useDeletePresetMutation — mutation()', () => {
 })
 
 describe('useDeletePresetMutation — onSettled()', () => {
-  test('invalidates both the review-pacing-presets and decks queries [obligation]', () => {
+  test('invalidates both the review-pacing-presets and decks queries', () => {
     // Deleting a preset assigned to a deck SET NULLs the deck's FK (see the
     // delete.ts comment) — decks need a refetch too, not just the preset list.
     const { onSettled } = config()

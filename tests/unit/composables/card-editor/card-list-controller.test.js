@@ -337,7 +337,7 @@ describe('useCardListController', () => {
   // ── addCardAtTop ──────────────────────────────────────────────────────────
 
   describe('addCardAtTop', () => {
-    test('stages a card at the top of all_cards when gate passes [obligation]', async () => {
+    test('stages a card at the top of all_cards when gate passes', async () => {
       const { addCardAtTop, all_cards } = makeController([makeCard({ id: 100 })])
       guardAddCardsMock.mockResolvedValue(true)
       await addCardAtTop()
@@ -345,7 +345,7 @@ describe('useCardListController', () => {
       expect(all_cards.value[1].id).toBe(100)
     })
 
-    test('does not stage a card when guardAddCards resolves false [obligation]', async () => {
+    test('does not stage a card when guardAddCards resolves false', async () => {
       const { addCardAtTop, all_cards } = makeController([makeCard({ id: 100 })])
       guardAddCardsMock.mockResolvedValue(false)
       await addCardAtTop()
@@ -353,7 +353,7 @@ describe('useCardListController', () => {
       expect(all_cards.value[0].id).toBe(100)
     })
 
-    test('sets pending_focus_client_id in the same synchronous block as staging [obligation]', async () => {
+    test('sets pending_focus_client_id in the same synchronous block as staging', async () => {
       // Verify claimFocus returns true for the staged card immediately after addCardAtTop
       // (no await between staging and target assignment in the source — this test pins that)
       const { addCardAtTop, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
@@ -367,12 +367,12 @@ describe('useCardListController', () => {
   // ── claimFocus ────────────────────────────────────────────────────────────
 
   describe('claimFocus', () => {
-    test('returns false before any addCardAtTop call [obligation]', () => {
+    test('returns false before any addCardAtTop call', () => {
       const { claimFocus } = makeController()
       expect(claimFocus('some-id')).toBe(false)
     })
 
-    test('returns true exactly once for the staged card client_id [obligation]', async () => {
+    test('returns true exactly once for the staged card client_id', async () => {
       const { addCardAtTop, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
       guardAddCardsMock.mockResolvedValue(true)
       await addCardAtTop()
@@ -382,7 +382,7 @@ describe('useCardListController', () => {
       expect(claimFocus(staged_client_id)).toBe(false)
     })
 
-    test('returns false for a different client_id than the one staged [obligation]', async () => {
+    test('returns false for a different client_id than the one staged', async () => {
       const { addCardAtTop, claimFocus } = makeController([makeCard({ id: 100 })])
       guardAddCardsMock.mockResolvedValue(true)
       await addCardAtTop()
@@ -393,7 +393,7 @@ describe('useCardListController', () => {
   // ── claimGrow — the reveal target, staged only by addCardAtTop ──────────────
 
   describe('claimGrow', () => {
-    test('returns true once for a card staged by addCardAtTop (freshly added) [obligation]', async () => {
+    test('returns true once for a card staged by addCardAtTop (freshly added)', async () => {
       const { addCardAtTop, claimGrow, all_cards } = makeController([makeCard({ id: 100 })])
       guardAddCardsMock.mockResolvedValue(true)
       await addCardAtTop()
@@ -403,7 +403,7 @@ describe('useCardListController', () => {
       expect(claimGrow(staged_client_id)).toBe(false)
     })
 
-    test('returns false before any addCardAtTop call [obligation]', () => {
+    test('returns false before any addCardAtTop call', () => {
       const { claimGrow } = makeController()
       expect(claimGrow('some-id')).toBe(false)
     })
@@ -434,28 +434,28 @@ describe('useCardListController', () => {
   // ── create seam — every desktop add path requests autofocus + grow-in ────────
 
   describe('create seam autofocus', () => {
-    test('gated appendCard flags the staged card for autofocus [obligation]', async () => {
+    test('gated appendCard flags the staged card for autofocus', async () => {
       const { gated_appendCard, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
       await gated_appendCard(100)
       const staged_client_id = all_cards.value.find((c) => c.id < 0).client_id
       expect(claimFocus(staged_client_id)).toBe(true)
     })
 
-    test('gated prependCard flags the staged card for autofocus [obligation]', async () => {
+    test('gated prependCard flags the staged card for autofocus', async () => {
       const { gated_prependCard, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
       await gated_prependCard(100)
       const staged_client_id = all_cards.value.find((c) => c.id < 0).client_id
       expect(claimFocus(staged_client_id)).toBe(true)
     })
 
-    test('addCardAtTop (empty-state / toolbar path) flags the staged card for autofocus [obligation]', async () => {
+    test('addCardAtTop (empty-state / toolbar path) flags the staged card for autofocus', async () => {
       const { addCardAtTop, claimFocus, all_cards } = makeController()
       await addCardAtTop()
       const staged_client_id = all_cards.value[0].client_id
       expect(claimFocus(staged_client_id)).toBe(true)
     })
 
-    test('gated addCard (mobile path) does NOT flag the staged card — the dock owns focus [obligation]', async () => {
+    test('gated addCard (mobile path) does NOT flag the staged card — the dock owns focus', async () => {
       const { gated_addCard, claimFocus, all_cards } = makeController([makeCard({ id: 100 })])
       await gated_addCard()
       const staged_client_id = all_cards.value.find((c) => c.id < 0).client_id
@@ -568,11 +568,11 @@ describe('useCardListController', () => {
   // by the cap (real_id still null); only the latter is a true no-op. ───────
 
   describe('persistEdit — a staged entry vanishing from the list mid-edit', () => {
-    // [obligation] the entry is gone by the time persistEdit re-reads it — the
+    // the entry is gone by the time persistEdit re-reads it — the
     // persisted refetch retired the promoted placeholder in the same tick the
     // keystroke landed — but its real_id already carries the server's copy, so
     // the edit must still land as an UPDATE, not get silently dropped.
-    test('a keystroke landing as the persisted refetch retires the promoted placeholder still saves as an update [obligation]', async () => {
+    test('a keystroke landing as the persisted refetch retires the promoted placeholder still saves as an update', async () => {
       const query = makeCardsQuery([])
       query.data = ref(query.data.value)
       cardsInfiniteQueryMock.mockReturnValueOnce(query)
@@ -604,10 +604,10 @@ describe('useCardListController', () => {
       expect(saveCardMock).toHaveBeenCalledOnce()
     })
 
-    // [obligation] complementary case: the staged entry vanished because the
+    // complementary case: the staged entry vanished because the
     // eager insert was refused by the cap, so real_id is still null — nothing
     // was ever created server-side, and the edit stays a no-op.
-    test('a keystroke landing after the cap refuses the eager insert still bails, not a second insert [obligation]', async () => {
+    test('a keystroke landing after the cap refuses the eager insert still bails, not a second insert', async () => {
       let rejectInsert
       insertCardMock.mockReturnValueOnce(
         new Promise((_resolve, reject) => {
@@ -635,21 +635,21 @@ describe('useCardListController', () => {
   // ── eager insert — stageCard fires the INSERT before any keystroke ─────────
 
   describe('eager insert on create', () => {
-    test('addFocusedCard (desktop appendCard) fires the INSERT immediately, before any text is entered [obligation]', async () => {
+    test('addFocusedCard (desktop appendCard) fires the INSERT immediately, before any text is entered', async () => {
       const { gated_appendCard } = makeController([makeCard({ id: 100 })])
       await gated_appendCard(100)
       await flushPromises()
       expect(insertCardMock).toHaveBeenCalledOnce()
     })
 
-    test('addCard (mobile dock editor) fires the INSERT immediately, before any text is entered [obligation]', async () => {
+    test('addCard (mobile dock editor) fires the INSERT immediately, before any text is entered', async () => {
       const { gated_addCard } = makeController([makeCard({ id: 100 })])
       await gated_addCard()
       await flushPromises()
       expect(insertCardMock).toHaveBeenCalledOnce()
     })
 
-    test('only the desktop seam (addFocusedCard) sets the autofocus target, not the mobile seam [obligation]', async () => {
+    test('only the desktop seam (addFocusedCard) sets the autofocus target, not the mobile seam', async () => {
       const { gated_appendCard, gated_addCard, claimFocus, all_cards } = makeController([
         makeCard({ id: 100 })
       ])
@@ -664,7 +664,7 @@ describe('useCardListController', () => {
       expect(claimFocus(mobile_client_id)).toBe(false)
     })
 
-    test('guardAddCards resolving false stages nothing AND fires no insert [obligation]', async () => {
+    test('guardAddCards resolving false stages nothing AND fires no insert', async () => {
       guardAddCardsMock.mockResolvedValue(false)
       const { gated_appendCard, gated_addCard, all_cards } = makeController([makeCard({ id: 100 })])
       await gated_appendCard(100)
@@ -674,11 +674,11 @@ describe('useCardListController', () => {
       expect(insertCardMock).not.toHaveBeenCalled()
     })
 
-    // [obligation] high-value regression: `neighbourRanksFor` skips unranked
+    // high-value regression: `neighbourRanksFor` skips unranked
     // siblings, so two concurrent mints would both resolve against the same
     // persisted neighbour and collide on the same key. Serializing through
     // one insert_queue makes the second mint read the first's resolved rank.
-    test('two cards created in rapid succession mint distinct ranks that sort in render order [obligation]', async () => {
+    test('two cards created in rapid succession mint distinct ranks that sort in render order', async () => {
       let next_id = 100
       insertCardMock.mockImplementation(async (args) => ({ id: next_id++, rank: args.rank }))
 
@@ -703,10 +703,10 @@ describe('useCardListController', () => {
       expect(top.rank < bottom.rank).toBe(true)
     })
 
-    // [obligation] typing into a card whose eager INSERT is still in flight
+    // typing into a card whose eager INSERT is still in flight
     // must yield exactly one card carrying the text — updateCard awaits the
     // pending insert, then routes to saveCard (UPDATE), never a second insert.
-    test('typing while the eager insert is in flight yields exactly one card carrying the text [obligation]', async () => {
+    test('typing while the eager insert is in flight yields exactly one card carrying the text', async () => {
       let resolveInsert
       insertCardMock.mockReturnValueOnce(
         new Promise((r) => {
@@ -732,11 +732,11 @@ describe('useCardListController', () => {
       expect(all_cards.value.filter((c) => c.client_id === client_id)).toHaveLength(1)
     })
 
-    // [obligation] a PT402 rejection on the eager insert rolls the staged row
+    // a PT402 rejection on the eager insert rolls the staged row
     // back out of the list — contrast with the updateCard→insertTemp path
     // (see the `updateCard` describe above), which deliberately leaves the
     // temp staged because it may carry user-typed text.
-    test('a PT402 rejection on the eager insert removes the staged card from the list [obligation]', async () => {
+    test('a PT402 rejection on the eager insert removes the staged card from the list', async () => {
       insertCardMock.mockRejectedValueOnce({ code: 'PT402' })
       handleLimitErrorMock.mockReturnValueOnce(true)
 
@@ -749,7 +749,7 @@ describe('useCardListController', () => {
       expect(all_cards.value).toHaveLength(0)
     })
 
-    test('a PT402 rejection on the eager insert surfaces the upgrade alert via handleLimitError [obligation]', async () => {
+    test('a PT402 rejection on the eager insert surfaces the upgrade alert via handleLimitError', async () => {
       const limit_error = { code: 'PT402' }
       insertCardMock.mockRejectedValueOnce(limit_error)
       handleLimitErrorMock.mockReturnValueOnce(true)
@@ -763,10 +763,10 @@ describe('useCardListController', () => {
       expect(handleLimitErrorMock).toHaveBeenCalledWith(limit_error)
     })
 
-    // [obligation] a non-limit failure of the eager insert is swallowed: the
+    // a non-limit failure of the eager insert is swallowed: the
     // insert only ever carries an empty card, so nothing typed can be lost.
     // No toast, the entry stays a temp, and the next edit re-inserts it.
-    test('a non-limit failure of the eager insert is swallowed — no toast, entry stays a temp [obligation]', async () => {
+    test('a non-limit failure of the eager insert is swallowed — no toast, entry stays a temp', async () => {
       insertCardMock.mockRejectedValueOnce(new Error('network down'))
 
       const { addCardAtTop, all_cards } = makeController()
@@ -781,7 +781,7 @@ describe('useCardListController', () => {
       expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
-    test('the next edit re-inserts a temp whose eager insert failed non-limit [obligation]', async () => {
+    test('the next edit re-inserts a temp whose eager insert failed non-limit', async () => {
       insertCardMock.mockRejectedValueOnce(new Error('network down'))
       insertCardMock.mockResolvedValueOnce({ id: 300, rank: 'm9' })
 
@@ -799,9 +799,9 @@ describe('useCardListController', () => {
       expect(second_call_args.front_text).toBe('retry')
     })
 
-    // [obligation] negative: nothing removes an empty temp on blur or when
+    // negative: nothing removes an empty temp on blur or when
     // leaving the deck — a successfully-inserted, still-empty card just stays.
-    test('a successfully eager-inserted, still-empty card is never auto-removed [obligation]', async () => {
+    test('a successfully eager-inserted, still-empty card is never auto-removed', async () => {
       const { addCardAtTop, all_cards } = makeController()
       guardAddCardsMock.mockResolvedValue(true)
       await addCardAtTop()
@@ -813,11 +813,11 @@ describe('useCardListController', () => {
       expect(all_cards.value[0].back_text).toBe('')
     })
 
-    // [obligation] regression this branch closes: an eagerly-created card is
+    // regression this branch closes: an eagerly-created card is
     // promoted in place and never refetched, so `patchTemp` — not the optimistic
     // cache patch — is what lets the mobile editor's one-side-at-a-time saves
     // both land on the same entry instead of clobbering each other.
-    test('create card, save front text, then save back text — both sides survive [obligation]', async () => {
+    test('create card, save front text, then save back text — both sides survive', async () => {
       insertCardMock.mockResolvedValueOnce({ id: 400, rank: 'm7' })
 
       const { addCardAtTop, all_cards, updateCard } = makeController()
@@ -982,7 +982,7 @@ describe('useCardListController', () => {
   // ── card_count — server-side deck total projected from deck_query ─────────
 
   describe('card_count', () => {
-    test('defaults to 0 when deck data is not yet loaded [obligation]', () => {
+    test('defaults to 0 when deck data is not yet loaded', () => {
       const dq = { data: ref(null), refetch: vi.fn() }
       cardsInfiniteQueryMock.mockReturnValueOnce(makeCardsQuery([]))
       deckQueryMock.mockReturnValue(dq)
@@ -990,13 +990,13 @@ describe('useCardListController', () => {
       expect(ctrl.card_count.value).toBe(0)
     })
 
-    test('reflects deck_query.data.card_count reactively [obligation]', () => {
+    test('reflects deck_query.data.card_count reactively', () => {
       const dq = makeDeckQuery(197)
       const ctrl = makeController([], [], dq)
       expect(ctrl.card_count.value).toBe(197)
     })
 
-    test('updates when deck_query.data.card_count changes [obligation]', () => {
+    test('updates when deck_query.data.card_count changes', () => {
       const dq = makeDeckQuery(10)
       const ctrl = makeController([], [], dq)
       expect(ctrl.card_count.value).toBe(10)
@@ -1024,7 +1024,7 @@ describe('useCardListController', () => {
   // ── newCard — enter edit mode, play chime, stage card ───────────────────────
 
   describe('newCard', () => {
-    test('calls shell.setMode("edit") in both empty and non-empty cases [obligation]', async () => {
+    test('calls shell.setMode("edit") in both empty and non-empty cases', async () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const sh = makeShell({ setMode })
 
@@ -1034,7 +1034,7 @@ describe('useCardListController', () => {
       expect(setMode).toHaveBeenCalledWith('edit')
     })
 
-    test('with empty cards, addCardAtTop runs even when setMode promise never resolves [obligation]', async () => {
+    test('with empty cards, addCardAtTop runs even when setMode promise never resolves', async () => {
       // Empty deck — mode-stack is not mounted, so setMode should not be awaited.
       // Return a never-resolving promise to prove the implementation does NOT await it.
       const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
@@ -1047,7 +1047,7 @@ describe('useCardListController', () => {
       expect(ctrl.list.all_cards.value[0].id).toBeLessThan(0)
     })
 
-    test('with cards present, awaits setMode before staging (setMode resolves first) [obligation]', async () => {
+    test('with cards present, awaits setMode before staging (setMode resolves first)', async () => {
       let setModeResolve
       const setMode = vi.fn().mockReturnValue(new Promise((r) => (setModeResolve = r)))
       const sh = makeShell({ setMode })
@@ -1064,7 +1064,7 @@ describe('useCardListController', () => {
       expect(ctrl.list.all_cards.value[0].id).toBeLessThan(0)
     })
 
-    test('emits the add chime in both paths [obligation]', async () => {
+    test('emits the add chime in both paths', async () => {
       // empty path
       const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
       const ctrl = makeController([], [], undefined, makeShell({ setMode }))
@@ -1072,7 +1072,7 @@ describe('useCardListController', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
     })
 
-    test('emits the add chime on non-empty deck path too [obligation]', async () => {
+    test('emits the add chime on non-empty deck path too', async () => {
       emitSfxMock.mockReset()
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
@@ -1080,7 +1080,7 @@ describe('useCardListController', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
     })
 
-    test('stages the new card at index 0 when deck is non-empty [obligation]', async () => {
+    test('stages the new card at index 0 when deck is non-empty', async () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController(
         [makeCard({ id: 100 }), makeCard({ id: 200 })],
@@ -1093,7 +1093,7 @@ describe('useCardListController', () => {
       expect(ctrl.list.all_cards.value[1].id).toBe(100)
     })
 
-    test('does not stage a card when guardAddCards blocks (limit reached) [obligation]', async () => {
+    test('does not stage a card when guardAddCards blocks (limit reached)', async () => {
       guardAddCardsMock.mockResolvedValue(false)
       const setMode = vi.fn().mockReturnValue(new Promise(() => {}))
       const ctrl = makeController([], [], undefined, makeShell({ setMode }))
@@ -1106,14 +1106,14 @@ describe('useCardListController', () => {
   // ── editCard — grid dropdown's "Edit" intent ─────────────────────────────────
 
   describe('editCard', () => {
-    test('is a no-op when card_id matches nothing [obligation]', async () => {
+    test('is a no-op when card_id matches nothing', async () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
       await ctrl.editCard(999)
       expect(setMode).not.toHaveBeenCalled()
     })
 
-    test('sets pending_focus_client_id, switches to edit mode, then scrolls [obligation]', async () => {
+    test('sets pending_focus_client_id, switches to edit mode, then scrolls', async () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
       const scroller = { scrollToCard: vi.fn() }
@@ -1127,7 +1127,7 @@ describe('useCardListController', () => {
       expect(scroller.scrollToCard).toHaveBeenCalledWith(client_id)
     })
 
-    test('focuses the edited card but stages no grow-in reveal (unlike addCardAtTop) [obligation]', async () => {
+    test('focuses the edited card but stages no grow-in reveal (unlike addCardAtTop)', async () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
       ctrl.registerScroller({ scrollToCard: vi.fn() })
@@ -1139,7 +1139,7 @@ describe('useCardListController', () => {
       expect(ctrl.claimFocus(client_id)).toBe(true)
     })
 
-    test('is a no-op scroll-wise when no scroller is registered [obligation]', async () => {
+    test('is a no-op scroll-wise when no scroller is registered', async () => {
       const setMode = vi.fn().mockResolvedValue(undefined)
       const ctrl = makeController([makeCard({ id: 1 })], [1], undefined, makeShell({ setMode }))
       await expect(ctrl.editCard(1)).resolves.toBeUndefined()
@@ -1149,7 +1149,7 @@ describe('useCardListController', () => {
   // ── reorderCard — moves a persisted card to a new slot ───────────────────────
 
   describe('reorderCard', () => {
-    // [obligation] no-op when dragged card is a temp (id < 0)
+    // no-op when dragged card is a temp (id < 0)
     test('is a no-op when the dragged card is a temp (id < 0)', () => {
       const { all_cards, addCard, reorderCard } = makeController([makeCard({ id: 100 })])
       addCard()
@@ -1158,7 +1158,7 @@ describe('useCardListController', () => {
       expect(reorderCardMock).not.toHaveBeenCalled()
     })
 
-    // [obligation] reorder still mints a key even with a single persisted card
+    // reorder still mints a key even with a single persisted card
     // in the list — rankBetween(null, null) mints the first key of the deck,
     // it's not a no-op condition (only a temp/unranked drag is).
     test('still fires the mutation when dragging the only persisted card', () => {
@@ -1187,7 +1187,7 @@ describe('useCardListController', () => {
       expect(() => ctrl.reorderCard(1, 0)).not.toThrow()
     })
 
-    test('fires notice.warn(toast.warn.reorder-failed) when the mutation rejects [obligation]', async () => {
+    test('fires notice.warn(toast.warn.reorder-failed) when the mutation rejects', async () => {
       reorderCardMock.mockRejectedValueOnce(new Error('network'))
       const ctrl = makeController([makeCard({ id: 1 }), makeCard({ id: 2 })])
 
@@ -1211,7 +1211,7 @@ describe('useCardListController', () => {
   })
 
   // ── can_reorder — backstop for a non-default sort, mobile page-settings gap
-  describe('can_reorder [obligation]', () => {
+  describe('can_reorder', () => {
     test('is true when the shell sort_by is default', () => {
       const sh = makeShell({ sort_by: ref('default') })
       const ctrl = makeController([], [], undefined, sh)
@@ -1319,7 +1319,7 @@ describe('useCardListController', () => {
       expect(deleteCardsMock).not.toHaveBeenCalled()
     })
 
-    test('onDeleteCards deletes and clears selection, mode is unchanged [obligation]', async () => {
+    test('onDeleteCards deletes and clears selection, mode is unchanged', async () => {
       alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
       const exitMode = vi.fn()
       const sh = makeShell({ exitMode })

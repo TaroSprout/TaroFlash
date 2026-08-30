@@ -90,11 +90,11 @@ describe('EditorStage', () => {
     expect(editor.update).toHaveBeenCalledWith('front', 'new text')
   })
 
-  // ── image_controls publication [obligation] ─────────────────────────────────
+  // ── image_controls publication ─────────────────────────────────
   // The header menu's `image_controls` reads whatever this watchEffect
   // publishes — surface both the enabled and the null (no image layer) case.
 
-  test('publishes openPicker/onRemove from the mounted FaceEditor uploader [obligation]', async () => {
+  test('publishes openPicker/onRemove from the mounted FaceEditor uploader', async () => {
     const { editor } = mountStage()
     await nextTick()
     expect(editor.image_controls.value).not.toBeNull()
@@ -102,7 +102,7 @@ describe('EditorStage', () => {
     expect(typeof editor.image_controls.value.onRemove).toBe('function')
   })
 
-  test('image_controls is null once the FaceEditor unmounts (no current card) [obligation]', async () => {
+  test('image_controls is null once the FaceEditor unmounts (no current card)', async () => {
     const editor = makeEditor()
     const { wrapper } = mountStage(editor)
     await nextTick()

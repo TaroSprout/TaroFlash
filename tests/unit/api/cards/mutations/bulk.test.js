@@ -105,7 +105,7 @@ describe('useUpsertCardsMutation', () => {
     expect(keys).toContainEqual(['decks'])
   })
 
-  test('onSettled invalidates card index — upserted fronts must appear in highlights [obligation]', () => {
+  test('onSettled invalidates card index — upserted fronts must appear in highlights', () => {
     const { onSettled } = configFrom(useUpsertCardsMutation)
     onSettled([], undefined, [{ id: 1, deck_id: 10 }])
     expect(invalidatedKeys()).toContainEqual(['cards', 'index'])
@@ -157,7 +157,7 @@ describe('useBulkInsertCardsInDeckMutation', () => {
     expect(keys).toContainEqual(['decks'])
   })
 
-  test('onSettled invalidates card index — inserted fronts must appear in highlights [obligation]', () => {
+  test('onSettled invalidates card index — inserted fronts must appear in highlights', () => {
     const { onSettled } = configFrom(useBulkInsertCardsInDeckMutation)
     onSettled([], undefined, { deck_id: 10, cards: [] })
     expect(invalidatedKeys()).toContainEqual(['cards', 'index'])
@@ -285,7 +285,7 @@ describe('useMoveCardsToDeckMutation', () => {
     })
   })
 
-  // [obligation] Mutation invalidation contract — hook owns its own invalidation.
+  // Mutation invalidation contract — hook owns its own invalidation.
   // Both discriminated shapes must invalidate in onSettled without caller help.
   test('explicit mode onSettled invalidates all card counts (moves shift deck totals)', () => {
     const { onSettled } = configFrom(useMoveCardsToDeckMutation)
@@ -313,7 +313,7 @@ describe('useMoveCardsToDeckMutation', () => {
     expect(keys).toContainEqual(['decks'])
   })
 
-  // [obligation] Hook must NOT rely on caller to invalidate — onSettled fires
+  // Hook must NOT rely on caller to invalidate — onSettled fires
   // even on error (it's onSettled, not onSuccess).
   test('explicit mode onSettled fires on error too (not just on success)', () => {
     const { onSettled } = configFrom(useMoveCardsToDeckMutation)
@@ -344,7 +344,7 @@ describe('useMoveCardsToDeckMutation', () => {
     expect(keys).toContainEqual(['deck', 10])
   })
 
-  test('onSettled invalidates card index — deck membership changes alter highlights [obligation]', () => {
+  test('onSettled invalidates card index — deck membership changes alter highlights', () => {
     const { onSettled } = configFrom(useMoveCardsToDeckMutation)
     invalidateSpy.mockClear()
     onSettled(undefined, undefined, {

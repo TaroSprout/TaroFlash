@@ -22,7 +22,7 @@ describe('deck defaults', () => {
     })
   })
 
-  test('DECK_CONFIG_DEFAULTS no longer carries study_all_cards (dropped with the deck-blind study session) [obligation]', () => {
+  test('DECK_CONFIG_DEFAULTS no longer carries study_all_cards (dropped with the deck-blind study session)', () => {
     expect(DECK_CONFIG_DEFAULTS).not.toHaveProperty('study_all_cards')
   })
 
@@ -39,12 +39,12 @@ describe('deck defaults', () => {
     expect(CARD_ATTRIBUTES_DEFAULTS.image_layout).toBe('above')
   })
 
-  test('DAILY_LIMIT_BOUNDS exposes a shared step and a min of 0 (the "all"/uncapped sentinel) [obligation]', () => {
+  test('DAILY_LIMIT_BOUNDS exposes a shared step and a min of 0 (the "all"/uncapped sentinel)', () => {
     expect(DAILY_LIMIT_BOUNDS.step).toBe(5)
     expect(DAILY_LIMIT_BOUNDS.min).toBe(0)
   })
 
-  test('DAILY_LIMIT_BOUNDS carries no max — unbounded above since decks grow past any stored limit [obligation]', () => {
+  test('DAILY_LIMIT_BOUNDS carries no max — unbounded above since decks grow past any stored limit', () => {
     expect(DAILY_LIMIT_BOUNDS).not.toHaveProperty('max')
   })
 
@@ -76,7 +76,7 @@ describe('deck defaults', () => {
     })
   })
 
-  describe('buildNewDeckPayload [obligation]', () => {
+  describe('buildNewDeckPayload', () => {
     test('passes the given title through', () => {
       expect(buildNewDeckPayload('My Deck').title).toBe('My Deck')
     })

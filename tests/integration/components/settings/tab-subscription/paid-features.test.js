@@ -97,75 +97,75 @@ describe('paid-features — structure', () => {
   })
 })
 
-// ── Feature filtering [obligation] ────────────────────────────────────────────
+// ── Feature filtering ────────────────────────────────────────────
 
-describe('paid-features — upgradeHighlight filtering [obligation]', () => {
-  test('renders exactly 4 feature items (one per upgradeHighlight feature) [obligation]', () => {
+describe('paid-features — upgradeHighlight filtering', () => {
+  test('renders exactly 4 feature items (one per upgradeHighlight feature)', () => {
     const wrapper = mountPaidFeatures()
     const items = wrapper.findAll('[data-testid="paid-features__item"]')
     expect(items).toHaveLength(4)
   })
 
-  test('deck-images feature (not upgradeHighlight) does NOT appear in the list [obligation]', () => {
+  test('deck-images feature (not upgradeHighlight) does NOT appear in the list', () => {
     const wrapper = mountPaidFeatures()
     const listText = wrapper.find('[data-testid="paid-features__list"]').text()
     expect(listText).not.toContain('Upload images to decks')
   })
 
-  test('cancel-anytime feature (not upgradeHighlight) does NOT appear in the list [obligation]', () => {
+  test('cancel-anytime feature (not upgradeHighlight) does NOT appear in the list', () => {
     const wrapper = mountPaidFeatures()
     const listText = wrapper.find('[data-testid="paid-features__list"]').text()
     expect(listText).not.toContain('Cancel anytime')
   })
 
-  test('no-deck-limit feature (upgradeHighlight) appears in the list [obligation]', () => {
+  test('no-deck-limit feature (upgradeHighlight) appears in the list', () => {
     const wrapper = mountPaidFeatures()
     const listText = wrapper.find('[data-testid="paid-features__list"]').text()
     expect(listText).toContain('No deck limit')
   })
 
-  test('no-card-limit feature (upgradeHighlight) appears in the list [obligation]', () => {
+  test('no-card-limit feature (upgradeHighlight) appears in the list', () => {
     const wrapper = mountPaidFeatures()
     const listText = wrapper.find('[data-testid="paid-features__list"]').text()
     expect(listText).toContain('No card limit per Deck')
   })
 
-  test('card-images feature (upgradeHighlight) appears in the list [obligation]', () => {
+  test('card-images feature (upgradeHighlight) appears in the list', () => {
     const wrapper = mountPaidFeatures()
     const listText = wrapper.find('[data-testid="paid-features__list"]').text()
     expect(listText).toContain('Add images to your Cards')
   })
 
-  test('review-history feature (upgradeHighlight) appears in the list [obligation]', () => {
+  test('review-history feature (upgradeHighlight) appears in the list', () => {
     const wrapper = mountPaidFeatures()
     const listText = wrapper.find('[data-testid="paid-features__list"]').text()
     expect(listText).toContain('Unlimited review history')
   })
 })
 
-// ── Upgrade interactions [obligation] ─────────────────────────────────────────
+// ── Upgrade interactions ─────────────────────────────────────────
 
-describe('paid-features — upgrade actions [obligation]', () => {
-  test('tapping the tappable body (UiTappable @tap) calls onUpgrade [obligation]', async () => {
+describe('paid-features — upgrade actions', () => {
+  test('tapping the tappable body (UiTappable @tap) calls onUpgrade', async () => {
     const wrapper = mountPaidFeatures()
     await wrapper.findComponent({ name: 'UiTappable' }).vm.$emit('tap')
     expect(mockOnUpgrade).toHaveBeenCalledOnce()
   })
 
-  test('[obligation] the nested upgrade pill has no click/press handler of its own — it is inert', async () => {
+  test('the nested upgrade pill has no click/press handler of its own — it is inert', async () => {
     const wrapper = mountPaidFeatures()
     await wrapper.find('[data-testid="upgrade-button"]').trigger('click')
     expect(mockOnUpgrade).not.toHaveBeenCalled()
   })
 
-  test('[obligation] the nested upgrade pill is marked inert (tabindex -1, aria-hidden)', () => {
+  test('the nested upgrade pill is marked inert (tabindex -1, aria-hidden)', () => {
     const wrapper = mountPaidFeatures()
     const pill = wrapper.find('[data-testid="upgrade-button"]')
     expect(pill.attributes('tabindex')).toBe('-1')
     expect(pill.attributes('aria-hidden')).toBe('true')
   })
 
-  test('[obligation] tapping the card body calls onUpgrade exactly once, not twice via the nested pill', async () => {
+  test('tapping the card body calls onUpgrade exactly once, not twice via the nested pill', async () => {
     const wrapper = mountPaidFeatures()
     await wrapper.findComponent({ name: 'UiTappable' }).vm.$emit('tap')
     expect(mockOnUpgrade).toHaveBeenCalledTimes(1)

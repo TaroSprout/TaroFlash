@@ -124,9 +124,9 @@ describe('StudyCard', () => {
     vi.useRealTimers()
   })
 
-  // ── Fling direction per grade [obligation] ────────────────────────────────
+  // ── Fling direction per grade ────────────────────────────────
 
-  test('rate(Again) flings card left (direction -1) [obligation]', async () => {
+  test('rate(Again) flings card left (direction -1)', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -138,7 +138,7 @@ describe('StudyCard', () => {
     expect(el.style.transform).toMatch(/translateX\(-/)
   })
 
-  test('rate(Hard) flings card right (direction +1) [obligation]', async () => {
+  test('rate(Hard) flings card right (direction +1)', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -150,7 +150,7 @@ describe('StudyCard', () => {
     expect(el.style.transform).toMatch(/translateX\(\d/)
   })
 
-  test('rate(Easy) flings card right (direction +1) [obligation]', async () => {
+  test('rate(Easy) flings card right (direction +1)', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -161,9 +161,9 @@ describe('StudyCard', () => {
     expect(el.style.transform).toMatch(/translateX\(\d/)
   })
 
-  // ── Grade passthrough: Hard/Easy [obligation] ─────────────────────────────
+  // ── Grade passthrough: Hard/Easy ─────────────────────────────
 
-  test('rate(Hard) emits reviewed with Rating.Hard — not Rating.Good [obligation]', async () => {
+  test('rate(Hard) emits reviewed with Rating.Hard — not Rating.Good', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -178,7 +178,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Hard)
   })
 
-  test('rate(Easy) emits reviewed with Rating.Easy — not Rating.Good [obligation]', async () => {
+  test('rate(Easy) emits reviewed with Rating.Easy — not Rating.Good', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -193,7 +193,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Easy)
   })
 
-  test('rate(Hard) plays ok sfx (not locancel) [obligation]', async () => {
+  test('rate(Hard) plays ok sfx (not locancel)', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -204,9 +204,9 @@ describe('StudyCard', () => {
     expect(mockEmitSfx).not.toHaveBeenCalledWith('card.grade-again')
   })
 
-  // ── Swipe fallback grade (drag path, no explicit grade) [obligation] ────────
+  // ── Swipe fallback grade (drag path, no explicit grade) ────────
 
-  test('swipe right (onEnd dx > 50) derives Rating.Good and emits it [obligation]', async () => {
+  test('swipe right (onEnd dx > 50) derives Rating.Good and emits it', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -222,7 +222,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Good)
   })
 
-  test('swipe left (onEnd dx < -50) derives Rating.Again and emits it [obligation]', async () => {
+  test('swipe left (onEnd dx < -50) derives Rating.Again and emits it', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -264,7 +264,7 @@ describe('StudyCard', () => {
     expect(failLabel.classes()).toContain('review-label--visible')
   })
 
-  test('fail label carries data-palette="danger" [obligation]', async () => {
+  test('fail label carries data-palette="danger"', async () => {
     const wrapper = mountStudyCard()
     await flushPromises()
 
@@ -300,7 +300,7 @@ describe('StudyCard', () => {
   // The @mouseup DOM handler was removed. Flip is triggered by the gesture
   // pipeline's onEnd when |dx| < FLIP_THRESHOLD and |dy| < FLIP_THRESHOLD.
 
-  test('tap gesture (onEnd ~0 dx/dy) on front side emits side-changed [obligation]', async () => {
+  test('tap gesture (onEnd ~0 dx/dy) on front side emits side-changed', async () => {
     const wrapper = mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -311,7 +311,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('tap gesture (onEnd ~0 dx/dy) on back side emits side-changed [obligation]', async () => {
+  test('tap gesture (onEnd ~0 dx/dy) on back side emits side-changed', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -322,7 +322,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('tap gesture on cover side emits "started" not side-changed [obligation]', async () => {
+  test('tap gesture on cover side emits "started" not side-changed', async () => {
     const wrapper = mountStudyCard({ side: 'cover' })
     await flushPromises()
 
@@ -334,10 +334,10 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toBeFalsy()
   })
 
-  // ── Tap release of a text selection must not flip [obligation] ─────────────
+  // ── Tap release of a text selection must not flip ─────────────
   // Mirrors the same guard in grid-item.vue's onCardClick.
 
-  test('tap that releases a non-collapsed selection does NOT flip [obligation]', async () => {
+  test('tap that releases a non-collapsed selection does NOT flip', async () => {
     const origGetSelection = window.getSelection
     window.getSelection = () => ({ isCollapsed: false })
 
@@ -354,7 +354,7 @@ describe('StudyCard', () => {
     window.getSelection = origGetSelection
   })
 
-  test('plain tap with a collapsed selection still flips [obligation]', async () => {
+  test('plain tap with a collapsed selection still flips', async () => {
     const origGetSelection = window.getSelection
     window.getSelection = () => ({ isCollapsed: true })
 
@@ -370,7 +370,7 @@ describe('StudyCard', () => {
     window.getSelection = origGetSelection
   })
 
-  test('plain tap with no selection (getSelection returns null) still flips [obligation]', async () => {
+  test('plain tap with no selection (getSelection returns null) still flips', async () => {
     const origGetSelection = window.getSelection
     window.getSelection = () => null
 
@@ -386,9 +386,9 @@ describe('StudyCard', () => {
     window.getSelection = origGetSelection
   })
 
-  // ── onCardMouseDown suppresses multi-click selection [obligation] ──────────
+  // ── onCardMouseDown suppresses multi-click selection ──────────
 
-  test('onCardMouseDown calls preventDefault on a multi-click (detail > 1) [obligation]', async () => {
+  test('onCardMouseDown calls preventDefault on a multi-click (detail > 1)', async () => {
     mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -400,7 +400,7 @@ describe('StudyCard', () => {
     expect(preventDefaultSpy).toHaveBeenCalled()
   })
 
-  test('onCardMouseDown does NOT call preventDefault on a single click (detail === 1) [obligation]', async () => {
+  test('onCardMouseDown does NOT call preventDefault on a single click (detail === 1)', async () => {
     mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -412,7 +412,7 @@ describe('StudyCard', () => {
     expect(preventDefaultSpy).not.toHaveBeenCalled()
   })
 
-  test('long horizontal swipe (|dx| > 50) on back side flings and does NOT flip [obligation]', async () => {
+  test('long horizontal swipe (|dx| > 50) on back side flings and does NOT flip', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -424,7 +424,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toBeFalsy()
   })
 
-  test('long horizontal swipe emits reviewed after transitionend [obligation]', async () => {
+  test('long horizontal swipe emits reviewed after transitionend', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -439,7 +439,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
   })
 
-  test('medium drag (|dx| between 10 and 50) snaps back and does NOT flip [obligation]', async () => {
+  test('medium drag (|dx| between 10 and 50) snaps back and does NOT flip', async () => {
     const wrapper = mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -570,7 +570,7 @@ describe('StudyCard', () => {
 
   // ── cover_config forwarding ────────────────────────────────────────────────
 
-  test('forwards cover_config from deck context for the card deck_id [obligation]', async () => {
+  test('forwards cover_config from deck context for the card deck_id', async () => {
     const cover_config = { bg_color: 'blue-500', pattern: 'stars' }
     const card_data = { id: 1, deck_id: 42 }
     const deck = { id: 42, cover_config, card_attributes: null }
@@ -588,7 +588,7 @@ describe('StudyCard', () => {
     expect(wrapper.findComponent({ name: 'Card' }).props('cover_config')).toBeUndefined()
   })
 
-  test('cover_override prop takes precedence over deck context cover_config [obligation]', async () => {
+  test('cover_override prop takes precedence over deck context cover_config', async () => {
     const deck_cover = { bg_color: 'red-500', pattern: 'none' }
     const override_cover = { bg_color: 'blue-500', pattern: 'stars' }
     const card_data = { id: 1, deck_id: 42 }
@@ -731,11 +731,11 @@ describe('StudyCard', () => {
     expect(el.style.transform).toBe('')
   })
 
-  // ── Animation lock [obligation] ────────────────────────────────────────────
+  // ── Animation lock ────────────────────────────────────────────
   // triggerCardFlip guards only on is_animating (is_dragging guard was removed).
   // Flip is driven from the gesture onEnd tap pipeline.
 
-  test('triggerCardFlip (via tap) sets is_animating and emits started on cover side [obligation]', async () => {
+  test('triggerCardFlip (via tap) sets is_animating and emits started on cover side', async () => {
     const wrapper = mountStudyCard({ side: 'cover' })
     await flushPromises()
 
@@ -746,7 +746,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('started')).toHaveLength(1)
   })
 
-  test('triggerCardFlip (via tap) emits side-changed on front side [obligation]', async () => {
+  test('triggerCardFlip (via tap) emits side-changed on front side', async () => {
     const wrapper = mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -757,7 +757,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('second tap while is_animating is a no-op — side-changed emitted only once [obligation]', async () => {
+  test('second tap while is_animating is a no-op — side-changed emitted only once', async () => {
     const wrapper = mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -773,7 +773,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('flip-out-complete event on Card releases is_animating so next tap flip works [obligation]', async () => {
+  test('flip-out-complete event on Card releases is_animating so next tap flip works', async () => {
     const wrapper = mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -793,7 +793,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toHaveLength(2)
   })
 
-  test('space shortcut is a no-op while is_animating is true [obligation]', async () => {
+  test('space shortcut is a no-op while is_animating is true', async () => {
     const wrapper = mountStudyCard({ side: 'front' })
     await flushPromises()
 
@@ -810,7 +810,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('side-changed')).toHaveLength(1)
   })
 
-  test('arrowright shortcut is a no-op while is_animating is true [obligation]', async () => {
+  test('arrowright shortcut is a no-op while is_animating is true', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -828,7 +828,7 @@ describe('StudyCard', () => {
     expect(mockEmitSfx.mock.calls.length).toBe(sfxCallsBefore)
   })
 
-  test('arrowleft shortcut is a no-op while is_animating is true [obligation]', async () => {
+  test('arrowleft shortcut is a no-op while is_animating is true', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -845,7 +845,7 @@ describe('StudyCard', () => {
     expect(mockEmitSfx.mock.calls.length).toBe(sfxCallsBefore)
   })
 
-  test('rate() is a no-op while is_animating is true — no reviewed emitted [obligation]', async () => {
+  test('rate() is a no-op while is_animating is true — no reviewed emitted', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -868,7 +868,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
   })
 
-  test('fling lock persists through reviewed emit — is_animating stays true [obligation]', async () => {
+  test('fling lock persists through reviewed emit — is_animating stays true', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -893,7 +893,7 @@ describe('StudyCard', () => {
 
   // ── swipe() via keyboard shortcuts (arrowright/arrowleft) ─────────────────
 
-  test('arrowright shortcut calls swipe and flings card right when not animating [obligation]', async () => {
+  test('arrowright shortcut calls swipe and flings card right when not animating', async () => {
     mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -905,7 +905,7 @@ describe('StudyCard', () => {
     expect(el.style.transform).toContain('translateX')
   })
 
-  test('arrowleft shortcut calls swipe and flings card left when not animating [obligation]', async () => {
+  test('arrowleft shortcut calls swipe and flings card left when not animating', async () => {
     mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -916,7 +916,7 @@ describe('StudyCard', () => {
     expect(el.style.transform).toContain('translateX')
   })
 
-  test('arrowright shortcut is a no-op on cover side [obligation]', async () => {
+  test('arrowright shortcut is a no-op on cover side', async () => {
     const wrapper = mountStudyCard({ side: 'cover' })
     await flushPromises()
 
@@ -939,10 +939,10 @@ describe('StudyCard', () => {
     expect(el.style.transition).toBe('none')
   })
 
-  // ── toDragRating boundary values [obligation] ──────────────────────────────
+  // ── toDragRating boundary values ──────────────────────────────
   // toDragRating uses exclusive comparison (< / >), so dy === ±50 must stay Good.
 
-  test('toDragRating: dy === -50 returns Good (exclusive boundary, not Easy) [obligation]', async () => {
+  test('toDragRating: dy === -50 returns Good (exclusive boundary, not Easy)', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -957,7 +957,7 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Good)
   })
 
-  test('toDragRating: dy === +50 returns Good (exclusive boundary, not Hard) [obligation]', async () => {
+  test('toDragRating: dy === +50 returns Good (exclusive boundary, not Hard)', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -970,7 +970,7 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Good)
   })
 
-  test('toDragRating: dy < -50 returns Easy [obligation]', async () => {
+  test('toDragRating: dy < -50 returns Easy', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -986,7 +986,7 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Easy)
   })
 
-  test('toDragRating: dy > +50 returns Hard [obligation]', async () => {
+  test('toDragRating: dy > +50 returns Hard', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -1000,9 +1000,9 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Hard)
   })
 
-  // ── drag_rating resets to Good when leaving the right zone [obligation] ────
+  // ── drag_rating resets to Good when leaving the right zone ────
 
-  test('drag_rating resets to Good when dx drops back below SWIPE_DISTANCE_THRESHOLD [obligation]', async () => {
+  test('drag_rating resets to Good when dx drops back below SWIPE_DISTANCE_THRESHOLD', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -1031,9 +1031,9 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Good)
   })
 
-  // ── drag_rating resets to Good on snapBack [obligation] ───────────────────
+  // ── drag_rating resets to Good on snapBack ───────────────────
 
-  test('drag_rating resets to Good on snapBack (onCancel) [obligation]', async () => {
+  test('drag_rating resets to Good on snapBack (onCancel)', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -1058,9 +1058,9 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Good)
   })
 
-  // ── primed_grade emits drag-rating on zone transitions [obligation] ────────
+  // ── primed_grade emits drag-rating on zone transitions ────────
 
-  test('primed_grade emits drag-rating with current rating when entering right zone [obligation]', async () => {
+  test('primed_grade emits drag-rating with current rating when entering right zone', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -1073,7 +1073,7 @@ describe('StudyCard', () => {
     expect(events[0][0]).toBe(Rating.Good)
   })
 
-  test('primed_grade emits Rating.Again when entering left zone [obligation]', async () => {
+  test('primed_grade emits Rating.Again when entering left zone', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -1086,7 +1086,7 @@ describe('StudyCard', () => {
     expect(events[0][0]).toBe(Rating.Again)
   })
 
-  test('primed_grade emits null when returning to neutral from right zone [obligation]', async () => {
+  test('primed_grade emits null when returning to neutral from right zone', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -1102,7 +1102,7 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBeNull()
   })
 
-  test('primed_grade emits new drag-rating when drag_rating changes within the right zone [obligation]', async () => {
+  test('primed_grade emits new drag-rating when drag_rating changes within the right zone', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -1121,9 +1121,9 @@ describe('StudyCard', () => {
     expect(events[events.length - 1][0]).toBe(Rating.Easy)
   })
 
-  // ── endDrag grade selection with show_all_ratings [obligation] ────────────
+  // ── endDrag grade selection with show_all_ratings ────────────
 
-  test('endDrag passes drag_rating.value (not always Good) when show_all_ratings=true [obligation]', async () => {
+  test('endDrag passes drag_rating.value (not always Good) when show_all_ratings=true', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: true })
     await flushPromises()
 
@@ -1144,13 +1144,13 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Hard)
   })
 
-  // ── rating_labels passthrough [obligation] ────────────────────────────────
+  // ── rating_labels passthrough ────────────────────────────────
   // study-card no longer computes projected intervals itself — it renders
   // whatever `rating_labels` the parent hands it verbatim. Freshness/freezing
   // is the parent's (useRatingTimes) responsibility, covered by its own unit
   // test — this only checks the render contract.
 
-  test('renders rating_labels[Again] in the fail label when provided [obligation]', async () => {
+  test('renders rating_labels[Again] in the fail label when provided', async () => {
     const rating_labels = {
       [Rating.Again]: 'Study again in 1 hour',
       [Rating.Hard]: 'Study again in 1 day',
@@ -1165,7 +1165,7 @@ describe('StudyCard', () => {
     )
   })
 
-  test('does not render the rating-label paragraph when rating_labels is undefined [obligation]', async () => {
+  test('does not render the rating-label paragraph when rating_labels is undefined', async () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
@@ -1173,7 +1173,7 @@ describe('StudyCard', () => {
     expect(wrapper.find('[data-testid="review-label--pass"] p').exists()).toBe(false)
   })
 
-  test('endDrag always uses Rating.Good for right flings when show_all_ratings=false [obligation]', async () => {
+  test('endDrag always uses Rating.Good for right flings when show_all_ratings=false', async () => {
     const wrapper = mountStudyCard({ side: 'back', show_all_ratings: false })
     await flushPromises()
 

@@ -83,26 +83,26 @@ function mountFaceEditor(props = {}) {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('FaceEditor — Card forwarding, with and without images [obligation]', () => {
+describe('FaceEditor — Card forwarding, with and without images', () => {
   // The old no-images branch dropped `disabled`/`error` on the way to Card —
   // both configurations must forward both, every time.
 
-  test('forwards disabled=true to Card when with_images is false [obligation]', () => {
+  test('forwards disabled=true to Card when with_images is false', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), disabled: true })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-disabled')).toBe('true')
   })
 
-  test('forwards error=true to Card when with_images is false [obligation]', () => {
+  test('forwards error=true to Card when with_images is false', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), error: true })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-error')).toBe('true')
   })
 
-  test('forwards disabled=true to Card when with_images is true [obligation]', () => {
+  test('forwards disabled=true to Card when with_images is true', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), with_images: true, disabled: true })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-disabled')).toBe('true')
   })
 
-  test('forwards error=true to Card when with_images is true [obligation]', () => {
+  test('forwards error=true to Card when with_images is true', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), with_images: true, error: true })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-error')).toBe('true')
   })
@@ -209,14 +209,14 @@ describe('FaceEditor — text/placeholder/side wiring', () => {
 })
 
 describe('FaceEditor — defineExpose surface', () => {
-  test('uploader surfaces the Card image_controls when images are enabled [obligation]', () => {
+  test('uploader surfaces the Card image_controls when images are enabled', () => {
     const wrapper = mountFaceEditor({ card: makeCard(), with_images: true })
     expect(wrapper.vm.uploader).not.toBeNull()
     expect(typeof wrapper.vm.uploader.openPicker).toBe('function')
     expect(typeof wrapper.vm.uploader.onRemove).toBe('function')
   })
 
-  test('uploader is null when images are not enabled [obligation]', () => {
+  test('uploader is null when images are not enabled', () => {
     const wrapper = mountFaceEditor({ card: makeCard() })
     expect(wrapper.vm.uploader).toBeNull()
   })

@@ -46,7 +46,7 @@ function mountTextareaWithSfx(props = {}) {
 }
 
 describe('UiTextarea — max_chars', () => {
-  test('wires maxlength attribute onto the <textarea> when max_chars is set [obligation]', () => {
+  test('wires maxlength attribute onto the <textarea> when max_chars is set', () => {
     const wrapper = mountTextarea({ max_chars: 100 })
     const ta = wrapper.find('textarea')
     expect(ta.attributes('maxlength')).toBe('100')
@@ -58,7 +58,7 @@ describe('UiTextarea — max_chars', () => {
     expect(ta.attributes('maxlength')).toBeUndefined()
   })
 
-  test('renders the X/N counter span when max_chars is set [obligation]', () => {
+  test('renders the X/N counter span when max_chars is set', () => {
     const wrapper = mountTextarea({ max_chars: 50 })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.exists()).toBe(true)
@@ -76,31 +76,31 @@ describe('UiTextarea — max_chars', () => {
     expect(counter.text()).toBe('5/100')
   })
 
-  test('counter does not have the --limit class when below the limit [obligation]', () => {
+  test('counter does not have the --limit class when below the limit', () => {
     const wrapper = mountTextarea({ max_chars: 100, value: 'hi' })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.classes()).not.toContain('ui-kit-textarea-char-count--limit')
   })
 
-  test('counter has no data-palette when below the limit [obligation]', () => {
+  test('counter has no data-palette when below the limit', () => {
     const wrapper = mountTextarea({ max_chars: 100, value: 'hi' })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.attributes('data-palette')).toBeUndefined()
   })
 
-  test('counter has the --limit class when at the limit [obligation]', () => {
+  test('counter has the --limit class when at the limit', () => {
     const wrapper = mountTextarea({ max_chars: 5, value: 'hello' })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.classes()).toContain('ui-kit-textarea-char-count--limit')
   })
 
-  test('counter has data-palette="danger" at the character limit [obligation]', () => {
+  test('counter has data-palette="danger" at the character limit', () => {
     const wrapper = mountTextarea({ max_chars: 5, value: 'hello' })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.attributes('data-palette')).toBe('danger')
   })
 
-  test('counter has the --limit class when over the limit [obligation]', () => {
+  test('counter has the --limit class when over the limit', () => {
     // maxlength prevents the browser from going over, but the component
     // itself uses >= check so test with a value that equals max (limit case)
     const wrapper = mountTextarea({ max_chars: 3, value: 'abc' })
@@ -110,13 +110,13 @@ describe('UiTextarea — max_chars', () => {
 })
 
 describe('UiTextarea — style props', () => {
-  test('textarea element is present in the DOM [obligation]', () => {
+  test('textarea element is present in the DOM', () => {
     const wrapper = mountTextarea()
     expect(wrapper.find('[data-testid="ui-kit-textarea"]').exists()).toBe(true)
     expect(wrapper.find('textarea').exists()).toBe(true)
   })
 
-  test('textarea wrapper element has data-testid [obligation]', () => {
+  test('textarea wrapper element has data-testid', () => {
     const wrapper = mountTextarea({ max_chars: 20 })
     expect(wrapper.find('[data-testid="ui-kit-textarea"]').exists()).toBe(true)
   })
@@ -158,15 +158,15 @@ describe('UiTextarea — label', () => {
   })
 })
 
-describe('UiTextarea — noNewlines [obligation]', () => {
-  test('pressing Enter does NOT insert a newline into the model value when noNewlines is true [obligation]', async () => {
+describe('UiTextarea — noNewlines', () => {
+  test('pressing Enter does NOT insert a newline into the model value when noNewlines is true', async () => {
     const wrapper = mountTextarea({ value: 'hello', noNewlines: true })
     const ta = wrapper.find('textarea')
     await ta.trigger('keydown', { key: 'Enter' })
     expect(wrapper.emitted('update:value')).toBeFalsy()
   })
 
-  test('pressing Enter does not preventDefault when noNewlines is false [obligation]', async () => {
+  test('pressing Enter does not preventDefault when noNewlines is false', async () => {
     const wrapper = mountTextarea({ value: 'hello', noNewlines: false })
     const ta = wrapper.find('textarea').element
     const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
@@ -174,7 +174,7 @@ describe('UiTextarea — noNewlines [obligation]', () => {
     expect(event.defaultPrevented).toBe(false)
   })
 
-  test('pressing Enter does not preventDefault when noNewlines is omitted [obligation]', async () => {
+  test('pressing Enter does not preventDefault when noNewlines is omitted', async () => {
     const wrapper = mountTextarea({ value: 'hello' })
     const ta = wrapper.find('textarea').element
     const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
@@ -182,7 +182,7 @@ describe('UiTextarea — noNewlines [obligation]', () => {
     expect(event.defaultPrevented).toBe(false)
   })
 
-  test('pressing Enter calls preventDefault when noNewlines is true [obligation]', async () => {
+  test('pressing Enter calls preventDefault when noNewlines is true', async () => {
     const wrapper = mountTextarea({ value: 'hello', noNewlines: true })
     const ta = wrapper.find('textarea').element
     const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
@@ -190,7 +190,7 @@ describe('UiTextarea — noNewlines [obligation]', () => {
     expect(event.defaultPrevented).toBe(true)
   })
 
-  test('sanitizes a pasted value containing newlines to spaces when noNewlines is true [obligation]', async () => {
+  test('sanitizes a pasted value containing newlines to spaces when noNewlines is true', async () => {
     const wrapper = mountTextarea({ noNewlines: true })
     const ta = wrapper.find('textarea')
     await ta.setValue('line one\nline two\r\nline three')
@@ -210,8 +210,8 @@ describe('UiTextarea — noNewlines [obligation]', () => {
   })
 })
 
-describe('UiTextarea — max_chars behavior unaffected by noNewlines [obligation]', () => {
-  test('char count still reflects value length when noNewlines is true [obligation]', () => {
+describe('UiTextarea — max_chars behavior unaffected by noNewlines', () => {
+  test('char count still reflects value length when noNewlines is true', () => {
     const wrapper = mountTextarea({ max_chars: 100, value: 'hello', noNewlines: true })
     const counter = wrapper.find('[data-testid="ui-kit-textarea-char-count"]')
     expect(counter.text()).toBe('5/100')
@@ -223,7 +223,7 @@ describe('UiTextarea — sfx', () => {
     mockEmitSfx.mockReset()
   })
 
-  test('plays ui.focus sfx when the <textarea> receives focus [obligation]', async () => {
+  test('plays ui.focus sfx when the <textarea> receives focus', async () => {
     const wrapper = mountTextareaWithSfx()
     await wrapper.find('textarea').trigger('focus')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.focus')
