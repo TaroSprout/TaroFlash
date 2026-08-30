@@ -9,7 +9,7 @@ import { useMemberStore } from '@/stores/member'
 import { memberCoverBindings } from '@/components/member/cover'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
 import { useNewDeckAction } from '../composables/new-deck-action'
-import { useMatchMedia } from '@/composables/ui/media-query'
+import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 import { totalDueCardCount } from '@/utils/deck/due'
 
 type DashboardActionsPanelProps = {
@@ -32,7 +32,8 @@ const { t } = useI18n()
 const member_store = useMemberStore()
 const study_session = useStudyModal()
 const { creating_deck, createNewDeck } = useNewDeckAction()
-const dock_on_screen = useMatchMedia('w<mxl')
+// Never re-derive this from a media query: it has to say what the dock itself hides on.
+const { is_visible: dock_on_screen } = useMobileDock()
 
 const root_bindings = computed(() => memberCoverBindings(member_store.cover))
 const due_card_count = computed(() => totalDueCardCount(due_decks))

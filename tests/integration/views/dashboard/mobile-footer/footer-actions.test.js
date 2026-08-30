@@ -173,7 +173,7 @@ describe('DashboardFooterActions', () => {
       expect(mockStudyStart).toHaveBeenCalledWith(due_decks.map((deck) => deck.id))
     })
 
-    test('renders a solid brand data-palette [obligation]', () => {
+    test('renders a solid brand data-palette', () => {
       const wrapper = mountFooterActions({ due_decks: [{ id: 1, due_count: 1 }] })
 
       expect(
@@ -183,8 +183,7 @@ describe('DashboardFooterActions', () => {
       ).toBe('brand')
     })
 
-    // [obligation] zero due cards disables the button and reuses the panel's no-decks-due-label key.
-    test('is disabled and shows "No Cards Due" when the total due card count is zero [obligation]', () => {
+    test('is disabled and shows "No Cards Due" when the total due card count is zero', () => {
       const wrapper = mountFooterActions({ due_decks: [{ id: 1, due_count: 0 }] })
       const button = wrapper.find('[data-testid="dashboard-footer-actions__study-button"]')
 
@@ -192,8 +191,7 @@ describe('DashboardFooterActions', () => {
       expect(button.text()).toBe('No Cards Due')
     })
 
-    // [obligation] singular branch of "Study {count} Card | Study {count} Cards".
-    test('shows the singular label for exactly one due card [obligation]', () => {
+    test('shows the singular label for exactly one due card', () => {
       const wrapper = mountFooterActions({ due_decks: [{ id: 1, due_count: 1 }] })
 
       expect(wrapper.find('[data-testid="dashboard-footer-actions__study-button"]').text()).toBe(
@@ -201,8 +199,7 @@ describe('DashboardFooterActions', () => {
       )
     })
 
-    // [obligation] plural branch, summed across decks.
-    test('shows the plural label with the summed due card count [obligation]', () => {
+    test('shows the plural label with the summed due card count', () => {
       const wrapper = mountFooterActions({
         due_decks: [
           { id: 1, due_count: 3 },
