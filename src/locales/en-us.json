@@ -646,7 +646,7 @@
   "errors.deck-limit-reached.title": "Deck limit reached",
   "errors.deck-limit-reached.message": "You've reached your plan's deck limit. Upgrade to create more.",
   "errors.deck-limit-reached.upgrade-cta": "Upgrade plan",
-  "errors.card-images-paid.title": "Add images with a paid plan",
+  "errors.card-images-paid.title": "Add images to your cards",
   "errors.card-images-paid.message": "Upgrade to add images to the front and back of your cards.",
   "errors.card-images-paid.upgrade-cta": "Upgrade plan",
   "errors.card-limit-reached.title": "Card limit reached",
