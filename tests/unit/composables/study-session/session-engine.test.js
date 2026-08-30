@@ -138,6 +138,24 @@ describe('state machine [obligation]', () => {
     expect(engine.is_cover.value).toBe(false)
   })
 
+  test('startSession fires the session.intro cue by default [obligation]', () => {
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ deck_id: 1 })])
+
+    engine.startSession()
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('session.intro')
+  })
+
+  test('startSession({ silent: true }) skips the session.intro cue [obligation]', () => {
+    const { engine } = makeEngine()
+    engine.setCards([makeCard({ deck_id: 1 })])
+
+    engine.startSession({ silent: true })
+
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('session.intro')
+  })
+
   test('reviewing the last card transitions studying -> summary once the save settles', async () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useMobileDock } from './use-mobile-dock'
+import { onUnmounted } from 'vue'
+import { DEFAULT_BREAKPOINT, useMobileDock } from './use-mobile-dock'
 import type { BreakpointKey } from '@/composables/ui/media-query'
 
 type MobileDockProps = {
@@ -8,13 +8,15 @@ type MobileDockProps = {
   breakpoint?: BreakpointKey
 }
 
-const { breakpoint = 'xl' } = defineProps<MobileDockProps>()
+const { breakpoint = DEFAULT_BREAKPOINT } = defineProps<MobileDockProps>()
 
-const dock = useMobileDock()
+const { claimBreakpoint } = useMobileDock()
 
 defineSlots<{ default: () => unknown; above?: () => unknown }>()
 
-onMounted(() => (dock.breakpoint.value = breakpoint))
+const releaseBreakpoint = claimBreakpoint(breakpoint)
+
+onUnmounted(releaseBreakpoint)
 </script>
 
 <template>

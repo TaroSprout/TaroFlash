@@ -9,9 +9,9 @@ const { modalOpenMock, alertWarnMock, emitSfxMock, mockT } = vi.hoisted(() => ({
   mockT: vi.fn((key) => key)
 }))
 
-const { mockFadeEnter, mockFadeLeave } = vi.hoisted(() => ({
-  mockFadeEnter: vi.fn((_el, done) => done?.()),
-  mockFadeLeave: vi.fn((_el, done) => done?.())
+const { mockPopDeckIn, mockPopDeckOut } = vi.hoisted(() => ({
+  mockPopDeckIn: vi.fn((_el, done) => done?.()),
+  mockPopDeckOut: vi.fn((_el, done) => done?.())
 }))
 
 const { mockNotice } = vi.hoisted(() => ({
@@ -34,9 +34,9 @@ vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/api/cards', () => ({ useAllCardsInDeckQuery: mockUseAllCardsInDeckQuery }))
 vi.mock('@/utils/download', () => ({ downloadTextFile: mockDownloadTextFile }))
-vi.mock('@/utils/animations/fade', () => ({
-  fadeEnter: mockFadeEnter,
-  fadeLeave: mockFadeLeave
+vi.mock('@/utils/animations/deck-grid', () => ({
+  popDeckIn: mockPopDeckIn,
+  popDeckOut: mockPopDeckOut
 }))
 vi.mock('@/utils/card/csv', () => ({
   cardsToCsv: mockCardsToCsv,
@@ -151,8 +151,8 @@ describe('useCardActions', () => {
     mockDownloadTextFile.mockReset()
     mockCardsToCsv.mockReset().mockReturnValue('csv-body')
     mockUseAllCardsInDeckQuery.mockReset()
-    mockFadeEnter.mockClear()
-    mockFadeLeave.mockClear()
+    mockPopDeckIn.mockClear()
+    mockPopDeckOut.mockClear()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────

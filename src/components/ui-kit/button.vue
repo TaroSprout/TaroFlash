@@ -136,6 +136,9 @@ function onClick(e: MouseEvent) {
         // Ghost is transparent at rest; fill it behind the content while the
         // coarse quiet tap sweeps, so the bgx reads against a surface.
         'data-[active=true]:bg-(--color-accent)': variant === 'ghost' && !disabled,
+        // Hover wash: a faint fill of the button's own text colour, so a brand
+        // ghost tints toward its brand colour and a neutral one toward ink.
+        'hover:bg-(--btn-text-color)/10': variant === 'ghost' && !disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -162,17 +165,17 @@ function onClick(e: MouseEvent) {
         'bg-(--color-raised)': loading && neutral && !inverted,
         'bg-(--color-accent)': loading && !(neutral && !inverted),
         hidden: !loading,
+        // Sweeps on hover and on the coarse quiet tap. Ghost always sweeps on
+        // both (its tint fill is added to the button root, behind the
+        // content) regardless of fancyHover; other variants respect it.
         'group-hover/btn:block group-data-[active=true]/btn:block':
-          !loading && !disabled && fancyHover && variant !== 'ghost',
+          !loading && !disabled && (variant === 'ghost' || fancyHover),
         // accent solid + ghost sweep the default accent sheen (--color-accent-
         // pattern). A NEUTRAL button's fill is --color-raised, so it sweeps the
         // neutral analog instead — raised over raised would be invisible.
         // inverted is a light button, so its shimmer is the accent colour itself.
         'bgx-color-[var(--color-raised-pattern)]': neutral && !inverted,
-        'bgx-color-[var(--color-accent)]': inverted,
-        // Ghost has no surface, so only the coarse quiet tap sweeps it (the
-        // accent fill is added to the button root, behind the content).
-        'group-data-[active=true]/btn:block': !loading && !disabled && variant === 'ghost'
+        'bgx-color-[var(--color-accent)]': inverted
       }"
     >
       <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-(--btn-text-color)" />

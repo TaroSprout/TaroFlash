@@ -51,6 +51,16 @@ describe('phone animations', () => {
         expect.objectContaining({ onComplete: done })
       )
     })
+
+    test('clears the inline transform on completion, so the resting rotate/scale classes survive [obligation]', () => {
+      slideDownBlurIn(el, done)
+
+      expect(mockFromTo).toHaveBeenCalledWith(
+        el,
+        expect.anything(),
+        expect.objectContaining({ clearProps: 'transform' })
+      )
+    })
   })
 
   describe('slideUpBlurOut', () => {
@@ -90,6 +100,16 @@ describe('phone animations', () => {
         el,
         expect.anything(),
         expect.objectContaining({ onComplete: done })
+      )
+    })
+
+    test('clears the inline transform on completion, so the resting rotate/scale classes survive [obligation]', () => {
+      slideUpBlurIn(el, done)
+
+      expect(mockFromTo).toHaveBeenCalledWith(
+        el,
+        expect.anything(),
+        expect.objectContaining({ clearProps: 'transform' })
       )
     })
   })

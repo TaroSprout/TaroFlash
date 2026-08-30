@@ -40,10 +40,10 @@ describe('card-grid/delete-button', () => {
     expect(document.querySelector('[data-testid="ui-tooltip"]')?.textContent).toBe('Delete')
   })
 
-  test('clicking calls onDeleteCardImmediate with the card id and its grid-item element [obligation]', async () => {
+  test('clicking calls onDeleteCardImmediate with the card id and its positioned grid cell [obligation]', async () => {
     const editor = makeEditor()
     const grid_item_el = document.createElement('div')
-    grid_item_el.setAttribute('data-testid', 'grid-item')
+    grid_item_el.setAttribute('data-testid', 'card-grid__item')
     document.body.appendChild(grid_item_el)
 
     const wrapper = mount(CardGridDeleteButton, {

@@ -56,7 +56,7 @@ const success_options = computed<ButtonGroupOption[]>(() => {
       :sfx="{ tap_pre: 'ui.press' }"
       @press="emit('rated', Rating.Again)"
     >
-      {{ preview_on ? rating_times.bare[Rating.Again] : t('study.flashcard.rating.again-button') }}
+      {{ preview_on ? rating_times.bare[Rating.Again] : t('study.flashcard.rating.fail-button') }}
     </ui-button>
 
     <ui-button-group

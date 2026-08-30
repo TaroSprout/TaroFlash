@@ -1,6 +1,6 @@
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
-import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
+import { popDeckIn, popDeckOut } from '@/utils/animations/deck-grid'
 import { useNoticeStore } from '@/stores/notice-store'
 import { resolveDeleteArgs, resolveMoveArgs } from '@/utils/card-editor/selection-payload'
 import { useCardPrompts, type CardSelection, type CardMutations } from '@/composables/card'
@@ -101,9 +101,10 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
    * Delete one card with no confirmation — the grid's reorder-mode corner
    * button. Reorder is already a destructive editing mode, so it skips
    * `confirmDelete` and fires the delete cue directly instead of riding the
-   * confirm alert's `confirmAudio`. Fades `card_el` out before the mutation
-   * fires, so the card visibly leaves instead of vanishing the instant the
-   * grid reflows. No-op when the card isn't found.
+   * confirm alert's `confirmAudio`. Shrinks `card_el` — the positioned grid
+   * cell — away before the mutation fires, the same pop the dashboard's deck
+   * grid uses, so the card visibly leaves and the survivors slide into the gap
+   * it opens rather than jumping across it. No-op when the card isn't found.
    */
   async function onDeleteCardImmediate(card_id: number, card_el: HTMLElement) {
     const card = list.findCard(card_id)
@@ -113,13 +114,13 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     const retired = list.retireTemps([card_id])
 
     emitSfx('card.delete')
-    await new Promise<void>((resolve) => fadeLeave(card_el, resolve))
+    await new Promise<void>((resolve) => popDeckOut(card_el, resolve))
 
     try {
       await mutations.deleteCards({ cards: [without_review as Card] })
     } catch {
       list.restoreTemps(retired)
-      fadeEnter(card_el, () => {})
+      popDeckIn(card_el, () => {})
       notice.error(t('toast.error.delete-cards-failed'))
       return
     }

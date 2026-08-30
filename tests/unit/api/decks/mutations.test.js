@@ -5,29 +5,50 @@ const {
   invalidateSpy,
   upsertDeckMock,
   deleteDeckMock,
-  refreshMock,
+  fetchMock,
+  ensureMock,
   deckCountData,
   deckLimit,
   getQueryDataMock,
-  setQueryDataMock
-} = vi.hoisted(() => ({
-  useMutationSpy: vi.fn((cfg) => cfg),
-  invalidateSpy: vi.fn(),
-  upsertDeckMock: vi.fn().mockResolvedValue(undefined),
-  deleteDeckMock: vi.fn().mockResolvedValue(undefined),
-  refreshMock: vi.fn().mockResolvedValue(undefined),
-  deckCountData: { value: 0 },
-  deckLimit: { value: null },
-  getQueryDataMock: vi.fn(),
-  setQueryDataMock: vi.fn()
-}))
+  setQueryDataMock,
+  MEMBER_DECK_COUNT_QUERY
+} = vi.hoisted(() => {
+  const deckCountData = { value: 0 }
+  const MEMBER_DECK_COUNT_QUERY = { key: ['decks', 'count'] }
+  // Mirrors the shape `queryCache.ensure(...)` returns — `upsert.ts` reads
+  // the freshly-fetched count off `count_entry.state.value.data`.
+  const count_entry = {
+    state: {
+      value: {
+        get data() {
+          return deckCountData.value
+        }
+      }
+    }
+  }
+  return {
+    useMutationSpy: vi.fn((cfg) => cfg),
+    invalidateSpy: vi.fn(),
+    upsertDeckMock: vi.fn().mockResolvedValue(undefined),
+    deleteDeckMock: vi.fn().mockResolvedValue(undefined),
+    fetchMock: vi.fn().mockResolvedValue(undefined),
+    ensureMock: vi.fn(() => count_entry),
+    deckCountData,
+    deckLimit: { value: null },
+    getQueryDataMock: vi.fn(),
+    setQueryDataMock: vi.fn(),
+    MEMBER_DECK_COUNT_QUERY
+  }
+})
 
 vi.mock('@pinia/colada', () => ({
   useMutation: useMutationSpy,
   useQueryCache: () => ({
     invalidateQueries: invalidateSpy,
     getQueryData: getQueryDataMock,
-    setQueryData: setQueryDataMock
+    setQueryData: setQueryDataMock,
+    ensure: ensureMock,
+    fetch: fetchMock
   })
 }))
 
@@ -37,7 +58,7 @@ vi.mock('@/api/decks/db', () => ({
 }))
 
 vi.mock('@/api/decks/queries/count', () => ({
-  useMemberDeckCountQuery: () => ({ refresh: refreshMock, data: deckCountData })
+  MEMBER_DECK_COUNT_QUERY
 }))
 
 vi.mock('@/stores/member', () => ({
@@ -58,7 +79,8 @@ beforeEach(() => {
   invalidateSpy.mockClear()
   upsertDeckMock.mockClear()
   deleteDeckMock.mockClear()
-  refreshMock.mockClear()
+  fetchMock.mockClear()
+  ensureMock.mockClear()
   getQueryDataMock.mockReset()
   setQueryDataMock.mockReset()
   deckCountData.value = 0
@@ -71,11 +93,24 @@ function configFrom(hook) {
 }
 
 describe('useUpsertDeckMutation', () => {
+  // [obligation] useDeckEditor calls useUpsertDeckMutation() unconditionally,
+  // for both an existing deck's edit and a new deck's create. The mutation
+  // must never mount its own `useMemberDeckCountQuery` — that would overwrite
+  // the live reader's options on the shared entry (→[K:shared-cache-entry-options-last-mount-wins]).
+  // Instead the create-only re-check reaches the entry through
+  // `queryCache.ensure`/`fetch`, from the same exported options object the
+  // live reader uses.
+  test('reaches the count entry via queryCache.ensure(MEMBER_DECK_COUNT_QUERY), never a second useQuery mount [obligation]', async () => {
+    const { mutation } = configFrom(useUpsertDeckMutation)
+    await mutation({ title: 'brand new' })
+    expect(ensureMock).toHaveBeenCalledWith(MEMBER_DECK_COUNT_QUERY)
+  })
+
   test('mutation delegates to upsertDeck for an update (id present), skipping the count refresh', async () => {
     const { mutation } = configFrom(useUpsertDeckMutation)
     await mutation({ id: 1, title: 'new' })
     expect(upsertDeckMock).toHaveBeenCalledWith({ id: 1, title: 'new' })
-    expect(refreshMock).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   test('the deck payload handed to upsertDeck carries no pending or client_key field [obligation]', async () => {
@@ -88,10 +123,10 @@ describe('useUpsertDeckMutation', () => {
   })
 
   describe('deck-limit re-check on create', () => {
-    test('awaits deck_count_query.refresh() before writing, only when deck.id is undefined', async () => {
+    test('awaits queryCache.fetch(count_entry) before writing, only when deck.id is undefined', async () => {
       const { mutation } = configFrom(useUpsertDeckMutation)
       await mutation({ title: 'brand new' })
-      expect(refreshMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
       expect(upsertDeckMock).toHaveBeenCalledWith({ title: 'brand new' })
     })
 
@@ -121,6 +156,15 @@ describe('useUpsertDeckMutation', () => {
       expect(upsertDeckMock).toHaveBeenCalledWith({ title: 'brand new' })
     })
 
+    test('a count_entry with no data yet falls back to 0, so a positive limit still allows the create [obligation]', async () => {
+      deckLimit.value = 5
+      deckCountData.value = undefined
+      const { mutation } = configFrom(useUpsertDeckMutation)
+
+      await expect(mutation({ title: 'brand new' })).resolves.toBeUndefined()
+      expect(upsertDeckMock).toHaveBeenCalledWith({ title: 'brand new' })
+    })
+
     test('a null limit (unlimited) never throws, whatever the count [obligation]', async () => {
       deckLimit.value = null
       deckCountData.value = 999
@@ -135,7 +179,7 @@ describe('useUpsertDeckMutation', () => {
       const { mutation } = configFrom(useUpsertDeckMutation)
 
       await expect(mutation({ id: 3, title: 'existing' })).resolves.toBeUndefined()
-      expect(refreshMock).not.toHaveBeenCalled()
+      expect(fetchMock).not.toHaveBeenCalled()
     })
   })
 
