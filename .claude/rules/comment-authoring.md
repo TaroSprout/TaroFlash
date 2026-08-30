@@ -4,6 +4,7 @@ paths:
   - 'src/**'
   - 'supabase/**/*.ts'
   - 'scripts/**'
+  - 'tests/**'
 ---
 
 # Comment authoring
@@ -41,6 +42,10 @@ a missing knowledge entry, not a longer comment.
 **A symbol keeps every position that earns its place.** An above-symbol comment and a trailing
 comment on the same line answer different questions, so a request for one is never grounds to delete
 the other — add the one asked for and leave the rest, unless the request specifically supersedes it.
+
+**Inside `tests/`, the position table collapses to one row.** A test's name and its `describe`/`it`
+structure already carry what a JSDoc, a file-top comment, or an above-symbol doc would elsewhere — the
+only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
 
 ## Gates
 
