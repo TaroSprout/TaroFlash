@@ -23,6 +23,16 @@ Node engine minimum your version already satisfies (seen: fails on 22.14, works 
 minimum is wrong, not the toolchain. Switch to a newer Node rather than debugging the config or the
 error message. `vp test` is unaffected.
 
+## Lint
+
+- **Configure lint rules only in `vite.config.ts`'s `lint` block.** `vp lint` silently ignores a root
+  `.oxlintrc.json` — a rule set there never runs, `vp lint` still reports zero errors, and
+  `./node_modules/.bin/oxlint` on the same file with the same config proves the gap
+  (→[K:proxy-pass-not-evidence]).
+- **Oxlint only sees a Vue SFC's `<script>` block.** The template is invisible to its AST — a rule
+  reporting a position outside the script block is rejected outright — and an SFC with no `<script>`
+  at all is never visited.
+
 ## Never `pnpm`
 
 - **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm
