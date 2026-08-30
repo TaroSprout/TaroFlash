@@ -219,7 +219,7 @@ If a file genuinely can't reach 90% in this branch (e.g. depends on infra that i
 
 ## Step 8 — Report
 
-1-line per test: test name (code-formatted) → rationale sentence explaining why the test exists. Grouped by module (bolded). Mark obligation-driven tests with `[obligation]` so the orchestrator can verify each was satisfied. Omit empty sections.
+1-line per test: test name (code-formatted) → rationale sentence explaining why the test exists. Grouped by module (bolded). Omit empty sections. Which tests satisfy which obligation is reported under "Obligations satisfied" below, never marked on the test name itself — a test's name and body stay clean of any tag proving it was written for this run.
 
 ```markdown
 ## New tests
@@ -231,7 +231,7 @@ If a file genuinely can't reach 90% in this branch (e.g. depends on infra that i
 
 **Unit | Composable | useBulkActions**
 
-- `clearing the selection does not exit selection mode` [obligation] → Captures the verbal invariant agreed mid-session (selection mode is sticky)
+- `clearing the selection does not exit selection mode` → Captures the verbal invariant agreed mid-session (selection mode is sticky)
 
 ## Obligations satisfied
 
