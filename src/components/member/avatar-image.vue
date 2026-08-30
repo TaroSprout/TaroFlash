@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { loadAvatarUrl } from './avatars'
 import avatarDefaultUrl from '@/assets/avatars/frog.svg?url'
 
@@ -9,20 +9,51 @@ type MemberAvatarImageProps = {
 
 const { avatar } = defineProps<MemberAvatarImageProps>()
 
-const lazyUrl = ref<string | null>(null)
-const imageUrl = computed(() => lazyUrl.value ?? avatarDefaultUrl)
+// `undefined` marks a key still resolving; `null` marks either no key or a
+// key that resolved to nothing — both fall back to the frog.
+const lazyUrl = ref<string | null | undefined>(undefined)
+// Tracks the real avatar's own paint, not just its URL resolution — the
+// placeholder has to survive the gap between "url known" and "image
+// painted", or a set-but-slow avatar shows a blank frame.
+const loaded = ref(false)
+const imgEl = ref<HTMLImageElement>()
 
 watch(
   () => avatar,
   async (key) => {
-    lazyUrl.value = null
-    const load = key ? loadAvatarUrl(key) : null
-    lazyUrl.value = load ? await load : null
+    lazyUrl.value = key ? undefined : null
+    loaded.value = false
+    const load = key ? await loadAvatarUrl(key) : null
+
+    if (key !== avatar) return // a newer key resolved first; this result is stale
+
+    lazyUrl.value = load
+    await nextTick()
+    // A cached image can finish before the freshly-mounted <img>'s @load
+    // listener attaches; `complete` catches that instead of stranding the
+    // placeholder on a load event that already fired.
+    if (imgEl.value?.complete) loaded.value = true
   },
   { immediate: true }
 )
 </script>
 
 <template>
-  <img :src="imageUrl" :alt="avatar ?? 'default'" />
+  <div class="relative h-full w-full">
+    <div
+      v-if="avatar && (lazyUrl === undefined || (typeof lazyUrl === 'string' && !loaded))"
+      data-testid="avatar-image__placeholder"
+      class="bg-skeleton bgx-diagonal-stripes shimmer absolute inset-0 h-full w-full"
+    />
+    <img
+      v-if="lazyUrl !== undefined"
+      ref="imgEl"
+      :src="lazyUrl ?? avatarDefaultUrl"
+      :alt="avatar ?? 'default'"
+      class="h-full w-full transition-opacity duration-300"
+      :class="!lazyUrl || loaded ? 'opacity-100' : 'opacity-0'"
+      @load="loaded = true"
+      @error="loaded = true"
+    />
+  </div>
 </template>

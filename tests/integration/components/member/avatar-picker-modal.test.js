@@ -137,30 +137,21 @@ describe('AvatarPickerModal', () => {
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('shows a skeleton and no avatar-image for an option before its load resolves', () => {
+  test('renders avatar-image for every tile unconditionally, with no per-tile skeleton of its own [obligation]', () => {
     mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
     const wrapper = mountModal()
 
     const option = wrapper.find('[data-testid="avatar-picker-modal__option-panda"]')
-    expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
-    expect(option.findComponent(AvatarImage).exists()).toBe(false)
-  })
-
-  test('replaces the skeleton with avatar-image once loadAvatarUrl resolves', async () => {
-    let resolvePanda
-    mockLoadAvatarUrl.mockImplementation((key) =>
-      key === 'panda' ? new Promise((resolve) => (resolvePanda = resolve)) : new Promise(() => {})
-    )
-    const wrapper = mountModal()
-    const option = wrapper.find('[data-testid="avatar-picker-modal__option-panda"]')
-    expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
-
-    resolvePanda('/mock/panda.svg')
-    await wrapper.vm.$nextTick()
-    await wrapper.vm.$nextTick()
-
     expect(option.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(false)
     expect(option.findComponent(AvatarImage).exists()).toBe(true)
+  })
+
+  test("passes each tile's own avatar key through to avatar-image, unresolved or not [obligation]", () => {
+    mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
+    const wrapper = mountModal()
+
+    const option = wrapper.find('[data-testid="avatar-picker-modal__option-panda"]')
+    expect(option.findComponent(AvatarImage).props('avatar')).toBe('panda')
   })
 
   // ── dialog-card-body migration [obligation] ────────────────────────────────
@@ -182,21 +173,6 @@ describe('AvatarPickerModal', () => {
     )
   })
 
-  test('resolving one option does not reveal the skeleton on other options', async () => {
-    let resolvePanda
-    mockLoadAvatarUrl.mockImplementation((key) =>
-      key === 'panda' ? new Promise((resolve) => (resolvePanda = resolve)) : new Promise(() => {})
-    )
-    const wrapper = mountModal()
-
-    resolvePanda('/mock/panda.svg')
-    await wrapper.vm.$nextTick()
-    await wrapper.vm.$nextTick()
-
-    const otter = wrapper.find('[data-testid="avatar-picker-modal__option-otter"]')
-    expect(otter.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
-    expect(otter.findComponent(AvatarImage).exists()).toBe(false)
-  })
 
   test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
     const wrapper = mountModal({ selected: 'otter' })
