@@ -127,8 +127,7 @@ function mountDropdown(props = {}, { attrs = {}, slots = {} } = {}) {
         // menu, options) is present — shallowMount would otherwise stub them.
         DropdownCaret: false,
         DropdownMenu: false
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }
@@ -505,8 +504,7 @@ describe('UiDropdownButton', () => {
           UiIcon: UiIconStub,
           DropdownCaret: false,
           DropdownMenu: false
-        },
-        directives: { sfx: {} }
+        }
       }
     })
 
@@ -721,8 +719,7 @@ describe('UiDropdownButton', () => {
             UiIcon: UiIconStub,
             DropdownCaret: false,
             DropdownMenu: false
-          },
-          directives: { sfx: {} }
+          }
         }
       })
     }
@@ -760,8 +757,7 @@ describe('UiDropdownButton', () => {
               UiIcon: UiIconStub,
               DropdownCaret: false,
               DropdownMenu: false
-            },
-            directives: { sfx: {} }
+            }
           }
         })
       ).not.toThrow()

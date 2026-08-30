@@ -48,8 +48,7 @@ function mountDropzone(props = {}) {
   return shallowMount(ImageDropzone, {
     props,
     global: {
-      stubs: { UiButton: UiButtonStub, FaceOverlay: FaceOverlayStub },
-      directives: { sfx: {} }
+      stubs: { UiButton: UiButtonStub, FaceOverlay: FaceOverlayStub }
     }
   })
 }

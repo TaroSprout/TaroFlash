@@ -1,14 +1,25 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import MemberCard from '@/components/member/member-card.vue'
+import AvatarImageReal from '@/components/member/avatar-image.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
+
+const { mockLoadAvatarUrl } = vi.hoisted(() => ({ mockLoadAvatarUrl: vi.fn() }))
 
 vi.mock('gsap', () => ({
   gsap: {
     to: vi.fn((_el, opts) => opts?.onComplete?.()),
     fromTo: vi.fn((_el, _from, to) => to?.onComplete?.())
   }
+}))
+
+vi.mock('@/components/member/avatars', () => ({
+  loadAvatarUrl: mockLoadAvatarUrl
+}))
+
+vi.mock('@/assets/avatars/frog.svg?url', () => ({
+  default: '/mock/frog.svg'
 }))
 
 const AvatarImageStub = defineComponent({
@@ -34,6 +45,10 @@ function mountCard(props = {}) {
 }
 
 describe('MemberCard', () => {
+  beforeEach(() => {
+    mockLoadAvatarUrl.mockReset()
+  })
+
   test('renders the card root', () => {
     const wrapper = mountCard()
     expect(wrapper.find('[data-testid="member-card"]').exists()).toBe(true)
@@ -118,6 +133,28 @@ describe('MemberCard', () => {
     )
   })
 
+  // Mounts the real avatar-image so the placeholder/frog split lands through
+  // this surface, not just the component's own tests.
+  test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved [obligation]', async () => {
+    mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
+    const wrapper = shallowMount(MemberCard, {
+      props: {
+        createdAt: '2024-04-15T00:00:00Z',
+        cardTitle: 'Apprentice',
+        cover: { palette: 'teal', pattern: 'aztec', avatar: 'panda' }
+      },
+      global: {
+        stubs: { AvatarImage: false },
+        mocks: { $t: (key, params) => (params ? `${key}:${JSON.stringify(params)}` : key) }
+      }
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent(AvatarImageReal).exists()).toBe(true)
+    expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(true)
+    expect(wrapper.find('img').exists()).toBe(false)
+  })
+
   // ── name truncation title ──────────────────────────────────────────────────
 
   describe('name truncation title', () => {
@@ -155,7 +192,7 @@ describe('MemberCard', () => {
     test('pressing the avatar-edit button emits edit-avatar', async () => {
       const wrapper = mount(MemberCard, {
         props: { createdAt: '2024-04-15T00:00:00Z', cardTitle: 'Apprentice', editable: true },
-        global: { stubs: { AvatarImage: AvatarImageStub }, directives: { sfx: {} } }
+        global: { stubs: { AvatarImage: AvatarImageStub } }
       })
 
       await wrapper.find('[data-testid="member-card__avatar-edit"]').trigger('click')

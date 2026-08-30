@@ -16,8 +16,7 @@ function makeWrapper(props = {}) {
       message: 'We sent you a confirmation link.',
       close: vi.fn(),
       ...props
-    },
-    global: { directives: { sfx: {} } }
+    }
   })
 }
 

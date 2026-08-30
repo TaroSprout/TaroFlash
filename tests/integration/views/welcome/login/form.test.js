@@ -68,8 +68,7 @@ function mountForm(props = {}) {
       ...props
     },
     global: {
-      stubs: { UiInput: UiInputStub, UiDivider: UiDividerStub, UiButton: UiButtonStub },
-      directives: { sfx: {} }
+      stubs: { UiInput: UiInputStub, UiDivider: UiDividerStub, UiButton: UiButtonStub }
     }
   })
 }

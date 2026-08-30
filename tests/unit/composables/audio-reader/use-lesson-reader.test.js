@@ -363,6 +363,50 @@ describe('useLessonReader', () => {
       expect(reader.matches.value).not.toBe(before)
       expect(reader.matches.value.get(1).palette).toBe('green-400')
     })
+
+    test('matches map gets a new reference when the card index adds a match (size differs) [obligation]', async () => {
+      const card_index = ref([{ term: 'world', deck_ids: [7] }])
+      cardIndexQueryMock.mockReturnValue({ data: card_index })
+
+      let reader
+      ;[reader, app] = withReader()
+      const before = reader.matches.value
+      expect(before.size).toBe(1)
+
+      card_index.value = [
+        { term: 'world', deck_ids: [7] },
+        { term: 'how', deck_ids: [7] }
+      ]
+      await nextTick()
+
+      expect(reader.matches.value).not.toBe(before)
+      expect(reader.matches.value.size).toBe(2)
+    })
+
+    test('matches map gets a new reference when a shared word key resolves a different span (lo/hi differs) [obligation]', async () => {
+      // A single two-word card ("are you") covers keys 3 and 4 with lo=3, hi=4;
+      // splitting it into two single-word cards keeps the same key set and map
+      // size but shrinks each match's span, changing hi (key 3) and lo (key 4).
+      const card_index = ref([{ term: 'are you', deck_ids: [7] }])
+      cardIndexQueryMock.mockReturnValue({ data: card_index })
+
+      let reader
+      ;[reader, app] = withReader()
+      const before = reader.matches.value
+      expect(before.size).toBe(2)
+      expect(before.get(3)).toMatchObject({ lo: 3, hi: 4 })
+
+      card_index.value = [
+        { term: 'are', deck_ids: [7] },
+        { term: 'you', deck_ids: [7] }
+      ]
+      await nextTick()
+
+      expect(reader.matches.value).not.toBe(before)
+      expect(reader.matches.value.size).toBe(2)
+      expect(reader.matches.value.get(3)).toMatchObject({ lo: 3, hi: 3 })
+      expect(reader.matches.value.get(4)).toMatchObject({ lo: 4, hi: 4 })
+    })
   })
 
   describe('selected_term_decks [obligation]', () => {

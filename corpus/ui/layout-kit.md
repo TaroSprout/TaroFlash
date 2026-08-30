@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: [dialog-card]
-updated: 2026-08-16
+updated: 2026-08-30
 ---
 
 # The window family
@@ -39,29 +39,39 @@ needing to know:
 
 ## Docking drops the body scroller
 
-Docked to the bottom of a viewport too short to hold it, `app-window` drops
-whatever height its caller set and grows to fit its content instead — the
-modal sheet around it is then the only thing that scrolls. Docking is the
-`mobile-modal` variant in `src/styles/mobile-modal-variant.css`: pure media
-queries plus attribute selectors, no JS flag, so every part of this state is
-expressible as a CSS variant →[K:mid-gesture-mutation-kills-momentum-scroll].
+A viewport too short or too narrow to hold the window docks it to the bottom
+edge. Only running out of _width_ also makes `app-window` drop whatever height
+its caller set and grow to fit its content; running out of _height_ alone
+leaves the cap alone. Docking is the `mobile-modal` variant in
+`src/styles/mobile-modal-variant.css`, whose width half is the sibling
+`mobile-modal-flush`: pure media queries plus attribute selectors, no JS flag,
+so every part of this state is expressible as a CSS variant
+→[K:mid-gesture-mutation-kills-momentum-scroll].
 
-> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A docked window has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight.**
+> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A window docked on width has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight.**
 > Two things get in the way of switching the body off. A caller's height cap
 > (feedback-board's `msm:h-196`, admin's `h-205`) is a same-property variant
-> utility whose cascade order against `mobile-modal:` isn't guaranteed, so the
-> window root drops the cap with an important `mobile-modal:h-auto!` instead of
-> a plain utility. The body's `overflow-y` can't be switched off by a utility
-> either — `scroll-region` owns it in a scoped stylesheet at a specificity a
+> utility whose cascade order against `mobile-modal-flush:` isn't guaranteed, so
+> the window root drops the cap with an important `mobile-modal-flush:h-auto!`
+> instead of a plain utility. The body's `overflow-y` can't be switched off by
+> a utility either — `scroll-region` owns it in a scoped stylesheet at a specificity a
 > `:where`-wrapped variant utility loses to — so the window sets
 > `--scroll-overflow: visible` for the region to read. That variable
 > inherits, so a scroll region mounted deeper inside a docked window's body
 > would stop scrolling too; there are none today, and "nothing inside a
 > docked window scrolls" is arguably the rule anyway, but the reach is wider
 > than the body scroller alone.
+>
+> Both utilities ride `mobile-modal-flush:`, not `mobile-modal:`, so neither
+> fires on a short-but-wide viewport — which is the point. A fixed-height
+> window (settings' `h-187`, deck settings' `h-181.5`) docks to the bottom
+> edge there but keeps its cap and keeps running its own body scroller inside
+> the sheet, rather than collapsing to whatever the current tab happens to
+> hold and changing height as the tab changes. Every window behaves this way;
+> it is not something a caller opts into.
 
-With the cap gone, the scroller's `scrollHeight` equals its `clientHeight`,
-`use-scroll-metrics` reports not-overflowing, and the scroll handle needs no
+With the cap gone on width, the scroller's `scrollHeight` equals its
+`clientHeight`, `use-scroll-metrics` reports not-overflowing, and the scroll handle needs no
 hiding branch of its own — it's simply never rendered.
 
 ## What this isn't

@@ -36,15 +36,14 @@ import DropdownCaret from '@/components/ui-kit/dropdown-button/caret.vue'
 
 function mountCaret(props = {}) {
   return mount(DropdownCaret, {
-    props: { open: false, ...props },
-    global: { directives: { sfx: {} } }
+    props: { open: false, ...props }
   })
 }
 
 function mountCaretRealTransition(props = {}) {
   return mount(DropdownCaret, {
     props: { open: false, ...props },
-    global: { directives: { sfx: {} }, stubs: { transition: false } }
+    global: { stubs: { transition: false } }
   })
 }
 

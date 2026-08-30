@@ -23,7 +23,6 @@ function makeWrapper(props = {}, { modalId = 'test-alert' } = {}) {
     },
     attachTo: document.body,
     global: {
-      directives: { sfx: {} },
       provide: { [MODAL_ID_KEY]: modalId }
     }
   })

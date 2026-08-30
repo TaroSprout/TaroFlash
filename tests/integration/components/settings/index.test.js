@@ -223,7 +223,7 @@ beforeEach(() => {
 
 // ── pages composition ───────────────────────────────────────────────────────
 
-describe('settings app — pages composition [obligation]', () => {
+describe('settings app — pages composition', () => {
   test('exposes the four sidebar pages in the expected order, excluding account-access', () => {
     const wrapper = makeWrapper()
     const pw = wrapper.findComponent({ name: 'PagedWindow' })
@@ -245,7 +245,7 @@ describe('settings app — pages composition [obligation]', () => {
 
 // ── Header copy ───────────────────────────────────────────────────────────────
 
-describe('settings app — header copy is static across tabs [obligation]', () => {
+describe('settings app — header copy is static across tabs', () => {
   test('renders the static header title with no tab selected', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="settings__header-title"]').text()).toBe('App Settings')
@@ -260,7 +260,7 @@ describe('settings app — header copy is static across tabs [obligation]', () =
 
 // ── active_page defaults ───────────────────────────────────────────────────────
 
-describe('settings app — active_page is a plain, non-persisted ref [obligation]', () => {
+describe('settings app — active_page is a plain, non-persisted ref', () => {
   test('defaults to null on every mount', () => {
     const wrapper = makeWrapper()
     expect(wrapper.vm.active_page).toBe(null)
@@ -303,9 +303,9 @@ describe('settings app — back navigation', () => {
   })
 })
 
-// ── onChromeBack delegation [obligation] ──────────────────────────────────────
+// ── onChromeBack delegation ──────────────────────────────────────
 
-describe('settings app — onChromeBack delegates to the active tab first [obligation]', () => {
+describe('settings app — onChromeBack delegates to the active tab first', () => {
   test('falls through to the default exit when the active tab has no onChromeBack', async () => {
     const wrapper = makeWrapper()
     await flushPromises()
@@ -440,6 +440,31 @@ describe('settings app — layout poses across breakpoints', () => {
     )
     expect(wrapper.find('[data-testid="settings__aside"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="settings__pinned-preview"]').exists()).toBe(true)
+  })
+
+  test('the aside reserves the preview room from a static class, never an inline measurement', async () => {
+    const wrapper = makeWrapper()
+    stub_layout_mode.value = 'desktop'
+    await nextTick()
+    await nextTick()
+
+    const aside = wrapper.find('[data-testid="settings__aside"]')
+    expect(aside.classes()).toContain('pt-(--preview-clearance)')
+    expect(aside.attributes('style')).toBeUndefined()
+    expect(wrapper.find('[data-testid="settings-container"]').classes()).toContain(
+      '[--preview-clearance:calc(var(--spacing)*60)]'
+    )
+  })
+
+  test('tablet reserves the extra header step less than desktop, off the same constant', async () => {
+    const wrapper = makeWrapper()
+    stub_layout_mode.value = 'tablet'
+    await nextTick()
+    await nextTick()
+
+    const aside = wrapper.find('[data-testid="settings__aside"]')
+    expect(aside.classes()).toContain('pt-[calc(var(--preview-clearance)-var(--spacing)*4)]')
+    expect(aside.attributes('style')).toBeUndefined()
   })
 
   test('phone drops the aside and preview, and shows the directory save button', async () => {

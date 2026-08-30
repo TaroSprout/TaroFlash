@@ -1,9 +1,20 @@
 import '@/styles/main.css'
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import MemberPolaroid from '@/components/member/member-polaroid.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import AvatarImageReal from '@/components/member/avatar-image.vue'
+
+const { mockLoadAvatarUrl } = vi.hoisted(() => ({ mockLoadAvatarUrl: vi.fn() }))
+
+vi.mock('@/components/member/avatars', () => ({
+  loadAvatarUrl: mockLoadAvatarUrl
+}))
+
+vi.mock('@/assets/avatars/frog.svg?url', () => ({
+  default: '/mock/frog.svg'
+}))
 
 const AvatarImageStub = defineComponent({
   name: 'AvatarImage',
@@ -21,6 +32,10 @@ function mountPolaroid(props = {}) {
 }
 
 describe('MemberPolaroid', () => {
+  beforeEach(() => {
+    mockLoadAvatarUrl.mockReset()
+  })
+
   test('renders the polaroid frame and photo placeholder', () => {
     const wrapper = mountPolaroid()
     expect(wrapper.find('[data-testid="member-polaroid"]').exists()).toBe(true)
@@ -33,6 +48,21 @@ describe('MemberPolaroid', () => {
     expect(wrapper.find('[data-testid="avatar-image-stub"]').attributes('data-avatar')).toBe(
       'panda'
     )
+  })
+
+  // Mounts the real avatar-image so the placeholder/frog split lands through
+  // this surface, not just the component's own tests.
+  test('shows the shimmer placeholder rather than the frog while the avatar is unresolved [obligation]', async () => {
+    mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
+    const wrapper = shallowMount(MemberPolaroid, {
+      props: { avatar: 'panda' },
+      global: { stubs: { AvatarImage: false } }
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent(AvatarImageReal).exists()).toBe(true)
+    expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(true)
+    expect(wrapper.find('img').exists()).toBe(false)
   })
 
   test('the frame stamps the constant data-station="float"', () => {

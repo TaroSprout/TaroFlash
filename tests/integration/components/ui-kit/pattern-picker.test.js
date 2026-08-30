@@ -15,9 +15,6 @@ function makePicker(props = {}) {
       supported_patterns: SUPPORTED_PATTERNS,
       selected_pattern: undefined,
       ...props
-    },
-    global: {
-      directives: { sfx: {} }
     }
   })
 }

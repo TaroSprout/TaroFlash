@@ -104,8 +104,7 @@ function mountLayer(props = {}) {
         UiTooltip: UiTooltipStub,
         FaceOverlay: FaceOverlayStub,
         ImageDropzone: ImageDropzoneStub
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }

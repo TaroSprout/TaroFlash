@@ -1,6 +1,6 @@
 import { Rating, type Grade, type RecordLog } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
-import { toRelative, toRelativeDistinct, toShortDuration } from '@/utils/date'
+import { toRelative, toRelativeDistinct, toShortDuration } from './relative-time'
 
 // Again is formatted alone; the pass grades share a granularity collision group (below).
 const PASS_GRADES: Grade[] = [Rating.Hard, Rating.Good, Rating.Easy]

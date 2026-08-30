@@ -35,8 +35,7 @@ const UiTooltipStub = defineComponent({
 function makeWrapper() {
   return mount(EmailSection, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub },
-      directives: { sfx: {} }
+      stubs: { UiTooltip: UiTooltipStub }
     }
   })
 }

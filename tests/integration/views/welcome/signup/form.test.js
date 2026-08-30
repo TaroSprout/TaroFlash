@@ -85,8 +85,7 @@ function mountForm({ errors = {}, modelValues = {} } = {}) {
         UiInput: UiInputStub,
         UiDivider: UiDividerStub,
         UiButton: UiButtonStub
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }

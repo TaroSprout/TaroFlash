@@ -101,8 +101,7 @@ function mountContent(page = 'menu', props = {}) {
         AccountAccessMenu: MenuStub,
         EmailSection: EmailSectionStub,
         PasswordSection: PasswordSectionStub
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }

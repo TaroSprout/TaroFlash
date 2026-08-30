@@ -25,6 +25,14 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
 
+function unobserveIfElement(resize_obs: ResizeObserver, node: Node) {
+  if (node instanceof Element) resize_obs.unobserve(node)
+}
+
+function observeIfElement(resize_obs: ResizeObserver, node: Node) {
+  if (node instanceof Element) resize_obs.observe(node)
+}
+
 /**
  * Reading position of a scrolling element, kept live while its content changes.
  *
@@ -117,12 +125,8 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
     if (!resize_obs) return
 
     for (const record of records) {
-      for (const node of record.removedNodes) {
-        if (node instanceof Element) resize_obs.unobserve(node)
-      }
-      for (const node of record.addedNodes) {
-        if (node instanceof Element) resize_obs.observe(node)
-      }
+      for (const node of record.removedNodes) unobserveIfElement(resize_obs, node)
+      for (const node of record.addedNodes) observeIfElement(resize_obs, node)
     }
   }
 

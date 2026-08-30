@@ -42,8 +42,7 @@ const UiTooltipStub = defineComponent({
 function makeWrapper() {
   return mount(PasswordSection, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub },
-      directives: { sfx: {} }
+      stubs: { UiTooltip: UiTooltipStub }
     }
   })
 }
