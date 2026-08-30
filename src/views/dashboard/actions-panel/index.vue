@@ -8,6 +8,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { useMemberStore } from '@/stores/member'
 import { memberCoverBindings } from '@/components/member/cover'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
+import { useSettingsModal } from '@/composables/settings/use-settings-modal'
 import { useNewDeckAction } from '../composables/new-deck-action'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { totalDueCardCount } from '@/utils/deck/due'
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const member_store = useMemberStore()
 const study_session = useStudyModal()
+const settings_modal = useSettingsModal()
 const { creating_deck, createNewDeck } = useNewDeckAction()
 const dock_on_screen = useMatchMedia('w<mxl')
 
@@ -60,6 +62,10 @@ function onStudyAll() {
   study_session.start(due_decks.map((deck) => deck.id))
 }
 
+function onOpenSettings() {
+  settings_modal.open()
+}
+
 async function onSelect(value: string) {
   if (value === 'edit-decks') {
     emit('toggle-edit-decks')
@@ -80,7 +86,14 @@ async function onSelect(value: string) {
     body_class="bg-surface"
   >
     <template #polaroid>
-      <member-polaroid :avatar="member_store.cover.avatar" class="absolute top-1 -left-1 z-10" />
+      <div
+        data-testid="dashboard-actions-panel__polaroid"
+        class="group absolute top-1 -left-1 z-10 cursor-pointer"
+        v-sfx="{ hover: 'ui.hover' }"
+        @click="onOpenSettings"
+      >
+        <member-polaroid :avatar="member_store.cover.avatar" interactive />
+      </div>
     </template>
 
     <template #header>
