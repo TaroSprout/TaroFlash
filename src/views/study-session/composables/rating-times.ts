@@ -1,6 +1,6 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { Rating, type Grade, type RecordLog } from 'ts-fsrs'
-import { useRatingFormat } from '@/composables/fsrs'
+import { useRatingFormat } from './fsrs'
 
 const ALL_GRADES: Grade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy]
 

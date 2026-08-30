@@ -19,7 +19,7 @@ Use this first. Match words in the raw ticket to a starting path, then grep from
 | mobile editor, "mobile editor still shows", editor on phone                 | `src/views/deck/mobile-editor/`                                                                                            |
 | card grid, reorder cards, select/bulk, search cards                         | `src/views/deck/card-grid/`, `src/views/deck/composables/`                                                                 |
 | study session, rating buttons, fail/nope, session summary, resume           | `src/views/study-session/` (engine in `composables/`)                                                                      |
-| FSRS, review pacing, scheduling, presets, limits                            | `src/views/deck/deck-settings/tab-review-pacing/`, `src/composables/fsrs.ts`, `src/api/review-pacing/`                     |
+| FSRS, review pacing, scheduling, presets, limits                            | `src/views/deck/deck-settings/tab-review-pacing/`, `src/views/study-session/composables/fsrs.ts`, `src/api/review-pacing/` |
 | deck settings, deck design, cover, danger zone                              | `src/views/deck/deck-settings/` (tabs: `tab-details/ tab-design/ tab-review-pacing/ tab-review-history/ tab-danger-zone/`) |
 | deck cover, icon/pattern picker, bgx                                        | `src/views/deck/cover-designer/`, `src/utils/cover/`, `src/styles/bg-utils.css`                                            |
 | avatar, member cover                                                        | `src/components/member/` (`avatar-picker-modal.vue`, `avatars.ts`, `cover.ts`)                                             |
@@ -102,7 +102,7 @@ Use this first. Match words in the raw ticket to a starting path, then grep from
 
 ## Domain glossary
 
-- **FSRS** — Free Spaced Repetition Scheduler; drives review-pacing. `composables/fsrs.ts`, `api/reviews/`.
+- **FSRS** — Free Spaced Repetition Scheduler; drives review-pacing. `views/study-session/composables/fsrs.ts`, `api/reviews/`.
 - **Review pacing** — per-deck study limits + scheduling (presets, new/review limits). `api/review-pacing/`, `tab-review-pacing/`.
 - **Fractional rank / reorder anchors** — ordering scheme for drag-reorder (fractional-rank strings; `anchor_id` + before/after; temp rows use negative ids). `utils/reorder.ts`, `cards/mutations/move.ts`. (LexoRank-style.)
 - **bgx** — CSS custom-prop system for decorative pattern backgrounds (`--bgx-image/-fill/-opacity/-size`); Tailwind `bgx-*` in `styles/bg-utils.css`, bound in `utils/cover/bindings.ts`. Used for covers.
