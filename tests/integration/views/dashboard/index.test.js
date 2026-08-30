@@ -24,7 +24,12 @@ vi.mock('@/api/decks', () => ({
   // imports useDeleteDeckMutation.
   useMoveDeckMutation: () => ({ mutateAsync: () => Promise.resolve() }),
   useDeleteDeckMutation: () => ({ mutateAsync: () => Promise.resolve() }),
-  useUpsertDeckMutation: () => ({ mutateAsync: () => Promise.resolve() })
+  useUpsertDeckMutation: () => ({ mutateAsync: () => Promise.resolve() }),
+  // Same story: the actions panel's polaroid opens settings via
+  // useSettingsModal, which statically imports views/settings/index.vue ->
+  // tab-subscription/use-upgrade-click.ts -> composables/member/
+  // subscription-actions.ts, and that imports useMemberDeckCountQuery.
+  useMemberDeckCountQuery: () => ({ data: ref(0) })
 }))
 
 vi.mock('@/sfx/bus', () => ({

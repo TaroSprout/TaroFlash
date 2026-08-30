@@ -3,6 +3,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import MemberPolaroid from '@/components/member/member-polaroid.vue'
+import UiIcon from '@/components/ui-kit/icon.vue'
 
 const AvatarImageStub = defineComponent({
   name: 'AvatarImage',
@@ -54,9 +55,9 @@ describe('MemberPolaroid', () => {
   })
 
   // ── root positioning [obligation] ─────────────────────────────────────────
-  // Both call sites position the root themselves (absolute); a `relative` on
-  // the root would silently beat every caller's own positioning class since
-  // Vue merges caller and component classes onto the same element.
+  // `relative` lives on the inner positioner so the paperclip sibling's `absolute`
+  // positions against it; the root itself carries no position utility of its own,
+  // so a caller's own `absolute`/`top-*`/`left-*` lands unopposed.
 
   test('the root positions statically, leaving placement to the caller [obligation]', () => {
     const wrapper = mount(MemberPolaroid, {
@@ -149,5 +150,54 @@ describe('MemberPolaroid', () => {
     const photo = wrapper.find('[data-testid="member-polaroid__photo"]')
     expect(photo.find('[data-testid="custom-photo"]').exists()).toBe(true)
     expect(photo.find('[data-testid="avatar-image-stub"]').exists()).toBe(false)
+  })
+
+  // ── paperclip is an unrotated sibling of the frame [obligation] ───────────
+  // The clip used to sit nested inside the rotated frame and inherit its -12°;
+  // now it's a sibling with the combined angle baked into its own class, so the
+  // frame can swing on hover without dragging the clip along.
+
+  test('the clip is a sibling of the frame, not nested inside it [obligation]', () => {
+    const wrapper = mountPolaroid()
+    const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
+    expect(frame.findComponent(UiIcon).exists()).toBe(false)
+    expect(wrapper.findComponent(UiIcon).exists()).toBe(true)
+  })
+
+  test.each([
+    ['base', { frame: 'w-30 p-2 pb-6', clip: '-top-3 left-12 size-10', origin: '57% 6%' }],
+    ['sm', { frame: 'w-24 p-1.5 pb-5', clip: '-top-3 left-11 size-9', origin: '65% 5%' }]
+  ])(
+    'size=%s reproduces the old geometry algebraically on the frame and the clip [obligation]',
+    (size, expected) => {
+      const wrapper = mountPolaroid({ size })
+      const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
+      const clip = wrapper.findComponent(UiIcon)
+
+      expect(frame.classes()).toContain('-rotate-12')
+      for (const cls of expected.frame.split(' ')) expect(frame.classes()).toContain(cls)
+      expect(frame.attributes('style')).toContain(`transform-origin: ${expected.origin}`)
+
+      expect(clip.classes()).toContain('rotate-188')
+      for (const cls of expected.clip.split(' ')) expect(clip.classes()).toContain(cls)
+    }
+  )
+
+  // ── interactive prop [obligation] ─────────────────────────────────────────
+  // `interactive` gates the hover swing; decorative call sites leave it off.
+
+  test('interactive defaults to false — no transition, no group-hover swing class [obligation]', () => {
+    const wrapper = mountPolaroid()
+    const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
+    expect(frame.classes()).not.toContain('group-hover:-rotate-8')
+    expect(frame.classes()).not.toContain('transition-transform')
+  })
+
+  test('interactive=true adds the group-hover swing class and its transition [obligation]', () => {
+    const wrapper = mountPolaroid({ interactive: true })
+    const frame = wrapper.find('[data-testid="member-polaroid__frame"]')
+    expect(frame.classes()).toContain('group-hover:-rotate-8')
+    expect(frame.classes()).toContain('transition-transform')
+    expect(frame.classes()).toContain('duration-150')
   })
 })

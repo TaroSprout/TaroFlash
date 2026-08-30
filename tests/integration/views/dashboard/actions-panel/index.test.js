@@ -4,10 +4,11 @@ import { defineComponent, h, nextTick, ref, useAttrs } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockStartStudy, mockCreateDeck, mockEmitSfx } = vi.hoisted(() => ({
+const { mockStartStudy, mockCreateDeck, mockEmitSfx, mockOpenSettings } = vi.hoisted(() => ({
   mockStartStudy: vi.fn(),
   mockCreateDeck: vi.fn(() => Promise.resolve({ id: 1 })),
-  mockEmitSfx: vi.fn()
+  mockEmitSfx: vi.fn(),
+  mockOpenSettings: vi.fn()
 }))
 
 // Module-level, not vi.hoisted, so Vue's ref() is available.
@@ -15,6 +16,10 @@ const mockDockVisible = ref(false)
 
 vi.mock('@/views/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: mockStartStudy })
+}))
+
+vi.mock('@/composables/settings/use-settings-modal', () => ({
+  useSettingsModal: () => ({ open: mockOpenSettings })
 }))
 
 vi.mock('@/composables/deck/actions', () => ({
@@ -38,13 +43,16 @@ vi.mock('@/components/mobile-dock/use-mobile-dock', () => ({
 
 const PolaroidStub = defineComponent({
   name: 'MemberPolaroid',
-  props: { avatar: { type: String, default: undefined } },
-  setup(props, { attrs }) {
+  props: {
+    avatar: { type: String, default: undefined },
+    interactive: { type: Boolean, default: false }
+  },
+  setup(props) {
     return () =>
       h('div', {
-        'data-testid': 'dashboard-actions-panel__polaroid',
+        'data-testid': 'member-polaroid-stub',
         'data-avatar': props.avatar,
-        class: attrs.class
+        'data-interactive': String(props.interactive)
       })
   }
 })
@@ -100,7 +108,7 @@ function wrapper_entry(wrapper) {
   return entries.find((e) => e.value === 'edit-decks')
 }
 
-function mount(due_decks = [], editing_decks = false, has_decks = false) {
+function mount(due_decks = [], editing_decks = false, has_decks = false, global_overrides = {}) {
   return shallowMount(DashboardActionsPanel, {
     props: { due_decks, editing_decks, has_decks },
     global: {
@@ -109,7 +117,9 @@ function mount(due_decks = [], editing_decks = false, has_decks = false) {
         MemberPolaroid: PolaroidStub,
         UiOptionsPanel: UiOptionsPanelStub,
         UiButton: UiButtonStub
-      }
+      },
+      directives: { sfx: {} },
+      ...global_overrides
     }
   })
 }
@@ -122,6 +132,7 @@ beforeEach(() => {
   mockCreateDeck.mockResolvedValue({ id: 1 })
   mockEmitSfx.mockClear()
   mockDockVisible.value = false
+  mockOpenSettings.mockClear()
 })
 
 describe('DashboardActionsPanel — header', () => {
@@ -137,11 +148,54 @@ describe('DashboardActionsPanel — header', () => {
     ).toBe('Ada')
   })
 
-  test('passes the member store avatar into the polaroid and positions it itself', () => {
+  test('passes the member store avatar into the interactive polaroid', () => {
     const wrapper = mount()
-    const polaroid = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    const polaroid = wrapper.find('[data-testid="member-polaroid-stub"]')
     expect(polaroid.attributes('data-avatar')).toBe('panda')
-    expect(polaroid.classes()).toContain('absolute')
+    expect(polaroid.attributes('data-interactive')).toBe('true')
+  })
+
+  test('the wrapper div carries the positioning classes moved off the polaroid [obligation]', () => {
+    const wrapper = mount()
+    const polaroid_wrapper = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    expect(polaroid_wrapper.classes()).toContain('absolute')
+    expect(polaroid_wrapper.classes()).toContain('top-1')
+    expect(polaroid_wrapper.classes()).toContain('-left-1')
+    expect(polaroid_wrapper.classes()).toContain('z-10')
+  })
+
+  // `group` is load-bearing: the polaroid's swing is a `group-hover:` class, so
+  // it only ever fires if the wrapper opens the group. `cursor-pointer` is the
+  // affordance that says the polaroid is clickable at all.
+  test('the wrapper div opens the hover group and shows the click affordance [obligation]', () => {
+    const wrapper = mount()
+    const polaroid_wrapper = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    expect(polaroid_wrapper.classes()).toContain('group')
+    expect(polaroid_wrapper.classes()).toContain('cursor-pointer')
+  })
+
+  test('clicking the polaroid wrapper opens the settings modal on its default tab [obligation]', async () => {
+    const wrapper = mount()
+    await wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]').trigger('click')
+    expect(mockOpenSettings).toHaveBeenCalledWith()
+  })
+
+  test('clicking the polaroid wrapper plays no sound [obligation]', async () => {
+    const wrapper = mount()
+    await wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]').trigger('click')
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('the polaroid wrapper wires v-sfx hover to ui.hover, with no click channel [obligation]', () => {
+    let captured
+    const captureDirective = {
+      mounted: (_el, binding) => (captured = binding.value),
+      updated: (_el, binding) => (captured = binding.value)
+    }
+    mount([], false, false, { directives: { sfx: captureDirective } })
+
+    expect(captured.hover).toBe('ui.hover')
+    expect(captured.click).toBeUndefined()
   })
 })
 
