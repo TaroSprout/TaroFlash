@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
-// Docked to the bottom of a viewport too short to hold it, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls. `keep_docked_height` narrows that to the width half of docking. →[K:docked-app-window-drops-body-scroll]
+// Docked because the viewport ran out of width, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls. Running out of height alone docks it to the bottom and leaves both alone, so a fixed-height window never collapses to its content on a short, wide viewport. →[K:docked-app-window-drops-body-scroll]
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
@@ -30,8 +30,6 @@ export type AppWindowProps = {
   window_px?: string
   /** Makes the body itself the scrolling region, so content runs under the header and is cut at the window's bottom edge. Off by default; a window whose pages manage their own overflow leaves it off. */
   scroll_body?: boolean
-  /** Keeps the caller's height cap when the window docks only because the viewport is short, leaving the width half of docking untouched. Off by default. */
-  keep_docked_height?: boolean
 }
 
 const {
@@ -42,8 +40,7 @@ const {
   close_icon = 'close',
   header_border = 'wave',
   window_px,
-  scroll_body = false,
-  keep_docked_height = false
+  scroll_body = false
 } = defineProps<AppWindowProps>()
 
 const { t } = useI18n()
@@ -84,19 +81,6 @@ const header_bindings = computed(() =>
 
 const showHeader = computed(() => Boolean(slots.header || slots['header-content'] || title))
 
-/*
- * Docking releases the caller's height cap and hands the body's overflow to the
- * sheet. `keep_docked_height` narrows that release to the width half, so a
- * window docked only because the viewport got short keeps its cap and keeps its
- * own body scroller. Constant per caller, never rewritten as the viewport moves
- * →[K:mid-gesture-mutation-kills-momentum-scroll].
- */
-const docked_release_class = computed(() =>
-  keep_docked_height
-    ? 'mobile-modal-flush:h-auto! mobile-modal-flush:[--scroll-overflow:visible]'
-    : 'mobile-modal:h-auto! mobile-modal:[--scroll-overflow:visible]'
-)
-
 const root_style = computed(() => ({
   ...(window_px ? { '--window-px': window_px } : {}),
   ...(scroll_body && showHeader.value
@@ -108,8 +92,7 @@ const root_style = computed(() => ({
 <template>
   <div
     data-testid="app-window-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
-    :class="docked_release_class"
+    class="relative w-full shrink-0 mobile-modal:mt-auto mobile-modal-flush:h-auto! mobile-modal-flush:[--scroll-overflow:visible] pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
     :style="root_style"
   >
     <div
