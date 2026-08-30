@@ -49,6 +49,24 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
+// Spied so a regression test can assert that opening settings for an
+// existing deck never mounts the member-deck-count query — useDeckEditor is
+// mocked below, so this pins DeckSettings' own contract: it never reaches
+// for either of these directly, only through the editor composable
+// [obligation].
+const { mockUseMemberDeckCountQuery, mockUseDeckActions } = vi.hoisted(() => ({
+  mockUseMemberDeckCountQuery: vi.fn(() => ({ data: { value: 0 } })),
+  mockUseDeckActions: vi.fn(() => ({ createDeck: vi.fn() }))
+}))
+
+vi.mock('@/api/decks', () => ({
+  useMemberDeckCountQuery: mockUseMemberDeckCountQuery
+}))
+
+vi.mock('@/composables/deck/actions', () => ({
+  useDeckActions: mockUseDeckActions
+}))
+
 // Mock the window-chrome composable directly — its own tuck/restore/snap
 // contract (edge-on timing, no-op guards) is covered by
 // tests/unit/views/deck/deck-settings/window-chrome.test.js. Here we only
@@ -578,5 +596,15 @@ describe('DeckSettings — layout poses across breakpoints', () => {
     expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="deck-preview-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
+  })
+})
+
+// ── Deck-count query never fires for an existing deck [obligation] ────────────
+
+describe('DeckSettings — opening settings for an existing deck never mounts the member-deck-count query [obligation]', () => {
+  test('useMemberDeckCountQuery and useDeckActions are not called when mounting for a deck with an id', () => {
+    makeWrapper({ deck: deckFixture.one({ overrides: { id: 1 } }) })
+    expect(mockUseMemberDeckCountQuery).not.toHaveBeenCalled()
+    expect(mockUseDeckActions).not.toHaveBeenCalled()
   })
 })
