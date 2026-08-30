@@ -1,6 +1,6 @@
 import '@/styles/main.css'
 import { describe, test, expect } from 'vite-plus/test'
-import { shallowMount, mount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import MemberPolaroid from '@/components/member/member-polaroid.vue'
 
@@ -128,5 +128,26 @@ describe('MemberPolaroid', () => {
     expect(photo_rect.height).toBe(container_rect.height)
 
     wrapper.unmount()
+  })
+
+  // ── photo slot [obligation] ────────────────────────────────────────────────
+  // The photo is a defaulted slot so a skeleton can borrow the frame's real
+  // geometry — every existing caller that never fills it still needs its
+  // avatar-image fallback, and a caller that does fill it needs the fallback gone.
+
+  test('with no photo slot content, renders the avatar image inside the photo container [obligation]', () => {
+    const wrapper = mountPolaroid({ avatar: 'panda' })
+    const photo = wrapper.find('[data-testid="member-polaroid__photo"]')
+    expect(photo.find('[data-testid="avatar-image-stub"]').exists()).toBe(true)
+  })
+
+  test('photo slot content overrides the default avatar image [obligation]', () => {
+    const wrapper = mount(MemberPolaroid, {
+      slots: { photo: '<div data-testid="custom-photo">shimmer</div>' },
+      global: { stubs: { AvatarImage: AvatarImageStub } }
+    })
+    const photo = wrapper.find('[data-testid="member-polaroid__photo"]')
+    expect(photo.find('[data-testid="custom-photo"]').exists()).toBe(true)
+    expect(photo.find('[data-testid="avatar-image-stub"]').exists()).toBe(false)
   })
 })

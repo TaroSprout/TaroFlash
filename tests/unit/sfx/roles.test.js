@@ -60,4 +60,14 @@ describe('roleDef', () => {
   test('dialog.confirm is not a defined role — the file/card-saved cues replaced it [obligation]', () => {
     expect(Object.keys(ROLES)).not.toContain('dialog.confirm')
   })
+
+  // ── session.intro chime, restored after the role rename regression [obligation] ──
+
+  test('session.intro resolves to music_plink_chordyes [obligation]', () => {
+    expect(roleDef('session.intro').sound).toBe('music_plink_chordyes')
+  })
+
+  test('session.intro and nav.page-forward resolve to different sounds [obligation]', () => {
+    expect(roleDef('session.intro').sound).not.toBe(roleDef('nav.page-forward').sound)
+  })
 })

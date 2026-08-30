@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
-import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, ref } from 'vue'
+import { shallowMount, flushPromises } from '@vue/test-utils'
+import { defineComponent, h, ref, nextTick } from 'vue'
 import FeedbackBoard from '@/components/feedback/feedback-board.vue'
 import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.vue'
 
@@ -10,13 +10,15 @@ import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.v
 const mockItems = ref([])
 const mockStatus = ref('success')
 
-const { modalOpenMock, mockEmitSfx } = vi.hoisted(() => ({
+const { modalOpenMock, mockEmitSfx, mockRefetch, mockShake } = vi.hoisted(() => ({
   modalOpenMock: vi.fn(),
-  mockEmitSfx: vi.fn()
+  mockEmitSfx: vi.fn(),
+  mockRefetch: vi.fn(),
+  mockShake: vi.fn()
 }))
 
 vi.mock('@/api/feedback', () => ({
-  useFeedbackItemsQuery: () => ({ data: mockItems, status: mockStatus }),
+  useFeedbackItemsQuery: () => ({ data: mockItems, status: mockStatus, refetch: mockRefetch }),
   useToggleFeedbackVoteMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } }),
   useSubmitFeedbackMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } })
 }))
@@ -26,6 +28,8 @@ vi.mock('@/composables/modal', () => ({
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
+
+vi.mock('@/utils/animations/shake', () => ({ shake: mockShake }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -67,6 +71,9 @@ function mountBoard(close = vi.fn()) {
 beforeEach(() => {
   mockItems.value = []
   mockStatus.value = 'success'
+  mockRefetch.mockReset()
+  mockShake.mockReset()
+  mockEmitSfx.mockClear()
 })
 
 // ── Content ───────────────────────────────────────────────────────────────────
@@ -157,6 +164,19 @@ describe('FeedbackBoard — loading state [obligation]', () => {
     expect(wrapper.find('[data-testid="feedback-board__intro"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
   })
+
+  test('the submit button stays pressable while the query is pending [obligation]', async () => {
+    mockStatus.value = 'pending'
+    modalOpenMock.mockReset()
+    const { wrapper } = mountBoard()
+
+    await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
+
+    expect(modalOpenMock).toHaveBeenCalledWith(FeedbackSubmitDialog, {
+      backdrop: true,
+      mode: 'popup'
+    })
+  })
 })
 
 // ── Fixed geometry [obligation] ───────────────────────────────────────────────
@@ -225,5 +245,174 @@ describe('FeedbackBoard — submit dialog wiring [obligation]', () => {
     const { wrapper } = mountBoard()
     await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
+  })
+})
+
+// ── Error state [obligation] ─────────────────────────────────────────────────
+// The query is mocked wholesale, so the initial pending→error transition is
+// driven the same way the pending→success one already is above: by mutating
+// the mocked status ref and letting the component's own watcher react to it.
+
+describe('FeedbackBoard — error state [obligation]', () => {
+  test('renders the error node and plays notice.error on the initial fetch failure [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+
+    mockStatus.value = 'error'
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="feedback-board__error"]').exists()).toBe(true)
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+  })
+
+  test('retry wires to refetch and swaps the error node for the card list on success [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+    mockStatus.value = 'error'
+    await nextTick()
+
+    mockRefetch.mockImplementation(() => {
+      mockItems.value = [{ id: 1 }]
+      mockStatus.value = 'success'
+    })
+
+    await wrapper.find('[data-testid="feedback-board__retry-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockRefetch).toHaveBeenCalledOnce()
+    expect(wrapper.find('[data-testid="feedback-board__error"]').exists()).toBe(false)
+    expect(wrapper.findAllComponents(FeedbackCardStub)).toHaveLength(1)
+  })
+
+  // The query layer holds `status` at 'error' across a repeat failure, so the
+  // component's `watch(status, ...)` never re-fires for this case — `onRetry`
+  // checks `was_already_error` directly against the pre-refetch value instead
+  // of relying on the watcher. →[K:query-status-holds-through-repeat-failure]
+  test('retry that fails again shakes the error message and plays ui.rejected, without changing the message text [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+    mockStatus.value = 'error'
+    await nextTick()
+
+    const messageBefore = wrapper.find('[data-testid="feedback-board__error-message"]').text()
+    mockEmitSfx.mockClear()
+
+    mockRefetch.mockImplementation(() => {
+      mockStatus.value = 'error'
+    })
+
+    await wrapper.find('[data-testid="feedback-board__retry-button"]').trigger('click')
+    await flushPromises()
+
+    // The tap press cue and the repeat-failure rejection are two distinct
+    // events at two distinct phases — both are expected on this one press.
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
+    expect(mockShake).toHaveBeenCalledOnce()
+    expect(wrapper.find('[data-testid="feedback-board__error-message"]').text()).toBe(messageBefore)
+  })
+
+  test('pressing the retry button plays the default press cue [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+    mockStatus.value = 'error'
+    await nextTick()
+
+    mockRefetch.mockImplementation(() => {
+      mockStatus.value = 'success'
+      mockItems.value = [{ id: 1 }]
+    })
+
+    await wrapper.find('[data-testid="feedback-board__retry-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
+  })
+
+  // `was_already_error` is read once, before the refetch, so a failure that
+  // follows an intervening success is a genuine 'success' -> 'error'
+  // transition — the watcher fires and plays the first-failure cue, not the
+  // repeat one.
+  test('a failure -> success -> failure sequence replays the first-failure cue, not the repeat one [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+    mockStatus.value = 'error'
+    await nextTick()
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+
+    mockRefetch.mockImplementation(() => {
+      mockStatus.value = 'success'
+    })
+    await wrapper.find('[data-testid="feedback-board__retry-button"]').trigger('click')
+    await flushPromises()
+
+    mockEmitSfx.mockClear()
+    mockRefetch.mockImplementation(() => {
+      mockStatus.value = 'error'
+    })
+    // Second failure comes from 'success', a genuine value change, so the
+    // watcher does fire here — unlike the same-value 'error' -> 'error' case above.
+    mockStatus.value = 'error'
+    await nextTick()
+
+    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+    expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.rejected')
+  })
+
+  test('title, intro, and submit button stay available while the board is in the error state [obligation]', async () => {
+    mockStatus.value = 'pending'
+    const { wrapper } = mountBoard()
+    mockStatus.value = 'error'
+    await nextTick()
+
+    expect(wrapper.findComponent(AppWindow).props('title')).toBe('Feedback')
+    expect(wrapper.find('[data-testid="feedback-board__intro"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
+  })
+})
+
+// ── Empty state [obligation] ─────────────────────────────────────────────────
+
+describe('FeedbackBoard — empty state [obligation]', () => {
+  test('renders the empty state when the query resolves to an empty list, distinct from the error state [obligation]', () => {
+    mockStatus.value = 'success'
+    mockItems.value = []
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.find('[data-testid="feedback-board__empty"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-board__error"]').exists()).toBe(false)
+  })
+
+  test('renders the empty state when items is undefined rather than an empty array [obligation]', () => {
+    mockStatus.value = 'success'
+    mockItems.value = undefined
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.find('[data-testid="feedback-board__empty"]').exists()).toBe(true)
+    expect(wrapper.findAllComponents(FeedbackCardStub)).toHaveLength(0)
+  })
+
+  test('title, intro, and submit button stay available while the board is empty [obligation]', () => {
+    mockStatus.value = 'success'
+    mockItems.value = []
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.findComponent(AppWindow).props('title')).toBe('Feedback')
+    expect(wrapper.find('[data-testid="feedback-board__intro"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
+  })
+})
+
+// ── Populated state [obligation] ─────────────────────────────────────────────
+
+describe('FeedbackBoard — populated state [obligation]', () => {
+  test('title, intro, and submit button stay available while the board shows cards [obligation]', () => {
+    mockStatus.value = 'success'
+    mockItems.value = [{ id: 1 }]
+    const { wrapper } = mountBoard()
+
+    expect(wrapper.findComponent(AppWindow).props('title')).toBe('Feedback')
+    expect(wrapper.find('[data-testid="feedback-board__intro"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
   })
 })

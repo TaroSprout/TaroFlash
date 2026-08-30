@@ -65,6 +65,17 @@ deck's cards." The answer is filed under that name.
 Ask twice and the second ask is instant: the cache already has it. That's the
 whole point of the copy.
 
+> [!HAZARD] [K:query-status-holds-through-repeat-failure] **A refetch that fails again does not move `status` — it was already `'error'` and stays `'error'`, so a `watch(status, …)` never fires for the repeat.**
+> `status` names which of three states the data is in — loading, error, or
+> success — and a watcher naturally reads it as "tell me when a fetch fails."
+> That holds for the _first_ failure, the one that changes `status` into
+> `'error'`. It quietly stops holding for every failure after: the refetch runs,
+> fails the same way, and `status` was already `'error'` and simply stays there,
+> so nothing about it changed and the watcher never runs. Only `asyncStatus`
+> (idle/loading) moves on a repeat failure — a caller that needs to react to
+> every failed retry, not just the first, has to compare `status` before and
+> after awaiting the refetch itself, not watch it.
+
 The name is also the handle a write uses later to say "throw that one out." So the
 names aren't decoration — they're the vocabulary the two jobs use to talk about
 the same data.
