@@ -21,7 +21,10 @@ const { count = 4 } = defineProps<FeedbackSkeletonProps>()
       class="absolute top-2 left-0 z-10"
     >
       <template #photo>
-        <div class="bg-skeleton shimmer relative h-full w-full"></div>
+        <div
+          data-testid="feedback-skeleton__photo"
+          class="bg-skeleton shimmer relative h-full w-full"
+        ></div>
       </template>
     </member-polaroid>
 

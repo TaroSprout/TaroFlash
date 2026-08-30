@@ -15,7 +15,7 @@ onUnmounted(() => (document.documentElement.style.overflow = ''))
 </script>
 
 <template>
-  <div data-testid="dashboard-skeleton" class="w-full">
+  <div data-testid="dashboard-skeleton" class="w-full min-h-[calc(100dvh-var(--nav-height))]">
     <dashboard-shell>
       <template #left>
         <dashboard-actions-panel-skeleton />
