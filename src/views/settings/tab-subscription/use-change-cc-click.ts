@@ -41,26 +41,25 @@ export function useChangeCcClick() {
     }).response
 
     if (!response?.added) return
+    if (!response.paymentMethodId) return
 
-    if (response.paymentMethodId) {
+    try {
+      await set_default_mutation.mutateAsync(response.paymentMethodId)
+    } catch {
+      notice.error(t('settings.subscription.payment-methods.set-default-error'), {
+        variant: 'panel'
+      })
+      return
+    }
+
+    const stale_ids = old_ids.filter((id) => id !== response.paymentMethodId)
+    for (const id of stale_ids) {
       try {
-        await set_default_mutation.mutateAsync(response.paymentMethodId)
+        await detach_mutation.mutateAsync(id)
       } catch {
-        notice.error(t('settings.subscription.payment-methods.set-default-error'), {
+        notice.error(t('settings.subscription.payment-methods.detach-error'), {
           variant: 'panel'
         })
-        return
-      }
-
-      const stale_ids = old_ids.filter((id) => id !== response.paymentMethodId)
-      for (const id of stale_ids) {
-        try {
-          await detach_mutation.mutateAsync(id)
-        } catch {
-          notice.error(t('settings.subscription.payment-methods.detach-error'), {
-            variant: 'panel'
-          })
-        }
       }
     }
   }

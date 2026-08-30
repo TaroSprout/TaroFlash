@@ -42,6 +42,10 @@ export interface TapCallOptions {
  * - preAudio  — coarse only, fires at press before animation (arm/haptic cue)
  * - audio     — all pointers; fires immediately on fine, at the action phase on coarse
  */
+function playTapAudio(tapOpts: TapCallOptions) {
+  if (tapOpts.audio) emitSfx(tapOpts.audio)
+}
+
 export function useStagedTap(options: StagedTapOptions = {}) {
   const {
     animate = 'quiet',
@@ -65,7 +69,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
       tapOpts.onTap?.(e)
 
       if (activeOn === 'coarse-only' && !is_coarse.value) {
-        if (tapOpts.audio) emitSfx(tapOpts.audio)
+        playTapAudio(tapOpts)
         action?.(e)
         return
       }
@@ -75,7 +79,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       if (tapOpts.preAudio) emitSfx(tapOpts.preAudio)
       if (phase === 'press') {
-        if (tapOpts.audio) emitSfx(tapOpts.audio)
+        playTapAudio(tapOpts)
         action?.(e)
       }
 
@@ -86,7 +90,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
         const { peak, done } = playButtonTap(target, duration, { yoyo, hold })
         await peak
         if (phase === 'peak') {
-          if (tapOpts.audio) emitSfx(tapOpts.audio)
+          playTapAudio(tapOpts)
           action?.(e)
         }
         await done
@@ -94,7 +98,7 @@ export function useStagedTap(options: StagedTapOptions = {}) {
       } else {
         await new Promise<void>((resolve) => setTimeout(resolve, duration * 1000))
         if (phase !== 'press') {
-          if (tapOpts.audio) emitSfx(tapOpts.audio)
+          playTapAudio(tapOpts)
           action?.(e)
         }
       }

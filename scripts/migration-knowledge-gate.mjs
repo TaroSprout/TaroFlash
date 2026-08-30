@@ -133,17 +133,17 @@ export function checkMigration(root, path, knowledgeFiles) {
   }
 
   for (const claim of claims.filter((one) => !unknown.includes(one.name))) {
-    if (claim.verdict === UNRECORDED) {
-      const mention = mentionedIn(root, knowledgeFiles, claim.name)
-      if (mention) {
-        errors.push(
-          `${at} — \`${claim.name}\` is called ${UNRECORDED}, but ${mention} describes it; cite that file and amend it where this change makes it false`
-        )
-      }
+    if (claim.verdict !== UNRECORDED && knowledgeFiles.includes(claim.verdict)) continue
+    if (claim.verdict !== UNRECORDED) {
+      errors.push(`${at} — \`${claim.verdict}\` is not a knowledge file in this repo`)
       continue
     }
-    if (!knowledgeFiles.includes(claim.verdict)) {
-      errors.push(`${at} — \`${claim.verdict}\` is not a knowledge file in this repo`)
+
+    const mention = mentionedIn(root, knowledgeFiles, claim.name)
+    if (mention) {
+      errors.push(
+        `${at} — \`${claim.name}\` is called ${UNRECORDED}, but ${mention} describes it; cite that file and amend it where this change makes it false`
+      )
     }
   }
 

@@ -195,4 +195,17 @@ describe('useChangeCcClick — mutation flow [obligation]', () => {
     expect(setDefaultMutateMock).not.toHaveBeenCalled()
     expect(detachMutateMock).not.toHaveBeenCalled()
   })
+
+  test('does not call any mutation when added is true but paymentMethodId is missing [obligation]', async () => {
+    queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
+    modalOpenMock.mockReturnValue({
+      response: Promise.resolve({ added: true, paymentMethodId: null })
+    })
+    const { onChangeCardClick } = withSetup(() => useChangeCcClick())
+
+    await onChangeCardClick()
+
+    expect(setDefaultMutateMock).not.toHaveBeenCalled()
+    expect(detachMutateMock).not.toHaveBeenCalled()
+  })
 })

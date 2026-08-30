@@ -98,11 +98,11 @@ export const useSessionStore = defineStore('sessionStore', () => {
     startLoading()
 
     try {
-      if (!authenticated.value) {
-        const session = await getSession()
-        user.value = session?.user
-        if (authenticated.value) await refreshHasPassword()
-      }
+      if (authenticated.value) return authenticated.value
+
+      const session = await getSession()
+      user.value = session?.user
+      if (authenticated.value) await refreshHasPassword()
 
       return authenticated.value
     } catch (e: any) {

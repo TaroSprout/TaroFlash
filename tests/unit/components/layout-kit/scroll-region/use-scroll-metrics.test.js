@@ -68,6 +68,9 @@ class FakeResizeObserver {
   observe(el) {
     this.observed.push(el)
   }
+  unobserve(el) {
+    this.observed = this.observed.filter((o) => o !== el)
+  }
   disconnect() {
     this.disconnected = true
   }
@@ -184,6 +187,30 @@ describe('useScrollMetrics — measurement', () => {
     unmount = setup.unmount
 
     expect(setup.result.progress.value).toBe(0)
+  })
+})
+
+// ── Tracking children added/removed from the observed element ──────────────────
+
+describe('useScrollMetrics — trackChildren [obligation]', () => {
+  test('observes an element added to the DOM and unobserves one removed, ignoring non-element nodes', async () => {
+    const el = makeElement({ clientHeight: 100, scrollHeight: 300 })
+    const target = ref(el)
+    const setup = await withSetup(() => useScrollMetrics(target))
+    unmount = setup.unmount
+
+    const resize_obs = resize_instances[0]
+    const mutation_obs = mutation_instances[0]
+    const added = document.createElement('div')
+    const removed = document.createElement('div')
+    const text_node = document.createTextNode('not an element')
+
+    mutation_obs.callback([
+      { addedNodes: [added, text_node], removedNodes: [] },
+      { addedNodes: [], removedNodes: [removed, text_node] }
+    ])
+
+    expect(resize_obs.observed).toContain(added)
   })
 })
 
