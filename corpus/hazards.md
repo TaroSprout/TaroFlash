@@ -26,6 +26,8 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:client-owns-the-schedule]                   | [[scheduling]]         | `src/views/study-session/`                                                                                               |
 | →[K:silent-stale-cache]                         | [[data-flow]]          | `src/api/reviews/mutations/`                                                                                             |
 | →[K:postgrest-max-rows-truncates-silently]      | [[data-flow]]          | `src/api/**`                                                                                                             |
+| →[K:query-status-holds-through-repeat-failure]  | [[data-flow]]          | `src/components/feedback/feedback-board.vue`                                                                             |
+| →[K:shared-cache-entry-options-last-mount-wins] | [[data-flow]]          | `src/api/decks/queries/count.ts`                                                                                         |
 | →[K:pin-is-presence-not-difference]             | [[pacing]]             | `src/api/review-pacing/`                                                                                                 |
 | →[K:closed-color-set-fails-bare]                | [[theming]]            | `src/utils/palette/`                                                                                                     |
 | →[K:public-is-read-only]                        | [[decks]]              | `src/api/decks/`                                                                                                         |
@@ -39,7 +41,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:ios-audio-interruption]                     | [[sound]]              | `src/sfx/`                                                                                                               |
 | →[K:dock-height-single-owner]                   | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
 | →[K:dock-edge-inset-follows-flush]              | [[mobile-dock]]        | `src/components/mobile-dock/mobile-dock-host.vue`                                                                        |
-| →[K:fixed-roles-skip-the-station]               | [[surface-stations]]   | `src/styles/main.css`                                                                                                    |
+| →[K:fixed-roles-skip-the-station]               | [[surface-stations]]   | `src/styles/main.css`, `src/components/card/index.vue`                                                                   |
 | →[K:station-roles-can-collide]                  | [[surface-stations]]   | `src/styles/stations.css`, `src/components/ui-kit/options-panel/index.vue`                                               |
 | →[K:app-window-fills-full-width]                | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |
 | →[K:docked-app-window-drops-body-scroll]        | [[layout-kit]]         | `src/components/layout-kit/app-window/`                                                                                  |

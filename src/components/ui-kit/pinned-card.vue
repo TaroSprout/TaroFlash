@@ -3,9 +3,12 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 
 type UiPinnedCardProps = {
   tucked?: boolean
+  // Opt-in: swings the card toward upright on hover, pivoting at the clip.
+  // Off by default so member settings and the splash preview stay static.
+  hover_lift?: boolean
 }
 
-const { tucked = false } = defineProps<UiPinnedCardProps>()
+const { tucked = false, hover_lift = false } = defineProps<UiPinnedCardProps>()
 
 defineSlots<{
   backdrop(): any
@@ -14,7 +17,12 @@ defineSlots<{
 </script>
 
 <template>
-  <div data-testid="ui-pinned-card" class="relative">
+  <div
+    data-testid="ui-pinned-card"
+    class="relative"
+    :class="hover_lift && 'group/pinned-card'"
+    v-sfx="hover_lift ? { hover: 'ui.hover' } : undefined"
+  >
     <slot name="backdrop"></slot>
 
     <div
@@ -27,7 +35,23 @@ defineSlots<{
     </div>
 
     <div data-testid="ui-pinned-card__card" class="rotate-4 drop-shadow-sm">
-      <slot></slot>
+      <!-- The swing is a nested rotation so the clip pivot can be set at rest as well as on
+           hover: transform-origin isn't animatable, so an origin that only appears on hover
+           relocates the card in one frame before the rotation starts. The outer rotate-4 keeps
+           its own default origin, so the tuned resting position is untouched.
+           The pivot is the paperclip's own centre, tracked from how the clip above is placed:
+           its box sits right-15 (60px) in from this edge, and -translate-x-1/2 on a w-16 icon
+           puts that box's centre a further 64px left, so 124px from the right edge, level with
+           the card's top. -->
+      <div
+        data-testid="ui-pinned-card__swing"
+        :class="
+          hover_lift &&
+          'origin-[calc(100%_-_124px)_0px] transition-transform duration-150 ease-out group-hover/pinned-card:-rotate-2'
+        "
+      >
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>

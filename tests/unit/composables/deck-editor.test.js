@@ -42,14 +42,14 @@ const { mockCoverCommit, mockCoverDiscardStaged } = vi.hoisted(() => ({
   mockCoverDiscardStaged: vi.fn()
 }))
 
-// useCardsInDeckInfiniteQuery is called inside useDeckEditor to power the
-// design preview. Stub it so unit tests don't need Pinia Colada / getActivePinia.
-const { mockCardsInDeckInfiniteQuery } = vi.hoisted(() => ({
-  mockCardsInDeckInfiniteQuery: vi.fn(() => ({ data: { value: undefined } }))
+// useFirstCardInDeckQuery is called inside useDeckEditor to power the design
+// preview. Stub it so unit tests don't need Pinia Colada / getActivePinia.
+const { mockFirstCardInDeckQuery } = vi.hoisted(() => ({
+  mockFirstCardInDeckQuery: vi.fn(() => ({ data: { value: undefined } }))
 }))
 
 vi.mock('@/api/cards', () => ({
-  useCardsInDeckInfiniteQuery: mockCardsInDeckInfiniteQuery
+  useFirstCardInDeckQuery: mockFirstCardInDeckQuery
 }))
 
 vi.mock('@/api/decks', () => ({
@@ -65,10 +65,16 @@ vi.mock('@/api/decks', () => ({
   })
 }))
 
+// Spied factory (not just the returned methods) so tests can assert
+// useDeckActions itself is never invoked for an existing deck — mounting it
+// mounts useCan() -> useMemberDeckCountQuery(), which an existing-deck edit
+// must never fire.
+const { mockUseDeckActions } = vi.hoisted(() => ({
+  mockUseDeckActions: vi.fn()
+}))
+
 vi.mock('@/composables/deck/actions', () => ({
-  useDeckActions: () => ({
-    createDeck: mockCreateDeck
-  })
+  useDeckActions: mockUseDeckActions
 }))
 
 vi.mock('@/composables/deck/cover-image', () => ({
@@ -136,6 +142,10 @@ describe('useDeckEditor', () => {
     mockUpsertMutateAsync.mockResolvedValue({ id: 1, title: 'Saved Deck' })
     mockCreateDeck.mockClear()
     mockCreateDeck.mockResolvedValue({ id: 99, title: 'Created Deck' })
+    mockUseDeckActions.mockClear()
+    mockUseDeckActions.mockReturnValue({ createDeck: mockCreateDeck })
+    mockFirstCardInDeckQuery.mockClear()
+    mockFirstCardInDeckQuery.mockReturnValue({ data: { value: undefined } })
     mockDeleteDeck.mockClear()
     mockResetReviews.mockClear()
     mockResetReviews.mockResolvedValue(undefined)
@@ -664,19 +674,49 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    // [obligation] regression: first_card used to read pages[0][0] directly —
-    // a page is now { cards, next_rank }, so the preview must read pages[0].cards[0]
-    test('reads the first card off pages[0].cards[0] under the { cards, next_rank } page shape [obligation]', () => {
-      mockCardsInDeckInfiniteQuery.mockReturnValueOnce({
-        data: {
-          value: {
-            pages: [{ cards: [{ front_text: 'Front A', back_text: 'Back A' }], next_rank: null }]
-          }
-        }
+    // [obligation] regression: first_card now reads useFirstCardInDeckQuery's
+    // flat array directly (data.value?.[0]), not the old infinite-query page
+    // shape (data.value.pages[0].cards[0]).
+    test('reads the first card off data.value[0] under the flat-array shape from useFirstCardInDeckQuery [obligation]', () => {
+      mockFirstCardInDeckQuery.mockReturnValueOnce({
+        data: { value: [{ front_text: 'Front A', back_text: 'Back A' }] }
       })
       const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
       expect(editor.preview_front_text.value).toBe('Front A')
       expect(editor.preview_back_text.value).toBe('Back A')
+      unmount()
+    })
+
+    test('an empty deck (query resolves to []) yields first_card undefined, so preview text is undefined too [obligation]', () => {
+      mockFirstCardInDeckQuery.mockReturnValueOnce({ data: { value: [] } })
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(editor.preview_front_text.value).toBeUndefined()
+      expect(editor.preview_back_text.value).toBeUndefined()
+      unmount()
+    })
+  })
+
+  // ── useDeckActions instantiation ────────────────────────────────────────────
+  // useDeckActions() mounts useCan() -> useMemberDeckCountQuery(); an existing
+  // deck's edit must never fire that request, so it's only instantiated when
+  // there's no deck id yet (the create path) [obligation].
+
+  describe('useDeckActions instantiation [obligation]', () => {
+    test('is NOT invoked when a deck with an id is passed [obligation]', () => {
+      const { unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(mockUseDeckActions).not.toHaveBeenCalled()
+      unmount()
+    })
+
+    test('IS invoked when no deck is passed [obligation]', () => {
+      const { unmount } = withDeckEditor()
+      expect(mockUseDeckActions).toHaveBeenCalledOnce()
+      unmount()
+    })
+
+    test('IS invoked when a deck with no id is passed [obligation]', () => {
+      const { unmount } = withDeckEditor(makeDeck({ id: undefined }))
+      expect(mockUseDeckActions).toHaveBeenCalledOnce()
       unmount()
     })
   })
