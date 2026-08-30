@@ -31,10 +31,27 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: ['dist/**', 'supabase/**'],
+    jsPlugins: ['./scripts/lint-rules/comment-authoring.js'],
     options: {
       typeAware: true,
       typeCheck: false
     },
+    overrides: [
+      {
+        // The same paths .claude/rules/comment-authoring.md governs; tests are the test-authoring rule's.
+        files: ['src/**', 'scripts/**', 'supabase/**/*.ts'],
+        rules: {
+          'comment-authoring/no-template-comment': 'error',
+          'comment-authoring/single-line-body-comment': 'error'
+        }
+      },
+      {
+        files: ['tests/**'],
+        rules: {
+          'comment-authoring/no-obligation-vocabulary': 'error'
+        }
+      }
+    ],
     rules: {
       'no-console': 'warn',
       'no-floating-promises': 'off',
