@@ -4,7 +4,8 @@ const POP_IN_DURATION = 0.2
 const POP_OUT_DURATION = 0.2
 
 /**
- * Pops a newly created deck into the grid.
+ * Pops a newly created item into an absolutely-positioned grid — the
+ * dashboard's deck grid, and the deck view's card grid.
  *
  * Pass the grid cell — the pop is applied one level in, because the cell is
  * already carrying its own placement. →[K:settled-transform-traps-overlays]
@@ -26,7 +27,7 @@ export function popDeckIn(el: Element, done: () => void) {
   )
 }
 
-/** Shrinks a removed deck away. Takes the grid cell, same as `popDeckIn`. */
+/** Shrinks a removed item away. Takes the grid cell, same as `popDeckIn`. */
 export function popDeckOut(el: Element, done: () => void) {
   gsap.to(el.firstElementChild ?? el, {
     scale: 0.5,
