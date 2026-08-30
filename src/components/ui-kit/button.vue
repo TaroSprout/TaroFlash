@@ -81,16 +81,12 @@ const tooltip_active = computed(() => iconOnly && !!slots.default)
 const has_trailing = computed(() => !!slots.trailing)
 
 function onClick(e: MouseEvent) {
-  // The trailing slot (e.g. a split-button caret) owns its own action — clicks
-  // there don't fire the primary press, and aren't blocked when only the primary
-  // action is disabled.
+  // The trailing slot owns its own action, so it fires even when the primary is disabled.
   if ((e.target as HTMLElement).closest?.('.btn-trailing')) return
 
   if (disabled) {
     if (sfx.rejected !== false) emitSfx(sfx.rejected ?? 'ui.rejected')
 
-    // clickWhenDisabled still surfaces the press (e.g. to flag a validation
-    // error); otherwise a disabled button emits nothing and blocks the default.
     if (clickWhenDisabled) emit('press', e)
     else e.preventDefault()
     return
@@ -101,9 +97,7 @@ function onClick(e: MouseEvent) {
     return
   }
 
-  // A button stays silent on press unless the call site names a role. Most
-  // already play their own cue from the handler behind @press, so a default
-  // here would sound twice on every one of them.
+  // No default press cue: handlers behind @press play their own, so one here would double.
   tap((ev) => emit('press', ev), {
     preAudio: sfx.tap_pre || undefined,
     audio: sfx.press || undefined
