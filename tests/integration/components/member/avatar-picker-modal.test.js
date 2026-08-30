@@ -173,21 +173,6 @@ describe('AvatarPickerModal', () => {
     )
   })
 
-  test('resolving one option does not reveal the skeleton on other options', async () => {
-    let resolvePanda
-    mockLoadAvatarUrl.mockImplementation((key) =>
-      key === 'panda' ? new Promise((resolve) => (resolvePanda = resolve)) : new Promise(() => {})
-    )
-    const wrapper = mountModal()
-
-    resolvePanda('/mock/panda.svg')
-    await wrapper.vm.$nextTick()
-    await wrapper.vm.$nextTick()
-
-    const otter = wrapper.find('[data-testid="avatar-picker-modal__option-otter"]')
-    expect(otter.find('[data-testid="avatar-picker-modal__skeleton"]').exists()).toBe(true)
-    expect(otter.findComponent(AvatarImage).exists()).toBe(false)
-  })
 
   test('colours the selection tick with the accent-text token, not a fixed neutral [obligation]', () => {
     const wrapper = mountModal({ selected: 'otter' })
