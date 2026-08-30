@@ -92,6 +92,8 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
   (→[K:build-unfinished-markers]).
 - The readable sentence is never optional. A pointer replaces the explanation, never the knowledge —
   someone skimming a diff gets the constraint without leaving the file.
+- **The citation is the last token in its comment block.** It trails the readable sentence; never a
+  further line, of any kind, beneath it.
 
 ## Spokes
 
