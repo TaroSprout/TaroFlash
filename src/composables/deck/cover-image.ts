@@ -6,6 +6,7 @@ import { useMemberStore } from '@/stores/member'
 import { emitSfx } from '@/sfx/bus'
 import { hashFile } from '@/utils/hash'
 import { bytesToMbLabel } from '@/utils/file-size'
+import { collapseFaceImage } from '@/utils/animations/face-image'
 
 // One-per-deck, so the cap is generous — still under the bucket's 10 MiB backstop.
 export const COVER_IMAGE_MAX_BYTES = 5 * 1024 * 1024
@@ -31,6 +32,9 @@ export function useCoverImage(
   const upload_mutation = useUploadImageMutation()
 
   const file_input = shallowRef<HTMLInputElement | null>(null)
+  // Bound by the rendered <img> (card-cover.vue), so onRemove has a handle to
+  // collapse before the image is cleared.
+  const image_el = shallowRef<HTMLImageElement | null>(null)
   // The picked File, held out of the draft (which is serialized on save) until
   // Save uploads it. Its objectURL lives in cover_config.image_path meanwhile.
   const staged_file = shallowRef<File | null>(null)
@@ -79,13 +83,21 @@ export function useCoverImage(
     emitSfx('file.accepted')
   }
 
-  /** Clear the cover image — drops any staged file and reverts to palette/pattern/icon. */
-  function onRemove() {
+  /**
+   * Clear the cover image — drops any staged file and reverts to
+   * palette/pattern/icon. The image scales down before it clears, and the
+   * trash sfx plays once the removal lands.
+   */
+  async function onRemove() {
     emitSfx('ui.press')
     clearError()
+
+    if (image_el.value) await collapseFaceImage(image_el.value)
+
     revokeStaged()
     staged_file.value = null
     delete toValue(cover).image_path
+    emitSfx('card.delete')
   }
 
   /** Open the file picker. No paid gate — a custom cover is free. */
@@ -161,6 +173,7 @@ export function useCoverImage(
   return {
     accept,
     file_input,
+    image_el,
     dragging,
     file_error,
     error_message,

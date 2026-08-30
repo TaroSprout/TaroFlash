@@ -4,6 +4,7 @@ import UiRadio from '@/components/ui-kit/radio.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
+import CardGridDeleteButton from './delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
 import { inject, ref, useTemplateRef, watch } from 'vue'
 import { usePressHold } from '@/composables/ui/press-hold'
@@ -95,7 +96,7 @@ watch(
       'pointer-fine:hover:scale-101': is_selecting,
       jiggle: rearranging && !dragging
     }"
-    v-sfx="{ hover: is_selecting || rearranging ? 'ui.hover' : undefined }"
+    v-sfx="{ hover: 'ui.hover' }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
     @pointerdown="onPointerdown"
@@ -131,6 +132,10 @@ watch(
       :options="menu_options"
       @select="onMenuSelect"
     />
+
+    <div v-if="rearranging" class="absolute -top-1 -right-1">
+      <card-grid-delete-button :card_id="card.id!" @pointerdown.stop />
+    </div>
   </div>
 </template>
 

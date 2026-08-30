@@ -1,8 +1,13 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+// The seam assertions below read real computed colours off a real Card, so the
+// app's stylesheet has to be present — without it every colour role resolves to
+// nothing and they pass vacuously.
+import '@/styles/main.css'
+
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
+import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
 
 import DeckPreview from '@/components/deck/deck-design-preview.vue'
 
@@ -150,5 +155,108 @@ describe('DeckPreview — cover_editing / cover_image pass-through', () => {
     const card = wrapper.findComponent({ name: 'Card' })
     expect(card.props('cover_editing')).toBe(false)
     expect(card.props('cover_image')).toBeUndefined()
+  })
+})
+
+// ── The card's top-left seam [obligation] ─────────────────────────────────────
+// The seam is the hairline that separates the preview card from the decorative
+// card stacked behind it. It regressed twice: first drawn in a surface-station
+// role that resolved to the same white as the card's own fill (invisible — the
+// two cards read as one shape), then over-corrected to the card's body-text ink
+// (a rule, not a hairline). It now comes from the card's own line role, which is
+// fixed across every station and mode, so these assertions run the preview
+// inside each station a deck-settings modal can inherit and in dark mode.
+
+const STATIONS = ['page', 'window', 'panel']
+
+function mountInStation({ station, dark } = {}) {
+  const host = document.createElement('div')
+  if (station) host.dataset.station = station
+  document.body.appendChild(host)
+  if (dark) document.documentElement.dataset.mode = 'dark'
+
+  const wrapper = mount(DeckPreview, {
+    props: { ...baseProps, side: 'front', front_text: 'seam' },
+    attachTo: host
+  })
+
+  return { wrapper, host }
+}
+
+// Resolve a colour role the same way the browser paints it, in the same DOM
+// context, so the comparison is between rendered colours rather than tokens.
+function roleColour(host, role) {
+  const probe = document.createElement('span')
+  probe.style.color = `var(${role})`
+  host.appendChild(probe)
+  const colour = getComputedStyle(probe).color
+  probe.remove()
+  return colour
+}
+
+describe('DeckPreview — the card seam is drawn in the card’s own line role [obligation]', () => {
+  const open = []
+
+  afterEach(() => {
+    while (open.length) {
+      const { wrapper, host } = open.pop()
+      wrapper.unmount()
+      host.remove()
+    }
+    delete document.documentElement.dataset.mode
+  })
+
+  function seam(options) {
+    const mounted = mountInStation(options)
+    open.push(mounted)
+    const face = mounted.wrapper.find('[data-testid="card-face__front"]').element
+    const style = getComputedStyle(face)
+    return {
+      top: { colour: style.borderTopColor, width: parseFloat(style.borderTopWidth) },
+      left: { colour: style.borderLeftColor, width: parseFloat(style.borderLeftWidth) },
+      right_width: parseFloat(style.borderRightWidth),
+      bottom_width: parseFloat(style.borderBottomWidth),
+      host: mounted.host
+    }
+  }
+
+  test('draws a hairline on the top and left edges only', () => {
+    const { top, left, right_width, bottom_width } = seam()
+
+    expect(top.width).toBeGreaterThan(0)
+    expect(left.width).toBeGreaterThan(0)
+    expect(right_width).toBe(0)
+    expect(bottom_width).toBe(0)
+  })
+
+  test('paints the seam in the card line role, never the card fill or its body ink', () => {
+    const { top, left, host } = seam()
+
+    expect(top.colour).toBe(roleColour(host, '--color-card-line'))
+    expect(left.colour).toBe(top.colour)
+    expect(top.colour).not.toBe(roleColour(host, '--color-card'))
+    expect(top.colour).not.toBe(roleColour(host, '--color-on-card'))
+  })
+
+  test.each(STATIONS)('stays visible against the card fill inside a %s station', (station) => {
+    const { top, host } = seam({ station })
+
+    expect(top.colour).toBe(roleColour(host, '--color-card-line'))
+    // The first regression: the seam borrowed a station role that resolved
+    // to the card's own fill, so the hairline was there but invisible.
+    expect(top.colour).not.toBe(roleColour(host, '--color-card'))
+  })
+
+  test.each(STATIONS)('keeps the same seam role in dark mode on a %s station', (station) => {
+    const { top, host } = seam({ station, dark: true })
+
+    expect(top.colour).toBe(roleColour(host, '--color-card-line'))
+    expect(top.colour).not.toBe(roleColour(host, '--color-card'))
+    expect(top.colour).not.toBe(roleColour(host, '--color-on-card'))
+  })
+
+  test('the seam role is station-independent — the same colour in every station', () => {
+    const colours = STATIONS.map((station) => seam({ station }).top.colour)
+    expect(new Set(colours).size).toBe(1)
   })
 })

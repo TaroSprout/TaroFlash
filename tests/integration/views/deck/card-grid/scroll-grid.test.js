@@ -86,6 +86,7 @@ import ScrollGrid from '@/views/deck/card-grid/scroll-grid.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 import { cardSearchKey } from '@/views/deck/composables/card-search'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
+import { GRID_REFLOW_DURATION } from '@/composables/ui/grid-reflow'
 
 function makeEditor({
   card_attributes = ref({ front: {}, back: {} }),
@@ -510,6 +511,100 @@ describe('card-grid/scroll-grid', () => {
   // not the engine's internals) — these tests invoke the captured option
   // getters directly so the real count/enabled/topInset/maxScroll/geometry
   // closures scroll-grid.vue builds are still exercised.
+
+  // ── reflow transition [obligation] ───────────────────────────────────────
+  // A delete leaves a gap the survivors slide into. The very first delete
+  // after a page load must slide exactly like every later one — the grid
+  // starting from an empty list (page still loading) must not itself count
+  // as that first edit.
+
+  describe('reflow transition [obligation]', () => {
+    function cards(n) {
+      return Array.from({ length: n }, (_, i) => ({
+        id: i + 1,
+        client_id: `c${i + 1}`,
+        front_text: `q${i + 1}`,
+        back_text: `a${i + 1}`
+      }))
+    }
+
+    test('does not animate the cards.length change that fills a still-loading grid', async () => {
+      const search = makeSearch({ displayed_cards: [] })
+      const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
+
+      search.displayed_cards.value = cards(3)
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="card-grid__item"]').classes()).not.toContain(
+        'transition-transform'
+      )
+    })
+
+    test('a grid mounted with cards already loaded animates its very first delete, not just later ones [obligation]', async () => {
+      // Regression: the deck already has cards by the time this grid mounts
+      // (e.g. a warm query cache) — the first delete must slide the survivors
+      // exactly like every later one, not jump.
+      const search = makeSearch({ displayed_cards: cards(3) })
+      const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
+
+      search.displayed_cards.value = cards(2)
+      await nextTick()
+
+      expect(wrapper.find('[data-testid="card-grid__item"]').classes()).toContain(
+        'transition-transform'
+      )
+    })
+
+    test('the first delete after that load slides the survivors, same as every later one [obligation]', async () => {
+      // Fake timers go in *before* the mount so the reflow window's own
+      // setTimeout is fake too — installing them later would leave the first
+      // window open on a real timer and make the second assertion vacuous.
+      vi.useFakeTimers()
+      try {
+        const search = makeSearch({ displayed_cards: [] })
+        const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
+
+        // The list arrives — no animation, per the test above.
+        search.displayed_cards.value = cards(3)
+        await nextTick()
+
+        // First delete of the session.
+        search.displayed_cards.value = cards(2)
+        await nextTick()
+        expect(wrapper.find('[data-testid="card-grid__item"]').classes()).toContain(
+          'transition-transform'
+        )
+
+        // Let that first window actually close, so the assertion below is
+        // about the *new* reflow the later delete opens, not the leftover one.
+        vi.advanceTimersByTime(GRID_REFLOW_DURATION)
+        await nextTick()
+        expect(wrapper.find('[data-testid="card-grid__item"]').classes()).not.toContain(
+          'transition-transform'
+        )
+
+        // A later delete, in the same session — must animate the same way.
+        search.displayed_cards.value = cards(1)
+        await nextTick()
+        expect(wrapper.find('[data-testid="card-grid__item"]').classes()).toContain(
+          'transition-transform'
+        )
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    test('does not animate a same-length reorder (drag-drop resort)', async () => {
+      const search = makeSearch({ displayed_cards: cards(2) })
+      const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
+
+      search.displayed_cards.value = [...cards(2)].reverse()
+      await nextTick()
+
+      const items = wrapper.findAll('[data-testid="card-grid__item"]')
+      expect(items.every((i) => !i.classes().includes('transition-transform'))).toBe(true)
+    })
+  })
 
   describe('useReorderDrag options passed by scroll-grid [obligation]', () => {
     test('count reflects the live displayed_cards length', () => {

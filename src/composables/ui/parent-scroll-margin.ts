@@ -1,7 +1,7 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 
-// Debounced so a resize burst (the mobile dock's live height, cascading from
-// --edge-safe-padding) settles after scroll stops, instead of measuring
+// Debounced so a resize burst (the mobile dock's live height, cascading from its
+// bottom edge allowance) settles after scroll stops, instead of measuring
 // scroll_margin from a window.scrollY snapshot that's still moving.
 const RESIZE_DEBOUNCE_MS = 120
 

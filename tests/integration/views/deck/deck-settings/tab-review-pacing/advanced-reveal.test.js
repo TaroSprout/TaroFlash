@@ -1,5 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+// The `?raw` suffix inlines the file as a string at build time.
+import advancedRevealSource from '@/views/deck/deck-settings/tab-review-pacing/advanced-reveal.vue?raw'
 
 const LOCAL_STORAGE_KEY = 'deck-settings-advanced-revealed'
 
@@ -152,5 +154,70 @@ describe('AdvancedReveal — structure', () => {
     expect(wrapper.find('[data-testid="advanced-reveal__badge-content"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="advanced-reveal__scrim"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="advanced-reveal__fields"]').exists()).toBe(true)
+  })
+})
+
+// ── badge reads as a notch into the window [obligation] ────────────────────────
+
+describe('AdvancedReveal — badge reads as a notch into the window [obligation]', () => {
+  test('badge carries data-station="window" [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
+    expect(badge.attributes('data-station')).toBe('window')
+  })
+
+  test('badge carries bg-surface and no longer carries bg-well [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
+    expect(badge.classes()).toContain('bg-surface')
+    expect(badge.classes()).not.toContain('bg-well')
+  })
+
+  test('badge classes hold the same shape whether revealed or not [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
+    expect(badge.classes()).toContain('bg-surface')
+
+    await wrapper.find('[data-testid="advanced-reveal__scrim"]').trigger('click')
+
+    expect(badge.classes()).toContain('bg-surface')
+    expect(badge.classes()).not.toContain('bg-well')
+  })
+
+  test('no raw colour value appears in the component source [obligation]', () => {
+    const rawColourPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|\b(?:bg|text)-\[[^\]]+\]/
+
+    expect(advancedRevealSource).not.toMatch(rawColourPattern)
+  })
+
+  test('badge content still renders the eye-close icon, the advanced-label text and text-ink-muted [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
+    const content = wrapper.find('[data-testid="advanced-reveal__badge-content"]')
+
+    expect(badge.classes()).toContain('text-ink-muted')
+    expect(content.exists()).toBe(true)
+    expect(content.find('[data-testid="ui-kit-icon"]').attributes('alt')).toBe('eye-close')
+    expect(content.text()).toContain('Advanced')
+  })
+
+  test('badge gained no hover, active or group-hover treatment [obligation]', () => {
+    const { wrapper } = makeWrapper()
+    const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
+
+    expect(badge.classes().some((c) => c.startsWith('hover:'))).toBe(false)
+    expect(badge.classes().some((c) => c.startsWith('active:'))).toBe(false)
+    expect(badge.classes().some((c) => c.startsWith('group-hover:'))).toBe(false)
+  })
+
+  test("badge's :class binding still only toggles pointer-events-none on the not-revealed state [obligation]", async () => {
+    const { wrapper } = makeWrapper()
+    const badge = wrapper.find('[data-testid="advanced-reveal__badge"]')
+
+    expect(badge.classes()).toContain('pointer-events-none')
+
+    await wrapper.find('[data-testid="advanced-reveal__scrim"]').trigger('click')
+
+    expect(badge.classes()).not.toContain('pointer-events-none')
   })
 })

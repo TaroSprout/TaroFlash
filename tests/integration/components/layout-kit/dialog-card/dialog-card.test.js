@@ -487,30 +487,33 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── --content-grid-max-width mobile cap [obligation] ────────────────────────
-  // On mobile the content column is capped to 100% instead of resolving to the
-  // (larger) desktop size-based default or a caller override — otherwise a
-  // phone narrower than the size max-width still renders content flush against
-  // the edge.
+  // ── --content-grid-max-width holds on mobile [obligation] ───────────────────
+  // The content column keeps its configured max width on mobile instead of
+  // collapsing to 100% — the content-grid CSS's own
+  // `min(100% - padding*2, max-width)` clamp already keeps narrow viewports
+  // from being over-constrained, so the component just hands down a fixed
+  // width unconditionally.
 
-  describe('--content-grid-max-width mobile cap [obligation]', () => {
-    test('resolves to 100% on mobile regardless of size', () => {
+  describe('--content-grid-max-width holds on mobile [obligation]', () => {
+    test('resolves to the size default on mobile, not 100% [obligation]', () => {
       matchState.value = true
       const wrapper = mountCard({ size: 'lg' })
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
-        '--content-grid-max-width: 100%'
-      )
+      const style = wrapper.find('[data-testid="dialog-card"]').attributes('style')
+
+      expect(style).toContain('--content-grid-max-width: 37rem')
+      expect(style).not.toContain('--content-grid-max-width: 100%')
     })
 
-    test('resolves to 100% on mobile even when content_max_width is explicitly set', () => {
+    test('an explicit content_max_width still wins on mobile [obligation]', () => {
       matchState.value = true
       const wrapper = mountCard({ content_max_width: '50rem' })
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
-        '--content-grid-max-width: 100%'
-      )
+      const style = wrapper.find('[data-testid="dialog-card"]').attributes('style')
+
+      expect(style).toContain('--content-grid-max-width: 50rem')
+      expect(style).not.toContain('--content-grid-max-width: 100%')
     })
 
-    test('falls back to the size default on desktop (not 100%)', () => {
+    test('resolves to the same size default on desktop as on mobile [obligation]', () => {
       matchState.value = false
       const wrapper = mountCard({ size: 'lg' })
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
@@ -524,6 +527,62 @@ describe('DialogCard', () => {
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
         '--content-grid-max-width: 50rem'
       )
+    })
+
+    test.each([
+      ['sm', '25rem'],
+      ['md', '32.5rem'],
+      ['lg', '37rem']
+    ])(
+      'size="%s" hands down the fixed width %s, not a percentage, on mobile [obligation]',
+      (size, expected_width) => {
+        matchState.value = true
+        const wrapper = mountCard({ size })
+        const style = wrapper.find('[data-testid="dialog-card"]').attributes('style')
+
+        expect(style).toContain(`--content-grid-max-width: ${expected_width}`)
+        expect(style).not.toMatch(/--content-grid-max-width:\s*\d+%/)
+      }
+    )
+  })
+
+  // ── --content-grid-breakout-max-width is unaffected by viewport [obligation]
+
+  describe('--content-grid-breakout-max-width unaffected by viewport [obligation]', () => {
+    test('resolves to the same value on mobile and desktop for a given size [obligation]', () => {
+      matchState.value = true
+      const mobile = mountCard({ size: 'lg' })
+      const mobile_style = mobile.find('[data-testid="dialog-card"]').attributes('style')
+
+      matchState.value = false
+      const desktop = mountCard({ size: 'lg' })
+      const desktop_style = desktop.find('[data-testid="dialog-card"]').attributes('style')
+
+      expect(mobile_style).toContain('--content-grid-breakout-max-width: 40rem')
+      expect(desktop_style).toContain('--content-grid-breakout-max-width: 40rem')
+    })
+  })
+
+  // ── mobile-variant trigger unchanged [obligation] ───────────────────────────
+  // The fix only dropped the mobile branch on --content-grid-max-width — the
+  // viewport computation itself, and everything else that keys off it (the
+  // exposed `viewport`, the mobile sizing classes), still work the same way.
+
+  describe('mobile-variant trigger unchanged [obligation]', () => {
+    test('viewport is still driven by the resolved matchMedia query [obligation]', () => {
+      matchState.value = true
+      const wrapper = mountCard({ full_bleed_at: 'w<sm' })
+      expect(wrapper.vm.viewport).toBe('mobile')
+    })
+
+    test('mobile sizing classes (h-full!/w-full!/rounded-none!) still key off the same viewport [obligation]', () => {
+      matchState.value = true
+      const wrapper = mountCard()
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('h-full!')
+      expect(classes).toContain('w-full!')
+      expect(classes).toContain('rounded-none!')
     })
   })
 

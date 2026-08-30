@@ -24,8 +24,11 @@ onMounted(() => {
       class="flex w-full max-w-(--page-width) items-center max-sm:justify-center gap-4 sm:px-(--page-px) relative"
     >
       <back-button class="absolute! left-4" />
-      <div class="flex items-center gap-1 text-4xl text-(--color-on-accent)">
-        <ui-icon src="logo" class="h-9" />
+      <div
+        data-testid="nav-bar__logo-lockup"
+        class="flex items-center gap-1 min-h-9 text-3xl sm:text-4xl text-(--color-on-accent)"
+      >
+        <ui-icon src="logo" class="h-8 sm:h-9" />
         <div>{{ t('app.title') }}</div>
       </div>
     </div>

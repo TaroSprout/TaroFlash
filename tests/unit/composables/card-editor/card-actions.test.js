@@ -9,6 +9,11 @@ const { modalOpenMock, alertWarnMock, emitSfxMock, mockT } = vi.hoisted(() => ({
   mockT: vi.fn((key) => key)
 }))
 
+const { mockPopDeckIn, mockPopDeckOut } = vi.hoisted(() => ({
+  mockPopDeckIn: vi.fn((_el, done) => done?.()),
+  mockPopDeckOut: vi.fn((_el, done) => done?.())
+}))
+
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
@@ -29,6 +34,10 @@ vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/api/cards', () => ({ useAllCardsInDeckQuery: mockUseAllCardsInDeckQuery }))
 vi.mock('@/utils/download', () => ({ downloadTextFile: mockDownloadTextFile }))
+vi.mock('@/utils/animations/deck-grid', () => ({
+  popDeckIn: mockPopDeckIn,
+  popDeckOut: mockPopDeckOut
+}))
 vi.mock('@/utils/card/csv', () => ({
   cardsToCsv: mockCardsToCsv,
   deckExportFilename: (title) => `${title ?? 'deck'}.csv`
@@ -142,6 +151,8 @@ describe('useCardActions', () => {
     mockDownloadTextFile.mockReset()
     mockCardsToCsv.mockReset().mockReturnValue('csv-body')
     mockUseAllCardsInDeckQuery.mockReset()
+    mockPopDeckIn.mockClear()
+    mockPopDeckOut.mockClear()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -258,6 +269,74 @@ describe('useCardActions', () => {
       expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
       expect(selection.exitSelection).not.toHaveBeenCalled()
       expect(deck_query.refetch).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── onDeleteCardImmediate ─────────────────────────────────────────────────
+  // The grid's reorder-mode corner button: no confirm alert, fires the delete
+  // cue directly. [obligation]
+
+  describe('onDeleteCardImmediate [obligation]', () => {
+    test('fires the card.delete sfx directly, without going through confirmDelete', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
+
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
+
+      expect(emitSfxMock).toHaveBeenCalledWith('card.delete')
+      expect(alertWarnMock).not.toHaveBeenCalled()
+      expect(mutations.deleteCards).toHaveBeenCalledOnce()
+    })
+
+    test('calls mutations.deleteCards with the card in the cards array', async () => {
+      const persisted = [makeCard({ id: 5 })]
+      const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
+
+      await actions.onDeleteCardImmediate(5, document.createElement('div'))
+
+      const [args] = mutations.deleteCards.mock.calls[0]
+      expect(args.cards.map((c) => c.id)).toEqual([5])
+    })
+
+    test('retires the card temp entry before the mutation and runs afterDelete on success', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const list = makeList({ persisted })
+      const retireTempsSpy = vi.spyOn(list, 'retireTemps')
+      const { actions, mutations, selection, deck_query } = makeActions({ list })
+
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
+
+      expect(retireTempsSpy).toHaveBeenCalledWith([1])
+      expect(mutations.deleteCards).toHaveBeenCalledOnce()
+      expect(selection.exitSelection).toHaveBeenCalledOnce()
+      expect(deck_query.refetch).toHaveBeenCalledOnce()
+    })
+
+    test('restores the retired temp entry and shows an error notice when the mutation rejects', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const temp_entries = [{ index: 0, real_id: 1, card: { id: 1 } }]
+      const mutations = makeMutations()
+      mutations.deleteCards.mockRejectedValueOnce(new Error('boom'))
+      const list = makeList({ persisted, temp_entries })
+      const restoreTempsSpy = vi.spyOn(list, 'restoreTemps')
+      const { actions, selection, deck_query } = makeActions({ list, mutations })
+
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
+
+      expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
+      expect(restoreTempsSpy).toHaveBeenCalledOnce()
+      expect(list.temp_entries.value).toEqual(temp_entries)
+      expect(selection.exitSelection).not.toHaveBeenCalled()
+      expect(deck_query.refetch).not.toHaveBeenCalled()
+    })
+
+    test('is a no-op when the card is not found', async () => {
+      const { actions, mutations } = makeActions({ list: makeList({ persisted: [] }) })
+
+      await actions.onDeleteCardImmediate(999, document.createElement('div'))
+
+      expect(mutations.deleteCards).not.toHaveBeenCalled()
+      expect(emitSfxMock).not.toHaveBeenCalledWith('card.delete')
     })
   })
 

@@ -15,7 +15,7 @@ vi.mock('@/sfx/bus', () => ({
 
 const PinnedPreviewStub = defineComponent({
   name: 'PinnedPreview',
-  props: ['cover', 'card_attributes', 'side'],
+  props: ['cover', 'card_attributes', 'side', 'hover_lift'],
   emits: ['update:side'],
   setup(props, { emit }) {
     return () =>
@@ -68,6 +68,14 @@ describe('SplashPreview', () => {
   test('preview starts on the cover side', () => {
     const wrapper = mountSplashPreview()
     expect(wrapper.find('[data-testid="pinned-preview"]').attributes('data-side')).toBe('cover')
+  })
+
+  // [obligation] The splash preview never opts into the hover lift — only
+  // deck-settings does — so it must stay static.
+  test('never passes hover_lift to the pinned preview [obligation]', () => {
+    const wrapper = mountSplashPreview()
+    const preview = wrapper.findComponent({ name: 'PinnedPreview' })
+    expect(preview.props('hover_lift')).toBeFalsy()
   })
 
   // ── flipPreviewSide [obligation] ───────────────────────────────────────────

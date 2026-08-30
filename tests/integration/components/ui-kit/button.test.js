@@ -424,17 +424,16 @@ describe('UiButton', () => {
     })
   })
 
-  // ── ghost variant — fancyHover overlay suppression [obligation] ───────────
+  // ── ghost variant — fancyHover overlay reveal [obligation] ────────────────
 
   describe('ghost variant', () => {
-    test('ghost button: fancyHover overlay does NOT get the group-hover/btn:block class [obligation]', () => {
-      // The diagonal-stripe overlay is gated by `variant !== 'ghost'`.
+    test('ghost button: overlay DOES get the group-hover/btn:block class [obligation]', () => {
+      // The diagonal-stripe overlay reveal condition is
+      // `!loading && !disabled && (variant === 'ghost' || fancyHover)` — ghost
+      // always sweeps on hover, independent of fancyHover.
       // Use mountButtonWithSlots to get actual rendered DOM (UiTooltipSlotStub
       // renders slot content so the inner divs are accessible).
-      const wrapper = mountButtonWithSlots(
-        { variant: 'ghost', fancyHover: true },
-        { default: 'Label' }
-      )
+      const wrapper = mountButtonWithSlots({ variant: 'ghost' }, { default: 'Label' })
 
       // Find the stripe overlay div — it's the absolutely-positioned one inside
       // the button content area. We assert via data-testid on the button root
@@ -442,13 +441,12 @@ describe('UiButton', () => {
       const button = wrapper.find('[data-testid="ui-kit-button"]')
       expect(button.exists()).toBe(true)
 
-      // The overlay is present in the DOM but must NOT carry the
-      // group-hover/btn:block class when variant=ghost (the class gating).
+      // The overlay must carry the group-hover/btn:block class for variant=ghost.
       // We assert at the source level: find the absolute inset div and confirm
-      // its outerHTML does NOT contain `group-hover/btn:block` and `group-data-[playing=true]/btn:block`.
+      // its outerHTML contains `group-hover/btn:block`.
       const html = button.html()
-      // The hover-stripe classes are only present when !loading && fancyHover && variant !== 'ghost'
-      expect(html).not.toContain('group-hover/btn:block')
+      // The hover-stripe classes are present when !loading && !disabled && (variant === 'ghost' || fancyHover)
+      expect(html).toContain('group-hover/btn:block')
     })
 
     test('non-ghost variant with fancyHover: overlay gets the group-hover/btn:block class [obligation]', () => {

@@ -2,14 +2,17 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitHoverSfx: vi.fn()
+}))
 const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
 const { pressHoldArmMock, pressHoldCancelMock } = vi.hoisted(() => ({
   pressHoldArmMock: vi.fn(),
   pressHoldCancelMock: vi.fn()
 }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: mockEmitHoverSfx }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
 vi.mock('@/composables/ui/press-hold', () => ({
   usePressHold: () => ({ arm: pressHoldArmMock, cancel: pressHoldCancelMock })
@@ -94,6 +97,7 @@ const UiDropdownButtonStub = defineComponent({
   }
 })
 
+import { vSfx } from '@/sfx/directive'
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
@@ -103,7 +107,8 @@ function makeEditor({ is_selecting = false } = {}) {
     actions: {
       onSelectCard: vi.fn(),
       onMoveCards: vi.fn(),
-      onDeleteCards: vi.fn()
+      onDeleteCards: vi.fn(),
+      onDeleteCardImmediate: vi.fn()
     },
     editCard: vi.fn(),
     selection: {
@@ -116,7 +121,13 @@ function makeMobileEditor() {
   return { open_at: vi.fn() }
 }
 
-function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } = {}) {
+function mountGridItem({
+  props = {},
+  editor,
+  mobile_editor,
+  is_mobile = false,
+  attachTo = document.body
+} = {}) {
   const ed = editor ?? makeEditor()
   const is_mobile_ref = ref(is_mobile)
   mockUseMatchMedia.mockReturnValue(is_mobile_ref)
@@ -130,9 +141,10 @@ function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } 
         selected: false,
         ...props
       },
-      attachTo: document.body,
+      attachTo,
       global: {
         provide,
+        directives: { sfx: vSfx },
         stubs: { Card: CardStub, UiRadio: UiRadioStub, UiDropdownButton: UiDropdownButtonStub }
       }
     }),
@@ -144,6 +156,7 @@ function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } 
 describe('GridItem (card-grid/grid-item.vue)', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockEmitHoverSfx.mockClear()
     mockUseMatchMedia.mockReturnValue(ref(false))
     pressHoldArmMock.mockClear()
     pressHoldCancelMock.mockClear()
@@ -473,6 +486,113 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
       })
 
       expect(pressHoldArmMock).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── v-sfx hover binding [obligation] ────────────────────────────────────
+
+  describe('v-sfx hover binding [obligation]', () => {
+    function hoverRoot(wrapper) {
+      wrapper
+        .find('[data-testid="grid-item"]')
+        .element.dispatchEvent(
+          new PointerEvent('pointerenter', { bubbles: true, pointerType: 'mouse' })
+        )
+    }
+
+    test('plain browsing (neither selecting nor rearranging) still plays ui.hover [obligation]', () => {
+      // This is the case that regressed: the hover binding must not require
+      // is_selecting or rearranging to resolve to a hover sound.
+      const { wrapper } = mountGridItem()
+      hoverRoot(wrapper)
+      expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+
+    test('while selecting, hover still plays ui.hover [obligation]', () => {
+      const editor = makeEditor({ is_selecting: true })
+      const { wrapper } = mountGridItem({ editor })
+      hoverRoot(wrapper)
+      expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+
+    test('while rearranging, hover still plays ui.hover [obligation]', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      hoverRoot(wrapper)
+      expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+  })
+
+  // ── reorder-mode corner delete button [obligation] ────────────────────────
+  // The button is a reorder-mode-only affordance — it must never appear
+  // alongside the selection radio or the idle-mode more-menu.
+
+  describe('reorder-mode corner delete button [obligation]', () => {
+    test('renders only when rearranging', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(true)
+    })
+
+    test('is absent while selecting', () => {
+      const editor = makeEditor({ is_selecting: true })
+      const { wrapper } = mountGridItem({ editor })
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
+    })
+
+    test('is absent in idle mode (not rearranging, not selecting)', () => {
+      const { wrapper } = mountGridItem()
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
+    })
+
+    test('clicking it calls onDeleteCardImmediate with the card id and the positioned grid cell, never confirmDelete/onDeleteCards', async () => {
+      const editor = makeEditor()
+      const grid_cell = document.createElement('div')
+      grid_cell.setAttribute('data-testid', 'card-grid__item')
+      document.body.appendChild(grid_cell)
+
+      const { wrapper } = mountGridItem({
+        props: { card: { id: 9, client_id: 'c9' }, rearranging: true },
+        editor,
+        attachTo: grid_cell
+      })
+
+      await wrapper.find('[data-testid="card-grid-item__delete-button"]').trigger('click')
+
+      expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(9, grid_cell)
+      expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
+
+      wrapper.unmount()
+      grid_cell.remove()
+    })
+
+    test('its pointerdown.stop keeps the ancestor grid drag-start listener from firing [obligation]', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      const outerAncestorHandler = vi.fn()
+      const outer = document.createElement('div')
+      outer.addEventListener('pointerdown', outerAncestorHandler)
+      outer.appendChild(wrapper.element)
+      document.body.appendChild(outer)
+
+      const button = wrapper.find('[data-testid="card-grid-item__delete-button"]').element
+      const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
+      button.dispatchEvent(event)
+
+      expect(outerAncestorHandler).not.toHaveBeenCalled()
+
+      outer.remove()
+    })
+  })
+
+  // ── card-menu delete path stays unchanged [obligation] ────────────────────
+
+  describe('card-menu delete path [obligation]', () => {
+    test('the more-menu delete option still routes through onDeleteCards, not onDeleteCardImmediate', async () => {
+      const editor = makeEditor({ is_selecting: false })
+      const { wrapper } = mountGridItem({ editor })
+
+      await wrapper.find('[data-testid="grid-item-menu-stub__delete"]').trigger('click')
+
+      expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
+      expect(editor.actions.onDeleteCardImmediate).not.toHaveBeenCalled()
     })
   })
 })

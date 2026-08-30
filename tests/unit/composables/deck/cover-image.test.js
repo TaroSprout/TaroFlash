@@ -11,6 +11,13 @@ const i18n = createI18n({ locale: 'en-us', legacy: false, messages })
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
+// onRemove awaits collapseFaceImage (a real gsap.to under the hood) before it
+// clears image_path — capture the onComplete instead of auto-firing it, so
+// tests can assert the pending-collapse state before releasing it.
+const { mockGsapTo } = vi.hoisted(() => ({ mockGsapTo: vi.fn() }))
+const { mockRevokeObjectURL } = vi.hoisted(() => ({ mockRevokeObjectURL: vi.fn() }))
+vi.mock('gsap', () => ({ gsap: { to: mockGsapTo } }))
+
 const { mockHashFile } = vi.hoisted(() => ({
   mockHashFile: vi.fn().mockResolvedValue('deadbeef')
 }))
@@ -77,6 +84,7 @@ function dropEvent(file) {
 }
 
 let created_urls
+let captured_on_complete
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
@@ -87,6 +95,12 @@ beforeEach(() => {
   mockDeleteDeckCoverImage.mockReset().mockResolvedValue(undefined)
   captured_dropzone_opts = undefined
 
+  captured_on_complete = undefined
+  mockGsapTo.mockReset().mockImplementation((_el, opts) => {
+    captured_on_complete = opts.onComplete
+  })
+
+  mockRevokeObjectURL.mockClear()
   created_urls = []
   vi.stubGlobal(
     'URL',
@@ -96,7 +110,7 @@ beforeEach(() => {
         created_urls.push(url)
         return url
       }
-      static revokeObjectURL = vi.fn()
+      static revokeObjectURL = mockRevokeObjectURL
     }
   )
 })
@@ -193,6 +207,81 @@ describe('useCoverImage — onRemove [obligation]', () => {
     cover_image.onRemove()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
+    unmount()
+  })
+
+  test('emits ui.press before card.delete, in that order [obligation]', async () => {
+    const cover = reactive({ image_path: 'https://cdn/existing.png' })
+    const { cover_image, unmount } = withCoverImage(cover, ref(1))
+
+    await cover_image.onRemove()
+
+    const press_index = mockEmitSfx.mock.calls.findIndex((call) => call[0] === 'ui.press')
+    const delete_index = mockEmitSfx.mock.calls.findIndex((call) => call[0] === 'card.delete')
+    expect(press_index).toBeGreaterThanOrEqual(0)
+    expect(delete_index).toBeGreaterThan(press_index)
+    unmount()
+  })
+
+  test('awaits collapseFaceImage before clearing image_path when an <img> is mounted [obligation]', async () => {
+    const cover = reactive({ image_path: 'https://cdn/existing.png' })
+    const { cover_image, unmount } = withCoverImage(cover, ref(1))
+    cover_image.image_el.value = document.createElement('img')
+
+    const remove_promise = cover_image.onRemove()
+
+    // collapseFaceImage's promise executor runs synchronously up to the
+    // pending gsap.to call, so this holds before any microtask has run.
+    expect(mockGsapTo).toHaveBeenCalled()
+    expect(cover.image_path).toBe('https://cdn/existing.png')
+
+    captured_on_complete()
+    await remove_promise
+
+    expect(cover.image_path).toBeUndefined()
+    unmount()
+  })
+
+  test('revokes the staged object URL and clears the staged file on remove [obligation]', async () => {
+    const cover = reactive({})
+    const { cover_image, unmount } = withCoverImage(cover, ref(1))
+    await cover_image.onDrop(dropEvent(pngFile()))
+    const staged_url = cover.image_path
+
+    await cover_image.onRemove()
+
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith(staged_url)
+    unmount()
+  })
+
+  test('clears synchronously without throwing or calling collapseFaceImage when no <img> is mounted [obligation]', () => {
+    const cover = reactive({ image_path: 'https://cdn/existing.png' })
+    const { cover_image, unmount } = withCoverImage(cover, ref(1))
+    expect(cover_image.image_el.value).toBeNull()
+
+    expect(() => cover_image.onRemove()).not.toThrow()
+
+    expect(cover.image_path).toBeUndefined()
+    expect(mockGsapTo).not.toHaveBeenCalled()
+    unmount()
+  })
+})
+
+// ── reset restores a removed cover [obligation] ─────────────────────────────────
+
+describe('useCoverImage — reset restores a removed cover [obligation]', () => {
+  test('restoring image_path after onRemove brings has_image back — removal is draft-local until save [obligation]', async () => {
+    const cover = reactive({ image_path: 'https://cdn/existing.png' })
+    const { cover_image, unmount } = withCoverImage(cover, ref(1))
+
+    await cover_image.onRemove()
+    expect(cover_image.has_image.value).toBe(false)
+
+    // Mimics useDeckEditor.resetChanges restoring the draft's own field —
+    // onRemove must not leave state that blocks the image from coming back.
+    cover.image_path = 'https://cdn/existing.png'
+
+    expect(cover_image.has_image.value).toBe(true)
     unmount()
   })
 })
