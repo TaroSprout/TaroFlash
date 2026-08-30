@@ -30,7 +30,7 @@ const MANY_ENTRIES = Array.from({ length: 20 }, (_, i) => ({
 function makePanel(props = {}, options = {}) {
   return mount(OptionsPanel, {
     props: { entries: ENTRIES, ...props },
-    global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } },
+    global: { stubs: { UiIcon: IconStub } },
     ...options
   })
 }
@@ -53,7 +53,7 @@ function makeOverflowingPanel(height = 60) {
   const wrapper = mount(OptionsPanel, {
     attachTo: document.body,
     props: { entries: MANY_ENTRIES, scrollable: true },
-    global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } }
+    global: { stubs: { UiIcon: IconStub } }
   })
   _activeWrappers.push(wrapper)
 
@@ -243,7 +243,7 @@ describe('OptionsPanel', () => {
     const wrapper = mount(OptionsPanel, {
       props: { entries: ENTRIES },
       attrs: { 'data-testid': 'move-cards__deck-list' },
-      global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } }
+      global: { stubs: { UiIcon: IconStub } }
     })
     expect(wrapper.find('[data-testid="move-cards__deck-list__content"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="options-panel__content"]').exists()).toBe(false)

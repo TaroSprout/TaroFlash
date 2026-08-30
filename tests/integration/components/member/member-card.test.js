@@ -192,7 +192,7 @@ describe('MemberCard', () => {
     test('pressing the avatar-edit button emits edit-avatar', async () => {
       const wrapper = mount(MemberCard, {
         props: { createdAt: '2024-04-15T00:00:00Z', cardTitle: 'Apprentice', editable: true },
-        global: { stubs: { AvatarImage: AvatarImageStub }, directives: { sfx: {} } }
+        global: { stubs: { AvatarImage: AvatarImageStub } }
       })
 
       await wrapper.find('[data-testid="member-card__avatar-edit"]').trigger('click')

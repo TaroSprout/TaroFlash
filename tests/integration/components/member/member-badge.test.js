@@ -70,8 +70,7 @@ function mountBadge(props = {}) {
   return shallowMount(MemberBadge, {
     props,
     global: {
-      stubs: { AvatarImage: AvatarImageStub, UiTappable: UiTappableStub, UiButton: UiButtonStub },
-      directives: { sfx: {} }
+      stubs: { AvatarImage: AvatarImageStub, UiTappable: UiTappableStub, UiButton: UiButtonStub }
     }
   })
 }
@@ -257,7 +256,7 @@ describe('MemberBadge', () => {
     test('the click does not bubble to the badge tappable in a real DOM tree [obligation]', async () => {
       const wrapper = mount(MemberBadge, {
         props: { editable: true },
-        global: { stubs: { AvatarImage: AvatarImageStub }, directives: { sfx: {} } }
+        global: { stubs: { AvatarImage: AvatarImageStub } }
       })
 
       await wrapper.find('[data-testid="member-badge__avatar-edit"]').trigger('click')

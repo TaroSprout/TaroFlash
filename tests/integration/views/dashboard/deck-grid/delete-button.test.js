@@ -60,8 +60,7 @@ const DECK = { id: 7, title: 'Deck 7' }
 
 function mountButton() {
   return mount(DeckGridDeleteButton, {
-    props: { deck: DECK },
-    global: { directives: { sfx: {} } }
+    props: { deck: DECK }
   })
 }
 

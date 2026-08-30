@@ -16,9 +16,6 @@ function makePicker(props = {}) {
       palette: undefined,
 
       ...props
-    },
-    global: {
-      directives: { sfx: {} }
     }
   })
 }

@@ -60,8 +60,7 @@ import ResetPasswordModal from '@/views/welcome/reset-password/index.vue'
 
 function makeWrapper(close = vi.fn()) {
   return mount(ResetPasswordModal, {
-    props: { close },
-    global: { directives: { sfx: {} } }
+    props: { close }
   })
 }
 

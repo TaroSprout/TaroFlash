@@ -43,7 +43,7 @@ function mountCard(props = {}, slots = {}, extraOpts = {}) {
   return shallowMount(Card, {
     props: { side: 'front', ...props },
     slots,
-    global: { stubs: { CardFace: CardFaceStub }, directives: { sfx: {} } },
+    global: { stubs: { CardFace: CardFaceStub } },
     ...extraOpts
   })
 }
@@ -98,8 +98,7 @@ function mountEditableCard(props = {}, slots = {}) {
     props: { side: 'front', mode: 'edit', image_editing: true, ...props },
     slots,
     global: {
-      stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub },
-      directives: { sfx: {} }
+      stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub }
     }
   })
 }
@@ -246,7 +245,7 @@ describe('Card — flip delegates to flipEnter/flipLeave [obligation]', () => {
   function mountRealTransition(props = {}) {
     return mount(Card, {
       props: { side: 'cover', ...props },
-      global: { directives: { sfx: {} }, stubs: { transition: false } }
+      global: { stubs: { transition: false } }
     })
   }
 
@@ -298,8 +297,7 @@ describe('Card — edit-state attrs owned by the card root [obligation]', () => 
     const cover_side = shallowMount(Card, {
       props: { side: 'cover', mode: 'edit', image_editing: true },
       global: {
-        stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub },
-        directives: { sfx: {} }
+        stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub }
       }
     })
     expect(cover_side.find('[data-testid="face-image-layer-stub"]').exists()).toBe(false)
@@ -433,8 +431,7 @@ describe('Card — region-dropzone image slot substitution', () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'front', mode: 'edit', image_editing: true },
       global: {
-        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() },
-        directives: { sfx: {} }
+        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() }
       }
     })
     await wrapper.vm.$nextTick()
@@ -447,8 +444,7 @@ describe('Card — region-dropzone image slot substitution', () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'back', mode: 'edit', image_editing: true },
       global: {
-        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() },
-        directives: { sfx: {} }
+        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() }
       }
     })
     await wrapper.vm.$nextTick()

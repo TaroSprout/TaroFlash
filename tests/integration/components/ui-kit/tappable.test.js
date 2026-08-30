@@ -36,10 +36,7 @@ import UiTappable from '@/components/ui-kit/tappable.vue'
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function mountTappable(props = {}) {
-  return mount(UiTappable, {
-    props,
-    global: { directives: { sfx: {} } }
-  })
+  return mount(UiTappable, { props })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

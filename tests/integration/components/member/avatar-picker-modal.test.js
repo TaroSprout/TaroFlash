@@ -61,8 +61,7 @@ function mountModal(props = {}) {
   return shallowMount(AvatarPickerModal, {
     props: { close: vi.fn(), ...props },
     global: {
-      stubs: { DialogCard: DialogCardStub, DialogCardBody: DialogCardBodyStub },
-      directives: { sfx: {} }
+      stubs: { DialogCard: DialogCardStub, DialogCardBody: DialogCardBodyStub }
     }
   })
 }
