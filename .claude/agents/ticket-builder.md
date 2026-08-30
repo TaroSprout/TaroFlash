@@ -73,6 +73,11 @@ you waiting on something.
   "work better" or "look consistent" — a hover state to keep a restyled background legible, a related
   prop nudged to match — is still unrequested scope; the requester decides whether it's needed, not
   you. An adjacent defect you spot goes in the report.
+- **How you verified something is report prose, never a code comment.** A prompt that asks you to
+  show your work, explain a mechanism, or prove you didn't take something on trust is asking for your
+  Output section — a comment in the diff still stands or falls on its own
+  [`comment-authoring`](../rules/comment-authoring.md) gates, regardless of what the prompt demanded
+  of the run that wrote it.
 
 ## Output
 
