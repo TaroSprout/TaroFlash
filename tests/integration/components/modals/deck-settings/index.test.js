@@ -176,7 +176,11 @@ vi.mock('@/components/deck/pinned-preview.vue', async () => {
   return {
     default: defineComponent({
       name: 'DeckPinnedPreview',
-      props: { cover_editing: Boolean, cover_image: { type: Object, default: undefined } },
+      props: {
+        cover_editing: Boolean,
+        cover_image: { type: Object, default: undefined },
+        hover_lift: Boolean
+      },
       emits: ['update:side'],
       setup(_props, { emit }) {
         return () =>
@@ -574,6 +578,15 @@ describe('DeckSettings — pinned-preview cover_editing / cover_image wiring', (
     await nextTick()
     const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
     expect(preview.props('cover_image')).toEqual(mockEditor.editor.cover_image)
+  })
+
+  // [obligation] Deck-settings is the one call site that opts the pinned
+  // preview into the hover lift — TARO-389's whole point.
+  test('passes hover_lift: true to the pinned preview [obligation]', async () => {
+    const { wrapper } = makeWrapper()
+    await nextTick()
+    const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
+    expect(preview.props('hover_lift')).toBe(true)
   })
 })
 
