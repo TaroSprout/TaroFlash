@@ -172,7 +172,6 @@ describe('AvatarPickerModal', () => {
     )
   })
 
-
   test('colours the selection tick with the accent-text token, not a fixed neutral', () => {
     const wrapper = mountModal({ selected: 'otter' })
     const tick = wrapper
