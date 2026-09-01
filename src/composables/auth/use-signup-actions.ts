@@ -129,8 +129,7 @@ export function useSignupActions() {
   watch(password, () => clearOnInput('password'))
   watch(confirm_password, () => clearOnInput('confirm_password'))
 
-  // reactive() so callers can pass the whole instance as a single prop and the
-  // form can `v-model="auth.email"` without unwrapping each ref by hand.
+  // reactive() so a caller can pass the whole instance and `v-model` its fields.
   return reactive({
     username,
     email,

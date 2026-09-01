@@ -37,8 +37,7 @@ export function useImageReveal(
       await el.decode()
       await reveal()
     } catch {
-      // decode() can reject on an element reinserted mid-flip; reveal if it did
-      // load, else the <img>'s @load (onLoad) will — never leave it stuck.
+      // decode() rejects on an element reinserted mid-flip; @load is the fallback.
       if (isLoaded(el)) reveal()
     }
   }

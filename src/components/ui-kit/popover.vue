@@ -141,12 +141,7 @@ function onPageClick(e: Event): void {
   const target = e.target as HTMLElement
 
   if (target.closest(`[data-id="${id}"]`)) return
-  // A trigger wrapped in the default slot is already inside the container above,
-  // but an `anchor_el` caller anchors to DOM this component doesn't contain — and
-  // this listener runs in the capture phase, ahead of the anchor's own click
-  // handler. Counting that click as outside would close the popover a frame
-  // before the anchor reopened it, which reads as a flash. Left to the anchor,
-  // its handler is the only thing that decides open or closed.
+  // An external anchor's own click decides open or closed; counting it as outside flashes the popover.
   if (anchor_el?.contains(target)) return
 
   emit('close')

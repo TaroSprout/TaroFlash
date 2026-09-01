@@ -29,9 +29,7 @@ watch(
 
     lazyUrl.value = load
     await nextTick()
-    // A cached image can finish before the freshly-mounted <img>'s @load
-    // listener attaches; `complete` catches that instead of stranding the
-    // placeholder on a load event that already fired.
+    // A cached image can load before @load attaches, stranding the placeholder.
     if (imgEl.value?.complete) loaded.value = true
   },
   { immediate: true }

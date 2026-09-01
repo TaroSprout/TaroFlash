@@ -7,7 +7,6 @@ export function prefetchMemberById(id: string) {
     key: ['member', id],
     query: () => fetchMemberById(id)
   })
-  // `refresh`, never `fetch` — `fetch` restarts a request already in flight, and
-  // the member store starts this exact one at app start.
+  // `refresh`, never `fetch`: the member store already has this request in flight at app start.
   return cache.refresh(entry)
 }

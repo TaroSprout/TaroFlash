@@ -204,9 +204,7 @@ export function useReorderDrag(opts: ReorderDragOptions) {
 
     if (from !== null) emitSfx('ui.press')
 
-    // Hand the new order over and clear the offsets in the same tick — split across
-    // two, the row draws once back at its old spot and visibly snaps.
-    // →[K:reorder-drag-commit-reset-sync]
+    // Commit the order and clear offsets in one tick, or the row snaps back for a frame. →[K:reorder-drag-commit-reset-sync]
     if (from !== null && to !== null && from !== to) onReorder(from, to)
     reset()
   }

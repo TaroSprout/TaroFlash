@@ -159,8 +159,7 @@ export function useCoverImage(
       return
     }
 
-    // No staged file and no image → a removal (or a never-set cover). Soft-delete
-    // any active cover row; a no-op when there was none.
+    // No staged file and no image means a removal; a no-op when there was no cover.
     if (!has_image.value) await deleteDeckCoverImage(id)
   }
 
