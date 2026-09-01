@@ -14,15 +14,12 @@ const SIZES: Record<MemberPolaroidSize, { frame: string; clip: string; origin: s
 type MemberPolaroidProps = {
   avatar?: string
   size?: MemberPolaroidSize
-  // Enables the hover swing toward upright — call sites that make the
-  // polaroid clickable opt in; decorative call sites leave it off.
   interactive?: boolean
 }
 
 const { avatar, size = 'base', interactive = false } = defineProps<MemberPolaroidProps>()
 
-// The photo is a slot so a skeleton can borrow the frame's real geometry and
-// positioning instead of copying the offsets into a placeholder that drifts.
+// A slot, so a skeleton borrows the real frame instead of copying offsets that drift.
 defineSlots<{ photo?: () => any }>()
 </script>
 

@@ -50,9 +50,6 @@ export function useDeckEditor(deck?: Deck) {
 
   const { t } = useI18n()
   const notice = useNoticeStore()
-  // Only a brand-new deck (no `deck` at all) ever reaches the create-deck
-  // guard below — an existing deck's edit never asks whether the member can
-  // create one, so the deck-count check that guard depends on stays unmounted.
   const deck_actions = deck?.id ? undefined : useDeckActions()
   const upsert_mutation = useUpsertDeckMutation()
   const delete_mutation = useDeleteDeckMutation()
