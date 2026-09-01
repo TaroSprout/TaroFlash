@@ -131,6 +131,9 @@ export default defineConfig({
         '**/types/**',
         '**/src/utils/logger.ts',
         '**/src/utils/uid.ts',
+        // Static legal copy: a translation call per line, nothing a test could assert.
+        '**/src/views/privacy-policy.vue',
+        '**/src/views/terms-of-service.vue',
         ...coverageConfigDefaults.exclude
       ]
     }
