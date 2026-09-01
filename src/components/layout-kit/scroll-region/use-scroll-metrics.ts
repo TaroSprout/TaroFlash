@@ -134,9 +134,7 @@ export function useScrollMetrics(target: Ref<ScrollTarget>) {
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule, { passive: true })
 
-    // Never a ResizeObserver on the page's own boxes: `index.html` pins `html`, `body` and `#app` to
-    // the viewport with `h-full`, so none of them grows when a route swaps taller content in and
-    // the handle would stay hidden until the reader scrolls. →[K:page-boxes-are-height-pinned]
+    // Never observe the page's own boxes: they're height-pinned and never grow. →[K:page-boxes-are-height-pinned]
     mutation_obs = new MutationObserver(schedule)
     mutation_obs.observe(document.body, { childList: true, subtree: true, attributes: true })
   }

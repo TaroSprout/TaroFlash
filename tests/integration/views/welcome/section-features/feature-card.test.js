@@ -68,25 +68,25 @@ describe('FeatureCard', () => {
 
   // ── Structure ──────────────────────────────────────────────────────────────
 
-  test('renders the card face element [obligation]', () => {
+  test('renders the card face element', () => {
     const wrapper = mountFeatureCard()
     expect(wrapper.find('[data-testid="feature-card__face"]').exists()).toBe(true)
   })
 
-  test('renders the icon element [obligation]', () => {
+  test('renders the icon element', () => {
     const wrapper = mountFeatureCard()
     expect(wrapper.find('[data-testid="feature-card__icon"]').exists()).toBe(true)
   })
 
   // ── i18n key resolution ────────────────────────────────────────────────────
 
-  test('renders heading text resolved from feature_key i18n key [obligation]', () => {
+  test('renders heading text resolved from feature_key i18n key', () => {
     const wrapper = mountFeatureCard({ feature_key: 'experience' })
     const face = wrapper.find('[data-testid="feature-card__face"]')
     expect(face.text()).toContain('Fully Customizable')
   })
 
-  test('renders description text resolved from feature_key i18n key [obligation]', () => {
+  test('renders description text resolved from feature_key i18n key', () => {
     const wrapper = mountFeatureCard({ feature_key: 'experience' })
     const face = wrapper.find('[data-testid="feature-card__face"]')
     expect(face.text()).toContain('Pick how your decks and cards look')
@@ -118,7 +118,7 @@ describe('FeatureCard', () => {
     expect(icon.attributes('data-src')).toBe('paint-brush')
   })
 
-  test('renders the icon with the cover’s palette as data-palette [obligation]', () => {
+  test('renders the icon with the cover’s palette as data-palette', () => {
     const wrapper = mountFeatureCard({ cover: { theme: 'pink-500', palette: 'pink' } })
     const icon = wrapper.find('[data-testid="feature-card__icon"]')
     expect(icon.attributes('data-palette')).toBe('pink')
@@ -126,17 +126,17 @@ describe('FeatureCard', () => {
 
   // ── side / cover forwarding ──────────────────────────────────────────────────
 
-  test('defaults the card side to "front" when side prop is omitted [obligation]', () => {
+  test('defaults the card side to "front" when side prop is omitted', () => {
     const wrapper = mountFeatureCard()
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
   })
 
-  test('forwards the side prop to the card [obligation]', () => {
+  test('forwards the side prop to the card', () => {
     const wrapper = mountFeatureCard({ side: 'cover' })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('cover')
   })
 
-  test('forwards the cover config to the card as cover_config [obligation]', () => {
+  test('forwards the cover config to the card as cover_config', () => {
     const wrapper = mountFeatureCard({
       cover: { theme: 'purple-500', pattern: 'diagonal-stripes' }
     })
@@ -149,19 +149,19 @@ describe('FeatureCard', () => {
   // icon/heading/description lookup maps (FACE_ROWS/ICON_SIZE/HEADING_SIZE/
   // DESCRIPTION_SIZE) — asserting the attribute proves each width tier picks a
   // distinct entry without asserting Tailwind class names directly.
-  test('face data-size-tier tracks the width-derived size on desktop [obligation]', () => {
+  test('face data-size-tier tracks the width-derived size on desktop', () => {
     width.value = 'desktop'
     const face = mountFeatureCard().find('[data-testid="feature-card__face"]')
     expect(face.attributes('data-size-tier')).toBe('lg')
   })
 
-  test('face data-size-tier tracks the width-derived size on tablet [obligation]', () => {
+  test('face data-size-tier tracks the width-derived size on tablet', () => {
     width.value = 'tablet'
     const face = mountFeatureCard().find('[data-testid="feature-card__face"]')
     expect(face.attributes('data-size-tier')).toBe('xl')
   })
 
-  test('face data-size-tier tracks the width-derived size on mobile [obligation]', () => {
+  test('face data-size-tier tracks the width-derived size on mobile', () => {
     width.value = 'mobile'
     const face = mountFeatureCard().find('[data-testid="feature-card__face"]')
     expect(face.attributes('data-size-tier')).toBe('sm')

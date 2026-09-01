@@ -39,11 +39,11 @@ describe('sessionPaneLeave', () => {
     expect(mockTo.mock.calls[0][1].duration).toBeGreaterThan(0)
   })
 
-  // ── pins the leaving pane with explicit top/left/width/height [obligation] ─
+  // ── pins the leaving pane with explicit top/left/width/height ─
   // `inset: 0` collapses against a parent that's shrinking mid-swap — the
   // measured height is written as an explicit pixel value instead.
 
-  test('pins position, top, left, width, height explicitly — never inset [obligation]', () => {
+  test('pins position, top, left, width, height explicitly — never inset', () => {
     const node = document.createElement('div')
     Object.defineProperty(node, 'getBoundingClientRect', {
       value: () => ({ height: 240 })
@@ -106,9 +106,9 @@ describe('sessionPaneEnter', () => {
     expect(to.clearProps).toBe('transform')
   })
 
-  // ── onStart callback [obligation] ─────────────────────────────────────────
+  // ── onStart callback ─────────────────────────────────────────
 
-  test('invokes onStart callback when the tween begins [obligation]', () => {
+  test('invokes onStart callback when the tween begins', () => {
     const onStart = vi.fn()
     sessionPaneEnter(el, vi.fn(), { onStart })
     // onStart is not called until GSAP fires it
@@ -118,7 +118,7 @@ describe('sessionPaneEnter', () => {
     expect(onStart).toHaveBeenCalledTimes(1)
   })
 
-  test('works without onStart (optional parameter) [obligation]', () => {
+  test('works without onStart (optional parameter)', () => {
     // No third arg — must not throw
     expect(() => {
       sessionPaneEnter(el, vi.fn())

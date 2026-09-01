@@ -204,12 +204,12 @@ describe('UiButton', () => {
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
 
-    // ── press no longer defaults to ui.press — regression guard [obligation] ──
+    // ── press no longer defaults to ui.press — regression guard ──
     // Call sites play their own press cue from the @press handler; button.vue
     // used to double it up by also defaulting to ui.press internally.
 
-    describe('press sfx no longer defaults [obligation]', () => {
-      test('a click with no sfx.press emits zero press sounds [obligation]', async () => {
+    describe('press sfx no longer defaults', () => {
+      test('a click with no sfx.press emits zero press sounds', async () => {
         const wrapper = shallowMount(UiButton, {
           props: { playOnTap: true },
           attrs: { onClick: vi.fn() }
@@ -220,7 +220,7 @@ describe('UiButton', () => {
         expect(mockEmitSfx).not.toHaveBeenCalled()
       })
 
-      test('a click with sfx.press set emits exactly one call, with that role [obligation]', async () => {
+      test('a click with sfx.press set emits exactly one call, with that role', async () => {
         vi.useFakeTimers()
         const wrapper = shallowMount(UiButton, {
           props: { playOnTap: true, sfx: { press: 'ui.select' } },
@@ -238,7 +238,7 @@ describe('UiButton', () => {
         vi.useRealTimers()
       })
 
-      test('sfx.press: false stays silent on click [obligation]', async () => {
+      test('sfx.press: false stays silent on click', async () => {
         vi.useFakeTimers()
         const wrapper = shallowMount(UiButton, {
           props: { playOnTap: true, sfx: { press: false } },
@@ -255,7 +255,7 @@ describe('UiButton', () => {
         vi.useRealTimers()
       })
 
-      test('sfx.tap_pre is unaffected — still plays its own role on tap start [obligation]', async () => {
+      test('sfx.tap_pre is unaffected — still plays its own role on tap start', async () => {
         vi.useFakeTimers()
         const wrapper = shallowMount(UiButton, {
           props: { playOnTap: true, sfx: { tap_pre: 'ui.select' } },
@@ -273,7 +273,7 @@ describe('UiButton', () => {
       })
     })
 
-    describe('tapAnimate=false — quiet tap mode [obligation]', () => {
+    describe('tapAnimate=false — quiet tap mode', () => {
       beforeEach(() => {
         vi.useFakeTimers()
       })
@@ -281,7 +281,7 @@ describe('UiButton', () => {
         vi.useRealTimers()
       })
 
-      test('tapAnimate=false still toggles data-active on a coarse tap [obligation]', async () => {
+      test('tapAnimate=false still toggles data-active on a coarse tap', async () => {
         const { gsap } = await import('gsap')
         gsap.to.mockClear()
 
@@ -299,7 +299,7 @@ describe('UiButton', () => {
         expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
       })
 
-      test('tapAnimate=false does NOT invoke the GSAP tween [obligation]', async () => {
+      test('tapAnimate=false does NOT invoke the GSAP tween', async () => {
         const { gsap } = await import('gsap')
         gsap.to.mockClear()
 
@@ -317,7 +317,7 @@ describe('UiButton', () => {
         expect(gsap.to).not.toHaveBeenCalled()
       })
 
-      test('tapAnimate=false still fires press sfx when sfx.press is set [obligation]', async () => {
+      test('tapAnimate=false still fires press sfx when sfx.press is set', async () => {
         mockEmitSfx.mockClear()
         const wrapper = shallowMount(UiButton, {
           props: { playOnTap: true, tapAnimate: false, sfx: { press: 'ui.select' } },
@@ -333,7 +333,7 @@ describe('UiButton', () => {
         expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
       })
 
-      test('tapAnimate=true (default) still uses GSAP tween [obligation]', async () => {
+      test('tapAnimate=true (default) still uses GSAP tween', async () => {
         const { gsap } = await import('gsap')
         gsap.to.mockClear()
 
@@ -349,7 +349,7 @@ describe('UiButton', () => {
     })
   })
 
-  // ── merged_sfx: false silences a channel, an omitted one keeps the default [obligation] ──
+  // ── merged_sfx: false silences a channel, an omitted one keeps the default ──
 
   describe('merged_sfx passed to v-sfx', () => {
     function captureSfxBinding(props = {}) {
@@ -365,11 +365,11 @@ describe('UiButton', () => {
       return captured
     }
 
-    test('an omitted hover channel falls back to the primitive default (ui.hover) [obligation]', () => {
+    test('an omitted hover channel falls back to the primitive default (ui.hover)', () => {
       expect(captureSfxBinding({}).hover).toBe('ui.hover')
     })
 
-    test('sfx.hover: false silences the hover channel [obligation]', () => {
+    test('sfx.hover: false silences the hover channel', () => {
       expect(captureSfxBinding({ sfx: { hover: false } }).hover).toBe(false)
     })
 
@@ -378,22 +378,22 @@ describe('UiButton', () => {
     })
   })
 
-  // ── active prop [obligation] ───────────────────────────────────────────────
+  // ── active prop ───────────────────────────────────────────────
 
   describe('active prop', () => {
-    test('active=true sets data-active="true" on the root element [obligation]', () => {
+    test('active=true sets data-active="true" on the root element', () => {
       const wrapper = mountButton({ active: true })
       expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
     })
 
-    test('active=false leaves data-active unset [obligation]', () => {
+    test('active=false leaves data-active unset', () => {
       const wrapper = mountButton({ active: false })
       expect(
         wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')
       ).toBeUndefined()
     })
 
-    test('active=true and playing both set data-active="true" (not duplicated) [obligation]', async () => {
+    test('active=true and playing both set data-active="true" (not duplicated)', async () => {
       let resolveTween
       const { gsap } = await import('gsap')
       gsap.to.mockImplementationOnce(
@@ -424,10 +424,10 @@ describe('UiButton', () => {
     })
   })
 
-  // ── ghost variant — fancyHover overlay reveal [obligation] ────────────────
+  // ── ghost variant — fancyHover overlay reveal ────────────────
 
   describe('ghost variant', () => {
-    test('ghost button: overlay DOES get the group-hover/btn:block class [obligation]', () => {
+    test('ghost button: overlay DOES get the group-hover/btn:block class', () => {
       // The diagonal-stripe overlay reveal condition is
       // `!loading && !disabled && (variant === 'ghost' || fancyHover)` — ghost
       // always sweeps on hover, independent of fancyHover.
@@ -449,7 +449,7 @@ describe('UiButton', () => {
       expect(html).toContain('group-hover/btn:block')
     })
 
-    test('non-ghost variant with fancyHover: overlay gets the group-hover/btn:block class [obligation]', () => {
+    test('non-ghost variant with fancyHover: overlay gets the group-hover/btn:block class', () => {
       const wrapper = mountButtonWithSlots(
         { variant: 'solid', fancyHover: true },
         { default: 'Label' }
@@ -460,10 +460,10 @@ describe('UiButton', () => {
     })
   })
 
-  // ── playOnTap bails for clicks inside .btn-trailing [obligation] ──────────
+  // ── playOnTap bails for clicks inside .btn-trailing ──────────
 
   describe('playOnTap — trailing region bail', () => {
-    test('clicking inside .btn-trailing skips the play-on-tap intercept so GSAP is NOT called [obligation]', async () => {
+    test('clicking inside .btn-trailing skips the play-on-tap intercept so GSAP is NOT called', async () => {
       // Verify that the `onCaptureClick` guard bails when the click target is
       // inside `.btn-trailing`, leaving the event for the caret's own handler.
       // We confirm GSAP is never invoked — the tap-pop animation is the intercept.
@@ -492,7 +492,7 @@ describe('UiButton', () => {
     })
   })
 
-  // ── trailing slot / split layout [obligation] ──────────────────────────────
+  // ── trailing slot / split layout ──────────────────────────────
   // Uses mountButtonWithSlots — a UiTooltip stub that renders slot content so
   // inner data-testid elements (ui-kit-button__content, ui-kit-button__trailing)
   // are reachable in the wrapper tree.
@@ -503,17 +503,17 @@ describe('UiButton', () => {
       expect(wrapper.find('[data-testid="ui-kit-button__content"]').exists()).toBe(true)
     })
 
-    test('does NOT render ui-kit-button__trailing when no #trailing slot is provided [obligation]', () => {
+    test('does NOT render ui-kit-button__trailing when no #trailing slot is provided', () => {
       const wrapper = mountButtonWithSlots({}, { default: 'Label' })
       expect(wrapper.find('[data-testid="ui-kit-button__trailing"]').exists()).toBe(false)
     })
 
-    test('renders ui-kit-button__trailing when a #trailing slot is provided [obligation]', () => {
+    test('renders ui-kit-button__trailing when a #trailing slot is provided', () => {
       const wrapper = mountButtonWithSlots({}, { trailing: () => h('span', 'caret') })
       expect(wrapper.find('[data-testid="ui-kit-button__trailing"]').exists()).toBe(true)
     })
 
-    test('renders ui-kit-button__content alongside the trailing slot [obligation]', () => {
+    test('renders ui-kit-button__content alongside the trailing slot', () => {
       const wrapper = mountButtonWithSlots(
         {},
         { default: 'Label', trailing: () => h('span', 'caret') }
@@ -532,24 +532,24 @@ describe('UiButton', () => {
     })
   })
 
-  // ── disabled prop [obligation] ─────────────────────────────────────────────
+  // ── disabled prop ─────────────────────────────────────────────
   // A disabled button blocks its own @click and sets aria-disabled, but the
   // trailing slot (split-button caret) stays live and clickable.
 
   describe('disabled', () => {
-    test('disabled=true sets aria-disabled on the root button [obligation]', () => {
+    test('disabled=true sets aria-disabled on the root button', () => {
       const wrapper = mountButtonWithSlots({ disabled: true }, { default: 'Label' })
       expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('aria-disabled')).toBe('true')
     })
 
-    test('disabled=false leaves aria-disabled unset [obligation]', () => {
+    test('disabled=false leaves aria-disabled unset', () => {
       const wrapper = mountButtonWithSlots({ disabled: false }, { default: 'Label' })
       expect(
         wrapper.find('[data-testid="ui-kit-button"]').attributes('aria-disabled')
       ).toBeUndefined()
     })
 
-    test('clicking a disabled button does NOT fire consumer @click [obligation]', async () => {
+    test('clicking a disabled button does NOT fire consumer @click', async () => {
       const onClick = vi.fn()
       const wrapper = mountButtonWithSlots({ disabled: true }, { default: 'Label' })
       // Dispatch on the root element so capture fires
@@ -561,7 +561,7 @@ describe('UiButton', () => {
       expect(onClick).not.toHaveBeenCalled()
     })
 
-    test('clicking inside .btn-trailing is NOT blocked when primary is disabled [obligation]', async () => {
+    test('clicking inside .btn-trailing is NOT blocked when primary is disabled', async () => {
       // The guard in onCaptureClick bails early (returns without stopping) when the
       // click originates inside .btn-trailing, even when disabled=true.
       // Verify this by confirming GSAP is not called (no intercept on trailing clicks),
@@ -598,7 +598,7 @@ describe('UiButton', () => {
       expect(gsap.to).not.toHaveBeenCalled()
     })
 
-    test('disabled=true fires ui.rejected, not ui.press [obligation]', async () => {
+    test('disabled=true fires ui.rejected, not ui.press', async () => {
       mockEmitSfx.mockClear()
       const wrapper = mountButtonWithSlots(
         { disabled: true, playOnTap: true },
@@ -613,13 +613,13 @@ describe('UiButton', () => {
       expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.press', expect.anything())
     })
 
-    // ── clickWhenDisabled [obligation] ─────────────────────────────────────
+    // ── clickWhenDisabled ─────────────────────────────────────
 
     // The capture handler decides whether a disabled button's click reaches the
     // bubble-phase @click handler: it lets it propagate when clickWhenDisabled is
     // set, and stops propagation (+ preventDefault) when it isn't. Assert that
     // contract directly on the dispatched event.
-    test('clickWhenDisabled=true with disabled=true lets the click propagate to the handler [obligation]', async () => {
+    test('clickWhenDisabled=true with disabled=true lets the click propagate to the handler', async () => {
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: true },
         global: { stubs: { UiTooltip: UiTooltipSlotStub } }
@@ -635,7 +635,7 @@ describe('UiButton', () => {
       expect(preventSpy).not.toHaveBeenCalled()
     })
 
-    test('disabled=true without clickWhenDisabled swallows the click (calls preventDefault) [obligation]', async () => {
+    test('disabled=true without clickWhenDisabled swallows the click (calls preventDefault)', async () => {
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: false },
         global: { stubs: { UiTooltip: UiTooltipSlotStub } }
@@ -649,7 +649,7 @@ describe('UiButton', () => {
       expect(preventSpy).toHaveBeenCalled()
     })
 
-    test('clickWhenDisabled still fires ui.rejected even though the click reaches the handler [obligation]', async () => {
+    test('clickWhenDisabled still fires ui.rejected even though the click reaches the handler', async () => {
       mockEmitSfx.mockClear()
       const wrapper = shallowMount(UiButton, {
         props: { disabled: true, clickWhenDisabled: true },

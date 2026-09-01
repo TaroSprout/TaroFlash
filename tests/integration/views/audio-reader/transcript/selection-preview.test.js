@@ -72,7 +72,7 @@ describe('SelectionPreview', () => {
       wrapper.unmount()
     })
 
-    test('stamps the constant data-station="float" [obligation]', () => {
+    test('stamps the constant data-station="float"', () => {
       const wrapper = mountPreview()
 
       const el = document.querySelector('[data-testid="selection-preview"]')

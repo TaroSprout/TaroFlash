@@ -179,7 +179,7 @@ describe('FaceImageLayer — add button gating', () => {
     expect(wrapper.find('[data-testid="face-image-layer__add"]').exists()).toBe(false)
   })
 
-  test('hides the add button on a coarse (touch) pointer [obligation]', () => {
+  test('hides the add button on a coarse (touch) pointer', () => {
     state.is_coarse = ref(true)
     const wrapper = mountLayer()
     expect(wrapper.find('[data-testid="face-image-layer__add"]').exists()).toBe(false)
@@ -229,7 +229,7 @@ describe('FaceImageLayer — image dropzone (corners mode)', () => {
     expect(dropzone.props('mode')).toBe('corners')
   })
 
-  test('passes the card remove/replace copy to the corners dropzone [obligation]', () => {
+  test('passes the card remove/replace copy to the corners dropzone', () => {
     state.upload.has_image.value = true
     const wrapper = mountLayer({ attributes: { image_layout: 'behind' } })
     const dropzone = wrapper.findComponent(ImageDropzoneStub)
@@ -341,7 +341,7 @@ describe('FaceImageLayer — defineExpose surface', () => {
   })
 })
 
-describe('FaceImageLayer — root listener wiring [obligation]', () => {
+describe('FaceImageLayer — root listener wiring', () => {
   test('attaches drag/pointer listeners to the passed-in root element', async () => {
     const root = document.createElement('div')
     document.body.appendChild(root)

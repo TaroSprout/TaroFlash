@@ -113,13 +113,13 @@ describe('SignupForm (signup/form.vue)', () => {
 
   // ── submit event ───────────────────────────────────────────────────────────
 
-  test('emits submit when the <form> is submitted [obligation]', async () => {
+  test('emits submit when the <form> is submitted', async () => {
     const wrapper = mountForm()
     await wrapper.find('form[data-testid="email-auth"]').trigger('submit')
     expect(wrapper.emitted('submit')).toHaveLength(1)
   })
 
-  test('hidden submit button inside the form allows Enter-key submission [obligation]', () => {
+  test('hidden submit button inside the form allows Enter-key submission', () => {
     const wrapper = mountForm()
     const hiddenBtn = wrapper.find('button[type="submit"]')
     expect(hiddenBtn.exists()).toBe(true)

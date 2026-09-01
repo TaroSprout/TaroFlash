@@ -173,30 +173,30 @@ describe('DeckGrid — create deck', () => {
     expect(createNewDeckMock).toHaveBeenCalledTimes(1)
   })
 
-  test('does not call createNewDeck when editing is true, even bypassing the disabled UI state [obligation]', async () => {
+  test('does not call createNewDeck when editing is true, even bypassing the disabled UI state', async () => {
     const wrapper = mount([], true)
     await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
     expect(createNewDeckMock).not.toHaveBeenCalled()
   })
 
-  test('passes disabled=true to new-deck-card when creating_deck is true, with no loading prop [obligation]', () => {
+  test('passes disabled=true to new-deck-card when creating_deck is true, with no loading prop', () => {
     creatingDeckRef.value = true
     const wrapper = mount([])
     expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('true')
   })
 
-  test('passes disabled=true to new-deck-card when editing [obligation]', () => {
+  test('passes disabled=true to new-deck-card when editing', () => {
     const wrapper = mount([], true)
     expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('true')
   })
 
-  test('passes disabled=false to new-deck-card when neither creating nor editing [obligation]', () => {
+  test('passes disabled=false to new-deck-card when neither creating nor editing', () => {
     const wrapper = mount([], false)
     expect(wrapper.find('[data-testid="new-deck-card"]').attributes('data-disabled')).toBe('false')
   })
 })
 
-describe('DeckGrid — pending deck guards [obligation]', () => {
+describe('DeckGrid — pending deck guards', () => {
   test("a pending deck is keyed by client_key, not id — re-keying it doesn't replay the pop-in", () => {
     const pending_deck = makeDeck(-1, { pending: true, client_key: 'temp-key-1' })
     const wrapper = mount([pending_deck])
@@ -248,7 +248,7 @@ describe('DeckGrid — pending deck guards [obligation]', () => {
   })
 })
 
-describe('DeckGrid — editing mode forwards rearranging/dragging to each item [obligation]', () => {
+describe('DeckGrid — editing mode forwards rearranging/dragging to each item', () => {
   test('forwards rearranging=true to every item when editing', () => {
     const wrapper = mount([makeDeck(1), makeDeck(2)], true)
     const items = wrapper.findAllComponents(DeckGridItemStub)
@@ -270,7 +270,7 @@ describe('DeckGrid — editing mode forwards rearranging/dragging to each item [
   })
 })
 
-describe('DeckGrid — reflow transition [obligation]', () => {
+describe('DeckGrid — reflow transition', () => {
   test('does not apply the transition class on the initial decks.length change from mount', async () => {
     const wrapper = mount([])
     await wrapper.setProps({ decks: [makeDeck(1)] })
@@ -328,7 +328,7 @@ describe('DeckGrid — reflow transition [obligation]', () => {
   })
 })
 
-describe('DeckGrid — pointerdown wiring [obligation]', () => {
+describe('DeckGrid — pointerdown wiring', () => {
   test('pointerdown on an item calls reorder.onItemPointerdown with its index', async () => {
     const wrapper = mount([makeDeck(1), makeDeck(2)], true)
     const item_wrapper = wrapper.find('[data-testid="deck-grid__item"]')
@@ -337,7 +337,7 @@ describe('DeckGrid — pointerdown wiring [obligation]', () => {
   })
 })
 
-describe('DeckGrid — downgrade-grace lock forwarding [obligation]', () => {
+describe('DeckGrid — downgrade-grace lock forwarding', () => {
   test('forwards locked=true to decks ranked below the top 10, false to the rest, while in grace', () => {
     const decks = Array.from({ length: 12 }, (_, i) =>
       makeDeck(i + 1, { rank: i + 1, is_locked: i === 11 })

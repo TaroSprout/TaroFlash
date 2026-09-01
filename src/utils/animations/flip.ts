@@ -15,8 +15,7 @@ export function flipEnter(el: Element, axis: FlipAxis, done: () => void) {
       scale: 1,
       duration: 0.2,
       ease: 'back.out(2)',
-      // Drop the inline transform once landed, or it shadows the card's CSS
-      // hover effects. →[K:settled-transform-traps-overlays]
+      // Drop the inline transform, or it shadows the card's CSS hover effects. →[K:settled-transform-traps-overlays]
       clearProps: 'transform',
       onComplete: done
     }

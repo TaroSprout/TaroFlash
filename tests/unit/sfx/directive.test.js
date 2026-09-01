@@ -84,10 +84,10 @@ describe('vSfx directive', () => {
     })
   })
 
-  // ── the directive no longer accepts a per-call debounce [obligation] ───────
+  // ── the directive no longer accepts a per-call debounce ───────
 
   describe('no per-call debounce', () => {
-    test('hover fires emitHoverSfx with just the role — no debounce/options argument [obligation]', () => {
+    test('hover fires emitHoverSfx with just the role — no debounce/options argument', () => {
       const el = mountDirective({ hover: 'ui.hover', debounce: 250 })
 
       el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
@@ -99,7 +99,7 @@ describe('vSfx directive', () => {
       unmount(el)
     })
 
-    test('focus fires emitSfx with just the role — no debounce/options argument [obligation]', () => {
+    test('focus fires emitSfx with just the role — no debounce/options argument', () => {
       const el = mountDirective({ focus: 'ui.focus', debounce: 250 })
 
       el.dispatchEvent(new Event('focus'))
@@ -200,9 +200,9 @@ describe('vSfx directive', () => {
     })
   })
 
-  // ── the `blur` channel is gone [obligation] ─────────────────────────────────
+  // ── the `blur` channel is gone ─────────────────────────────────
 
-  describe('blur is no longer a supported channel [obligation]', () => {
+  describe('blur is no longer a supported channel', () => {
     test('a `blur` key on the binding object does nothing — no listener, no emitSfx', () => {
       const el = mountDirective({ blur: 'ui.focus' })
 

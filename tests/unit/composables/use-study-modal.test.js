@@ -26,13 +26,13 @@ describe('useStudyModal', () => {
     mockOpen.mockReturnValue({ response: Promise.resolve(undefined) })
   })
 
-  test('plays notice.info sfx synchronously when starting [obligation]', () => {
+  test('plays notice.info sfx synchronously when starting', () => {
     const { start } = useStudyModal()
     start([1])
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.info')
   })
 
-  test('opens a StudySession popup modal with deck_ids [obligation]', () => {
+  test('opens a StudySession popup modal with deck_ids', () => {
     const { start } = useStudyModal()
     start([1])
 
@@ -43,7 +43,7 @@ describe('useStudyModal', () => {
     })
   })
 
-  test('passes multiple deck ids through, in the given order [obligation]', () => {
+  test('passes multiple deck ids through, in the given order', () => {
     const { start } = useStudyModal()
     start([1, 2, 3])
 
@@ -60,7 +60,7 @@ describe('useStudyModal', () => {
     await expect(start([1])).resolves.toBe('some-response')
   })
 
-  test('does not open a second modal by itself — start is a single call, no recursion [obligation]', async () => {
+  test('does not open a second modal by itself — start is a single call, no recursion', async () => {
     const { start } = useStudyModal()
     await start([1])
 

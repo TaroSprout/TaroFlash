@@ -52,25 +52,25 @@ describe('SummaryCardEditor', () => {
     mockEmitSfx.mockClear()
   })
 
-  test('renders the editor root and the card editor for the given card [obligation]', () => {
+  test('renders the editor root and the card editor for the given card', () => {
     const wrapper = mountEditor({ card: makeCard({ id: 42 }) })
     expect(wrapper.find('[data-testid="session-summary__card-editor"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').exists()).toBe(true)
   })
 
-  test('starts on the front side [obligation]', () => {
+  test('starts on the front side', () => {
     const wrapper = mountEditor()
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
       'front'
     )
   })
 
-  // ── exposed flip() [obligation] ──────────────────────────────────────────
+  // ── exposed flip() ──────────────────────────────────────────
   // The Flip button now lives in the session's shared toolbar footer, which
   // reaches this editor's flip() through a template ref — no in-component
   // Flip/Done buttons anymore.
 
-  test('flip() switches to the back side and plays a transition sfx [obligation]', async () => {
+  test('flip() switches to the back side and plays a transition sfx', async () => {
     const wrapper = mountEditor()
     wrapper.vm.flip()
     await nextTick()
@@ -81,7 +81,7 @@ describe('SummaryCardEditor', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('calling flip() twice returns to the front and plays the opposite sfx [obligation]', async () => {
+  test('calling flip() twice returns to the front and plays the opposite sfx', async () => {
     const wrapper = mountEditor()
 
     wrapper.vm.flip()
@@ -97,7 +97,7 @@ describe('SummaryCardEditor', () => {
 
   // ── update forwarding ─────────────────────────────────────────────────────
 
-  test('forwards the child editor update event unchanged [obligation]', async () => {
+  test('forwards the child editor update event unchanged', async () => {
     const wrapper = mountEditor()
     await wrapper.find('[data-testid="study-card-edit-stub__emit-update"]').trigger('click')
 

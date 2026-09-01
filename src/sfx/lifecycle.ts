@@ -71,9 +71,7 @@ export function installAudioLifecycle(): () => void {
     engine.unlock(forced_unlock)
     forced_unlock = false
 
-    // Don't rely on the confirming `statechange` alone — heavy work sharing
-    // this gesture can starve it, leaving nothing to re-arm on and audio dead
-    // for the rest of the visit.
+    // Heavy work on this gesture can starve `statechange`, leaving audio dead for the visit.
     setTimeout(() => {
       if (!engine.isUnlocked()) armGestureRetry(false)
     }, UNLOCK_CHECK_MS)

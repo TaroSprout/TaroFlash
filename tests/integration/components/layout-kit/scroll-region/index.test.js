@@ -90,9 +90,9 @@ function pxOf(el, property) {
   return Number.parseFloat(getComputedStyle(el)[property])
 }
 
-// ── Handle visibility follows overflow [obligation] ──────────────────────────
+// ── Handle visibility follows overflow ──────────────────────────
 
-describe('ScrollRegion — handle appears only on overflow and disappears when content shrinks [obligation]', () => {
+describe('ScrollRegion — handle appears only on overflow and disappears when content shrinks', () => {
   test('no handle when content fits the container', async () => {
     const wrapper = mountRegion({ height: 100, contentHeight: 50 })
     await waitForUpdate()
@@ -119,9 +119,9 @@ describe('ScrollRegion — handle appears only on overflow and disappears when c
   })
 })
 
-// ── Handle resizes on content growth alone [obligation] ──────────────────────
+// ── Handle resizes on content growth alone ──────────────────────
 
-describe('ScrollRegion — handle resizes when content grows with no scroll or resize event [obligation]', () => {
+describe('ScrollRegion — handle resizes when content grows with no scroll or resize event', () => {
   test('growing the content past the container reveals the handle without a scroll or resize event', async () => {
     const wrapper = mountRegion({ height: 100, contentHeight: 90 })
     await waitForUpdate()
@@ -135,14 +135,14 @@ describe('ScrollRegion — handle resizes when content grows with no scroll or r
   })
 })
 
-// ── The gutter is carved out of the inset the consumer declared [obligation] ─
+// ── The gutter is carved out of the inset the consumer declared ─
 // A consumer says how far in from its end edge the content stops
 // (`--scroll-content-inset`) and pads with the `--scroll-content-pad-end` the
 // region publishes back. Whatever the region takes for the handle's band, the
 // two together have to add back up to the inset the consumer asked for, or the
 // content column lands somewhere the design never put it.
 
-describe('ScrollRegion — the handle band plus the published end padding equal the declared inset [obligation]', () => {
+describe('ScrollRegion — the handle band plus the published end padding equal the declared inset', () => {
   // These assert the inset/band split math, not the breakpoint gate itself —
   // widen past `md` so the gutter these tests depend on is actually present.
   async function mountWithInset(inset) {
@@ -200,12 +200,12 @@ describe('ScrollRegion — the handle band plus the published end padding equal 
   })
 })
 
-// ── The gutter costs nothing below the md breakpoint [obligation] ────────────
+// ── The gutter costs nothing below the md breakpoint ────────────
 // A real Chromium viewport resize genuinely re-evaluates the `@media
 // (min-width: 52rem)` rule, unlike jsdom — so this drives the actual gate
 // rather than reading the stylesheet text.
 
-describe('ScrollRegion — --scroll-gutter is width-gated at the md breakpoint [obligation]', () => {
+describe('ScrollRegion — --scroll-gutter is width-gated at the md breakpoint', () => {
   test('below 832px the gutter is 0 even with a fine pointer', async () => {
     await page.viewport(700, 800)
     const wrapper = mountRegion({ height: 100, contentHeight: 500 })
@@ -229,13 +229,13 @@ describe('ScrollRegion — --scroll-gutter is width-gated at the md breakpoint [
   })
 })
 
-// ── A host can take the scroller away [obligation] ───────────────────────────
+// ── A host can take the scroller away ───────────────────────────
 // A window that docks to the viewport edge grows to its children and lets the
 // sheet around it do the scrolling. It says so with `--scroll-overflow: visible`
 // and a height of auto; the handle then goes on its own, because a box that
 // grows to its content never overflows.
 
-describe('ScrollRegion — a host that sets --scroll-overflow drops the scroller [obligation]', () => {
+describe('ScrollRegion — a host that sets --scroll-overflow drops the scroller', () => {
   test('the scrolling box stops scrolling and no handle is drawn', async () => {
     const wrapper = mountRegion({
       height: null,
@@ -257,9 +257,9 @@ describe('ScrollRegion — a host that sets --scroll-overflow drops the scroller
   })
 })
 
-// ── An external target keeps the host's positioning [obligation] ─────────────
+// ── An external target keeps the host's positioning ─────────────
 
-describe('ScrollRegion — data-scroll reflects who owns the scroller [obligation]', () => {
+describe('ScrollRegion — data-scroll reflects who owns the scroller', () => {
   test('no target: the region owns its own scroller and becomes the positioning box', async () => {
     const wrapper = mountRegion({ height: 100, contentHeight: 500 })
     await waitForUpdate()
@@ -286,9 +286,9 @@ describe('ScrollRegion — data-scroll reflects who owns the scroller [obligatio
   })
 })
 
-// ── Hidden host, revealed later [obligation] ─────────────────────────────────
+// ── Hidden host, revealed later ─────────────────────────────────
 
-describe('ScrollRegion — mounted inside a display:none host [obligation]', () => {
+describe('ScrollRegion — mounted inside a display:none host', () => {
   function mountHidden({ height = 100, contentHeight = 500 } = {}) {
     const host = document.createElement('div')
     host.style.display = 'none'

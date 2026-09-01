@@ -106,8 +106,8 @@ afterEach(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('mobile-editor/index (real modal stack) [obligation]', () => {
-  test('open_at opens the editor through the real modal system and the context reaches nested descendants [obligation]', async () => {
+describe('mobile-editor/index (real modal stack)', () => {
+  test('open_at opens the editor through the real modal system and the context reaches nested descendants', async () => {
     const controller = makeController([
       makeCard({ client_id: 'cid-1' }),
       makeCard({ client_id: 'cid-2' })
@@ -135,9 +135,9 @@ describe('mobile-editor/index (real modal stack) [obligation]', () => {
     ).toBeUndefined()
   })
 
-  // ── editor-controls lives in dialog-card's #toolbar [obligation] ──────────
+  // ── editor-controls lives in dialog-card's #toolbar ──────────
 
-  test('editor-controls is rendered inside the dialog-card toolbar, pinned outside the scrolling body [obligation]', async () => {
+  test('editor-controls is rendered inside the dialog-card toolbar, pinned outside the scrolling body', async () => {
     const controller = makeController([makeCard({ client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
     editor.open_at('cid-1')
@@ -150,7 +150,7 @@ describe('mobile-editor/index (real modal stack) [obligation]', () => {
     expect(toolbar.find('[data-testid="mobile-card-editor__prev"]').exists()).toBe(true)
   })
 
-  test('calling open_at again while open updates the existing modal instead of stacking a second one [obligation]', async () => {
+  test('calling open_at again while open updates the existing modal instead of stacking a second one', async () => {
     const controller = makeController([
       makeCard({ client_id: 'cid-1' }),
       makeCard({ client_id: 'cid-2' })
@@ -168,7 +168,7 @@ describe('mobile-editor/index (real modal stack) [obligation]', () => {
     expect(wrapper.find('[data-testid="face-editor-stub"]').text()).toBe('cid-2')
   })
 
-  test('a full close-then-reopen cycle works: dialog-card close dismisses the modal, and a later open_at reopens it [obligation]', async () => {
+  test('a full close-then-reopen cycle works: dialog-card close dismisses the modal, and a later open_at reopens it', async () => {
     const controller = makeController([makeCard({ client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
 
@@ -187,7 +187,7 @@ describe('mobile-editor/index (real modal stack) [obligation]', () => {
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(true)
   })
 
-  test('onClosed fires (resetting internal state) when the modal is dismissed via backdrop, not just via close() [obligation]', async () => {
+  test('onClosed fires (resetting internal state) when the modal is dismissed via backdrop, not just via close()', async () => {
     const controller = makeController([makeCard({ client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
 
@@ -206,7 +206,7 @@ describe('mobile-editor/index (real modal stack) [obligation]', () => {
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(true)
   })
 
-  test('reconcileCursor still closes the real modal when deleting the last card empties the deck [obligation]', async () => {
+  test('reconcileCursor still closes the real modal when deleting the last card empties the deck', async () => {
     const controller = makeController([makeCard({ id: 1, client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
 

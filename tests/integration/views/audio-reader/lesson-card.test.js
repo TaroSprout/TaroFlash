@@ -68,19 +68,19 @@ describe('LessonCard', () => {
     ).toBe('processing')
   })
 
-  test('stamps the constant data-station="panel" [obligation]', () => {
+  test('stamps the constant data-station="panel"', () => {
     expect(mountCard(ready).find('[data-testid="lesson-card"]').attributes('data-station')).toBe(
       'panel'
     )
   })
 
-  test('the icon carries no data-palette when the lesson is not failed [obligation]', () => {
+  test('the icon carries no data-palette when the lesson is not failed', () => {
     expect(
       mountCard(ready).find('[data-testid="lesson-card__icon"]').attributes('data-palette')
     ).toBeUndefined()
   })
 
-  test('the icon carries data-palette="danger" when the lesson has failed [obligation]', () => {
+  test('the icon carries data-palette="danger" when the lesson has failed', () => {
     expect(
       mountCard(failed).find('[data-testid="lesson-card__icon"]').attributes('data-palette')
     ).toBe('danger')

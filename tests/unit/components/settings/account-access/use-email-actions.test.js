@@ -39,7 +39,7 @@ describe('useEmailActions — initial state', () => {
     expect(email_actions.current_email.value).toBe('current@example.com')
   })
 
-  test('[obligation] current_email is reactive to changes in the member store, not a static snapshot', () => {
+  test('current_email is reactive to changes in the member store, not a static snapshot', () => {
     const email_actions = useEmailActions()
     expect(email_actions.current_email.value).toBe('current@example.com')
 
@@ -75,7 +75,7 @@ describe('useEmailActions — validation', () => {
     expect(email_actions.error.value).toBe('account-access-modal.email.validation-invalid')
   })
 
-  test('[obligation] rejects submitting the member store current email as unchanged', async () => {
+  test('rejects submitting the member store current email as unchanged', async () => {
     mockMember.email = 'current@example.com'
     const email_actions = useEmailActions()
     email_actions.email.value = 'current@example.com'
@@ -96,14 +96,14 @@ describe('useEmailActions — validation', () => {
     expect(email_actions.error.value).toBe('')
   })
 
-  test('[obligation] plays the stuck sfx when client-side validation fails', async () => {
+  test('plays the stuck sfx when client-side validation fails', async () => {
     const email_actions = useEmailActions()
     email_actions.email.value = ''
     await email_actions.submit()
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
-  test('[obligation] does NOT fire a notice-store error for a validation failure', async () => {
+  test('does NOT fire a notice-store error for a validation failure', async () => {
     const email_actions = useEmailActions()
     email_actions.email.value = ''
     await email_actions.submit()
@@ -112,7 +112,7 @@ describe('useEmailActions — validation', () => {
 })
 
 describe('useEmailActions — submit', () => {
-  test('[obligation] "success" sets pending true rather than changing current_email — double_confirm_changes requires both inboxes', async () => {
+  test('"success" sets pending true rather than changing current_email — double_confirm_changes requires both inboxes', async () => {
     mockSession.updateEmail.mockResolvedValueOnce('success')
     const email_actions = useEmailActions()
     email_actions.email.value = 'new@example.com'
@@ -124,7 +124,7 @@ describe('useEmailActions — submit', () => {
     expect(email_actions.current_email.value).toBe('current@example.com')
   })
 
-  test('[obligation] does not play the stuck sfx on a successful submit', async () => {
+  test('does not play the stuck sfx on a successful submit', async () => {
     mockSession.updateEmail.mockResolvedValueOnce('success')
     const email_actions = useEmailActions()
     email_actions.email.value = 'new@example.com'
@@ -145,7 +145,7 @@ describe('useEmailActions — submit', () => {
     expect(email_actions.error.value).toBe('account-access-modal.email.validation-taken')
   })
 
-  test('[obligation] does NOT fire a notice-store error for the "email-taken" outcome', async () => {
+  test('does NOT fire a notice-store error for the "email-taken" outcome', async () => {
     mockSession.updateEmail.mockResolvedValueOnce('email-taken')
     const email_actions = useEmailActions()
     email_actions.email.value = 'new@example.com'
@@ -165,7 +165,7 @@ describe('useEmailActions — submit', () => {
     expect(result).toBe('error')
   })
 
-  test('[obligation] fires a notice-store error only on the true fallthrough "error" outcome', async () => {
+  test('fires a notice-store error only on the true fallthrough "error" outcome', async () => {
     mockSession.updateEmail.mockResolvedValueOnce('error')
     const email_actions = useEmailActions()
     email_actions.email.value = 'new@example.com'
@@ -175,7 +175,7 @@ describe('useEmailActions — submit', () => {
     expect(mockNotice.error).toHaveBeenCalledWith('account-access-modal.email.error')
   })
 
-  test('[obligation] plays the stuck sfx for every non-success server outcome', async () => {
+  test('plays the stuck sfx for every non-success server outcome', async () => {
     for (const outcome of ['email-taken', 'error']) {
       mockEmitSfx.mockReset()
       mockSession.updateEmail.mockResolvedValueOnce(outcome)

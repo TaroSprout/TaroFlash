@@ -64,7 +64,7 @@ beforeEach(() => {
 // ── onDelete ──────────────────────────────────────────────────────────────────
 
 describe('useActiveCardActions — onDelete', () => {
-  test('is a no-op when active_card is undefined [obligation]', async () => {
+  test('is a no-op when active_card is undefined', async () => {
     const active_card = ref(undefined)
     const onRemoved = vi.fn()
     const { onDelete } = useActiveCardActions({ active_card, deck_id: () => 10, onRemoved })
@@ -76,7 +76,7 @@ describe('useActiveCardActions — onDelete', () => {
     expect(onRemoved).not.toHaveBeenCalled()
   })
 
-  test('does NOT call deleteCards when confirm is dismissed [obligation]', async () => {
+  test('does NOT call deleteCards when confirm is dismissed', async () => {
     confirmDeleteMock.mockResolvedValueOnce(false)
     const { result } = makeSetup()
 
@@ -85,7 +85,7 @@ describe('useActiveCardActions — onDelete', () => {
     expect(deleteCardsMock).not.toHaveBeenCalled()
   })
 
-  test('does NOT call onRemoved when confirm is dismissed [obligation]', async () => {
+  test('does NOT call onRemoved when confirm is dismissed', async () => {
     confirmDeleteMock.mockResolvedValueOnce(false)
     const { result, onRemoved } = makeSetup()
 
@@ -94,7 +94,7 @@ describe('useActiveCardActions — onDelete', () => {
     expect(onRemoved).not.toHaveBeenCalled()
   })
 
-  test('calls deleteCards({ cards: [card] }) on confirm [obligation]', async () => {
+  test('calls deleteCards({ cards: [card] }) on confirm', async () => {
     confirmDeleteMock.mockResolvedValueOnce(true)
     const card = makeCard({ id: 42 })
     const { result } = makeSetup({ card })
@@ -104,7 +104,7 @@ describe('useActiveCardActions — onDelete', () => {
     expect(deleteCardsMock).toHaveBeenCalledWith({ cards: [expect.objectContaining({ id: 42 })] })
   })
 
-  test('calls onRemoved(card.id) after successful delete [obligation]', async () => {
+  test('calls onRemoved(card.id) after successful delete', async () => {
     confirmDeleteMock.mockResolvedValueOnce(true)
     const card = makeCard({ id: 42 })
     const { result, onRemoved } = makeSetup({ card })
@@ -123,7 +123,7 @@ describe('useActiveCardActions — onDelete', () => {
     expect(confirmDeleteMock).toHaveBeenCalledWith(1)
   })
 
-  test('shows an error notice and does NOT call onRemoved when deleteCards rejects [obligation]', async () => {
+  test('shows an error notice and does NOT call onRemoved when deleteCards rejects', async () => {
     confirmDeleteMock.mockResolvedValueOnce(true)
     deleteCardsMock.mockRejectedValueOnce(new Error('boom'))
     const card = makeCard({ id: 42 })
@@ -139,7 +139,7 @@ describe('useActiveCardActions — onDelete', () => {
 // ── onMove ────────────────────────────────────────────────────────────────────
 
 describe('useActiveCardActions — onMove', () => {
-  test('is a no-op when active_card is undefined [obligation]', async () => {
+  test('is a no-op when active_card is undefined', async () => {
     const active_card = ref(undefined)
     const onRemoved = vi.fn()
     const { onMove } = useActiveCardActions({ active_card, deck_id: () => 10, onRemoved })
@@ -151,7 +151,7 @@ describe('useActiveCardActions — onMove', () => {
     expect(onRemoved).not.toHaveBeenCalled()
   })
 
-  test('does NOT call moveCards when modal is dismissed (resolves undefined) [obligation]', async () => {
+  test('does NOT call moveCards when modal is dismissed (resolves undefined)', async () => {
     openMoveModalMock.mockResolvedValueOnce(undefined)
     const { result } = makeSetup()
 
@@ -160,7 +160,7 @@ describe('useActiveCardActions — onMove', () => {
     expect(moveCardsMock).not.toHaveBeenCalled()
   })
 
-  test('does NOT call onRemoved when modal is dismissed [obligation]', async () => {
+  test('does NOT call onRemoved when modal is dismissed', async () => {
     openMoveModalMock.mockResolvedValueOnce(undefined)
     const { result, onRemoved } = makeSetup()
 
@@ -169,7 +169,7 @@ describe('useActiveCardActions — onMove', () => {
     expect(onRemoved).not.toHaveBeenCalled()
   })
 
-  test('the move closure calls moveCards with target_deck_id, card_ids, source_deck_ids [obligation]', async () => {
+  test('the move closure calls moveCards with target_deck_id, card_ids, source_deck_ids', async () => {
     // Mirrors what move-cards.vue does: invoke the passed `move` closure with
     // the chosen deck before resolving with the modal response.
     openMoveModalMock.mockImplementationOnce(async (_cards, _count, _deck_id, move) => {
@@ -188,7 +188,7 @@ describe('useActiveCardActions — onMove', () => {
     })
   })
 
-  test('calls onRemoved(card.id) after successful move [obligation]', async () => {
+  test('calls onRemoved(card.id) after successful move', async () => {
     openMoveModalMock.mockResolvedValueOnce({ deck_id: 99 })
     const card = makeCard({ id: 7 })
     const { result, onRemoved } = makeSetup({ card })
@@ -213,7 +213,7 @@ describe('useActiveCardActions — onMove', () => {
     )
   })
 
-  test('the move closure passed to openMoveModal lets a rejected mutation propagate [obligation]', async () => {
+  test('the move closure passed to openMoveModal lets a rejected mutation propagate', async () => {
     // Error handling now lives entirely inside move-cards.vue — this composable's
     // `move` closure must not swallow a rejection with a local try/catch.
     openMoveModalMock.mockResolvedValueOnce(undefined)

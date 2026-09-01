@@ -103,10 +103,10 @@ describe('GeneralSection — shuffle toggle', () => {
   })
 })
 
-// ── starting-side option group [obligation] ───────────────────────────────────
+// ── starting-side option group ───────────────────────────────────
 
-describe('GeneralSection — starting-side option group [obligation]', () => {
-  test('displays "front" as active when draft.study_config.starting_side is absent [obligation]', () => {
+describe('GeneralSection — starting-side option group', () => {
+  test('displays "front" as active when draft.study_config.starting_side is absent', () => {
     const { wrapper } = makeWrapper()
     const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
     expect(group.find('[data-testid="option-front"]').attributes('data-active')).toBe('true')
@@ -118,19 +118,19 @@ describe('GeneralSection — starting-side option group [obligation]', () => {
     expect(group.find('[data-testid="option-random"]').attributes('data-active')).toBe('true')
   })
 
-  test('writes "back" into draft.study_config.starting_side when the back option is picked [obligation]', async () => {
+  test('writes "back" into draft.study_config.starting_side when the back option is picked', async () => {
     const { wrapper, config } = makeWrapper()
     await wrapper.find('[data-testid="option-back"]').trigger('click')
     expect(config.starting_side).toBe('back')
   })
 
-  test('writes "random" into draft.study_config.starting_side when the random option is picked [obligation]', async () => {
+  test('writes "random" into draft.study_config.starting_side when the random option is picked', async () => {
     const { wrapper, config } = makeWrapper()
     await wrapper.find('[data-testid="option-random"]').trigger('click')
     expect(config.starting_side).toBe('random')
   })
 
-  test('writes "front" into draft.study_config.starting_side when the front option is picked from a "back" draft [obligation]', async () => {
+  test('writes "front" into draft.study_config.starting_side when the front option is picked from a "back" draft', async () => {
     const { wrapper, config } = makeWrapper({ config: { starting_side: 'back' } })
     await wrapper.find('[data-testid="option-front"]').trigger('click')
     expect(config.starting_side).toBe('front')
@@ -141,13 +141,13 @@ describe('GeneralSection — starting-side option group [obligation]', () => {
     expect(wrapper.find('[data-testid="tab-review-pacing__starting-side"]').exists()).toBe(true)
   })
 
-  test('passes size="base" to the option group on a coarse pointer [obligation]', () => {
+  test('passes size="base" to the option group on a coarse pointer', () => {
     const { wrapper } = makeWrapper({ coarse: true })
     const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
     expect(group.attributes('size')).toBe('base')
   })
 
-  test('passes size="sm" to the option group on a fine pointer [obligation]', () => {
+  test('passes size="sm" to the option group on a fine pointer', () => {
     const { wrapper } = makeWrapper({ coarse: false })
     const group = wrapper.find('[data-testid="tab-review-pacing__starting-side-options"]')
     expect(group.attributes('size')).toBe('sm')

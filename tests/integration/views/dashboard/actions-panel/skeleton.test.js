@@ -50,7 +50,7 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     ).toBe(true)
   })
 
-  test('the polaroid placeholder stamps the constant data-station="float" [obligation]', () => {
+  test('the polaroid placeholder stamps the constant data-station="float"', () => {
     mountSkeleton()
     expect(
       wrapper
@@ -69,19 +69,19 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     expect(wrapper.find('[data-testid="dashboard-actions-panel-shell__body"]').exists()).toBe(true)
   })
 
-  // ── real member-polaroid, not a hand-rolled copy [obligation] ──────────────
+  // ── real member-polaroid, not a hand-rolled copy ──────────────
   // The regression is a duplicated offset drifting from the real component —
   // guard that this call site renders the actual MemberPolaroid instance, not
   // a div reproducing its geometry.
 
-  test('renders the polaroid through the real MemberPolaroid component [obligation]', () => {
+  test('renders the polaroid through the real MemberPolaroid component', () => {
     mountSkeleton()
     const polaroid = wrapper.findComponent(MemberPolaroid)
     expect(polaroid.exists()).toBe(true)
     expect(polaroid.find('[data-testid="member-polaroid__frame"]').exists()).toBe(true)
   })
 
-  test('the photo placeholder fills the real member-polaroid photo slot [obligation]', () => {
+  test('the photo placeholder fills the real member-polaroid photo slot', () => {
     mountSkeleton()
     const photo_container = wrapper.find('[data-testid="member-polaroid__photo"]')
     expect(
@@ -89,17 +89,17 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     ).toBe(true)
   })
 
-  // ── shimmer clipping [obligation] ───────────────────────────────────────────
+  // ── shimmer clipping ───────────────────────────────────────────
   // The shimmer utility clips its own host via overflow:hidden. The polaroid
   // overhangs the shell's top-left corner and must not be clipped by it.
 
-  test('the shimmer host actually clips its own overflow [obligation]', () => {
+  test('the shimmer host actually clips its own overflow', () => {
     mountSkeleton()
     const host = wrapper.find('[data-testid="dashboard-actions-panel-skeleton"]').element
     expect(getComputedStyle(host).overflow).toBe('hidden')
   })
 
-  test('the polaroid is not a DOM descendant of the shimmer-clipping shell [obligation]', () => {
+  test('the polaroid is not a DOM descendant of the shimmer-clipping shell', () => {
     mountSkeleton()
     const nested = wrapper.find(
       '[data-testid="dashboard-actions-panel-skeleton"] [data-testid="dashboard-actions-panel-skeleton__polaroid"]'
@@ -110,7 +110,7 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     ).toBe(true)
   })
 
-  test('the polaroid geometrically overhangs past the shell edge and is actually painted there [obligation]', () => {
+  test('the polaroid geometrically overhangs past the shell edge and is actually painted there', () => {
     mountSkeleton()
     const shell_rect = wrapper
       .find('[data-testid="dashboard-actions-panel-skeleton"]')
@@ -136,9 +136,9 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     expect(painted).toBeTruthy()
   })
 
-  // ── header stripes below the fill [obligation] ──────────────────────────────
+  // ── header stripes below the fill ──────────────────────────────
 
-  test('the header text placeholder has no stripe mask on itself, so its own fill is visible [obligation]', () => {
+  test('the header text placeholder has no stripe mask on itself, so its own fill is visible', () => {
     mountSkeleton()
     const header = wrapper.find(
       '[data-testid="dashboard-actions-panel-skeleton__header-block"]'
@@ -146,15 +146,15 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     expect(getComputedStyle(header, '::before').content).toBe('none')
   })
 
-  test('the shell carries the stripe mask, painted below the header text placeholder [obligation]', () => {
+  test('the shell carries the stripe mask, painted below the header text placeholder', () => {
     mountSkeleton()
     const shell = wrapper.find('[data-testid="dashboard-actions-panel-skeleton"]').element
     expect(getComputedStyle(shell, '::before').content).toBe('""')
   })
 
-  // ── distinguishable colours [obligation] ────────────────────────────────────
+  // ── distinguishable colours ────────────────────────────────────
 
-  test('the actions-panel surface is a different resolved colour than the page behind it [obligation]', () => {
+  test('the actions-panel surface is a different resolved colour than the page behind it', () => {
     mountSkeleton()
     const shell = wrapper.find('[data-testid="dashboard-actions-panel-skeleton"]').element
     const panel_color = getComputedStyle(shell).backgroundColor
@@ -163,7 +163,7 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     expect(panel_color).not.toBe(page_color)
   })
 
-  test('the actions-panel surface is a different resolved colour than its own skeleton placeholders [obligation]', () => {
+  test('the actions-panel surface is a different resolved colour than its own skeleton placeholders', () => {
     mountSkeleton()
     const shell = wrapper.find('[data-testid="dashboard-actions-panel-skeleton"]').element
     const header = wrapper.find(
@@ -175,7 +175,7 @@ describe('DashboardActionsPanelSkeleton (views/dashboard/actions-panel/skeleton.
     )
   })
 
-  test('the polaroid overhang is a different resolved colour than the panel it overhangs onto [obligation]', () => {
+  test('the polaroid overhang is a different resolved colour than the panel it overhangs onto', () => {
     mountSkeleton()
     const shell = wrapper.find('[data-testid="dashboard-actions-panel-skeleton"]').element
     const frame = wrapper.find('[data-testid="member-polaroid__frame"]').element

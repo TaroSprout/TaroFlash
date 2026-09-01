@@ -70,23 +70,23 @@ describe('SplashPreview', () => {
     expect(wrapper.find('[data-testid="pinned-preview"]').attributes('data-side')).toBe('cover')
   })
 
-  // [obligation] The splash preview never opts into the hover lift — only
+  // The splash preview never opts into the hover lift — only
   // deck-settings does — so it must stay static.
-  test('never passes hover_lift to the pinned preview [obligation]', () => {
+  test('never passes hover_lift to the pinned preview', () => {
     const wrapper = mountSplashPreview()
     const preview = wrapper.findComponent({ name: 'PinnedPreview' })
     expect(preview.props('hover_lift')).toBeFalsy()
   })
 
-  // ── flipPreviewSide [obligation] ───────────────────────────────────────────
+  // ── flipPreviewSide ───────────────────────────────────────────
 
-  test('flipping the pinned preview side updates the side [obligation]', async () => {
+  test('flipping the pinned preview side updates the side', async () => {
     const wrapper = mountSplashPreview()
     await wrapper.find('[data-testid="pinned-preview__flip"]').trigger('click')
     expect(wrapper.find('[data-testid="pinned-preview"]').attributes('data-side')).toBe('front')
   })
 
-  test('flipping the pinned preview emits nav.page-forward sfx [obligation]', async () => {
+  test('flipping the pinned preview emits nav.page-forward sfx', async () => {
     const wrapper = mountSplashPreview()
     await wrapper.find('[data-testid="pinned-preview__flip"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('nav.page-forward')

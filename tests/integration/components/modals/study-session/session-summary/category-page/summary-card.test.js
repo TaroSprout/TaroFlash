@@ -229,8 +229,8 @@ describe('SummaryCard', () => {
 
   // ── selection mode ──────────────────────────────────────────────────────────
 
-  describe('selection mode [obligation]', () => {
-    test('clicking the card while selecting toggles selection and does not flip [obligation]', async () => {
+  describe('selection mode', () => {
+    test('clicking the card while selecting toggles selection and does not flip', async () => {
       const controller = makeController({ is_selecting: true })
       const { wrapper } = mount_({ controller })
 
@@ -241,7 +241,7 @@ describe('SummaryCard', () => {
       expect(mockEmitSfx).not.toHaveBeenCalled()
     })
 
-    test('renders the checkbox while selecting, reflecting isCardSelected [obligation]', () => {
+    test('renders the checkbox while selecting, reflecting isCardSelected', () => {
       const controller = makeController({ is_selecting: true, selected: true })
       const { wrapper } = mount_({ controller })
 
@@ -250,12 +250,12 @@ describe('SummaryCard', () => {
       expect(radio.attributes('data-checked')).toBe('true')
     })
 
-    test('omits the checkbox when not selecting [obligation]', () => {
+    test('omits the checkbox when not selecting', () => {
       const { wrapper } = mount_()
       expect(wrapper.find('[data-testid="session-summary__card-checkbox"]').exists()).toBe(false)
     })
 
-    test('mirrors hover onto the checkbox active prop [obligation]', async () => {
+    test('mirrors hover onto the checkbox active prop', async () => {
       const controller = makeController({ is_selecting: true })
       const { wrapper } = mount_({ controller })
       const root = wrapper.find('[data-testid="session-summary__card"]')
@@ -275,13 +275,13 @@ describe('SummaryCard', () => {
       ).toBe('false')
     })
 
-    test('hides the ⋯ menu while selecting [obligation]', () => {
+    test('hides the ⋯ menu while selecting', () => {
       const controller = makeController({ is_selecting: true })
       const { wrapper } = mount_({ controller })
       expect(wrapper.find('[data-testid="session-summary__card-menu"]').exists()).toBe(false)
     })
 
-    test('a touch pointerdown does NOT arm the long-press hold while selecting [obligation]', async () => {
+    test('a touch pointerdown does NOT arm the long-press hold while selecting', async () => {
       const controller = makeController({ is_selecting: true })
       const { wrapper } = mount_({ controller })
       await wrapper
@@ -294,41 +294,41 @@ describe('SummaryCard', () => {
 
   // ── ⋯ options menu ────────────────────────────────────────────────────────
 
-  describe('⋯ options menu [obligation]', () => {
-    test('renders the menu when not selecting [obligation]', () => {
+  describe('⋯ options menu', () => {
+    test('renders the menu when not selecting', () => {
       const { wrapper } = mount_()
       expect(wrapper.find('[data-testid="session-summary__card-menu"]').exists()).toBe(true)
     })
 
-    test('select option enters selection and selects this card [obligation]', async () => {
+    test('select option enters selection and selects this card', async () => {
       const { wrapper, controller } = mount_()
       await wrapper.find('[data-testid="summary-card-menu-stub__select"]').trigger('click')
 
       expect(controller.onSelectSummaryCard).toHaveBeenCalledWith(1)
     })
 
-    test('move option calls onMoveSummaryCard with the card id [obligation]', async () => {
+    test('move option calls onMoveSummaryCard with the card id', async () => {
       const { wrapper, controller } = mount_()
       await wrapper.find('[data-testid="summary-card-menu-stub__move"]').trigger('click')
 
       expect(controller.onMoveSummaryCard).toHaveBeenCalledWith(1)
     })
 
-    test('edit option calls startSummaryEdit with the card id [obligation]', async () => {
+    test('edit option calls startSummaryEdit with the card id', async () => {
       const { wrapper, controller } = mount_()
       await wrapper.find('[data-testid="summary-card-menu-stub__edit"]').trigger('click')
 
       expect(controller.startSummaryEdit).toHaveBeenCalledWith(1)
     })
 
-    test('delete option calls onDeleteSummaryCard with the card id [obligation]', async () => {
+    test('delete option calls onDeleteSummaryCard with the card id', async () => {
       const { wrapper, controller } = mount_()
       await wrapper.find('[data-testid="summary-card-menu-stub__delete"]').trigger('click')
 
       expect(controller.onDeleteSummaryCard).toHaveBeenCalledWith(1)
     })
 
-    test('a touch pointerdown when not selecting arms a hold that opens the menu [obligation]', async () => {
+    test('a touch pointerdown when not selecting arms a hold that opens the menu', async () => {
       const { wrapper } = mount_()
       await wrapper
         .find('[data-testid="session-summary__card"]')
@@ -337,7 +337,7 @@ describe('SummaryCard', () => {
       expect(pressHoldArmMock).toHaveBeenCalledTimes(1)
     })
 
-    test('a mouse pointerdown does NOT arm the hold — desktop hovers the menu [obligation]', async () => {
+    test('a mouse pointerdown does NOT arm the hold — desktop hovers the menu', async () => {
       const { wrapper } = mount_()
       await wrapper
         .find('[data-testid="session-summary__card"]')

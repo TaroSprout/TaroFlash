@@ -61,16 +61,11 @@ export function useUpsertDeckMutation() {
   return useMutation({
     mutation: async (deck: Deck) => {
       if (deck.id === undefined) {
-        // Reached through the cache rather than a mounted `useQuery`: mounting
-        // one here fires a count fetch for every deck upsert, edits included,
-        // and its options would overwrite the live reader's on the shared
-        // entry. `fetch` always goes to the server, which is what an
-        // authoritative re-check wants.
+        // Reach the entry through the cache: mounting a query here would overwrite the live reader's options.
         const count_entry = queryCache.ensure(MEMBER_DECK_COUNT_QUERY)
         await queryCache.fetch(count_entry)
-        // Trap: decks barrel cycle drops runtime exports →[K:decks-barrel-cycle-drops-runtime-exports]
         // Mirrors useCan().createDeck — duplicated rather than imported, since
-        // that composable pulls in this module's own barrel.
+        // that composable pulls in this module's own barrel. →[K:decks-barrel-cycle-drops-runtime-exports]
         const limit = member.deck_limit
         const count = count_entry.state.value.data ?? 0
         if (limit !== null && count >= limit) throw new DeckLimitError()
@@ -86,10 +81,7 @@ export function useUpsertDeckMutation() {
       if (client_key) removePendingDeck(queryCache, client_key)
     },
     onSettled: (_data, error, deck) => {
-      // A failed write touched nothing server-side, and onError already undid
-      // the optimistic insert — refetching here only sends a doomed request
-      // while offline, which surfaces its own error toast on top of the one
-      // this failure already showed.
+      // Nothing landed server-side and onError already rolled back, so a refetch only doubles the toast.
       if (error) return
 
       queryCache.invalidateQueries({ key: ['decks'] })

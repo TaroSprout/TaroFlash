@@ -105,7 +105,7 @@ describe('useSetCollectionProgressMutation', () => {
       expect(setQueryDataSpy).not.toHaveBeenCalled()
     })
 
-    test('never calls invalidateQueries — patches in place to avoid refetch loops [obligation]', () => {
+    test('never calls invalidateQueries — patches in place to avoid refetch loops', () => {
       getQueryDataSpy.mockImplementation((key) =>
         key[0] === 'lesson-collection' ? { id: 3, title: 'Book', last_lesson_id: 1 } : undefined
       )

@@ -100,11 +100,11 @@ describe('useCardPreview', () => {
     expect(result.preview_style.value.transition).toBe('none')
   })
 
-  // ── awaitFlip [obligation] ─────────────────────────────────────────────────
+  // ── awaitFlip ─────────────────────────────────────────────────
   // awaitFlip emits nav.page-forward sfx, sets next_card_side, and resolves when
   // onNextCardFlipped is called.
 
-  test('awaitFlip emits nav.page-forward sfx [obligation]', async () => {
+  test('awaitFlip emits nav.page-forward sfx', async () => {
     const next_card = ref(undefined)
     const { result } = withSetup(() => useCardPreview(next_card))
     unmount = () => {}

@@ -70,8 +70,7 @@ function onCardClick() {
   if (sel && !sel.isCollapsed) return
 
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
-  // The grid picks which face it shows, so the cue reads against that face and
-  // not against the front.
+  // The cue reads against the face the grid is showing, not the front.
   emitSfx(active_side.value === side ? 'card.flip-back' : 'card.flip-away')
 }
 

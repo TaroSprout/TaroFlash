@@ -197,7 +197,7 @@ describe('useShortcutStore', () => {
     })
   })
 
-  describe('key dispatch [obligation]', () => {
+  describe('key dispatch', () => {
     let app
     let store
 

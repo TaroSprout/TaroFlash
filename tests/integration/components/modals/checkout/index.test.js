@@ -77,28 +77,28 @@ describe('Checkout — header', () => {
     expect(wrapper.find('[data-testid="dialog-card-header"]').exists()).toBe(true)
   })
 
-  test('[obligation] is absent while status is success', async () => {
+  test('is absent while status is success', async () => {
     checkoutState.status.value = 'success'
     const wrapper = mountCheckout()
     await flushPromises()
     expect(wrapper.find('[data-testid="dialog-card-header"]').exists()).toBe(false)
   })
 
-  test('[obligation] close button is disabled only while confirming', () => {
+  test('close button is disabled only while confirming', () => {
     checkoutState.status.value = 'confirming'
     const wrapper = mountCheckout()
     const closeButton = wrapper.findComponent({ name: 'UiButton' })
     expect(closeButton.props('disabled')).toBe(true)
   })
 
-  test('[obligation] close button is enabled while loading', () => {
+  test('close button is enabled while loading', () => {
     checkoutState.status.value = 'loading'
     const wrapper = mountCheckout()
     const closeButton = wrapper.findComponent({ name: 'UiButton' })
     expect(closeButton.props('disabled')).toBe(false)
   })
 
-  test('[obligation] close button is enabled while error', () => {
+  test('close button is enabled while error', () => {
     checkoutState.status.value = 'error'
     const wrapper = mountCheckout()
     const closeButton = wrapper.findComponent({ name: 'UiButton' })
@@ -132,11 +132,11 @@ describe('Checkout — header', () => {
     expect(wrapper.text()).toContain('Close')
   })
 
-  // ── exactly one close button [obligation] ──────────────────────────────────
+  // ── exactly one close button ──────────────────────────────────
   // checkout passes close_label/close_disabled through to dialog-card's own
   // fallback header instead of rendering a second close button of its own.
 
-  test('[obligation] renders exactly one close button regardless of status', () => {
+  test('renders exactly one close button regardless of status', () => {
     ;['loading', 'form', 'error', 'confirming'].forEach((status) => {
       checkoutState.status.value = status
       const wrapper = mountCheckout()
@@ -166,7 +166,7 @@ describe('Checkout — footer', () => {
     expect(wrapper.findComponent({ name: 'CheckoutFooter' }).exists()).toBe(true)
   })
 
-  test('[obligation] is absent while status is success', async () => {
+  test('is absent while status is success', async () => {
     checkoutState.status.value = 'success'
     const wrapper = mountCheckout()
     await flushPromises()
@@ -189,7 +189,7 @@ describe('Checkout — body', () => {
     expect(wrapper.findComponent({ name: 'SuccessView' }).exists()).toBe(false)
   })
 
-  test('[obligation] shows only the success view while status is success', async () => {
+  test('shows only the success view while status is success', async () => {
     checkoutState.status.value = 'success'
     const wrapper = mountCheckout()
     await flushPromises()
@@ -214,21 +214,21 @@ describe('Checkout — body/success transition', () => {
   })
 })
 
-// ── dialog-card-body migration [obligation] ───────────────────────────────────
+// ── dialog-card-body migration ───────────────────────────────────
 // checkout's scroll area is now dialog-card-body itself — it owns the
 // overflow/scroll-bar, not a hand-rolled full-bleed div. The footer moved out
 // into dialog-card's #toolbar, so it's a sibling of the scroll area, not
 // nested inside it.
 
-describe('Checkout — dialog-card-body owns the scroll area [obligation]', () => {
-  test('[obligation] checkout__scroll-area is rendered by dialog-card-body', () => {
+describe('Checkout — dialog-card-body owns the scroll area', () => {
+  test('checkout__scroll-area is rendered by dialog-card-body', () => {
     const wrapper = mountCheckout()
     expect(wrapper.findComponent({ name: 'DialogCardBody' }).attributes('data-testid')).toBe(
       'checkout__scroll-area'
     )
   })
 
-  test('[obligation] the footer is a sibling of the scroll area, not nested inside it', () => {
+  test('the footer is a sibling of the scroll area, not nested inside it', () => {
     const wrapper = mountCheckout()
 
     const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
@@ -236,7 +236,7 @@ describe('Checkout — dialog-card-body owns the scroll area [obligation]', () =
     expect(wrapper.findComponent({ name: 'CheckoutFooter' }).exists()).toBe(true)
   })
 
-  test('[obligation] the scroll area still wraps the body', () => {
+  test('the scroll area still wraps the body', () => {
     const wrapper = mountCheckout()
     const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
     expect(scrollArea.find('[data-testid="checkout__body"]').exists()).toBe(true)
@@ -246,7 +246,7 @@ describe('Checkout — dialog-card-body owns the scroll area [obligation]', () =
   // hands its overflow to a scroll region, which only draws a handle once the
   // content outgrows the box.
 
-  test('[obligation] the scroll area hands its overflow to a scroll region', () => {
+  test('the scroll area hands its overflow to a scroll region', () => {
     const wrapper = mountCheckout()
 
     const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
@@ -259,14 +259,14 @@ describe('Checkout — dialog-card-body owns the scroll area [obligation]', () =
   })
 })
 
-// ── dialog-card's own header sits outside the scroll-area [obligation] ───────
+// ── dialog-card's own header sits outside the scroll-area ───────
 // checkout delegates the header entirely to dialog-card (via show_header /
 // close_label / close_disabled) instead of building its own — dialog-card
 // always renders the header as a sibling above its body slot, so it's never
 // nested inside checkout's own scroll-area.
 
-describe('Checkout — header lives outside the scroll-area, owned by dialog-card [obligation]', () => {
-  test('[obligation] dialog-card-header is a sibling of checkout__scroll-area, not nested inside it', () => {
+describe('Checkout — header lives outside the scroll-area, owned by dialog-card', () => {
+  test('dialog-card-header is a sibling of checkout__scroll-area, not nested inside it', () => {
     const wrapper = mountCheckout()
 
     const scrollArea = wrapper.find('[data-testid="checkout__scroll-area"]')
@@ -275,19 +275,19 @@ describe('Checkout — header lives outside the scroll-area, owned by dialog-car
   })
 })
 
-// ── size prop default full_bleed_at [obligation] ──────────────────────────────
+// ── size prop default full_bleed_at ──────────────────────────────
 
-describe('Checkout — dialog-card size default full_bleed_at [obligation]', () => {
-  test('[obligation] uses the "w<sm | h<sm" query sourced from size="md", not a hardcoded/shared one', () => {
+describe('Checkout — dialog-card size default full_bleed_at', () => {
+  test('uses the "w<sm | h<sm" query sourced from size="md", not a hardcoded/shared one', () => {
     mountCheckout()
     expect(capturedQueries).toContain('w<sm | h<sm')
   })
 })
 
-// ── show_header/close_label/close_disabled passed through [obligation] ───────
+// ── show_header/close_label/close_disabled passed through ───────
 
-describe('Checkout — header props forwarded to dialog-card [obligation]', () => {
-  test('[obligation] does not pass show_close_button=false, so dialog-card renders its own fallback close button', () => {
+describe('Checkout — header props forwarded to dialog-card', () => {
+  test('does not pass show_close_button=false, so dialog-card renders its own fallback close button', () => {
     const wrapper = mountCheckout()
     expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(true)
   })

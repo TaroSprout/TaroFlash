@@ -64,42 +64,42 @@ beforeEach(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('crossfadeResizeBeforeLeave [obligation]', () => {
-  test('freezes the wrapper height to its current offsetHeight [obligation]', () => {
+describe('crossfadeResizeBeforeLeave', () => {
+  test('freezes the wrapper height to its current offsetHeight', () => {
     const wrapper = makeEl({ offsetHeight: 120 })
     crossfadeResizeBeforeLeave(wrapper)()
     expect(wrapper.style.height).toBe('120px')
   })
 
-  test('sets overflow to hidden on the wrapper [obligation]', () => {
+  test('sets overflow to hidden on the wrapper', () => {
     const wrapper = makeEl()
     crossfadeResizeBeforeLeave(wrapper)()
     expect(wrapper.style.overflow).toBe('hidden')
   })
 
-  test('returns a function (factory pattern) [obligation]', () => {
+  test('returns a function (factory pattern)', () => {
     const wrapper = makeEl()
     const fn = crossfadeResizeBeforeLeave(wrapper)
     expect(typeof fn).toBe('function')
   })
 })
 
-describe('crossfadeResizeLeave [obligation]', () => {
-  test('pins the leaving element (absolute position) [obligation]', () => {
+describe('crossfadeResizeLeave', () => {
+  test('pins the leaving element (absolute position)', () => {
     const el = makeEl()
     const done = vi.fn()
     crossfadeResizeLeave(el, done)
     expect(el.style.position).toBe('absolute')
   })
 
-  test('calls gsap.to to fade out the element [obligation]', () => {
+  test('calls gsap.to to fade out the element', () => {
     const el = makeEl()
     const done = vi.fn()
     crossfadeResizeLeave(el, done)
     expect(mockGsapTo).toHaveBeenCalledWith(el, expect.objectContaining({ opacity: 0 }))
   })
 
-  test('calls done via onComplete of the fade tween [obligation]', () => {
+  test('calls done via onComplete of the fade tween', () => {
     mockGsapTo.mockImplementation((_el, opts) => opts?.onComplete?.())
     const el = makeEl()
     const done = vi.fn()
@@ -108,14 +108,14 @@ describe('crossfadeResizeLeave [obligation]', () => {
   })
 })
 
-describe('crossfadeResizeEnter [obligation]', () => {
-  test('returns a function (factory pattern) [obligation]', () => {
+describe('crossfadeResizeEnter', () => {
+  test('returns a function (factory pattern)', () => {
     const wrapper = makeEl()
     const fn = crossfadeResizeEnter(wrapper)
     expect(typeof fn).toBe('function')
   })
 
-  test('pins the entering element (absolute position) mid-tween [obligation]', () => {
+  test('pins the entering element (absolute position) mid-tween', () => {
     // Use a mock that does NOT auto-call onComplete so the element stays pinned
     // when we assert — the default mock would call onComplete and unpin immediately.
     mockGsapTo.mockImplementation(() => {})
@@ -126,7 +126,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(el.style.position).toBe('absolute')
   })
 
-  test('sets el opacity to 0 via gsap.set before tweening [obligation]', () => {
+  test('sets el opacity to 0 via gsap.set before tweening', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 80 })
     const done = vi.fn()
@@ -134,7 +134,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(mockGsapSet).toHaveBeenCalledWith(el, { opacity: 0 })
   })
 
-  test('snaps wrapper height to the incoming el scrollHeight via gsap.set [obligation]', () => {
+  test('snaps wrapper height to the incoming el scrollHeight via gsap.set', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 200 })
     const done = vi.fn()
@@ -143,7 +143,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
   })
 
-  test('tweens el opacity to 1 separately [obligation]', () => {
+  test('tweens el opacity to 1 separately', () => {
     const wrapper = makeEl()
     const el = makeEl()
     const done = vi.fn()
@@ -155,7 +155,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(fadeInCall).toBeDefined()
   })
 
-  test('onComplete of opacity tween clears wrapper height and overflow [obligation]', () => {
+  test('onComplete of opacity tween clears wrapper height and overflow', () => {
     // onComplete now lives on the gsap.to(node, { opacity: 1 }) call, not the wrapper
     const wrapper = makeEl()
     const el = makeEl()
@@ -171,7 +171,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(wrapper.style.overflow).toBe('')
   })
 
-  test('onComplete unpins the entering element [obligation]', () => {
+  test('onComplete unpins the entering element', () => {
     const wrapper = makeEl()
     const el = makeEl()
     const done = vi.fn()
@@ -185,7 +185,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(el.style.position).toBe('')
   })
 
-  test('onComplete calls done [obligation]', () => {
+  test('onComplete calls done', () => {
     const wrapper = makeEl()
     const el = makeEl()
     const done = vi.fn()
@@ -199,7 +199,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(done).toHaveBeenCalledTimes(1)
   })
 
-  test('clips overflow only during tween — wrapper.overflow is empty at rest [obligation]', () => {
+  test('clips overflow only during tween — wrapper.overflow is empty at rest', () => {
     // After onComplete, overflow must be cleared (not remain hidden)
     const wrapper = makeEl()
     const el = makeEl()
@@ -215,7 +215,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(wrapper.style.overflow).toBe('')
   })
 
-  // ── animate_height=true branch [obligation] ────────────────────────────────
+  // ── animate_height=true branch ────────────────────────────────
 
   test('defaults animate_height to false — uses gsap.set snap, not a timeline', () => {
     const wrapper = makeEl()
@@ -228,7 +228,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(mockGsapTimeline).not.toHaveBeenCalled()
   })
 
-  test('animate_height=true uses a single gsap.timeline instead of gsap.set for height [obligation]', () => {
+  test('animate_height=true uses a single gsap.timeline instead of gsap.set for height', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 200 })
     const done = vi.fn()
@@ -239,7 +239,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(mockGsapSet).not.toHaveBeenCalledWith(wrapper, { height: 200 })
   })
 
-  test('animate_height=true tweens both wrapper height and el opacity on the same timeline at position 0 [obligation]', () => {
+  test('animate_height=true tweens both wrapper height and el opacity on the same timeline at position 0', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 200 })
     const done = vi.fn()
@@ -254,7 +254,7 @@ describe('crossfadeResizeEnter [obligation]', () => {
     expect(opacityCall).toEqual([el, expect.objectContaining({ opacity: 1 }), 0])
   })
 
-  test('animate_height=true releases the wrapper and calls done only when the timeline completes [obligation]', () => {
+  test('animate_height=true releases the wrapper and calls done only when the timeline completes', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 200 })
     const done = vi.fn()

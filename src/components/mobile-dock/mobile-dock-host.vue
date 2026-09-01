@@ -14,8 +14,9 @@ const bar = useTemplateRef<HTMLElement>('bar')
 const content_wrapper = useTemplateRef<HTMLElement>('content_wrapper')
 const content = useTemplateRef<HTMLElement>('content')
 
-// Trap: the edge inset is earned by being flush against the screen edge, not by being on a touch device →[K:dock-edge-inset-follows-flush]
-// The allowance floors at the bar's own top padding, so a browser reporting no device inset still clears the edge →[K:dock-edge-inset-follows-flush]
+// The allowance is earned by being flush to the edge, not by being on a touch device, and
+// floors at the bar's own top padding so a browser reporting no inset still clears it.
+// →[K:dock-edge-inset-follows-flush]
 const has_edge_allowance = computed(() => is_flush.value && !is_bottom_chrome_covering.value)
 
 /**

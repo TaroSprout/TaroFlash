@@ -17,7 +17,7 @@ function styleBlock() {
   return sfc.slice(open, end)
 }
 
-describe('scroll-region/index.vue — gutter width gate [obligation]', () => {
+describe('scroll-region/index.vue — gutter width gate', () => {
   test('the base .scroll-region rule leaves --scroll-gutter at 0', () => {
     const style = styleBlock()
     const base_rule_start = style.indexOf('.scroll-region {')
@@ -43,7 +43,7 @@ describe('scroll-region/index.vue — gutter width gate [obligation]', () => {
   })
 })
 
-describe('scroll-region/index.vue — the hand-written breakpoint agrees with the md variant [obligation]', () => {
+describe('scroll-region/index.vue — the hand-written breakpoint agrees with the md variant', () => {
   test('the media query min-width matches --breakpoint-md in the theme config', () => {
     const style = styleBlock()
     const min_width_match = style.match(/min-width:\s*([\d.]+rem)/)

@@ -67,14 +67,14 @@ describe('DeckPreview (presentational)', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('front')
   })
 
-  // ── preview_text — front side [obligation] ──────────────────────────────────
+  // ── preview_text — front side ──────────────────────────────────
 
-  test('uses front_text prop when side is front [obligation]', () => {
+  test('uses front_text prop when side is front', () => {
     const wrapper = mountPreview({ side: 'front', front_text: 'hello front' })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-front')).toBe('hello front')
   })
 
-  test('falls back to locale placeholder when front_text is absent and side is front [obligation]', () => {
+  test('falls back to locale placeholder when front_text is absent and side is front', () => {
     const wrapper = mountPreview({ side: 'front' })
     // The real locale resolves to "Front" (deck.settings-modal.preview.front-fallback)
     const frontAttr = wrapper.find('[data-testid="card-stub"]').attributes('data-front')
@@ -83,14 +83,14 @@ describe('DeckPreview (presentational)', () => {
     expect(frontAttr?.length).toBeGreaterThan(0)
   })
 
-  // ── preview_text — back side [obligation] ───────────────────────────────────
+  // ── preview_text — back side ───────────────────────────────────
 
-  test('uses back_text prop when side is back [obligation]', () => {
+  test('uses back_text prop when side is back', () => {
     const wrapper = mountPreview({ side: 'back', back_text: 'hello back' })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-back')).toBe('hello back')
   })
 
-  test('falls back to locale placeholder when back_text is absent and side is back [obligation]', () => {
+  test('falls back to locale placeholder when back_text is absent and side is back', () => {
     const wrapper = mountPreview({ side: 'back' })
     // The real locale resolves to "Back" (deck.settings-modal.preview.back-fallback)
     const backAttr = wrapper.find('[data-testid="card-stub"]').attributes('data-back')
@@ -111,21 +111,21 @@ describe('DeckPreview (presentational)', () => {
     expect(card.attributes('data-back')).toBe('')
   })
 
-  // ── cycleSide via @update:side [obligation] ──────────────────────────────────
+  // ── cycleSide via @update:side ──────────────────────────────────
 
-  test('clicking the card emits update:side cycling cover → front [obligation]', async () => {
+  test('clicking the card emits update:side cycling cover → front', async () => {
     const wrapper = mountPreview({ side: 'cover' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['front']])
   })
 
-  test('clicking cycles front → back [obligation]', async () => {
+  test('clicking cycles front → back', async () => {
     const wrapper = mountPreview({ side: 'front' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['back']])
   })
 
-  test('clicking cycles back → cover (wraps around) [obligation]', async () => {
+  test('clicking cycles back → cover (wraps around)', async () => {
     const wrapper = mountPreview({ side: 'back' })
     await wrapper.find('[data-testid="card-stub"]').trigger('click')
     expect(wrapper.emitted('update:side')).toEqual([['cover']])
@@ -158,7 +158,7 @@ describe('DeckPreview — cover_editing / cover_image pass-through', () => {
   })
 })
 
-// ── The card's top-left seam [obligation] ─────────────────────────────────────
+// ── The card's top-left seam ─────────────────────────────────────
 // The seam is the hairline that separates the preview card from the decorative
 // card stacked behind it. It regressed twice: first drawn in a surface-station
 // role that resolved to the same white as the card's own fill (invisible — the
@@ -194,7 +194,7 @@ function roleColour(host, role) {
   return colour
 }
 
-describe('DeckPreview — the card seam is drawn in the card’s own line role [obligation]', () => {
+describe('DeckPreview — the card seam is drawn in the card’s own line role', () => {
   const open = []
 
   afterEach(() => {

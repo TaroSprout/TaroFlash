@@ -73,8 +73,8 @@ function makeWrapper() {
 
 beforeEach(() => mockEmitSfx.mockClear())
 
-describe('AccountAccessModal — chrome (close/back) [obligation]', () => {
-  test('renders the close button (not back) while on the menu page [obligation]', () => {
+describe('AccountAccessModal — chrome (close/back)', () => {
+  test('renders the close button (not back) while on the menu page', () => {
     const { wrapper } = makeWrapper()
     const close_button = wrapper.find('[data-testid="dialog-card__close"]')
     expect(close_button.exists()).toBe(true)
@@ -82,13 +82,13 @@ describe('AccountAccessModal — chrome (close/back) [obligation]', () => {
     expect(wrapper.find('[data-testid="account-access-modal__back"]').exists()).toBe(false)
   })
 
-  test('pressing close on the menu page calls close() [obligation]', async () => {
+  test('pressing close on the menu page calls close()', async () => {
     const { wrapper, close } = makeWrapper()
     await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
     expect(close).toHaveBeenCalledOnce()
   })
 
-  test('renders the back button (not close) once navigated to a sub-page [obligation]', async () => {
+  test('renders the back button (not close) once navigated to a sub-page', async () => {
     const { wrapper } = makeWrapper()
     await wrapper.find('[data-testid="content-navigate-email"]').trigger('click')
 
@@ -98,7 +98,7 @@ describe('AccountAccessModal — chrome (close/back) [obligation]', () => {
     expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(false)
   })
 
-  test('pressing back resets page to "menu" instead of exiting the modal [obligation]', async () => {
+  test('pressing back resets page to "menu" instead of exiting the modal', async () => {
     const { wrapper, close } = makeWrapper()
     await wrapper.find('[data-testid="content-navigate-email"]').trigger('click')
     expect(wrapper.vm.page).toBe('email')
@@ -109,7 +109,7 @@ describe('AccountAccessModal — chrome (close/back) [obligation]', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('the dialog-card close event (backdrop/esc dismiss) also calls close() [obligation]', async () => {
+  test('the dialog-card close event (backdrop/esc dismiss) also calls close()', async () => {
     // DialogCard's SFC filename is index.vue, so its inferred component name
     // isn't usable for findComponent({ name }) — resolve it by the imported
     // component reference instead.
@@ -121,8 +121,8 @@ describe('AccountAccessModal — chrome (close/back) [obligation]', () => {
   })
 })
 
-describe('AccountAccessModal — header title reflects content.title [obligation]', () => {
-  test('shows the menu title by default [obligation]', async () => {
+describe('AccountAccessModal — header title reflects content.title', () => {
+  test('shows the menu title by default', async () => {
     const { wrapper } = makeWrapper()
     // The header title reads content.title through a template ref, which is
     // only populated after the initial render commits — an extra tick is
@@ -131,20 +131,20 @@ describe('AccountAccessModal — header title reflects content.title [obligation
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('Login Details')
   })
 
-  test('shows the exposed content title after navigating to a sub-page [obligation]', async () => {
+  test('shows the exposed content title after navigating to a sub-page', async () => {
     const { wrapper } = makeWrapper()
     await wrapper.find('[data-testid="content-navigate-email"]').trigger('click')
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('Update Email')
   })
 })
 
-describe('AccountAccessModal — sfx [obligation]', () => {
-  test('plays dialog.open-chime on mount [obligation]', () => {
+describe('AccountAccessModal — sfx', () => {
+  test('plays dialog.open-chime on mount', () => {
     makeWrapper()
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 
-  test('plays dialog.close on unmount [obligation]', () => {
+  test('plays dialog.close on unmount', () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
     wrapper.unmount()

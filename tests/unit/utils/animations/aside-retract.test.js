@@ -22,9 +22,9 @@ function elWithWidth(width) {
   return el
 }
 
-// ── margin collapses instantly, never tweens [obligation] ──────────────────────
+// ── margin collapses instantly, never tweens ──────────────────────
 
-describe('retractAside — the negative margin is set instantly, never tweened [obligation]', () => {
+describe('retractAside — the negative margin is set instantly, never tweened', () => {
   test('applies marginRight via gsap.set, not gsap.to', async () => {
     const el = elWithWidth(120)
     await retractAside(el)
@@ -60,7 +60,7 @@ describe('retractAside — the negative margin is set instantly, never tweened [
   })
 })
 
-describe('restoreAside — reverse of retractAside, margin restored instantly at the end [obligation]', () => {
+describe('restoreAside — reverse of retractAside, margin restored instantly at the end', () => {
   test('tweens x back in and opacity to 1, without touching marginRight in the tween', async () => {
     const el = elWithWidth(100)
     await restoreAside(el)

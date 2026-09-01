@@ -61,8 +61,8 @@ describe('TabAccountAccess', () => {
   })
 })
 
-describe('TabAccountAccess — onChromeBack() [obligation]', () => {
-  test('returns false and leaves page untouched when already on the menu page [obligation]', () => {
+describe('TabAccountAccess — onChromeBack()', () => {
+  test('returns false and leaves page untouched when already on the menu page', () => {
     const wrapper = makeWrapper()
     const result = wrapper.vm.onChromeBack()
 
@@ -72,7 +72,7 @@ describe('TabAccountAccess — onChromeBack() [obligation]', () => {
     ).toBe('menu')
   })
 
-  test('returns true and resets page to "menu" when on a sub-page [obligation]', async () => {
+  test('returns true and resets page to "menu" when on a sub-page', async () => {
     const wrapper = makeWrapper()
     await wrapper.find('[data-testid="content-navigate-email"]').trigger('click')
 
@@ -86,14 +86,14 @@ describe('TabAccountAccess — onChromeBack() [obligation]', () => {
   })
 })
 
-describe('TabAccountAccess — sfx [obligation]', () => {
-  test('does not play the modal open chime on mount (tab variant has no chrome sfx) [obligation]', () => {
+describe('TabAccountAccess — sfx', () => {
+  test('does not play the modal open chime on mount (tab variant has no chrome sfx)', () => {
     mockEmitSfx.mockClear()
     makeWrapper()
     expect(mockEmitSfx).not.toHaveBeenCalledWith('wooden_chime_ring')
   })
 
-  test('does not play the modal close sfx on unmount (tab variant has no chrome sfx) [obligation]', () => {
+  test('does not play the modal close sfx on unmount (tab variant has no chrome sfx)', () => {
     const wrapper = makeWrapper()
     mockEmitSfx.mockClear()
     wrapper.unmount()

@@ -83,8 +83,8 @@ describe('useMobileCardEditor — initial state', () => {
   })
 })
 
-describe('useMobileCardEditor — open_at [obligation]', () => {
-  test('open_at opens the editor via useModal().open with MobileEditor, mode popup, and the editor context [obligation]', () => {
+describe('useMobileCardEditor — open_at', () => {
+  test('open_at opens the editor via useModal().open with MobileEditor, mode popup, and the editor context', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -96,14 +96,14 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
     })
   })
 
-  test('open_at sets cursor to the given client_id [obligation]', () => {
+  test('open_at sets cursor to the given client_id', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     expect(editor.current.value?.client_id).toBe('cid-1')
   })
 
-  test('open_at resets side to front [obligation]', () => {
+  test('open_at resets side to front', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.side.value = 'back'
@@ -111,14 +111,14 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
     expect(editor.side.value).toBe('front')
   })
 
-  test('open_at emits dialog.open [obligation]', () => {
+  test('open_at emits dialog.open', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('open_at with no arg opens at the first card [obligation]', () => {
+  test('open_at with no arg opens at the first card', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -126,13 +126,13 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
     expect(editor.current.value?.client_id).toBe('cid-1')
   })
 
-  test('open_at is a no-op when the deck is empty [obligation]', () => {
+  test('open_at is a no-op when the deck is empty', () => {
     const { editor } = makeEditor([])
     editor.open_at()
     expect(mockOpen).not.toHaveBeenCalled()
   })
 
-  test('calling open_at again while already open does not push a second modal [obligation]', () => {
+  test('calling open_at again while already open does not push a second modal', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -144,7 +144,7 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
     expect(editor.current.value?.client_id).toBe('cid-2')
   })
 
-  test('reopening after onClosed pushes a new modal [obligation]', () => {
+  test('reopening after onClosed pushes a new modal', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([c1])
 
@@ -157,8 +157,8 @@ describe('useMobileCardEditor — open_at [obligation]', () => {
   })
 })
 
-describe('useMobileCardEditor — openNewCard [obligation]', () => {
-  test('openNewCard stages via controller.addCard and opens the editor on the returned client_id [obligation]', async () => {
+describe('useMobileCardEditor — openNewCard', () => {
+  test('openNewCard stages via controller.addCard and opens the editor on the returned client_id', async () => {
     const card = makeCard({ client_id: 'cid-new' })
     const { editor, controller } = makeEditor([card])
     controller.addCard.mockResolvedValue('cid-new')
@@ -170,7 +170,7 @@ describe('useMobileCardEditor — openNewCard [obligation]', () => {
     expect(mockOpen).toHaveBeenCalledOnce()
   })
 
-  test('openNewCard is a no-op when addCard stages nothing (plan cap gated) [obligation]', async () => {
+  test('openNewCard is a no-op when addCard stages nothing (plan cap gated)', async () => {
     const { editor, controller } = makeEditor([])
     controller.addCard.mockResolvedValue(undefined)
 
@@ -180,8 +180,8 @@ describe('useMobileCardEditor — openNewCard [obligation]', () => {
   })
 })
 
-describe('useMobileCardEditor — close [obligation]', () => {
-  test('close invokes the close function returned by modal.open [obligation]', () => {
+describe('useMobileCardEditor — close', () => {
+  test('close invokes the close function returned by modal.open', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -189,15 +189,15 @@ describe('useMobileCardEditor — close [obligation]', () => {
     expect(mockClose).toHaveBeenCalled()
   })
 
-  test('close is a no-op (does not throw) when the editor was never opened [obligation]', () => {
+  test('close is a no-op (does not throw) when the editor was never opened', () => {
     const { editor } = makeEditor([])
     expect(() => editor.close()).not.toThrow()
     expect(mockClose).not.toHaveBeenCalled()
   })
 })
 
-describe('useMobileCardEditor — onClosed [obligation]', () => {
-  test('onClosed emits ui.press [obligation]', () => {
+describe('useMobileCardEditor — onClosed', () => {
+  test('onClosed emits ui.press', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -206,7 +206,7 @@ describe('useMobileCardEditor — onClosed [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('onClosed resets internal state so a later open_at reopens the editor [obligation]', () => {
+  test('onClosed resets internal state so a later open_at reopens the editor', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -216,8 +216,8 @@ describe('useMobileCardEditor — onClosed [obligation]', () => {
   })
 })
 
-describe('useMobileCardEditor — flip [obligation]', () => {
-  test('flip toggles side from front to back [obligation]', () => {
+describe('useMobileCardEditor — flip', () => {
+  test('flip toggles side from front to back', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -225,7 +225,7 @@ describe('useMobileCardEditor — flip [obligation]', () => {
     expect(editor.side.value).toBe('back')
   })
 
-  test('flip toggles side from back to front [obligation]', () => {
+  test('flip toggles side from back to front', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -234,7 +234,7 @@ describe('useMobileCardEditor — flip [obligation]', () => {
     expect(editor.side.value).toBe('front')
   })
 
-  test('flip emits card.flip-away when landing on back [obligation]', () => {
+  test('flip emits card.flip-away when landing on back', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -243,7 +243,7 @@ describe('useMobileCardEditor — flip [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('flip emits card.flip-back when landing on front [obligation]', () => {
+  test('flip emits card.flip-back when landing on front', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -254,8 +254,8 @@ describe('useMobileCardEditor — flip [obligation]', () => {
   })
 })
 
-describe('useMobileCardEditor — prev/next [obligation]', () => {
-  test('next steps cursor to the next card by client_id [obligation]', () => {
+describe('useMobileCardEditor — prev/next', () => {
+  test('next steps cursor to the next card by client_id', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -264,7 +264,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.current.value?.client_id).toBe('cid-2')
   })
 
-  test('next resets side to front [obligation]', () => {
+  test('next resets side to front', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -274,7 +274,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.side.value).toBe('front')
   })
 
-  test('next is a no-op at the last card (has_next is false) [obligation]', () => {
+  test('next is a no-op at the last card (has_next is false)', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([c1])
     editor.open_at('cid-1')
@@ -283,7 +283,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.has_next.value).toBe(false)
   })
 
-  test('prev steps cursor to the previous card by client_id [obligation]', () => {
+  test('prev steps cursor to the previous card by client_id', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -292,7 +292,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.current.value?.client_id).toBe('cid-1')
   })
 
-  test('prev resets side to front [obligation]', () => {
+  test('prev resets side to front', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -302,7 +302,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.side.value).toBe('front')
   })
 
-  test('prev is a no-op at the first card (has_prev is false) [obligation]', () => {
+  test('prev is a no-op at the first card (has_prev is false)', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([c1])
     editor.open_at('cid-1')
@@ -311,7 +311,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.has_prev.value).toBe(false)
   })
 
-  test('has_prev is true when index > 0 [obligation]', () => {
+  test('has_prev is true when index > 0', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -319,7 +319,7 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
     expect(editor.has_prev.value).toBe(true)
   })
 
-  test('has_next is true when not at the last card [obligation]', () => {
+  test('has_next is true when not at the last card', () => {
     const c1 = makeCard({ client_id: 'cid-1' })
     const c2 = makeCard({ client_id: 'cid-2' })
     const { editor } = makeEditor([c1, c2])
@@ -328,8 +328,8 @@ describe('useMobileCardEditor — prev/next [obligation]', () => {
   })
 })
 
-describe('useMobileCardEditor — cursor re-derives on id change [obligation]', () => {
-  test('current re-derives to the promoted card when id changes but client_id is stable [obligation]', async () => {
+describe('useMobileCardEditor — cursor re-derives on id change', () => {
+  test('current re-derives to the promoted card when id changes but client_id is stable', async () => {
     const card = makeCard({ id: null, client_id: 'cid-stable' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-stable')
@@ -344,8 +344,8 @@ describe('useMobileCardEditor — cursor re-derives on id change [obligation]', 
   })
 })
 
-describe('useMobileCardEditor — update [obligation]', () => {
-  test('update calls controller.updateCard with the card id and only the edited side [obligation]', async () => {
+describe('useMobileCardEditor — update', () => {
+  test('update calls controller.updateCard with the card id and only the edited side', async () => {
     const card = makeCard({ id: 10, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -355,7 +355,7 @@ describe('useMobileCardEditor — update [obligation]', () => {
     expect(controller.updateCard).toHaveBeenCalledWith(10, { front_text: 'new front text' })
   })
 
-  test('update for back side sends only back_text [obligation]', () => {
+  test('update for back side sends only back_text', () => {
     const card = makeCard({ id: 10, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -365,15 +365,15 @@ describe('useMobileCardEditor — update [obligation]', () => {
     expect(controller.updateCard).toHaveBeenCalledWith(10, { back_text: 'new back text' })
   })
 
-  test('update is a no-op when no current card [obligation]', () => {
+  test('update is a no-op when no current card', () => {
     const { editor, controller } = makeEditor([])
     editor.update('front', 'text')
     expect(controller.updateCard).not.toHaveBeenCalled()
   })
 })
 
-describe('useMobileCardEditor — has_image [obligation]', () => {
-  test('has_image is true on front side when front_image_path is set [obligation]', () => {
+describe('useMobileCardEditor — has_image', () => {
+  test('has_image is true on front side when front_image_path is set', () => {
     const card = makeCard({ client_id: 'cid-1', front_image_path: 'img/f.jpg' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -381,14 +381,14 @@ describe('useMobileCardEditor — has_image [obligation]', () => {
     expect(editor.has_image.value).toBe(true)
   })
 
-  test('has_image is false on front side when front_image_path is null [obligation]', () => {
+  test('has_image is false on front side when front_image_path is null', () => {
     const card = makeCard({ client_id: 'cid-1', front_image_path: null })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     expect(editor.has_image.value).toBe(false)
   })
 
-  test('has_image is true on back side when back_image_path is set [obligation]', () => {
+  test('has_image is true on back side when back_image_path is set', () => {
     const card = makeCard({ client_id: 'cid-1', back_image_path: 'img/b.jpg' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -396,7 +396,7 @@ describe('useMobileCardEditor — has_image [obligation]', () => {
     expect(editor.has_image.value).toBe(true)
   })
 
-  test('has_image is false on back side when back_image_path is null [obligation]', () => {
+  test('has_image is false on back side when back_image_path is null', () => {
     const card = makeCard({ client_id: 'cid-1', back_image_path: null })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
@@ -405,8 +405,8 @@ describe('useMobileCardEditor — has_image [obligation]', () => {
   })
 })
 
-describe('useMobileCardEditor — moveCard/deleteCard [obligation]', () => {
-  test('moveCard calls controller.actions.onMoveCards with current card id [obligation]', async () => {
+describe('useMobileCardEditor — moveCard/deleteCard', () => {
+  test('moveCard calls controller.actions.onMoveCards with current card id', async () => {
     const card = makeCard({ id: 5, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -416,7 +416,7 @@ describe('useMobileCardEditor — moveCard/deleteCard [obligation]', () => {
     expect(controller.actions.onMoveCards).toHaveBeenCalledWith(5)
   })
 
-  test('deleteCard calls controller.actions.onDeleteCards with current card id [obligation]', async () => {
+  test('deleteCard calls controller.actions.onDeleteCards with current card id', async () => {
     const card = makeCard({ id: 5, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -426,15 +426,15 @@ describe('useMobileCardEditor — moveCard/deleteCard [obligation]', () => {
     expect(controller.actions.onDeleteCards).toHaveBeenCalledWith(5)
   })
 
-  test('deleteCard is a no-op when no current card [obligation]', async () => {
+  test('deleteCard is a no-op when no current card', async () => {
     const { editor, controller } = makeEditor([])
     await editor.deleteCard()
     expect(controller.actions.onDeleteCards).not.toHaveBeenCalled()
   })
 })
 
-describe('useMobileCardEditor — reconcileCursor after delete [obligation]', () => {
-  test('lands on card at the old slot when the deleted card is gone [obligation]', async () => {
+describe('useMobileCardEditor — reconcileCursor after delete', () => {
+  test('lands on card at the old slot when the deleted card is gone', async () => {
     const c1 = makeCard({ id: 1, client_id: 'cid-1' })
     const c2 = makeCard({ id: 2, client_id: 'cid-2' })
     const c3 = makeCard({ id: 3, client_id: 'cid-3' })
@@ -453,7 +453,7 @@ describe('useMobileCardEditor — reconcileCursor after delete [obligation]', ()
     expect(editor.current.value?.client_id).toBe('cid-3')
   })
 
-  test('lands on the last card when deleting the last one [obligation]', async () => {
+  test('lands on the last card when deleting the last one', async () => {
     const c1 = makeCard({ id: 1, client_id: 'cid-1' })
     const c2 = makeCard({ id: 2, client_id: 'cid-2' })
     const { editor, controller } = makeEditor([c1, c2])
@@ -470,7 +470,7 @@ describe('useMobileCardEditor — reconcileCursor after delete [obligation]', ()
     expect(editor.current.value?.client_id).toBe('cid-1')
   })
 
-  test('closes (via modal close) when the deck becomes empty after delete [obligation]', async () => {
+  test('closes (via modal close) when the deck becomes empty after delete', async () => {
     const card = makeCard({ id: 1, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -485,7 +485,7 @@ describe('useMobileCardEditor — reconcileCursor after delete [obligation]', ()
     expect(mockClose).toHaveBeenCalled()
   })
 
-  test('reconcileCursor is a no-op when the card is still present (user dismissed modal) [obligation]', async () => {
+  test('reconcileCursor is a no-op when the card is still present (user dismissed modal)', async () => {
     const c1 = makeCard({ id: 1, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([c1])
     editor.open_at('cid-1')

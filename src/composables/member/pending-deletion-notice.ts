@@ -50,9 +50,7 @@ export function usePendingDeletionNotice() {
       return
     }
 
-    // Invalidate the whole cache, never drop entries — a dropped member row leaves
-    // the store still reading "suspended" and the guard bounces straight back here.
-    // →[K:pending-deletion-notice-invalidate-not-remove]
+    // Invalidate, never drop: a dropped member row leaves the guard bouncing back here. →[K:pending-deletion-notice-invalidate-not-remove]
     await queryCache.invalidateQueries()
 
     dismiss()
@@ -76,9 +74,7 @@ export function usePendingDeletionNotice() {
           closesOnClick: true
         }
       ],
-      // A swipe closes the panel too, so every way out has to sign a still-suspended
-      // member out — otherwise they sit in an empty app with no way back here.
-      // →[K:pending-deletion-notice-dismiss-signs-out]
+      // Every way out must sign a suspended member out, or they strand in an empty app. →[K:pending-deletion-notice-dismiss-signs-out]
       onDismiss: () => {
         current = null
         if (member.pending_deletion) session.logout()

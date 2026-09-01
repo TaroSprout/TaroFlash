@@ -6,13 +6,8 @@ import { fetchMemberDeckCount } from '../db'
 const STALE_TIME = 1000 * 60 * 5
 
 /**
- * One shared definition of the count entry, so a non-mounting reader (the
- * upsert mutation's limit re-check) can reach the same cache entry through
- * `queryCache.ensure` instead of standing up a second `useQuery`. Every
- * `useQuery`/`ensure` call overwrites the entry's options wholesale, so a
- * second definition carrying different options silently rewrites the behaviour
- * of the one already mounted — including whether an invalidation refetches it.
- * Trap: last mount's options win for every reader of this key
+ * The one definition of the deck-count entry. Whichever call site mounts this key last
+ * sets the options every other reader gets, including whether an invalidation refetches.
  * →[K:shared-cache-entry-options-last-mount-wins]
  */
 export const MEMBER_DECK_COUNT_QUERY = {

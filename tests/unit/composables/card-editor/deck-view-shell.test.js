@@ -102,20 +102,20 @@ describe('useDeckViewShell', () => {
     expect(shell.is_view.value).toBe(false)
   })
 
-  test('setMode returns a Promise that resolves immediately when already in new_mode [obligation]', async () => {
+  test('setMode returns a Promise that resolves immediately when already in new_mode', async () => {
     const shell = useDeckViewShell()
     // Already in view — should resolve immediately without waiting for notifyModeSettled
     await expect(shell.setMode('view')).resolves.toBeUndefined()
   })
 
-  test('setMode flips mode.value synchronously before the returned promise settles [obligation]', () => {
+  test('setMode flips mode.value synchronously before the returned promise settles', () => {
     const shell = useDeckViewShell()
     // Do not await — verify the synchronous side-effect
     shell.setMode('edit')
     expect(shell.mode.value).toBe('edit')
   })
 
-  test('setMode returns a Promise that resolves only after notifyModeSettled is called [obligation]', async () => {
+  test('setMode returns a Promise that resolves only after notifyModeSettled is called', async () => {
     const shell = useDeckViewShell()
     let settled = false
     const p = shell.setMode('edit').then(() => {
@@ -129,25 +129,25 @@ describe('useDeckViewShell', () => {
     expect(settled).toBe(true)
   })
 
-  test('setMode plays ui.select chime on a real switch [obligation]', () => {
+  test('setMode plays ui.select chime on a real switch', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
     expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 
-  test('setMode does NOT play ui.select when already in new_mode [obligation]', () => {
+  test('setMode does NOT play ui.select when already in new_mode', () => {
     const shell = useDeckViewShell()
     shell.setMode('view') // no-op since already in view
     expect(emitSfxMock).not.toHaveBeenCalled()
   })
 
-  test('setMode plays an explicit chime when one is passed [obligation]', () => {
+  test('setMode plays an explicit chime when one is passed', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit', 'ui.deselect')
     expect(emitSfxMock).toHaveBeenCalledWith('ui.deselect')
   })
 
-  test('exitMode forwards its chime argument to setMode [obligation]', () => {
+  test('exitMode forwards its chime argument to setMode', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
     emitSfxMock.mockClear()
@@ -157,7 +157,7 @@ describe('useDeckViewShell', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('ui.deselect')
   })
 
-  test('exitMode defaults to the select chime when no chime is passed [obligation]', () => {
+  test('exitMode defaults to the select chime when no chime is passed', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
     emitSfxMock.mockClear()
@@ -167,7 +167,7 @@ describe('useDeckViewShell', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 
-  test('notifyModeSettled resolves all pending setMode promises [obligation]', async () => {
+  test('notifyModeSettled resolves all pending setMode promises', async () => {
     const shell = useDeckViewShell()
     // Two sequential setMode calls before settling
     const p1 = shell.setMode('edit')
@@ -177,7 +177,7 @@ describe('useDeckViewShell', () => {
     await Promise.all([p1, p2])
   })
 
-  test('notifyModeSettled is idempotent — second call does nothing when no waiter [obligation]', () => {
+  test('notifyModeSettled is idempotent — second call does nothing when no waiter', () => {
     const shell = useDeckViewShell()
     expect(() => {
       shell.notifyModeSettled()
@@ -207,7 +207,7 @@ describe('useDeckViewShell', () => {
     expect(shell.mode.value).toBe('import')
   })
 
-  test('toggleMode returns a Promise (propagates setMode return value) [obligation]', () => {
+  test('toggleMode returns a Promise (propagates setMode return value)', () => {
     const shell = useDeckViewShell()
     const result = shell.toggleMode('edit')
     expect(result).toBeInstanceOf(Promise)
@@ -229,7 +229,7 @@ describe('useDeckViewShell', () => {
     expect(shell.is_view.value).toBe(true)
   })
 
-  test('exitMode returns a Promise (propagates setMode return value) [obligation]', () => {
+  test('exitMode returns a Promise (propagates setMode return value)', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
     const result = shell.exitMode()
@@ -243,20 +243,20 @@ describe('useDeckViewShell', () => {
     expect(shell.is_rearranging.value).toBe(false)
   })
 
-  test('toggleRearrange flips is_rearranging from false to true [obligation]', () => {
+  test('toggleRearrange flips is_rearranging from false to true', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange()
     expect(shell.is_rearranging.value).toBe(true)
   })
 
-  test('toggleRearrange flips is_rearranging from true back to false [obligation]', () => {
+  test('toggleRearrange flips is_rearranging from true back to false', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange()
     shell.toggleRearrange()
     expect(shell.is_rearranging.value).toBe(false)
   })
 
-  test('toggleRearrange turning ON forces mode to view [obligation]', () => {
+  test('toggleRearrange turning ON forces mode to view', () => {
     const shell = useDeckViewShell()
     shell.setMode('edit')
     expect(shell.mode.value).toBe('edit')
@@ -273,7 +273,7 @@ describe('useDeckViewShell', () => {
     expect(shell.mode.value).toBe('view') // still view (no mode side-effect)
   })
 
-  test('toggleRearrange emits dialog.open when turning ON [obligation]', () => {
+  test('toggleRearrange emits dialog.open when turning ON', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange()
     expect(emitSfxMock).toHaveBeenCalledWith('dialog.open')
@@ -287,7 +287,7 @@ describe('useDeckViewShell', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
   })
 
-  test('setMode(<non-view>) clears is_rearranging [obligation]', () => {
+  test('setMode(<non-view>) clears is_rearranging', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange() // turn on rearranging
     expect(shell.is_rearranging.value).toBe(true)
@@ -303,10 +303,10 @@ describe('useDeckViewShell', () => {
     expect(shell.is_rearranging.value).toBe(true)
   })
 
-  // [obligation] the editor is the surface where you rearrange cards — a drop
+  // the editor is the surface where you rearrange cards — a drop
   // can only express a position when what's on screen is the rank order, so
   // entering edit mode always forces the deck's own order.
-  test('setMode("edit") forces sort_by back to default [obligation]', () => {
+  test('setMode("edit") forces sort_by back to default', () => {
     const shell = useDeckViewShell()
     shell.setSortBy('difficulty')
     expect(shell.sort_by.value).toBe('difficulty')
@@ -315,7 +315,7 @@ describe('useDeckViewShell', () => {
     expect(shell.sort_by.value).toBe('default')
   })
 
-  test('setMode to a non-edit mode does not force sort_by [obligation]', () => {
+  test('setMode to a non-edit mode does not force sort_by', () => {
     const shell = useDeckViewShell()
     shell.setSortBy('difficulty')
     shell.setMode('import')
@@ -339,20 +339,20 @@ describe('useDeckViewShell', () => {
     expect(shell2.grid_size.value).toBe('base')
   })
 
-  // ── grid_face / setGridFace [obligation] ──────────────────────────────────
+  // ── grid_face / setGridFace ──────────────────────────────────
 
-  test('grid_face defaults to front [obligation]', () => {
+  test('grid_face defaults to front', () => {
     const shell = useDeckViewShell()
     expect(shell.grid_face.value).toBe('front')
   })
 
-  test('setGridFace changes grid_face [obligation]', () => {
+  test('setGridFace changes grid_face', () => {
     const shell = useDeckViewShell()
     shell.setGridFace('back')
     expect(shell.grid_face.value).toBe('back')
   })
 
-  test('setGridFace persists across shell instances via localStorage [obligation]', async () => {
+  test('setGridFace persists across shell instances via localStorage', async () => {
     const shell1 = useDeckViewShell()
     shell1.setGridFace('back')
     await nextTick()
@@ -361,7 +361,7 @@ describe('useDeckViewShell', () => {
     expect(shell2.grid_face.value).toBe('back')
   })
 
-  test('setGridFace and setGridSize are independent settings [obligation]', () => {
+  test('setGridFace and setGridSize are independent settings', () => {
     const shell = useDeckViewShell()
     shell.setGridFace('back')
     shell.setGridSize('xl')
@@ -371,12 +371,12 @@ describe('useDeckViewShell', () => {
 
   // ── sort_by / setSortBy ────────────────────────────────────────────────────
 
-  test('sort_by starts as default [obligation]', () => {
+  test('sort_by starts as default', () => {
     const shell = useDeckViewShell()
     expect(shell.sort_by.value).toBe('default')
   })
 
-  test('sort_by is non-persistent — each fresh call initializes to default regardless of prior state [obligation]', async () => {
+  test('sort_by is non-persistent — each fresh call initializes to default regardless of prior state', async () => {
     const shell1 = useDeckViewShell()
     shell1.setSortBy('difficulty')
     await nextTick()
@@ -392,7 +392,7 @@ describe('useDeckViewShell', () => {
     expect(shell.sort_by.value).toBe('difficulty')
   })
 
-  test('setSortBy is a no-op when called with the current value — sort_by does not mutate [obligation]', () => {
+  test('setSortBy is a no-op when called with the current value — sort_by does not mutate', () => {
     const shell = useDeckViewShell()
     shell.setSortBy('difficulty')
     const before = shell.sort_by.value
@@ -402,7 +402,7 @@ describe('useDeckViewShell', () => {
     expect(shell.sort_by.value).toBe(before)
   })
 
-  test('setSortBy no-op does not mutate is_rearranging [obligation]', () => {
+  test('setSortBy no-op does not mutate is_rearranging', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange() // turn on
     expect(shell.is_rearranging.value).toBe(true)
@@ -412,7 +412,7 @@ describe('useDeckViewShell', () => {
     expect(shell.is_rearranging.value).toBe(true)
   })
 
-  test('setSortBy to a non-default key clears is_rearranging [obligation]', () => {
+  test('setSortBy to a non-default key clears is_rearranging', () => {
     const shell = useDeckViewShell()
     shell.toggleRearrange() // is_rearranging = true, sort_by is already 'default'
     // Now switch to a real sort key
@@ -429,7 +429,7 @@ describe('useDeckViewShell', () => {
     expect(shell.is_rearranging.value).toBe(true)
   })
 
-  test('toggleRearrange turning ON resets sort_by to default [obligation]', () => {
+  test('toggleRearrange turning ON resets sort_by to default', () => {
     const shell = useDeckViewShell()
     shell.setSortBy('difficulty')
     expect(shell.sort_by.value).toBe('difficulty')
@@ -451,39 +451,39 @@ describe('useDeckViewShell', () => {
     expect(shell2.sort_by.value).toBe('default')
   })
 
-  // ── is_page_settings_open / open+closePageSettings [obligation] ───────────
+  // ── is_page_settings_open / open+closePageSettings ───────────
 
-  test('is_page_settings_open starts false [obligation]', () => {
+  test('is_page_settings_open starts false', () => {
     const shell = useDeckViewShell()
     expect(shell.is_page_settings_open.value).toBe(false)
   })
 
-  test('openPageSettings sets is_page_settings_open to true [obligation]', () => {
+  test('openPageSettings sets is_page_settings_open to true', () => {
     const shell = useDeckViewShell()
     shell.openPageSettings()
     expect(shell.is_page_settings_open.value).toBe(true)
   })
 
-  test('closePageSettings sets is_page_settings_open to false [obligation]', () => {
+  test('closePageSettings sets is_page_settings_open to false', () => {
     const shell = useDeckViewShell()
     shell.openPageSettings()
     shell.closePageSettings()
     expect(shell.is_page_settings_open.value).toBe(false)
   })
 
-  test('openPageSettings emits ui.press [obligation]', () => {
+  test('openPageSettings emits ui.press', () => {
     const shell = useDeckViewShell()
     shell.openPageSettings()
     expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 
-  test('closePageSettings emits ui.press [obligation]', () => {
+  test('closePageSettings emits ui.press', () => {
     const shell = useDeckViewShell()
     shell.closePageSettings()
     expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 
-  test("is_page_settings_open is shared state — one shell instance reflects another's toggle [obligation]", () => {
+  test("is_page_settings_open is shared state — one shell instance reflects another's toggle", () => {
     // Regression context: the same flag is read by both the desktop toolbar
     // popover and the mobile-footer panel, so it must be a single ref per
     // shell instance rather than re-derived independently by each caller.

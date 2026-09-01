@@ -55,7 +55,7 @@ describe('useMemberDangerActions', () => {
     expect(deleting_account.value).toBe(false)
   })
 
-  test('on confirm, calls requestAccountDeletion then discards the revoked session before showing the success notice [obligation]', async () => {
+  test('on confirm, calls requestAccountDeletion then discards the revoked session before showing the success notice', async () => {
     const callOrder = []
     mockRequestAccountDeletion.mockImplementationOnce(async () => {
       callOrder.push('requestAccountDeletion')
@@ -128,10 +128,10 @@ describe('useMemberDangerActions', () => {
     expect(deleting_account.value).toBe(false)
   })
 
-  // ── failure path [obligation] ────────────────────────────────────────────
+  // ── failure path ────────────────────────────────────────────
 
   describe('when requestAccountDeletion fails', () => {
-    test('shows an error notice and does NOT discard the session, close, or navigate [obligation]', async () => {
+    test('shows an error notice and does NOT discard the session, close, or navigate', async () => {
       mockRequestAccountDeletion.mockRejectedValueOnce(new Error('network error'))
       const { onDeleteAccount } = useMemberDangerActions(close)
       confirmResponse(true)

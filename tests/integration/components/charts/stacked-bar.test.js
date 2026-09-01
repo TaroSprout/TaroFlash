@@ -26,9 +26,9 @@ describe('UiStackedBar — rendering', () => {
   })
 })
 
-// ── Zero-value segments skipped [obligation] ──────────────────────────────────
+// ── Zero-value segments skipped ──────────────────────────────────
 
-describe('UiStackedBar — skips zero-value segments [obligation]', () => {
+describe('UiStackedBar — skips zero-value segments', () => {
   test('segment with value=0 is not rendered', () => {
     const segments = [
       { value: 0, colorClass: 'bg-red-500', key: 'a' },

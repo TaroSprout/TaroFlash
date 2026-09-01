@@ -46,7 +46,7 @@ describe('useMemberDecksQuery', () => {
     expect(key).toEqual(['decks'])
   })
 
-  test('fetches fresh decks and returns them unchanged when no cached row carries a client_key [obligation]', async () => {
+  test('fetches fresh decks and returns them unchanged when no cached row carries a client_key', async () => {
     fetchMemberDecksMock.mockResolvedValueOnce([{ id: 1, title: 'a' }])
     getQueryDataMock.mockReturnValue([{ id: 1, title: 'a' }])
     const { query } = configFrom(useMemberDecksQuery)
@@ -56,7 +56,7 @@ describe('useMemberDecksQuery', () => {
     expect(result).toEqual([{ id: 1, title: 'a' }])
   })
 
-  test('short-circuits to the fresh rows untouched when the cache holds no client_key at all [obligation]', async () => {
+  test('short-circuits to the fresh rows untouched when the cache holds no client_key at all', async () => {
     const fresh = [{ id: 1, title: 'a' }]
     fetchMemberDecksMock.mockResolvedValueOnce(fresh)
     getQueryDataMock.mockReturnValue(undefined)
@@ -67,7 +67,7 @@ describe('useMemberDecksQuery', () => {
     expect(result).toBe(fresh)
   })
 
-  test('carries a cached client_key forward onto the freshly-fetched row with the matching id [obligation]', async () => {
+  test('carries a cached client_key forward onto the freshly-fetched row with the matching id', async () => {
     fetchMemberDecksMock.mockResolvedValueOnce([
       { id: 5, title: 'confirmed' },
       { id: 6, title: 'untouched' }
@@ -83,7 +83,7 @@ describe('useMemberDecksQuery', () => {
     ])
   })
 
-  test('rows with no prior client_key pass through untouched [obligation]', async () => {
+  test('rows with no prior client_key pass through untouched', async () => {
     fetchMemberDecksMock.mockResolvedValueOnce([{ id: 7, title: 'plain' }])
     getQueryDataMock.mockReturnValue([
       { id: 5, title: 'x', client_key: 'key-1' },
@@ -131,27 +131,27 @@ describe('useMemberDeckCountQuery', () => {
     expect(query).toBe(fetchMemberDeckCountMock)
   })
 
-  // [obligation] useCan() instantiates this query and is mounted per card face
+  // useCan() instantiates this query and is mounted per card face
   // editor, so the default 5s staleTime made every newly rendered card row
   // refetch the member deck count. Explicit ['decks'] invalidation on deck
   // create/delete/move carries the freshness; this is only the backstop.
-  test('staleTime is 5 minutes, well past a card row mount [obligation]', () => {
+  test('staleTime is 5 minutes, well past a card row mount', () => {
     const { staleTime } = configFrom(useMemberDeckCountQuery)
     expect(staleTime).toBe(1000 * 60 * 5)
   })
 
-  // [obligation] useMemberDeckCountQuery(), useCan(), and the upsert
+  // useMemberDeckCountQuery(), useCan(), and the upsert
   // mutation's create-time re-check (via `queryCache.ensure`) must all reach
   // the exact same options object — a second, differently-configured
   // definition of this key would silently overwrite the first mount's
   // options on the shared cache entry.
   // →[K:shared-cache-entry-options-last-mount-wins]
-  test('useMemberDeckCountQuery() delegates straight to the exported MEMBER_DECK_COUNT_QUERY options object [obligation]', () => {
+  test('useMemberDeckCountQuery() delegates straight to the exported MEMBER_DECK_COUNT_QUERY options object', () => {
     const config = configFrom(useMemberDeckCountQuery)
     expect(config).toBe(MEMBER_DECK_COUNT_QUERY)
   })
 
-  test('takes no arguments — every caller mounts with identical options [obligation]', () => {
+  test('takes no arguments — every caller mounts with identical options', () => {
     expect(useMemberDeckCountQuery).toHaveLength(0)
   })
 })

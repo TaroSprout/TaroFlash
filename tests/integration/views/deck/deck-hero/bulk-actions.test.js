@@ -149,14 +149,14 @@ describe('deck-hero/bulk-actions', () => {
     expect(editor.actions.onMoveCards).toHaveBeenCalledOnce()
   })
 
-  test('nav entries include export directly after move [obligation]', () => {
+  test('nav entries include export directly after move', () => {
     const { wrapper } = mount(makeEditor({ selected_count: 1 }))
     const entries = wrapper.findAll('[data-testid^="nav-entry-"]')
     const values = entries.map((e) => e.attributes('data-testid').replace('nav-entry-', ''))
     expect(values.indexOf('export')).toBe(values.indexOf('move') + 1)
   })
 
-  test('navigating export calls actions.onExportSelection [obligation]', async () => {
+  test('navigating export calls actions.onExportSelection', async () => {
     const { wrapper, editor } = mount(makeEditor({ selected_count: 1 }))
     await exportEntry(wrapper).trigger('click')
     expect(editor.actions.onExportSelection).toHaveBeenCalledOnce()

@@ -43,7 +43,7 @@ describe('insertCard (contract)', () => {
     expect(result.rank).toBe('a0')
   })
 
-  test('appends after the current tail when rank is omitted [obligation]', async () => {
+  test('appends after the current tail when rank is omitted', async () => {
     const first = await insertCard({
       deck_id: deck.id,
       rank: 'a0',
@@ -125,7 +125,7 @@ describe('fetchCardsInDeck (contract)', () => {
     expect(result.cards[0]).toHaveProperty('review')
   })
 
-  test('filters by query with ilike when query is a non-null string [obligation]', async () => {
+  test('filters by query with ilike when query is a non-null string', async () => {
     await bulkInsertCardsInDeck({
       deck_id: deck.id,
       cards: [
@@ -144,7 +144,7 @@ describe('fetchCardsInDeck (contract)', () => {
     expect(result.cards[0].front_text).toBe('Hello world')
   })
 
-  test('returns all cards when query is null — no spurious ilike fires [obligation]', async () => {
+  test('returns all cards when query is null — no spurious ilike fires', async () => {
     await bulkInsertCardsInDeck({
       deck_id: deck.id,
       cards: [
@@ -177,8 +177,8 @@ describe('fetchCardsInDeck (contract)', () => {
     expect(page.cards).toHaveLength(2)
   })
 
-  // [obligation] the lookahead row is what makes writes at a page boundary land correctly
-  test('next_rank carries the rank of the row past the page, null at the end of the deck [obligation]', async () => {
+  // the lookahead row is what makes writes at a page boundary land correctly
+  test('next_rank carries the rank of the row past the page, null at the end of the deck', async () => {
     await bulkInsertCardsInDeck({
       deck_id: deck.id,
       cards: Array.from({ length: 3 }, (_, i) => ({ front_text: `F${i}`, back_text: '' }))

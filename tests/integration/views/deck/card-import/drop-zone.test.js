@@ -31,7 +31,7 @@ describe('card-import/drop-zone', () => {
     expect(wrapper.find('[data-testid="card-import-drop-zone__error"]').exists()).toBe(false)
   })
 
-  test('does not set data-palette on the root when there is no error [obligation]', () => {
+  test('does not set data-palette on the root when there is no error', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="card-import-drop-zone"]').attributes('data-palette')).toBe(
       undefined
@@ -46,7 +46,7 @@ describe('card-import/drop-zone', () => {
     expect(wrapper.find('[data-testid="card-import-drop-zone__browse"]').exists()).toBe(false)
   })
 
-  test('sets data-palette="danger" on the root when error is set [obligation]', () => {
+  test('sets data-palette="danger" on the root when error is set', () => {
     const wrapper = mount({ error: 'bad file' })
     expect(wrapper.find('[data-testid="card-import-drop-zone"]').attributes('data-palette')).toBe(
       'danger'
@@ -111,7 +111,7 @@ describe('card-import/drop-zone', () => {
     expect(zone.attributes('data-active')).toBeUndefined()
   })
 
-  test('crossing a child element (nested enter/leave) does not read as leaving the zone [obligation]', async () => {
+  test('crossing a child element (nested enter/leave) does not read as leaving the zone', async () => {
     const wrapper = mount()
     const zone = wrapper.find('[data-testid="card-import-drop-zone"]')
     // Enter zone, then enter + leave a child — depth counts up then back down,

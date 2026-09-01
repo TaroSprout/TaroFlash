@@ -44,8 +44,7 @@ function addedMigrations(root, base) {
       encoding: 'utf8'
     })
   } catch {
-    // Usually a shallow clone that doesn't contain the base commit — a passing
-    // gate there would be a false negative, so say which ref is missing.
+    // A shallow clone without the base commit would pass falsely, so name the missing ref.
     throw new Error(
       `cannot diff against ${base} — it is not in this checkout. A CI job running this gate needs fetch-depth: 0.`
     )
@@ -123,9 +122,7 @@ export function checkMigration(root, path, knowledgeFiles) {
   for (const name of unknown) {
     errors.push(`${at} — \`${name}\` is not a schema object this migration touches`)
   }
-  // The missing names stay unprinted on purpose: the answer is in the migration
-  // the author just wrote, and a gate that dictates its own answer is a gate
-  // that gets pasted rather than read.
+  // Don't print the missing names: a gate that dictates its answer gets pasted, not read.
   if (missing) {
     errors.push(
       `${at} — answers for ${objects.length - missing} of the ${objects.length} schema objects it touches; read the migration and name the rest`

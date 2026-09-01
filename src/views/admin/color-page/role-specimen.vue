@@ -94,8 +94,7 @@ function updateBadgePosition() {
   if (!target) return
 
   const rect = target.getBoundingClientRect()
-  // Reproduces the specimen's former in-flow anchor (`-top-2 -right-2` on a relatively
-  // positioned region button) in viewport coordinates now that the badge sits on <body>.
+  // The badge sits on <body> now, so its former in-flow anchor is recomputed in viewport coordinates.
   badge_style.value = {
     top: `${rect.top - 8}px`,
     right: `${window.innerWidth - rect.right - 8}px`
@@ -149,9 +148,6 @@ watch(
       </button>
     </div>
 
-    <!-- The role name is a token, not copy, so the badge shows it verbatim rather than through i18n.
-         Teleported to <body> so it renders above the specimen's `overflow-hidden` glyph box instead
-         of being clipped by it. -->
     <Teleport v-if="badge_role" to="body">
       <span
         ref="role-specimen-badge"

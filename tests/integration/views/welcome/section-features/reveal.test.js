@@ -73,8 +73,8 @@ describe('SectionFeatures scroll-flip reveal', () => {
     wrapper = undefined
   })
 
-  // [obligation] desktop: single trigger over all 4 card indices
-  test('wires a single ScrollTrigger reveal over all 4 indices on desktop [obligation]', () => {
+  // desktop: single trigger over all 4 card indices
+  test('wires a single ScrollTrigger reveal over all 4 indices on desktop', () => {
     wrapper = mountFeatures()
     expect(mockCreateFeatureReveal).toHaveBeenCalledTimes(1)
     const [triggerEl, indices] = mockCreateFeatureReveal.mock.calls[0]
@@ -90,8 +90,8 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(sides).toEqual(['cover', 'cover', 'cover', 'cover'])
   })
 
-  // [obligation] setActive boolean callback: active=true → front, active=false → cover
-  test('setActive(index, true) flips the card to front [obligation]', async () => {
+  // setActive boolean callback: active=true → front, active=false → cover
+  test('setActive(index, true) flips the card to front', async () => {
     wrapper = mountFeatures()
     const setActive = mockCreateFeatureReveal.mock.calls[0][2]
 
@@ -104,7 +104,7 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(sides).toEqual(['cover', 'front', 'cover', 'cover'])
   })
 
-  test('setActive(index, false) returns the card to cover [obligation]', async () => {
+  test('setActive(index, false) returns the card to cover', async () => {
     wrapper = mountFeatures()
     const setActive = mockCreateFeatureReveal.mock.calls[0][2]
 
@@ -119,8 +119,8 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(sides).toEqual(['cover', 'cover', 'cover', 'cover'])
   })
 
-  // [obligation] tablet: two triggers — one per 2-column grid row ([0,1] and [2,3])
-  test('wires two reveal triggers on tablet, one per grid row [obligation]', () => {
+  // tablet: two triggers — one per 2-column grid row ([0,1] and [2,3])
+  test('wires two reveal triggers on tablet, one per grid row', () => {
     width.value = 'tablet'
     wrapper = mountFeatures()
     expect(mockCreateFeatureReveal).toHaveBeenCalledTimes(2)
@@ -130,9 +130,9 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(secondIndices).toEqual([2, 3])
   })
 
-  // [obligation] mobile now takes the exact same grid-reveal code path as tablet —
+  // mobile now takes the exact same grid-reveal code path as tablet —
   // no more createStackReveal / deck-stack branch.
-  test('wires two reveal triggers on mobile, one per grid row — same as tablet [obligation]', () => {
+  test('wires two reveal triggers on mobile, one per grid row — same as tablet', () => {
     width.value = 'mobile'
     wrapper = mountFeatures()
     expect(mockCreateFeatureReveal).toHaveBeenCalledTimes(2)
@@ -142,7 +142,7 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(secondIndices).toEqual([2, 3])
   })
 
-  test('mobile and tablet group the same trigger elements (leading li of each row) [obligation]', () => {
+  test('mobile and tablet group the same trigger elements (leading li of each row)', () => {
     width.value = 'tablet'
     wrapper = mountFeatures()
     const tabletTriggers = mockCreateFeatureReveal.mock.calls.map(([trigger]) => trigger)
@@ -157,9 +157,9 @@ describe('SectionFeatures scroll-flip reveal', () => {
     mobileTriggers.forEach((trigger) => expect(trigger).toBeInstanceOf(HTMLElement))
   })
 
-  // [obligation] setActive on mobile flips the card exactly like desktop/tablet —
+  // setActive on mobile flips the card exactly like desktop/tablet —
   // no activeIndex / data-active semantics remain.
-  test('setActive(index, true) flips the card to front on mobile [obligation]', async () => {
+  test('setActive(index, true) flips the card to front on mobile', async () => {
     width.value = 'mobile'
     wrapper = mountFeatures()
     const setActive = mockCreateFeatureReveal.mock.calls[0][2]
@@ -173,9 +173,9 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(sides).toEqual(['cover', 'front', 'cover', 'cover'])
   })
 
-  // [obligation] the removed deck-stack markup/attrs never appear, on any width
+  // the removed deck-stack markup/attrs never appear, on any width
   test.each(['desktop', 'tablet', 'mobile'])(
-    'renders no data-stack or data-active attributes on %s [obligation]',
+    'renders no data-stack or data-active attributes on %s',
     (w) => {
       width.value = w
       wrapper = mountFeatures()
@@ -195,7 +195,7 @@ describe('SectionFeatures scroll-flip reveal', () => {
     expect(mockKill).toHaveBeenCalled()
   })
 
-  test('kills the ScrollTrigger on unmount (mobile) [obligation]', () => {
+  test('kills the ScrollTrigger on unmount (mobile)', () => {
     width.value = 'mobile'
     wrapper = mountFeatures()
     wrapper.unmount()

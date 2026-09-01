@@ -189,14 +189,14 @@ describe('AudioToolbar', () => {
 
   // ── Mode persistence (useLocalRef) ─────────────────────────────────────────
 
-  test('defaults to expanded mode and renders audio-toolbar__expanded [obligation]', () => {
+  test('defaults to expanded mode and renders audio-toolbar__expanded', () => {
     const wrapper = mountToolbar()
 
     expect(wrapper.find('[data-testid="audio-toolbar__expanded"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="audio-toolbar__mini"]').exists()).toBe(false)
   })
 
-  test('clicking audio-toolbar__collapse switches to mini mode [obligation]', async () => {
+  test('clicking audio-toolbar__collapse switches to mini mode', async () => {
     const wrapper = mountToolbar()
 
     await wrapper.find('[data-testid="audio-toolbar__collapse"]').trigger('click')
@@ -205,7 +205,7 @@ describe('AudioToolbar', () => {
     expect(wrapper.find('[data-testid="audio-toolbar__expanded"]').exists()).toBe(false)
   })
 
-  test('mode change is written to the localRef (simulates localStorage write) [obligation]', async () => {
+  test('mode change is written to the localRef (simulates localStorage write)', async () => {
     const wrapper = mountToolbar()
 
     await wrapper.find('[data-testid="audio-toolbar__collapse"]').trigger('click')
@@ -213,7 +213,7 @@ describe('AudioToolbar', () => {
     expect(localRefStore.ref.value).toBe('mini')
   })
 
-  test('a fresh mount with stored mini mode renders mini [obligation]', () => {
+  test('a fresh mount with stored mini mode renders mini', () => {
     // Simulate a previous session having stored 'mini' — set next before mount
     localRefStore.next = 'mini'
 
@@ -231,9 +231,9 @@ describe('AudioToolbar', () => {
     expect(wrapper.find('[data-testid="audio-toolbar__expanded"]').exists()).toBe(true)
   })
 
-  // ── Mini mode controls [obligation] ───────────────────────────────────────
+  // ── Mini mode controls ───────────────────────────────────────
 
-  test('mini mode renders all five controls via data-testid [obligation]', () => {
+  test('mini mode renders all five controls via data-testid', () => {
     localRefStore.next = 'mini'
     const wrapper = mountToolbar()
 
@@ -244,7 +244,7 @@ describe('AudioToolbar', () => {
     expect(wrapper.find('[data-testid="audio-toolbar__speed-select"]').exists()).toBe(true)
   })
 
-  test('mini mode audio-toolbar__toggle calls player.play() when paused [obligation]', async () => {
+  test('mini mode audio-toolbar__toggle calls player.play() when paused', async () => {
     localRefStore.next = 'mini'
     const player = makePlayer({ is_playing: ref(false) })
     const wrapper = mountToolbar({ player })
@@ -254,7 +254,7 @@ describe('AudioToolbar', () => {
     expect(player.play).toHaveBeenCalledOnce()
   })
 
-  test('mini mode audio-toolbar__toggle calls player.pause() when playing [obligation]', async () => {
+  test('mini mode audio-toolbar__toggle calls player.pause() when playing', async () => {
     localRefStore.next = 'mini'
     const player = makePlayer({ is_playing: ref(true) })
     const wrapper = mountToolbar({ player })
@@ -264,7 +264,7 @@ describe('AudioToolbar', () => {
     expect(player.pause).toHaveBeenCalledOnce()
   })
 
-  test('mini mode audio-toolbar__skip-back calls player.skip(-10) [obligation]', async () => {
+  test('mini mode audio-toolbar__skip-back calls player.skip(-10)', async () => {
     localRefStore.next = 'mini'
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
@@ -274,7 +274,7 @@ describe('AudioToolbar', () => {
     expect(player.skip).toHaveBeenCalledWith(-10)
   })
 
-  test('mini mode audio-toolbar__skip-forward calls player.skip(10) [obligation]', async () => {
+  test('mini mode audio-toolbar__skip-forward calls player.skip(10)', async () => {
     localRefStore.next = 'mini'
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
@@ -284,7 +284,7 @@ describe('AudioToolbar', () => {
     expect(player.skip).toHaveBeenCalledWith(10)
   })
 
-  test('mini mode audio-toolbar__speed-select calls player.setPlaybackRate [obligation]', async () => {
+  test('mini mode audio-toolbar__speed-select calls player.setPlaybackRate', async () => {
     localRefStore.next = 'mini'
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
@@ -299,7 +299,7 @@ describe('AudioToolbar', () => {
 
   // ── Transport actions ──────────────────────────────────────────────────────
 
-  test('audio-toolbar__toggle calls player.play() when paused [obligation]', async () => {
+  test('audio-toolbar__toggle calls player.play() when paused', async () => {
     const player = makePlayer({ is_playing: ref(false) })
     const wrapper = mountToolbar({ player })
 
@@ -309,7 +309,7 @@ describe('AudioToolbar', () => {
     expect(player.pause).not.toHaveBeenCalled()
   })
 
-  test('audio-toolbar__toggle calls player.pause() when playing [obligation]', async () => {
+  test('audio-toolbar__toggle calls player.pause() when playing', async () => {
     const player = makePlayer({ is_playing: ref(true) })
     const wrapper = mountToolbar({ player })
 
@@ -319,7 +319,7 @@ describe('AudioToolbar', () => {
     expect(player.play).not.toHaveBeenCalled()
   })
 
-  test('audio-toolbar__skip-back calls player.skip(-10) [obligation]', async () => {
+  test('audio-toolbar__skip-back calls player.skip(-10)', async () => {
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
 
@@ -328,7 +328,7 @@ describe('AudioToolbar', () => {
     expect(player.skip).toHaveBeenCalledWith(-10)
   })
 
-  test('audio-toolbar__skip-forward calls player.skip(10) [obligation]', async () => {
+  test('audio-toolbar__skip-forward calls player.skip(10)', async () => {
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
 
@@ -339,7 +339,7 @@ describe('AudioToolbar', () => {
 
   // ── Sfx wiring ─────────────────────────────────────────────────────────────
 
-  test('skip-back click.capture emits ui.press sfx [obligation]', async () => {
+  test('skip-back click.capture emits ui.press sfx', async () => {
     const wrapper = mountToolbar()
 
     // click.capture fires on the element's capture phase — trigger('click') fires
@@ -349,7 +349,7 @@ describe('AudioToolbar', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('skip-forward click.capture emits ui.press sfx [obligation]', async () => {
+  test('skip-forward click.capture emits ui.press sfx', async () => {
     const wrapper = mountToolbar()
 
     await wrapper.find('[data-testid="audio-toolbar__skip-forward"]').trigger('click')
@@ -357,7 +357,7 @@ describe('AudioToolbar', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('play/pause toggle click.capture emits ui.press when paused [obligation]', async () => {
+  test('play/pause toggle click.capture emits ui.press when paused', async () => {
     const player = makePlayer({ is_playing: ref(false) })
     const wrapper = mountToolbar({ player })
 
@@ -366,7 +366,7 @@ describe('AudioToolbar', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('play/pause toggle click.capture emits dialog.open when playing [obligation]', async () => {
+  test('play/pause toggle click.capture emits dialog.open when playing', async () => {
     const player = makePlayer({ is_playing: ref(true) })
     const wrapper = mountToolbar({ player })
 
@@ -377,7 +377,7 @@ describe('AudioToolbar', () => {
 
   // ── Dropdown wiring: chapters ──────────────────────────────────────────────
 
-  test('collection-level chapter options are numbered with a 1-based prefix [obligation]', () => {
+  test('collection-level chapter options are numbered with a 1-based prefix', () => {
     const wrapper = mountToolbar({
       chapters: [
         { id: 10, title: 'Intro' },
@@ -392,7 +392,7 @@ describe('AudioToolbar', () => {
     expect(options[1].text()).toBe('2. Part Two')
   })
 
-  test('internal lesson-chapter options are numbered with a 1-based prefix [obligation]', () => {
+  test('internal lesson-chapter options are numbered with a 1-based prefix', () => {
     const wrapper = mountToolbar({
       lessonChapters: [
         { start: 0, title: 'Warm-up' },
@@ -407,7 +407,7 @@ describe('AudioToolbar', () => {
     expect(options[1].text()).toBe('2. Vocabulary')
   })
 
-  test('current chapter label is the bare chapter title (no number prefix) [obligation]', () => {
+  test('current chapter label is the bare chapter title (no number prefix)', () => {
     const wrapper = mountToolbar({
       chapters: [
         { id: 10, title: 'Intro' },
@@ -423,7 +423,7 @@ describe('AudioToolbar', () => {
     expect(label.text()).not.toMatch(/\d+\.\s/)
   })
 
-  test('selecting a chapter option emits select-chapter with Number(value) [obligation]', async () => {
+  test('selecting a chapter option emits select-chapter with Number(value)', async () => {
     const wrapper = mountToolbar({
       chapters: [
         { id: 10, title: 'Intro' },
@@ -443,7 +443,7 @@ describe('AudioToolbar', () => {
 
   // ── Dropdown wiring: speed ─────────────────────────────────────────────────
 
-  test('selecting a speed option calls player.setPlaybackRate(Number(value)) [obligation]', async () => {
+  test('selecting a speed option calls player.setPlaybackRate(Number(value))', async () => {
     const player = makePlayer()
     const wrapper = mountToolbar({ player })
 

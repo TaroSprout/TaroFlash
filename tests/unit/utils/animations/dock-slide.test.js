@@ -135,7 +135,7 @@ describe('dock-slide animations', () => {
     expect(mockFromTo.mock.calls[0][2].duration).toBe(mockTo.mock.calls[0][1].duration)
   })
 
-  test("slide duration matches the dock content-height tween's duration [obligation]", () => {
+  test("slide duration matches the dock content-height tween's duration", () => {
     dockSlideOut(el, done)
     const slide_duration = mockTo.mock.calls[0][1].duration
 

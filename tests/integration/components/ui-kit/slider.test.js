@@ -312,15 +312,15 @@ describe('UiSlider — applyX stepping and clamping', () => {
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  // ── preview_bus routes the tick to the bus the slider itself sets [obligation] ──
+  // ── preview_bus routes the tick to the bus the slider itself sets ──
 
-  test('preview_bus is forwarded to emitSfx as the second argument [obligation]', () => {
+  test('preview_bus is forwarded to emitSfx as the second argument', () => {
     const { wrapper } = makeSlider({ min: 0, max: 10, step: 1, preview_bus: 'hover' }, 5)
     simulateDrag(wrapper, EDGE_PX) // 5 → 0 = change
     expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick', 'hover')
   })
 
-  test('preview_bus never changes which sound plays — the role stays gesture.tick [obligation]', () => {
+  test('preview_bus never changes which sound plays — the role stays gesture.tick', () => {
     const { wrapper } = makeSlider({ min: 0, max: 10, step: 1, preview_bus: 'interface' }, 5)
     simulateDrag(wrapper, EDGE_PX)
     expect(mockEmitSfx.mock.calls[0][0]).toBe('gesture.tick')

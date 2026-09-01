@@ -101,7 +101,7 @@ describe('TabReviewPacing — section layout', () => {
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
   })
 
-  test('stamps the constant data-station="panel" on scheduling-section [obligation]', () => {
+  test('stamps the constant data-station="panel" on scheduling-section', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="scheduling-section-stub"]').attributes('data-station')).toBe(
       'panel'
@@ -109,23 +109,23 @@ describe('TabReviewPacing — section layout', () => {
   })
 })
 
-// ── shared usePacingFields instance [obligation] ──────────────────────────────
+// ── shared usePacingFields instance ──────────────────────────────
 // usePacingFields is resolved once at the tab root and shared via provide —
 // every reader must reflect the SAME resolved preset, proving there's one
 // subscription rather than each child re-deriving its own.
 
-describe('TabReviewPacing — usePacingFields is provided once and shared [obligation]', () => {
+describe('TabReviewPacing — usePacingFields is provided once and shared', () => {
   test('preset-header/preset-chip renders the system preset label when no preset is drafted', () => {
     const { wrapper } = makeWrapper({ review_pacing_preset_id: null })
     expect(wrapper.find('[data-testid="preset-chip"]').text()).toContain('Default')
   })
 
-  test('preset-header/preset-chip reflects a drafted non-system preset by name [obligation]', () => {
+  test('preset-header/preset-chip reflects a drafted non-system preset by name', () => {
     const { wrapper } = makeWrapper({ review_pacing_preset_id: 2 })
     expect(wrapper.find('[data-testid="preset-chip"]').text()).toContain('Aggressive')
   })
 
-  test('preset-header shows no divergence and limits-section resolves caps off the same shared instance [obligation]', () => {
+  test('preset-header shows no divergence and limits-section resolves caps off the same shared instance', () => {
     const { wrapper } = makeWrapper({ review_pacing_preset_id: 2 })
 
     expect(wrapper.find('[data-testid="preset-header__reset-all"]').exists()).toBe(false)

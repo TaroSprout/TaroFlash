@@ -74,12 +74,12 @@ describe('useRatingFormat', () => {
     expect(again_result).toMatch(/minute|second/)
   })
 
-  // ── toRelativeDistinct wiring [obligation] ─────────────────────────────────
+  // ── toRelativeDistinct wiring ─────────────────────────────────
   // getRatingTimeFormat now resolves all 4 grades together via toRelativeDistinct
   // before picking the requested one, so two grades whose due dates collide at
   // week-level never render identical preview text.
 
-  test('returns distinct strings for two grades whose due dates collide at week-level [obligation]', () => {
+  test('returns distinct strings for two grades whose due dates collide at week-level', () => {
     const { getRatingTimeFormat } = useRatingFormat()
     const day = 24 * 60 * 60 * 1000
     // 7.6 and 8.6 days out both naturally round to "in 1 week" — only these two collide.
@@ -103,12 +103,12 @@ describe('useRatingFormat', () => {
     expect(again_result).toMatch(/minute|second/)
   })
 
-  // ── Rating.Again is isolated from the Hard/Good/Easy collision group [obligation] ──
+  // ── Rating.Again is isolated from the Hard/Good/Easy collision group ──
   // Again previews the short learning-step interval and always formats via a
   // plain `toRelative` call, independent of whatever granularity bump the
   // pass grades force on each other.
 
-  test('Again keeps its own hour-level label even when Hard/Good/Easy collide and bump to day-granularity [obligation]', () => {
+  test('Again keeps its own hour-level label even when Hard/Good/Easy collide and bump to day-granularity', () => {
     const { getRatingTimeFormat } = useRatingFormat()
     const day = 24 * 60 * 60 * 1000
     // Hard/Good/Easy all round to "in 1 week" — forces their collision group
@@ -172,9 +172,9 @@ describe('getRatingTimeCompact', () => {
     expect(getRatingTimeCompact(Rating.Good, options)).toBe('1d')
   })
 
-  // [obligation] no collision-group formatting for the compact form — each
+  // no collision-group formatting for the compact form — each
   // grade's due date is read directly, independent of the other grades.
-  test('does not apply the pass-grade collision bump — reads each due date independently [obligation]', () => {
+  test('does not apply the pass-grade collision bump — reads each due date independently', () => {
     const { getRatingTimeCompact } = useRatingFormat()
     const day = 24 * 60 * 60 * 1000
     // Good/Easy would collide under toRelativeDistinct's day-bump, but the

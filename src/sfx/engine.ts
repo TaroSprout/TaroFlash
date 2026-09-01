@@ -165,8 +165,7 @@ function unlock(force = false): void {
     return
   }
 
-  // Throw the old context away rather than trying to revive it — a context
-  // born outside a gesture can never be recovered. →[K:ios-audio-interruption]
+  // A context born outside a gesture can never be revived, so discard it. →[K:ios-audio-interruption]
   current.removeEventListener('statechange', notifyState)
   void current.close()
 

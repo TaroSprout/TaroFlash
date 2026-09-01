@@ -35,13 +35,13 @@ describe('DashboardTipCardSkeleton', () => {
     expect(wrapper.find('[data-testid="dashboard-tip-card-skeleton"]').exists()).toBe(true)
   })
 
-  test('the root is a shimmer host that clips its own overflow [obligation]', () => {
+  test('the root is a shimmer host that clips its own overflow', () => {
     mountSkeleton()
     const card = wrapper.find('[data-testid="dashboard-tip-card-skeleton"]').element
     expect(getComputedStyle(card).overflow).toBe('hidden')
   })
 
-  test('both text bars carry the diagonal-stripe mask [obligation]', () => {
+  test('both text bars carry the diagonal-stripe mask', () => {
     mountSkeleton()
     const bars = wrapper.findAll('[data-testid="dashboard-tip-card-skeleton__text-bar"]')
     expect(bars).toHaveLength(2)
@@ -50,9 +50,9 @@ describe('DashboardTipCardSkeleton', () => {
     }
   })
 
-  // ── the tape overhangs the shimmer-clipping card [obligation] ──────────────
+  // ── the tape overhangs the shimmer-clipping card ──────────────
 
-  test('the tape is not a DOM descendant of the shimmer-clipping card [obligation]', () => {
+  test('the tape is not a DOM descendant of the shimmer-clipping card', () => {
     mountSkeleton()
     const nested = wrapper.find(
       '[data-testid="dashboard-tip-card-skeleton"] [data-testid="dashboard-tip-card-skeleton__tape"]'
@@ -61,7 +61,7 @@ describe('DashboardTipCardSkeleton', () => {
     expect(wrapper.find('[data-testid="dashboard-tip-card-skeleton__tape"]').exists()).toBe(true)
   })
 
-  test('the tape geometrically overhangs above the card and is actually painted there [obligation]', () => {
+  test('the tape geometrically overhangs above the card and is actually painted there', () => {
     mountSkeleton()
     const card_rect = wrapper
       .find('[data-testid="dashboard-tip-card-skeleton"]')
@@ -87,12 +87,12 @@ describe('DashboardTipCardSkeleton', () => {
     expect(painted).toBeTruthy()
   })
 
-  // ── the tape is distinguishable from the card it overhangs onto [obligation] ─
+  // ── the tape is distinguishable from the card it overhangs onto ─
   // Both share the same `bg-skeleton` role, so the tape's own stripe overlay
   // is what makes it visually distinct from the plain card underneath — not
   // a difference in the base fill colour.
 
-  test('the tape carries its own diagonal-stripe mask, distinguishing it from the plain card underneath [obligation]', () => {
+  test('the tape carries its own diagonal-stripe mask, distinguishing it from the plain card underneath', () => {
     mountSkeleton()
     const tape = wrapper.find('[data-testid="dashboard-tip-card-skeleton__tape"]').element
     const card = wrapper.find('[data-testid="dashboard-tip-card-skeleton"]').element
@@ -101,7 +101,7 @@ describe('DashboardTipCardSkeleton', () => {
     expect(getComputedStyle(card, '::before').content).toBe('none')
   })
 
-  test('the tape mask fill resolves to a colour different from the tape’s own base fill [obligation]', () => {
+  test('the tape mask fill resolves to a colour different from the tape’s own base fill', () => {
     mountSkeleton()
     const tape = wrapper.find('[data-testid="dashboard-tip-card-skeleton__tape"]').element
     const base_color = getComputedStyle(tape).backgroundColor

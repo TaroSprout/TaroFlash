@@ -83,7 +83,7 @@ describe('useCardMutations', () => {
       expect(result).toEqual({ id: 7000, rank: 'a5' })
     })
 
-    test('omits rank when the caller wants an append (no rank given) [obligation]', async () => {
+    test('omits rank when the caller wants an append (no rank given)', async () => {
       const m = makeMutations()
       const params = { deck_id: 10, front_text: 'Q', back_text: 'A' }
       await m.insertCard(params)

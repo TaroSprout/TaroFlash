@@ -136,22 +136,22 @@ describe('LoginForm (login/form.vue)', () => {
     expect(wrapper.emitted('oauth')).toEqual([['google']])
   })
 
-  // ── forgot-password button — regression: type="button" [obligation] ────────
+  // ── forgot-password button — regression: type="button" ────────
 
-  describe('forgot-password button [obligation]', () => {
-    test('has type="button" so it never triggers native form submission [obligation]', () => {
+  describe('forgot-password button', () => {
+    test('has type="button" so it never triggers native form submission', () => {
       const wrapper = mountForm()
       const button = wrapper.find('[data-testid="login-dialog__forgot-password"]')
       expect(button.attributes('type')).toBe('button')
     })
 
-    test('emits "forgot-password" exactly once on click [obligation]', async () => {
+    test('emits "forgot-password" exactly once on click', async () => {
       const wrapper = mountForm()
       await wrapper.find('[data-testid="login-dialog__forgot-password"]').trigger('click')
       expect(wrapper.emitted('forgot-password')).toHaveLength(1)
     })
 
-    test('does NOT emit "submit" when the forgot-password button is clicked [obligation]', async () => {
+    test('does NOT emit "submit" when the forgot-password button is clicked', async () => {
       const wrapper = mountForm()
       await wrapper.find('[data-testid="login-dialog__forgot-password"]').trigger('click')
       expect(wrapper.emitted('submit')).toBeUndefined()

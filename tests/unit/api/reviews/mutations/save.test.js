@@ -49,8 +49,8 @@ describe('useSaveReviewMutation', () => {
 
   // Cache invalidation now lives entirely in useFlushDeckReviews, fired once
   // per deck at session summary — a per-review onSettled here would refetch
-  // the deck list on every rating instead of once per session. [obligation]
-  test('does not touch the query cache at all — no onSettled, no useQueryCache call [obligation]', () => {
+  // the deck list on every rating instead of once per session.
+  test('does not touch the query cache at all — no onSettled, no useQueryCache call', () => {
     const config = configFrom(useSaveReviewMutation)
 
     expect(config.onSettled).toBeUndefined()
@@ -61,8 +61,8 @@ describe('useSaveReviewMutation', () => {
 
 describe('useFlushDeckReviews', () => {
   // ['decks'] is the newly added key — it's what the dashboard's due counts read.
-  // exact: true keeps it off ['decks', 'count'], which no review can ever change. [obligation]
-  test('invalidates ["deck", deck_id] and ["cards", deck_id] per deck, and ["decks"] exactly once [obligation]', () => {
+  // exact: true keeps it off ['decks', 'count'], which no review can ever change.
+  test('invalidates ["deck", deck_id] and ["cards", deck_id] per deck, and ["decks"] exactly once', () => {
     const flush = useFlushDeckReviews()
 
     flush([7, 9])

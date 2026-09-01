@@ -15,30 +15,30 @@ function fillWidth(wrapper) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('UiProgressBar', () => {
-  // ── Fill width — clamp(value/max) as percent [obligation] ─────────────────
+  // ── Fill width — clamp(value/max) as percent ─────────────────
 
-  describe('fill width [obligation]', () => {
-    test('value=0 → fill width is "0%" [obligation]', () => {
+  describe('fill width', () => {
+    test('value=0 → fill width is "0%"', () => {
       const wrapper = mountBar({ value: 0, max: 100 })
       expect(fillWidth(wrapper)).toBe('0%')
     })
 
-    test('value=max → fill width is "100%" [obligation]', () => {
+    test('value=max → fill width is "100%"', () => {
       const wrapper = mountBar({ value: 50, max: 50 })
       expect(fillWidth(wrapper)).toBe('100%')
     })
 
-    test('value > max → fill width is clamped to "100%" [obligation]', () => {
+    test('value > max → fill width is clamped to "100%"', () => {
       const wrapper = mountBar({ value: 200, max: 50 })
       expect(fillWidth(wrapper)).toBe('100%')
     })
 
-    test('max <= 0 → fill width is "0%" [obligation]', () => {
+    test('max <= 0 → fill width is "0%"', () => {
       const wrapper = mountBar({ value: 10, max: 0 })
       expect(fillWidth(wrapper)).toBe('0%')
     })
 
-    test('partial 30/50 → fill width is "60%" [obligation]', () => {
+    test('partial 30/50 → fill width is "60%"', () => {
       const wrapper = mountBar({ value: 30, max: 50 })
       expect(fillWidth(wrapper)).toBe('60%')
     })
@@ -49,15 +49,15 @@ describe('UiProgressBar', () => {
     })
   })
 
-  // ── Label in both layers [obligation] ─────────────────────────────────────
+  // ── Label in both layers ─────────────────────────────────────
 
-  describe('label dual-layer [obligation]', () => {
-    test('label text appears in ui-kit-progress-bar__label [obligation]', () => {
+  describe('label dual-layer', () => {
+    test('label text appears in ui-kit-progress-bar__label', () => {
       const wrapper = mountBar({ value: 30, max: 50, label: '30/50' })
       expect(wrapper.find('[data-testid="ui-kit-progress-bar__label"]').text()).toBe('30/50')
     })
 
-    test('label text appears in ui-kit-progress-bar__label-fill [obligation]', () => {
+    test('label text appears in ui-kit-progress-bar__label-fill', () => {
       const wrapper = mountBar({ value: 30, max: 50, label: '30/50' })
       expect(wrapper.find('[data-testid="ui-kit-progress-bar__label-fill"]').text()).toBe('30/50')
     })

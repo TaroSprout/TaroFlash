@@ -46,7 +46,7 @@ describe('mobile-footer/footer-import', () => {
     expect(wrapper.find('[data-testid="deck-footer-import__bar"]').exists()).toBe(true)
   })
 
-  test('clicking close calls draft.dismiss, not draft.close [obligation]', async () => {
+  test('clicking close calls draft.dismiss, not draft.close', async () => {
     const draft = makeDraft()
     const wrapper = mount(draft)
     await findButton(wrapper, 'deck-footer-import__close').vm.$emit('press')

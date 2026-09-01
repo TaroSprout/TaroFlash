@@ -44,15 +44,15 @@ function mountButton(props = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('ResumeFollowButton', () => {
-  describe('icon selection [obligation]', () => {
-    test('direction "up" renders arcade-stick-up icon [obligation]', () => {
+  describe('icon selection', () => {
+    test('direction "up" renders arcade-stick-up icon', () => {
       const wrapper = mountButton({ direction: 'up' })
 
       const btn = wrapper.findComponent(UiButtonStub)
       expect(btn.props('iconLeft')).toBe('arcade-stick-up')
     })
 
-    test('direction "down" renders arcade-stick-down icon [obligation]', () => {
+    test('direction "down" renders arcade-stick-down icon', () => {
       const wrapper = mountButton({ direction: 'down' })
 
       const btn = wrapper.findComponent(UiButtonStub)
@@ -60,8 +60,8 @@ describe('ResumeFollowButton', () => {
     })
   })
 
-  describe('resume emit [obligation]', () => {
-    test('emits "resume" when the button is clicked [obligation]', async () => {
+  describe('resume emit', () => {
+    test('emits "resume" when the button is clicked', async () => {
       const wrapper = mountButton()
 
       await wrapper.findComponent(UiButtonStub).trigger('click')
@@ -71,8 +71,8 @@ describe('ResumeFollowButton', () => {
     })
   })
 
-  describe('click feedback [obligation]', () => {
-    test('plays the ui.press sfx on click [obligation]', () => {
+  describe('click feedback', () => {
+    test('plays the ui.press sfx on click', () => {
       const wrapper = mountButton()
 
       expect(wrapper.findComponent(UiButtonStub).props('sfx')).toEqual({

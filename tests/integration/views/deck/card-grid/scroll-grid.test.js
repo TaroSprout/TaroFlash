@@ -159,7 +159,7 @@ describe('card-grid/scroll-grid', () => {
     expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
   })
 
-  test('[obligation] the initial synchronous render is height 0px, not an inflated single-column fallback', async () => {
+  test('the initial synchronous render is height 0px, not an inflated single-column fallback', async () => {
     const search = makeSearch({
       displayed_cards: [
         { id: 1, client_id: 'c1', front_text: 'q1', back_text: 'a1' },
@@ -183,7 +183,7 @@ describe('card-grid/scroll-grid', () => {
 
   // ── displayed_cards (from cardSearchKey) drives the grid ─────────────────
 
-  test('renders one grid-item per card in displayed_cards [obligation]', () => {
+  test('renders one grid-item per card in displayed_cards', () => {
     const search = makeSearch({
       displayed_cards: [
         { id: 1, client_id: 'c1', front_text: 'q1', back_text: 'a1' },
@@ -196,7 +196,7 @@ describe('card-grid/scroll-grid', () => {
     expect(items).toHaveLength(3)
   })
 
-  test('passes shell.grid_face as the side prop to its grid-items [obligation]', () => {
+  test('passes shell.grid_face as the side prop to its grid-items', () => {
     const search = makeSearch({
       displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
     })
@@ -204,7 +204,7 @@ describe('card-grid/scroll-grid', () => {
     expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('grid-item side updates reactively when shell.grid_face changes [obligation]', async () => {
+  test('grid-item side updates reactively when shell.grid_face changes', async () => {
     const search = makeSearch({
       displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
     })
@@ -218,7 +218,7 @@ describe('card-grid/scroll-grid', () => {
     expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('passes a scale to its grid-items [obligation]', () => {
+  test('passes a scale to its grid-items', () => {
     const search = makeSearch({
       displayed_cards: [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
     })
@@ -226,13 +226,13 @@ describe('card-grid/scroll-grid', () => {
     expect(wrapper.find('[data-testid="grid-item-stub"]').attributes('data-scale')).toBeDefined()
   })
 
-  test('does not render the infinite-scroll sentinel when hasNextPage is false [obligation]', () => {
+  test('does not render the infinite-scroll sentinel when hasNextPage is false', () => {
     const editor = makeEditor({ hasNextPage: false })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid__sentinel"]').exists()).toBe(false)
   })
 
-  test('renders the infinite-scroll sentinel only when hasNextPage is true [obligation]', () => {
+  test('renders the infinite-scroll sentinel only when hasNextPage is true', () => {
     const editor = makeEditor({ hasNextPage: true })
     const wrapper = mountScrollGrid(editor)
     expect(wrapper.find('[data-testid="card-grid__sentinel"]').exists()).toBe(true)
@@ -266,7 +266,7 @@ describe('card-grid/scroll-grid', () => {
 
   // ── search integration ────────────────────────────────────────────────────
 
-  test('shows card-grid__no-results when no_results is true [obligation]', () => {
+  test('shows card-grid__no-results when no_results is true', () => {
     const search = makeSearch({ no_results: true })
     const wrapper = mountScrollGrid(makeEditor(), makeShell(), search)
     expect(wrapper.find('[data-testid="card-grid__no-results"]').exists()).toBe(true)
@@ -280,21 +280,21 @@ describe('card-grid/scroll-grid', () => {
     expect(wrapper.find('[data-testid="card-grid"]').exists()).toBe(true)
   })
 
-  test('hides the sentinel when is_active is true even if hasNextPage is true [obligation]', () => {
+  test('hides the sentinel when is_active is true even if hasNextPage is true', () => {
     const editor = makeEditor({ hasNextPage: true })
     const search = makeSearch({ is_active: true })
     const wrapper = mountScrollGrid(editor, makeShell(), search)
     expect(wrapper.find('[data-testid="card-grid__sentinel"]').exists()).toBe(false)
   })
 
-  test('shows the sentinel when hasNextPage is true and is_active is false [obligation]', () => {
+  test('shows the sentinel when hasNextPage is true and is_active is false', () => {
     const editor = makeEditor({ hasNextPage: true })
     const search = makeSearch({ is_active: false })
     const wrapper = mountScrollGrid(editor, makeShell(), search)
     expect(wrapper.find('[data-testid="card-grid__sentinel"]').exists()).toBe(true)
   })
 
-  test('renders search result cards from displayed_cards with correct client_id keys [obligation]', () => {
+  test('renders search result cards from displayed_cards with correct client_id keys', () => {
     const search = makeSearch({
       is_active: true,
       displayed_cards: [
@@ -338,7 +338,7 @@ describe('card-grid/scroll-grid', () => {
       window.ResizeObserver = original_resize_observer
     })
 
-    test('[obligation] measureLayout pairs its scroll_margin write with an explicit virtualizer.measure() call', async () => {
+    test('measureLayout pairs its scroll_margin write with an explicit virtualizer.measure() call', async () => {
       mountScrollGrid()
       await nextTick()
 
@@ -346,7 +346,7 @@ describe('card-grid/scroll-grid', () => {
       expect(captured_measure_spy.fn).toHaveBeenCalledTimes(1)
     })
 
-    test('[obligation] the is_view watcher remeasuring on return-to-grid also pairs with an explicit virtualizer.measure() call', async () => {
+    test('the is_view watcher remeasuring on return-to-grid also pairs with an explicit virtualizer.measure() call', async () => {
       const shell = makeShell()
       shell.is_view.value = false
       mountScrollGrid(makeEditor(), shell)
@@ -359,7 +359,7 @@ describe('card-grid/scroll-grid', () => {
       expect(captured_measure_spy.fn).toHaveBeenCalledTimes(1)
     })
 
-    test('[obligation] a burst of ResizeObserver firings within the debounce window coalesces into a single measureLayout call', async () => {
+    test('a burst of ResizeObserver firings within the debounce window coalesces into a single measureLayout call', async () => {
       const wrapper = mountScrollGrid()
       await nextTick()
       captured_measure_spy.fn.mockClear()
@@ -378,7 +378,7 @@ describe('card-grid/scroll-grid', () => {
       expect(captured_measure_spy.fn).toHaveBeenCalledTimes(1)
     })
 
-    test('[obligation] unmounting clears the pending debounce timer so a queued measureLayout never fires after teardown', async () => {
+    test('unmounting clears the pending debounce timer so a queued measureLayout never fires after teardown', async () => {
       const wrapper = mountScrollGrid()
       await nextTick()
       captured_measure_spy.fn.mockClear()
@@ -395,12 +395,12 @@ describe('card-grid/scroll-grid', () => {
     })
   })
 
-  // ── reorder pointerdown mode arbitration [obligation] ────────────────────
+  // ── reorder pointerdown mode arbitration ────────────────────
   // Mouse picks up immediately; touch waits out a press-and-hold so a plain
   // swipe still scrolls the grid. Outside rearrange mode (or while search is
   // active) the grid must not touch the drag engine at all.
 
-  describe('reorder pointerdown mode arbitration [obligation]', () => {
+  describe('reorder pointerdown mode arbitration', () => {
     function firstItem(wrapper) {
       return wrapper.find('[data-testid="card-grid__item"]')
     }
@@ -506,19 +506,19 @@ describe('card-grid/scroll-grid', () => {
     })
   })
 
-  // ── useReorderDrag options — real geometry/scroll closures [obligation] ──
+  // ── useReorderDrag options — real geometry/scroll closures ──
   // The engine itself is mocked above (so pointerdown tests assert on wiring,
   // not the engine's internals) — these tests invoke the captured option
   // getters directly so the real count/enabled/topInset/maxScroll/geometry
   // closures scroll-grid.vue builds are still exercised.
 
-  // ── reflow transition [obligation] ───────────────────────────────────────
+  // ── reflow transition ───────────────────────────────────────
   // A delete leaves a gap the survivors slide into. The very first delete
   // after a page load must slide exactly like every later one — the grid
   // starting from an empty list (page still loading) must not itself count
   // as that first edit.
 
-  describe('reflow transition [obligation]', () => {
+  describe('reflow transition', () => {
     function cards(n) {
       return Array.from({ length: n }, (_, i) => ({
         id: i + 1,
@@ -540,7 +540,7 @@ describe('card-grid/scroll-grid', () => {
       )
     })
 
-    test('a grid mounted with cards already loaded animates its very first delete, not just later ones [obligation]', async () => {
+    test('a grid mounted with cards already loaded animates its very first delete, not just later ones', async () => {
       // Regression: the deck already has cards by the time this grid mounts
       // (e.g. a warm query cache) — the first delete must slide the survivors
       // exactly like every later one, not jump.
@@ -555,7 +555,7 @@ describe('card-grid/scroll-grid', () => {
       )
     })
 
-    test('the first delete after that load slides the survivors, same as every later one [obligation]', async () => {
+    test('the first delete after that load slides the survivors, same as every later one', async () => {
       // Fake timers go in *before* the mount so the reflow window's own
       // setTimeout is fake too — installing them later would leave the first
       // window open on a real timer and make the second assertion vacuous.
@@ -606,7 +606,7 @@ describe('card-grid/scroll-grid', () => {
     })
   })
 
-  describe('useReorderDrag options passed by scroll-grid [obligation]', () => {
+  describe('useReorderDrag options passed by scroll-grid', () => {
     test('count reflects the live displayed_cards length', () => {
       const search_state = makeSearch({
         displayed_cards: [
@@ -644,7 +644,7 @@ describe('card-grid/scroll-grid', () => {
       expect(Number.isFinite(reorderCaptured.opts.maxScroll())).toBe(true)
     })
 
-    test('geometry.idealIndex computes a finite slot index from origin + drag delta [obligation]', () => {
+    test('geometry.idealIndex computes a finite slot index from origin + drag delta', () => {
       const search_state = makeSearch({
         displayed_cards: [
           { id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' },

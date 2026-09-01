@@ -62,8 +62,8 @@ describe('useMoveDeckMutation — mutation()', () => {
 // ── onMutate — optimistic cache reorder ───────────────────────────────────────
 
 describe('useMoveDeckMutation — onMutate()', () => {
-  // [obligation] rank is computed off a rank-sorted view, not raw array-index adjacency
-  test('resolves the anchor from rank-sorted neighbours, not raw array-adjacent ones [obligation]', () => {
+  // rank is computed off a rank-sorted view, not raw array-index adjacency
+  test('resolves the anchor from rank-sorted neighbours, not raw array-adjacent ones', () => {
     // Cache array order deliberately does NOT match rank order: rank 30 sits
     // at array index 0, rank 10 at index 1, rank 20 at index 2. Moving deck 40
     // to sit after anchor (rank 10, id 2) must land between rank 10 and rank
@@ -94,8 +94,8 @@ describe('useMoveDeckMutation — onMutate()', () => {
     expect(moved.rank).toBeLessThan(20)
   })
 
-  // [obligation] patches only the moved deck's rank; raw array order/positions untouched
-  test('leaves the cache array order (by id) unchanged — only the moved rank field differs [obligation]', () => {
+  // patches only the moved deck's rank; raw array order/positions untouched
+  test('leaves the cache array order (by id) unchanged — only the moved rank field differs', () => {
     cached_data = [deck(1, 30), deck(2, 10), deck(3, 20), deck(4, 40)]
     const original_order = cached_data.map((d) => d.id)
     const { onMutate } = config()
@@ -130,8 +130,8 @@ describe('useMoveDeckMutation — onMutate()', () => {
     expect(written.find((d) => d.id === 2).rank).toBeLessThan(10)
   })
 
-  // [obligation] no-op when the deck list isn't cached
-  test('is a no-op and returns undefined snapshot when decks are not cached [obligation]', () => {
+  // no-op when the deck list isn't cached
+  test('is a no-op and returns undefined snapshot when decks are not cached', () => {
     cached_data = undefined
     const { onMutate } = config()
 
@@ -166,8 +166,8 @@ describe('useMoveDeckMutation — onMutate()', () => {
 // ── onError — rollback ────────────────────────────────────────────────────────
 
 describe('useMoveDeckMutation — onError()', () => {
-  // [obligation] onError restores the exact pre-mutation snapshot
-  test('restores the pre-mutate snapshot when the mutation errors [obligation]', () => {
+  // onError restores the exact pre-mutation snapshot
+  test('restores the pre-mutate snapshot when the mutation errors', () => {
     const snapshot = [deck(1, 10), deck(2, 20)]
     const { onError } = config()
 
@@ -188,14 +188,14 @@ describe('useMoveDeckMutation — onError()', () => {
 // ── onSettled — invalidation ───────────────────────────────────────────────────
 
 describe('useMoveDeckMutation — onSettled()', () => {
-  // [obligation] onSettled invalidates ['decks'] regardless of success or failure
+  // onSettled invalidates ['decks'] regardless of success or failure
   test('invalidates the decks query on settle after success', () => {
     const { onSettled } = config()
     onSettled(1234, undefined, { deck_id: 1, anchor_id: 2, side: 'after' })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
   })
 
-  test('invalidates the decks query on settle after an error [obligation]', () => {
+  test('invalidates the decks query on settle after an error', () => {
     const { onSettled } = config()
     onSettled(undefined, new Error('boom'), { deck_id: 1, anchor_id: 2, side: 'after' })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })

@@ -88,7 +88,7 @@ afterEach(() => {
 // ── Nothing claimed ────────────────────────────────────────────────────────────
 
 describe('providePageAnchor — nothing claimed', () => {
-  test('[obligation] inset is null when nothing has claimed it', () => {
+  test('inset is null when nothing has claimed it', () => {
     const setup = withSetup()
     unmount = setup.unmount
 
@@ -99,7 +99,7 @@ describe('providePageAnchor — nothing claimed', () => {
 // ── A pane claims the anchor ──────────────────────────────────────────────────
 
 describe('providePageAnchor — a pane claims the anchor', () => {
-  test('[obligation] inset becomes the viewport clientWidth minus the claimed element right edge', async () => {
+  test('inset becomes the viewport clientWidth minus the claimed element right edge', async () => {
     vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1200)
 
     // 400 wide, sitting 300 into a parent that itself sits 200 in: a right edge
@@ -120,7 +120,7 @@ describe('providePageAnchor — a pane claims the anchor', () => {
     expect(setup.anchor.inset.value).toBe(300)
   })
 
-  test('[obligation] unmounting the claiming pane clears inset back to null', async () => {
+  test('unmounting the claiming pane clears inset back to null', async () => {
     vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1200)
 
     const pane_el = document.createElement('div')
@@ -140,7 +140,7 @@ describe('providePageAnchor — a pane claims the anchor', () => {
     expect(setup.anchor.inset.value).toBeNull()
   })
 
-  test('[obligation] a window resize event re-measures the claimed pane', async () => {
+  test('a window resize event re-measures the claimed pane', async () => {
     vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1200)
 
     const pane_el = document.createElement('div')

@@ -37,7 +37,7 @@ describe('useImageReveal', () => {
     expect(revealFaceImageMock).toHaveBeenCalledWith(img)
   })
 
-  test('decoded becomes true without calling decode() when the img is already loaded, even if decode() would reject [obligation]', async () => {
+  test('decoded becomes true without calling decode() when the img is already loaded, even if decode() would reject', async () => {
     const img = makeImg({
       complete: true,
       naturalWidth: 10,
@@ -64,7 +64,7 @@ describe('useImageReveal', () => {
     expect(revealFaceImageMock).not.toHaveBeenCalled()
   })
 
-  test('resets decoded to false when the source becomes falsy again [obligation]', async () => {
+  test('resets decoded to false when the source becomes falsy again', async () => {
     const source = shallowRef('src.png')
     const imgRef = shallowRef(makeImg())
     const { decoded } = useImageReveal(() => source.value, imgRef)

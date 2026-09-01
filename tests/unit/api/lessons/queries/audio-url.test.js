@@ -73,7 +73,7 @@ describe('useLessonAudioUrlQuery', () => {
     })
   })
 
-  describe('cache / refetch options [obligation]', () => {
+  describe('cache / refetch options', () => {
     test('staleTime equals SIGNED_URL_TTL_SECONDS * 1000 (3_600_000 ms)', () => {
       const { staleTime } = configFrom('lessons/abc.mp3')
       // 3600 s × 1000 = 3_600_000 ms — the full token lifetime

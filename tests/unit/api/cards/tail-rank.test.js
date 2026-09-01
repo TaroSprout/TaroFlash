@@ -46,7 +46,7 @@ describe('fetchDeckTailRank', () => {
     expect(rank).toBe('z9')
   })
 
-  test('returns null for an empty deck [obligation]', async () => {
+  test('returns null for an empty deck', async () => {
     maybeSingleMock.mockResolvedValueOnce({ data: null, error: null })
     const rank = await fetchDeckTailRank(10)
     expect(rank).toBeNull()

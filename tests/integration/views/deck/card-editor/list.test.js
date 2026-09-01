@@ -101,7 +101,7 @@ describe('CardList (list.vue)', () => {
     useWindowVirtualizerMock.mockReset()
   })
 
-  // [obligation] entering edit mode under a non-default sort still mounts this
+  // entering edit mode under a non-default sort still mounts this
   // list; can_reorder is the backstop that keeps drag disabled until the shell
   // forces the deck's own order back.
   test('drag-to-reorder is disabled when can_reorder is false', () => {
@@ -450,7 +450,7 @@ describe('CardList (list.vue)', () => {
       window.ResizeObserver = original_resize_observer
     })
 
-    test('[obligation] measureScrollMargin pairs its scroll_margin write with an explicit virtualizer.measure() call', async () => {
+    test('measureScrollMargin pairs its scroll_margin write with an explicit virtualizer.measure() call', async () => {
       const cards = [{ id: 1 }]
       const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
 
@@ -461,7 +461,7 @@ describe('CardList (list.vue)', () => {
       expect(virtualizer.value.measure).toHaveBeenCalledTimes(1)
     })
 
-    test('[obligation] a burst of ResizeObserver firings within the debounce window coalesces into a single measureScrollMargin call', async () => {
+    test('a burst of ResizeObserver firings within the debounce window coalesces into a single measureScrollMargin call', async () => {
       const cards = [{ id: 1 }]
       const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
 
@@ -483,7 +483,7 @@ describe('CardList (list.vue)', () => {
       expect(virtualizer.value.measure).toHaveBeenCalledTimes(1)
     })
 
-    test('[obligation] unmounting clears the pending debounce timer so a queued measureScrollMargin never fires after teardown', async () => {
+    test('unmounting clears the pending debounce timer so a queued measureScrollMargin never fires after teardown', async () => {
       const cards = [{ id: 1 }]
       const virtualizer = setupVirtualizer({ items: makeVirtualItems([0]), totalSize: ROW_PITCH })
 

@@ -17,7 +17,7 @@ type CardProps = Partial<CardBase> & {
   side?: CardSide
   cover_config?: DeckCover
   card_attributes?: DeckCardAttributes
-  // Trap: a station role assumes the thing wearing it rests on a station →[K:fixed-roles-skip-the-station]
+  // A seam drawn on the card takes the card's own line role, never a station's. →[K:fixed-roles-skip-the-station]
   face_classes?: string
   sfx?: SfxOptions
   error?: boolean

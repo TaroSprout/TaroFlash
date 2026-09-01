@@ -25,11 +25,11 @@ describe('gen-palette-css', () => {
     vi.resetModules()
   })
 
-  // ── accentText role emitted for every palette, both renditions [obligation]
+  // ── accentText role emitted for every palette, both renditions
   // The acceptance criterion is that accent-coloured text is legible for all
   // seven member colours in both light and dark.
 
-  test('emits --color-accent-text for all seven palettes in both renditions [obligation]', async () => {
+  test('emits --color-accent-text for all seven palettes in both renditions', async () => {
     await import('../../../scripts/gen-palette-css.ts')
 
     expect(writeFileSyncMock).toHaveBeenCalledOnce()

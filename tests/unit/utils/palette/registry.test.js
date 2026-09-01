@@ -4,11 +4,11 @@ import { PALETTES, SEMANTIC_ALIASES } from '@/utils/palette/registry'
 const PALETTE_NAMES = ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange']
 
 describe('palette registry', () => {
-  // ── accentText role [obligation] ─────────────────────────────────────────
+  // ── accentText role ─────────────────────────────────────────
   // Every palette must carry an accentText rendition in both light and dark,
   // so accent-coloured text stays legible for all seven member colours.
 
-  describe('accentText [obligation]', () => {
+  describe('accentText', () => {
     test('all seven palettes are present', () => {
       expect(Object.keys(PALETTES).sort()).toEqual([...PALETTE_NAMES].sort())
     })

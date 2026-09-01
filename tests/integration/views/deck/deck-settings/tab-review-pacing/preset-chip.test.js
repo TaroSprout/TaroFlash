@@ -102,10 +102,10 @@ describe('PresetChip — rendering', () => {
   })
 })
 
-// ── action rows — system vs member preset [obligation] ────────────────────────
+// ── action rows — system vs member preset ────────────────────────
 
-describe('PresetChip — action rows [obligation]', () => {
-  test('system preset shows ONLY the fork action row [obligation]', () => {
+describe('PresetChip — action rows', () => {
+  test('system preset shows ONLY the fork action row', () => {
     const { wrapper } = makeWrapper({
       preset_actions: makePresetActions({ is_system_preset: true })
     })
@@ -117,7 +117,7 @@ describe('PresetChip — action rows [obligation]', () => {
     expect(action_values.map((o) => o.value)).toEqual(['fork'])
   })
 
-  test('a member preset shows fork + push + rename + delete [obligation]', () => {
+  test('a member preset shows fork + push + rename + delete', () => {
     const { wrapper } = makeWrapper({
       preset_actions: makePresetActions({ is_system_preset: false })
     })
@@ -129,7 +129,7 @@ describe('PresetChip — action rows [obligation]', () => {
     expect(action_values.map((o) => o.value)).toEqual(['fork', 'push', 'rename', 'delete'])
   })
 
-  test('the push row is disabled when there are no overrides [obligation]', () => {
+  test('the push row is disabled when there are no overrides', () => {
     const { wrapper } = makeWrapper({
       preset_actions: makePresetActions({ is_system_preset: false, has_overrides: false })
     })
@@ -139,7 +139,7 @@ describe('PresetChip — action rows [obligation]', () => {
     expect(push.disabled).toBe(true)
   })
 
-  test('the push row is enabled when overrides are pinned [obligation]', () => {
+  test('the push row is enabled when overrides are pinned', () => {
     const { wrapper } = makeWrapper({
       preset_actions: makePresetActions({ is_system_preset: false, has_overrides: true })
     })
@@ -150,15 +150,15 @@ describe('PresetChip — action rows [obligation]', () => {
   })
 })
 
-// ── popover placement [obligation] ─────────────────────────────────────────────
+// ── popover placement ─────────────────────────────────────────────
 
-describe('PresetChip — popover placement [obligation]', () => {
-  test('passes position="bottom-end" to the dropdown button [obligation]', () => {
+describe('PresetChip — popover placement', () => {
+  test('passes position="bottom-end" to the dropdown button', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.findComponent(DropdownButtonStub).props('position')).toBe('bottom-end')
   })
 
-  test('passes end-only fallback placements to the dropdown button [obligation]', () => {
+  test('passes end-only fallback placements to the dropdown button', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.findComponent(DropdownButtonStub).props('fallbackPlacements')).toEqual([
       'bottom-end',
@@ -167,17 +167,17 @@ describe('PresetChip — popover placement [obligation]', () => {
   })
 })
 
-// ── select sfx [obligation] ─────────────────────────────────────────────────────
+// ── select sfx ─────────────────────────────────────────────────────
 
-describe('PresetChip — select sfx [obligation]', () => {
-  test('emits the select sfx when picking a preset row [obligation]', async () => {
+describe('PresetChip — select sfx', () => {
+  test('emits the select sfx when picking a preset row', async () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="preset-chip__option-2"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('emits the select sfx when picking a CRUD action row [obligation]', async () => {
+  test('emits the select sfx when picking a CRUD action row', async () => {
     const { wrapper } = makeWrapper()
     mockEmitSfx.mockClear()
     await wrapper.find('[data-testid="preset-chip__option-fork"]').trigger('click')
@@ -185,10 +185,10 @@ describe('PresetChip — select sfx [obligation]', () => {
   })
 })
 
-// ── selection vs action dispatch [obligation] ──────────────────────────────────
+// ── selection vs action dispatch ──────────────────────────────────
 
-describe('PresetChip — selecting an option [obligation]', () => {
-  test('selecting a preset row writes selected_preset_value and does NOT invoke a handler [obligation]', async () => {
+describe('PresetChip — selecting an option', () => {
+  test('selecting a preset row writes selected_preset_value and does NOT invoke a handler', async () => {
     const pacing_fields = makePacingFields({ selected: '1' })
     const preset_actions = makePresetActions()
     const { wrapper } = makeWrapper({ pacing_fields, preset_actions })
@@ -202,7 +202,7 @@ describe('PresetChip — selecting an option [obligation]', () => {
     expect(preset_actions.onDelete).not.toHaveBeenCalled()
   })
 
-  test('selecting an action row invokes its handler and does NOT write selected_preset_value [obligation]', async () => {
+  test('selecting an action row invokes its handler and does NOT write selected_preset_value', async () => {
     const pacing_fields = makePacingFields({ selected: '1' })
     const preset_actions = makePresetActions()
     const { wrapper } = makeWrapper({ pacing_fields, preset_actions })

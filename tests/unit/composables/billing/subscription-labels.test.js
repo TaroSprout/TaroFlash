@@ -52,7 +52,7 @@ const activeSubscription = {
 // ── subscription ref ──────────────────────────────────────────────────────────
 
 describe('useSubscriptionLabels — subscription', () => {
-  test('returns null when query data is null (free member) [obligation]', () => {
+  test('returns null when query data is null (free member)', () => {
     const query = makeQuery(null)
     const { subscription } = withSetup(() => useSubscriptionLabels(query))
     expect(subscription.value).toBeNull()
@@ -68,23 +68,23 @@ describe('useSubscriptionLabels — subscription', () => {
 // ── status label ──────────────────────────────────────────────────────────────
 
 describe('useSubscriptionLabels — status', () => {
-  test('returns null when no subscription (free member) [obligation]', () => {
+  test('returns null when no subscription (free member)', () => {
     const { status } = withSetup(() => useSubscriptionLabels(makeQuery(null)))
     expect(status.value).toBeNull()
   })
 
-  test('returns "Active" for status=active non-canceling sub [obligation]', () => {
+  test('returns "Active" for status=active non-canceling sub', () => {
     const { status } = withSetup(() => useSubscriptionLabels(makeQuery(activeSubscription)))
     expect(status.value).toBe('Active')
   })
 
-  test('returns "Canceled" when cancelAtPeriodEnd=true even with status=active [obligation]', () => {
+  test('returns "Canceled" when cancelAtPeriodEnd=true even with status=active', () => {
     const sub = { ...activeSubscription, cancelAtPeriodEnd: true }
     const { status } = withSetup(() => useSubscriptionLabels(makeQuery(sub)))
     expect(status.value).toBe('Canceled')
   })
 
-  test('status and description are returned as SEPARATE refs, not joined [obligation]', () => {
+  test('status and description are returned as SEPARATE refs, not joined', () => {
     const { status, description } = withSetup(() =>
       useSubscriptionLabels(makeQuery(activeSubscription))
     )
@@ -98,18 +98,18 @@ describe('useSubscriptionLabels — status', () => {
 // ── description label ─────────────────────────────────────────────────────────
 
 describe('useSubscriptionLabels — description', () => {
-  test('returns null when no subscription [obligation]', () => {
+  test('returns null when no subscription', () => {
     const { description } = withSetup(() => useSubscriptionLabels(makeQuery(null)))
     expect(description.value).toBeNull()
   })
 
-  test('returns ends-on when cancelAtPeriodEnd=true [obligation]', () => {
+  test('returns ends-on when cancelAtPeriodEnd=true', () => {
     const sub = { ...activeSubscription, cancelAtPeriodEnd: true }
     const { description } = withSetup(() => useSubscriptionLabels(makeQuery(sub)))
     expect(description.value).toMatch(/Ends/)
   })
 
-  test('description for canceling sub is "Ends {date}", NOT "Renews" [obligation]', () => {
+  test('description for canceling sub is "Ends {date}", NOT "Renews"', () => {
     const sub = { ...activeSubscription, cancelAtPeriodEnd: true }
     const { description } = withSetup(() => useSubscriptionLabels(makeQuery(sub)))
     expect(description.value).not.toMatch(/Renews/)
@@ -131,18 +131,18 @@ describe('useSubscriptionLabels — description', () => {
 // ── cost label ────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionLabels — cost', () => {
-  test('returns null when no subscription [obligation]', () => {
+  test('returns null when no subscription', () => {
     const { cost } = withSetup(() => useSubscriptionLabels(makeQuery(null)))
     expect(cost.value).toBeNull()
   })
 
-  test('returns null when priceCents is null [obligation]', () => {
+  test('returns null when priceCents is null', () => {
     const sub = { ...activeSubscription, priceCents: null }
     const { cost } = withSetup(() => useSubscriptionLabels(makeQuery(sub)))
     expect(cost.value).toBeNull()
   })
 
-  test('builds cost from flat DTO priceCents/currency/interval [obligation]', () => {
+  test('builds cost from flat DTO priceCents/currency/interval', () => {
     const { cost } = withSetup(() => useSubscriptionLabels(makeQuery(activeSubscription)))
     expect(cost.value).toContain('10.00')
     expect(cost.value).toContain('month')

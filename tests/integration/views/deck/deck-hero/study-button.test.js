@@ -60,37 +60,37 @@ describe('deck-hero/study-button', () => {
     expect(studyBtn(wrapper).text()).toContain('12')
   })
 
-  test('study button is disabled when due_count is 0 [obligation]', () => {
+  test('study button is disabled when due_count is 0', () => {
     const wrapper = mount({ due_count: 0 })
     expect(studyBtn(wrapper).attributes('disabled')).toBeDefined()
   })
 
-  test('study button is disabled when due_count is undefined [obligation]', () => {
+  test('study button is disabled when due_count is undefined', () => {
     const wrapper = mount({ due_count: undefined })
     expect(studyBtn(wrapper).attributes('disabled')).toBeDefined()
   })
 
-  test('study button shows no-cards-due text when due_count is 0 [obligation]', () => {
+  test('study button shows no-cards-due text when due_count is 0', () => {
     const wrapper = mount({ due_count: 0 })
     expect(studyBtn(wrapper).text()).toContain('No cards due')
   })
 
-  test('study button shows no-cards-due text when due_count is undefined [obligation]', () => {
+  test('study button shows no-cards-due text when due_count is undefined', () => {
     const wrapper = mount({ due_count: undefined })
     expect(studyBtn(wrapper).text()).toContain('No cards due')
   })
 
-  test('study button is enabled when due_count is greater than 0 [obligation]', () => {
+  test('study button is enabled when due_count is greater than 0', () => {
     const wrapper = mount({ due_count: 5 })
     expect(studyBtn(wrapper).attributes('disabled')).toBeUndefined()
   })
 
-  test('study button shows due count when due_count > 0 [obligation]', () => {
+  test('study button shows due count when due_count > 0', () => {
     const wrapper = mount({ due_count: 7 })
     expect(studyBtn(wrapper).text()).toContain('7')
   })
 
-  test('clicking the enabled study button starts the session [obligation]', async () => {
+  test('clicking the enabled study button starts the session', async () => {
     const wrapper = mount({ id: 3, due_count: 5 })
     await studyBtn(wrapper).trigger('click')
     expect(mockStartStudy).toHaveBeenCalledWith([3])

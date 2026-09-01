@@ -42,7 +42,7 @@ beforeEach(() => {
 // ── reactivity obligation ───────────────────────────────────────────────────
 
 describe('useGoogleActions — reactivity', () => {
-  test('[obligation] hasGoogleIdentity/hasPasswordIdentity reflect store changes without re-invoking the composable', async () => {
+  test('hasGoogleIdentity/hasPasswordIdentity reflect store changes without re-invoking the composable', async () => {
     const session = useSessionStore()
     const google = useGoogleActions()
 

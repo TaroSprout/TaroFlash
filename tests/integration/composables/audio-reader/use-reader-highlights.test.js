@@ -346,7 +346,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('trailing-click swallow after touch commit', () => {
-    test('after a touch tap commits, the next click outside the reader is swallowed [obligation]', async () => {
+    test('after a touch tap commits, the next click outside the reader is swallowed', async () => {
       const wrapper = mountHost(vi.fn())
       const onDocClick = vi.fn()
       document.addEventListener('click', onDocClick, true)
@@ -364,7 +364,7 @@ describe('useReaderHighlights', () => {
       expect(onDocClick).not.toHaveBeenCalled()
     })
 
-    test('the swallow is one-shot: a subsequent click outside the reader reaches document handlers [obligation]', async () => {
+    test('the swallow is one-shot: a subsequent click outside the reader reaches document handlers', async () => {
       const wrapper = mountHost(vi.fn())
       const onDocClick = vi.fn()
       document.addEventListener('click', onDocClick, true)
@@ -389,7 +389,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('standing selection persists and re-tap reopens (mobile)', () => {
-    test('committed selection is NOT cleared when popover_open stays false (mobile path) [obligation]', async () => {
+    test('committed selection is NOT cleared when popover_open stays false (mobile path)', async () => {
       const onSelect = vi.fn()
       const wrapper = mountHost(onSelect)
 
@@ -408,7 +408,7 @@ describe('useReaderHighlights', () => {
       expect(onSelect).toHaveBeenCalledTimes(1)
     })
 
-    test('re-tapping a word inside the committed range re-emits the whole range [obligation]', async () => {
+    test('re-tapping a word inside the committed range re-emits the whole range', async () => {
       const onSelect = vi.fn()
       const wrapper = mountHost(onSelect)
 
@@ -445,7 +445,7 @@ describe('useReaderHighlights', () => {
       expect(onSelect.mock.calls[0][0].end_index).toBe(1)
     })
 
-    test('tapping a word outside the committed range replaces the selection [obligation]', async () => {
+    test('tapping a word outside the committed range replaces the selection', async () => {
       const onSelect = vi.fn()
       const wrapper = mountHost(onSelect)
 
@@ -466,7 +466,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('empty-space tap deselects; scroll does not', () => {
-    test('a stationary tap that lands on no word clears the committed selection [obligation]', async () => {
+    test('a stationary tap that lands on no word clears the committed selection', async () => {
       const onSelect = vi.fn()
       const onDismiss = vi.fn()
       const wrapper = mountHost(onSelect, onDismiss)
@@ -503,7 +503,7 @@ describe('useReaderHighlights', () => {
       expect(wrapper.vm.interaction_range).toBeNull()
     })
 
-    test('a tap on empty space calls onDismiss [obligation]', async () => {
+    test('a tap on empty space calls onDismiss', async () => {
       const onSelect = vi.fn()
       const onDismiss = vi.fn()
       const wrapper = mountHost(onSelect, onDismiss)
@@ -539,7 +539,7 @@ describe('useReaderHighlights', () => {
       expect(onDismiss).toHaveBeenCalledTimes(1)
     })
 
-    test('a tap ON a word commits onSelect and does NOT call onDismiss [obligation]', async () => {
+    test('a tap ON a word commits onSelect and does NOT call onDismiss', async () => {
       const onSelect = vi.fn()
       const onDismiss = vi.fn()
       const wrapper = mountHost(onSelect, onDismiss)
@@ -551,7 +551,7 @@ describe('useReaderHighlights', () => {
       expect(onDismiss).not.toHaveBeenCalled()
     })
 
-    test('a touch drift past slop (scroll) does not clear the committed selection [obligation]', async () => {
+    test('a touch drift past slop (scroll) does not clear the committed selection', async () => {
       const onSelect = vi.fn()
       const onDismiss = vi.fn()
       const wrapper = mountHost(onSelect, onDismiss)
@@ -577,7 +577,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('interaction_range provide + word data-active tint', () => {
-    test('a word with index inside the committed range reports data-active=true [obligation]', async () => {
+    test('a word with index inside the committed range reports data-active=true', async () => {
       const onSelect = vi.fn()
       const wrapper = mountHost(onSelect)
 
@@ -591,7 +591,7 @@ describe('useReaderHighlights', () => {
       expect(range.hi).toBe(1)
     })
 
-    test('a word with index outside the committed range reports data-active=false [obligation]', async () => {
+    test('a word with index outside the committed range reports data-active=false', async () => {
       const onSelect = vi.fn()
       const wrapper = mountHost(onSelect)
 
@@ -605,12 +605,12 @@ describe('useReaderHighlights', () => {
       expect(word0Active).toBe(false)
     })
 
-    test('interaction_range is null when there is no selection or hover [obligation]', () => {
+    test('interaction_range is null when there is no selection or hover', () => {
       const wrapper = mountHost(vi.fn())
       expect(wrapper.vm.interaction_range).toBeNull()
     })
 
-    test('interaction_range reflects hover (focus_index) when not dragging and not committed [obligation]', async () => {
+    test('interaction_range reflects hover (focus_index) when not dragging and not committed', async () => {
       const wrapper = mountHost(vi.fn())
 
       await pointer(wrapper, 'pointermove', 1, 0)
@@ -619,7 +619,7 @@ describe('useReaderHighlights', () => {
       expect(range).toEqual({ lo: 1, hi: 1 })
     })
 
-    test('interaction_range prefers drag over hover when drag is in progress [obligation]', async () => {
+    test('interaction_range prefers drag over hover when drag is in progress', async () => {
       const wrapper = mountHost(vi.fn())
 
       await pointer(wrapper, 'pointerdown', 0, 1)
@@ -631,7 +631,7 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  describe('pointerdown disarms the suppress flag (regression guard) [obligation]', () => {
+  describe('pointerdown disarms the suppress flag (regression guard)', () => {
     test('after a touch tap whose trailing click never fires, a fresh pointerdown+click reaches document handlers', async () => {
       const wrapper = mountHost(vi.fn())
       const onDocClick = vi.fn()
@@ -660,7 +660,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('tap_05 ratchet on range-select via long-press', () => {
-    test('arming range-select via long-press emits gesture.tick for the first word [obligation]', async () => {
+    test('arming range-select via long-press emits gesture.tick for the first word', async () => {
       const wrapper = mountHost(vi.fn())
       emitSfxMock.mockClear()
 
@@ -673,7 +673,7 @@ describe('useReaderHighlights', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     })
 
-    test('each new word the drag adds emits gesture.tick [obligation]', async () => {
+    test('each new word the drag adds emits gesture.tick', async () => {
       const wrapper = mountHost(vi.fn())
 
       vi.useFakeTimers()
@@ -698,7 +698,7 @@ describe('useReaderHighlights', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('gesture.tick')
     })
 
-    test('release does not emit an extra ui.tap_05 [obligation]', async () => {
+    test('release does not emit an extra ui.tap_05', async () => {
       const wrapper = mountHost(vi.fn())
 
       vi.useFakeTimers()
@@ -727,7 +727,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('selection_preview', () => {
-    test('is non-null the instant a touch long-press arms with NO drag [obligation]', async () => {
+    test('is non-null the instant a touch long-press arms with NO drag', async () => {
       const wrapper = mountHost(vi.fn())
 
       vi.useFakeTimers()
@@ -745,7 +745,7 @@ describe('useReaderHighlights', () => {
       expect(wrapper.vm.selection_preview).not.toBeNull()
     })
 
-    test('selection_preview x comes from finger clientX at arm time, top/bottom from word rect [obligation]', async () => {
+    test('selection_preview x comes from finger clientX at arm time, top/bottom from word rect', async () => {
       const wrapper = mountHost(vi.fn())
 
       // words[0] is 'Hello ' — give it a measured rect
@@ -777,7 +777,7 @@ describe('useReaderHighlights', () => {
       expect(preview.bottom).toBe(120 + 24)
     })
 
-    test('selection_preview stays null for a mouse drag [obligation]', async () => {
+    test('selection_preview stays null for a mouse drag', async () => {
       const wrapper = mountHost(vi.fn())
 
       await pointer(wrapper, 'pointerdown', 0, 1)
@@ -786,7 +786,7 @@ describe('useReaderHighlights', () => {
       expect(wrapper.vm.selection_preview).toBeNull()
     })
 
-    test('selection_preview resets to null after commitTouch (pointerup) [obligation]', async () => {
+    test('selection_preview resets to null after commitTouch (pointerup)', async () => {
       const wrapper = mountHost(vi.fn())
 
       vi.useFakeTimers()
@@ -802,7 +802,7 @@ describe('useReaderHighlights', () => {
       expect(wrapper.vm.selection_preview).toBeNull()
     })
 
-    test('selection_preview resets to null after onPointerCancel [obligation]', async () => {
+    test('selection_preview resets to null after onPointerCancel', async () => {
       const wrapper = mountHost(vi.fn())
 
       vi.useFakeTimers()

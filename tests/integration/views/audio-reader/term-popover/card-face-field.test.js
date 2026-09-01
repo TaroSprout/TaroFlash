@@ -51,7 +51,7 @@ describe('CardFaceField', () => {
     expect(typeof emitted_value).toBe('string')
   })
 
-  test('forwards the error prop through to the card face [obligation]', () => {
+  test('forwards the error prop through to the card face', () => {
     const wrapper = mountField({ error: true })
     expect(wrapper.find('[data-testid="card-face-field"]').attributes('data-error')).toBeDefined()
   })

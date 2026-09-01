@@ -88,8 +88,8 @@ describe('useMobileDock', () => {
     })
   })
 
-  describe('breakpoint claim stack [obligation]', () => {
-    test('with no claim, is_visible follows the default breakpoint [obligation]', async () => {
+  describe('breakpoint claim stack', () => {
+    test('with no claim, is_visible follows the default breakpoint', async () => {
       const { is_visible } = useMobileDock()
 
       await setBelow(DEFAULT_BREAKPOINT, true)
@@ -99,7 +99,7 @@ describe('useMobileDock', () => {
       expect(is_visible.value).toBe(false)
     })
 
-    test('after the only fill unmounts (releases), the effective breakpoint falls back to DEFAULT_BREAKPOINT [obligation]', async () => {
+    test('after the only fill unmounts (releases), the effective breakpoint falls back to DEFAULT_BREAKPOINT', async () => {
       const { is_visible } = useMobileDock()
       const release = claim('md')
       await nextTick()
@@ -116,7 +116,7 @@ describe('useMobileDock', () => {
       expect(is_visible.value).toBe(true)
     })
 
-    test('while two fills overlap, the newest claim wins [obligation]', async () => {
+    test('while two fills overlap, the newest claim wins', async () => {
       const { is_visible } = useMobileDock()
       claim('md')
       claim('sm')
@@ -129,7 +129,7 @@ describe('useMobileDock', () => {
       expect(is_visible.value).toBe(true)
     })
 
-    test('releasing the newest claim drops back to the still-open older claim [obligation]', async () => {
+    test('releasing the newest claim drops back to the still-open older claim', async () => {
       const { is_visible } = useMobileDock()
       claim('md')
       const releaseSm = claim('sm')
@@ -147,7 +147,7 @@ describe('useMobileDock', () => {
       expect(is_visible.value).toBe(true)
     })
 
-    test('claims are id-keyed — releasing an older claim out of order never drops the newer one [obligation]', async () => {
+    test('claims are id-keyed — releasing an older claim out of order never drops the newer one', async () => {
       const { is_visible } = useMobileDock()
       const releaseMd = claim('md')
       claim('sm')
@@ -162,8 +162,8 @@ describe('useMobileDock', () => {
     })
   })
 
-  describe('is_visible also gates on the keyboard [obligation]', () => {
-    test('is_visible is false while the keyboard is open, even below the claimed breakpoint [obligation]', async () => {
+  describe('is_visible also gates on the keyboard', () => {
+    test('is_visible is false while the keyboard is open, even below the claimed breakpoint', async () => {
       const { is_visible } = useMobileDock()
       claim('md')
       await setBelow('md', true)
@@ -175,7 +175,7 @@ describe('useMobileDock', () => {
   })
 
   describe('is_flush', () => {
-    test('is_flush follows the sm breakpoint independently of the claimed breakpoint [obligation]', async () => {
+    test('is_flush follows the sm breakpoint independently of the claimed breakpoint', async () => {
       const { is_flush } = useMobileDock()
       claim('xl')
       await nextTick()

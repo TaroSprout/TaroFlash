@@ -57,11 +57,11 @@ describe('useInsertCardMutation', () => {
     expect(insertCardMock).toHaveBeenCalledWith(params)
   })
 
-  // [obligation] a blank eager insert (empty front + back) skips the card-pages
+  // a blank eager insert (empty front + back) skips the card-pages
   // refetch — the row is already on screen via promoteTemp — and skips the
   // card-index invalidation, since an empty front indexes nothing.
   describe('onSettled — blank insert (eager create)', () => {
-    test('skips the deck card-pages invalidation [obligation]', () => {
+    test('skips the deck card-pages invalidation', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: '', back_text: '' }
 
@@ -70,7 +70,7 @@ describe('useInsertCardMutation', () => {
       expect(invalidateDeckMock).toHaveBeenCalledWith(queryCache, 10, { card_pages: false })
     })
 
-    test('skips the card-index invalidation [obligation]', () => {
+    test('skips the card-index invalidation', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: '', back_text: '' }
 
@@ -79,7 +79,7 @@ describe('useInsertCardMutation', () => {
       expect(invalidateCardIndexMock).not.toHaveBeenCalled()
     })
 
-    test('still invalidates the member-wide card counts [obligation]', () => {
+    test('still invalidates the member-wide card counts', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: '', back_text: '' }
 
@@ -88,7 +88,7 @@ describe('useInsertCardMutation', () => {
       expect(invalidateAllCardCountsMock).toHaveBeenCalledWith(queryCache)
     })
 
-    test('treats undefined front/back text the same as empty strings [obligation]', () => {
+    test('treats undefined front/back text the same as empty strings', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0' }
 
@@ -99,11 +99,11 @@ describe('useInsertCardMutation', () => {
     })
   })
 
-  // [obligation] an insert carrying text — the audio-reader add-card panel, or
+  // an insert carrying text — the audio-reader add-card panel, or
   // a re-insert after a failed eager save — has no row already on screen and
   // genuinely needs both refetches.
   describe('onSettled — insert carrying text', () => {
-    test('refetches the deck card pages when front_text is present [obligation]', () => {
+    test('refetches the deck card pages when front_text is present', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: 'Q', back_text: '' }
 
@@ -112,7 +112,7 @@ describe('useInsertCardMutation', () => {
       expect(invalidateDeckMock).toHaveBeenCalledWith(queryCache, 10, { card_pages: true })
     })
 
-    test('invalidates the card index when front_text is present [obligation]', () => {
+    test('invalidates the card index when front_text is present', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: 'Q', back_text: '' }
 
@@ -121,7 +121,7 @@ describe('useInsertCardMutation', () => {
       expect(invalidateCardIndexMock).toHaveBeenCalledWith(queryCache)
     })
 
-    test('refetches the deck card pages when only back_text is present [obligation]', () => {
+    test('refetches the deck card pages when only back_text is present', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: '', back_text: 'A' }
 
@@ -130,7 +130,7 @@ describe('useInsertCardMutation', () => {
       expect(invalidateDeckMock).toHaveBeenCalledWith(queryCache, 10, { card_pages: true })
     })
 
-    test('does not invalidate the card index when only back_text is present (index keys on front) [obligation]', () => {
+    test('does not invalidate the card index when only back_text is present (index keys on front)', () => {
       const { onSettled } = configFrom()
       const params = { deck_id: 10, rank: 'a0', front_text: '', back_text: 'A' }
 

@@ -197,20 +197,20 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="deck-hero-stub"]').exists()).toBe(false)
   })
 
-  test('always mounts deck-mobile-footer, unconditionally of viewport [obligation]', () => {
+  test('always mounts deck-mobile-footer, unconditionally of viewport', () => {
     const wrapper = mount({ deck: { id: 1, name: 'Test' } })
     expect(wrapper.findComponent({ name: 'DeckMobileFooter' }).exists()).toBe(true)
   })
 
   // ── DeckSkeleton (top-level v-if) ─────────────────────────────────────────
 
-  test('renders DeckSkeleton when deck query data is null (initial loading) [obligation]', () => {
+  test('renders DeckSkeleton when deck query data is null (initial loading)', () => {
     const wrapper = mount({ deck: null })
     expect(wrapper.find('[data-testid="deck-skeleton-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="deck-view"]').exists()).toBe(false)
   })
 
-  test('renders real layout (not DeckSkeleton) when deck data is present [obligation]', () => {
+  test('renders real layout (not DeckSkeleton) when deck data is present', () => {
     const wrapper = mount({ deck: { id: 1, name: 'Test' } })
     expect(wrapper.find('[data-testid="deck-skeleton-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="deck-view"]').exists()).toBe(true)
@@ -222,14 +222,14 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(false)
   })
 
-  test('shows card-grid-skeleton when loading with no cards yet [obligation]', () => {
+  test('shows card-grid-skeleton when loading with no cards yet', () => {
     const wrapper = mount({ editorOpts: { cards: [], isLoading: true } })
     expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(false)
   })
 
-  test('hides card-grid-skeleton once cards arrive (loading still true) [obligation]', () => {
+  test('hides card-grid-skeleton once cards arrive (loading still true)', () => {
     const wrapper = mount({ editorOpts: { cards: [{ id: 1 }], isLoading: true } })
     expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="mode-stack-stub"]').exists()).toBe(true)
@@ -292,9 +292,9 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(backing.attributes('aria-hidden')).toBe('true')
   })
 
-  // ── import mode: sticky toolbar hidden, layout branches on has_cards [obligation] ──
+  // ── import mode: sticky toolbar hidden, layout branches on has_cards ──
 
-  test('hides the sticky toolbar entirely in import mode [obligation]', () => {
+  test('hides the sticky toolbar entirely in import mode', () => {
     const wrapper = mount({ mode: 'import' })
     expect(wrapper.find('[data-testid="deck-view__toolbar"]').exists()).toBe(false)
   })
@@ -304,14 +304,14 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="deck-view__toolbar"]').exists()).toBe(true)
   })
 
-  test('import mode with no cards fills the viewport, no bottom padding [obligation]', () => {
+  test('import mode with no cards fills the viewport, no bottom padding', () => {
     const wrapper = mount({ mode: 'import', hasCards: false })
     const main = wrapper.find('[data-testid="deck-view__main"]')
     expect(main.classes()).toContain('xl:h-[calc(100dvh-var(--nav-height))]')
     expect(main.classes().some((c) => c.startsWith('pb-'))).toBe(false)
   })
 
-  test('import mode with cards parsed switches to the padded scrolling branch [obligation]', () => {
+  test('import mode with cards parsed switches to the padded scrolling branch', () => {
     const wrapper = mount({ mode: 'import', hasCards: true, editorOpts: { cards: [{ id: 1 }] } })
     const main = wrapper.find('[data-testid="deck-view__main"]')
     expect(main.classes().some((c) => c.startsWith('pb-'))).toBe(true)
@@ -320,36 +320,36 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
 
   // The dock clearance moved to the shared <main> in authenticated.vue — a
   // surviving dock term here would double the padding under the mobile dock.
-  test('non-fills_viewport padding is a flat 1rem with no mobile-dock-height term [obligation]', () => {
+  test('non-fills_viewport padding is a flat 1rem with no mobile-dock-height term', () => {
     const wrapper = mount({ mode: 'view', editorOpts: { cards: [{ id: 1 }] } })
     const main = wrapper.find('[data-testid="deck-view__main"]')
     expect(main.classes()).toContain('pb-[1rem]')
     expect(main.classes().some((c) => c.includes('mobile-dock-height'))).toBe(false)
   })
 
-  // ── toolbar-skeleton swap [obligation] ────────────────────────────────────
+  // ── toolbar-skeleton swap ────────────────────────────────────
 
-  test('shows mode-toolbar-skeleton when view_state is "empty" [obligation]', () => {
+  test('shows mode-toolbar-skeleton when view_state is "empty"', () => {
     const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
     expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(false)
   })
 
-  test('shows mode-toolbar (not skeleton) when view_state is "loading" [obligation]', () => {
+  test('shows mode-toolbar (not skeleton) when view_state is "loading"', () => {
     const wrapper = mount({ editorOpts: { cards: [], isLoading: true } })
     expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
   })
 
-  test('shows mode-toolbar (not skeleton) when view_state is "ready" [obligation]', () => {
+  test('shows mode-toolbar (not skeleton) when view_state is "ready"', () => {
     const wrapper = mount({ editorOpts: { cards: [{ id: 1 }], isLoading: false } })
     expect(wrapper.find('[data-testid="mode-toolbar-skeleton-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
   })
 
-  // ── deck-hero hide-actions driven by view_state [obligation] ──────────────
+  // ── deck-hero hide-actions driven by view_state ──────────────
 
-  test('passes hideActions=true to deck-hero when view_state is "empty" [obligation]', () => {
+  test('passes hideActions=true to deck-hero when view_state is "empty"', () => {
     const wrapper = mount({
       editorOpts: { cards: [], isLoading: false },
       withHideActionsCheck: true
@@ -358,7 +358,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(hero.attributes('data-hide-actions')).toBe('true')
   })
 
-  test('passes hideActions=false to deck-hero when view_state is "ready" [obligation]', () => {
+  test('passes hideActions=false to deck-hero when view_state is "ready"', () => {
     const wrapper = mount({
       editorOpts: { cards: [{ id: 1 }], isLoading: false },
       withHideActionsCheck: true
@@ -367,7 +367,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(hero.attributes('data-hide-actions')).toBe('false')
   })
 
-  test('passes hideActions=false to deck-hero when view_state is "loading" [obligation]', () => {
+  test('passes hideActions=false to deck-hero when view_state is "loading"', () => {
     const wrapper = mount({
       editorOpts: { cards: [], isLoading: true },
       withHideActionsCheck: true
@@ -376,16 +376,16 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(hero.attributes('data-hide-actions')).toBe('false')
   })
 
-  // ── card-grid-empty renders when view_state is "empty" [obligation] ─────────
+  // ── card-grid-empty renders when view_state is "empty" ─────────
   // The source adds data-testid="deck-view__empty" directly on the <card-grid-empty>
   // element; shallowMount passes it through as an attribute on the auto-stub.
 
-  test('renders deck-view__empty (card-grid-empty) when view_state is "empty" [obligation]', () => {
+  test('renders deck-view__empty (card-grid-empty) when view_state is "empty"', () => {
     const wrapper = mount({ editorOpts: { cards: [], isLoading: false } })
     expect(wrapper.find('[data-testid="deck-view__empty"]').exists()).toBe(true)
   })
 
-  test('omits deck-view__empty when view_state is not "empty" [obligation]', () => {
+  test('omits deck-view__empty when view_state is not "empty"', () => {
     const ready = mount({ editorOpts: { cards: [{ id: 1 }] } })
     expect(ready.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
 
@@ -393,12 +393,12 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(loading.find('[data-testid="deck-view__empty"]').exists()).toBe(false)
   })
 
-  // ── view_state stays "ready" for a zero-result search [obligation] ────────
+  // ── view_state stays "ready" for a zero-result search ────────
   // Regression: a zero-result search used to fall back to the full empty-deck
   // layout (hiding the hero, reflowing the page) instead of letting the grid
   // show its own inline no-results message.
 
-  test('view_state stays "ready" when search.is_active is true even with zero cards [obligation]', () => {
+  test('view_state stays "ready" when search.is_active is true even with zero cards', () => {
     const wrapper = mount({
       editorOpts: { cards: [], isLoading: false },
       searchOpts: { is_active: true }
@@ -408,7 +408,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="mode-toolbar-stub"]').exists()).toBe(true)
   })
 
-  test('an active zero-result search does not hide deck-hero actions [obligation]', () => {
+  test('an active zero-result search does not hide deck-hero actions', () => {
     const wrapper = mount({
       editorOpts: { cards: [], isLoading: false },
       searchOpts: { is_active: true },
@@ -418,12 +418,12 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(hero.attributes('data-hide-actions')).toBe('false')
   })
 
-  // ── view_state stays "ready" for import mode on a zero-card deck [obligation] ──
+  // ── view_state stays "ready" for import mode on a zero-card deck ──
   // Regression: import mode used to fall through to the empty-deck's own
   // "Make the first one!" branch instead of mounting the import pane, since
   // both share the "no cards yet" precondition.
 
-  test('view_state is "ready" (not "empty") when shell.mode is import on a zero-card deck [obligation]', () => {
+  test('view_state is "ready" (not "empty") when shell.mode is import on a zero-card deck', () => {
     const wrapper = mount({
       mode: 'import',
       editorOpts: { cards: [], isLoading: false }
@@ -433,7 +433,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="card-grid-skeleton-stub"]').exists()).toBe(false)
   })
 
-  test('the toolbar-skeleton branch does not render in import mode on a zero-card deck [obligation]', () => {
+  test('the toolbar-skeleton branch does not render in import mode on a zero-card deck', () => {
     const wrapper = mount({
       mode: 'import',
       editorOpts: { cards: [], isLoading: false }
@@ -445,7 +445,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(wrapper.find('[data-testid="deck-view__toolbar"]').exists()).toBe(false)
   })
 
-  test('deck-hero keeps its actions visible in import mode on a zero-card deck [obligation]', () => {
+  test('deck-hero keeps its actions visible in import mode on a zero-card deck', () => {
     const wrapper = mount({
       mode: 'import',
       editorOpts: { cards: [], isLoading: false },
@@ -455,17 +455,17 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(hero.attributes('data-hide-actions')).toBe('false')
   })
 
-  test('a plain (non-import) empty deck still fills the viewport [obligation]', () => {
+  test('a plain (non-import) empty deck still fills the viewport', () => {
     const wrapper = mount({ mode: 'view', editorOpts: { cards: [], isLoading: false } })
     const main = wrapper.find('[data-testid="deck-view__main"]')
     expect(main.classes()).toContain('xl:h-[calc(100dvh-var(--nav-height))]')
   })
 
-  // ── useCardSearch wiring [obligation] ─────────────────────────────────────
+  // ── useCardSearch wiring ─────────────────────────────────────
   // The search composable receives a shared query ref, the editor's all_cards,
   // and the editor's isLoading — no deck_id (filtering is now server-side).
 
-  test('calls useCardSearch with a ref, all_cards, and isLoading [obligation]', () => {
+  test('calls useCardSearch with a ref, all_cards, and isLoading', () => {
     mount()
     const [query_ref, all_cards, is_querying] = useCardSearchMock.mock.calls[0]
     expect(isRef(query_ref)).toBe(true)
@@ -473,7 +473,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     expect(isRef(is_querying)).toBe(true)
   })
 
-  // ── deck_query.error watcher [obligation] ─────────────────────────────────
+  // ── deck_query.error watcher ─────────────────────────────────
 
   function mountWithDeckQuery(deck_query) {
     useDeckQueryMock.mockReturnValue(deck_query)
@@ -503,7 +503,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
     })
   }
 
-  describe('deck_query.error watcher [obligation]', () => {
+  describe('deck_query.error watcher', () => {
     test('does not fire on mount when there is no error', () => {
       mockNotice.error.mockClear()
       const deck_query = makeDeckQuery({ id: 1, name: 'Test' })
@@ -512,7 +512,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
       expect(mockNotice.error).not.toHaveBeenCalled()
     })
 
-    test('fires an error notice once when the query error transitions from falsy to truthy [obligation]', async () => {
+    test('fires an error notice once when the query error transitions from falsy to truthy', async () => {
       mockNotice.error.mockClear()
       const deck_query = makeDeckQuery({ id: 1, name: 'Test' })
       const wrapper = mountWithDeckQuery(deck_query)
@@ -524,7 +524,7 @@ describe('DeckView (views/deck/deck-view.vue)', () => {
       expect(mockNotice.error).toHaveBeenCalledWith("Couldn't load this deck. Please try again.")
     })
 
-    test('does not fire again on an unrelated re-render once already truthy [obligation]', async () => {
+    test('does not fire again on an unrelated re-render once already truthy', async () => {
       mockNotice.error.mockClear()
       const deck_query = makeDeckQuery({ id: 1, name: 'Test' })
       const wrapper = mountWithDeckQuery(deck_query)

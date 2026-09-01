@@ -40,7 +40,7 @@ beforeEach(() => {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('useLoginModal', () => {
-  test('emits snappy_button_3 immediately on open [obligation]', () => {
+  test('emits snappy_button_3 immediately on open', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -49,7 +49,7 @@ describe('useLoginModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('emits pop_up_close when the modal response resolves [obligation]', async () => {
+  test('emits pop_up_close when the modal response resolves', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -62,7 +62,7 @@ describe('useLoginModal', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
-  test('emits snappy_button_3 before pop_up_close (ordering) [obligation]', async () => {
+  test('emits snappy_button_3 before pop_up_close (ordering)', async () => {
     const { result, resolve } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -74,7 +74,7 @@ describe('useLoginModal', () => {
     expect(calls.indexOf('dialog.open')).toBeLessThan(calls.indexOf('dialog.close'))
   })
 
-  test('opens modal with mode mobile-sheet [obligation]', () => {
+  test('opens modal with mode mobile-sheet', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -86,7 +86,7 @@ describe('useLoginModal', () => {
     )
   })
 
-  test('opens modal with mobile_below_width md [obligation]', () => {
+  test('opens modal with mobile_below_width md', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 
@@ -98,7 +98,7 @@ describe('useLoginModal', () => {
     )
   })
 
-  test('opens modal with backdrop [obligation]', () => {
+  test('opens modal with backdrop', () => {
     const { result } = makeModalResult()
     mockOpen.mockReturnValueOnce(result)
 

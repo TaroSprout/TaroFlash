@@ -65,16 +65,16 @@ describe('UiOptionGroup', () => {
     expect(wrapper.find('[data-testid="ui-option-group"]').exists()).toBe(true)
   })
 
-  // ── Active state [obligation] ──────────────────────────────────────────────
+  // ── Active state ──────────────────────────────────────────────
 
-  test('active option has data-active=true [obligation]', () => {
+  test('active option has data-active=true', () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     const opts = getOptions(wrapper)
     expect(opts[0].attributes('data-active')).toBe('true')
     expect(opts[1].attributes('data-active')).toBe('false')
   })
 
-  test('switching active value changes data-active [obligation]', async () => {
+  test('switching active value changes data-active', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await wrapper.setProps({ value: 'advanced' })
     const opts = getOptions(wrapper)
@@ -82,9 +82,9 @@ describe('UiOptionGroup', () => {
     expect(opts[1].attributes('data-active')).toBe('true')
   })
 
-  // ── Tap interaction [obligation] ───────────────────────────────────────────
+  // ── Tap interaction ───────────────────────────────────────────
 
-  test('clicking an inactive option emits update:value with that value [obligation]', async () => {
+  test('clicking an inactive option emits update:value with that value', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[1].trigger('click')
     await flushPromises()
@@ -92,7 +92,7 @@ describe('UiOptionGroup', () => {
     expect(wrapper.emitted('update:value')[0][0]).toBe('advanced')
   })
 
-  test('clicking the active option still emits update:value [obligation]', async () => {
+  test('clicking the active option still emits update:value', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[0].trigger('click')
     await flushPromises()
@@ -100,16 +100,16 @@ describe('UiOptionGroup', () => {
     expect(wrapper.emitted('update:value')[0][0]).toBe('simple')
   })
 
-  // ── Sfx [obligation] ──────────────────────────────────────────────────────
+  // ── Sfx ──────────────────────────────────────────────────────
 
-  test('clicking an inactive option plays ui.select [obligation]', async () => {
+  test('clicking an inactive option plays ui.select', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[1].trigger('click')
     await flushPromises()
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
   })
 
-  test('clicking the already-active option plays ui.rejected [obligation]', async () => {
+  test('clicking the already-active option plays ui.rejected', async () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     await getOptions(wrapper)[0].trigger('click')
     await flushPromises()
@@ -117,18 +117,18 @@ describe('UiOptionGroup', () => {
   })
 
   // ── Regression: data-active fallthrough must not collide with tappable's
-  // own data-tap-active hover/press indicator [obligation] ────────────────
+  // own data-tap-active hover/press indicator ────────────────
 
-  test('a selected-but-idle option does not carry data-tap-active=true [obligation]', () => {
+  test('a selected-but-idle option does not carry data-tap-active=true', () => {
     const wrapper = mountOptionGroup({ value: 'simple' })
     const opts = getOptions(wrapper)
     expect(opts[0].attributes('data-active')).toBe('true')
     expect(opts[0].attributes('data-tap-active')).toBeUndefined()
   })
 
-  // ── v-sfx directive cleanup [obligation] ────────────────────────────────
+  // ── v-sfx directive cleanup ────────────────────────────────
 
-  test('unmounting removes every hover listener the real v-sfx directive attached [obligation]', () => {
+  test('unmounting removes every hover listener the real v-sfx directive attached', () => {
     const addSpy = vi.spyOn(EventTarget.prototype, 'addEventListener')
     const removeSpy = vi.spyOn(EventTarget.prototype, 'removeEventListener')
 
@@ -179,7 +179,7 @@ describe('UiOptionGroup', () => {
     expect(root.classes()).toContain('w-full')
   })
 
-  // ── Disabled option [obligation] ──────────────────────────────────────────
+  // ── Disabled option ──────────────────────────────────────────
 
   describe('disabled option', () => {
     const OPTIONS_WITH_DISABLED = [
@@ -187,21 +187,21 @@ describe('UiOptionGroup', () => {
       { value: 'advanced', label: 'Advanced', disabled: true }
     ]
 
-    test('renders the native disabled attribute on a disabled option [obligation]', () => {
+    test('renders the native disabled attribute on a disabled option', () => {
       const wrapper = mountOptionGroup({ options: OPTIONS_WITH_DISABLED, value: 'simple' })
       const opts = getOptions(wrapper)
       expect(opts[1].attributes('disabled')).toBeDefined()
       expect(opts[0].attributes('disabled')).toBeUndefined()
     })
 
-    test('tapping a disabled option emits no update:value [obligation]', async () => {
+    test('tapping a disabled option emits no update:value', async () => {
       const wrapper = mountOptionGroup({ options: OPTIONS_WITH_DISABLED, value: 'simple' })
       await getOptions(wrapper)[1].trigger('click')
       await flushPromises()
       expect(wrapper.emitted('update:value')).toBeUndefined()
     })
 
-    test('tapping a disabled option plays no sfx [obligation]', async () => {
+    test('tapping a disabled option plays no sfx', async () => {
       const wrapper = mountOptionGroup({ options: OPTIONS_WITH_DISABLED, value: 'simple' })
       await getOptions(wrapper)[1].trigger('click')
       await flushPromises()

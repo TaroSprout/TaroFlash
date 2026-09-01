@@ -75,7 +75,7 @@ describe('SectionFeatures', () => {
     expect(header.attributes('data-heading')).toBe('A Flashcard App At Heart')
   })
 
-  test('section header is rendered without eyebrow prop [obligation]', () => {
+  test('section header is rendered without eyebrow prop', () => {
     const wrapper = mountFeatures()
     const headerComponent = wrapper.findComponent({ name: 'SectionHeader' })
     expect(headerComponent.props('eyebrow')).toBeUndefined()
@@ -83,43 +83,43 @@ describe('SectionFeatures', () => {
 
   // ── Feature card list ──────────────────────────────────────────────────────
 
-  test('renders the feature card row list [obligation]', () => {
+  test('renders the feature card row list', () => {
     const wrapper = mountFeatures()
     expect(wrapper.find('[data-testid="welcome-features__row"]').exists()).toBe(true)
   })
 
-  test('renders exactly 4 feature cards [obligation]', () => {
+  test('renders exactly 4 feature cards', () => {
     const wrapper = mountFeatures()
     const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
     expect(items).toHaveLength(4)
   })
 
-  test('renders experience card with correct testid [obligation]', () => {
+  test('renders experience card with correct testid', () => {
     const wrapper = mountFeatures()
     expect(wrapper.find('[data-testid="welcome-features__card-experience"]').exists()).toBe(true)
   })
 
-  test('renders mobile card with correct testid [obligation]', () => {
+  test('renders mobile card with correct testid', () => {
     const wrapper = mountFeatures()
     expect(wrapper.find('[data-testid="welcome-features__card-mobile"]').exists()).toBe(true)
   })
 
-  test('renders scheduling card with correct testid [obligation]', () => {
+  test('renders scheduling card with correct testid', () => {
     const wrapper = mountFeatures()
     expect(wrapper.find('[data-testid="welcome-features__card-scheduling"]').exists()).toBe(true)
   })
 
-  test('renders upcoming card with correct testid [obligation]', () => {
+  test('renders upcoming card with correct testid', () => {
     const wrapper = mountFeatures()
     expect(wrapper.find('[data-testid="welcome-features__card-upcoming"]').exists()).toBe(true)
   })
 
-  test('does NOT render old portable card [obligation]', () => {
+  test('does NOT render old portable card', () => {
     const wrapper = mountFeatures()
     expect(wrapper.find('[data-testid="welcome-features__card-portable"]').exists()).toBe(false)
   })
 
-  test('renders cards in correct order: experience, mobile, scheduling, upcoming [obligation]', () => {
+  test('renders cards in correct order: experience, mobile, scheduling, upcoming', () => {
     const wrapper = mountFeatures()
     const items = wrapper.findAll('[data-testid^="welcome-features__card-"]')
     expect(items[0].attributes('data-testid')).toBe('welcome-features__card-experience')
@@ -128,17 +128,17 @@ describe('SectionFeatures', () => {
     expect(items[3].attributes('data-testid')).toBe('welcome-features__card-upcoming')
   })
 
-  // ── seeRoadmap prop forwarding [obligation] ────────────────────────────────
+  // ── seeRoadmap prop forwarding ────────────────────────────────
 
-  test('renders community callout (via stub) [obligation]', () => {
+  test('renders community callout (via stub)', () => {
     const wrapper = mountFeatures()
     // CommunityCallout is stubbed; verify the component is present
     expect(wrapper.findComponent({ name: 'CommunityCallout' }).exists()).toBe(true)
   })
 
-  // ── row layout: mobile now reuses tablet's exact grid classes [obligation] ─
+  // ── row layout: mobile now reuses tablet's exact grid classes ─
 
-  test('renders the same 2-column grid classes on mobile and tablet [obligation]', () => {
+  test('renders the same 2-column grid classes on mobile and tablet', () => {
     width.value = 'tablet'
     const tablet_classes = mountFeatures().find('[data-testid="welcome-features__row"]').classes()
 
@@ -149,16 +149,16 @@ describe('SectionFeatures', () => {
     expect(mobile_classes).toEqual(expect.arrayContaining(['grid', 'grid-cols-[auto_auto]']))
   })
 
-  test('renders a single-row flex layout on desktop, distinct from mobile/tablet [obligation]', () => {
+  test('renders a single-row flex layout on desktop, distinct from mobile/tablet', () => {
     width.value = 'desktop'
     const desktop_classes = mountFeatures().find('[data-testid="welcome-features__row"]').classes()
     expect(desktop_classes).toEqual(expect.arrayContaining(['flex', 'flex-wrap']))
     expect(desktop_classes).not.toContain('grid')
   })
 
-  // ── removed deck-stack markup never appears [obligation] ───────────────────
+  // ── removed deck-stack markup never appears ───────────────────
 
-  test('does not render a data-stack attribute on the row for any width [obligation]', () => {
+  test('does not render a data-stack attribute on the row for any width', () => {
     for (const w of ['desktop', 'tablet', 'mobile']) {
       width.value = w
       const wrapper = mountFeatures()
@@ -168,7 +168,7 @@ describe('SectionFeatures', () => {
     }
   })
 
-  test('does not render a data-active attribute on any card for any width [obligation]', () => {
+  test('does not render a data-active attribute on any card for any width', () => {
     for (const w of ['desktop', 'tablet', 'mobile']) {
       width.value = w
       const wrapper = mountFeatures()

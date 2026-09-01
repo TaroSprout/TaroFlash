@@ -116,26 +116,26 @@ describe('PageSettings (mode-toolbar)', () => {
     expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 
-  test('the panel stamps the constant data-station="float" [obligation]', () => {
+  test('the panel stamps the constant data-station="float"', () => {
     const { wrapper } = mountPageSettings()
     expect(wrapper.find('[data-testid="page-settings__panel"]').attributes('data-station')).toBe(
       'float'
     )
   })
 
-  // ── desktop_open gating [obligation] ───────────────────────────────────────
+  // ── desktop_open gating ───────────────────────────────────────
   // Regression: the desktop popover is only CSS-hidden below `md`, still
   // mounted — so its own `open` prop must be false on mobile even when the
   // shared is_page_settings_open flag is true (set by the mobile footer's
   // panel), or its outside-click listener treats footer taps as "click outside".
 
-  test('desktop_open is false on mobile even when is_page_settings_open is true [obligation]', () => {
+  test('desktop_open is false on mobile even when is_page_settings_open is true', () => {
     const shell = makeShell({ is_open: true })
     const { wrapper } = mountPageSettings(shell, { is_mobile: true })
     expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('false')
   })
 
-  test('desktop_open is true above mobile when is_page_settings_open is true [obligation]', () => {
+  test('desktop_open is true above mobile when is_page_settings_open is true', () => {
     const shell = makeShell({ is_open: true })
     const { wrapper } = mountPageSettings(shell, { is_mobile: false })
     expect(wrapper.find('[data-testid="page-settings"]').attributes('data-open')).toBe('true')
@@ -149,7 +149,7 @@ describe('PageSettings (mode-toolbar)', () => {
 
   // ── data-active on trigger tracks desktop_open ─────────────────────────────
 
-  test('trigger data-active reflects desktop_open, not raw is_page_settings_open [obligation]', () => {
+  test('trigger data-active reflects desktop_open, not raw is_page_settings_open', () => {
     const shell = makeShell({ is_open: true })
     const { wrapper } = mountPageSettings(shell, { is_mobile: true })
     expect(wrapper.find('[data-testid="page-settings__trigger"]').attributes('data-active')).toBe(

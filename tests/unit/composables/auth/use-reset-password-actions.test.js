@@ -106,10 +106,10 @@ describe('useResetPasswordActions', () => {
     })
   })
 
-  // ── submit() — weak-password outcome [obligation] ────────────────────────
+  // ── submit() — weak-password outcome ────────────────────────
 
-  describe('submit() — weak-password outcome [obligation]', () => {
-    test('maps "weak-password" to an inline errors.password message and returns "invalid" [obligation]', async () => {
+  describe('submit() — weak-password outcome', () => {
+    test('maps "weak-password" to an inline errors.password message and returns "invalid"', async () => {
       mockUpdatePassword.mockResolvedValueOnce('weak-password')
       const auth = useResetPasswordActions()
       fillValidFields(auth)
@@ -121,7 +121,7 @@ describe('useResetPasswordActions', () => {
       expect(auth.errors.value.password).toBe('reset-password-modal.validation-weak')
     })
 
-    test('emits notice.error sfx on weak-password [obligation]', async () => {
+    test('emits notice.error sfx on weak-password', async () => {
       mockUpdatePassword.mockResolvedValueOnce('weak-password')
       const auth = useResetPasswordActions()
       fillValidFields(auth)
@@ -133,10 +133,10 @@ describe('useResetPasswordActions', () => {
     })
   })
 
-  // ── submit() — same-password outcome [obligation] ────────────────────────
+  // ── submit() — same-password outcome ────────────────────────
 
-  describe('submit() — same-password outcome deliberately falls through to "error" [obligation]', () => {
-    test('returns "error" (not "invalid") for the "same-password" outcome [obligation]', async () => {
+  describe('submit() — same-password outcome deliberately falls through to "error"', () => {
+    test('returns "error" (not "invalid") for the "same-password" outcome', async () => {
       mockUpdatePassword.mockResolvedValueOnce('same-password')
       const auth = useResetPasswordActions()
       fillValidFields(auth)
@@ -147,7 +147,7 @@ describe('useResetPasswordActions', () => {
       expect(result).toBe('error')
     })
 
-    test('does NOT set an inline errors.password message for "same-password" [obligation]', async () => {
+    test('does NOT set an inline errors.password message for "same-password"', async () => {
       mockUpdatePassword.mockResolvedValueOnce('same-password')
       const auth = useResetPasswordActions()
       fillValidFields(auth)
@@ -158,7 +158,7 @@ describe('useResetPasswordActions', () => {
       expect(auth.errors.value.password).toBeUndefined()
     })
 
-    test('leaves success false for "same-password" [obligation]', async () => {
+    test('leaves success false for "same-password"', async () => {
       mockUpdatePassword.mockResolvedValueOnce('same-password')
       const auth = useResetPasswordActions()
       fillValidFields(auth)

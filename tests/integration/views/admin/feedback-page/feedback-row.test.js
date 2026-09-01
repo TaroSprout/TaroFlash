@@ -133,24 +133,24 @@ describe('FeedbackRow — rendering', () => {
     ).toBe('done')
   })
 
-  test('passes the member avatar and size="sm" to member-polaroid [obligation]', () => {
+  test('passes the member avatar and size="sm" to member-polaroid', () => {
     const wrapper = mountRow(makeItem({ member_avatar: 'owl' }))
     const polaroid = wrapper.findComponent(MemberPolaroid)
     expect(polaroid.props('avatar')).toBe('owl')
     expect(polaroid.props('size')).toBe('sm')
   })
 
-  // ── REGRESSION GUARD — this call site stays decorative [obligation] ────────
+  // ── REGRESSION GUARD — this call site stays decorative ────────
   // The dashboard is the only interactive polaroid; this one gets no click
   // handler, no hover wiring, and renders at rest same as before.
 
-  test('member-polaroid is not interactive here — no hover swing wiring [obligation]', () => {
+  test('member-polaroid is not interactive here — no hover swing wiring', () => {
     const wrapper = mountRow()
     const polaroid = wrapper.findComponent(MemberPolaroid)
     expect(polaroid.props('interactive')).toBeFalsy()
   })
 
-  test('passes size="sm" to the status select-menu [obligation]', () => {
+  test('passes size="sm" to the status select-menu', () => {
     const wrapper = mountRow()
     expect(wrapper.find('[data-testid="admin-feedback-row__status"]').attributes('size')).toBe('sm')
   })

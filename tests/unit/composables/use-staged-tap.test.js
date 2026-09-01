@@ -303,7 +303,7 @@ describe('useStagedTap — audio', () => {
     await p
   })
 
-  test('audio NOT played twice on coarse pop animate with triggerAt peak [obligation]', async () => {
+  test('audio NOT played twice on coarse pop animate with triggerAt peak', async () => {
     let peakResolve
     mockPlayButtonTap.mockImplementation(() => ({
       peak: new Promise((r) => (peakResolve = r)),
@@ -321,13 +321,13 @@ describe('useStagedTap — audio', () => {
 })
 
 describe('useStagedTap — preAudio', () => {
-  test('preAudio fires on coarse press before animation [obligation]', async () => {
+  test('preAudio fires on coarse press before animation', async () => {
     const { tap } = useStagedTap()
     await tap(vi.fn(), { preAudio: 'ui.press' })(makeEvent())
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('preAudio does NOT fire on fine pointer [obligation]', async () => {
+  test('preAudio does NOT fire on fine pointer', async () => {
     coarseRef.value = false
     const { tap } = useStagedTap()
     await tap(vi.fn(), { preAudio: 'ui.press' })(makeEvent())

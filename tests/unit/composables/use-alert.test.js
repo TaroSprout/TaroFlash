@@ -26,7 +26,7 @@ describe('useAlert', () => {
   })
 
   describe('warn()', () => {
-    test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
+    test('calls emitSfx with the default open audio when openAudio is omitted', () => {
       const { warn } = useAlert()
       warn({ title: 'Are you sure?' })
       expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
@@ -38,7 +38,7 @@ describe('useAlert', () => {
       expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
     })
 
-    test('passes default cancelAudio to the alert component when cancelAudio is omitted [obligation]', () => {
+    test('passes default cancelAudio to the alert component when cancelAudio is omitted', () => {
       const { warn } = useAlert()
       warn({ title: 'Are you sure?' })
       expect(mockOpen).toHaveBeenCalledWith(
@@ -69,7 +69,7 @@ describe('useAlert', () => {
       )
     })
 
-    test('opens the modal with mode: popup [obligation]', () => {
+    test('opens the modal with mode: popup', () => {
       const { warn } = useAlert()
       warn()
       expect(mockOpen).toHaveBeenCalledWith(
@@ -112,13 +112,13 @@ describe('useAlert', () => {
   })
 
   describe('info()', () => {
-    test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
+    test('calls emitSfx with the default open audio when openAudio is omitted', () => {
       const { info } = useAlert()
       info({ title: 'FYI' })
       expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
     })
 
-    test('passes default cancelAudio to the alert component when cancelAudio is omitted [obligation]', () => {
+    test('passes default cancelAudio to the alert component when cancelAudio is omitted', () => {
       const { info } = useAlert()
       info({ title: 'FYI' })
       expect(mockOpen).toHaveBeenCalledWith(
@@ -138,7 +138,7 @@ describe('useAlert', () => {
       )
     })
 
-    test('opens the modal with mode: popup [obligation]', () => {
+    test('opens the modal with mode: popup', () => {
       const { info } = useAlert()
       info()
       expect(mockOpen).toHaveBeenCalledWith(

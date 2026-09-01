@@ -35,7 +35,7 @@ function scrub(track, clientX) {
 describe('Scrubber', () => {
   // ── Layout prop ────────────────────────────────────────────────────────────
 
-  test('layout="inline" renders scrubber__current and scrubber__duration spans [obligation]', () => {
+  test('layout="inline" renders scrubber__current and scrubber__duration spans', () => {
     const player = makePlayer({ current_time: ref(30), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player, layout: 'inline' } })
 
@@ -44,7 +44,7 @@ describe('Scrubber', () => {
     expect(wrapper.find('[data-testid="scrubber__labels"]').exists()).toBe(false)
   })
 
-  test('layout="stacked" renders the scrubber__labels row [obligation]', () => {
+  test('layout="stacked" renders the scrubber__labels row', () => {
     const player = makePlayer()
     const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
 
@@ -76,7 +76,7 @@ describe('Scrubber', () => {
   // At 0%:  calc(0% + 8px)
   // At 50%: calc(50% + 0px) = calc(50% + 0px)
 
-  test('fill width reflects current_time / duration as a percentage [obligation]', () => {
+  test('fill width reflects current_time / duration as a percentage', () => {
     const player = makePlayer({ current_time: ref(30), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
@@ -84,7 +84,7 @@ describe('Scrubber', () => {
     expect(wrapper.find('[data-testid="scrubber__fill"]').attributes('style')).toContain('25%')
   })
 
-  test('fill width stays at 0% when duration is 0 [obligation]', () => {
+  test('fill width stays at 0% when duration is 0', () => {
     const player = makePlayer({ current_time: ref(10), duration: ref(0) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
@@ -114,7 +114,7 @@ describe('Scrubber', () => {
 
   // ── Seek on scrub ──────────────────────────────────────────────────────────
 
-  test('pointerdown seeks to the fraction of duration under the pointer [obligation]', () => {
+  test('pointerdown seeks to the fraction of duration under the pointer', () => {
     const player = makePlayer({ duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
     const track = stubTrackRect(wrapper, { left: 0, width: 200 })
@@ -124,7 +124,7 @@ describe('Scrubber', () => {
     expect(player.seek).toHaveBeenCalledWith(60)
   })
 
-  test('pointerdown clamps past the right edge to duration [obligation]', () => {
+  test('pointerdown clamps past the right edge to duration', () => {
     const player = makePlayer({ duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
     const track = stubTrackRect(wrapper, { left: 0, width: 200 })
@@ -134,7 +134,7 @@ describe('Scrubber', () => {
     expect(player.seek).toHaveBeenCalledWith(120)
   })
 
-  test('pointerdown clamps before the left edge to 0 [obligation]', () => {
+  test('pointerdown clamps before the left edge to 0', () => {
     const player = makePlayer({ duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
     const track = stubTrackRect(wrapper, { left: 0, width: 200 })
@@ -144,7 +144,7 @@ describe('Scrubber', () => {
     expect(player.seek).toHaveBeenCalledWith(0)
   })
 
-  test('pointerdown is a no-op when duration is 0 [obligation]', () => {
+  test('pointerdown is a no-op when duration is 0', () => {
     const player = makePlayer({ duration: ref(0) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
     const track = stubTrackRect(wrapper, { left: 0, width: 200 })
@@ -172,12 +172,12 @@ describe('Scrubber', () => {
     expect(labels[1].text()).toBe('0:00')
   })
 
-  // ── Thumb positioning — stays inside track at both ends [obligation] ────────
+  // ── Thumb positioning — stays inside track at both ends ────────
   // Thumb uses `left: progress%` + `translate: -progress% -50%`
   // This keeps the thumb inside the track: at 0% translate is 0, at 100%
   // translate pulls it back by its full width. Never overhangs either edge.
 
-  test('thumb left style is set to the progress percentage [obligation]', () => {
+  test('thumb left style is set to the progress percentage', () => {
     const player = makePlayer({ current_time: ref(30), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
@@ -186,7 +186,7 @@ describe('Scrubber', () => {
     expect(style).toContain('left: 25%')
   })
 
-  test('thumb translate style is -progress% -50% [obligation]', () => {
+  test('thumb translate style is -progress% -50%', () => {
     const player = makePlayer({ current_time: ref(30), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
@@ -195,7 +195,7 @@ describe('Scrubber', () => {
     expect(style).toContain('translate: -25% -50%')
   })
 
-  test('thumb is at left:0% at the start (progress=0) [obligation]', () => {
+  test('thumb is at left:0% at the start (progress=0)', () => {
     const player = makePlayer({ current_time: ref(0), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
@@ -206,7 +206,7 @@ describe('Scrubber', () => {
     expect(style).toContain('-50%')
   })
 
-  test('thumb is at left:100% with translate:-100% -50% at the end (progress=100%) [obligation]', () => {
+  test('thumb is at left:100% with translate:-100% -50% at the end (progress=100%)', () => {
     const player = makePlayer({ current_time: ref(120), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player } })
 
@@ -215,9 +215,9 @@ describe('Scrubber', () => {
     expect(style).toContain('translate: -100% -50%')
   })
 
-  // ── Stacked layout: track carries data-layout for flex-1 scoping [obligation] ─
+  // ── Stacked layout: track carries data-layout for flex-1 scoping ─
 
-  test('track carries data-layout="stacked" in stacked mode [obligation]', () => {
+  test('track carries data-layout="stacked" in stacked mode', () => {
     const player = makePlayer()
     const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
 
@@ -226,24 +226,24 @@ describe('Scrubber', () => {
     )
   })
 
-  test('track carries data-layout="inline" in inline mode [obligation]', () => {
+  test('track carries data-layout="inline" in inline mode', () => {
     const player = makePlayer()
     const wrapper = shallowMount(Scrubber, { props: { player, layout: 'inline' } })
 
     expect(wrapper.find('[data-testid="scrubber__track"]').attributes('data-layout')).toBe('inline')
   })
 
-  // ── Stacked layout: labels are out-of-flow (absolute) [obligation] ─────────
+  // ── Stacked layout: labels are out-of-flow (absolute) ─────────
   // Labels in stacked mode are positioned absolute so only the bar drives height.
 
-  test('stacked layout labels container has data-testid="scrubber__labels" [obligation]', () => {
+  test('stacked layout labels container has data-testid="scrubber__labels"', () => {
     const player = makePlayer()
     const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
 
     expect(wrapper.find('[data-testid="scrubber__labels"]').exists()).toBe(true)
   })
 
-  test('stacked layout labels render current and duration inside the labels container [obligation]', () => {
+  test('stacked layout labels render current and duration inside the labels container', () => {
     const player = makePlayer({ current_time: ref(30), duration: ref(120) })
     const wrapper = shallowMount(Scrubber, { props: { player, layout: 'stacked' } })
 

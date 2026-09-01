@@ -62,8 +62,8 @@ describe('useDeleteDeckMutation — mutation()', () => {
 // ── onMutate — optimistic cache removal ───────────────────────────────────────
 
 describe('useDeleteDeckMutation — onMutate()', () => {
-  // [obligation] the deleted deck is filtered out of the cached list synchronously at mutate time
-  test('filters the deleted deck out of the cached list synchronously [obligation]', () => {
+  // the deleted deck is filtered out of the cached list synchronously at mutate time
+  test('filters the deleted deck out of the cached list synchronously', () => {
     cached_data = [deck(1), deck(2), deck(3)]
     const { onMutate } = config()
 
@@ -73,8 +73,8 @@ describe('useDeleteDeckMutation — onMutate()', () => {
     expect(written.map((d) => d.id)).toEqual([1, 3])
   })
 
-  // [obligation] onMutate returns snapshot: undefined when there is no cached list
-  test('returns snapshot: undefined and skips the write when decks are not cached [obligation]', () => {
+  // onMutate returns snapshot: undefined when there is no cached list
+  test('returns snapshot: undefined and skips the write when decks are not cached', () => {
     cached_data = undefined
     const { onMutate } = config()
 
@@ -98,8 +98,8 @@ describe('useDeleteDeckMutation — onMutate()', () => {
 // ── onError — rollback ────────────────────────────────────────────────────────
 
 describe('useDeleteDeckMutation — onError()', () => {
-  // [obligation] onError restores the snapshot returned by onMutate back into ['decks']
-  test('restores the pre-mutate snapshot when deleteDeck rejects [obligation]', () => {
+  // onError restores the snapshot returned by onMutate back into ['decks']
+  test('restores the pre-mutate snapshot when deleteDeck rejects', () => {
     const snapshot = [deck(1), deck(2)]
     const { onError } = config()
 
@@ -108,8 +108,8 @@ describe('useDeleteDeckMutation — onError()', () => {
     expect(setQueryDataSpy).toHaveBeenCalledWith(['decks'], snapshot)
   })
 
-  // [obligation] the if (snapshot) guard leaves the cache alone when snapshot is undefined
-  test('does not call setQueryData when context.snapshot is undefined [obligation]', () => {
+  // the if (snapshot) guard leaves the cache alone when snapshot is undefined
+  test('does not call setQueryData when context.snapshot is undefined', () => {
     const { onError } = config()
 
     onError(new Error('failed'), 1, { snapshot: undefined })
@@ -121,8 +121,8 @@ describe('useDeleteDeckMutation — onError()', () => {
 // ── onSettled — invalidation ───────────────────────────────────────────────────
 
 describe('useDeleteDeckMutation — onSettled()', () => {
-  // [obligation] onSettled invalidates ['decks'] on success, plus ['deck', id] forgotten (not refetched)
-  test('invalidates decks and forgets the deck query on settle after success [obligation]', () => {
+  // onSettled invalidates ['decks'] on success, plus ['deck', id] forgotten (not refetched)
+  test('invalidates decks and forgets the deck query on settle after success', () => {
     const { onSettled } = config()
 
     onSettled(undefined, undefined, 5)
@@ -131,8 +131,8 @@ describe('useDeleteDeckMutation — onSettled()', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['deck', 5] }, false)
   })
 
-  // [obligation] onSettled invalidates ['decks'] on error too, but never touches ['deck', id]
-  test('invalidates decks but does not invalidate the deck query on settle after an error [obligation]', () => {
+  // onSettled invalidates ['decks'] on error too, but never touches ['deck', id]
+  test('invalidates decks but does not invalidate the deck query on settle after an error', () => {
     const { onSettled } = config()
 
     onSettled(undefined, new Error('failed'), 5)

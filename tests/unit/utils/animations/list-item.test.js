@@ -19,25 +19,25 @@ describe('expandListItemIn', () => {
     vi.clearAllMocks()
   })
 
-  test('calls gsap.from on the provided element [obligation]', () => {
+  test('calls gsap.from on the provided element', () => {
     expandListItemIn(el)
     expect(mockFrom).toHaveBeenCalledWith(el, expect.any(Object))
   })
 
-  test('animates from scaleY=0 and opacity=0 (collapsed top edge grow-in) [obligation]', () => {
+  test('animates from scaleY=0 and opacity=0 (collapsed top edge grow-in)', () => {
     expandListItemIn(el)
     const opts = mockFrom.mock.calls[0][1]
     expect(opts.scaleY).toBe(0)
     expect(opts.opacity).toBe(0)
   })
 
-  test('uses transformOrigin=center top so the grow anchors at the row top edge [obligation]', () => {
+  test('uses transformOrigin=center top so the grow anchors at the row top edge', () => {
     expandListItemIn(el)
     const opts = mockFrom.mock.calls[0][1]
     expect(opts.transformOrigin).toBe('center top')
   })
 
-  test('clears all inline GSAP props on complete (clearProps=all) [obligation]', () => {
+  test('clears all inline GSAP props on complete (clearProps=all)', () => {
     expandListItemIn(el)
     const opts = mockFrom.mock.calls[0][1]
     expect(opts.clearProps).toBe('all')

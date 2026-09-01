@@ -81,9 +81,9 @@ describe('useBottomChromeCover', () => {
     viewport._fire('resize')
   }
 
-  // ── Starting state [obligation] ───────────────────────────────────────────
+  // ── Starting state ───────────────────────────────────────────
 
-  test('is_covered defaults false, so a consumer that never gets a real measurement still errs toward extra room [obligation]', () => {
+  test('is_covered defaults false, so a consumer that never gets a real measurement still errs toward extra room', () => {
     Object.defineProperty(window, 'visualViewport', {
       value: undefined,
       writable: true,
@@ -130,9 +130,9 @@ describe('useBottomChromeCover', () => {
     expect(is_covered.value).toBe(false)
   })
 
-  // ── Debounce + live updates [obligation] ────────────────────────────────
+  // ── Debounce + live updates ────────────────────────────────
 
-  test('debounces a burst of resize events to a single re-measure after ~120ms [obligation]', () => {
+  test('debounces a burst of resize events to a single re-measure after ~120ms', () => {
     viewport.height = 700 // large gap → covered once measured
     const { is_covered } = consumer()
     vi.runAllTimers()
@@ -161,9 +161,9 @@ describe('useBottomChromeCover', () => {
     expect(is_covered.value).toBe(false)
   })
 
-  // ── Consumer refcounting [obligation] ────────────────────────────────────
+  // ── Consumer refcounting ────────────────────────────────────
 
-  test('shares a single visualViewport listener pair across multiple consumers [obligation]', () => {
+  test('shares a single visualViewport listener pair across multiple consumers', () => {
     consumer()
     consumer()
 
@@ -171,7 +171,7 @@ describe('useBottomChromeCover', () => {
     expect(viewport._handlerCount('scroll')).toBe(1)
   })
 
-  test('removes listeners only once the last consumer tears down [obligation]', () => {
+  test('removes listeners only once the last consumer tears down', () => {
     const a = consumer()
     const b = consumer()
 

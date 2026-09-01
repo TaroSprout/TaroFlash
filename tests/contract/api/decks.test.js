@@ -116,7 +116,7 @@ describe('upsertDeck (contract)', () => {
     expect(updated.max_reviews_per_day).toBe(15)
   })
 
-  test('persists leech_threshold and a pinned-null max_interval override [obligation]', async () => {
+  test('persists leech_threshold and a pinned-null max_interval override', async () => {
     const created = await upsertDeck({ title: 'Leech + Interval Deck' })
 
     const updated = await upsertDeck({

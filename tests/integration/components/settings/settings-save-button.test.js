@@ -74,7 +74,7 @@ beforeEach(() => {
 
 // ── Disabled state ────────────────────────────────────────────────────────────
 
-describe('settings-save-button — disabled state [obligation]', () => {
+describe('settings-save-button — disabled state', () => {
   test('button is disabled when is_dirty is false', () => {
     const { wrapper } = makeWrapper({ is_dirty: false })
     expect(wrapper.find('[data-testid="settings__save-button"]').attributes('data-disabled')).toBe(
@@ -89,7 +89,7 @@ describe('settings-save-button — disabled state [obligation]', () => {
     )
   })
 
-  test('button has click-when-disabled prop when is_dirty is false [obligation]', () => {
+  test('button has click-when-disabled prop when is_dirty is false', () => {
     const { wrapper } = makeWrapper({ is_dirty: false })
     expect(
       wrapper.find('[data-testid="settings__save-button"]').attributes('data-click-when-disabled')
@@ -106,7 +106,7 @@ describe('settings-save-button — disabled state [obligation]', () => {
 
 // ── Blank-name save guard ──────────────────────────────────────────────────────
 
-describe('settings-save-button — blank-name save guard [obligation]', () => {
+describe('settings-save-button — blank-name save guard', () => {
   test('sets name_error to the required-name copy when has_name is false', async () => {
     const { wrapper, editor } = makeWrapper({ is_dirty: true, has_name: false })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
@@ -129,28 +129,28 @@ describe('settings-save-button — blank-name save guard [obligation]', () => {
 
 // ── Save and close ────────────────────────────────────────────────────────────
 
-describe('settings-save-button — save behaviour [obligation]', () => {
+describe('settings-save-button — save behaviour', () => {
   test('clicking save calls saveMember', async () => {
     const { wrapper, saveMember } = makeWrapper({ is_dirty: true })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     expect(saveMember).toHaveBeenCalledOnce()
   })
 
-  test('calls close() after saveMember resolves "success" [obligation]', async () => {
+  test('calls close() after saveMember resolves "success"', async () => {
     const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: 'success' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(close).toHaveBeenCalledOnce()
   })
 
-  test('does NOT call close() when saveMember resolves "error" [obligation]', async () => {
+  test('does NOT call close() when saveMember resolves "error"', async () => {
     const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: 'error' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('shows settings.save-error notice when saveMember resolves "error" [obligation]', async () => {
+  test('shows settings.save-error notice when saveMember resolves "error"', async () => {
     const { wrapper } = makeWrapper({ is_dirty: true, save_result: 'error' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
@@ -164,21 +164,21 @@ describe('settings-save-button — save behaviour [obligation]', () => {
     expect(mockNotice.error).not.toHaveBeenCalled()
   })
 
-  test('does NOT call close() when saveMember resolves "duplicate-name" [obligation]', async () => {
+  test('does NOT call close() when saveMember resolves "duplicate-name"', async () => {
     const { wrapper, close } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('does NOT show the generic error notice when saveMember resolves "duplicate-name" [obligation]', async () => {
+  test('does NOT show the generic error notice when saveMember resolves "duplicate-name"', async () => {
     const { wrapper } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
     expect(mockNotice.error).not.toHaveBeenCalled()
   })
 
-  test('sets name_error to the duplicate-name copy when saveMember resolves "duplicate-name" [obligation]', async () => {
+  test('sets name_error to the duplicate-name copy when saveMember resolves "duplicate-name"', async () => {
     const { wrapper, editor } = makeWrapper({ is_dirty: true, save_result: 'duplicate-name' })
     await wrapper.find('[data-testid="settings__save-button"]').trigger('click')
     await flushPromises()
@@ -220,22 +220,22 @@ describe('settings-save-button — save behaviour [obligation]', () => {
 
 // ── Reset button ────────────────────────────────────────────────────────────
 
-describe('settings-save-button — reset button [obligation]', () => {
-  test('is disabled when is_dirty is false [obligation]', () => {
+describe('settings-save-button — reset button', () => {
+  test('is disabled when is_dirty is false', () => {
     const { wrapper } = makeWrapper({ is_dirty: false })
     expect(wrapper.find('[data-testid="settings__reset-button"]').attributes('data-disabled')).toBe(
       'true'
     )
   })
 
-  test('is not disabled when is_dirty is true [obligation]', () => {
+  test('is not disabled when is_dirty is true', () => {
     const { wrapper } = makeWrapper({ is_dirty: true })
     expect(wrapper.find('[data-testid="settings__reset-button"]').attributes('data-disabled')).toBe(
       'false'
     )
   })
 
-  test('pressing it while disabled does NOT call resetChanges, only plays digi_powerdown [obligation]', async () => {
+  test('pressing it while disabled does NOT call resetChanges, only plays digi_powerdown', async () => {
     const { wrapper, resetChanges } = makeWrapper({ is_dirty: false })
 
     await wrapper.find('[data-testid="settings__reset-button"]').trigger('click')
@@ -243,7 +243,7 @@ describe('settings-save-button — reset button [obligation]', () => {
     expect(resetChanges).not.toHaveBeenCalled()
   })
 
-  test('pressing it while enabled calls resetChanges [obligation]', async () => {
+  test('pressing it while enabled calls resetChanges', async () => {
     const { wrapper, resetChanges } = makeWrapper({ is_dirty: true })
 
     await wrapper.find('[data-testid="settings__reset-button"]').trigger('click')

@@ -444,9 +444,7 @@ export function useReaderHighlights(
     if (follow_timer !== null) clearTimeout(follow_timer)
     follow_timer = setTimeout(async () => {
       follow_timer = null
-      // Re-check: a manual scroll can turn follow off during this debounce (or
-      // during the mount await below) — a scroll issued after that must not
-      // fight the member's own, still-in-flight one.
+      // Re-check: a manual scroll during the debounce turns follow off, and must win.
       if (!following.value) return
       const index = toValue(active_word)
       if (index < 0) return
@@ -541,8 +539,7 @@ export function useReaderHighlights(
   async function positionInteraction() {
     const lines = interactionLines()
 
-    // Hide pills that are about to be removed before Vue unmounts them, so the
-    // fade animation has a chance to run on the still-mounted elements.
+    // Hide before Vue unmounts, or the fade has no element left to run on.
     hover_el_pool.forEach((el, i) => {
       if (i >= lines.length) hideReaderCursor(el)
     })
@@ -691,9 +688,7 @@ export function useReaderHighlights(
 
     committed.value = null
 
-    // Own the gesture: stop native text selection and keep receiving moves even
-    // if the pointer strays outside the column mid-drag. Capture can reject a
-    // non-active pointer (e.g. synthetic events in tests), so it's best-effort.
+    // Capture is best-effort: it rejects a non-active pointer, as synthetic test events are.
     event.preventDefault()
     try {
       ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
@@ -713,8 +708,7 @@ export function useReaderHighlights(
 
     const index = wordIndexAt(event.clientX, event.clientY)
 
-    // Mid-drag, ignore gaps (translation gloss, padding) so the range holds its
-    // last extent instead of collapsing.
+    // Ignore gaps mid-drag, or the range collapses instead of holding its last extent.
     if (anchor_index.value !== null) {
       if (index !== null && index !== focus_index.value) {
         focus_index.value = index
@@ -723,8 +717,7 @@ export function useReaderHighlights(
       return
     }
 
-    // A committed selection owns the pill while its popover is open; don't let
-    // hover steal it.
+    // A committed selection owns the pill while its popover is open.
     if (committed.value) return
 
     if (index !== focus_index.value) focus_index.value = index
@@ -750,8 +743,7 @@ export function useReaderHighlights(
   // (translation gloss, padding) so the range doesn't collapse between words. Each
   // new word ticks `tap_05`, so the range audibly ratchets as words join or leave.
   function extendTouchSelection(event: PointerEvent) {
-    // Update the point every move so the preview bubble tracks the finger smoothly,
-    // even while it travels within the same word.
+    // Update every move, not every word, or the preview bubble stutters.
     touch_point.value = { x: event.clientX, y: event.clientY }
 
     const index = wordIndexAt(event.clientX, event.clientY)
@@ -807,9 +799,7 @@ export function useReaderHighlights(
   // A scroll the browser claims (or any aborted touch) fires pointercancel: drop
   // the pending tap and disarm so nothing commits on the absent release.
   function onPointerCancel() {
-    // The browser only claims a touch it's turning into a scroll — unless a
-    // long-press already armed range-select, in which case it's an aborted
-    // selection, not a pan. So a cancel mid-pan is the member taking the scroll.
+    // A cancel is the browser taking the touch for a scroll, unless range-select armed it.
     if (!touch_selecting) disableFollow()
 
     cancelLongPress()
@@ -852,8 +842,7 @@ export function useReaderHighlights(
       }
     }
   )
-  // Play resuming after the idle timer already lapsed while paused (no-op'd)
-  // leaves follow off with nothing scheduled to bring it back — re-arm.
+  // Resuming after the idle timer lapsed leaves follow off with nothing to re-arm it.
   watch(
     () => toValue(is_playing),
     (playing) => {

@@ -20,7 +20,7 @@ describe('UiWobbleBox', () => {
 
   // ── Slot ────────────────────────────────────────────────────────────────────
 
-  test('renders default slot content [obligation]', () => {
+  test('renders default slot content', () => {
     const wrapper = mount(UiWobbleBox, {
       slots: { default: () => h('span', { 'data-testid': 'slot-child' }, 'hello') }
     })
@@ -30,12 +30,12 @@ describe('UiWobbleBox', () => {
 
   // ── Seed prop ───────────────────────────────────────────────────────────────
 
-  test('seed defaults to 7 on feTurbulence [obligation]', () => {
+  test('seed defaults to 7 on feTurbulence', () => {
     const wrapper = mountWobbleBox()
     expect(wrapper.find('feTurbulence').attributes('seed')).toBe('7')
   })
 
-  test('custom seed is forwarded to feTurbulence [obligation]', () => {
+  test('custom seed is forwarded to feTurbulence', () => {
     const wrapper = mountWobbleBox({ seed: 42 })
     expect(wrapper.find('feTurbulence').attributes('seed')).toBe('42')
   })
@@ -45,7 +45,7 @@ describe('UiWobbleBox', () => {
   // that CSS url('#id') references on each ::before pseudo resolve to the
   // correct filter, not a shared one that makes later instances render unfiltered.
 
-  test('two instances in the same app have different filter ids [obligation]', () => {
+  test('two instances in the same app have different filter ids', () => {
     // Wrap both instances in a single mount so they share the same Vue app
     // and the same useId() counter — this is the real-world scenario.
     const Host = defineComponent({
@@ -71,7 +71,7 @@ describe('UiWobbleBox', () => {
     expect(filterId1).not.toBe(filterId2)
   })
 
-  test('each instance --wobble-filter url references only its own filter id [obligation]', () => {
+  test('each instance --wobble-filter url references only its own filter id', () => {
     const Host = defineComponent({
       setup() {
         return () => h('div', [h(UiWobbleBox), h(UiWobbleBox)])

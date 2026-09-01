@@ -45,12 +45,12 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     document.documentElement.style.removeProperty('--nav-height')
   })
 
-  test('sets document.documentElement.style.overflow to "hidden" on mount [obligation]', () => {
+  test('sets document.documentElement.style.overflow to "hidden" on mount', () => {
     mountSkeleton()
     expect(document.documentElement.style.overflow).toBe('hidden')
   })
 
-  test('clears document.documentElement.style.overflow to "" on unmount [obligation]', () => {
+  test('clears document.documentElement.style.overflow to "" on unmount', () => {
     const wrapper = mountSkeleton()
     expect(document.documentElement.style.overflow).toBe('hidden')
 
@@ -63,7 +63,7 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     expect(wrapper.find('[data-testid="dashboard-skeleton"]').exists()).toBe(true)
   })
 
-  test('the root fills the viewport below the nav [obligation]', () => {
+  test('the root fills the viewport below the nav', () => {
     const wrapper = mountSkeleton({ attachTo: document.body })
     const root = wrapper.find('[data-testid="dashboard-skeleton"]').element
     const min_height = Number.parseFloat(getComputedStyle(root).minHeight)
@@ -72,7 +72,7 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
     wrapper.unmount()
   })
 
-  test('renders no audio-reader-section element [obligation]', () => {
+  test('renders no audio-reader-section element', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="audio-reader-section"]').exists()).toBe(false)
   })
@@ -101,7 +101,7 @@ describe('DashboardSkeleton (views/dashboard/skeleton.vue)', () => {
   // wipes Tailwind's default theme vars, so `animate-pulse` generates no
   // animation at all and `animationName` reads "none" whether the class is
   // present or not. The class itself is the only signal that bites here.
-  test('the three sort-options placeholders no longer carry animate-pulse [obligation]', () => {
+  test('the three sort-options placeholders no longer carry animate-pulse', () => {
     const wrapper = mountSkeleton()
     const items = wrapper.findAll('[data-testid="deck-grid-sort-options-skeleton__item"]')
     expect(items).toHaveLength(3)

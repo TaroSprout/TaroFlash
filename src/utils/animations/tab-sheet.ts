@@ -14,8 +14,7 @@ export function tabContentEnter(el: Element, done: () => void) {
     opacity: 1,
     duration: ENTER_DURATION,
     ease: 'expo.out',
-    // Strip the transform once landed, or the tab traps its own popovers.
-    // →[K:settled-transform-traps-overlays]
+    // Strip the transform once landed, or the tab traps its own popovers. →[K:settled-transform-traps-overlays]
     clearProps: 'transform,opacity',
     onComplete: done
   })

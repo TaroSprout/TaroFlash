@@ -200,21 +200,21 @@ describe('WelcomeIndex', () => {
     expect(wrapper.find('[data-testid="welcome-footer"]').exists()).toBe(true)
   })
 
-  // ── openSignup sfx [obligation] ────────────────────────────────────────────
+  // ── openSignup sfx ────────────────────────────────────────────
 
-  test('clicking signup emits dialog.open sfx [obligation]', async () => {
+  test('clicking signup emits dialog.open sfx', async () => {
     const wrapper = mountWelcome()
     await wrapper.find('[data-testid="splash__signup"]').trigger('click')
     expect(mocks.emitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('clicking signup opens the modal [obligation]', async () => {
+  test('clicking signup opens the modal', async () => {
     const wrapper = mountWelcome()
     await wrapper.find('[data-testid="splash__signup"]').trigger('click')
     expect(mocks.modalOpen).toHaveBeenCalled()
   })
 
-  test('modal response resolution emits dialog.close sfx [obligation]', async () => {
+  test('modal response resolution emits dialog.close sfx', async () => {
     let resolve_response
     const deferred = new Promise((resolve) => {
       resolve_response = resolve
@@ -227,9 +227,9 @@ describe('WelcomeIndex', () => {
     expect(mocks.emitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
-  // ── scrollToContent / See More [obligation] ────────────────────────────────
+  // ── scrollToContent / See More ────────────────────────────────
 
-  test('clicking See More calls scrollIntoView on the features section [obligation]', async () => {
+  test('clicking See More calls scrollIntoView on the features section', async () => {
     const wrapper = mountWelcome()
 
     // Mock scrollIntoView on the features component's $el
@@ -241,9 +241,9 @@ describe('WelcomeIndex', () => {
     expect(scrollIntoViewSpy).toHaveBeenCalledWith({ behavior: 'smooth' })
   })
 
-  // ── scrollToRoadmap wiring [obligation] ────────────────────────────────────
+  // ── scrollToRoadmap wiring ────────────────────────────────────
 
-  test('passes scrollToRoadmap as seeRoadmap to SectionFeatures [obligation]', async () => {
+  test('passes scrollToRoadmap as seeRoadmap to SectionFeatures', async () => {
     const wrapper = mountWelcome()
 
     // The roadmap section's scrollIntoView should be called when the
@@ -256,7 +256,7 @@ describe('WelcomeIndex', () => {
     expect(scrollIntoViewSpy).toHaveBeenCalledWith({ behavior: 'smooth' })
   })
 
-  test('scrollToRoadmap does not call scrollIntoView on the features section [obligation]', async () => {
+  test('scrollToRoadmap does not call scrollIntoView on the features section', async () => {
     const wrapper = mountWelcome()
 
     const featuresEl = wrapper.find('[data-testid="section-features"]').element
@@ -270,14 +270,14 @@ describe('WelcomeIndex', () => {
     expect(featuresSpy).not.toHaveBeenCalled()
   })
 
-  // ── onMounted — checkPasswordRecovery [obligation] ─────────────────────────
+  // ── onMounted — checkPasswordRecovery ─────────────────────────
   //
   // The checkpoint already routes a signed-in visitor away before this view
   // ever mounts, so onMounted here no longer self-redirects — it only handles
   // the recovery-modal branch and stashing `?next=`.
 
-  describe('checkPasswordRecovery [obligation]', () => {
-    test('opens the reset-password modal and does NOT capture a return destination when it resolves true [obligation]', async () => {
+  describe('checkPasswordRecovery', () => {
+    test('opens the reset-password modal and does NOT capture a return destination when it resolves true', async () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
       primeSessionStore(pinia, useSessionStore)
@@ -307,7 +307,7 @@ describe('WelcomeIndex', () => {
       expect(mocks.captureReturnDestination).not.toHaveBeenCalled()
     })
 
-    test('captures the ?next= route query as the return destination when recovery resolves false [obligation]', async () => {
+    test('captures the ?next= route query as the return destination when recovery resolves false', async () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
       primeSessionStore(pinia, useSessionStore)

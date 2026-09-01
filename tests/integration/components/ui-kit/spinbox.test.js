@@ -72,12 +72,12 @@ describe('UiSpinbox', () => {
     expect(findInput(wrapper).element.value).toBe('7')
   })
 
-  test('renders value+suffix as one string in the input while blurred [obligation]', () => {
+  test('renders value+suffix as one string in the input while blurred', () => {
     const wrapper = mountSpinbox({ value: 30, suffix: 'd' })
     expect(findInput(wrapper).element.value).toBe('30d')
   })
 
-  test('renders the bare number, no suffix, once the input is focused [obligation]', async () => {
+  test('renders the bare number, no suffix, once the input is focused', async () => {
     const wrapper = mountSpinbox({ value: 30, suffix: 'd' })
     const input = findInput(wrapper)
     input.element.focus()
@@ -85,7 +85,7 @@ describe('UiSpinbox', () => {
     expect(input.element.value).toBe('30')
   })
 
-  test('re-appends the suffix on blur [obligation]', async () => {
+  test('re-appends the suffix on blur', async () => {
     const wrapper = mountSpinbox({ value: 30, suffix: 'd' })
     const input = findInput(wrapper)
     input.element.focus()
@@ -155,65 +155,65 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toEqual([[10]])
   })
 
-  // ── Out-of-range recovery [obligation] ──────────────────────────────────────
+  // ── Out-of-range recovery ──────────────────────────────────────
   // A stored value outside [min, max] (e.g. a tightened bound after the value
   // was saved) must settle into range on the very first press of the button
   // that moves toward the violated bound — not treat the far edge as already
   // reached and wrap past it.
 
-  test('a value above max settles to max on decrement, not past it to min [obligation]', async () => {
+  test('a value above max settles to max on decrement, not past it to min', async () => {
     const wrapper = mountSpinbox({ value: 45, min: 0, max: 1, step: 1 })
     await findDecrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[1]])
   })
 
-  test('a value above max settles to max on decrement even with a step that would overshoot [obligation]', async () => {
+  test('a value above max settles to max on decrement even with a step that would overshoot', async () => {
     const wrapper = mountSpinbox({ value: 45, min: 0, max: 1, step: 10, wrap: true })
     await findDecrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[1]])
   })
 
-  test('a value below min settles to min on increment, not past it to max [obligation]', async () => {
+  test('a value below min settles to min on increment, not past it to max', async () => {
     const wrapper = mountSpinbox({ value: -10, min: 0, max: 100, step: 1 })
     await findIncrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[0]])
   })
 
-  test('a value below min settles to min on increment even with a step that would overshoot [obligation]', async () => {
+  test('a value below min settles to min on increment even with a step that would overshoot', async () => {
     const wrapper = mountSpinbox({ value: -10, min: 0, max: 1, step: 10, wrap: true })
     await findIncrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[0]])
   })
 
-  // ── Snap to nearest multiple of step [obligation] ───────────────────────────
+  // ── Snap to nearest multiple of step ───────────────────────────
   // TARO-141: the steppers snap to the nearest multiple of `step` in the
   // pressed direction rather than offsetting from an off-grid value.
 
-  test('decrement snaps an off-grid value down to the nearest lower multiple of step [obligation]', async () => {
+  test('decrement snaps an off-grid value down to the nearest lower multiple of step', async () => {
     const wrapper = mountSpinbox({ value: 42, step: 5, min: 0, max: 100 })
     await findDecrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[40]])
   })
 
-  test('increment snaps an off-grid value up to the nearest higher multiple of step [obligation]', async () => {
+  test('increment snaps an off-grid value up to the nearest higher multiple of step', async () => {
     const wrapper = mountSpinbox({ value: 42, step: 5, min: 0, max: 100 })
     await findIncrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[45]])
   })
 
-  test('decrement on an on-grid value moves by exactly one step [obligation]', async () => {
+  test('decrement on an on-grid value moves by exactly one step', async () => {
     const wrapper = mountSpinbox({ value: 40, step: 5, min: 0, max: 100 })
     await findDecrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[35]])
   })
 
-  test('increment on an on-grid value moves by exactly one step [obligation]', async () => {
+  test('increment on an on-grid value moves by exactly one step', async () => {
     const wrapper = mountSpinbox({ value: 40, step: 5, min: 0, max: 100 })
     await findIncrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[45]])
   })
 
-  test('a value typed into the field stays off-grid until a stepper is pressed [obligation]', async () => {
+  test('a value typed into the field stays off-grid until a stepper is pressed', async () => {
     const wrapper = mountSpinbox({ value: 5, step: 5, min: 0, max: 100 })
     const input = findInput(wrapper)
     input.element.value = '42'
@@ -221,13 +221,13 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toEqual([[42]])
   })
 
-  test('increment snaps an off-grid value up then clamps to max when the snapped multiple overshoots [obligation]', async () => {
+  test('increment snaps an off-grid value up then clamps to max when the snapped multiple overshoots', async () => {
     const wrapper = mountSpinbox({ value: 41, step: 10, min: 0, max: 44 })
     await findIncrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[44]])
   })
 
-  test('decrement snaps an off-grid value down then clamps to min when the snapped multiple undershoots [obligation]', async () => {
+  test('decrement snaps an off-grid value down then clamps to min when the snapped multiple undershoots', async () => {
     const wrapper = mountSpinbox({ value: 5, step: 10, min: 3, max: 100 })
     await findDecrement(wrapper).trigger('click')
     expect(wrapper.emitted('update:value')).toEqual([[3]])
@@ -263,7 +263,7 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toEqual([[42]])
   })
 
-  test('typing digits still parses correctly with a suffix set (suffix never leaks into the numeric model) [obligation]', async () => {
+  test('typing digits still parses correctly with a suffix set (suffix never leaks into the numeric model)', async () => {
     const wrapper = mountSpinbox({ value: 5, min: 1, max: 365, suffix: 'd' })
     const input = findInput(wrapper)
     input.element.focus()
@@ -392,7 +392,7 @@ describe('UiSpinbox', () => {
     expect(container.element.tagName).toBe('DIV')
   })
 
-  // ── Arrow key stepping [obligation] ─────────────────────────────────────────
+  // ── Arrow key stepping ─────────────────────────────────────────
 
   test('ArrowUp on the focused input steps the value up by step', async () => {
     const wrapper = mountSpinbox({ value: 5, step: 1 })
@@ -422,9 +422,9 @@ describe('UiSpinbox', () => {
     expect(wrapper.emitted('update:value')).toBeUndefined()
   })
 
-  // ── ui.rejected at the bound [obligation] ────────────────────────────────
+  // ── ui.rejected at the bound ────────────────────────────────
 
-  test('ArrowUp at max fires ui.rejected, not ui.select [obligation]', async () => {
+  test('ArrowUp at max fires ui.rejected, not ui.select', async () => {
     const wrapper = mountSpinbox({ value: 10, max: 10, step: 1 })
     mockEmitSfx.mockClear()
     await findInput(wrapper).trigger('keydown', { key: 'ArrowUp' })
@@ -432,7 +432,7 @@ describe('UiSpinbox', () => {
     expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
-  test('ArrowDown at min fires ui.rejected, not ui.select [obligation]', async () => {
+  test('ArrowDown at min fires ui.rejected, not ui.select', async () => {
     const wrapper = mountSpinbox({ value: 1, min: 1, step: 1 })
     mockEmitSfx.mockClear()
     await findInput(wrapper).trigger('keydown', { key: 'ArrowDown' })
@@ -480,7 +480,7 @@ describe('SpinboxButton', () => {
     expect(wrapper.emitted('click')).toBeUndefined()
   })
 
-  // ── Kit-standard tap feedback [obligation] ──────────────────────────────
+  // ── Kit-standard tap feedback ──────────────────────────────
   // TARO-242: steppers route through the kit's staged-tap path instead of the
   // old ad-hoc emitSfx('select') + active:scale-95. The sound itself stays
   // 'select' — only the path it travels changed.

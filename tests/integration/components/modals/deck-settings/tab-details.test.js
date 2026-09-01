@@ -129,27 +129,27 @@ function makeTab(layout = 'phone', editor = makeEditor()) {
   return { wrapper, editor, close }
 }
 
-describe('TabDetails [obligation]', () => {
+describe('TabDetails', () => {
   test('renders the details container', () => {
     const { wrapper } = makeTab()
     expect(wrapper.find('[data-testid="tab-details"]').exists()).toBe(true)
   })
 
-  test('renders title input and description textarea [obligation]', () => {
+  test('renders title input and description textarea', () => {
     const { wrapper } = makeTab()
     expect(wrapper.find('[data-testid="tab-details__inputs"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="ui-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="ui-textarea"]').exists()).toBe(true)
   })
 
-  test('title input bound to editor.draft.title [obligation]', async () => {
+  test('title input bound to editor.draft.title', async () => {
     const editor = makeEditor({ title: 'Old Title' })
     const { wrapper } = makeTab('phone', editor)
     await wrapper.find('[data-testid="ui-input"]').setValue('New Title')
     expect(editor.draft.title).toBe('New Title')
   })
 
-  test('description textarea bound to editor.draft.description [obligation]', async () => {
+  test('description textarea bound to editor.draft.description', async () => {
     const editor = makeEditor({ description: 'Old desc' })
     const { wrapper } = makeTab('phone', editor)
     await wrapper.find('[data-testid="ui-textarea"]').setValue('New desc')
@@ -161,13 +161,13 @@ describe('TabDetails [obligation]', () => {
     expect(wrapper.find('[data-testid="ui-input"]').attributes('maxlength')).toBe('15')
   })
 
-  test('does not render a back button (chrome-driven back replaced the inline button) [obligation]', () => {
+  test('does not render a back button (chrome-driven back replaced the inline button)', () => {
     const { wrapper } = makeTab('phone')
     expect(wrapper.find('[data-testid="deck-back-button-stub"]').exists()).toBe(false)
     expect(wrapper.emitted('back')).toBeUndefined()
   })
 
-  test('save button rendered in phone mode [obligation]', () => {
+  test('save button rendered in phone mode', () => {
     const { wrapper } = makeTab('phone')
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
   })
@@ -177,7 +177,7 @@ describe('TabDetails [obligation]', () => {
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(false)
   })
 
-  test('title input carries the error set on the shared editor instance [obligation]', () => {
+  test('title input carries the error set on the shared editor instance', () => {
     const editor = makeEditor({ title: '' })
     const { wrapper } = makeTab('phone', editor)
     editor.title_error.value = 'Give this deck a title'
@@ -189,7 +189,7 @@ describe('TabDetails [obligation]', () => {
   })
 })
 
-describe('TabDetails + DeckSaveButton — shared editor instance [obligation]', () => {
+describe('TabDetails + DeckSaveButton — shared editor instance', () => {
   test('title_error set by deck-save-button onSave is visible in tab-details rendered error', async () => {
     const editor = makeEditor({ title: '' })
     const close = vi.fn()

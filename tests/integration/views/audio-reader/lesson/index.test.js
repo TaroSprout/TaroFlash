@@ -315,7 +315,7 @@ describe('LessonView', () => {
       })
     })
 
-    test('the audio toolbar seek event seeks the player and plays [obligation]', async () => {
+    test('the audio toolbar seek event seeks the player and plays', async () => {
       chaptersRef.value = CHAPTERS
       const wrapper = mountView({ lessonId: '2' })
 
@@ -387,7 +387,7 @@ describe('LessonView', () => {
     })
   })
 
-  describe('term card placement — dock vs sidebar [obligation]', () => {
+  describe('term card placement — dock vs sidebar', () => {
     test('dock shows toolbar by default (no selection, popover closed)', () => {
       const wrapper = mountView()
 
@@ -396,9 +396,9 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__sidebar-term"]').exists()).toBe(false)
     })
 
-    // [obligation] Below xl the committed term card lives in the dock; the sidebar
+    // Below xl the committed term card lives in the dock; the sidebar
     // stays on its chapter list.
-    test('dock shows term-card on mobile when popover open and selection set [obligation]', async () => {
+    test('dock shows term-card on mobile when popover open and selection set', async () => {
       isDesktopRef.value = false
       const wrapper = mountView()
       // Set state after mount so the watch fires and the deferred rAF executes.
@@ -411,9 +411,9 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__sidebar-term"]').exists()).toBe(false)
     })
 
-    // [obligation] At xl+ the term card moves to the sidebar (replacing the chapter
+    // At xl+ the term card moves to the sidebar (replacing the chapter
     // list) and the dock falls back to its toolbar — only one term-card mounts.
-    test('sidebar shows term-card on desktop when popover open and selection set [obligation]', async () => {
+    test('sidebar shows term-card on desktop when popover open and selection set', async () => {
       isDesktopRef.value = true
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
@@ -428,7 +428,7 @@ describe('LessonView', () => {
       expect(wrapper.findAllComponents({ name: 'TermCard' })).toHaveLength(1)
     })
 
-    test('dock shows toolbar when popover is closed even with selection [obligation]', async () => {
+    test('dock shows toolbar when popover is closed even with selection', async () => {
       popoverOpenRef.value = false
       selectionRef.value = { term: 'hello', sentence: 'say hello', word_index: 3, rect: {} }
 
@@ -439,7 +439,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(false)
     })
 
-    test('dock shows toolbar when popover open but no selection [obligation]', async () => {
+    test('dock shows toolbar when popover open but no selection', async () => {
       popoverOpenRef.value = true
       selectionRef.value = null
 
@@ -450,7 +450,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__dock-term"]').exists()).toBe(false)
     })
 
-    test('term-card receives the selection term and sentence [obligation]', async () => {
+    test('term-card receives the selection term and sentence', async () => {
       const wrapper = mountView()
       selectionRef.value = {
         term: 'konnichiwa',
@@ -467,7 +467,7 @@ describe('LessonView', () => {
       expect(termCard.props('sentence')).toBe('konnichiwa world')
     })
 
-    test('term-card back event calls closeTerm [obligation]', async () => {
+    test('term-card back event calls closeTerm', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -477,7 +477,7 @@ describe('LessonView', () => {
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
-    test('term-card close event calls closeTerm [obligation]', async () => {
+    test('term-card close event calls closeTerm', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -487,7 +487,7 @@ describe('LessonView', () => {
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
-    test('term-card play-from-here event calls playFromHere [obligation]', async () => {
+    test('term-card play-from-here event calls playFromHere', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -497,7 +497,7 @@ describe('LessonView', () => {
       expect(playFromHereMock).toHaveBeenCalledOnce()
     })
 
-    test('term-card play-from-here event also resumes transcript follow [obligation]', async () => {
+    test('term-card play-from-here event also resumes transcript follow', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -509,7 +509,7 @@ describe('LessonView', () => {
       expect(playFromHereMock).toHaveBeenCalledOnce()
     })
 
-    test('term-card play-word event calls playClip [obligation]', async () => {
+    test('term-card play-word event calls playClip', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -520,8 +520,8 @@ describe('LessonView', () => {
     })
   })
 
-  describe('dismissTerm — transcript dismiss event [obligation]', () => {
-    test('transcript dismiss event calls closeTerm [obligation]', async () => {
+  describe('dismissTerm — transcript dismiss event', () => {
+    test('transcript dismiss event calls closeTerm', async () => {
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -533,7 +533,7 @@ describe('LessonView', () => {
       expect(closeTermMock).toHaveBeenCalledOnce()
     })
 
-    test('transcript dismiss event emits dialog.close [obligation]', async () => {
+    test('transcript dismiss event emits dialog.close', async () => {
       popoverOpenRef.value = true
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
 
@@ -545,7 +545,7 @@ describe('LessonView', () => {
       expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
     })
 
-    test('closeTerm alone does NOT emit ui.pop_up_close [obligation]', async () => {
+    test('closeTerm alone does NOT emit ui.pop_up_close', async () => {
       const wrapper = mountView()
       selectionRef.value = { term: 'hi', sentence: 'say hi', word_index: 1, rect: {} }
       popoverOpenRef.value = true
@@ -570,10 +570,10 @@ describe('LessonView', () => {
     })
   })
 
-  describe('follow-button visibility [obligation]', () => {
+  describe('follow-button visibility', () => {
     // show_follow_button = transcript.value?.following === false
     // When transcript.following flips false, the resume button appears.
-    test('resume-follow button is hidden when transcript.following is true [obligation]', async () => {
+    test('resume-follow button is hidden when transcript.following is true', async () => {
       transcriptFollowing.value = true
       const wrapper = mountView()
       await nextTick()
@@ -581,7 +581,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(false)
     })
 
-    test('resume-follow button renders in dock when transcript.following is false [obligation]', async () => {
+    test('resume-follow button renders in dock when transcript.following is false', async () => {
       transcriptFollowing.value = false
       const wrapper = mountView()
       await nextTick()
@@ -589,7 +589,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(true)
     })
 
-    test('resume-follow desktop button renders when transcript.following is false [obligation]', async () => {
+    test('resume-follow desktop button renders when transcript.following is false', async () => {
       transcriptFollowing.value = false
       const wrapper = mountView()
       await nextTick()
@@ -597,7 +597,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__resume-follow-desktop"]').exists()).toBe(true)
     })
 
-    test('resume-follow button is hidden again when transcript.following returns to true [obligation]', async () => {
+    test('resume-follow button is hidden again when transcript.following returns to true', async () => {
       transcriptFollowing.value = false
       const wrapper = mountView()
       await nextTick()
@@ -609,7 +609,7 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(false)
     })
 
-    test('swap-start/swap-end from the dock crossfade toggle the "not swapping" flag read by useAnimatedHeight [obligation]', async () => {
+    test('swap-start/swap-end from the dock crossfade toggle the "not swapping" flag read by useAnimatedHeight', async () => {
       vi.clearAllMocks()
       const wrapper = mountView()
       await nextTick()
@@ -626,7 +626,7 @@ describe('LessonView', () => {
       expect(not_swapping()).toBe(true)
     })
 
-    test('swap-start/swap-end claim and release the mobile dock height alongside the local swapping flag [obligation]', async () => {
+    test('swap-start/swap-end claim and release the mobile dock height alongside the local swapping flag', async () => {
       const wrapper = mountView()
       await nextTick()
       const { height_claims } = useMobileDock()
@@ -640,7 +640,7 @@ describe('LessonView', () => {
       expect(height_claims.value).toBe(0)
     })
 
-    test('follow_direction prop matches transcript follow_direction [obligation]', async () => {
+    test('follow_direction prop matches transcript follow_direction', async () => {
       transcriptFollowing.value = false
       transcriptFollowDirection.value = 'up'
       const wrapper = mountView()
@@ -652,7 +652,7 @@ describe('LessonView', () => {
       expect(btn.props('direction')).toBe('up')
     })
 
-    test('clicking resume-follow button calls transcript.resumeFollow [obligation]', async () => {
+    test('clicking resume-follow button calls transcript.resumeFollow', async () => {
       transcriptFollowing.value = false
       const wrapper = mountView()
       await nextTick()
@@ -668,14 +668,14 @@ describe('LessonView', () => {
     })
   })
 
-  // ── viewport height reserves room for the mobile dock [obligation] ─────────
+  // ── viewport height reserves room for the mobile dock ─────────
   //
   // The dock now sits below this view rather than over it, so the lesson's
   // own min-height must subtract the dock's published height or the dock
   // pushes the lesson past one screen.
 
-  describe('viewport height reserves room for the mobile dock [obligation]', () => {
-    test('[obligation] min-height subtracts --mobile-dock-height from the nav-adjusted viewport', () => {
+  describe('viewport height reserves room for the mobile dock', () => {
+    test('min-height subtracts --mobile-dock-height from the nav-adjusted viewport', () => {
       const wrapper = mountView()
 
       expect(wrapper.find('[data-testid="lesson-view"]').classes()).toContain(

@@ -87,13 +87,13 @@ describe('FaceOverlay — error state', () => {
     expect(error_el.attributes('data-variant')).toBe('inset')
   })
 
-  test('carries data-palette="error" on the error element [obligation]', () => {
+  test('carries data-palette="error" on the error element', () => {
     const wrapper = mountOverlay({ error: 'oops' })
     const error_el = wrapper.find('[data-testid="face-overlay__error"]')
     expect(error_el.attributes('data-palette')).toBe('error')
   })
 
-  test('clicking the error element re-emits browse (re-pick after error) [obligation]', async () => {
+  test('clicking the error element re-emits browse (re-pick after error)', async () => {
     const wrapper = mountOverlay({ error: 'oops' })
     await wrapper.find('[data-testid="face-overlay__error"]').trigger('click')
     expect(wrapper.emitted('browse')).toBeTruthy()

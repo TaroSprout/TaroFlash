@@ -71,7 +71,7 @@ describe('useDeckActions', () => {
       })
     })
 
-    test('opens checkout modal (mobile-sheet, backdrop) when the member confirms upgrade [obligation]', async () => {
+    test('opens checkout modal (mobile-sheet, backdrop) when the member confirms upgrade', async () => {
       mockWarn.mockReturnValue(makeAlertResponse(Promise.resolve(true)))
 
       const { guardCreateDeck } = useDeckActions()
@@ -83,7 +83,7 @@ describe('useDeckActions', () => {
       })
     })
 
-    test('opens nothing when the member dismisses the alert [obligation]', async () => {
+    test('opens nothing when the member dismisses the alert', async () => {
       mockWarn.mockReturnValue(makeAlertResponse(Promise.resolve(false)))
 
       const { guardCreateDeck } = useDeckActions()
@@ -104,7 +104,7 @@ describe('useDeckActions', () => {
       expect(result).toEqual({ id: 7, title: 'New Deck' })
     })
 
-    test('is called with a single argument, no options object [obligation]', async () => {
+    test('is called with a single argument, no options object', async () => {
       const { createDeck } = useDeckActions()
       // A second arg was the pre-refactor CreateDeckOptions shape — assert the
       // call site under test only ever passes the deck.
@@ -112,7 +112,7 @@ describe('useDeckActions', () => {
       expect(upsertMock).toHaveBeenCalledWith({ title: 'New Deck' })
     })
 
-    describe('cached can.createDeck is false — sync precheck branch [obligation]', () => {
+    describe('cached can.createDeck is false — sync precheck branch', () => {
       test('calls guardCreateDeck (alert only) and returns null, without calling the mutation', async () => {
         canCreateDeck.value = false
         const { createDeck } = useDeckActions()
@@ -132,7 +132,7 @@ describe('useDeckActions', () => {
       })
     })
 
-    describe('cached check passes but the mutation throws DeckLimitError — recheck-throw branch [obligation]', () => {
+    describe('cached check passes but the mutation throws DeckLimitError — recheck-throw branch', () => {
       test('calls guardCreateDeck again and returns null', async () => {
         canCreateDeck.value = true
         upsertMock.mockRejectedValueOnce(new DeckLimitError())
@@ -156,7 +156,7 @@ describe('useDeckActions', () => {
     })
 
     describe('any other throw', () => {
-      test('fires the generic error notice and does NOT call guardCreateDeck [obligation]', async () => {
+      test('fires the generic error notice and does NOT call guardCreateDeck', async () => {
         canCreateDeck.value = true
         upsertMock.mockRejectedValueOnce(new Error('boom'))
         const { createDeck } = useDeckActions()
@@ -182,7 +182,7 @@ describe('useDeckActions', () => {
       expect(result).toEqual({ id: 1, title: 'Updated' })
     })
 
-    test('returns null instead of throwing when the mutation rejects [obligation]', async () => {
+    test('returns null instead of throwing when the mutation rejects', async () => {
       upsertMock.mockRejectedValueOnce(new Error('boom'))
       const { updateDeck } = useDeckActions()
 

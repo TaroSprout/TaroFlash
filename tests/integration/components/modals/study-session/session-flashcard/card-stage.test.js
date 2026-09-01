@@ -203,29 +203,29 @@ describe('CardStage', () => {
     mockOnEditUpdate.mockClear()
   })
 
-  // ── card_view computed [obligation] ────────────────────────────────────────
+  // ── card_view computed ────────────────────────────────────────
 
-  test('renders nothing in the stage while loading [obligation]', () => {
+  test('renders nothing in the stage while loading', () => {
     const wrapper = mountCardStage({ loading: true })
 
     expect(wrapper.find('[data-testid="study-card-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').exists()).toBe(false)
   })
 
-  test('shows edit view when editing=true (and not loading) [obligation]', () => {
+  test('shows edit view when editing=true (and not loading)', () => {
     const wrapper = mountCardStage({ loading: false, editing: true, active_card: makeCard() })
 
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="study-card-stub"]').exists()).toBe(false)
   })
 
-  test('shows study-card when not loading and not editing [obligation]', () => {
+  test('shows study-card when not loading and not editing', () => {
     const wrapper = mountCardStage({ loading: false, editing: false, active_card: makeCard() })
 
     expect(wrapper.find('[data-testid="study-card-stub"]').exists()).toBe(true)
   })
 
-  test('renders nothing when loading overrides editing [obligation]', () => {
+  test('renders nothing when loading overrides editing', () => {
     const wrapper = mountCardStage({ loading: true, editing: true, active_card: makeCard() })
 
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').exists()).toBe(false)
@@ -257,9 +257,9 @@ describe('CardStage', () => {
     expect(wrapper.find('[data-testid="study-card__preview"]').exists()).toBe(false)
   })
 
-  // ── rating_times.label forwarding, gated on show_card_preview [obligation] ─
+  // ── rating_times.label forwarding, gated on show_card_preview ─
 
-  test('forwards rating_times.label as rating_labels when show_card_preview is true [obligation]', () => {
+  test('forwards rating_times.label as rating_labels when show_card_preview is true', () => {
     const labels = { some: 'label-record' }
     const wrapper = mountCardStage({
       loading: false,
@@ -271,7 +271,7 @@ describe('CardStage', () => {
     expect(wrapper.findComponent(StudyCardStub).props('rating_labels')).toEqual(labels)
   })
 
-  test('rating_labels is undefined on the active study-card when show_card_preview is false [obligation]', () => {
+  test('rating_labels is undefined on the active study-card when show_card_preview is false', () => {
     const wrapper = mountCardStage({
       loading: false,
       active_card: makeCard(),
@@ -282,9 +282,9 @@ describe('CardStage', () => {
     expect(wrapper.findComponent(StudyCardStub).props('rating_labels')).toBeUndefined()
   })
 
-  // ── event delegation straight to the injected controller [obligation] ─────
+  // ── event delegation straight to the injected controller ─────
 
-  test('study-card @started delegates to controller.startSession [obligation]', () => {
+  test('study-card @started delegates to controller.startSession', () => {
     const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
 
     wrapper.findComponent(StudyCardStub).vm.$emit('started')
@@ -292,7 +292,7 @@ describe('CardStage', () => {
     expect(mockStartSession).toHaveBeenCalledOnce()
   })
 
-  test('study-card @side-changed delegates to controller.flipCurrentCard [obligation]', () => {
+  test('study-card @side-changed delegates to controller.flipCurrentCard', () => {
     const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
 
     wrapper.findComponent(StudyCardStub).vm.$emit('side-changed')
@@ -300,7 +300,7 @@ describe('CardStage', () => {
     expect(mockFlipCurrentCard).toHaveBeenCalledOnce()
   })
 
-  test('study-card @reviewed delegates to controller.onCardReviewed with the grade [obligation]', async () => {
+  test('study-card @reviewed delegates to controller.onCardReviewed with the grade', async () => {
     const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
     const { Rating } = await import('ts-fsrs')
 
@@ -309,7 +309,7 @@ describe('CardStage', () => {
     expect(mockOnCardReviewed).toHaveBeenCalledWith(Rating.Good)
   })
 
-  test('study-card @drag-progress delegates to controller.onDragProgress [obligation]', () => {
+  test('study-card @drag-progress delegates to controller.onDragProgress', () => {
     const wrapper = mountCardStage({ loading: false, active_card: makeCard() })
 
     wrapper.findComponent(StudyCardStub).vm.$emit('drag-progress', 0.5, 0)
@@ -317,7 +317,7 @@ describe('CardStage', () => {
     expect(mockOnDragProgress).toHaveBeenCalledWith(0.5, 0)
   })
 
-  test('study-card @drag-rating sets the primed_grade context ref [obligation]', () => {
+  test('study-card @drag-rating sets the primed_grade context ref', () => {
     const primed = { value: null }
     loading.value = false
     editing.value = false
@@ -336,7 +336,7 @@ describe('CardStage', () => {
     expect(primed.value).toBe(3)
   })
 
-  test('forwards show_all_ratings from the controller to study-card [obligation]', () => {
+  test('forwards show_all_ratings from the controller to study-card', () => {
     const wrapper = mountCardStage({
       loading: false,
       active_card: makeCard(),
@@ -346,7 +346,7 @@ describe('CardStage', () => {
     expect(wrapper.findComponent(StudyCardStub).props('show_all_ratings')).toBe(true)
   })
 
-  test('preview card @flip-complete delegates to controller.onNextCardFlipped [obligation]', () => {
+  test('preview card @flip-complete delegates to controller.onNextCardFlipped', () => {
     const wrapper = mountCardStage({
       loading: false,
       active_card: makeCard(1),
@@ -360,7 +360,7 @@ describe('CardStage', () => {
 
   // ── edit-update forwarding ─────────────────────────────────────────────────
 
-  test('study-card-edit @update delegates to controller.onEditUpdate [obligation]', () => {
+  test('study-card-edit @update delegates to controller.onEditUpdate', () => {
     const wrapper = mountCardStage({ loading: false, editing: true, active_card: makeCard() })
 
     wrapper.findComponent(StudyCardEditStub).vm.$emit('update', 'front', 'new text')
@@ -368,7 +368,7 @@ describe('CardStage', () => {
     expect(mockOnEditUpdate).toHaveBeenCalledWith('front', 'new text')
   })
 
-  // ── rate() expose [obligation] ─────────────────────────────────────────────
+  // ── rate() expose ─────────────────────────────────────────────
 
   test('rate() is a no-op when study-card is not rendered (loading)', () => {
     const wrapper = mountCardStage({ loading: true })
@@ -379,7 +379,7 @@ describe('CardStage', () => {
   // ── transition hooks: cover-card rise only on the cover side ──────────────
 
   describe('card enter transition', () => {
-    test('runs the cover-card rise animation when the study-card enters on the cover side [obligation]', async () => {
+    test('runs the cover-card rise animation when the study-card enters on the cover side', async () => {
       mountCardStage({ loading: true })
       loading.value = false
       active_card.value = makeCard()

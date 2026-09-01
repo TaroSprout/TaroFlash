@@ -93,14 +93,14 @@ function configFrom(hook) {
 }
 
 describe('useUpsertDeckMutation', () => {
-  // [obligation] useDeckEditor calls useUpsertDeckMutation() unconditionally,
+  // useDeckEditor calls useUpsertDeckMutation() unconditionally,
   // for both an existing deck's edit and a new deck's create. The mutation
   // must never mount its own `useMemberDeckCountQuery` — that would overwrite
   // the live reader's options on the shared entry (→[K:shared-cache-entry-options-last-mount-wins]).
   // Instead the create-only re-check reaches the entry through
   // `queryCache.ensure`/`fetch`, from the same exported options object the
   // live reader uses.
-  test('reaches the count entry via queryCache.ensure(MEMBER_DECK_COUNT_QUERY), never a second useQuery mount [obligation]', async () => {
+  test('reaches the count entry via queryCache.ensure(MEMBER_DECK_COUNT_QUERY), never a second useQuery mount', async () => {
     const { mutation } = configFrom(useUpsertDeckMutation)
     await mutation({ title: 'brand new' })
     expect(ensureMock).toHaveBeenCalledWith(MEMBER_DECK_COUNT_QUERY)
@@ -113,7 +113,7 @@ describe('useUpsertDeckMutation', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  test('the deck payload handed to upsertDeck carries no pending or client_key field [obligation]', async () => {
+  test('the deck payload handed to upsertDeck carries no pending or client_key field', async () => {
     const { mutation } = configFrom(useUpsertDeckMutation)
     const deck = { id: 1, title: 'new' }
     await mutation(deck)
@@ -156,7 +156,7 @@ describe('useUpsertDeckMutation', () => {
       expect(upsertDeckMock).toHaveBeenCalledWith({ title: 'brand new' })
     })
 
-    test('a count_entry with no data yet falls back to 0, so a positive limit still allows the create [obligation]', async () => {
+    test('a count_entry with no data yet falls back to 0, so a positive limit still allows the create', async () => {
       deckLimit.value = 5
       deckCountData.value = undefined
       const { mutation } = configFrom(useUpsertDeckMutation)
@@ -165,7 +165,7 @@ describe('useUpsertDeckMutation', () => {
       expect(upsertDeckMock).toHaveBeenCalledWith({ title: 'brand new' })
     })
 
-    test('a null limit (unlimited) never throws, whatever the count [obligation]', async () => {
+    test('a null limit (unlimited) never throws, whatever the count', async () => {
       deckLimit.value = null
       deckCountData.value = 999
       const { mutation } = configFrom(useUpsertDeckMutation)
@@ -173,7 +173,7 @@ describe('useUpsertDeckMutation', () => {
       await expect(mutation({ title: 'brand new' })).resolves.toBeUndefined()
     })
 
-    test('an update (id defined) skips the re-check entirely, even over the limit [obligation]', async () => {
+    test('an update (id defined) skips the re-check entirely, even over the limit', async () => {
       deckLimit.value = 1
       deckCountData.value = 99
       const { mutation } = configFrom(useUpsertDeckMutation)
@@ -184,7 +184,7 @@ describe('useUpsertDeckMutation', () => {
   })
 
   describe('onMutate — pending insert', () => {
-    test('inserts a pending row into the ["decks"] cache only when deck.id is undefined [obligation]', () => {
+    test('inserts a pending row into the ["decks"] cache only when deck.id is undefined', () => {
       getQueryDataMock.mockReturnValue([{ id: 1, title: 'existing' }])
       const { onMutate } = configFrom(useUpsertDeckMutation)
 
@@ -200,7 +200,7 @@ describe('useUpsertDeckMutation', () => {
       )
     })
 
-    test('an update (deck.id present) inserts nothing and returns no client_key [obligation]', () => {
+    test('an update (deck.id present) inserts nothing and returns no client_key', () => {
       const { onMutate } = configFrom(useUpsertDeckMutation)
 
       const { client_key } = onMutate({ id: 7, title: 'existing' })
@@ -209,7 +209,7 @@ describe('useUpsertDeckMutation', () => {
       expect(setQueryDataMock).not.toHaveBeenCalled()
     })
 
-    test('the pending row gets a unique negative temp id, decrementing across concurrent creates [obligation]', () => {
+    test('the pending row gets a unique negative temp id, decrementing across concurrent creates', () => {
       getQueryDataMock.mockReturnValue([])
       const { onMutate } = configFrom(useUpsertDeckMutation)
 
@@ -238,7 +238,7 @@ describe('useUpsertDeckMutation', () => {
   })
 
   describe('onSuccess — confirm pending row', () => {
-    test('replaces the pending row in place, preserving its client_key [obligation]', () => {
+    test('replaces the pending row in place, preserving its client_key', () => {
       const client_key = 'pending-key-1'
       getQueryDataMock.mockReturnValue([
         { id: -1, title: 'brand new', pending: true, client_key },
@@ -257,7 +257,7 @@ describe('useUpsertDeckMutation', () => {
       )
     })
 
-    test('does nothing when client_key is undefined (update path) [obligation]', () => {
+    test('does nothing when client_key is undefined (update path)', () => {
       const { onSuccess } = configFrom(useUpsertDeckMutation)
       onSuccess(
         { id: 42, title: 'updated' },
@@ -276,7 +276,7 @@ describe('useUpsertDeckMutation', () => {
   })
 
   describe('onError — rollback pending row', () => {
-    test('removes the pending row when client_key is present [obligation]', () => {
+    test('removes the pending row when client_key is present', () => {
       const client_key = 'pending-key-2'
       getQueryDataMock.mockReturnValue([
         { id: -1, title: 'brand new', pending: true, client_key },
@@ -289,7 +289,7 @@ describe('useUpsertDeckMutation', () => {
       expect(setQueryDataMock).toHaveBeenCalledWith(['decks'], [{ id: 2, title: 'other' }])
     })
 
-    test('does nothing when client_key is undefined (update path) [obligation]', () => {
+    test('does nothing when client_key is undefined (update path)', () => {
       const { onError } = configFrom(useUpsertDeckMutation)
       onError(new Error('boom'), { id: 2, title: 'x' }, { client_key: undefined })
       expect(setQueryDataMock).not.toHaveBeenCalled()
@@ -323,13 +323,13 @@ describe('useUpsertDeckMutation', () => {
     expect(detailCalls).toHaveLength(0)
   })
 
-  test('onSettled skips both invalidations on a failed create — nothing changed server-side [obligation]', () => {
+  test('onSettled skips both invalidations on a failed create — nothing changed server-side', () => {
     const { onSettled } = configFrom(useUpsertDeckMutation)
     onSettled(undefined, new Error('boom'), { title: 'x' })
     expect(invalidateSpy).not.toHaveBeenCalled()
   })
 
-  test('onSettled skips both invalidations on a failed update, including ["deck", id] [obligation]', () => {
+  test('onSettled skips both invalidations on a failed update, including ["deck", id]', () => {
     const { onSettled } = configFrom(useUpsertDeckMutation)
     onSettled(undefined, new Error('boom'), { id: 1, title: 'x' })
     expect(invalidateSpy).not.toHaveBeenCalled()

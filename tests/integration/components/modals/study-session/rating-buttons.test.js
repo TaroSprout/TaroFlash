@@ -65,20 +65,20 @@ describe('RatingButtons', () => {
     rating_times.value = { bare: {}, label: {} }
   })
 
-  // ── show_rating_buttons: footprint preserved, not removed [obligation] ─────
+  // ── show_rating_buttons: footprint preserved, not removed ─────
   // Buttons stay mounted (invisible via class) rather than v-if'd away, so the
   // layout footprint holds steady. Assert via data-testid presence, not the
   // class that drives the visual hiding.
 
-  describe('show_rating_buttons visibility [obligation]', () => {
-    test('the group and its rating buttons stay in the DOM when show_rating_buttons is false [obligation]', () => {
+  describe('show_rating_buttons visibility', () => {
+    test('the group and its rating buttons stay in the DOM when show_rating_buttons is false', () => {
       const wrapper = mountRatingButtons({ side: 'back', show_rating_buttons: false })
       expect(wrapper.find('[data-testid="rating-buttons__group"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
     })
 
-    test('the group and its rating buttons are present when show_rating_buttons is true [obligation]', () => {
+    test('the group and its rating buttons are present when show_rating_buttons is true', () => {
       const wrapper = mountRatingButtons({ side: 'back', show_rating_buttons: true })
       expect(wrapper.find('[data-testid="rating-buttons__group"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(true)
@@ -95,12 +95,12 @@ describe('RatingButtons', () => {
       wrapper = mountRatingButtons({ side: 'front' })
     })
 
-    test('does not show the start button [obligation]', () => {
+    test('does not show the start button', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(false)
     })
   })
 
-  // ── side: 'back' + show_all_ratings: true → advanced [obligation] ──────────
+  // ── side: 'back' + show_all_ratings: true → advanced ──────────
 
   describe('when side is "back" and show_all_ratings is true (advanced)', () => {
     let wrapper
@@ -109,11 +109,11 @@ describe('RatingButtons', () => {
       wrapper = mountRatingButtons({ side: 'back', show_all_ratings: true })
     })
 
-    test('renders the advanced rating buttons container [obligation]', () => {
+    test('renders the advanced rating buttons container', () => {
       expect(wrapper.find('[data-testid="rating-buttons__advanced"]').exists()).toBe(true)
     })
 
-    test('does not render the simple rating buttons container [obligation]', () => {
+    test('does not render the simple rating buttons container', () => {
       expect(wrapper.find('[data-testid="rating-buttons__simple"]').exists()).toBe(false)
     })
 
@@ -133,7 +133,7 @@ describe('RatingButtons', () => {
     })
   })
 
-  // ── side: 'back' + show_all_ratings: false → simple [obligation] ────────────
+  // ── side: 'back' + show_all_ratings: false → simple ────────────
 
   describe('when side is "back" and show_all_ratings is false (simple)', () => {
     let wrapper
@@ -142,11 +142,11 @@ describe('RatingButtons', () => {
       wrapper = mountRatingButtons({ side: 'back', show_all_ratings: false })
     })
 
-    test('renders the simple rating buttons container [obligation]', () => {
+    test('renders the simple rating buttons container', () => {
       expect(wrapper.find('[data-testid="rating-buttons__simple"]').exists()).toBe(true)
     })
 
-    test('does not render the advanced rating buttons container [obligation]', () => {
+    test('does not render the advanced rating buttons container', () => {
       expect(wrapper.find('[data-testid="rating-buttons__advanced"]').exists()).toBe(false)
     })
 
@@ -192,11 +192,11 @@ describe('RatingButtons', () => {
       wrapper = mountRatingButtons({ side: 'cover' })
     })
 
-    test('shows the start button [obligation]', () => {
+    test('shows the start button', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
     })
 
-    test('does not show the Again button [obligation]', () => {
+    test('does not show the Again button', () => {
       expect(wrapper.find('[data-testid="rating-buttons__again"]').exists()).toBe(false)
     })
 
@@ -206,31 +206,31 @@ describe('RatingButtons', () => {
       expect(wrapper.emitted('started')).toHaveLength(1)
     })
 
-    test('start button shown regardless of show_all_ratings [obligation]', () => {
+    test('start button shown regardless of show_all_ratings', () => {
       const w = mountRatingButtons({ side: 'cover', show_all_ratings: true })
       expect(w.find('[data-testid="rating-buttons__start"]').exists()).toBe(true)
     })
 
-    test('does NOT render the advanced subcomponent on cover side [obligation]', () => {
+    test('does NOT render the advanced subcomponent on cover side', () => {
       expect(wrapper.find('[data-testid="rating-buttons__advanced"]').exists()).toBe(false)
     })
 
-    test('does NOT render the simple subcomponent on cover side [obligation]', () => {
+    test('does NOT render the simple subcomponent on cover side', () => {
       expect(wrapper.find('[data-testid="rating-buttons__simple"]').exists()).toBe(false)
     })
   })
 
-  // ── side: 'cover' + loading prop [obligation] ───────────────────────────────
+  // ── side: 'cover' + loading prop ───────────────────────────────
 
   describe('when side is "cover" and loading is true', () => {
-    test('clicking the start button does NOT emit "started" while loading [obligation]', async () => {
+    test('clicking the start button does NOT emit "started" while loading', async () => {
       const wrapper = mountRatingButtons({ side: 'cover', loading: true })
       await wrapper.find('[data-testid="rating-buttons__start"]').trigger('click')
 
       expect(wrapper.emitted('started')).toBeUndefined()
     })
 
-    test('the start button is disabled while loading [obligation]', () => {
+    test('the start button is disabled while loading', () => {
       const wrapper = mountRatingButtons({ side: 'cover', loading: true })
       expect(
         wrapper.find('[data-testid="rating-buttons__start"]').attributes('aria-disabled')
@@ -239,14 +239,14 @@ describe('RatingButtons', () => {
   })
 
   describe('when side is "cover" and loading is false', () => {
-    test('clicking the start button emits "started" when not loading [obligation]', async () => {
+    test('clicking the start button emits "started" when not loading', async () => {
       const wrapper = mountRatingButtons({ side: 'cover', loading: false })
       await wrapper.find('[data-testid="rating-buttons__start"]').trigger('click')
 
       expect(wrapper.emitted('started')).toHaveLength(1)
     })
 
-    test('the start button is not disabled when not loading [obligation]', () => {
+    test('the start button is not disabled when not loading', () => {
       const wrapper = mountRatingButtons({ side: 'cover', loading: false })
       expect(
         wrapper.find('[data-testid="rating-buttons__start"]').attributes('aria-disabled')
@@ -254,10 +254,10 @@ describe('RatingButtons', () => {
     })
   })
 
-  // ── primed_grade prop forwarding [obligation] ──────────────────────────────
+  // ── primed_grade prop forwarding ──────────────────────────────
 
   describe('primed_grade forwarding to advanced-rating-buttons', () => {
-    test('primed_grade=Rating.Again marks again button active in advanced mode [obligation]', () => {
+    test('primed_grade=Rating.Again marks again button active in advanced mode', () => {
       const wrapper = mountRatingButtons({
         side: 'back',
         show_all_ratings: true,
@@ -268,7 +268,7 @@ describe('RatingButtons', () => {
       )
     })
 
-    test('primed_grade=null leaves again button inactive in advanced mode [obligation]', () => {
+    test('primed_grade=null leaves again button inactive in advanced mode', () => {
       const wrapper = mountRatingButtons({
         side: 'back',
         show_all_ratings: true,
@@ -281,7 +281,7 @@ describe('RatingButtons', () => {
   })
 
   describe('primed_grade forwarding to simple-rating-buttons', () => {
-    test('primed_grade=Rating.Again marks again button active in simple mode [obligation]', () => {
+    test('primed_grade=Rating.Again marks again button active in simple mode', () => {
       const wrapper = mountRatingButtons({
         side: 'back',
         show_all_ratings: false,
@@ -292,7 +292,7 @@ describe('RatingButtons', () => {
       )
     })
 
-    test('primed_grade=Rating.Good marks good button active in simple mode [obligation]', () => {
+    test('primed_grade=Rating.Good marks good button active in simple mode', () => {
       const wrapper = mountRatingButtons({
         side: 'back',
         show_all_ratings: false,
@@ -303,7 +303,7 @@ describe('RatingButtons', () => {
       )
     })
 
-    test('primed_grade=null leaves both buttons inactive in simple mode [obligation]', () => {
+    test('primed_grade=null leaves both buttons inactive in simple mode', () => {
       const wrapper = mountRatingButtons({
         side: 'back',
         show_all_ratings: false,

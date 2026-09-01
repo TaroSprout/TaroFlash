@@ -119,9 +119,9 @@ describe('PagedWindow', () => {
     mounted_wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
   })
 
-  // ── pages prop drives sidebar + directory [obligation] ────────────────────
+  // ── pages prop drives sidebar + directory ────────────────────
 
-  describe('renders from the `pages` prop, not `tabs` [obligation]', () => {
+  describe('renders from the `pages` prop, not `tabs`', () => {
     test('sidebar renders one button per page with sidebar !== false', () => {
       const wrapper = mountWindow()
       const buttons = wrapper.findAll('[data-testid="paged-window__tab"]')
@@ -155,7 +155,7 @@ describe('PagedWindow', () => {
       expect(design_button.exists()).toBe(true)
     })
 
-    test('sidebar stamps data-station="panel" [obligation]', () => {
+    test('sidebar stamps data-station="panel"', () => {
       const wrapper = mountWindow()
       expect(wrapper.find('[data-testid="paged-window__sidebar"]').attributes('data-station')).toBe(
         'panel'
@@ -163,9 +163,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── nav_direction ownership [obligation] ──────────────────────────────────
+  // ── nav_direction ownership ──────────────────────────────────
 
-  describe('nav_direction is owned by paged-window [obligation]', () => {
+  describe('nav_direction is owned by paged-window', () => {
     test('directory navigate sets the direction forward; a subsequent back-mode close sets it back — a select-then-back sequence', async () => {
       setDesktop(false)
       const wrapper = mountWindow({ active: null })
@@ -197,9 +197,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── Nullable active model [obligation] ────────────────────────────────────
+  // ── Nullable active model ────────────────────────────────────
 
-  describe('nullable active model [obligation]', () => {
+  describe('nullable active model', () => {
     test('active = null resolves to the directory on phone', () => {
       setDesktop(false)
       setPhone(true)
@@ -250,9 +250,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── between hook contract [obligation] ────────────────────────────────────
+  // ── between hook contract ────────────────────────────────────
 
-  describe('between hook contract [obligation]', () => {
+  describe('between hook contract', () => {
     test('is awaited in the gap between the leaving and entering page — no page mounted at that moment', async () => {
       setDesktop(true)
       let resolveBetween
@@ -287,9 +287,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── Back mode [obligation] ─────────────────────────────────────────────────
+  // ── Back mode ─────────────────────────────────────────────────
 
-  describe('back mode [obligation]', () => {
+  describe('back mode', () => {
     test('with no sidebar and active !== null, the close button becomes a back affordance', () => {
       setDesktop(false)
       const wrapper = mountWindow({ active: 'design' })
@@ -323,9 +323,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── Provide/inject [obligation] ────────────────────────────────────────────
+  // ── Provide/inject ────────────────────────────────────────────
 
-  describe('windowLayoutKey provide/inject reaches the default slot [obligation]', () => {
+  describe('windowLayoutKey provide/inject reaches the default slot', () => {
     test('a page component rendered through the default slot injects the pager layout', () => {
       setDesktop(true)
       const InjectingPage = defineComponent({
@@ -342,9 +342,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── uid-scoped panel id [obligation] ───────────────────────────────────────
+  // ── uid-scoped panel id ───────────────────────────────────────
 
-  describe('tab panel DOM id is uid-scoped [obligation]', () => {
+  describe('tab panel DOM id is uid-scoped', () => {
     test('two simultaneously mounted paged-windows do not share id/aria-controls', () => {
       setDesktop(true)
       const wrapper_a = mountWindow({ active: 'design' })
@@ -362,9 +362,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── Sidebar close aria-label [obligation] ──────────────────────────────────
+  // ── Sidebar close aria-label ──────────────────────────────────
 
-  describe('sidebar close button aria-label [obligation]', () => {
+  describe('sidebar close button aria-label', () => {
     test('comes from t("app-window.close-label"), not hardcoded text', () => {
       setDesktop(true)
       const wrapper = mountWindow({ active: 'design' })
@@ -374,9 +374,9 @@ describe('PagedWindow', () => {
     })
   })
 
-  // ── Exposed API [obligation] ───────────────────────────────────────────────
+  // ── Exposed API ───────────────────────────────────────────────
 
-  describe('exposed API [obligation]', () => {
+  describe('exposed API', () => {
     test('exposes layout_mode, displayed_page, and has_sidebar', () => {
       setDesktop(true)
       const wrapper = mountWindow({ active: 'design' })
@@ -453,13 +453,13 @@ describe('PagedWindow — sfx suppression, danger pages, hidden close', () => {
   })
 })
 
-// ── stretch_page [obligation] ─────────────────────────────────────────────────
+// ── stretch_page ─────────────────────────────────────────────────
 // Opt-in and false by default — the content-row/page pair must render exactly
 // as before when the prop is absent, since every other paged-window caller
 // still relies on the content-hugging layout.
 
-describe('PagedWindow — stretch_page [obligation]', () => {
-  test('defaults to data-stretch="false" on both the content-row and the page when the prop is omitted [obligation]', () => {
+describe('PagedWindow — stretch_page', () => {
+  test('defaults to data-stretch="false" on both the content-row and the page when the prop is omitted', () => {
     const wrapper = mountWindow({ active: 'design' })
 
     expect(
@@ -470,7 +470,7 @@ describe('PagedWindow — stretch_page [obligation]', () => {
     )
   })
 
-  test('stretch_page: true flips data-stretch to "true" on both the content-row and the page [obligation]', () => {
+  test('stretch_page: true flips data-stretch to "true" on both the content-row and the page', () => {
     const wrapper = mountWindow({ active: 'design', stretch_page: true })
 
     expect(
@@ -488,7 +488,7 @@ describe('PagedWindow — stretch_page [obligation]', () => {
     expect(wrapper.find('[data-testid="paged-window__page"]').exists()).toBe(false)
   })
 
-  test('stretch_page: true caps the page column with min-h-0 so a scrolling child can shrink [obligation]', () => {
+  test('stretch_page: true caps the page column with min-h-0 so a scrolling child can shrink', () => {
     const wrapper = mountWindow({ active: 'design', stretch_page: true })
     expect(wrapper.find('[data-testid="paged-window__page"]').classes()).toContain('min-h-0')
   })

@@ -17,7 +17,7 @@ function makeWrapper() {
   })
 }
 
-describe('DarkmodeApp — theme cycling [obligation]', () => {
+describe('DarkmodeApp — theme cycling', () => {
   test('clicking calls theme_store.cycle() directly with no useTaroPhoneStore interaction', async () => {
     const wrapper = makeWrapper()
     const theme_store = useThemeStore()

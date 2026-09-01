@@ -196,7 +196,7 @@ describe('useSessionStore', () => {
       expect(result).toBe(true)
     })
 
-    test('[obligation] refreshes hasPassword via fetchHasPassword once authenticated', async () => {
+    test('refreshes hasPassword via fetchHasPassword once authenticated', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockFetchHasPassword.mockResolvedValueOnce(true)
@@ -244,10 +244,10 @@ describe('useSessionStore', () => {
     })
   })
 
-  // ── ensureResolved [obligation] ────────────────────────────────────────────
+  // ── ensureResolved ────────────────────────────────────────────
 
-  describe('ensureResolved [obligation]', () => {
-    test('[obligation] concurrent calls share one in-flight promise — getSession runs only once', async () => {
+  describe('ensureResolved', () => {
+    test('concurrent calls share one in-flight promise — getSession runs only once', async () => {
       let resolveGetSession
       mockGetSession.mockReturnValueOnce(
         new Promise((resolve) => {
@@ -267,7 +267,7 @@ describe('useSessionStore', () => {
       expect(secondResult).toBe(true)
     })
 
-    test('[obligation] a repeat call after the first resolves reuses the memoized answer — no second restore', async () => {
+    test('a repeat call after the first resolves reuses the memoized answer — no second restore', async () => {
       mockGetSession.mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
       const store = useSessionStore()
 
@@ -279,7 +279,7 @@ describe('useSessionStore', () => {
       expect(result).toBe(true)
     })
 
-    test('[obligation] a fresh call after reset() (via discardRevokedSession) re-resolves against the new session', async () => {
+    test('a fresh call after reset() (via discardRevokedSession) re-resolves against the new session', async () => {
       mockGetSession.mockResolvedValueOnce({ user: { id: 'u1', aud: 'authenticated' } })
       const store = useSessionStore()
       await store.ensureResolved()
@@ -292,7 +292,7 @@ describe('useSessionStore', () => {
       expect(result).toBe(false)
     })
 
-    test('[obligation] a fresh call after onAuthenticated() re-resolves rather than returning the stale answer', async () => {
+    test('a fresh call after onAuthenticated() re-resolves rather than returning the stale answer', async () => {
       mockGetSession.mockResolvedValueOnce(null)
       const store = useSessionStore()
       await store.ensureResolved()
@@ -308,8 +308,8 @@ describe('useSessionStore', () => {
 
   // ── checkPasswordRecovery ──────────────────────────────────────────────────
 
-  describe('checkPasswordRecovery [obligation]', () => {
-    test('short-circuits to false without calling waitForPasswordRecovery when isPasswordRecoveryUrl is false [obligation]', async () => {
+  describe('checkPasswordRecovery', () => {
+    test('short-circuits to false without calling waitForPasswordRecovery when isPasswordRecoveryUrl is false', async () => {
       mockIsPasswordRecoveryUrl.mockReturnValueOnce(false)
       const store = useSessionStore()
 
@@ -319,7 +319,7 @@ describe('useSessionStore', () => {
       expect(mockWaitForPasswordRecovery).not.toHaveBeenCalled()
     })
 
-    test('returns whatever waitForPasswordRecovery resolves when isPasswordRecoveryUrl is true [obligation]', async () => {
+    test('returns whatever waitForPasswordRecovery resolves when isPasswordRecoveryUrl is true', async () => {
       mockIsPasswordRecoveryUrl.mockReturnValueOnce(true)
       mockWaitForPasswordRecovery.mockResolvedValueOnce(true)
       const store = useSessionStore()
@@ -330,7 +330,7 @@ describe('useSessionStore', () => {
       expect(mockWaitForPasswordRecovery).toHaveBeenCalledOnce()
     })
 
-    test('returns false when isPasswordRecoveryUrl is true but waitForPasswordRecovery resolves false [obligation]', async () => {
+    test('returns false when isPasswordRecoveryUrl is true but waitForPasswordRecovery resolves false', async () => {
       mockIsPasswordRecoveryUrl.mockReturnValueOnce(true)
       mockWaitForPasswordRecovery.mockResolvedValueOnce(false)
       const store = useSessionStore()
@@ -357,7 +357,7 @@ describe('useSessionStore', () => {
       await expect(store.login('user@example.com', 'pw')).rejects.toThrow('invalid credentials')
     })
 
-    test('does NOT record a Signup Completed event [obligation]', async () => {
+    test('does NOT record a Signup Completed event', async () => {
       mockLogin.mockResolvedValueOnce({ user: { id: 'u1' } })
       const store = useSessionStore()
       await store.login('user@example.com', 'password1')
@@ -381,7 +381,7 @@ describe('useSessionStore', () => {
       expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
     })
 
-    test('shows an error notice and does NOT reset user or navigate when supaLogout rejects [obligation]', async () => {
+    test('shows an error notice and does NOT reset user or navigate when supaLogout rejects', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockLogout.mockRejectedValueOnce(new Error('network down'))
@@ -395,7 +395,7 @@ describe('useSessionStore', () => {
       expect(mockPush).not.toHaveBeenCalledWith({ name: 'welcome' })
     })
 
-    test('runs the full teardown — closes modals, clears the query cache, resets the phone [obligation]', async () => {
+    test('runs the full teardown — closes modals, clears the query cache, resets the phone', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockLogout.mockResolvedValueOnce(undefined)
@@ -411,10 +411,10 @@ describe('useSessionStore', () => {
       expect(mockTaroPhoneReset).toHaveBeenCalledOnce()
     })
 
-    // [obligation] regression guard — reset() clears the persisted study-session
+    // regression guard — reset() clears the persisted study-session
     // snapshot so the next member signing in on the same tab isn't offered the
     // previous member's session to resume.
-    test('[obligation] clears the persisted study-session snapshot and resets hasPassword', async () => {
+    test('clears the persisted study-session snapshot and resets hasPassword', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockFetchHasPassword.mockResolvedValueOnce(true)
@@ -429,7 +429,7 @@ describe('useSessionStore', () => {
       expect(store.hasPassword).toBe(false)
     })
 
-    test('does NOT run teardown when supaLogout rejects (no reset reached) [obligation]', async () => {
+    test('does NOT run teardown when supaLogout rejects (no reset reached)', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockLogout.mockRejectedValueOnce(new Error('network down'))
@@ -444,10 +444,10 @@ describe('useSessionStore', () => {
     })
   })
 
-  // ── discardRevokedSession [obligation] ────────────────────────────────────
+  // ── discardRevokedSession ────────────────────────────────────
 
-  describe('discardRevokedSession [obligation]', () => {
-    test('runs reset() teardown AND drops the locally persisted supabase session [obligation]', async () => {
+  describe('discardRevokedSession', () => {
+    test('runs reset() teardown AND drops the locally persisted supabase session', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockQueryCache.getEntries.mockReturnValueOnce(['entry-a'])
@@ -464,7 +464,7 @@ describe('useSessionStore', () => {
       expect(mockSignOutLocal).toHaveBeenCalledOnce()
     })
 
-    test('runs reset() before dropping the local supabase session [obligation]', async () => {
+    test('runs reset() before dropping the local supabase session', async () => {
       const callOrder = []
       mockQueryCache.remove.mockImplementationOnce(() => callOrder.push('reset'))
       mockSignOutLocal.mockImplementationOnce(async () => callOrder.push('signOutLocal'))
@@ -476,7 +476,7 @@ describe('useSessionStore', () => {
       expect(callOrder).toEqual(['reset', 'signOutLocal'])
     })
 
-    test('holds the intentional-logout flag across reset() AND the local sign-out, so the SIGNED_OUT event does not trigger forceLogout [obligation]', async () => {
+    test('holds the intentional-logout flag across reset() AND the local sign-out, so the SIGNED_OUT event does not trigger forceLogout', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       let staleTabCallback
@@ -506,7 +506,7 @@ describe('useSessionStore', () => {
       await discardPromise
     })
 
-    test('does not stack a forced-logout notice on the caller messaging after teardown completes [obligation]', async () => {
+    test('does not stack a forced-logout notice on the caller messaging after teardown completes', async () => {
       mockSignOutLocal.mockResolvedValueOnce(undefined)
       const store = useSessionStore()
 
@@ -540,16 +540,16 @@ describe('useSessionStore', () => {
   // ── signInOAuth ────────────────────────────────────────────────────────────
 
   describe('signInOAuth', () => {
-    test('calls api signInOAuth with only the provider [obligation]', async () => {
+    test('calls api signInOAuth with only the provider', async () => {
       mockSignInOAuth.mockResolvedValueOnce('success')
       const store = useSessionStore()
       await store.signInOAuth('google')
       expect(mockSignInOAuth).toHaveBeenCalledWith('google')
     })
 
-    // [obligation] on api 'success' the store routes through the single
+    // on api 'success' the store routes through the single
     // onAuthenticated() funnel — closes modals AND navigates to dashboard.
-    test('on "success" outcome, calls onAuthenticated — closes modals and routes to dashboard [obligation]', async () => {
+    test('on "success" outcome, calls onAuthenticated — closes modals and routes to dashboard', async () => {
       mockSignInOAuth.mockResolvedValueOnce('success')
       const store = useSessionStore()
       await store.signInOAuth('google')
@@ -557,7 +557,7 @@ describe('useSessionStore', () => {
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('fires Signup Completed on "success" when isNewAccountSession() resolves true [obligation]', async () => {
+    test('fires Signup Completed on "success" when isNewAccountSession() resolves true', async () => {
       mockSignInOAuth.mockResolvedValueOnce('success')
       mockIsNewAccountSession.mockResolvedValueOnce(true)
       const store = useSessionStore()
@@ -565,7 +565,7 @@ describe('useSessionStore', () => {
       expect(mockTrackSignupCompleted).toHaveBeenCalledOnce()
     })
 
-    test('does NOT fire Signup Completed on "success" when isNewAccountSession() resolves false — a returning account [obligation]', async () => {
+    test('does NOT fire Signup Completed on "success" when isNewAccountSession() resolves false — a returning account', async () => {
       mockSignInOAuth.mockResolvedValueOnce('success')
       mockIsNewAccountSession.mockResolvedValueOnce(false)
       const store = useSessionStore()
@@ -573,7 +573,7 @@ describe('useSessionStore', () => {
       expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
     })
 
-    test('does NOT fire Signup Completed on "error" outcome, even when isNewAccountSession() resolves true [obligation]', async () => {
+    test('does NOT fire Signup Completed on "error" outcome, even when isNewAccountSession() resolves true', async () => {
       mockSignInOAuth.mockResolvedValueOnce('error')
       mockIsNewAccountSession.mockResolvedValueOnce(true)
       const store = useSessionStore()
@@ -581,7 +581,7 @@ describe('useSessionStore', () => {
       expect(mockTrackSignupCompleted).not.toHaveBeenCalled()
     })
 
-    test('on "error" outcome, does NOT navigate or close modals [obligation]', async () => {
+    test('on "error" outcome, does NOT navigate or close modals', async () => {
       mockSignInOAuth.mockResolvedValueOnce('error')
       const store = useSessionStore()
       await store.signInOAuth('google')
@@ -589,7 +589,7 @@ describe('useSessionStore', () => {
       expect(mockCloseAllModals).not.toHaveBeenCalled()
     })
 
-    test('on "error" outcome, shows the generic login-error notice [obligation]', async () => {
+    test('on "error" outcome, shows the generic login-error notice', async () => {
       mockSignInOAuth.mockResolvedValueOnce('error')
       const store = useSessionStore()
       await store.signInOAuth('google')
@@ -599,10 +599,10 @@ describe('useSessionStore', () => {
 
   // ── onAuthenticated ────────────────────────────────────────────────────────
 
-  describe('onAuthenticated [obligation]', () => {
-    // [obligation] single post-auth funnel: every successful sign-in path routes
+  describe('onAuthenticated', () => {
+    // single post-auth funnel: every successful sign-in path routes
     // through this so no path can navigate without tearing down its modal.
-    test('closes all modals AND routes to dashboard when no return destination was captured [obligation]', () => {
+    test('closes all modals AND routes to dashboard when no return destination was captured', () => {
       mockConsumeReturnDestination.mockReturnValue(null)
       const store = useSessionStore()
       store.onAuthenticated()
@@ -610,9 +610,9 @@ describe('useSessionStore', () => {
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    // [obligation] consumes the captured `?next=` destination and pushes it
+    // consumes the captured `?next=` destination and pushes it
     // instead of the dashboard fallback when one was stashed.
-    test('[obligation] pushes the consumed return destination when one is present', () => {
+    test('pushes the consumed return destination when one is present', () => {
       mockConsumeReturnDestination.mockReturnValue('/deck/123')
       const store = useSessionStore()
       store.onAuthenticated()
@@ -620,10 +620,10 @@ describe('useSessionStore', () => {
       expect(mockPush).not.toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    // [obligation] the resolution memo is cleared before navigating so the
+    // the resolution memo is cleared before navigating so the
     // checkpoint on the very next navigation reflects the new session rather
     // than the memoized signed-out answer from before this sign-in.
-    test('[obligation] clears the ensureResolved memo before pushing, so the next call re-resolves', async () => {
+    test('clears the ensureResolved memo before pushing, so the next call re-resolves', async () => {
       mockGetSession.mockResolvedValueOnce(null)
       const store = useSessionStore()
       await store.ensureResolved()
@@ -660,7 +660,7 @@ describe('useSessionStore', () => {
       expect(store.hasPasswordIdentity).toBe(true)
     })
 
-    test('[obligation] update reactively when the underlying user identities change, without recomputing the store', async () => {
+    test('update reactively when the underlying user identities change, without recomputing the store', async () => {
       const store = useSessionStore()
       expect(store.hasGoogleIdentity).toBe(false)
 
@@ -675,14 +675,14 @@ describe('useSessionStore', () => {
     })
   })
 
-  // ── hasPassword — RPC-backed, independent of hasPasswordIdentity [obligation] ──
+  // ── hasPassword — RPC-backed, independent of hasPasswordIdentity ──
 
-  describe('hasPassword vs hasPasswordIdentity [obligation]', () => {
-    // [obligation] the branch key for the password-change UI is session.hasPassword
+  describe('hasPassword vs hasPasswordIdentity', () => {
+    // the branch key for the password-change UI is session.hasPassword
     // (RPC-backed), not hasPasswordIdentity. GoTrue creates no 'email' identity
     // when a password is set on a Google-origin account, so hasPasswordIdentity
     // stays false forever even though the account can sign in with a password.
-    test('[obligation] hasPassword is true for a google-only account whose member_has_password() RPC returns true', async () => {
+    test('hasPassword is true for a google-only account whose member_has_password() RPC returns true', async () => {
       const user = {
         id: 'u1',
         aud: 'authenticated',
@@ -728,9 +728,9 @@ describe('useSessionStore', () => {
       expect(mockUpdatePassword).toHaveBeenCalledWith('hunter22')
     })
 
-    // [obligation] has_password refreshes after a successful password change —
+    // has_password refreshes after a successful password change —
     // Google-only → set password → next change asks for the current password.
-    test('[obligation] refreshes hasPassword via fetchHasPassword on a "success" outcome', async () => {
+    test('refreshes hasPassword via fetchHasPassword on a "success" outcome', async () => {
       mockUpdatePassword.mockResolvedValueOnce('success')
       mockFetchHasPassword.mockResolvedValueOnce(true)
       const store = useSessionStore()
@@ -741,7 +741,7 @@ describe('useSessionStore', () => {
       expect(store.hasPassword).toBe(true)
     })
 
-    test('[obligation] does NOT refresh hasPassword on "weak-password"', async () => {
+    test('does NOT refresh hasPassword on "weak-password"', async () => {
       mockUpdatePassword.mockResolvedValueOnce('weak-password')
       const store = useSessionStore()
 
@@ -750,7 +750,7 @@ describe('useSessionStore', () => {
       expect(mockFetchHasPassword).not.toHaveBeenCalled()
     })
 
-    test('[obligation] does NOT refresh hasPassword on "same-password"', async () => {
+    test('does NOT refresh hasPassword on "same-password"', async () => {
       mockUpdatePassword.mockResolvedValueOnce('same-password')
       const store = useSessionStore()
 
@@ -759,7 +759,7 @@ describe('useSessionStore', () => {
       expect(mockFetchHasPassword).not.toHaveBeenCalled()
     })
 
-    test('[obligation] does NOT refresh hasPassword on "error"', async () => {
+    test('does NOT refresh hasPassword on "error"', async () => {
       mockUpdatePassword.mockResolvedValueOnce('error')
       const store = useSessionStore()
 
@@ -816,7 +816,7 @@ describe('useSessionStore', () => {
   // ── linkGoogleIdentity / unlinkGoogleIdentity ─────────────────────────────
 
   describe('linkGoogleIdentity', () => {
-    test('[obligation] refreshes the user via getUser (not getSession) after linking', async () => {
+    test('refreshes the user via getUser (not getSession) after linking', async () => {
       mockLinkGoogleIdentity.mockResolvedValueOnce(undefined)
       mockGetUser.mockResolvedValueOnce({ id: 'u1', aud: 'authenticated' })
       const store = useSessionStore()
@@ -831,7 +831,7 @@ describe('useSessionStore', () => {
   })
 
   describe('unlinkGoogleIdentity', () => {
-    test('[obligation] refreshes the user via getUser (not getSession) after unlinking', async () => {
+    test('refreshes the user via getUser (not getSession) after unlinking', async () => {
       mockUnlinkGoogleIdentity.mockResolvedValueOnce(undefined)
       mockGetUser.mockResolvedValueOnce({ id: 'u1', aud: 'authenticated', identities: [] })
       const store = useSessionStore()
@@ -845,10 +845,10 @@ describe('useSessionStore', () => {
     })
   })
 
-  // ── handleAuthError / forceLogout [obligation] ────────────────────────────
+  // ── handleAuthError / forceLogout ────────────────────────────
 
-  describe('handleAuthError [obligation]', () => {
-    test('forces a logout when isAuthError returns true [obligation]', async () => {
+  describe('handleAuthError', () => {
+    test('forces a logout when isAuthError returns true', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(true)
@@ -863,7 +863,7 @@ describe('useSessionStore', () => {
       expect(mockNotice.warn).toHaveBeenCalledOnce()
     })
 
-    test('does NOT force a logout when isAuthError returns false [obligation]', async () => {
+    test('does NOT force a logout when isAuthError returns false', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(false)
@@ -931,8 +931,8 @@ describe('useSessionStore', () => {
     })
   })
 
-  describe('forceLogout guard [obligation]', () => {
-    test('is a no-op when already logged out, preventing its own supaLogout from re-triggering it [obligation]', async () => {
+  describe('forceLogout guard', () => {
+    test('is a no-op when already logged out, preventing its own supaLogout from re-triggering it', async () => {
       // Store is never authenticated in this test (no restoreSession call).
       mockIsAuthError.mockReturnValueOnce(true)
       const store = useSessionStore()
@@ -944,7 +944,7 @@ describe('useSessionStore', () => {
       expect(mockNotice.warn).not.toHaveBeenCalled()
     })
 
-    test('shows a panel notice whose onDismiss navigates to welcome, not immediately [obligation]', async () => {
+    test('shows a panel notice whose onDismiss navigates to welcome, not immediately', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(true)
@@ -967,7 +967,7 @@ describe('useSessionStore', () => {
       expect(mockPush).toHaveBeenCalledWith({ name: 'welcome' })
     })
 
-    test('forced session-loss runs the same teardown as logout [obligation]', async () => {
+    test('forced session-loss runs the same teardown as logout', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(true)
@@ -985,8 +985,8 @@ describe('useSessionStore', () => {
     })
   })
 
-  describe('onSignedOut wiring [obligation]', () => {
-    test('forces a logout when the stale-tab listener fires and we are not already logging out [obligation]', async () => {
+  describe('onSignedOut wiring', () => {
+    test('forces a logout when the stale-tab listener fires and we are not already logging out', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockLogout.mockResolvedValueOnce(undefined)
@@ -1005,7 +1005,7 @@ describe('useSessionStore', () => {
       expect(mockNotice.warn).toHaveBeenCalledOnce()
     })
 
-    test('manual logout() does not trigger the forced/expired panel notice path [obligation]', async () => {
+    test('manual logout() does not trigger the forced/expired panel notice path', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockLogout.mockResolvedValueOnce(undefined)
@@ -1036,9 +1036,9 @@ describe('useSessionStore', () => {
     })
   })
 
-  // ── public surface [obligation] ───────────────────────────────────────────
+  // ── public surface ───────────────────────────────────────────
 
-  test('does not export a bare reset() — only discardRevokedSession() [obligation]', () => {
+  test('does not export a bare reset() — only discardRevokedSession()', () => {
     const store = useSessionStore()
     expect(store.reset).toBeUndefined()
     expect(typeof store.discardRevokedSession).toBe('function')

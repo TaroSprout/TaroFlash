@@ -110,7 +110,7 @@ describe('useCardEditMenu — options', () => {
     expect(result.options.value[4].value).toBe('appearance')
   })
 
-  test('all five options have disabled:true when is_rearranging [obligation]', () => {
+  test('all five options have disabled:true when is_rearranging', () => {
     const shell = makeShell({ is_rearranging: true })
     const r = setup({ shell })
     app = r.app
@@ -129,7 +129,7 @@ describe('useCardEditMenu — options', () => {
     expect(opt.disabled).toBe(false)
   })
 
-  test('none of select/rearrange/appearance are disabled when not rearranging and the deck has cards [obligation]', () => {
+  test('none of select/rearrange/appearance are disabled when not rearranging and the deck has cards', () => {
     mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 3 }) })
     const shell = makeShell({ is_rearranging: false })
     const r = setup({ shell })
@@ -147,7 +147,7 @@ describe('useCardEditMenu — options', () => {
     expect(opt.icon).toBe('card-lift')
   })
 
-  test('export is disabled when the deck has zero cards [obligation]', () => {
+  test('export is disabled when the deck has zero cards', () => {
     mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 0 }) })
     const r = setup()
     app = r.app
@@ -155,7 +155,7 @@ describe('useCardEditMenu — options', () => {
     expect(opt.disabled).toBe(true)
   })
 
-  test('export is enabled when the deck has cards and is not rearranging [obligation]', () => {
+  test('export is enabled when the deck has cards and is not rearranging', () => {
     mockUseDeckQuery.mockReturnValue({ data: ref({ id: 1, card_count: 5 }) })
     const shell = makeShell({ is_rearranging: false })
     const r = setup({ shell })
@@ -179,10 +179,10 @@ describe('useCardEditMenu — options', () => {
   })
 })
 
-// ── primaryAction [obligation] ────────────────────────────────────────────────
+// ── primaryAction ────────────────────────────────────────────────
 
-describe('useCardEditMenu — primaryAction [obligation]', () => {
-  test('calls toggleRearrange when currently rearranging [obligation]', () => {
+describe('useCardEditMenu — primaryAction', () => {
+  test('calls toggleRearrange when currently rearranging', () => {
     const shell = makeShell({ is_rearranging: true })
     const r = setup({ shell, is_mobile: false })
     app = r.app
@@ -191,7 +191,7 @@ describe('useCardEditMenu — primaryAction [obligation]', () => {
     expect(shell.toggleMode).not.toHaveBeenCalled()
   })
 
-  test('calls startEditing (toggleMode) when not rearranging at md+ [obligation]', () => {
+  test('calls startEditing (toggleMode) when not rearranging at md+', () => {
     const shell = makeShell({ is_rearranging: false })
     const r = setup({ shell, is_mobile: false })
     app = r.app
@@ -200,7 +200,7 @@ describe('useCardEditMenu — primaryAction [obligation]', () => {
     expect(shell.toggleRearrange).not.toHaveBeenCalled()
   })
 
-  test('calls startEditing (mobile_editor.open_at) when not rearranging below md [obligation]', () => {
+  test('calls startEditing (mobile_editor.open_at) when not rearranging below md', () => {
     const shell = makeShell({ is_rearranging: false })
     const mobile_editor = makeMobileEditor()
     const r = setup({ shell, mobile_editor, is_mobile: true })
@@ -211,10 +211,10 @@ describe('useCardEditMenu — primaryAction [obligation]', () => {
   })
 })
 
-// ── startEditing [obligation] ─────────────────────────────────────────────────
+// ── startEditing ─────────────────────────────────────────────────
 
-describe('useCardEditMenu — startEditing [obligation]', () => {
-  test('calls mobile_editor.open_at() with no args below md [obligation]', () => {
+describe('useCardEditMenu — startEditing', () => {
+  test('calls mobile_editor.open_at() with no args below md', () => {
     const mobile_editor = makeMobileEditor()
     const shell = makeShell()
     const r = setup({ shell, mobile_editor, is_mobile: true })
@@ -224,7 +224,7 @@ describe('useCardEditMenu — startEditing [obligation]', () => {
     expect(shell.toggleMode).not.toHaveBeenCalled()
   })
 
-  test('calls shell.toggleMode("edit") at md+ [obligation]', () => {
+  test('calls shell.toggleMode("edit") at md+', () => {
     const shell = makeShell()
     const r = setup({ shell, is_mobile: false })
     app = r.app
@@ -241,9 +241,9 @@ describe('useCardEditMenu — startEditing [obligation]', () => {
   })
 })
 
-// ── onSelect dispatch [obligation] ────────────────────────────────────────────
+// ── onSelect dispatch ────────────────────────────────────────────
 
-describe('useCardEditMenu — onSelect [obligation]', () => {
+describe('useCardEditMenu — onSelect', () => {
   test('onSelect({value:"select"}) calls editor.actions.onSelectCard', () => {
     const editor = makeEditor()
     const r = setup({ editor })
@@ -268,7 +268,7 @@ describe('useCardEditMenu — onSelect [obligation]', () => {
     expect(shell.toggleMode).toHaveBeenCalledWith('edit')
   })
 
-  test('onSelect({value:"import"}) calls shell.setMode("import") [obligation]', () => {
+  test('onSelect({value:"import"}) calls shell.setMode("import")', () => {
     const shell = makeShell()
     const r = setup({ shell })
     app = r.app
@@ -276,7 +276,7 @@ describe('useCardEditMenu — onSelect [obligation]', () => {
     expect(shell.setMode).toHaveBeenCalledWith('import')
   })
 
-  test('onSelect({value:"export"}) calls editor.actions.onExportCards [obligation]', () => {
+  test('onSelect({value:"export"}) calls editor.actions.onExportCards', () => {
     const editor = makeEditor()
     const r = setup({ editor })
     app = r.app
@@ -284,7 +284,7 @@ describe('useCardEditMenu — onSelect [obligation]', () => {
     expect(editor.actions.onExportCards).toHaveBeenCalledOnce()
   })
 
-  test('onSelect({value:"appearance"}) opens settings modal with the deck [obligation]', () => {
+  test('onSelect({value:"appearance"}) opens settings modal with the deck', () => {
     const deck = { id: 5, title: 'Test Deck' }
     mockUseDeckQuery.mockReturnValue({ data: ref(deck) })
     const r = setup()

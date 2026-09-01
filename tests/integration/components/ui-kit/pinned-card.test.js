@@ -145,9 +145,9 @@ describe('UiPinnedCard — slots', () => {
   })
 })
 
-// ── tucked prop [obligation] ────────────────────────────────────────────────────
+// ── tucked prop ────────────────────────────────────────────────────
 
-describe('UiPinnedCard — tucked prop reflected on the paperclip [obligation]', () => {
+describe('UiPinnedCard — tucked prop reflected on the paperclip', () => {
   test('defaults tucked to false', () => {
     const wrapper = makeWrapper()
     expect(
@@ -178,14 +178,14 @@ describe('UiPinnedCard — tucked prop reflected on the paperclip [obligation]',
   })
 })
 
-// ── The pivot is unconditional [obligation] ─────────────────────────────────────
+// ── The pivot is unconditional ─────────────────────────────────────
 // The defect this guards: an origin that only exists in the hovered state.
 // transform-origin is not animatable, so the card jumps to a new position in one
 // frame the moment the pointer arrives, and only then starts rotating. The
 // origin must therefore be identical at rest and while hovered — and must sit at
 // the paperclip, not at the swing element's own centre.
 
-describe('UiPinnedCard — the swing pivots at the paperclip, hovered or not [obligation]', () => {
+describe('UiPinnedCard — the swing pivots at the paperclip, hovered or not', () => {
   test('the pivot is the same point at rest as it is while hovered', async () => {
     const wrapper = mountLive({ hover_lift: true })
 
@@ -228,9 +228,9 @@ describe('UiPinnedCard — the swing pivots at the paperclip, hovered or not [ob
   })
 })
 
-// ── The swing is partial, and quick [obligation] ────────────────────────────────
+// ── The swing is partial, and quick ────────────────────────────────
 
-describe('UiPinnedCard — hover swings the card partway toward upright [obligation]', () => {
+describe('UiPinnedCard — hover swings the card partway toward upright', () => {
   test('hover reduces the tilt without reaching upright or tipping past it', async () => {
     const wrapper = mountLive({ hover_lift: true })
 
@@ -277,12 +277,12 @@ describe('UiPinnedCard — hover swings the card partway toward upright [obligat
   })
 })
 
-// ── hover_lift is opt-in [obligation] ───────────────────────────────────────────
+// ── hover_lift is opt-in ───────────────────────────────────────────
 // Member settings and the welcome splash preview never pass hover_lift, so a
 // call site that leaves it unset must get no hover behaviour at all: no angle
 // change, no transition, no repositioned pivot, no sound.
 
-describe('UiPinnedCard — hover_lift unset or false stays static [obligation]', () => {
+describe('UiPinnedCard — hover_lift unset or false stays static', () => {
   beforeEach(() => mockEmitHoverSfx.mockClear())
 
   test('hovering does not change the rendered angle', async () => {
@@ -324,7 +324,7 @@ describe('UiPinnedCard — hover_lift unset or false stays static [obligation]',
   })
 })
 
-describe('UiPinnedCard — hover_lift: true opts the card into the hover lift [obligation]', () => {
+describe('UiPinnedCard — hover_lift: true opts the card into the hover lift', () => {
   beforeEach(() => mockEmitHoverSfx.mockClear())
 
   test('hovering the root plays the ui.hover sfx', () => {
@@ -334,12 +334,12 @@ describe('UiPinnedCard — hover_lift: true opts the card into the hover lift [o
   })
 })
 
-// ── tuck × hover_lift [obligation] ──────────────────────────────────────────────
+// ── tuck × hover_lift ──────────────────────────────────────────────
 // The tuck animation targets the outer wrapper (deck-settings' preview_el) and
 // the paperclip; the hover swing sits on the nested swing element. Opting into
 // hover_lift must not disturb tucking, and tucking must not disarm the swing.
 
-describe('UiPinnedCard — tuck still works with hover_lift on [obligation]', () => {
+describe('UiPinnedCard — tuck still works with hover_lift on', () => {
   test('tucking toggles the paperclip while hover_lift is on', async () => {
     const wrapper = makeWrapper({ hover_lift: true, tucked: false })
     const paperclip = () => wrapper.find('[data-testid="ui-pinned-card__paperclip"]')

@@ -19,7 +19,7 @@ beforeEach(() => {
 })
 
 describe('fetchAllCardsInDeck', () => {
-  test('loops across pages, accumulating cards in the order the pages came back [obligation]', async () => {
+  test('loops across pages, accumulating cards in the order the pages came back', async () => {
     fetchCardsInDeckMock
       .mockResolvedValueOnce({ cards: [row(1), row(2)], next_rank: 'rank-3' })
       .mockResolvedValueOnce({ cards: [row(3)], next_rank: null })
@@ -30,7 +30,7 @@ describe('fetchAllCardsInDeck', () => {
     expect(fetchCardsInDeckMock).toHaveBeenCalledTimes(2)
   })
 
-  test('stops once a page comes back with next_rank: null [obligation]', async () => {
+  test('stops once a page comes back with next_rank: null', async () => {
     fetchCardsInDeckMock.mockResolvedValueOnce({ cards: [row(1)], next_rank: null })
 
     await fetchAllCardsInDeck(7)
@@ -38,7 +38,7 @@ describe('fetchAllCardsInDeck', () => {
     expect(fetchCardsInDeckMock).toHaveBeenCalledOnce()
   })
 
-  test('advances offset by the accumulated card count on each page [obligation]', async () => {
+  test('advances offset by the accumulated card count on each page', async () => {
     fetchCardsInDeckMock
       .mockResolvedValueOnce({ cards: [row(1), row(2)], next_rank: 'rank-3' })
       .mockResolvedValueOnce({ cards: [row(3)], next_rank: null })

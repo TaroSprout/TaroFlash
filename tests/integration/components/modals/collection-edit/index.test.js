@@ -316,7 +316,7 @@ describe('CollectionEditModal', () => {
   })
 
   describe('danger zone', () => {
-    test('the danger-zone section carries data-palette="danger" [obligation]', () => {
+    test('the danger-zone section carries data-palette="danger"', () => {
       const { wrapper } = mountModal()
       expect(
         wrapper.find('[data-testid="collection-edit__danger-zone"]').attributes('data-palette')

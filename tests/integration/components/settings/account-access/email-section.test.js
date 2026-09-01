@@ -52,12 +52,12 @@ beforeEach(() => {
 describe('EmailSection', () => {
   // ── Structure ─────────────────────────────────────────────────────────────
 
-  test('renders the email section container — a pure form, always [obligation]', () => {
+  test('renders the email section container — a pure form, always', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="account-access-modal__email-section"]').exists()).toBe(true)
   })
 
-  test('renders unchanged when pending flips true — no internal pending panel [obligation]', async () => {
+  test('renders unchanged when pending flips true — no internal pending panel', async () => {
     const wrapper = makeWrapper()
     mockEmailActions.pending.value = true
     await wrapper.vm.$nextTick()
@@ -100,15 +100,15 @@ describe('EmailSection', () => {
     expect(input.findComponent(UiTooltipStub).props('text')).toBe('Taken')
   })
 
-  // ── emits 'pending' exactly once when pending flips true [obligation] ──────
+  // ── emits 'pending' exactly once when pending flips true ──────
 
-  describe('emits "pending" exactly once when pending flips true [obligation]', () => {
-    test('does not emit "pending" while pending is false [obligation]', () => {
+  describe('emits "pending" exactly once when pending flips true', () => {
+    test('does not emit "pending" while pending is false', () => {
       const wrapper = makeWrapper()
       expect(wrapper.emitted('pending')).toBeUndefined()
     })
 
-    test('emits "pending" when pending flips to true [obligation]', async () => {
+    test('emits "pending" when pending flips to true', async () => {
       const wrapper = makeWrapper()
       mockEmailActions.pending.value = true
       await wrapper.vm.$nextTick()
@@ -116,7 +116,7 @@ describe('EmailSection', () => {
       expect(wrapper.emitted('pending')).toHaveLength(1)
     })
 
-    test('does not re-emit when pending stays true across another update [obligation]', async () => {
+    test('does not re-emit when pending stays true across another update', async () => {
       const wrapper = makeWrapper()
       mockEmailActions.pending.value = true
       await wrapper.vm.$nextTick()

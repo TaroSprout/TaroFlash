@@ -74,7 +74,7 @@ describe('card-import/skipped-lines-dialog', () => {
     expect(close).toHaveBeenCalledOnce()
   })
 
-  test('the list renders a scroll-region handle once its lines overflow [obligation]', async () => {
+  test('the list renders a scroll-region handle once its lines overflow', async () => {
     const wrapper = mountOverflowing()
     await waitForUpdate()
 

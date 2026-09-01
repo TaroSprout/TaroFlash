@@ -47,9 +47,9 @@ describe('volume-seam', () => {
   })
 })
 
-// ── the player is only ever reached through this seam [obligation] ───────────
+// ── the player is only ever reached through this seam ───────────
 
-describe('src/sfx/player.ts is imported nowhere outside src/sfx/ [obligation]', () => {
+describe('src/sfx/player.ts is imported nowhere outside src/sfx/', () => {
   test('no source file outside src/sfx/ imports @/sfx/player or a relative path to it', () => {
     const src_root = join(process.cwd(), 'src')
     const offenders = []

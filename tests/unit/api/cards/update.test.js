@@ -205,11 +205,11 @@ describe('setCardImage', () => {
     expect(mocks.insertMediaMock).not.toHaveBeenCalled()
   })
 
-  // ── cause tagging [obligation] ────────────────────────────────────────────
+  // ── cause tagging ────────────────────────────────────────────
   // The UI toast needs to tell an upload failure apart from an insert failure
   // (different copy for each), so the two throw sites must tag distinct causes.
 
-  test('a storage-upload failure throws with cause: "upload" [obligation]', async () => {
+  test('a storage-upload failure throws with cause: "upload"', async () => {
     mocks.uploadImageMock.mockRejectedValueOnce(new Error('network down'))
     const file = new File(['x'], 'f.png', { type: 'image/png' })
 
@@ -219,7 +219,7 @@ describe('setCardImage', () => {
     expect(error.cause).toBe('upload')
   })
 
-  test('a media-row insert failure throws with cause: "insert" [obligation]', async () => {
+  test('a media-row insert failure throws with cause: "insert"', async () => {
     mocks.insertMediaMock.mockRejectedValueOnce(new Error('db error'))
     const file = new File(['x'], 'f.png', { type: 'image/png' })
 

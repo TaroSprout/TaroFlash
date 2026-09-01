@@ -138,7 +138,7 @@ describe('resolveMoveArgs', () => {
     expect(out.preview_cards.map((c) => c.id)).toEqual([1])
   })
 
-  // [obligation] resolveMoveArgs — select-all mode returns { source_deck_id, except_ids }
+  // resolveMoveArgs — select-all mode returns { source_deck_id, except_ids }
   test('select-all mode returns { source_deck_id, except_ids } not { card_ids }', () => {
     const out = resolveMoveArgs(
       makeSelection({ select_all: true, deselected: [5, 7] }),
@@ -152,7 +152,7 @@ describe('resolveMoveArgs', () => {
     expect('card_ids' in out.args).toBe(false)
   })
 
-  // [obligation] resolveMoveArgs — select-all w/ zero selected returns null
+  // resolveMoveArgs — select-all w/ zero selected returns null
   test('select-all mode returns null when selected_count is 0', () => {
     const selection = makeSelection({ select_all: true })
     selection.selected_count = ref(0)
@@ -160,7 +160,7 @@ describe('resolveMoveArgs', () => {
     expect(out).toBeNull()
   })
 
-  // [obligation] resolveMoveArgs — preview_cards in select-all mode is loaded subset only
+  // resolveMoveArgs — preview_cards in select-all mode is loaded subset only
   test('select-all mode preview_cards reflects only loaded cards, count reflects total', () => {
     // 3 cards loaded, select_all with count=200 (simulating many unloaded pages)
     const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]

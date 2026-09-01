@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vite-plus/test'
 import { PLANS, FREE_DECK_LIMIT } from '@/config/plans'
 
-describe('FREE_DECK_LIMIT [obligation]', () => {
-  test('PLANS.free decks feature count mirrors FREE_DECK_LIMIT [obligation]', () => {
+describe('FREE_DECK_LIMIT', () => {
+  test('PLANS.free decks feature count mirrors FREE_DECK_LIMIT', () => {
     const decks_feature = PLANS.free.features.find((f) => f.key === 'decks')
     expect(decks_feature.count).toBe(FREE_DECK_LIMIT)
   })
@@ -50,14 +50,14 @@ describe('PLANS', () => {
     }
   })
 
-  // ── upgradeHighlight filter [obligation] ───────────────────────────────────
+  // ── upgradeHighlight filter ───────────────────────────────────
 
-  test('PLANS.paid.features filtered by upgradeHighlight yields exactly 4 items [obligation]', () => {
+  test('PLANS.paid.features filtered by upgradeHighlight yields exactly 4 items', () => {
     const highlighted = PLANS.paid.features.filter((f) => f.upgradeHighlight)
     expect(highlighted).toHaveLength(4)
   })
 
-  test('upgradeHighlight features are no-deck-limit, no-card-limit, card-images, review-history [obligation]', () => {
+  test('upgradeHighlight features are no-deck-limit, no-card-limit, card-images, review-history', () => {
     const highlighted = PLANS.paid.features.filter((f) => f.upgradeHighlight)
     const keys = highlighted.map((f) => f.key)
     expect(keys).toContain('no-deck-limit')
@@ -66,13 +66,13 @@ describe('PLANS', () => {
     expect(keys).toContain('review-history')
   })
 
-  test('deck-images is NOT in the upgradeHighlight set [obligation]', () => {
+  test('deck-images is NOT in the upgradeHighlight set', () => {
     const highlighted = PLANS.paid.features.filter((f) => f.upgradeHighlight)
     const keys = highlighted.map((f) => f.key)
     expect(keys).not.toContain('deck-images')
   })
 
-  test('cancel-anytime is NOT in the upgradeHighlight set [obligation]', () => {
+  test('cancel-anytime is NOT in the upgradeHighlight set', () => {
     const highlighted = PLANS.paid.features.filter((f) => f.upgradeHighlight)
     const keys = highlighted.map((f) => f.key)
     expect(keys).not.toContain('cancel-anytime')

@@ -60,21 +60,21 @@ describe('AudioSection', () => {
     expect(wrapper.findAllComponents(UiSlider)).toHaveLength(2)
   })
 
-  // ── preview_bus routes the drag to the bus the slider itself sets [obligation] ──
+  // ── preview_bus routes the drag to the bus the slider itself sets ──
 
-  test('the interface-sounds slider passes preview_bus="interface" [obligation]', () => {
+  test('the interface-sounds slider passes preview_bus="interface"', () => {
     const { wrapper } = mountSection()
     const sliders = wrapper.findAllComponents(UiSlider)
     expect(sliders[0].props('preview_bus')).toBe('interface')
   })
 
-  test('the hover-sounds slider passes preview_bus="hover" [obligation]', () => {
+  test('the hover-sounds slider passes preview_bus="hover"', () => {
     const { wrapper } = mountSection()
     const sliders = wrapper.findAllComponents(UiSlider)
     expect(sliders[1].props('preview_bus')).toBe('hover')
   })
 
-  test('changing interface_sounds live-previews the volume without muting [obligation]', async () => {
+  test('changing interface_sounds live-previews the volume without muting', async () => {
     const { editor } = mountSection()
     editor.draft.preferences.audio.interface_sounds = 8
     await Promise.resolve()

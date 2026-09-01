@@ -51,57 +51,57 @@ describe('SessionHeaderMenu', () => {
     expect(wrapper.find('[data-testid="session-header__menu"]').exists()).toBe(true)
   })
 
-  // ── options: edit, move, delete, settings — no toggle-ratings [obligation] ─
+  // ── options: edit, move, delete, settings — no toggle-ratings ─
 
-  test('provides exactly four options: edit, move, delete, settings — no toggle-ratings [obligation]', () => {
+  test('provides exactly four options: edit, move, delete, settings — no toggle-ratings', () => {
     mountMenu()
     expect(capturedOptions).toHaveLength(4)
     expect(capturedOptions.map((o) => o.value)).toEqual(['edit', 'move', 'delete', 'settings'])
   })
 
-  // ── can_edit gates edit/move/delete only [obligation] ──────────────────────
+  // ── can_edit gates edit/move/delete only ──────────────────────
 
-  test('edit/move/delete options are disabled when can_edit is false [obligation]', () => {
+  test('edit/move/delete options are disabled when can_edit is false', () => {
     mountMenu({ can_edit: false })
     const action_options = capturedOptions.filter((o) => o.value !== 'settings')
     expect(action_options).toHaveLength(3)
     expect(action_options.every((o) => o.disabled === true)).toBe(true)
   })
 
-  test('edit/move/delete options are enabled when can_edit is true [obligation]', () => {
+  test('edit/move/delete options are enabled when can_edit is true', () => {
     mountMenu({ can_edit: true })
     const action_options = capturedOptions.filter((o) => o.value !== 'settings')
     expect(action_options).toHaveLength(3)
     expect(action_options.every((o) => o.disabled === false)).toBe(true)
   })
 
-  test('settings option carries no disabled flag regardless of can_edit [obligation]', () => {
+  test('settings option carries no disabled flag regardless of can_edit', () => {
     mountMenu({ can_edit: false })
     const settings_option = capturedOptions.find((o) => o.value === 'settings')
     expect(settings_option.disabled).toBeUndefined()
   })
 
-  // ── selecting each option emits the matching event [obligation] ──────────
+  // ── selecting each option emits the matching event ──────────
 
-  test('selecting edit emits "edit" [obligation]', async () => {
+  test('selecting edit emits "edit"', async () => {
     const wrapper = mountMenu({ can_edit: true })
     await wrapper.find('[data-testid="dropdown-select-edit"]').trigger('click')
     expect(wrapper.emitted('edit')).toHaveLength(1)
   })
 
-  test('selecting move emits "move" [obligation]', async () => {
+  test('selecting move emits "move"', async () => {
     const wrapper = mountMenu({ can_edit: true })
     await wrapper.find('[data-testid="dropdown-select-move"]').trigger('click')
     expect(wrapper.emitted('move')).toHaveLength(1)
   })
 
-  test('selecting delete emits "delete" [obligation]', async () => {
+  test('selecting delete emits "delete"', async () => {
     const wrapper = mountMenu({ can_edit: true })
     await wrapper.find('[data-testid="dropdown-select-delete"]').trigger('click')
     expect(wrapper.emitted('delete')).toHaveLength(1)
   })
 
-  test('selecting settings emits "settings" [obligation]', async () => {
+  test('selecting settings emits "settings"', async () => {
     const wrapper = mountMenu()
     await wrapper.find('[data-testid="dropdown-select-settings"]').trigger('click')
     expect(wrapper.emitted('settings')).toHaveLength(1)

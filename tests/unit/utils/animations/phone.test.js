@@ -52,7 +52,7 @@ describe('phone animations', () => {
       )
     })
 
-    test('clears the inline transform on completion, so the resting rotate/scale classes survive [obligation]', () => {
+    test('clears the inline transform on completion, so the resting rotate/scale classes survive', () => {
       slideDownBlurIn(el, done)
 
       expect(mockFromTo).toHaveBeenCalledWith(
@@ -103,7 +103,7 @@ describe('phone animations', () => {
       )
     })
 
-    test('clears the inline transform on completion, so the resting rotate/scale classes survive [obligation]', () => {
+    test('clears the inline transform on completion, so the resting rotate/scale classes survive', () => {
       slideUpBlurIn(el, done)
 
       expect(mockFromTo).toHaveBeenCalledWith(

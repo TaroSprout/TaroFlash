@@ -35,7 +35,7 @@ describe('useReviewSaver', () => {
     expect(mutateAsync).toHaveBeenCalledWith(vars)
   })
 
-  test('retries a failing save at 0.5s / 1s / 2s and resolves "saved" when a retry succeeds [obligation]', async () => {
+  test('retries a failing save at 0.5s / 1s / 2s and resolves "saved" when a retry succeeds', async () => {
     vi.useFakeTimers()
     mutateAsync
       .mockRejectedValueOnce(new Error('fail'))
@@ -55,7 +55,7 @@ describe('useReviewSaver', () => {
     expect(mutateAsync).toHaveBeenCalledTimes(4)
   })
 
-  test('makes one more attempt when the browser fires "online" after the timed retries are exhausted [obligation]', async () => {
+  test('makes one more attempt when the browser fires "online" after the timed retries are exhausted', async () => {
     vi.useFakeTimers()
     setOnline(false)
     mutateAsync.mockRejectedValue(new Error('offline'))
@@ -80,7 +80,7 @@ describe('useReviewSaver', () => {
     expect(mutateAsync).toHaveBeenCalledTimes(5)
   })
 
-  test('resolves "failed" after the timed retries and the online attempt all fail [obligation]', async () => {
+  test('resolves "failed" after the timed retries and the online attempt all fail', async () => {
     vi.useFakeTimers()
     mutateAsync.mockRejectedValue(new Error('boom'))
 

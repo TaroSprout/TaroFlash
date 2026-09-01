@@ -28,7 +28,7 @@ describe('DashboardSection — default slot', () => {
   })
 })
 
-describe('DashboardSection — loading prop [obligation]', () => {
+describe('DashboardSection — loading prop', () => {
   test('uses the flat loading color class when loading is true', () => {
     const wrapper = mountSection({ label: 'All Decks', loading: true })
     const label = wrapper.find('[data-testid="dashboard-section__label"]')

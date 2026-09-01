@@ -48,7 +48,7 @@ describe('fetchSessionBootstrap', () => {
     expect(result).toEqual({ decks, cards })
   })
 
-  test('returns an empty { decks: [], cards: [] } shape when data is null [obligation]', async () => {
+  test('returns an empty { decks: [], cards: [] } shape when data is null', async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: null })
 
     const result = await fetchSessionBootstrap([1])
@@ -56,7 +56,7 @@ describe('fetchSessionBootstrap', () => {
     expect(result).toEqual({ decks: [], cards: [] })
   })
 
-  test('logs and throws when the RPC returns an error [obligation]', async () => {
+  test('logs and throws when the RPC returns an error', async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
 
     await expect(fetchSessionBootstrap([1])).rejects.toThrow('boom')

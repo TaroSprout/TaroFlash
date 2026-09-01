@@ -60,7 +60,7 @@ afterEach(() => {
   active_wrapper = undefined
 })
 
-describe('AppLauncher — arrow-key focus cycling [obligation]', () => {
+describe('AppLauncher — arrow-key focus cycling', () => {
   test('arrowright focuses the first app when nothing is focused yet', () => {
     makeWrapper()
     handlers['arrowright']()
@@ -115,8 +115,8 @@ describe('AppLauncher — arrow-key focus cycling [obligation]', () => {
   })
 })
 
-describe('AppLauncher — arrow-key focus emits phone.app-focus [obligation]', () => {
-  test('arrow-key focus emits phone.app-focus via emitHoverSfx [obligation]', () => {
+describe('AppLauncher — arrow-key focus emits phone.app-focus', () => {
+  test('arrow-key focus emits phone.app-focus via emitHoverSfx', () => {
     makeWrapper()
 
     handlers['arrowright']()
@@ -126,7 +126,7 @@ describe('AppLauncher — arrow-key focus emits phone.app-focus [obligation]', (
 })
 
 describe('AppLauncher — mouse hover tracking', () => {
-  test('hovering a different app resets keyboard focus tracking and plays the phone.app-focus cue [obligation]', () => {
+  test('hovering a different app resets keyboard focus tracking and plays the phone.app-focus cue', () => {
     const wrapper = makeWrapper()
     handlers['arrowright']()
 
@@ -156,7 +156,7 @@ describe('AppLauncher — mouse hover tracking', () => {
   })
 })
 
-describe('AppLauncher — enter activates the focused app [obligation]', () => {
+describe('AppLauncher — enter activates the focused app', () => {
   test('enter clicks the currently focused app tile', () => {
     makeWrapper()
     handlers['arrowright']()
@@ -171,7 +171,7 @@ describe('AppLauncher — enter activates the focused app [obligation]', () => {
   })
 })
 
-describe('AppLauncher — admin app is gated by can.moderateFeedback [obligation]', () => {
+describe('AppLauncher — admin app is gated by can.moderateFeedback', () => {
   test('renders the admin app when moderateFeedback is true', () => {
     moderateFeedback.value = true
     const wrapper = makeWrapper()

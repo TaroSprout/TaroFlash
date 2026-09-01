@@ -42,7 +42,7 @@ describe('useUpdateFeedbackItemMutation — onSettled()', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['feedback-items'] })
   })
 
-  test('invalidates the feedback-items query on settle after an error [obligation]', () => {
+  test('invalidates the feedback-items query on settle after an error', () => {
     const { onSettled } = config()
     onSettled(undefined, new Error('boom'))
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['feedback-items'] })

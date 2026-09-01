@@ -42,9 +42,7 @@ export function popScrimReveal(
       scale: 1,
       duration: DURATION,
       ease: 'back.out(1.7)',
-      // Drop the settled scale, or the fields' dropdowns get trapped. The
-      // outgoing layer keeps its transform — that's what's hiding it.
-      // →[K:settled-transform-traps-overlays]
+      // Drop the settled scale, or the fields' dropdowns get trapped. →[K:settled-transform-traps-overlays]
       clearProps: 'transform'
     },
     DURATION * 0.35

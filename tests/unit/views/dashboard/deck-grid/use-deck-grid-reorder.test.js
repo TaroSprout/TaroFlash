@@ -128,7 +128,7 @@ afterEach(() => {
 // ── reorderDeck (the onReorder callback wired into useReorderDrag) ────────────
 
 describe('useDeckGridReorder — reorderDeck (via the captured onReorder callback)', () => {
-  test('resolves the anchor from the list-without-the-dragged-deck and calls moveDeck mutateAsync [obligation]', () => {
+  test('resolves the anchor from the list-without-the-dragged-deck and calls moveDeck mutateAsync', () => {
     const container_el = ref(document.createElement('div'))
     const decks = [deck(1), deck(2), deck(3)]
     ;({ app } = withSetup(() =>
@@ -180,7 +180,7 @@ describe('useDeckGridReorder — reorderDeck (via the captured onReorder callbac
     expect(mutateAsyncMock).not.toHaveBeenCalled()
   })
 
-  test('shows a warning toast when the mutation rejects [obligation]', async () => {
+  test('shows a warning toast when the mutation rejects', async () => {
     mutateAsyncMock.mockRejectedValueOnce(new Error('network'))
     const container_el = ref(document.createElement('div'))
     const decks = [deck(1), deck(2)]
@@ -239,7 +239,7 @@ describe('useDeckGridReorder — jiggleStyle', () => {
     expect(a['--jiggle-duration']).not.toBe(b['--jiggle-duration'])
   })
 
-  test('sets a lighter --jiggle-rotation than the deck-view card grid default [obligation]', () => {
+  test('sets a lighter --jiggle-rotation than the deck-view card grid default', () => {
     const container_el = ref(document.createElement('div'))
     let reorder
     ;({ app, result: reorder } = withSetup(() =>
@@ -343,7 +343,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
     expect(reorder.dragging_index.value).toBeNull()
   })
 
-  test('a touch hold that elapses without moving begins the drag [obligation]', () => {
+  test('a touch hold that elapses without moving begins the drag', () => {
     vi.useFakeTimers()
     const container_el = ref(document.createElement('div'))
     const item_el = document.createElement('div')
@@ -376,7 +376,7 @@ describe('useDeckGridReorder — onItemPointerdown', () => {
     vi.useRealTimers()
   })
 
-  test('moving the finger past the hold tolerance cancels the pending hold [obligation]', () => {
+  test('moving the finger past the hold tolerance cancels the pending hold', () => {
     vi.useFakeTimers()
     const container_el = ref(document.createElement('div'))
     let reorder
@@ -424,7 +424,7 @@ describe('useDeckGridReorder — geometry passed to the drag engine', () => {
     expect(reorder.row_count.value).toBe(1)
   })
 
-  test('geometry.idealIndex maps a horizontal drag delta to a fractional column offset [obligation]', () => {
+  test('geometry.idealIndex maps a horizontal drag delta to a fractional column offset', () => {
     const container_el = ref(document.createElement('div'))
     ;({ app } = withSetup(() =>
       useDeckGridReorder(
@@ -475,7 +475,7 @@ describe('useDeckGridReorder — measured', () => {
     expect(reorder.measured.value).toBe(false)
   })
 
-  test('becomes true once the resize observer reports a non-zero width [obligation]', () => {
+  test('becomes true once the resize observer reports a non-zero width', () => {
     const container_el = ref(document.createElement('div'))
     let reorder
     ;({ app, result: reorder } = withSetup(() =>
@@ -513,7 +513,7 @@ describe('useDeckGridReorder — measured', () => {
 // ── drop-settle watch ──────────────────────────────────────────────────────────
 
 describe('useDeckGridReorder — settling the lifted card on drag end', () => {
-  test('drops the lifted card once dragging_index returns to null [obligation]', async () => {
+  test('drops the lifted card once dragging_index returns to null', async () => {
     const container_el = ref(document.createElement('div'))
     const item_el = document.createElement('div')
     item_el.dataset.testid = 'deck-grid__item'

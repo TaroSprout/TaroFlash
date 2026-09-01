@@ -186,7 +186,7 @@ describe('useCan', () => {
     })
   })
 
-  describe('moderateFeedback [obligation]', () => {
+  describe('moderateFeedback', () => {
     afterEach(() => {
       vi.unstubAllEnvs()
     })

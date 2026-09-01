@@ -63,8 +63,8 @@ afterEach(() => {
 // ── start() — guard conditions ────────────────────────────────────────────────
 
 describe('useReorderDrag — start()', () => {
-  // [obligation] no-op when enabled() is false
-  test('does nothing when enabled() returns false [obligation]', () => {
+  // no-op when enabled() is false
+  test('does nothing when enabled() returns false', () => {
     const onReorder = vi.fn()
     const setup = withSetup(() =>
       useReorderDrag({
@@ -83,8 +83,8 @@ describe('useReorderDrag — start()', () => {
     expect(emitSfxMock).not.toHaveBeenCalled()
   })
 
-  // [obligation] no-op when event.button !== 0
-  test('does nothing when event.button is not 0 [obligation]', () => {
+  // no-op when event.button !== 0
+  test('does nothing when event.button is not 0', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -110,8 +110,8 @@ describe('useReorderDrag — start()', () => {
     expect(result.target_index.value).toBe(2)
   })
 
-  // [obligation] emits ui.press on drag start
-  test('emits ui.press on successful start [obligation]', () => {
+  // emits ui.press on drag start
+  test('emits ui.press on successful start', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -146,8 +146,8 @@ describe('useReorderDrag — hysteresis', () => {
     emitSfxMock.mockClear()
   })
 
-  // [obligation] within 0.65*pitch: target_index stays unchanged, no tap_05
-  test('target_index stays at from when delta < 0.65*pitch [obligation]', () => {
+  // within 0.65*pitch: target_index stays unchanged, no tap_05
+  test('target_index stays at from when delta < 0.65*pitch', () => {
     // 0.5 + HYSTERESIS(0.15) = 0.65 → need ideal - next > 0.65 to advance
     // At delta=65: ideal = 1 + 65/100 = 1.65, 1.65 - 1 = 0.65 which is NOT > 0.65
     moveTo(65)
@@ -156,7 +156,7 @@ describe('useReorderDrag — hysteresis', () => {
     expect(emitSfxMock).not.toHaveBeenCalled()
   })
 
-  test('target_index advances to next slot when delta crosses the 0.65*pitch boundary [obligation]', () => {
+  test('target_index advances to next slot when delta crosses the 0.65*pitch boundary', () => {
     // At delta=66: ideal = 1.66, 1.66 - 1 = 0.66 > 0.65 → advances to 2
     moveTo(66)
 
@@ -165,8 +165,8 @@ describe('useReorderDrag — hysteresis', () => {
     expect(emitSfxMock).toHaveBeenCalledTimes(1)
   })
 
-  // [obligation] boundary jitter must not double-fire the crossing tick
-  test('moving back within the hysteresis band does not fire another tap_05 [obligation]', () => {
+  // boundary jitter must not double-fire the crossing tick
+  test('moving back within the hysteresis band does not fire another tap_05', () => {
     // Cross forward: target flips to 2
     moveTo(66)
     emitSfxMock.mockClear()
@@ -190,8 +190,8 @@ describe('useReorderDrag — hysteresis', () => {
     expect(emitSfxMock).toHaveBeenCalledTimes(1)
   })
 
-  // [obligation] no tap_05 on the initial pickup that seeds target = from
-  test('no tap_05 is emitted when target is seeded to from on start [obligation]', () => {
+  // no tap_05 on the initial pickup that seeds target = from
+  test('no tap_05 is emitted when target is seeded to from on start', () => {
     // emitSfxMock was cleared after start(); no tap_05 should have fired during start
     expect(emitSfxMock).not.toHaveBeenCalled()
   })
@@ -200,8 +200,8 @@ describe('useReorderDrag — hysteresis', () => {
 // ── sfx contract ──────────────────────────────────────────────────────────────
 
 describe('useReorderDrag — sfx contract', () => {
-  // [obligation] snappy_button_5 fires on drop
-  test('emits snappy_button_5 on pointerup (drop) [obligation]', () => {
+  // snappy_button_5 fires on drop
+  test('emits snappy_button_5 on pointerup (drop)', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -216,8 +216,8 @@ describe('useReorderDrag — sfx contract', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('ui.press')
   })
 
-  // [obligation] tap_05 only when target_index changes between two non-null slots
-  test('tap_05 fires once per genuine slot crossing, not on drop [obligation]', () => {
+  // tap_05 only when target_index changes between two non-null slots
+  test('tap_05 fires once per genuine slot crossing, not on drop', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -240,8 +240,8 @@ describe('useReorderDrag — sfx contract', () => {
 // ── onReorder — called only when from !== to ──────────────────────────────────
 
 describe('useReorderDrag — onReorder callback', () => {
-  // [obligation] onReorder called only when from !== to
-  test('calls onReorder with (from, to) when drop position differs from start [obligation]', () => {
+  // onReorder called only when from !== to
+  test('calls onReorder with (from, to) when drop position differs from start', () => {
     const onReorder = vi.fn()
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder })
@@ -256,7 +256,7 @@ describe('useReorderDrag — onReorder callback', () => {
     expect(onReorder).toHaveBeenCalledWith(0, 1)
   })
 
-  test('does NOT call onReorder when drop position equals start position [obligation]', () => {
+  test('does NOT call onReorder when drop position equals start position', () => {
     const onReorder = vi.fn()
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder })
@@ -278,8 +278,8 @@ describe('useReorderDrag — dragOffset(index)', () => {
   // dragOffset now returns {x, y} (ReorderOffset) rather than a bare number.
   // The vertical pitch geometry yields x=0 for all shifts; only y carries the delta.
 
-  // [obligation] dragged row returns the live pointer delta as {x, y}
-  test('dragged row returns the current delta as {x, y} [obligation]', () => {
+  // dragged row returns the live pointer delta as {x, y}
+  test('dragged row returns the current delta as {x, y}', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -293,8 +293,8 @@ describe('useReorderDrag — dragOffset(index)', () => {
     expect(result.dragOffset(1)).toEqual({ x: 0, y: 66 })
   })
 
-  // [obligation] from < to: every card in (from, to] shifts by {x:0, y:-pitch} (toward the gap)
-  test('row shifted by a downward drag (from<to) returns {x:0, y:-pitch} [obligation]', () => {
+  // from < to: every card in (from, to] shifts by {x:0, y:-pitch} (toward the gap)
+  test('row shifted by a downward drag (from<to) returns {x:0, y:-pitch}', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -307,8 +307,8 @@ describe('useReorderDrag — dragOffset(index)', () => {
     expect(result.dragOffset(1)).toEqual({ x: 0, y: -PITCH })
   })
 
-  // [obligation] to < from: every card in [to, from) shifts by {x:0, y:+pitch} (toward the gap)
-  test('row shifted by an upward drag (to<from) returns {x:0, y:+pitch} [obligation]', () => {
+  // to < from: every card in [to, from) shifts by {x:0, y:+pitch} (toward the gap)
+  test('row shifted by an upward drag (to<from) returns {x:0, y:+pitch}', () => {
     const setup = withSetup(() =>
       useReorderDrag({ pitch: PITCH, count: () => 3, enabled: () => true, onReorder: vi.fn() })
     )
@@ -557,10 +557,10 @@ describe('useReorderDrag — autoScroll and edgeDirection', () => {
   })
 })
 
-// ── max_scroll_y capture and clamp [obligation] ───────────────────────────────
+// ── max_scroll_y capture and clamp ───────────────────────────────
 
-describe('useReorderDrag — max_scroll_y runaway guard [obligation]', () => {
-  test('auto-scroll target is clamped to max_scroll_y captured at drag start [obligation]', () => {
+describe('useReorderDrag — max_scroll_y runaway guard', () => {
+  test('auto-scroll target is clamped to max_scroll_y captured at drag start', () => {
     // max_scroll_y = scrollHeight - clientHeight = 800 - 600 = 200
     Object.defineProperty(document.documentElement, 'scrollHeight', {
       configurable: true,
@@ -610,14 +610,14 @@ describe('useReorderDrag — max_scroll_y runaway guard [obligation]', () => {
   })
 })
 
-// ── maxScroll option tracks content loaded mid-drag [obligation] ──────────────
+// ── maxScroll option tracks content loaded mid-drag ──────────────
 // Regression: auto-scroll used to clamp to the scrollHeight captured at pickup,
 // so when infinite-scroll loaded more rows mid-drag the page stopped scrolling
 // at the old bottom. The `maxScroll` getter is re-read each frame from a
 // transform-immune source (the virtualizer total size) so it grows with content.
 
-describe('useReorderDrag — maxScroll option [obligation]', () => {
-  test('clamps to the live maxScroll getter and resumes when it grows [obligation]', () => {
+describe('useReorderDrag — maxScroll option', () => {
+  test('clamps to the live maxScroll getter and resumes when it grows', () => {
     // Captured fallback would pin at scrollHeight - clientHeight = 700 - 600 = 100.
     Object.defineProperty(document.documentElement, 'scrollHeight', {
       configurable: true,
@@ -680,10 +680,10 @@ describe('useReorderDrag — maxScroll option [obligation]', () => {
   })
 })
 
-// ── touch-scroll suppression [obligation] ─────────────────────────────────────
+// ── touch-scroll suppression ─────────────────────────────────────
 
-describe('useReorderDrag — touch-scroll suppression [obligation]', () => {
-  test('start() attaches a non-passive touchmove listener; stopTracking() removes it [obligation]', () => {
+describe('useReorderDrag — touch-scroll suppression', () => {
+  test('start() attaches a non-passive touchmove listener; stopTracking() removes it', () => {
     const addEventSpy = vi.spyOn(window, 'addEventListener')
     const removeEventSpy = vi.spyOn(window, 'removeEventListener')
 
@@ -714,9 +714,9 @@ describe('useReorderDrag — touch-scroll suppression [obligation]', () => {
   })
 })
 
-// ── 2-D geometry [obligation] ─────────────────────────────────────────────────
+// ── 2-D geometry ─────────────────────────────────────────────────
 
-describe('useReorderDrag — 2-D grid geometry [obligation]', () => {
+describe('useReorderDrag — 2-D grid geometry', () => {
   const COLUMNS = 3
   const CELL_PITCH = 100
   const ROW_PITCH = 120
@@ -752,19 +752,19 @@ describe('useReorderDrag — 2-D grid geometry [obligation]', () => {
     emitSfxMock.mockClear()
   })
 
-  test('geometry: horizontal delta of one cell-pitch maps ideal to from+1 [obligation]', () => {
+  test('geometry: horizontal delta of one cell-pitch maps ideal to from+1', () => {
     const geo = makeGridGeometry()
     // from=0, dx=CELL_PITCH, dy=0 → col = 0+1 = 1, row = 0 → ideal = 1 ≈ from+1
     expect(geo.idealIndex(0, CELL_PITCH, 0)).toBeCloseTo(1)
   })
 
-  test('geometry: vertical delta of one row-pitch maps ideal to from+columns [obligation]', () => {
+  test('geometry: vertical delta of one row-pitch maps ideal to from+columns', () => {
     const geo = makeGridGeometry()
     // from=0, dx=0, dy=ROW_PITCH → col = 0, row = 0+1 = 1 → ideal = 3 = from+columns
     expect(geo.idealIndex(0, 0, ROW_PITCH)).toBeCloseTo(COLUMNS)
   })
 
-  test('horizontal drag advances target_index by 1 column through the engine [obligation]', () => {
+  test('horizontal drag advances target_index by 1 column through the engine', () => {
     result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
     // dx = 0.66 * CELL_PITCH → ideal = 0.66 > 0.65 threshold → target flips to 1
     window.dispatchEvent(
@@ -777,7 +777,7 @@ describe('useReorderDrag — 2-D grid geometry [obligation]', () => {
     expect(result.target_index.value).toBe(1)
   })
 
-  test('vertical drag advances target_index by at least columns through the engine [obligation]', () => {
+  test('vertical drag advances target_index by at least columns through the engine', () => {
     result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
     // dy = 1.66 * ROW_PITCH → ideal = 1.66*3 = 4.98 → target advances to at least 3
     window.dispatchEvent(
@@ -790,7 +790,7 @@ describe('useReorderDrag — 2-D grid geometry [obligation]', () => {
     expect(result.target_index.value).toBeGreaterThanOrEqual(COLUMNS)
   })
 
-  test('gap-shift for card at a row-start wraps to previous row last slot: +x, -y [obligation]', () => {
+  test('gap-shift for card at a row-start wraps to previous row last slot: +x, -y', () => {
     // Drag from index 0 down so target reaches ≥ COLUMNS (3).
     result.start(0, pointerEvent('pointerdown', { button: 0, clientY: 0 }))
     window.dispatchEvent(

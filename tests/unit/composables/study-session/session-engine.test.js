@@ -103,16 +103,16 @@ beforeEach(() => {
   mockEmitSfx.mockClear()
 })
 
-// ── Single state machine [obligation] ───────────────────────────────────────
+// ── Single state machine ───────────────────────────────────────
 
-describe('state machine [obligation]', () => {
-  test('is_cover is true in the initial loading state, before setCards [obligation]', () => {
+describe('state machine', () => {
+  test('is_cover is true in the initial loading state, before setCards', () => {
     const { engine } = makeEngine()
     expect(engine.state.value).toBe('loading')
     expect(engine.is_cover.value).toBe(true)
   })
 
-  test('setCards with unreviewed cards lands on "cover", is_cover stays true [obligation]', () => {
+  test('setCards with unreviewed cards lands on "cover", is_cover stays true', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])
 
@@ -120,7 +120,7 @@ describe('state machine [obligation]', () => {
     expect(engine.is_cover.value).toBe(true)
   })
 
-  test('setCards([]) lands directly on "summary" [obligation]', () => {
+  test('setCards([]) lands directly on "summary"', () => {
     const { engine } = makeEngine()
     engine.setCards([])
 
@@ -128,7 +128,7 @@ describe('state machine [obligation]', () => {
     expect(engine.is_cover.value).toBe(false)
   })
 
-  test('startSession transitions cover -> studying, is_cover becomes false [obligation]', () => {
+  test('startSession transitions cover -> studying, is_cover becomes false', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])
 
@@ -138,7 +138,7 @@ describe('state machine [obligation]', () => {
     expect(engine.is_cover.value).toBe(false)
   })
 
-  test('startSession fires the session.intro cue by default [obligation]', () => {
+  test('startSession fires the session.intro cue by default', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])
 
@@ -147,7 +147,7 @@ describe('state machine [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('session.intro')
   })
 
-  test('startSession({ silent: true }) skips the session.intro cue [obligation]', () => {
+  test('startSession({ silent: true }) skips the session.intro cue', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])
 
@@ -167,7 +167,7 @@ describe('state machine [obligation]', () => {
     expect(engine.state.value).toBe('summary')
   })
 
-  test('restoreCards with completed:true lands on "summary" [obligation]', () => {
+  test('restoreCards with completed:true lands on "summary"', () => {
     const { engine } = makeEngine()
     const c1 = makeCard({ deck_id: 1 })
 
@@ -176,7 +176,7 @@ describe('state machine [obligation]', () => {
     expect(engine.state.value).toBe('summary')
   })
 
-  test('restoreCards with no unreviewed cards remaining lands on "summary" even when completed:false [obligation]', () => {
+  test('restoreCards with no unreviewed cards remaining lands on "summary" even when completed:false', () => {
     const { engine } = makeEngine()
     const persisted = {
       card_ids: [1],
@@ -199,7 +199,7 @@ describe('state machine [obligation]', () => {
     expect(engine.state.value).toBe('summary')
   })
 
-  test('restoreCards mid-session (completed:false, unreviewed remainder) lands on "cover" [obligation]', () => {
+  test('restoreCards mid-session (completed:false, unreviewed remainder) lands on "cover"', () => {
     const { engine } = makeEngine()
     const c1 = makeCard({ deck_id: 1 })
 
@@ -210,10 +210,10 @@ describe('state machine [obligation]', () => {
   })
 })
 
-// ── Per-deck scheduling [obligation] ────────────────────────────────────────
+// ── Per-deck scheduling ────────────────────────────────────────
 
-describe('per-deck scheduling [obligation]', () => {
-  test('reviewCard uses the active card own deck scheduler — deck 1 vs deck 2 produce different schedules [obligation]', () => {
+describe('per-deck scheduling', () => {
+  test('reviewCard uses the active card own deck scheduler — deck 1 vs deck 2 produce different schedules', () => {
     const { engine: engine_a } = makeEngine()
     const card_deck_1 = makeReviewedCard({ id: 101, deck_id: 1 })
     engine_a.setCards([card_deck_1])
@@ -233,7 +233,7 @@ describe('per-deck scheduling [obligation]', () => {
     expect(result_deck_1.after_interval).toBeGreaterThan(result_deck_2.after_interval)
   })
 
-  test('a merged queue schedules each card against its own deck, never the first card deck [obligation]', () => {
+  test('a merged queue schedules each card against its own deck, never the first card deck', () => {
     const { engine } = makeEngine()
     const c1 = makeReviewedCard({ id: 201, deck_id: 1 })
     const c2 = makeReviewedCard({ id: 202, deck_id: 2 })
@@ -252,7 +252,7 @@ describe('per-deck scheduling [obligation]', () => {
     expect(result_c1.after_interval).toBeGreaterThan(result_c2.after_interval)
   })
 
-  test('active_card_preview uses the active card own deck scheduler [obligation]', () => {
+  test('active_card_preview uses the active card own deck scheduler', () => {
     const { engine } = makeEngine()
     const c2 = makeCard({ id: 301, deck_id: 2 })
     engine.setCards([c2])
@@ -269,10 +269,10 @@ describe('per-deck scheduling [obligation]', () => {
   })
 })
 
-// ── Per-card flip [obligation] ──────────────────────────────────────────────
+// ── Per-card flip ──────────────────────────────────────────────
 
-describe('per-card flip [obligation]', () => {
-  test('active_starting_side / current_card_side follow the active card own deck starting_side on startSession [obligation]', () => {
+describe('per-card flip', () => {
+  test('active_starting_side / current_card_side follow the active card own deck starting_side on startSession', () => {
     const { engine } = makeEngine()
     const deck_a_card = makeCard({ id: 401, deck_id: 1 }) // starting_side: 'front'
 
@@ -282,7 +282,7 @@ describe('per-card flip [obligation]', () => {
     expect(engine.current_card_side.value).toBe('front')
   })
 
-  test('starting side resets to "back" for a deck B card (starting_side: "back") [obligation]', () => {
+  test('starting side resets to "back" for a deck B card (starting_side: "back")', () => {
     const { engine } = makeEngine()
     const deck_b_card = makeCard({ id: 402, deck_id: 2 }) // starting_side: 'back'
 
@@ -292,7 +292,7 @@ describe('per-card flip [obligation]', () => {
     expect(engine.current_card_side.value).toBe('back')
   })
 
-  test('advancing between decks resets the side per-card as each becomes active [obligation]', () => {
+  test('advancing between decks resets the side per-card as each becomes active', () => {
     const { engine } = makeEngine()
     const deck_a_card = makeCard({ id: 403, deck_id: 1 }) // front
     const deck_b_card = makeCard({ id: 404, deck_id: 2 }) // back
@@ -309,7 +309,7 @@ describe('per-card flip [obligation]', () => {
     expect(engine.current_card_side.value).toBe('back')
   })
 
-  test('is_starting_side is relative to a "back" starting side, not hardcoded to "front" [obligation]', () => {
+  test('is_starting_side is relative to a "back" starting side, not hardcoded to "front"', () => {
     const { engine } = makeEngine()
     const deck_b_card = makeCard({ id: 405, deck_id: 2 }) // starting_side: 'back'
     engine.setCards([deck_b_card])
@@ -324,7 +324,7 @@ describe('per-card flip [obligation]', () => {
     expect(engine.is_starting_side.value).toBe(false)
   })
 
-  test('flipCurrentCard sfx is relative to a "back" starting side [obligation]', () => {
+  test('flipCurrentCard sfx is relative to a "back" starting side', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 406, deck_id: 2 })]) // starting_side: 'back'
     engine.startSession()
@@ -339,10 +339,10 @@ describe('per-card flip [obligation]', () => {
   })
 })
 
-// ── startingSideForCard: random rolled once per card [obligation] ───────────
+// ── startingSideForCard: random rolled once per card ───────────
 
-describe('startingSideForCard — random rolled once per card [obligation]', () => {
-  test('a "random" deck rolls once and memoizes: repeated reads for the same card stay stable [obligation]', () => {
+describe('startingSideForCard — random rolled once per card', () => {
+  test('a "random" deck rolls once and memoizes: repeated reads for the same card stay stable', () => {
     const random_spy = vi.spyOn(Math, 'random').mockReturnValue(0.9) // -> 'back'
     const { engine } = makeEngine({ startingSideFor: () => 'random' })
     const c1 = makeCard({ id: 1101, deck_id: 1 })
@@ -359,7 +359,7 @@ describe('startingSideForCard — random rolled once per card [obligation]', () 
     random_spy.mockRestore()
   })
 
-  test('active_starting_side reads the same memoized roll across many reads [obligation]', () => {
+  test('active_starting_side reads the same memoized roll across many reads', () => {
     const random_spy = vi.spyOn(Math, 'random').mockReturnValue(0.1) // -> 'front'
     const { engine } = makeEngine({ startingSideFor: () => 'random' })
     const c1 = makeCard({ id: 1102, deck_id: 1 })
@@ -376,7 +376,7 @@ describe('startingSideForCard — random rolled once per card [obligation]', () 
     random_spy.mockRestore()
   })
 
-  test('two different cards in a random deck roll independently — alternating Math.random lands each on a different side [obligation]', () => {
+  test('two different cards in a random deck roll independently — alternating Math.random lands each on a different side', () => {
     const random_spy = vi.spyOn(Math, 'random')
     const { engine } = makeEngine({ startingSideFor: () => 'random' })
     const c1 = makeCard({ id: 1103, deck_id: 1 })
@@ -393,7 +393,7 @@ describe('startingSideForCard — random rolled once per card [obligation]', () 
     random_spy.mockRestore()
   })
 
-  test('non-random decks ("front"/"back") ignore the memo entirely, for every card [obligation]', () => {
+  test('non-random decks ("front"/"back") ignore the memo entirely, for every card', () => {
     const { engine } = makeEngine()
     const front_card = makeCard({ id: 1105, deck_id: 1 })
     const back_card = makeCard({ id: 1106, deck_id: 2 })
@@ -491,7 +491,7 @@ describe('orderCards', () => {
     expect(new Set(engine.cards.value.map((c) => c.id))).toEqual(new Set(cards.map((c) => c.id)))
   })
 
-  test('setCards uses the orderCards result verbatim as the queue order [obligation]', () => {
+  test('setCards uses the orderCards result verbatim as the queue order', () => {
     const { engine } = makeEngine({ orderCards: (cards) => [...cards].reverse() })
     const c1 = makeCard({ id: 3001, deck_id: 1 })
     const c2 = makeCard({ id: 3002, deck_id: 1 })
@@ -515,9 +515,9 @@ describe('reviewCard no-op guard', () => {
   })
 })
 
-// ── Persistence contract [obligation] ───────────────────────────────────────
+// ── Persistence contract ───────────────────────────────────────
 
-describe('persistence contract — onChange fires on every state-changing mutation [obligation]', () => {
+describe('persistence contract — onChange fires on every state-changing mutation', () => {
   test('setCards triggers onChange', () => {
     const { engine, onChange } = makeEngine()
     engine.setCards([makeCard({ deck_id: 1 })])
@@ -566,10 +566,10 @@ describe('persistence contract — onChange fires on every state-changing mutati
   })
 })
 
-// ── Review-save failure surface [obligation] ────────────────────────────────
+// ── Review-save failure surface ────────────────────────────────
 
-describe('review-save failure surface [obligation]', () => {
-  test('a save that ultimately fails shows a non-blocking notice with no reload action [obligation]', async () => {
+describe('review-save failure surface', () => {
+  test('a save that ultimately fails shows a non-blocking notice with no reload action', async () => {
     saveMock.mockResolvedValueOnce('failed')
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 501, deck_id: 1 }), makeCard({ id: 511, deck_id: 1 })])
@@ -587,7 +587,7 @@ describe('review-save failure surface [obligation]', () => {
     expect(options.actions).toBeUndefined()
   })
 
-  test('a failed save marks the card failed and drops it from the summary results [obligation]', async () => {
+  test('a failed save marks the card failed and drops it from the summary results', async () => {
     saveMock.mockResolvedValueOnce('failed')
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 521, deck_id: 1 }), makeCard({ id: 522, deck_id: 1 })])
@@ -600,7 +600,7 @@ describe('review-save failure surface [obligation]', () => {
     expect(engine.results.value.some((r) => r.card_id === 521)).toBe(false)
   })
 
-  test('a confirmed save marks the card saved so it becomes durable [obligation]', async () => {
+  test('a confirmed save marks the card saved so it becomes durable', async () => {
     saveMock.mockResolvedValueOnce('saved')
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 531, deck_id: 1 }), makeCard({ id: 532, deck_id: 1 })])
@@ -613,7 +613,7 @@ describe('review-save failure surface [obligation]', () => {
     expect(engine.durableResults().map((r) => r.card_id)).toContain(531)
   })
 
-  test('the save payload carries card_id, deck_id, card, and log [obligation]', () => {
+  test('the save payload carries card_id, deck_id, card, and log', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 502, deck_id: 2 })])
     engine.startSession()
@@ -639,10 +639,10 @@ describe('review-save failure surface [obligation]', () => {
   })
 })
 
-// ── Durable-review lifecycle [obligation] ───────────────────────────────────
+// ── Durable-review lifecycle ───────────────────────────────────
 
-describe('durable-review lifecycle [obligation]', () => {
-  test('a rated card is recorded pending, not counted durable, until its save confirms [obligation]', () => {
+describe('durable-review lifecycle', () => {
+  test('a rated card is recorded pending, not counted durable, until its save confirms', () => {
     // A save that never resolves keeps the card pending.
     saveMock.mockReturnValueOnce(new Promise(() => {}))
     const { engine } = makeEngine()
@@ -657,7 +657,7 @@ describe('durable-review lifecycle [obligation]', () => {
     expect(engine.durableResults().some((r) => r.card_id === 541)).toBe(false)
   })
 
-  test('re-rating a card re-served as unreviewed on resume produces a single result entry [obligation]', () => {
+  test('re-rating a card re-served as unreviewed on resume produces a single result entry', () => {
     const { engine } = makeEngine()
     const c1 = makeCard({ id: 551, deck_id: 1 })
     const c2 = makeCard({ id: 552, deck_id: 1 })
@@ -684,7 +684,7 @@ describe('durable-review lifecycle [obligation]', () => {
     expect(engine.results.value.filter((r) => r.card_id === c1.id)).toHaveLength(1)
   })
 
-  test('holds the summary until a slow pending save resolves, then opens it [obligation]', async () => {
+  test('holds the summary until a slow pending save resolves, then opens it', async () => {
     let resolveSave
     saveMock.mockReturnValueOnce(new Promise((resolve) => (resolveSave = resolve)))
     const { engine } = makeEngine()
@@ -703,7 +703,7 @@ describe('durable-review lifecycle [obligation]', () => {
     expect(engine.cards.value.find((c) => c.id === 561).state).toBe('saved')
   })
 
-  test('force-fails a still-pending save at the 1s summary deadline [obligation]', async () => {
+  test('force-fails a still-pending save at the 1s summary deadline', async () => {
     vi.useFakeTimers()
     // A save that never settles on its own.
     saveMock.mockReturnValueOnce(new Promise(() => {}))
@@ -724,7 +724,7 @@ describe('durable-review lifecycle [obligation]', () => {
 // ── Restore queue lock ──────────────────────────────────────────────────────
 
 describe('restore queue lock', () => {
-  test('rebuilds a reviewed card from the fetched card — carrying its full back text/images, not a stub [obligation]', () => {
+  test('rebuilds a reviewed card from the fetched card — carrying its full back text/images, not a stub', () => {
     const { engine } = makeEngine()
     const c1 = makeCard({
       id: 601,
@@ -757,7 +757,7 @@ describe('restore queue lock', () => {
     expect(restored_c1.back_image_path).toBe('img.png')
   })
 
-  test('stamps a persisted (durably-saved) card as saved, so active_card and _advance never re-serve it [obligation]', async () => {
+  test('stamps a persisted (durably-saved) card as saved, so active_card and _advance never re-serve it', async () => {
     const { engine } = makeEngine()
     const c1 = makeCard({ id: 605, deck_id: 1 })
     const c2 = makeCard({ id: 606, deck_id: 1 })
@@ -787,7 +787,7 @@ describe('restore queue lock', () => {
     expect(engine.state.value).toBe('summary')
   })
 
-  test('drops a persisted card id the restore fetch did not return (deleted mid-session) [obligation]', () => {
+  test('drops a persisted card id the restore fetch did not return (deleted mid-session)', () => {
     const { engine } = makeEngine()
     const c1 = makeCard({ id: 603, deck_id: 1 })
 

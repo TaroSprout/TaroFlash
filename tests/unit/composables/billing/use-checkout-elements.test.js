@@ -118,7 +118,7 @@ describe('useCheckoutElements — mount lifecycle', () => {
     expect(result.is_ready.value).toBe(true)
   })
 
-  test('[obligation] does not return a submit_error field — Stripe surfaces inline errors itself', async () => {
+  test('does not return a submit_error field — Stripe surfaces inline errors itself', async () => {
     mockLoadStripe.mockResolvedValue(makeStripe())
 
     const result = withSetup(baseOptions())
@@ -182,7 +182,7 @@ describe('useCheckoutElements — confirm()', () => {
     return { result, checkout }
   }
 
-  test('[obligation] calls actions.confirm() with only { redirect: "if_required" } — no returnUrl', async () => {
+  test('calls actions.confirm() with only { redirect: "if_required" } — no returnUrl', async () => {
     const confirmSpy = vi.fn().mockResolvedValue({
       type: 'success',
       session: { status: { type: 'complete' } }
@@ -200,7 +200,7 @@ describe('useCheckoutElements — confirm()', () => {
     expect('returnUrl' in args).toBe(false)
   })
 
-  test('[obligation] does not leave is_submitting stuck when actions.confirm() throws an IntegrationError', async () => {
+  test('does not leave is_submitting stuck when actions.confirm() throws an IntegrationError', async () => {
     const confirmSpy = vi
       .fn()
       .mockRejectedValue(
@@ -293,7 +293,7 @@ describe('useCheckoutElements — confirm()', () => {
 })
 
 describe('useCheckoutElements — dark-mode reactivity', () => {
-  test('[obligation] initializes the Checkout SDK with the appearance read off the mounted container', async () => {
+  test('initializes the Checkout SDK with the appearance read off the mounted container', async () => {
     const stripe = makeStripe()
     mockLoadStripe.mockResolvedValue(stripe)
 
@@ -305,7 +305,7 @@ describe('useCheckoutElements — dark-mode reactivity', () => {
     expect(elementsOptions.appearance).toEqual(getStripeAppearance(result.container_el))
   })
 
-  test('[obligation] calls checkout.changeAppearance when is_dark toggles after mount, not just at init', async () => {
+  test('calls checkout.changeAppearance when is_dark toggles after mount, not just at init', async () => {
     const changeAppearance = vi.fn()
     const checkout = makeCheckoutSdk({ changeAppearance })
     mockLoadStripe.mockResolvedValue(makeStripe({ checkout }))
@@ -320,7 +320,7 @@ describe('useCheckoutElements — dark-mode reactivity', () => {
     expect(changeAppearance).toHaveBeenCalledTimes(1)
   })
 
-  test('[obligation] re-reads colours off the container after data-mode flips, since the watcher is flush: post', async () => {
+  test('re-reads colours off the container after data-mode flips, since the watcher is flush: post', async () => {
     const changeAppearance = vi.fn()
     const checkout = makeCheckoutSdk({ changeAppearance })
     mockLoadStripe.mockResolvedValue(makeStripe({ checkout }))
@@ -350,7 +350,7 @@ describe('useCheckoutElements — Stripe.js side-effect regression guard', () =>
   // triggered a WebKit bug (spurious file-download prompt) on the anonymous
   // /welcome marketing page. The `/pure` entry point has no such side
   // effect. This composable must keep importing from `/pure`.
-  test('[obligation] never invokes the side-effecting default @stripe/stripe-js entry point', async () => {
+  test('never invokes the side-effecting default @stripe/stripe-js entry point', async () => {
     mockLoadStripe.mockResolvedValue(makeStripe())
 
     withSetup(baseOptions())
@@ -360,7 +360,7 @@ describe('useCheckoutElements — Stripe.js side-effect regression guard', () =>
     expect(mockLoadStripe).toHaveBeenCalledTimes(1)
   })
 
-  test('[obligation] imports loadStripe from the @stripe/stripe-js/pure entry point', () => {
+  test('imports loadStripe from the @stripe/stripe-js/pure entry point', () => {
     const source_path = resolve(process.cwd(), 'src/composables/billing/use-checkout-elements.ts')
     const source = readFileSync(source_path, 'utf-8')
 

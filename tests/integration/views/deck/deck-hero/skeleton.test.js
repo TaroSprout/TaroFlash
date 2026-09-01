@@ -94,7 +94,7 @@ describe('DeckHeroSkeleton (deck-hero/skeleton.vue)', () => {
 
   // ── Fade retirement ───────────────────────────────────────────────────────
 
-  test('the wrapper no longer carries animate-pulse [obligation]', () => {
+  test('the wrapper no longer carries animate-pulse', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="deck-hero-skeleton"]').classes()).not.toContain(
       'animate-pulse'

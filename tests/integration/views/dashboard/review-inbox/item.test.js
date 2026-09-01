@@ -39,14 +39,14 @@ describe('ReviewInboxItem', () => {
     expect(wrapper.find('[data-testid="review-inbox-item__due-badge"]').text()).toBe('7')
   })
 
-  test('the due-count badge carries data-palette="danger" [obligation]', () => {
+  test('the due-count badge carries data-palette="danger"', () => {
     const wrapper = mount({ id: 1, due_count: 7 })
     expect(
       wrapper.find('[data-testid="review-inbox-item__due-badge"]').attributes('data-palette')
     ).toBe('danger')
   })
 
-  test('plays the type hover sfx on hover [obligation]', () => {
+  test('plays the type hover sfx on hover', () => {
     const wrapper = mount({ id: 1, due_count: 3 })
     wrapper
       .find('[data-testid="review-inbox-item"]')
@@ -54,7 +54,7 @@ describe('ReviewInboxItem', () => {
     expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
   })
 
-  describe('disabled prop [obligation]', () => {
+  describe('disabled prop', () => {
     test('defaults to not disabled', () => {
       const wrapper = mount({ id: 1, due_count: 3 })
       expect(wrapper.props('disabled')).toBe(false)

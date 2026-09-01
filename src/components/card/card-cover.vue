@@ -7,8 +7,6 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 
 const { cover, cover_image } = defineProps<{
   cover?: DeckCover
-  // Present only in the settings design preview — gives useCoverImage's onRemove
-  // a handle on the rendered <img> to collapse before it clears.
   cover_image?: CoverImage
 }>()
 

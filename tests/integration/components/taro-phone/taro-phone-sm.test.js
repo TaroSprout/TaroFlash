@@ -35,7 +35,7 @@ describe('TaroPhoneSm — notification badge', () => {
     expect(wrapper.find('[data-testid="notification-badge"]').exists()).toBe(true)
   })
 
-  test('the badge carries data-palette="danger" [obligation]', async () => {
+  test('the badge carries data-palette="danger"', async () => {
     const wrapper = makeWrapper()
     const store = useTaroPhoneStore()
     store.notify('settings', 1)
@@ -54,22 +54,22 @@ describe('TaroPhoneSm — open', () => {
   })
 })
 
-describe('TaroPhoneSm — station [obligation]', () => {
-  test('stamps the constant data-station="window" [obligation]', () => {
+describe('TaroPhoneSm — station', () => {
+  test('stamps the constant data-station="window"', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="phone"]').attributes('data-station')).toBe('window')
   })
 })
 
-describe('TaroPhoneSm — hover rotation [obligation]', () => {
-  test('hover:rotate-2 rides the resting rotate-6, straightening rather than tilting further [obligation]', () => {
+describe('TaroPhoneSm — hover rotation', () => {
+  test('hover:rotate-2 rides the resting rotate-6, straightening rather than tilting further', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
     expect(classes).toContain('rotate-6')
     expect(classes).toContain('hover:rotate-2')
   })
 
-  test('the hover rotation change carries no colour or background class change [obligation]', () => {
+  test('the hover rotation change carries no colour or background class change', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
     expect(classes).toContain('bg-surface')
@@ -77,15 +77,15 @@ describe('TaroPhoneSm — hover rotation [obligation]', () => {
   })
 })
 
-describe('TaroPhoneSm — hover scale [obligation]', () => {
-  test('hover:scale-81 rides the resting scale-75, adding a scale step on top of the hover rotation [obligation]', () => {
+describe('TaroPhoneSm — hover scale', () => {
+  test('hover:scale-81 rides the resting scale-75, adding a scale step on top of the hover rotation', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
     expect(classes).toContain('hover:scale-81')
     expect(classes).toContain('hover:rotate-2')
   })
 
-  test('rest keeps scale-75 and rotate-6 — the hover step never touches the resting values [obligation]', () => {
+  test('rest keeps scale-75 and rotate-6 — the hover step never touches the resting values', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
     expect(classes).toContain('scale-75')
@@ -93,15 +93,15 @@ describe('TaroPhoneSm — hover scale [obligation]', () => {
   })
 })
 
-describe('TaroPhoneSm — transform transition duration [obligation]', () => {
-  test('carries duration-150 on the transform transition [obligation]', () => {
+describe('TaroPhoneSm — transform transition duration', () => {
+  test('carries duration-150 on the transform transition', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
     expect(classes).toContain('transition-transform')
     expect(classes).toContain('duration-150')
   })
 
-  test('carries no duration other than the shortened one [obligation]', () => {
+  test('carries no duration other than the shortened one', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
     // Not an enumerated blocklist: any duration class that isn't duration-150 fails,
@@ -110,8 +110,8 @@ describe('TaroPhoneSm — transform transition duration [obligation]', () => {
   })
 })
 
-describe('TaroPhoneSm — hover transforms stay gated behind hover: [obligation]', () => {
-  test('no unconditional transform class applies the hover rotation or scale values outside hover: [obligation]', () => {
+describe('TaroPhoneSm — hover transforms stay gated behind hover:', () => {
+  test('no unconditional transform class applies the hover rotation or scale values outside hover:', () => {
     const wrapper = makeWrapper()
     const classes = wrapper.find('[data-testid="phone"]').classes()
 
@@ -124,7 +124,7 @@ describe('TaroPhoneSm — hover transforms stay gated behind hover: [obligation]
   })
 })
 
-describe('TaroPhoneSm — hover sfx pointer gating [obligation]', () => {
+describe('TaroPhoneSm — hover sfx pointer gating', () => {
   function mountWithRealDirective() {
     return mount(TaroPhoneSm, {
       global: {
@@ -134,7 +134,7 @@ describe('TaroPhoneSm — hover sfx pointer gating [obligation]', () => {
     })
   }
 
-  test('a mouse pointerenter plays the hover sfx [obligation]', () => {
+  test('a mouse pointerenter plays the hover sfx', () => {
     vi.clearAllMocks()
     const wrapper = mountWithRealDirective()
 
@@ -145,7 +145,7 @@ describe('TaroPhoneSm — hover sfx pointer gating [obligation]', () => {
     expect(emitHoverSfx).toHaveBeenCalledWith('ui.hover')
   })
 
-  test('a touch pointerenter plays no hover sfx [obligation]', () => {
+  test('a touch pointerenter plays no hover sfx', () => {
     vi.clearAllMocks()
     const wrapper = mountWithRealDirective()
 
@@ -157,8 +157,8 @@ describe('TaroPhoneSm — hover sfx pointer gating [obligation]', () => {
   })
 })
 
-describe('TaroPhoneSm — hover sfx wiring [obligation]', () => {
-  test('v-sfx is bound with hover set to ui.hover [obligation]', () => {
+describe('TaroPhoneSm — hover sfx wiring', () => {
+  test('v-sfx is bound with hover set to ui.hover', () => {
     let captured
     const captureDirective = {
       mounted: (_el, binding) => (captured = binding.value),
@@ -174,14 +174,14 @@ describe('TaroPhoneSm — hover sfx wiring [obligation]', () => {
   })
 })
 
-describe('TaroPhoneSm — collapsed colour roles [obligation]', () => {
-  test('the collapsed screen uses the ink-muted role, not well [obligation]', () => {
+describe('TaroPhoneSm — collapsed colour roles', () => {
+  test('the collapsed screen uses the ink-muted role, not well', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="phone__screen"]').classes()).toContain('bg-ink-muted')
     expect(wrapper.find('[data-testid="phone__screen"]').classes()).not.toContain('bg-well')
   })
 
-  test('the home-button outline uses the ink-muted role, not well [obligation]', () => {
+  test('the home-button outline uses the ink-muted role, not well', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="phone__home-button"]').classes()).toContain(
       'outline-ink-muted'
@@ -191,12 +191,12 @@ describe('TaroPhoneSm — collapsed colour roles [obligation]', () => {
     )
   })
 
-  test('the chip body stays on the surface role [obligation]', () => {
+  test('the chip body stays on the surface role', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="phone"]').classes()).toContain('bg-surface')
   })
 
-  test('carries no dark: variant override anywhere in the markup [obligation]', () => {
+  test('carries no dark: variant override anywhere in the markup', () => {
     const wrapper = makeWrapper()
     expect(wrapper.html()).not.toMatch(/\bdark:/)
   })

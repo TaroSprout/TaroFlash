@@ -91,9 +91,9 @@ describe('DialogCardPager', () => {
     expect(wrapper.find('[data-testid="pane-b"]').exists()).toBe(true)
   })
 
-  // ── enter-start emit [obligation] ───────────────────────────────────────────
+  // ── enter-start emit ───────────────────────────────────────────
 
-  test('[obligation] emits enter-start when the entering pane animation begins', async () => {
+  test('emits enter-start when the entering pane animation begins', async () => {
     const wrapper = mountHost()
     expect(wrapper.emitted('enter-start')).toBeFalsy()
 
@@ -108,9 +108,9 @@ describe('DialogCardPager', () => {
     expect(wrapper.emitted('enter-start')).toBeFalsy()
   })
 
-  // ── mode prop [obligation] ──────────────────────────────────────────────────
+  // ── mode prop ──────────────────────────────────────────────────
 
-  describe('mode [obligation]', () => {
+  describe('mode', () => {
     test('mode="out-in" still fires both leave and enter hooks across a swap', async () => {
       const wrapper = mountHost('out-in')
       await wrapper.setProps({ phase: 'b' })

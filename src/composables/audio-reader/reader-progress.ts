@@ -86,8 +86,7 @@ export function useReaderProgress(
     immediate: true
   })
 
-  // Throttle by playback progress: write once the position has advanced a step
-  // since the last save, never on every animation frame.
+  // Throttle by playback position, not by frame.
   watch(player.current_time, (now) => {
     if (player.is_playing.value && Math.abs(now - saved_at) >= SAVE_INTERVAL_SECONDS) save(now)
   })

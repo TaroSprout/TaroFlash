@@ -186,7 +186,7 @@ describe('MobileDockHost', () => {
     })
   })
 
-  describe('bottom edge allowance [obligation]', () => {
+  describe('bottom edge allowance', () => {
     // Derive the applied --dock-pb from the footer's *actual rendered class list*
     // rather than a copied literal — a literal survives editing the source back
     // to match it (this exact thing happened mid-branch: b6e05208 dropped the
@@ -217,7 +217,7 @@ describe('MobileDockHost', () => {
       return value === undefined ? undefined : remValue(value.replace(/calc\([^)]*\)/g, ''))
     }
 
-    test("present below sm and floored at least to the bar's own top padding — pointer type never gates it, and the floor survives a zero device inset [obligation]", async () => {
+    test("present below sm and floored at least to the bar's own top padding — pointer type never gates it, and the floor survives a zero device inset", async () => {
       // Read the un-flush render first so the floating-card padding the flush state
       // must beat comes from the component itself, not from a literal copied out of
       // the source. A literal is what failed here before: b6e05208 dropped the floor
@@ -251,7 +251,7 @@ describe('MobileDockHost', () => {
       expect(floorRem(allowance)).toBeGreaterThan(card_padding_rem)
     })
 
-    test('absent at or above sm — the bar is an inset card there, not flush [obligation]', async () => {
+    test('absent at or above sm — the bar is an inset card there, not flush', async () => {
       setBelowBreakpoint('sm', false)
       setChromeCovered(false)
 
@@ -263,7 +263,7 @@ describe('MobileDockHost', () => {
       expect(dockPaddingTokens(footer).bottom).toHaveLength(1)
     })
 
-    test('absent when the browser chrome already covers the bottom strip, even while flush [obligation]', async () => {
+    test('absent when the browser chrome already covers the bottom strip, even while flush', async () => {
       setBelowBreakpoint('sm', true)
       setChromeCovered(true)
 
@@ -337,7 +337,7 @@ describe('MobileDockHost', () => {
       expect(document.documentElement.style.getPropertyValue('--mobile-dock-height')).not.toBe('')
     })
 
-    test('publishes --mobile-dock-height = 0px while the keyboard is open, even when the breakpoint matches [obligation]', async () => {
+    test('publishes --mobile-dock-height = 0px while the keyboard is open, even when the breakpoint matches', async () => {
       setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
 
       mountHost()
@@ -382,8 +382,8 @@ describe('MobileDockHost', () => {
     })
   })
 
-  describe('slide transition [obligation]', () => {
-    test('dockSlideIn fires when the footer transitions from hidden to visible [obligation]', async () => {
+  describe('slide transition', () => {
+    test('dockSlideIn fires when the footer transitions from hidden to visible', async () => {
       setBelowBreakpoint(DEFAULT_BREAKPOINT, false)
       mountHost()
       await nextTick()
@@ -395,7 +395,7 @@ describe('MobileDockHost', () => {
       expect(mockDockSlideOut).not.toHaveBeenCalled()
     })
 
-    test('dockSlideOut fires when the footer transitions from visible to hidden [obligation]', async () => {
+    test('dockSlideOut fires when the footer transitions from visible to hidden', async () => {
       setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
       mountHost()
       await nextTick()
@@ -406,7 +406,7 @@ describe('MobileDockHost', () => {
       expect(mockDockSlideOut).toHaveBeenCalled()
     })
 
-    test('dockSlideOut fires when the on-screen keyboard opens and hides the dock [obligation]', async () => {
+    test('dockSlideOut fires when the on-screen keyboard opens and hides the dock', async () => {
       setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
       mountHost()
       await nextTick()
@@ -417,7 +417,7 @@ describe('MobileDockHost', () => {
       expect(mockDockSlideOut).toHaveBeenCalled()
     })
 
-    test("footer keeps its display until the leave transition's done callback fires [obligation]", async () => {
+    test("footer keeps its display until the leave transition's done callback fires", async () => {
       let captured_done
       mockDockSlideOut.mockImplementationOnce((_el, done) => {
         captured_done = done
@@ -440,7 +440,7 @@ describe('MobileDockHost', () => {
     })
   })
 
-  describe('content-height tween [obligation]', () => {
+  describe('content-height tween', () => {
     let captured_resize_cb
     let original_resize_observer
 
@@ -459,7 +459,7 @@ describe('MobileDockHost', () => {
       window.ResizeObserver = original_resize_observer
     })
 
-    test('content growing while is_visible stays true still tweens the wrapper height [obligation]', async () => {
+    test('content growing while is_visible stays true still tweens the wrapper height', async () => {
       setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
       mountHost()
       await nextTick()

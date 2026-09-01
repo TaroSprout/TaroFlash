@@ -54,7 +54,7 @@ describe('MemberCard', () => {
     expect(wrapper.find('[data-testid="member-card"]').exists()).toBe(true)
   })
 
-  test('stamps the constant data-station="panel" [obligation]', () => {
+  test('stamps the constant data-station="panel"', () => {
     const wrapper = mountCard()
     expect(wrapper.find('[data-testid="member-card"]').attributes('data-station')).toBe('panel')
   })
@@ -80,17 +80,17 @@ describe('MemberCard', () => {
     expect(wrapper.find('[data-testid="member-card__header"]').text()).toContain('Nina')
   })
 
-  test('shows the name-placeholder fallback when displayName is omitted [obligation]', () => {
+  test('shows the name-placeholder fallback when displayName is omitted', () => {
     const wrapper = mountCard()
     expect(wrapper.find('h1').text()).toBe('Member Name')
   })
 
-  test('shows the name-placeholder fallback when displayName is an empty string [obligation]', () => {
+  test('shows the name-placeholder fallback when displayName is an empty string', () => {
     const wrapper = mountCard({ displayName: '' })
     expect(wrapper.find('h1').text()).toBe('Member Name')
   })
 
-  test('renders displayName as-is when provided, not the fallback [obligation]', () => {
+  test('renders displayName as-is when provided, not the fallback', () => {
     const wrapper = mountCard({ displayName: 'Nina' })
     expect(wrapper.find('h1').text()).toBe('Nina')
   })
@@ -111,13 +111,13 @@ describe('MemberCard', () => {
     expect(row).toMatch(/\d{4}|\d{1,2}/)
   })
 
-  test('body never carries a border style — memberCoverBindings enforces border:false [obligation]', () => {
+  test('body never carries a border style — memberCoverBindings enforces border:false', () => {
     const wrapper = mountCard({ cover: { palette: 'red', pattern: 'saw' } })
     const style = wrapper.find('[data-testid="member-card__body"]').attributes('style') ?? ''
     expect(style).not.toContain('border:')
   })
 
-  test('still applies cover-derived bindings via memberCoverBindings after extraction refactor [obligation]', () => {
+  test('still applies cover-derived bindings via memberCoverBindings after extraction refactor', () => {
     const wrapper = mountCard({
       cover: { palette: 'teal', pattern: 'aztec' }
     })
@@ -135,7 +135,7 @@ describe('MemberCard', () => {
 
   // Mounts the real avatar-image so the placeholder/frog split lands through
   // this surface, not just the component's own tests.
-  test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved [obligation]', async () => {
+  test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved', async () => {
     mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
     const wrapper = shallowMount(MemberCard, {
       props: {
@@ -171,9 +171,9 @@ describe('MemberCard', () => {
     })
   })
 
-  // ── editable / edit-avatar [obligation] ────────────────────────────────────
+  // ── editable / edit-avatar ────────────────────────────────────
 
-  describe('editable [obligation]', () => {
+  describe('editable', () => {
     test('the avatar-edit button is absent when editable is unset', () => {
       const wrapper = mountCard()
       expect(wrapper.find('[data-testid="member-card__avatar-edit"]').exists()).toBe(false)

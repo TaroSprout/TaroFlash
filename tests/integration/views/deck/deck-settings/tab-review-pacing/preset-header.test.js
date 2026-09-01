@@ -44,31 +44,31 @@ afterEach(() => {
   mounted_wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
 })
 
-// ── reset button visibility [obligation] ────────────────────────────────────
+// ── reset button visibility ────────────────────────────────────
 
-describe('PresetHeader — reset button visibility [obligation]', () => {
-  test('hides the reset button when override_count is 0 [obligation]', () => {
+describe('PresetHeader — reset button visibility', () => {
+  test('hides the reset button when override_count is 0', () => {
     const { wrapper } = makeWrapper({ override_count: 0 })
     expect(wrapper.find('[data-testid="preset-header__reset-all"]').exists()).toBe(false)
   })
 
-  test('shows the reset button when override_count > 0 [obligation]', () => {
+  test('shows the reset button when override_count > 0', () => {
     const { wrapper } = makeWrapper({ override_count: 1 })
     expect(wrapper.find('[data-testid="preset-header__reset-all"]').exists()).toBe(true)
   })
 })
 
-// ── reset button label [obligation] ─────────────────────────────────────────
+// ── reset button label ─────────────────────────────────────────
 
-describe('PresetHeader — reset button label [obligation]', () => {
-  test('renders "Reset (N)" with the current override_count, no singular/plural split [obligation]', () => {
+describe('PresetHeader — reset button label', () => {
+  test('renders "Reset (N)" with the current override_count, no singular/plural split', () => {
     const { wrapper } = makeWrapper({ override_count: 1 })
     expect(wrapper.find('[data-testid="preset-header__reset-all"] .btn-label').text()).toBe(
       'Reset (1)'
     )
   })
 
-  test('renders the same "Reset (N)" shape for a count greater than one [obligation]', () => {
+  test('renders the same "Reset (N)" shape for a count greater than one', () => {
     const { wrapper } = makeWrapper({ override_count: 3 })
     expect(wrapper.find('[data-testid="preset-header__reset-all"] .btn-label').text()).toBe(
       'Reset (3)'
@@ -76,10 +76,10 @@ describe('PresetHeader — reset button label [obligation]', () => {
   })
 })
 
-// ── reset-all wiring [obligation] ─────────────────────────────────────────────
+// ── reset-all wiring ─────────────────────────────────────────────
 
-describe('PresetHeader — preset-header__reset-all [obligation]', () => {
-  test('pressing reset-all calls resetAllOverrides [obligation]', async () => {
+describe('PresetHeader — preset-header__reset-all', () => {
+  test('pressing reset-all calls resetAllOverrides', async () => {
     const { wrapper, resetAllOverrides } = makeWrapper({ override_count: 2 })
 
     await wrapper.find('[data-testid="preset-header__reset-all"]').trigger('click')
@@ -88,10 +88,10 @@ describe('PresetHeader — preset-header__reset-all [obligation]', () => {
   })
 })
 
-// ── removed markup [obligation] ──────────────────────────────────────────────
+// ── removed markup ──────────────────────────────────────────────
 
-describe('PresetHeader — removed divergence markup [obligation]', () => {
-  test('never renders a preset-header__divergence or preset-header__count element [obligation]', () => {
+describe('PresetHeader — removed divergence markup', () => {
+  test('never renders a preset-header__divergence or preset-header__count element', () => {
     const { wrapper } = makeWrapper({ override_count: 2 })
     expect(wrapper.find('[data-testid="preset-header__divergence"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="preset-header__count"]').exists()).toBe(false)

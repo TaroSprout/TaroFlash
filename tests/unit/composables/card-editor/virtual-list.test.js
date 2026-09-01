@@ -30,7 +30,7 @@ describe('useVirtualCardList', () => {
       expect(entry?.client_id).toBe(client_id)
     })
 
-    test('the same client_id still resolves after the entry is promoted [obligation]', () => {
+    test('the same client_id still resolves after the entry is promoted', () => {
       const client_id = list.addCard()
       const entry = list.findEntryByClientId(client_id)
       list.promoteTemp(entry.card.id, 555, 'a0', { front_text: 'Q' })
@@ -53,10 +53,10 @@ describe('useVirtualCardList', () => {
       expect(list.findEntryByClientId(client_id)?.card.front_text).toBe('Q')
     })
 
-    // [obligation] the eager-insert entry never enters the persisted cache, so
+    // the eager-insert entry never enters the persisted cache, so
     // patchTemp is the only mechanism keeping both sides of a two-step save —
     // this is the regression this branch closes.
-    test('a second patch preserves the first field, so both sides of a two-step save survive [obligation]', () => {
+    test('a second patch preserves the first field, so both sides of a two-step save survive', () => {
       const client_id = list.addCard()
       list.patchTemp(client_id, { front_text: 'Q' })
       list.patchTemp(client_id, { back_text: 'A' })
@@ -99,10 +99,10 @@ describe('useVirtualCardList', () => {
   // ── addCard eager-insert regression seam — persisted refetch never arrives ──
 
   describe('eager-created entries', () => {
-    // [obligation] negative: nothing in the composable removes a staged temp
+    // negative: nothing in the composable removes a staged temp
     // just because it stays empty. Removal only ever happens via explicit
     // removeTemp — never a side effect of reading the list.
-    test('a staged, never-edited temp is never auto-removed by reading all_cards [obligation]', () => {
+    test('a staged, never-edited temp is never auto-removed by reading all_cards', () => {
       const client_id = list.addCard()
       // Read the list repeatedly, as a render loop would.
       void list.all_cards.value
@@ -117,10 +117,10 @@ describe('useVirtualCardList', () => {
   // ── promoted-placeholder retirement — the persisted refetch takes over ─────
 
   describe('retiring a promoted temp once the persisted list carries its card', () => {
-    // [obligation] deleting a just-created card only removes the row from
+    // deleting a just-created card only removes the row from
     // screen if the promoted placeholder standing in for it is retired —
     // otherwise it renders the row right back once the persisted list drops it.
-    test('drops the promoted entry from temp_entries once its real_id appears in the persisted list [obligation]', async () => {
+    test('drops the promoted entry from temp_entries once its real_id appears in the persisted list', async () => {
       const client_id = list.addCard()
       const temp_id = list.findEntryByClientId(client_id).card.id
       list.promoteTemp(temp_id, 500, 'a0', { front_text: 'Q' })
@@ -136,7 +136,7 @@ describe('useVirtualCardList', () => {
       expect(list.temp_entries.value).toHaveLength(0)
     })
 
-    test('renders the card exactly once after retirement, not duplicated by the leftover placeholder [obligation]', async () => {
+    test('renders the card exactly once after retirement, not duplicated by the leftover placeholder', async () => {
       const client_id = list.addCard()
       const temp_id = list.findEntryByClientId(client_id).card.id
       list.promoteTemp(temp_id, 500, 'a0', { front_text: 'Q' })
@@ -153,7 +153,7 @@ describe('useVirtualCardList', () => {
 
     // A delete on that same card removes it from the persisted list; the
     // retired placeholder must not resurrect it.
-    test('a card removed from the persisted list after retirement does not come back via the placeholder [obligation]', async () => {
+    test('a card removed from the persisted list after retirement does not come back via the placeholder', async () => {
       const client_id = list.addCard()
       const temp_id = list.findEntryByClientId(client_id).card.id
       list.promoteTemp(temp_id, 500, 'a0', { front_text: 'Q' })

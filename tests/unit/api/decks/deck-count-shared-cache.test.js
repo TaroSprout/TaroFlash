@@ -60,14 +60,14 @@ beforeEach(() => {
 })
 
 describe('shared ["decks", "count"] cache entry', () => {
-  // [obligation] The regression itself: mounting the mutation's own
+  // The regression itself: mounting the mutation's own
   // useMemberDeckCountQuery(false) for the re-check used to overwrite the
   // live reader's options on the shared entry with a permanently-disabled
   // query, so an invalidation could never bring it back — a member who
   // deleted decks to get under the cap was still refused a create. A test
   // exercising the count query alone can't see this: it only appears once
   // both call sites share the one cache entry.
-  test('an invalidation still refetches the live count after the mutation has run its re-check [obligation]', async () => {
+  test('an invalidation still refetches the live count after the mutation has run its re-check', async () => {
     fetchMemberDeckCountMock.mockResolvedValue(0)
     const { app, live_reader, query_cache } = mountBothReaders()
     await flushPromises()
@@ -83,10 +83,10 @@ describe('shared ["decks", "count"] cache entry', () => {
     app.unmount()
   })
 
-  // [obligation] Once the member deletes decks and the count entry is
+  // Once the member deletes decks and the count entry is
   // invalidated back under the cap, a subsequent create must be allowed —
   // the exact user-facing symptom this branch's fix restores.
-  test('a create is allowed once deletions bring the member back under the cap [obligation]', async () => {
+  test('a create is allowed once deletions bring the member back under the cap', async () => {
     deckLimit.value = 1
     fetchMemberDeckCountMock.mockResolvedValue(1) // at cap
     const { app, upsert_mutation, query_cache } = mountBothReaders()
@@ -113,9 +113,9 @@ describe('shared ["decks", "count"] cache entry', () => {
     app.unmount()
   })
 
-  // [obligation] The create-time refusal must be driven by a live count, not
+  // The create-time refusal must be driven by a live count, not
   // whatever the live reader happened to cache before the limit rose.
-  test('a create is refused off a freshly fetched count, not a stale cached one [obligation]', async () => {
+  test('a create is refused off a freshly fetched count, not a stale cached one', async () => {
     deckLimit.value = 2
     fetchMemberDeckCountMock.mockResolvedValue(0)
     const { app, live_reader, upsert_mutation } = mountBothReaders()

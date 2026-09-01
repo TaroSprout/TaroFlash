@@ -11,46 +11,46 @@ import { useCardGrid } from '@/views/deck/card-grid/use-card-grid'
 describe('useCardGrid', () => {
   // ── grid_style — columns ──────────────────────────────────────────────────
 
-  test('grid_style has gridTemplateColumns repeat(auto-fill, 169px) for "base" [obligation]', () => {
+  test('grid_style has gridTemplateColumns repeat(auto-fill, 169px) for "base"', () => {
     const { grid_style } = useCardGrid('base')
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 169px)')
   })
 
-  test('grid_style has gridTemplateColumns repeat(auto-fill, 221px) for "md" [obligation]', () => {
+  test('grid_style has gridTemplateColumns repeat(auto-fill, 221px) for "md"', () => {
     const { grid_style } = useCardGrid('md')
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 221px)')
   })
 
-  test('grid_style has gridTemplateColumns repeat(auto-fill, 260px) for "xl" [obligation]', () => {
+  test('grid_style has gridTemplateColumns repeat(auto-fill, 260px) for "xl"', () => {
     const { grid_style } = useCardGrid('xl')
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 260px)')
   })
 
-  // ── grid_style — gap scales with card_scale [obligation] ─────────────────
+  // ── grid_style — gap scales with card_scale ─────────────────
 
-  test('gap is 8 * card_scale for "base" (5.2px) [obligation]', () => {
+  test('gap is 8 * card_scale for "base" (5.2px)', () => {
     const { grid_style } = useCardGrid('base')
     expect(grid_style.value.gap).toBe('5.2px')
   })
 
-  test('gap is 8 * card_scale for "md" (6.8px) [obligation]', () => {
+  test('gap is 8 * card_scale for "md" (6.8px)', () => {
     const { grid_style } = useCardGrid('md')
     expect(grid_style.value.gap).toBe('6.8px')
   })
 
-  test('gap is 8 * card_scale for "xl" (8px) [obligation]', () => {
+  test('gap is 8 * card_scale for "xl" (8px)', () => {
     const { grid_style } = useCardGrid('xl')
     expect(grid_style.value.gap).toBe('8px')
   })
 
   // ── grid_classes — static constant ────────────────────────────────────────
 
-  test('grid_classes is the static array [grid, justify-center] [obligation]', () => {
+  test('grid_classes is the static array [grid, justify-center]', () => {
     const { grid_classes } = useCardGrid('md')
     expect(grid_classes).toEqual(['grid', 'justify-center'])
   })
 
-  test('grid_classes is the same reference across calls (module constant) [obligation]', () => {
+  test('grid_classes is the same reference across calls (module constant)', () => {
     const { grid_classes: a } = useCardGrid('base')
     const { grid_classes: b } = useCardGrid('xl')
     expect(a).toBe(b)
@@ -63,7 +63,7 @@ describe('useCardGrid', () => {
     expect(grid_style.value.gridTemplateColumns).toBe('repeat(auto-fill, 221px)')
   })
 
-  test('accepts a ref and reacts to changes [obligation]', () => {
+  test('accepts a ref and reacts to changes', () => {
     const size = ref('base')
     const { grid_style } = useCardGrid(size)
 
@@ -88,20 +88,20 @@ describe('useCardGrid', () => {
     expect(grid_style).toHaveProperty('value')
   })
 
-  // ── columns — floor((width+gap)/(cellWidth+gap)), min 1 [obligation] ──────
+  // ── columns — floor((width+gap)/(cellWidth+gap)), min 1 ──────
   // xl: cell_width=260, gap=8
 
-  test('columns returns 1 when container_width is 0 [obligation]', () => {
+  test('columns returns 1 when container_width is 0', () => {
     const { columns } = useCardGrid('xl', 0, 5)
     expect(columns.value).toBe(1)
   })
 
-  test('columns returns 1 when container_width is negative [obligation]', () => {
+  test('columns returns 1 when container_width is negative', () => {
     const { columns } = useCardGrid('xl', -1, 5)
     expect(columns.value).toBe(1)
   })
 
-  test('columns = max(1, floor((width+gap)/(cellWidth+gap))) [obligation]', () => {
+  test('columns = max(1, floor((width+gap)/(cellWidth+gap)))', () => {
     // xl: (800+8)/(260+8) = 808/268 ≈ 3.01 → floor=3 → max(1,3)=3
     const { columns } = useCardGrid('xl', 800, 0)
     expect(columns.value).toBe(3)
@@ -113,7 +113,7 @@ describe('useCardGrid', () => {
     expect(columns.value).toBe(3)
   })
 
-  test('columns reacts when container_width ref changes [obligation]', () => {
+  test('columns reacts when container_width ref changes', () => {
     const width = ref(800)
     const { columns } = useCardGrid('xl', width, 0)
     expect(columns.value).toBe(3)
@@ -121,9 +121,9 @@ describe('useCardGrid', () => {
     expect(columns.value).toBe(1)
   })
 
-  // ── row_count = ceil(count / columns) [obligation] ────────────────────────
+  // ── row_count = ceil(count / columns) ────────────────────────
 
-  test('row_count = ceil(item_count / columns) [obligation]', () => {
+  test('row_count = ceil(item_count / columns)', () => {
     // xl, width=800 → columns=3; ceil(5/3)=2
     const { row_count } = useCardGrid('xl', 800, 5)
     expect(row_count.value).toBe(2)
@@ -140,22 +140,22 @@ describe('useCardGrid', () => {
     expect(row_count.value).toBe(1)
   })
 
-  // ── row_pitch = cell_width*(8/7)+gap [obligation] ─────────────────────────
+  // ── row_pitch = cell_width*(8/7)+gap ─────────────────────────
 
-  test('row_pitch equals cell_width*(8/7)+gap [obligation]', () => {
+  test('row_pitch equals cell_width*(8/7)+gap', () => {
     const { cell_width, gap, row_pitch } = useCardGrid('md')
     expect(row_pitch.value).toBeCloseTo(cell_width.value * (8 / 7) + gap.value, 10)
   })
 
-  test('row_pitch for xl ≈ 305.14 (260*8/7+8) [obligation]', () => {
+  test('row_pitch for xl ≈ 305.14 (260*8/7+8)', () => {
     const { row_pitch } = useCardGrid('xl')
     // 260*(8/7)+8 = 297.143…+8 = 305.143…
     expect(row_pitch.value).toBeCloseTo(305.143, 2)
   })
 
-  // ── itemPosition — left-justified, partial rows share full-row offset [obligation]
+  // ── itemPosition — left-justified, partial rows share full-row offset
 
-  test('itemPosition(0) has x = centering offset and y = 0 [obligation]', () => {
+  test('itemPosition(0) has x = centering offset and y = 0', () => {
     // xl, width=1000 → columns=3, full_row_width=3*260+2*8=796, offset_x=(1000-796)/2=102
     const { itemPosition } = useCardGrid('xl', 1000, 5)
     const p = itemPosition(0)
@@ -163,7 +163,7 @@ describe('useCardGrid', () => {
     expect(p.y).toBeCloseTo(0)
   })
 
-  test('itemPosition: partial last row is left-justified with the same left edge as full rows [obligation]', () => {
+  test('itemPosition: partial last row is left-justified with the same left edge as full rows', () => {
     // xl, width=1000 → columns=3; count=5 → row 0: [0,1,2], row 1 (partial): [3,4]
     // full_row_width=796, offset_x=102 for ALL rows including the partial one
     const { itemPosition } = useCardGrid('xl', 1000, 5)
@@ -178,7 +178,7 @@ describe('useCardGrid', () => {
     expect(p_partial_second.x).toBeCloseTo(p_full_second.x)
   })
 
-  test('itemPosition y increases by row_pitch for each successive row [obligation]', () => {
+  test('itemPosition y increases by row_pitch for each successive row', () => {
     const { itemPosition, row_pitch } = useCardGrid('xl', 1000, 6)
     const row0 = itemPosition(0).y
     const row1 = itemPosition(3).y // first item of next row (columns=3)

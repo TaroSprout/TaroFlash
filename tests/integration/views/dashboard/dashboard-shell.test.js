@@ -27,10 +27,10 @@ describe('DashboardShell (views/dashboard/dashboard-shell.vue)', () => {
     expect(right_column.find('[data-testid="left-content"]').exists()).toBe(false)
   })
 
-  // [obligation] the shell caps its own content narrower than the page column
+  // the shell caps its own content narrower than the page column
   // on wide viewports, so it claims the page anchor for the scrollbar to
   // follow it rather than stranding the bar out at the window edge.
-  test('[obligation] claims the page anchor with its own root element', async () => {
+  test('claims the page anchor with its own root element', async () => {
     let anchor
 
     const app = createApp({

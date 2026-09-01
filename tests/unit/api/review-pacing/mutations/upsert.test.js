@@ -70,19 +70,19 @@ describe('useUpsertPresetMutation — onSettled()', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['review-pacing-presets'] })
   })
 
-  test('invalidates the review-pacing-presets query on settle after an error [obligation]', () => {
+  test('invalidates the review-pacing-presets query on settle after an error', () => {
     const { onSettled } = config()
     onSettled(undefined, new Error('boom'))
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['review-pacing-presets'] })
   })
 
-  test('also invalidates the decks query on settle — editing a preset re-paces every deck following it [obligation]', () => {
+  test('also invalidates the decks query on settle — editing a preset re-paces every deck following it', () => {
     const { onSettled } = config()
     onSettled()
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })
   })
 
-  test('also invalidates the decks query on settle after an error [obligation]', () => {
+  test('also invalidates the decks query on settle after an error', () => {
     const { onSettled } = config()
     onSettled(undefined, new Error('boom'))
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'] })

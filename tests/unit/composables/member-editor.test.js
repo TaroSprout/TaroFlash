@@ -78,7 +78,7 @@ describe('useMemberEditor', () => {
     expect(editor.plan.value).toBe('free')
   })
 
-  test('seeds draft.preferences verbatim from the store (already resolved upstream) [obligation]', () => {
+  test('seeds draft.preferences verbatim from the store (already resolved upstream)', () => {
     mockMember.preferences = {
       accessibility: { left_hand: true },
       audio: { muted: false, interface_sounds: 2, hover_sounds: 3 },
@@ -94,7 +94,7 @@ describe('useMemberEditor', () => {
     expect(editor.draft.preferences).toEqual(mockMember.preferences)
   })
 
-  test('seeds draft.cover_config from member_store.cover (persisted value) [obligation]', () => {
+  test('seeds draft.cover_config from member_store.cover (persisted value)', () => {
     const editor = useMemberEditor()
     expect(editor.draft.cover_config).toEqual({
       palette: 'green',
@@ -102,7 +102,7 @@ describe('useMemberEditor', () => {
     })
   })
 
-  test('reopening with a previously-saved cover seeds that cover, not hardcoded defaults [obligation]', () => {
+  test('reopening with a previously-saved cover seeds that cover, not hardcoded defaults', () => {
     mockMember.cover = { palette: 'red', pattern: 'wave' }
     const editor = useMemberEditor()
     expect(editor.draft.cover_config).toEqual({
@@ -128,13 +128,13 @@ describe('useMemberEditor', () => {
     expect(editor.is_dirty.value).toBe(true)
   })
 
-  test('is_dirty flips to true when only draft.cover_config.palette changes, rest untouched [obligation]', () => {
+  test('is_dirty flips to true when only draft.cover_config.palette changes, rest untouched', () => {
     const editor = useMemberEditor()
     editor.draft.cover_config.palette = 'red'
     expect(editor.is_dirty.value).toBe(true)
   })
 
-  test('is_dirty flips to true when only draft.cover_config.pattern changes [obligation]', () => {
+  test('is_dirty flips to true when only draft.cover_config.pattern changes', () => {
     const editor = useMemberEditor()
     editor.draft.cover_config.pattern = 'wave'
     expect(editor.is_dirty.value).toBe(true)
@@ -181,7 +181,7 @@ describe('useMemberEditor', () => {
     })
   })
 
-  test('saveMember includes cover_config in the upsert payload when only cover changed [obligation]', async () => {
+  test('saveMember includes cover_config in the upsert payload when only cover changed', async () => {
     const editor = useMemberEditor()
     editor.draft.cover_config.palette = 'red'
     const result = await editor.saveMember()
@@ -202,7 +202,7 @@ describe('useMemberEditor', () => {
     expect(result).toBe('error')
   })
 
-  test('saveMember returns "duplicate-name" on a 23505 members_display_name_key violation [obligation]', async () => {
+  test('saveMember returns "duplicate-name" on a 23505 members_display_name_key violation', async () => {
     const pgError = Object.assign(
       new Error('duplicate key value violates unique constraint "members_display_name_key"'),
       {
@@ -216,7 +216,7 @@ describe('useMemberEditor', () => {
     expect(result).toBe('duplicate-name')
   })
 
-  test('saveMember returns "error" (not duplicate-name) for a 23505 on a different constraint [obligation]', async () => {
+  test('saveMember returns "error" (not duplicate-name) for a 23505 on a different constraint', async () => {
     const pgError = Object.assign(
       new Error('duplicate key value violates unique constraint "members_stripe_customer_id_key"'),
       { code: '23505' }
@@ -233,7 +233,7 @@ describe('useMemberEditor', () => {
     expect(editor.saving).toBe(mockIsLoading)
   })
 
-  test('rebases the draft on a successful save, so is_dirty clears without closing [obligation]', async () => {
+  test('rebases the draft on a successful save, so is_dirty clears without closing', async () => {
     const editor = useMemberEditor()
     editor.draft.display_name = 'Renamed'
     expect(editor.is_dirty.value).toBe(true)
@@ -243,7 +243,7 @@ describe('useMemberEditor', () => {
     expect(editor.is_dirty.value).toBe(false)
   })
 
-  describe('resetChanges [obligation]', () => {
+  describe('resetChanges', () => {
     test('restores draft to its store-seeded values', () => {
       const editor = useMemberEditor()
 
@@ -263,7 +263,7 @@ describe('useMemberEditor', () => {
       })
     })
 
-    test('is_dirty is false again after resetChanges, across display_name/preferences/cover edits [obligation]', () => {
+    test('is_dirty is false again after resetChanges, across display_name/preferences/cover edits', () => {
       const editor = useMemberEditor()
 
       editor.draft.display_name = 'Renamed'

@@ -109,12 +109,12 @@ describe('FeedbackBoard — content', () => {
     )
   })
 
-  test('opts the window body into scroll_body [obligation]', () => {
+  test('opts the window body into scroll_body', () => {
     const { wrapper } = mountBoard()
     expect(wrapper.findComponent(AppWindow).props('scroll_body')).toBe(true)
   })
 
-  test('renders the submit button inside the app-window footer, not the scrolling body [obligation]', () => {
+  test('renders the submit button inside the app-window footer, not the scrolling body', () => {
     const { wrapper } = mountBoard()
     const footer = wrapper.find('[data-testid="app-window__footer"]')
     expect(footer.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
@@ -127,9 +127,9 @@ describe('FeedbackBoard — content', () => {
   })
 })
 
-// ── Loading state [obligation] ───────────────────────────────────────────────
+// ── Loading state ───────────────────────────────────────────────
 
-describe('FeedbackBoard — loading state [obligation]', () => {
+describe('FeedbackBoard — loading state', () => {
   test('renders feedback-skeleton while the query status is pending, not the card list', () => {
     mockStatus.value = 'pending'
     mockItems.value = [{ id: 1 }]
@@ -165,7 +165,7 @@ describe('FeedbackBoard — loading state [obligation]', () => {
     expect(wrapper.find('[data-testid="feedback-board__submit-button"]').exists()).toBe(true)
   })
 
-  test('the submit button stays pressable while the query is pending [obligation]', async () => {
+  test('the submit button stays pressable while the query is pending', async () => {
     mockStatus.value = 'pending'
     modalOpenMock.mockReset()
     const { wrapper } = mountBoard()
@@ -179,14 +179,14 @@ describe('FeedbackBoard — loading state [obligation]', () => {
   })
 })
 
-// ── Fixed geometry [obligation] ───────────────────────────────────────────────
+// ── Fixed geometry ───────────────────────────────────────────────
 // The board is the one window that pins its own width and height, so the
 // breakpoint that switches those on has to be wider than the width itself —
 // gate them any earlier and the window is wider than the screen showing it.
 // The utility names are the only signal for this: the sizes never render in
 // this environment, and nothing else records which breakpoint owns them.
 
-describe('FeedbackBoard — fixed size [obligation]', () => {
+describe('FeedbackBoard — fixed size', () => {
   function rootClasses(wrapper) {
     return wrapper.find('[data-testid="feedback-board"]').classes()
   }
@@ -205,7 +205,7 @@ describe('FeedbackBoard — fixed size [obligation]', () => {
     expect(rootClasses(wrapper)).toEqual(expect.arrayContaining(['msm:w-170', 'msm:h-196']))
   })
 
-  test('leaves the gap below the wall to the footer, not the body [obligation]', () => {
+  test('leaves the gap below the wall to the footer, not the body', () => {
     const { wrapper } = mountBoard()
     const body = wrapper.find('[data-testid="feedback-board__body"]').classes()
 
@@ -226,7 +226,7 @@ describe('FeedbackBoard — close wiring', () => {
 
 // ── Submit dialog wiring ─────────────────────────────────────────────────────
 
-describe('FeedbackBoard — submit dialog wiring [obligation]', () => {
+describe('FeedbackBoard — submit dialog wiring', () => {
   beforeEach(() => {
     modalOpenMock.mockReset()
     mockEmitSfx.mockClear()
@@ -241,20 +241,20 @@ describe('FeedbackBoard — submit dialog wiring [obligation]', () => {
     })
   })
 
-  test('pressing the submit button plays dialog.open-chime [obligation]', async () => {
+  test('pressing the submit button plays dialog.open-chime', async () => {
     const { wrapper } = mountBoard()
     await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
   })
 })
 
-// ── Error state [obligation] ─────────────────────────────────────────────────
+// ── Error state ─────────────────────────────────────────────────
 // The query is mocked wholesale, so the initial pending→error transition is
 // driven the same way the pending→success one already is above: by mutating
 // the mocked status ref and letting the component's own watcher react to it.
 
-describe('FeedbackBoard — error state [obligation]', () => {
-  test('renders the error node and plays notice.error on the initial fetch failure [obligation]', async () => {
+describe('FeedbackBoard — error state', () => {
+  test('renders the error node and plays notice.error on the initial fetch failure', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
 
@@ -265,7 +265,7 @@ describe('FeedbackBoard — error state [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
-  test('retry wires to refetch and swaps the error node for the card list on success [obligation]', async () => {
+  test('retry wires to refetch and swaps the error node for the card list on success', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
     mockStatus.value = 'error'
@@ -288,7 +288,7 @@ describe('FeedbackBoard — error state [obligation]', () => {
   // component's `watch(status, ...)` never re-fires for this case — `onRetry`
   // checks `was_already_error` directly against the pre-refetch value instead
   // of relying on the watcher. →[K:query-status-holds-through-repeat-failure]
-  test('retry that fails again shakes the error message and plays ui.rejected, without changing the message text [obligation]', async () => {
+  test('retry that fails again shakes the error message and plays ui.rejected, without changing the message text', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
     mockStatus.value = 'error'
@@ -312,7 +312,7 @@ describe('FeedbackBoard — error state [obligation]', () => {
     expect(wrapper.find('[data-testid="feedback-board__error-message"]').text()).toBe(messageBefore)
   })
 
-  test('pressing the retry button plays the default press cue [obligation]', async () => {
+  test('pressing the retry button plays the default press cue', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
     mockStatus.value = 'error'
@@ -333,7 +333,7 @@ describe('FeedbackBoard — error state [obligation]', () => {
   // follows an intervening success is a genuine 'success' -> 'error'
   // transition — the watcher fires and plays the first-failure cue, not the
   // repeat one.
-  test('a failure -> success -> failure sequence replays the first-failure cue, not the repeat one [obligation]', async () => {
+  test('a failure -> success -> failure sequence replays the first-failure cue, not the repeat one', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
     mockStatus.value = 'error'
@@ -359,7 +359,7 @@ describe('FeedbackBoard — error state [obligation]', () => {
     expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.rejected')
   })
 
-  test('title, intro, and submit button stay available while the board is in the error state [obligation]', async () => {
+  test('title, intro, and submit button stay available while the board is in the error state', async () => {
     mockStatus.value = 'pending'
     const { wrapper } = mountBoard()
     mockStatus.value = 'error'
@@ -371,10 +371,10 @@ describe('FeedbackBoard — error state [obligation]', () => {
   })
 })
 
-// ── Empty state [obligation] ─────────────────────────────────────────────────
+// ── Empty state ─────────────────────────────────────────────────
 
-describe('FeedbackBoard — empty state [obligation]', () => {
-  test('renders the empty state when the query resolves to an empty list, distinct from the error state [obligation]', () => {
+describe('FeedbackBoard — empty state', () => {
+  test('renders the empty state when the query resolves to an empty list, distinct from the error state', () => {
     mockStatus.value = 'success'
     mockItems.value = []
     const { wrapper } = mountBoard()
@@ -383,7 +383,7 @@ describe('FeedbackBoard — empty state [obligation]', () => {
     expect(wrapper.find('[data-testid="feedback-board__error"]').exists()).toBe(false)
   })
 
-  test('renders the empty state when items is undefined rather than an empty array [obligation]', () => {
+  test('renders the empty state when items is undefined rather than an empty array', () => {
     mockStatus.value = 'success'
     mockItems.value = undefined
     const { wrapper } = mountBoard()
@@ -392,7 +392,7 @@ describe('FeedbackBoard — empty state [obligation]', () => {
     expect(wrapper.findAllComponents(FeedbackCardStub)).toHaveLength(0)
   })
 
-  test('title, intro, and submit button stay available while the board is empty [obligation]', () => {
+  test('title, intro, and submit button stay available while the board is empty', () => {
     mockStatus.value = 'success'
     mockItems.value = []
     const { wrapper } = mountBoard()
@@ -403,10 +403,10 @@ describe('FeedbackBoard — empty state [obligation]', () => {
   })
 })
 
-// ── Populated state [obligation] ─────────────────────────────────────────────
+// ── Populated state ─────────────────────────────────────────────
 
-describe('FeedbackBoard — populated state [obligation]', () => {
-  test('title, intro, and submit button stay available while the board shows cards [obligation]', () => {
+describe('FeedbackBoard — populated state', () => {
+  test('title, intro, and submit button stay available while the board shows cards', () => {
     mockStatus.value = 'success'
     mockItems.value = [{ id: 1 }]
     const { wrapper } = mountBoard()

@@ -54,32 +54,32 @@ describe('useMatchMedia', () => {
       expect(compiledFor('w<md')).toMatch(/^not all and \(min-width:/)
     })
 
-    test('w<mlg compiles to the L3 max-width form (not all and min-width) [obligation]', () => {
+    test('w<mlg compiles to the L3 max-width form (not all and min-width)', () => {
       expect(compiledFor('w<mlg')).toMatch(/^not all and \(min-width:/)
     })
 
-    test('w>=mlg compiles to a bare min-width form [obligation]', () => {
+    test('w>=mlg compiles to a bare min-width form', () => {
       const q = compiledFor('w>=mlg')
       expect(q).toMatch(/^\(min-width:/)
       expect(q).not.toContain('not all')
     })
 
-    test('mlg is accepted as a valid breakpoint token (no throw) [obligation]', () => {
+    test('mlg is accepted as a valid breakpoint token (no throw)', () => {
       expect(() => compiledFor('w<mlg')).not.toThrow()
       expect(() => compiledFor('w>=mlg')).not.toThrow()
     })
 
-    test('w<mxl compiles to the L3 max-width form (not all and min-width) [obligation]', () => {
+    test('w<mxl compiles to the L3 max-width form (not all and min-width)', () => {
       expect(compiledFor('w<mxl')).toMatch(/^not all and \(min-width:/)
     })
 
-    test('w>=mxl compiles to a bare min-width form [obligation]', () => {
+    test('w>=mxl compiles to a bare min-width form', () => {
       const q = compiledFor('w>=mxl')
       expect(q).toMatch(/^\(min-width:/)
       expect(q).not.toContain('not all')
     })
 
-    test('mxl is accepted as a valid breakpoint token (no throw) [obligation]', () => {
+    test('mxl is accepted as a valid breakpoint token (no throw)', () => {
       expect(() => compiledFor('w<mxl')).not.toThrow()
       expect(() => compiledFor('w>=mxl')).not.toThrow()
     })

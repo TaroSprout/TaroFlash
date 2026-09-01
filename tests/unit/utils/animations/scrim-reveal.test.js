@@ -46,7 +46,7 @@ function el(scrollHeight = 200) {
   return node
 }
 
-// ── incoming / outgoing layer selection [obligation] ──────────────────────────
+// ── incoming / outgoing layer selection ──────────────────────────
 
 describe('popScrimReveal — incoming/outgoing layer selection', () => {
   test('revealed=true fades the scrim out and pops the badge-content + fields in', () => {
@@ -72,12 +72,12 @@ describe('popScrimReveal — incoming/outgoing layer selection', () => {
   })
 })
 
-// ── collapse option [obligation] ───────────────────────────────────────────────
+// ── collapse option ───────────────────────────────────────────────
 // The height tween only runs when collapse: true (phones) — wider layouts hold
 // a stable height driven by the fields layer, opacity/scale only.
 
-describe('popScrimReveal — collapse option [obligation]', () => {
-  test('without collapse, no height tween runs and overflow is never touched [obligation]', () => {
+describe('popScrimReveal — collapse option', () => {
+  test('without collapse, no height tween runs and overflow is never touched', () => {
     popScrimReveal(el(), el(), el(150), true)
 
     expect(mockGsapSet).not.toHaveBeenCalled()
@@ -93,7 +93,7 @@ describe('popScrimReveal — collapse option [obligation]', () => {
     expect(mockGsapSet).toHaveBeenCalledWith(fields, { overflow: 'hidden' })
   })
 
-  test('collapse + revealed=true tweens height from 0 to the natural scrollHeight [obligation]', () => {
+  test('collapse + revealed=true tweens height from 0 to the natural scrollHeight', () => {
     const fields = el(240)
     popScrimReveal(el(), el(), fields, true, { collapse: true })
 
@@ -104,7 +104,7 @@ describe('popScrimReveal — collapse option [obligation]', () => {
     expect(to).toMatchObject({ height: 240 })
   })
 
-  test('collapse + revealed=false tweens height from the natural scrollHeight down to 0 [obligation]', () => {
+  test('collapse + revealed=false tweens height from the natural scrollHeight down to 0', () => {
     const fields = el(240)
     popScrimReveal(el(), el(), fields, false, { collapse: true })
 
@@ -116,13 +116,13 @@ describe('popScrimReveal — collapse option [obligation]', () => {
   })
 })
 
-// ── inline height/overflow cleanup [obligation] ────────────────────────────────
+// ── inline height/overflow cleanup ────────────────────────────────
 // Deliberate bug fix: leaving height: 0 inline after a phone collapse would
 // survive a resize to desktop and strand the panel collapsed. Cleared on
 // complete for BOTH directions.
 
-describe('popScrimReveal — clears inline height/overflow on complete, both directions [obligation]', () => {
-  test('reveal (revealed=true): onComplete resets fields.style.height and .overflow [obligation]', () => {
+describe('popScrimReveal — clears inline height/overflow on complete, both directions', () => {
+  test('reveal (revealed=true): onComplete resets fields.style.height and .overflow', () => {
     const fields = el(240)
     fields.style.height = '999px'
     fields.style.overflow = 'hidden'
@@ -136,7 +136,7 @@ describe('popScrimReveal — clears inline height/overflow on complete, both dir
     expect(fields.style.overflow).toBe('')
   })
 
-  test('hide (revealed=false): onComplete resets fields.style.height and .overflow [obligation]', () => {
+  test('hide (revealed=false): onComplete resets fields.style.height and .overflow', () => {
     const fields = el(240)
     fields.style.height = '999px'
     fields.style.overflow = 'hidden'
@@ -151,20 +151,20 @@ describe('popScrimReveal — clears inline height/overflow on complete, both dir
   })
 })
 
-// ── clearProps on incoming only [obligation] ──────────────────────────────────
+// ── clearProps on incoming only ──────────────────────────────────
 // The incoming layer's settled scale is visually a no-op but not a layout one
 // — clear it so it stops being a containing block for popovers. The outgoing
 // layer keeps its inline transform, since that's what holds it hidden.
 
-describe('popScrimReveal — clearProps on incoming only [obligation]', () => {
-  test('the incoming tween clears transform [obligation]', () => {
+describe('popScrimReveal — clearProps on incoming only', () => {
+  test('the incoming tween clears transform', () => {
     popScrimReveal(el(), el(), el(), true)
 
     const [, , to] = timelines[0].calls.fromTo[0]
     expect(to.clearProps).toBe('transform')
   })
 
-  test('the outgoing tween does not clear props [obligation]', () => {
+  test('the outgoing tween does not clear props', () => {
     popScrimReveal(el(), el(), el(), true)
 
     const [, opts] = timelines[0].calls.to[0]
