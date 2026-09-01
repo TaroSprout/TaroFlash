@@ -165,8 +165,7 @@ function paintMatchedWords(m: Map<number, CardMatch>) {
     if (base) base.textContent = el.dataset.wordText ?? ''
   })
 
-  // Apply each match: set theme attributes on the ruby element and rebuild the
-  // base span with [lead][underlined core][trail] text nodes.
+  // Rebuild the base span as lead, underlined core, trail.
   for (const [index, match] of m) {
     const el = els.get(index)
     if (!el) continue

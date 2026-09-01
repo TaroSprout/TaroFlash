@@ -120,8 +120,7 @@ function onForwardTap(e: MouseEvent) {
 }
 
 function onChapter(option: DropdownOption) {
-  // Internal chapters carry a start time to seek to; collection lessons carry an
-  // id to route to.
+  // Chapters carry a start time to seek; collection lessons carry an id to route to.
   if (use_lesson_chapters.value) emit('seek', Number(option.value))
   else emit('select-chapter', Number(option.value))
 }

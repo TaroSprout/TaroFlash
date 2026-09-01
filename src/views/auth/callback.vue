@@ -12,15 +12,13 @@ const tracking = useTracking()
 onMounted(async () => {
   await supabase.auth.getSession()
 
-  // Popup flow: the opener tab owns the navigation, so this tab just closes
-  // itself — the opener is the one that tracks completion for this leg.
+  // Popup flow: the opener owns the navigation and tracks completion, so this tab just closes.
   if (consumeOAuthPopupFlag()) {
     window.close()
     return
   }
 
-  // Redirect flow: this tab is the one that resolves, so it's the one that
-  // tracks a brand-new account before moving on.
+  // Redirect flow: this tab resolves, so it tracks a new account.
   if (await isNewAccountSession()) tracking.trackSignupCompleted()
 
   // Land on the destination stashed before the OAuth round trip, falling back to the dashboard.
