@@ -206,8 +206,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
       return
     }
 
-    // Covers the popup leg only — a redirect leg lands on /auth/callback in a
-    // fresh page load, where this function never runs.
+    // Popup leg only: a redirect lands on /auth/callback in a fresh page load.
     if (await isNewAccountSession()) tracking.trackSignupCompleted()
 
     onAuthenticated()

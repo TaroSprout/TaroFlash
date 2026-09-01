@@ -94,8 +94,7 @@ function updateBadgePosition() {
   if (!target) return
 
   const rect = target.getBoundingClientRect()
-  // Reproduces the specimen's former in-flow anchor (`-top-2 -right-2` on a relatively
-  // positioned region button) in viewport coordinates now that the badge sits on <body>.
+  // The badge sits on <body> now, so its former in-flow anchor is recomputed in viewport coordinates.
   badge_style.value = {
     top: `${rect.top - 8}px`,
     right: `${window.innerWidth - rect.right - 8}px`

@@ -14,8 +14,7 @@ const FLIP_PERSPECTIVE = 800
 export function cycleCoverCard(el: HTMLElement, onMidpoint: () => void): gsap.core.Timeline {
   const tl = gsap.timeline()
 
-  // Set the perspective before any rotation, never alongside it — the very
-  // first flip renders as a flat squish otherwise.
+  // Set perspective before any rotation, never alongside it, or the first flip squishes flat.
   tl.set(el, { transformPerspective: FLIP_PERSPECTIVE })
   tl.to(el, { duration: HOLD_DURATION })
   tl.to(el, {

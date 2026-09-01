@@ -43,8 +43,7 @@ function buildPatternStyle(
 
   return {
     '--bgx-image': `var(--bgx-${pattern})`,
-    // Don't set a fill here — leaving it unset is what lets the cover's own
-    // palette tint its texture.
+    // Leave the fill unset, or the cover's palette can't tint its texture.
     '--bgx-opacity-light': options.patternOpacity ?? token.opacity,
     '--bgx-opacity-dark': options.patternOpacityDark ?? options.patternOpacity ?? token.opacityDark,
     '--bgx-size': options.patternSize ?? token.size

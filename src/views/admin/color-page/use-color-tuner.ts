@@ -170,8 +170,7 @@ export function useColorTuner() {
 
     if (spec.ground !== 'page-surface') return shadeOf(roleId(mode, station, spec.ground))
 
-    // The page has nothing behind it, so its own surface is judged against nothing rather than
-    // against itself.
+    // The page has nothing behind it, so its surface is judged against nothing.
     return station === 'page' ? null : shadeOf(roleId(mode, 'page', 'surface'))
   }
 
@@ -350,8 +349,7 @@ export function useColorTuner() {
     const trimmed = name.trim()
     if (!shade || trimmed === '' || isNameTaken(trimmed, id)) return false
 
-    // Committing a name that already reads the same banks an undo step that reverses nothing, and
-    // the field re-commits on both Enter and the blur that follows it.
+    // The field commits on Enter and again on blur, so an unchanged name would bank an empty undo.
     if (shade.name === trimmed) return true
 
     commit({ key: 'admin.color-tuner.change.rename', params: { name: trimmed } }, () => {
