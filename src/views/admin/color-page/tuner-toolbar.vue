@@ -119,13 +119,6 @@ function onToggleExport() {
           data-station="float"
           class="flex w-160 max-w-[80vw] flex-col gap-3 rounded-4 bg-surface p-4"
         >
-          <!-- This popover teleports to the body, outside the admin modal the scroll lock keeps
-               scrollable, so this text opts itself back in or its handle is decorative. The
-               attribute rides the region rather than the box inside it — the region owns the
-               element that actually scrolls. →[K:scroll-lock-teleport-opt-in]
-
-               `--scroll-content-inset` is the `p-3` the text well already had, so the handle
-               draws in that same band and the text stops exactly where it did before. -->
           <scroll-region
             data-testid="tuner-toolbar__export-text"
             data-scroll-live

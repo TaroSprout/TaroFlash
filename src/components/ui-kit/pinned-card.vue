@@ -35,14 +35,6 @@ defineSlots<{
     </div>
 
     <div data-testid="ui-pinned-card__card" class="rotate-4 drop-shadow-sm">
-      <!-- The swing is a nested rotation so the clip pivot can be set at rest as well as on
-           hover: transform-origin isn't animatable, so an origin that only appears on hover
-           relocates the card in one frame before the rotation starts. The outer rotate-4 keeps
-           its own default origin, so the tuned resting position is untouched.
-           The pivot is the paperclip's own centre, tracked from how the clip above is placed:
-           its box sits right-15 (60px) in from this edge, and -translate-x-1/2 on a w-16 icon
-           puts that box's centre a further 64px left, so 124px from the right edge, level with
-           the card's top. -->
       <div
         data-testid="ui-pinned-card__swing"
         :class="

@@ -149,9 +149,6 @@ watch(
       </button>
     </div>
 
-    <!-- The role name is a token, not copy, so the badge shows it verbatim rather than through i18n.
-         Teleported to <body> so it renders above the specimen's `overflow-hidden` glyph box instead
-         of being clipped by it. -->
     <Teleport v-if="badge_role" to="body">
       <span
         ref="role-specimen-badge"
