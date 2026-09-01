@@ -9,12 +9,8 @@ type MemberAvatarImageProps = {
 
 const { avatar } = defineProps<MemberAvatarImageProps>()
 
-// `undefined` marks a key still resolving; `null` marks either no key or a
-// key that resolved to nothing — both fall back to the frog.
 const lazyUrl = ref<string | null | undefined>(undefined)
-// Tracks the real avatar's own paint, not just its URL resolution — the
-// placeholder has to survive the gap between "url known" and "image
-// painted", or a set-but-slow avatar shows a blank frame.
+// The placeholder must survive the gap between url-known and image-painted.
 const loaded = ref(false)
 const imgEl = ref<HTMLImageElement>()
 

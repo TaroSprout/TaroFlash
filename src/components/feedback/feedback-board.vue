@@ -23,9 +23,8 @@ function onSubmitPress() {
   modal.open(FeedbackSubmitDialog, { backdrop: true, mode: 'popup' })
 }
 
-// Trap: a repeat failure holds `status` at 'error' on both sides, so the
-// watch below never sees a change to react to →[K:query-status-holds-through-repeat-failure]
-// — check it directly once the refetch settles instead.
+// A repeat failure holds `status` at 'error' on both sides, so check it after the refetch
+// settles rather than watching for a change. →[K:query-status-holds-through-repeat-failure]
 async function onRetry() {
   const was_already_error = status.value === 'error'
   await refetch()
@@ -35,10 +34,6 @@ async function onRetry() {
   if (error_message.value) shake(error_message.value)
 }
 
-// Fires for the initial load failure, and for a failure that follows a
-// success — both are genuine transitions into 'error', so they get the
-// first-failure cue. A same-value error->error transition never reaches
-// here; onRetry above handles that repeat case directly.
 watch(status, (current) => {
   if (current !== 'error') return
 

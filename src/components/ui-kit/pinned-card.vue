@@ -3,8 +3,7 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 
 type UiPinnedCardProps = {
   tucked?: boolean
-  // Opt-in: swings the card toward upright on hover, pivoting at the clip.
-  // Off by default so member settings and the splash preview stay static.
+  // Swing the card toward upright on hover, pivoting at the clip.
   hover_lift?: boolean
 }
 

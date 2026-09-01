@@ -32,8 +32,6 @@ export function useCoverImage(
   const upload_mutation = useUploadImageMutation()
 
   const file_input = shallowRef<HTMLInputElement | null>(null)
-  // Bound by the rendered <img> (card-cover.vue), so onRemove has a handle to
-  // collapse before the image is cleared.
   const image_el = shallowRef<HTMLImageElement | null>(null)
   // The picked File, held out of the draft (which is serialized on save) until
   // Save uploads it. Its objectURL lives in cover_config.image_path meanwhile.

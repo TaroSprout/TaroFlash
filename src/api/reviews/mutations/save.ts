@@ -9,7 +9,7 @@ export type SaveReviewVars = {
   log: ReviewLog
 }
 
-// Trap: a missed invalidation fails silently →[K:silent-stale-cache]
+// A missed invalidation fails silently — nothing errors, the data just goes stale. →[K:silent-stale-cache]
 export function useSaveReviewMutation() {
   return useMutation({
     mutation: (vars: SaveReviewVars) => saveReview(vars.card_id, vars.card, vars.log)

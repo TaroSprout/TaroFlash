@@ -112,11 +112,7 @@
      rendition is in stations.css. */
   --color-raised-pattern: var(--color-brown-500);
 
-  /* The flashcard surface, the text on it, and the hairline drawn on it — a
-     fixed exception, the same on every station because the card carries its own
-     identity. card-line is the group's line member: a faint bevel a shade off
-     the fill, NOT --color-on-card, which is body-text weight and reads as a
-     rule. Dark renditions of all three are in stations.css. */
+  /* The card's own fill, ink and hairline — fixed on every station. */
   --color-card: var(--color-white);
   --color-on-card: var(--color-brown-700);
   --color-card-line: var(--color-brown-100);
