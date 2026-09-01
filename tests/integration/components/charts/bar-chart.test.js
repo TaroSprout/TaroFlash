@@ -27,9 +27,9 @@ describe('UiBarChart — rendering', () => {
   })
 })
 
-// ── Labels [obligation] ────────────────────────────────────────────────────────
+// ── Labels ────────────────────────────────────────────────────────
 
-describe('UiBarChart — labels [obligation]', () => {
+describe('UiBarChart — labels', () => {
   test('bar label text is rendered for each bar', () => {
     const bars = [
       { value: 5, label: 'Mon' },
@@ -49,9 +49,9 @@ describe('UiBarChart — labels [obligation]', () => {
   })
 })
 
-// ── Proportional heights [obligation] ──────────────────────────────────────────
+// ── Proportional heights ──────────────────────────────────────────
 
-describe('UiBarChart — proportional heights [obligation]', () => {
+describe('UiBarChart — proportional heights', () => {
   test('tallest bar has height equal to trackHeight', () => {
     const bars = [
       { value: 10, label: 'max' },
@@ -88,9 +88,9 @@ describe('UiBarChart — proportional heights [obligation]', () => {
   })
 })
 
-// ── Label truncation (single-line) [obligation] ────────────────────────────────
+// ── Label truncation (single-line) ────────────────────────────────
 
-describe('UiBarChart — label is single-line (truncate) [obligation]', () => {
+describe('UiBarChart — label is single-line (truncate)', () => {
   test('label element has truncate class (single-line, not wrapped)', () => {
     const wrapper = makeWrapper([{ value: 5, label: 'A very long label that could wrap' }])
 

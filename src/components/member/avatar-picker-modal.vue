@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, reactive } from 'vue'
+import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import AvatarImage from './avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { AVATAR_KEYS, loadAvatarUrl } from './avatars'
+import { AVATAR_KEYS } from './avatars'
 import { emitSfx } from '@/sfx/bus'
 
 type AvatarPickerModalProps = {
@@ -16,11 +16,9 @@ type AvatarPickerModalProps = {
 const { selected, close } = defineProps<AvatarPickerModalProps>()
 
 const { t } = useI18n()
-const loaded = reactive(new Set<string>())
 
 onMounted(() => {
   emitSfx('dialog.open-chime')
-  AVATAR_KEYS.forEach((avatar) => loadAvatarUrl(avatar)?.then(() => loaded.add(avatar)))
 })
 
 function onAvatarSelect(avatar: string) {
@@ -43,7 +41,10 @@ function onAvatarSelect(avatar: string) {
     @close="close()"
   >
     <dialog-card-body data-testid="avatar-picker-modal__scroll-area">
-      <div data-testid="avatar-picker-modal__grid" class="grid grid-cols-4 gap-3 pt-2">
+      <div
+        data-testid="avatar-picker-modal__grid"
+        class="grid grid-cols-[repeat(auto-fill,min(7.5rem,100%))] justify-center gap-3 pt-2"
+      >
         <button
           v-for="avatar in AVATAR_KEYS"
           :key="avatar"
@@ -53,12 +54,7 @@ function onAvatarSelect(avatar: string) {
           class="rounded-10 cursor-pointer hover:bg-(--color-accent) hover:bgx-diagonal-stripes hover:bgx-slide data-selected:bg-(--color-accent) data-selected:bgx-diagonal-stripes data-selected:border-6 border-knockout relative aspect-square p-2"
           @click="onAvatarSelect(avatar)"
         >
-          <div
-            v-if="!loaded.has(avatar)"
-            data-testid="avatar-picker-modal__skeleton"
-            class="h-full w-full rounded-8 animate-pulse bg-skeleton bgx-diagonal-stripes"
-          />
-          <avatar-image v-else :avatar="avatar" class="h-full w-full" />
+          <avatar-image :avatar="avatar" class="h-full w-full rounded-8 overflow-hidden" />
 
           <div
             v-if="avatar === selected"

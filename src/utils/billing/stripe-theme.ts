@@ -90,8 +90,7 @@ export function getStripeAppearance(host: HTMLElement): Appearance {
         borderColor: accent,
         backgroundColor: surface
       },
-      // Pin these back to the base text colour — Stripe's own selected-tab
-      // tint is too faint to read against our surface.
+      // Stripe's selected-tab tint is too faint on our surface, so pin it to base ink.
       '.TabLabel--selected': {
         color: text
       },

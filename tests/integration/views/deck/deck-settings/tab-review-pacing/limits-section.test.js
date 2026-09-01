@@ -64,7 +64,7 @@ describe('LimitsSection — rendering', () => {
     expect(wrapper.find('[data-testid="tab-review-pacing__max-new"]').exists()).toBe(true)
   })
 
-  test('reads its shared instance from the pacingFieldsKey injection, not by calling usePacingFields directly [obligation]', () => {
+  test('reads its shared instance from the pacingFieldsKey injection, not by calling usePacingFields directly', () => {
     const { wrapper, max_reviews_per_day } = makeWrapper()
     const spinbox = wrapper.find(
       '[data-testid="tab-review-pacing__max-reviews"] [data-testid="ui-spinbox"]'
@@ -104,10 +104,10 @@ describe('LimitsSection — writes through the injected computeds', () => {
   })
 })
 
-// ── reset wiring [obligation] ──────────────────────────────────────────────────
+// ── reset wiring ──────────────────────────────────────────────────
 
-describe('LimitsSection — reset wiring [obligation]', () => {
-  test('resetting the max-reviews row calls fields.max_reviews_per_day.reset [obligation]', async () => {
+describe('LimitsSection — reset wiring', () => {
+  test('resetting the max-reviews row calls fields.max_reviews_per_day.reset', async () => {
     const resetMaxReviewsPerDay = vi.fn()
     const { wrapper } = makeWrapper({
       fieldOverrides: {
@@ -122,7 +122,7 @@ describe('LimitsSection — reset wiring [obligation]', () => {
     expect(resetMaxReviewsPerDay).toHaveBeenCalledOnce()
   })
 
-  test('resetting the max-new row calls fields.max_new_per_day.reset [obligation]', async () => {
+  test('resetting the max-new row calls fields.max_new_per_day.reset', async () => {
     const resetMaxNewPerDay = vi.fn()
     const { wrapper } = makeWrapper({
       fieldOverrides: {

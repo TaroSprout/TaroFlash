@@ -13,9 +13,10 @@ type DeckPinnedPreviewProps = {
   tucked?: boolean
   cover_editing?: boolean
   cover_image?: CoverImage
+  hover_lift?: boolean
 }
 
-const { cover, card_attributes, side, front_text, back_text, tucked } =
+const { cover, card_attributes, side, front_text, back_text, tucked, hover_lift } =
   defineProps<DeckPinnedPreviewProps>()
 
 const emit = defineEmits<{
@@ -24,7 +25,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <ui-pinned-card data-testid="deck-pinned-preview" :tucked="tucked">
+  <ui-pinned-card data-testid="deck-pinned-preview" :tucked="tucked" :hover_lift="hover_lift">
     <template #backdrop>
       <card
         data-testid="deck-pinned-preview__shadow-card"

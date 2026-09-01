@@ -100,7 +100,7 @@ describe('routeSlideLeave', () => {
 // ── routeSlideEnter — leave_pending = false (obligation 1) ────────────────────
 
 describe('routeSlideEnter — leave_pending is false (no preceding leave)', () => {
-  test('calls done immediately without running GSAP animation [obligation]', async () => {
+  test('calls done immediately without running GSAP animation', async () => {
     const { routeSlideEnter } = await fresh()
     const animation_done = ref(false)
     const done = vi.fn()
@@ -111,7 +111,7 @@ describe('routeSlideEnter — leave_pending is false (no preceding leave)', () =
     expect(mockFromTo).not.toHaveBeenCalled()
   })
 
-  test('sets animation_done to true immediately when skipping [obligation]', async () => {
+  test('sets animation_done to true immediately when skipping', async () => {
     const { routeSlideEnter } = await fresh()
     const animation_done = ref(false)
 
@@ -124,7 +124,7 @@ describe('routeSlideEnter — leave_pending is false (no preceding leave)', () =
 // ── routeSlideEnter — is_initial = true gate (obligation 2) ───────────────────
 
 describe('routeSlideEnter — is_initial is true (first page load)', () => {
-  test('calls done immediately on initial render [obligation]', async () => {
+  test('calls done immediately on initial render', async () => {
     const { routeSlideEnter } = await fresh()
     const done = vi.fn()
 
@@ -134,7 +134,7 @@ describe('routeSlideEnter — is_initial is true (first page load)', () => {
     expect(mockFromTo).not.toHaveBeenCalled()
   })
 
-  test('sets animation_done to true immediately on initial render [obligation]', async () => {
+  test('sets animation_done to true immediately on initial render', async () => {
     const { routeSlideEnter } = await fresh()
     const animation_done = ref(false)
 
@@ -143,7 +143,7 @@ describe('routeSlideEnter — is_initial is true (first page load)', () => {
     expect(animation_done.value).toBe(true)
   })
 
-  test('skips animation even when a leave happened to fire before [obligation]', async () => {
+  test('skips animation even when a leave happened to fire before', async () => {
     const { routeSlideLeave, routeSlideEnter } = await fresh()
     // Trigger a leave to set leave_pending = true
     routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
@@ -161,7 +161,7 @@ describe('routeSlideEnter — is_initial is true (first page load)', () => {
 // ── routeSlideEnter — full animation path (obligation 5) ──────────────────────
 
 describe('routeSlideEnter — preceded by a leave (animation path)', () => {
-  test('runs GSAP fromTo animation when leave_pending and not initial [obligation]', async () => {
+  test('runs GSAP fromTo animation when leave_pending and not initial', async () => {
     const { routeSlideLeave, routeSlideEnter } = await fresh()
     const el = document.createElement('div')
 
@@ -173,7 +173,7 @@ describe('routeSlideEnter — preceded by a leave (animation path)', () => {
     expect(mockFromTo).toHaveBeenCalledOnce()
   })
 
-  test('sets animation_done to true inside onComplete [obligation]', async () => {
+  test('sets animation_done to true inside onComplete', async () => {
     const { routeSlideLeave, routeSlideEnter } = await fresh()
     const animation_done = ref(false)
 
@@ -183,7 +183,7 @@ describe('routeSlideEnter — preceded by a leave (animation path)', () => {
     expect(animation_done.value).toBe(true)
   })
 
-  test('calls done inside onComplete [obligation]', async () => {
+  test('calls done inside onComplete', async () => {
     const { routeSlideLeave, routeSlideEnter } = await fresh()
     const done = vi.fn()
 

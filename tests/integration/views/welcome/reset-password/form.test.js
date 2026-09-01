@@ -59,8 +59,7 @@ function mountForm(props = {}) {
       ...props
     },
     global: {
-      stubs: { UiInput: UiInputStub, UiButton: UiButtonStub },
-      directives: { sfx: {} }
+      stubs: { UiInput: UiInputStub, UiButton: UiButtonStub }
     }
   })
 }
@@ -103,29 +102,29 @@ describe('ResetPasswordForm (reset-password/form.vue)', () => {
     expect(wrapper.emitted('update:confirmPassword')).toEqual([['hunter2222']])
   })
 
-  // ── submit wiring — regression: submit button lives outside <form> [obligation]
+  // ── submit wiring — regression: submit button lives outside <form>
 
-  describe('submit button lives outside the <form> [obligation]', () => {
-    test('the visible submit button is NOT a descendant of the <form> element [obligation]', () => {
+  describe('submit button lives outside the <form>', () => {
+    test('the visible submit button is NOT a descendant of the <form> element', () => {
       const wrapper = mountForm()
       const form = wrapper.find('form')
       expect(form.find('[data-testid="reset-password-modal__submit"]').exists()).toBe(false)
     })
 
-    test('clicking the visible submit button emits "submit" exactly once [obligation]', async () => {
+    test('clicking the visible submit button emits "submit" exactly once', async () => {
       const wrapper = mountForm()
       await wrapper.find('[data-testid="reset-password-modal__submit"]').trigger('click')
       expect(wrapper.emitted('submit')).toHaveLength(1)
     })
 
-    test('a hidden sr-only submit button inside the form supports Enter-key submission [obligation]', () => {
+    test('a hidden sr-only submit button inside the form supports Enter-key submission', () => {
       const wrapper = mountForm()
       const hiddenBtn = wrapper.find('form button[type="submit"]')
       expect(hiddenBtn.exists()).toBe(true)
       expect(hiddenBtn.attributes('aria-hidden')).toBe('true')
     })
 
-    test('submitting the form (Enter key) emits "submit" exactly once [obligation]', async () => {
+    test('submitting the form (Enter key) emits "submit" exactly once', async () => {
       const wrapper = mountForm()
       await wrapper.find('form').trigger('submit')
       expect(wrapper.emitted('submit')).toHaveLength(1)

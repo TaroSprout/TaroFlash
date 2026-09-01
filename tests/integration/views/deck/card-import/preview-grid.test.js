@@ -52,9 +52,9 @@ describe('card-import/preview-grid', () => {
     expect(wrapper.findAll('[data-testid="card-import-preview-grid__item"]')).toHaveLength(0)
   })
 
-  // ── Fixed sizing, ignoring the deck's saved grid_size [obligation] ────────
+  // ── Fixed sizing, ignoring the deck's saved grid_size ────────
 
-  test('sizes cards at a fixed md, ignoring a saved grid_size of xl [obligation]', () => {
+  test('sizes cards at a fixed md, ignoring a saved grid_size of xl', () => {
     useCardGridMock.mockClear()
     shallowMount(PreviewGrid, {
       global: {

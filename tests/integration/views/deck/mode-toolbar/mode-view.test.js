@@ -51,14 +51,14 @@ describe('mode-toolbar/mode-view', () => {
   })
 
   // SearchBar replaced the old static search icon button in this PR.
-  test('renders SearchBar in the toolbar left slot [obligation]', () => {
+  test('renders SearchBar in the toolbar left slot', () => {
     const wrapper = mount()
     expect(wrapper.findComponent(SearchBar).exists()).toBe(true)
   })
 
   // The new-card orchestration (setMode → chime → addCardAtTop) lives in the
   // controller's `newCard`; mode-view only delegates to it.
-  test('clicking new-card invokes the injected newCard action [obligation]', async () => {
+  test('clicking new-card invokes the injected newCard action', async () => {
     const newCard = vi.fn()
     const wrapper = mount({ editor: makeEditor({ newCard }) })
     await wrapper.find('[data-testid="mode-view__add-card-button"]').trigger('click')

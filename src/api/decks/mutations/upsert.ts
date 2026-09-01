@@ -1,6 +1,6 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
 import { upsertDeck } from '../db'
-import { useMemberDeckCountQuery } from '../queries/count'
+import { MEMBER_DECK_COUNT_QUERY } from '../queries/count'
 import { useMemberStore } from '@/stores/member'
 
 type QueryCache = ReturnType<typeof useQueryCache>
@@ -57,17 +57,17 @@ function removePendingDeck(queryCache: QueryCache, client_key: string) {
 export function useUpsertDeckMutation() {
   const queryCache = useQueryCache()
   const member = useMemberStore()
-  const deck_count_query = useMemberDeckCountQuery()
 
   return useMutation({
     mutation: async (deck: Deck) => {
       if (deck.id === undefined) {
-        await deck_count_query.refresh()
-        // Trap: decks barrel cycle drops runtime exports →[K:decks-barrel-cycle-drops-runtime-exports]
+        // Reach the entry through the cache: mounting a query here would overwrite the live reader's options.
+        const count_entry = queryCache.ensure(MEMBER_DECK_COUNT_QUERY)
+        await queryCache.fetch(count_entry)
         // Mirrors useCan().createDeck — duplicated rather than imported, since
-        // that composable pulls in this module's own barrel.
+        // that composable pulls in this module's own barrel. →[K:decks-barrel-cycle-drops-runtime-exports]
         const limit = member.deck_limit
-        const count = deck_count_query.data.value ?? 0
+        const count = count_entry.state.value.data ?? 0
         if (limit !== null && count >= limit) throw new DeckLimitError()
       }
 
@@ -81,10 +81,7 @@ export function useUpsertDeckMutation() {
       if (client_key) removePendingDeck(queryCache, client_key)
     },
     onSettled: (_data, error, deck) => {
-      // A failed write touched nothing server-side, and onError already undid
-      // the optimistic insert — refetching here only sends a doomed request
-      // while offline, which surfaces its own error toast on top of the one
-      // this failure already showed.
+      // Nothing landed server-side and onError already rolled back, so a refetch only doubles the toast.
       if (error) return
 
       queryCache.invalidateQueries({ key: ['decks'] })

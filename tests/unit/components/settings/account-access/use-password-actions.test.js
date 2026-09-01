@@ -109,21 +109,21 @@ describe('usePasswordActions — validation', () => {
     expect(password_actions.errors.value.password).toBeUndefined()
   })
 
-  test('[obligation] plays the stuck sfx when client-side validation fails', async () => {
+  test('plays the stuck sfx when client-side validation fails', async () => {
     const password_actions = usePasswordActions()
     await password_actions.submit()
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
   })
 
-  test('[obligation] does NOT fire a notice-store error for a validation failure', async () => {
+  test('does NOT fire a notice-store error for a validation failure', async () => {
     const password_actions = usePasswordActions()
     await password_actions.submit()
     expect(mockNotice.error).not.toHaveBeenCalled()
   })
 })
 
-describe('usePasswordActions — submit ignores re-entry while loading [obligation]', () => {
-  test('[obligation] a second submit() call while the first is in flight is a no-op', async () => {
+describe('usePasswordActions — submit ignores re-entry while loading', () => {
+  test('a second submit() call while the first is in flight is a no-op', async () => {
     let resolveVerify
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockReturnValueOnce(
@@ -148,8 +148,8 @@ describe('usePasswordActions — submit ignores re-entry while loading [obligati
   })
 })
 
-describe('usePasswordActions — current-password branch (session.hasPassword) [obligation]', () => {
-  test('[obligation] verifies the current password before applying the change', async () => {
+describe('usePasswordActions — current-password branch (session.hasPassword)', () => {
+  test('verifies the current password before applying the change', async () => {
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockResolvedValueOnce('success')
     mockSession.updatePassword.mockResolvedValueOnce('success')
@@ -166,7 +166,7 @@ describe('usePasswordActions — current-password branch (session.hasPassword) [
     expect(result).toBe('success')
   })
 
-  test('wrong current password: updatePassword is never called, error lands on current_password [obligation]', async () => {
+  test('wrong current password: updatePassword is never called, error lands on current_password', async () => {
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockResolvedValueOnce('invalid-credentials')
     const password_actions = usePasswordActions()
@@ -201,8 +201,8 @@ describe('usePasswordActions — current-password branch (session.hasPassword) [
   })
 })
 
-describe('usePasswordActions — Google-only two-step flow [obligation]', () => {
-  test('[obligation] first submit only requests a code and advances step to "code" — does not call updatePassword', async () => {
+describe('usePasswordActions — Google-only two-step flow', () => {
+  test('first submit only requests a code and advances step to "code" — does not call updatePassword', async () => {
     mockSession.hasPassword = false
     mockSession.requestReauthCode.mockResolvedValueOnce('success')
     const password_actions = usePasswordActions()
@@ -247,7 +247,7 @@ describe('usePasswordActions — Google-only two-step flow [obligation]', () => 
     )
   })
 
-  test('[obligation] second submit verifies the code, then changes the password', async () => {
+  test('second submit verifies the code, then changes the password', async () => {
     mockSession.hasPassword = false
     mockSession.requestReauthCode.mockResolvedValueOnce('success')
     mockSession.verifyReauthCode.mockResolvedValueOnce('success')
@@ -284,7 +284,7 @@ describe('usePasswordActions — Google-only two-step flow [obligation]', () => 
     expect(mockSession.verifyReauthCode).not.toHaveBeenCalled()
   })
 
-  test('[obligation] wrong/expired code sets an error on the code field and preserves the typed new password', async () => {
+  test('wrong/expired code sets an error on the code field and preserves the typed new password', async () => {
     mockSession.hasPassword = false
     mockSession.requestReauthCode.mockResolvedValueOnce('success')
     mockSession.verifyReauthCode.mockResolvedValueOnce('invalid-code')
@@ -324,7 +324,7 @@ describe('usePasswordActions — Google-only two-step flow [obligation]', () => 
   })
 })
 
-describe('usePasswordActions — resendCode [obligation]', () => {
+describe('usePasswordActions — resendCode', () => {
   test('is a no-op while loading is true', async () => {
     mockSession.hasPassword = false
     let resolveRequest
@@ -398,7 +398,7 @@ describe('usePasswordActions — submit (current-password branch success/outcome
     expect(password_actions.code.value).toBe('')
   })
 
-  test('[obligation] does not play the stuck sfx on a successful submit', async () => {
+  test('does not play the stuck sfx on a successful submit', async () => {
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockResolvedValueOnce('success')
     mockSession.updatePassword.mockResolvedValueOnce('success')
@@ -431,7 +431,7 @@ describe('usePasswordActions — submit (current-password branch success/outcome
     )
   })
 
-  test('[obligation] maps the "same-password" outcome to an inline error on the password field', async () => {
+  test('maps the "same-password" outcome to an inline error on the password field', async () => {
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockResolvedValueOnce('success')
     mockSession.updatePassword.mockResolvedValueOnce('same-password')
@@ -449,7 +449,7 @@ describe('usePasswordActions — submit (current-password branch success/outcome
     )
   })
 
-  test('[obligation] does NOT fire a notice-store error for the "same-password" outcome', async () => {
+  test('does NOT fire a notice-store error for the "same-password" outcome', async () => {
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockResolvedValueOnce('success')
     mockSession.updatePassword.mockResolvedValueOnce('same-password')
@@ -479,7 +479,7 @@ describe('usePasswordActions — submit (current-password branch success/outcome
     expect(result).toBe('error')
   })
 
-  test('[obligation] fires a notice-store error only on the true fallthrough "error" outcome', async () => {
+  test('fires a notice-store error only on the true fallthrough "error" outcome', async () => {
     mockSession.hasPassword = true
     mockSession.verifyPassword.mockResolvedValueOnce('success')
     mockSession.updatePassword.mockResolvedValueOnce('error')
@@ -494,7 +494,7 @@ describe('usePasswordActions — submit (current-password branch success/outcome
     expect(mockNotice.error).toHaveBeenCalledWith('account-access-modal.password.error')
   })
 
-  test('[obligation] plays the stuck sfx for every non-success server outcome', async () => {
+  test('plays the stuck sfx for every non-success server outcome', async () => {
     for (const outcome of ['weak-password', 'same-password', 'error']) {
       mockEmitSfx.mockReset()
       mockSession.hasPassword = true

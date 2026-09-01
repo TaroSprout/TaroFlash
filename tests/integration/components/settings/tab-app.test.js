@@ -100,7 +100,6 @@ function makeTab({ audio = {} } = {}) {
         LabeledSection: LabeledSectionStub,
         SettingsSaveButton: NullStub
       },
-      directives: { sfx: {} },
       mocks: { $t: (k) => k },
       provide: {
         [memberEditorKey]: editor,
@@ -128,7 +127,7 @@ describe('TabApp', () => {
     expect(wrapper.find('[data-testid="tab-app"]').exists()).toBe(true)
   })
 
-  test('renders two slider controls in the audio section [obligation]', () => {
+  test('renders two slider controls in the audio section', () => {
     const { wrapper } = makeTab()
     expect(wrapper.find('[data-testid="tab-app__audio"]').exists()).toBe(true)
     expect(wrapper.findAll('[data-testid="slider-stub"]')).toHaveLength(2)
@@ -165,16 +164,16 @@ describe('TabApp', () => {
     expect(editor.draft.preferences.audio.hover_sounds).toBe(6)
   })
 
-  // ── Mute-all toggle [obligation] ──────────────────────────────────────────
+  // ── Mute-all toggle ──────────────────────────────────────────
 
-  test('renders the mute-all toggle reflecting editor preferences [obligation]', () => {
+  test('renders the mute-all toggle reflecting editor preferences', () => {
     const { wrapper } = makeTab({ audio: { muted: true } })
     const toggle = wrapper.find('[data-testid="toggle-stub"]')
     expect(toggle.exists()).toBe(true)
     expect(toggle.attributes('data-checked')).toBe('true')
   })
 
-  test('toggling mute-all updates editor preferences [obligation]', async () => {
+  test('toggling mute-all updates editor preferences', async () => {
     const { wrapper, editor } = makeTab()
     await wrapper.find('[data-testid="toggle-stub"]').trigger('click')
     expect(editor.draft.preferences.audio.muted).toBe(true)
@@ -182,7 +181,7 @@ describe('TabApp', () => {
 
   // ── Preview/reset obligation tests ────────────────────────────────────────
 
-  test('changing audio prefs calls previewVolumeConfig with mapped bus volumes [obligation]', async () => {
+  test('changing audio prefs calls previewVolumeConfig with mapped bus volumes', async () => {
     const { editor } = makeTab()
     editor.draft.preferences.audio.interface_sounds = 8
     await nextTick()
@@ -190,7 +189,7 @@ describe('TabApp', () => {
     expect(mockPreviewVolumeConfig).toHaveBeenCalledWith(expect.objectContaining({ interface: 8 }))
   })
 
-  test('previewVolumeConfig receives both buses on audio change, always unmuted for preview [obligation]', async () => {
+  test('previewVolumeConfig receives both buses on audio change, always unmuted for preview', async () => {
     const { editor } = makeTab({ audio: { interface_sounds: 7, hover_sounds: 1, muted: true } })
     editor.draft.preferences.audio.hover_sounds = 9
     await nextTick()
@@ -200,7 +199,7 @@ describe('TabApp', () => {
     expect(mockPreviewVolumeConfig).toHaveBeenCalledWith({ interface: 7, hover: 9 })
   })
 
-  test('unmounting the tab calls resetSettings to discard any preview [obligation]', () => {
+  test('unmounting the tab calls resetSettings to discard any preview', () => {
     const { wrapper } = makeTab()
     wrapper.unmount()
     // remove from _wrappers so afterEach doesn't double-unmount

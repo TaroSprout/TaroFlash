@@ -63,7 +63,7 @@ describe('saveReview (contract)', () => {
     expect(logs[0].rating).toBe(3)
   })
 
-  test('replaying an identical review writes no duplicate review_logs row [obligation]', async () => {
+  test('replaying an identical review writes no duplicate review_logs row', async () => {
     const deck = await createDeck(session.client, session.userId)
     const card = await insertCardDirect(session.client, deck.id)
 

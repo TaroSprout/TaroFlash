@@ -353,26 +353,53 @@ describe('session-controller', () => {
       expect(onClosed).not.toHaveBeenCalled()
       expect(state.value).toBe('summary')
     })
+
+    // Quit is a second path into `summary` besides running out of cards — a
+    // flush tied only to "the deck ran out of cards" would silently skip it.
+    test('quitting after at least one rated card still triggers the deck flush', async () => {
+      is_cover.value = false
+      reviewed_count.value = 1
+      const { controller } = makeController()
+
+      controller.requestClose()
+      await Promise.resolve()
+
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(1)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith([1, 2])
+    })
   })
 
-  // ── review flush on reaching summary [obligation] ───────────────────────
+  // ── review flush on reaching summary ───────────────────────
 
-  describe('watch(state) — flush on the transition into summary [obligation]', () => {
-    test('flushes every session deck once state flips to "summary" [obligation]', async () => {
+  describe('watch(state) — flush on the transition into summary', () => {
+    test('flushes every session deck once state flips to "summary"', async () => {
       const { controller: _controller } = makeController()
 
       state.value = 'summary'
       await Promise.resolve()
 
-      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(2)
-      expect(mockFlushDeckReviews).toHaveBeenCalledWith(1)
-      expect(mockFlushDeckReviews).toHaveBeenCalledWith(2)
+      expect(mockFlushDeckReviews).toHaveBeenCalledTimes(1)
+      expect(mockFlushDeckReviews).toHaveBeenCalledWith([1, 2])
     })
 
     test('does not flush when state changes to something other than "summary"', async () => {
       makeController()
 
       state.value = 'cover'
+      await Promise.resolve()
+
+      expect(mockFlushDeckReviews).not.toHaveBeenCalled()
+    })
+
+    // Guards against reintroducing a per-review flush/invalidation — rating
+    // cards must not touch the deck-flush seam while still mid-session.
+    test('rating cards while state stays "studying" flushes zero decks', async () => {
+      state.value = 'studying'
+      const { controller } = makeController()
+
+      await controller.onCardReviewed('good')
+      await controller.onCardReviewed('good')
+      await controller.onCardReviewed('good')
       await Promise.resolve()
 
       expect(mockFlushDeckReviews).not.toHaveBeenCalled()
@@ -410,7 +437,7 @@ describe('session-controller', () => {
       expect(mockReviewCard).toHaveBeenCalledWith('good')
     })
 
-    test('awaits the flip animation, resolved to the next card own deck side, before reviewing [obligation]', async () => {
+    test('awaits the flip animation, resolved to the next card own deck side, before reviewing', async () => {
       active_card.value = { id: 1, deck_id: 1 }
       state.value = 'studying'
       next_card.value = { id: 2, deck_id: 2 }
@@ -426,7 +453,7 @@ describe('session-controller', () => {
     })
   })
 
-  // ── toggleRatings [obligation] ──────────────────────────────────────────
+  // ── toggleRatings ──────────────────────────────────────────
 
   test('toggleRatings delegates to the session-prefs seam', () => {
     const { controller } = makeController()
@@ -460,29 +487,29 @@ describe('session-controller', () => {
     expect(controller.active_page.value).toBeNull()
   })
 
-  // ── summary category page state [obligation] ──────────────────────────────
+  // ── summary category page state ──────────────────────────────
 
   test('summary_category starts as null', () => {
     const { controller } = makeController()
     expect(controller.summary_category.value).toBeNull()
   })
 
-  test('openSummaryCategory sets summary_category to the given category [obligation]', () => {
+  test('openSummaryCategory sets summary_category to the given category', () => {
     const { controller } = makeController()
     controller.openSummaryCategory('stuck')
     expect(controller.summary_category.value).toBe('stuck')
   })
 
-  test('closeSummaryCategory returns summary_category to null [obligation]', () => {
+  test('closeSummaryCategory returns summary_category to null', () => {
     const { controller } = makeController()
     controller.openSummaryCategory('stuck')
     controller.closeSummaryCategory()
     expect(controller.summary_category.value).toBeNull()
   })
 
-  // ── useSummarySelection wiring [obligation] ───────────────────────────────
+  // ── useSummarySelection wiring ───────────────────────────────
 
-  test('useSummarySelection receives the engine cards/results, the summary_category ref, thresholdFor, updateCard, and dropCard [obligation]', () => {
+  test('useSummarySelection receives the engine cards/results, the summary_category ref, thresholdFor, updateCard, and dropCard', () => {
     cards.value = [{ id: 1, deck_id: 1 }]
     results.value = [{ card_id: 1, passed: true }]
     const { controller } = makeController()
@@ -496,7 +523,7 @@ describe('session-controller', () => {
     expect(opts.category.value).toBe('stuck')
   })
 
-  test('useSummarySelection closeCategory is wired to closeSummaryCategory [obligation]', () => {
+  test('useSummarySelection closeCategory is wired to closeSummaryCategory', () => {
     const { controller } = makeController()
     controller.openSummaryCategory('stuck')
 
@@ -507,8 +534,8 @@ describe('session-controller', () => {
 
   // Editing a card is a sub-state of an open category, not a page of its own —
   // starting/stopping it never touches summary_category, so closing the editor
-  // always lands back on the same category page (no back-stack to pop). [obligation]
-  test('starting and stopping a summary card edit does not change or close the open category [obligation]', () => {
+  // always lands back on the same category page (no back-stack to pop).
+  test('starting and stopping a summary card edit does not change or close the open category', () => {
     const { controller } = makeController()
     controller.openSummaryCategory('stuck')
 
@@ -519,7 +546,7 @@ describe('session-controller', () => {
     expect(controller.summary_category.value).toBe('stuck')
   })
 
-  test('exposes the summary selection surface from useSummarySelection [obligation]', () => {
+  test('exposes the summary selection surface from useSummarySelection', () => {
     const { controller } = makeController()
 
     expect(controller.summary_category_cards).toBeDefined()
@@ -583,7 +610,7 @@ describe('session-controller', () => {
 
   // ── engine deps: injected deck-resolution accessors, seed = engine.setCards ─
 
-  test('the engine is wired to the deck-resolution schedulerFor/startingSideFor/orderCards accessors [obligation]', () => {
+  test('the engine is wired to the deck-resolution schedulerFor/startingSideFor/orderCards accessors', () => {
     makeController()
 
     expect(capturedEngineDeps.current.schedulerFor).toBe(capturedResolution.current.schedulerFor)
@@ -593,14 +620,14 @@ describe('session-controller', () => {
     expect(capturedEngineDeps.current.orderCards).toBe(capturedResolution.current.orderCards)
   })
 
-  test('buildDeckResolution receives the multi_deck_ordering pref as its ordering getter [obligation]', () => {
+  test('buildDeckResolution receives the multi_deck_ordering pref as its ordering getter', () => {
     mockMultiDeckOrdering.value = 'even_spread'
     makeController()
 
     expect(capturedResolution.current._orderingGetter()).toBe('even_spread')
   })
 
-  test('useSessionCards seed is wired straight to engine.setCards [obligation]', () => {
+  test('useSessionCards seed is wired straight to engine.setCards', () => {
     makeController()
 
     const cards_arg = [{ id: 1 }]
@@ -609,9 +636,9 @@ describe('session-controller', () => {
     expect(mockSetCards).toHaveBeenCalledWith(cards_arg)
   })
 
-  // ── onRestore: refresh-restore drops the user back into the card, not the cover [obligation] ─
+  // ── onRestore: refresh-restore drops the user back into the card, not the cover ─
 
-  test('onRestore calls restoreCards and, when not landing on summary, resumes silently [obligation]', () => {
+  test('onRestore calls restoreCards and, when not landing on summary, resumes silently', () => {
     state.value = 'studying'
     makeController()
 
@@ -626,7 +653,7 @@ describe('session-controller', () => {
     expect(mockStartSession).toHaveBeenCalledWith({ silent: true })
   })
 
-  test('onRestore does not resume when the engine lands on "summary" [obligation]', () => {
+  test('onRestore does not resume when the engine lands on "summary"', () => {
     state.value = 'summary'
     makeController()
 
@@ -640,9 +667,9 @@ describe('session-controller', () => {
     expect(mockStartSession).not.toHaveBeenCalled()
   })
 
-  // ── persist contract: onChange writes {deck_ids, card_ids, results, completed} [obligation] ─
+  // ── persist contract: onChange writes {deck_ids, card_ids, results, completed} ─
 
-  test('engine onChange persists {deck_ids, card_ids, results, completed} via the persisted-session ref [obligation]', async () => {
+  test('engine onChange persists {deck_ids, card_ids, results, completed} via the persisted-session ref', async () => {
     cards.value = [{ id: 1 }, { id: 2 }]
     results.value = [{ card_id: 1, passed: true }]
     state.value = 'studying'
@@ -662,7 +689,7 @@ describe('session-controller', () => {
     })
   })
 
-  test('persist marks completed:true once state reaches "summary" [obligation]', async () => {
+  test('persist marks completed:true once state reaches "summary"', async () => {
     state.value = 'summary'
     makeController({ deck_ids: [1] })
 

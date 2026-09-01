@@ -68,6 +68,9 @@ class FakeResizeObserver {
   observe(el) {
     this.observed.push(el)
   }
+  unobserve(el) {
+    this.observed = this.observed.filter((o) => o !== el)
+  }
   disconnect() {
     this.disconnected = true
   }
@@ -187,6 +190,30 @@ describe('useScrollMetrics — measurement', () => {
   })
 })
 
+// ── Tracking children added/removed from the observed element ──────────────────
+
+describe('useScrollMetrics — trackChildren', () => {
+  test('observes an element added to the DOM and unobserves one removed, ignoring non-element nodes', async () => {
+    const el = makeElement({ clientHeight: 100, scrollHeight: 300 })
+    const target = ref(el)
+    const setup = await withSetup(() => useScrollMetrics(target))
+    unmount = setup.unmount
+
+    const resize_obs = resize_instances[0]
+    const mutation_obs = mutation_instances[0]
+    const added = document.createElement('div')
+    const removed = document.createElement('div')
+    const text_node = document.createTextNode('not an element')
+
+    mutation_obs.callback([
+      { addedNodes: [added, text_node], removedNodes: [] },
+      { addedNodes: [], removedNodes: [removed, text_node] }
+    ])
+
+    expect(resize_obs.observed).toContain(added)
+  })
+})
+
 // ── scrollToProgress ──────────────────────────────────────────────────────────
 
 describe('useScrollMetrics — scrollToProgress', () => {
@@ -217,9 +244,9 @@ describe('useScrollMetrics — scrollToProgress', () => {
   })
 })
 
-// ── Re-attaching on a late-resolving target [obligation] ─────────────────────
+// ── Re-attaching on a late-resolving target ─────────────────────
 
-describe('useScrollMetrics — re-attaches when the target ref resolves late [obligation]', () => {
+describe('useScrollMetrics — re-attaches when the target ref resolves late', () => {
   test('measures nothing while the target is null, then attaches once it resolves', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 
@@ -257,12 +284,12 @@ describe('useScrollMetrics — re-attaches when the target ref resolves late [ob
   })
 })
 
-// ── Selector target, looked up after mount [obligation] ──────────────────────
+// ── Selector target, looked up after mount ──────────────────────
 // `document.querySelector` runs against a tree this composable's own host is
 // not in yet during setup, and a selector string never changes to trigger a
 // second attempt — so the lookup has to wait for mount or it never lands.
 
-describe('useScrollMetrics — a target named by selector attaches after mount [obligation]', () => {
+describe('useScrollMetrics — a target named by selector attaches after mount', () => {
   let external
 
   beforeEach(() => {
@@ -318,7 +345,7 @@ describe('useScrollMetrics — page target', () => {
     addSpy.mockRestore()
   })
 
-  test('[obligation] a route swap that grows document.body content re-measures and reveals the handle', async () => {
+  test('a route swap that grows document.body content re-measures and reveals the handle', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 
     const target = ref('html')

@@ -84,6 +84,19 @@ const groups = computed<PagedWindowGroup[]>(() => [
 
 const header_title = computed(() => t('settings.header.title'))
 
+/*
+ * The pinned preview floats out of flow over the aside's own column, so the aside holds its controls
+ * clear of it. Every term of that reserve is fixed — the preview's `top-6` drop, the card's own box,
+ * the air before the first control — so `--preview-clearance` on the window states it outright and
+ * nothing is measured at runtime. Tablet's header carries the extra `pt-4` below, which starts its
+ * aside that much lower down, so tablet reserves that much less.
+ */
+const aside_clearance_class = computed(() =>
+  layout_mode.value === 'tablet'
+    ? 'pt-[calc(var(--preview-clearance)-var(--spacing)*4)]'
+    : 'pt-(--preview-clearance)'
+)
+
 // Open/close sfx live here, not per-callsite, so every launcher sounds identical — mirrors the deck-settings modal.
 onMounted(() => emitSfx('dialog.open'))
 onBeforeUnmount(() => emitSfx('dialog.close'))
@@ -129,7 +142,10 @@ watch(layout_mode, (mode) => {
     :class="[
       layout_mode === 'desktop' ? 'w-248!' : 'w-full! max-w-224',
       layout_mode !== 'phone' && 'h-187',
-      layout_mode === 'phone' ? '[--settings-padding:var(--window-px)]' : '[--settings-padding:0px]'
+      layout_mode === 'phone'
+        ? '[--settings-padding:var(--window-px)]'
+        : '[--settings-padding:0px]',
+      '[--preview-clearance:calc(var(--spacing)*60)]'
     ]"
     :pages="pages"
     :groups="groups"
@@ -162,7 +178,10 @@ watch(layout_mode, (mode) => {
         v-if="layout_mode !== 'phone'"
         data-testid="settings__aside"
         class="shrink-0 self-end pb-8"
-        :class="layout_mode === 'tablet' ? 'w-110 pt-56 pl-10 pr-26' : 'w-100 pt-60 pl-8 pr-16'"
+        :class="[
+          aside_clearance_class,
+          layout_mode === 'tablet' ? 'w-110 pl-10 pr-26' : 'w-100 pl-8 pr-16'
+        ]"
       />
     </template>
 

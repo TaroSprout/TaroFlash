@@ -131,7 +131,7 @@ describe('search-bar', () => {
     expect(btn.attributes('data-icon-left')).toBe('search')
   })
 
-  test('button icon is "close" when searching with an empty draft [obligation]', () => {
+  test('button icon is "close" when searching with an empty draft', () => {
     // Regression: an empty-but-open field used to keep showing "search" and did
     // nothing useful on click. It must show "close" as soon as is_searching is true.
     const wrapper = mountSearchBar(makeSearch({ is_searching: true, query_value: '' }))
@@ -139,7 +139,7 @@ describe('search-bar', () => {
     expect(btn.attributes('data-icon-left')).toBe('close')
   })
 
-  test('button icon is "close" when field has text [obligation]', async () => {
+  test('button icon is "close" when field has text', async () => {
     const wrapper = mountSearchBar(makeSearch({ is_searching: true }))
     await wrapper.find('[data-testid="deck-search-bar__input"]').setValue('hello')
     const btn = wrapper.find('[data-testid="deck-search-bar__button"]')
@@ -148,14 +148,14 @@ describe('search-bar', () => {
 
   // ── variant prop ───────────────────────────────────────────────────────────
 
-  test('button uses the variant prop when not expanded [obligation]', () => {
+  test('button uses the variant prop when not expanded', () => {
     const wrapper = mountSearchBar(makeSearch({ is_searching: false }), { variant: 'outline' })
     expect(wrapper.find('[data-testid="deck-search-bar__button"]').attributes('data-variant')).toBe(
       'outline'
     )
   })
 
-  test('button variant is forced to "ghost" when expanded [obligation]', () => {
+  test('button variant is forced to "ghost" when expanded', () => {
     const wrapper = mountSearchBar(makeSearch({ is_searching: true }), { variant: 'solid' })
     expect(wrapper.find('[data-testid="deck-search-bar__button"]').attributes('data-variant')).toBe(
       'ghost'
@@ -164,14 +164,14 @@ describe('search-bar', () => {
 
   // ── button click tri-state ─────────────────────────────────────────────────
 
-  test('pressing button when closed calls open() [obligation]', async () => {
+  test('pressing button when closed calls open()', async () => {
     const search = makeSearch({ is_searching: false })
     const wrapper = mountSearchBar(search)
     await wrapper.find('[data-testid="deck-search-bar__button"]').trigger('click')
     expect(search.open).toHaveBeenCalledOnce()
   })
 
-  test('pressing button when open with no text calls close(), not submit() [obligation]', async () => {
+  test('pressing button when open with no text calls close(), not submit()', async () => {
     // Regression: an empty-but-open field used to fall through to the old
     // no-op submit(); it must call close() via onClose so the bar collapses.
     const search = makeSearch({ is_searching: true, query_value: '' })
@@ -181,7 +181,7 @@ describe('search-bar', () => {
     expect(search.open).not.toHaveBeenCalled()
   })
 
-  test('pressing button when open with text calls clear() [obligation]', async () => {
+  test('pressing button when open with text calls clear()', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     await wrapper.find('[data-testid="deck-search-bar__input"]').setValue('some text')
@@ -194,7 +194,7 @@ describe('search-bar', () => {
 
   // ── clear() refocuses input ────────────────────────────────────────────────
 
-  test('clear() emits ui.press sfx [obligation]', async () => {
+  test('clear() emits ui.press sfx', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     await wrapper.find('[data-testid="deck-search-bar__input"]').setValue('text')
@@ -205,7 +205,7 @@ describe('search-bar', () => {
 
   // ── Enter key submits immediately (bypasses debounce) ─────────────────────
 
-  test('Enter key commits draft to query immediately [obligation]', async () => {
+  test('Enter key commits draft to query immediately', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     const input = wrapper.find('[data-testid="deck-search-bar__input"]')
@@ -216,7 +216,7 @@ describe('search-bar', () => {
 
   // ── Esc key closes the bar ─────────────────────────────────────────────────
 
-  test('Esc key closes the bar [obligation]', async () => {
+  test('Esc key closes the bar', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     await wrapper.find('[data-testid="deck-search-bar__input"]').trigger('keydown.esc')
@@ -225,7 +225,7 @@ describe('search-bar', () => {
 
   // ── debounce on input event ────────────────────────────────────────────────
 
-  test('typing fires a debounced submit — does not commit immediately [obligation]', async () => {
+  test('typing fires a debounced submit — does not commit immediately', async () => {
     vi.useFakeTimers()
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
@@ -238,7 +238,7 @@ describe('search-bar', () => {
     vi.useRealTimers()
   })
 
-  test('Enter bypasses debounce and commits synchronously [obligation]', async () => {
+  test('Enter bypasses debounce and commits synchronously', async () => {
     vi.useFakeTimers()
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
@@ -252,7 +252,7 @@ describe('search-bar', () => {
 
   // ── focusout behavior ──────────────────────────────────────────────────────
 
-  test('focusout closes the bar when field is empty and focus left the container [obligation]', async () => {
+  test('focusout closes the bar when field is empty and focus left the container', async () => {
     const search = makeSearch({ is_searching: true, query_value: '' })
     const wrapper = mountSearchBar(search)
     const container = wrapper.find('[data-testid="deck-search-bar"]')
@@ -263,7 +263,7 @@ describe('search-bar', () => {
     expect(search.close).toHaveBeenCalledOnce()
   })
 
-  test('focusout does NOT close when field has text (filtered results persist) [obligation]', async () => {
+  test('focusout does NOT close when field has text (filtered results persist)', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     const input = wrapper.find('[data-testid="deck-search-bar__input"]')
@@ -275,7 +275,7 @@ describe('search-bar', () => {
     expect(search.close).not.toHaveBeenCalled()
   })
 
-  test('focusout does NOT close when focus stayed within the container [obligation]', async () => {
+  test('focusout does NOT close when focus stayed within the container', async () => {
     const search = makeSearch({ is_searching: true })
     const wrapper = mountSearchBar(search)
     const container = wrapper.find('[data-testid="deck-search-bar"]')
@@ -289,7 +289,7 @@ describe('search-bar', () => {
 
   // ── toggle button disables the tap animation ──────────────────────────────
 
-  test('toggle button has play-on-tap disabled so its press fires synchronously [obligation]', () => {
+  test('toggle button has play-on-tap disabled so its press fires synchronously', () => {
     // Regression: the tap animation deferred onButton()/open() via a macrotask,
     // breaking iOS's requirement that .focus() run synchronously in the gesture.
     const wrapper = mountSearchBar(makeSearch({ is_searching: false }))
@@ -309,7 +309,7 @@ describe('search-bar', () => {
 
   // ── Transition JS hooks (onEnter / onLeave / fillTarget) ──────────────────
 
-  test('opening the bar triggers the enter transition (calls expandSearchInput) [obligation]', async () => {
+  test('opening the bar triggers the enter transition (calls expandSearchInput)', async () => {
     const search = makeSearch({ is_searching: false })
     mountSearchBar(search)
     search.is_searching.value = true
@@ -317,7 +317,7 @@ describe('search-bar', () => {
     expect(mockExpandSearchInput).toHaveBeenCalled()
   })
 
-  test('closing the bar triggers the leave transition (calls collapseSearchInput) [obligation]', async () => {
+  test('closing the bar triggers the leave transition (calls collapseSearchInput)', async () => {
     const search = makeSearch({ is_searching: true })
     mountSearchBar(search)
     search.is_searching.value = false
@@ -325,7 +325,7 @@ describe('search-bar', () => {
     expect(mockCollapseSearchInput).toHaveBeenCalled()
   })
 
-  test('fill=true uses fillTarget() when container has no measurable parent [obligation]', async () => {
+  test('fill=true uses fillTarget() when container has no measurable parent', async () => {
     const search = makeSearch({ is_searching: false })
     mountSearchBar(search, { fill: true, expandedWidth: 300 })
     search.is_searching.value = true

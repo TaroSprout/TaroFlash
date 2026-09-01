@@ -100,7 +100,7 @@ beforeEach(() => {
 // ── onUpgrade ─────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — onUpgrade', () => {
-  test('opens the Checkout modal [obligation]', async () => {
+  test('opens the Checkout modal', async () => {
     modalOpenMock.mockReturnValue({ response: Promise.resolve() })
     const { onUpgrade } = withSetup(() => useSubscriptionActions())
     await onUpgrade()
@@ -115,7 +115,7 @@ describe('useSubscriptionActions — onUpgrade', () => {
 // ── onCancel ──────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — onCancel', () => {
-  test('opens a confirm alert before calling the cancel mutation [obligation]', async () => {
+  test('opens a confirm alert before calling the cancel mutation', async () => {
     alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
     cancelMutateMock.mockResolvedValue({})
 
@@ -126,7 +126,7 @@ describe('useSubscriptionActions — onCancel', () => {
     expect(cancelMutateMock).toHaveBeenCalledWith(true)
   })
 
-  test('is a NO-OP when the alert is dismissed (response=false) [obligation]', async () => {
+  test('is a NO-OP when the alert is dismissed (response=false)', async () => {
     alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
 
     const { onCancel } = withSetup(() => useSubscriptionActions())
@@ -164,11 +164,11 @@ describe('useSubscriptionActions — onCancel', () => {
     expect(noticeSuccessMock).not.toHaveBeenCalled()
   })
 
-  // ── deck-count boundary — over-limit copy swap [obligation] ────────────────
+  // ── deck-count boundary — over-limit copy swap ────────────────
   // FREE_DECK_LIMIT is 10; only STRICTLY more than that swaps in the fuller
   // downgrade-grace warning. 10 itself still gets the base confirm copy.
 
-  test('shows the base cancel-confirm copy at exactly the free deck limit (10) [obligation]', async () => {
+  test('shows the base cancel-confirm copy at exactly the free deck limit (10)', async () => {
     deckCountRef.value = 10
     alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
 
@@ -182,7 +182,7 @@ describe('useSubscriptionActions — onCancel', () => {
     )
   })
 
-  test('shows the over-limit copy once above the free deck limit (11) [obligation]', async () => {
+  test('shows the over-limit copy once above the free deck limit (11)', async () => {
     deckCountRef.value = 11
     alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
 
@@ -201,7 +201,7 @@ describe('useSubscriptionActions — onCancel', () => {
 // ── onResume ──────────────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — onResume', () => {
-  test('calls resume mutation and shows a success notice without an explicit sfx [obligation]', async () => {
+  test('calls resume mutation and shows a success notice without an explicit sfx', async () => {
     resumeMutateMock.mockResolvedValue({})
 
     const { onResume } = withSetup(() => useSubscriptionActions())
@@ -216,7 +216,7 @@ describe('useSubscriptionActions — onResume', () => {
     expect(options.sfx).toBeUndefined()
   })
 
-  test('toasts error when resume mutation rejects [obligation]', async () => {
+  test('toasts error when resume mutation rejects', async () => {
     resumeMutateMock.mockRejectedValue(new Error('network'))
 
     const { onResume } = withSetup(() => useSubscriptionActions())
@@ -230,13 +230,13 @@ describe('useSubscriptionActions — onResume', () => {
 // ── loading state refs ────────────────────────────────────────────────────────
 
 describe('useSubscriptionActions — loading refs', () => {
-  test('exposes canceling sourced from cancel mutation isLoading [obligation]', () => {
+  test('exposes canceling sourced from cancel mutation isLoading', () => {
     cancelLoadingState.value = true
     const { canceling } = withSetup(() => useSubscriptionActions())
     expect(canceling.value).toBe(true)
   })
 
-  test('exposes resuming sourced from resume mutation isLoading [obligation]', () => {
+  test('exposes resuming sourced from resume mutation isLoading', () => {
     resumeLoadingState.value = true
     const { resuming } = withSetup(() => useSubscriptionActions())
     expect(resuming.value).toBe(true)

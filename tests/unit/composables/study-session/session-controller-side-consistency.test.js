@@ -185,8 +185,8 @@ afterEach(() => {
   while (mounted_apps.length > 0) mounted_apps.pop().unmount()
 })
 
-describe('onCardReviewed — preview flip side agrees with the side the next card opens on [obligation]', () => {
-  test('the side passed to awaitFlip equals display_side once the engine advances to that card [obligation]', async () => {
+describe('onCardReviewed — preview flip side agrees with the side the next card opens on', () => {
+  test('the side passed to awaitFlip equals display_side once the engine advances to that card', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9) // random deck -> 'back'
 
     const { controller } = makeController()
@@ -223,8 +223,8 @@ describe('onCardReviewed — preview flip side agrees with the side the next car
   })
 })
 
-describe('multi-deck merged session — each card resolves from its OWN deck [obligation]', () => {
-  test('a card from deck 2 resolves its starting side from deck 2, not the active deck (deck 1) [obligation]', async () => {
+describe('multi-deck merged session — each card resolves from its OWN deck', () => {
+  test('a card from deck 2 resolves its starting side from deck 2, not the active deck (deck 1)', async () => {
     const { controller } = makeController(
       [1, 2],
       [

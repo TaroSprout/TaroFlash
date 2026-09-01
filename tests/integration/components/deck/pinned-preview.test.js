@@ -1,7 +1,18 @@
+// The hover_lift forwarding assertions read real computed styles, so the app's
+// stylesheet has to be present — without it every Tailwind utility resolves to
+// nothing and they pass vacuously.
+import '@/styles/main.css'
+
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import PinnedPreview from '@/components/deck/pinned-preview.vue'
+
+// ui-pinned-card renders v-sfx when hover_lift is on; register the real
+// directive over a mocked bus so mounting doesn't warn or play sound.
+vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn(), emitHoverSfx: vi.fn() }))
+
+import { vSfx } from '@/sfx/directive'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -48,7 +59,8 @@ function makeWrapper(props = {}) {
         DeckDesignPreview: DeckDesignPreviewStub,
         Card: true,
         UiIcon: true
-      }
+      },
+      directives: { sfx: vSfx }
     }
   })
 }
@@ -116,9 +128,9 @@ describe('PinnedPreview — props forwarding', () => {
   })
 })
 
-// ── update:side forwarding [obligation] ───────────────────────────────────────
+// ── update:side forwarding ───────────────────────────────────────
 
-describe('PinnedPreview — update:side emit [obligation]', () => {
+describe('PinnedPreview — update:side emit', () => {
   test('forwards update:side emit from DeckDesignPreview to parent', async () => {
     const wrapper = makeWrapper({ side: 'cover' })
 
@@ -130,12 +142,12 @@ describe('PinnedPreview — update:side emit [obligation]', () => {
   })
 })
 
-// ── tucked prop forwarding [obligation] ─────────────────────────────────────────
+// ── tucked prop forwarding ─────────────────────────────────────────
 // The DOM contract moved from an ancestor's `group-data-[tucked=true]` selector
 // to an explicit `tucked` prop on ui-pinned-card — assert PinnedPreview forwards
 // it through, and that the paperclip reflects it via data-tucked.
 
-describe('PinnedPreview — forwards tucked through to ui-pinned-card [obligation]', () => {
+describe('PinnedPreview — forwards tucked through to ui-pinned-card', () => {
   test('defaults the paperclip data-tucked to false when the prop is omitted', () => {
     const wrapper = makeWrapper()
     expect(
@@ -167,5 +179,43 @@ describe('PinnedPreview — cover_editing / cover_image pass-through', () => {
     // Props cross the browser-mode component boundary serialized, so identity
     // doesn't survive — compare structurally instead.
     expect(preview.props('cover_image')).toEqual(cover_image)
+  })
+})
+
+// ── hover_lift prop forwarding ─────────────────────────────────────
+// ui-pinned-card is real (not stubbed) here, so the forwarded prop shows up as
+// real rendered behaviour on the nested swing element: a hover transition and a
+// pivot moved off the element's own centre. ui-pinned-card's own suite owns the
+// swing's geometry and timing — all this needs to prove is that the prop
+// arrives.
+
+describe('PinnedPreview — forwards hover_lift through to ui-pinned-card', () => {
+  const swingStyle = (wrapper) => {
+    const host = document.createElement('div')
+    host.style.width = '400px'
+    document.body.appendChild(host)
+    host.appendChild(wrapper.element)
+
+    const swing = wrapper.find('[data-testid="ui-pinned-card__swing"]').element
+    const style = {
+      duration: getComputedStyle(swing).transitionDuration,
+      origin: getComputedStyle(swing).transformOrigin,
+      centre: `${swing.offsetWidth / 2}px ${swing.offsetHeight / 2}px`
+    }
+
+    host.remove()
+    return style
+  }
+
+  test('omitting hover_lift leaves the swing with no transition and its default pivot', () => {
+    const { duration, origin, centre } = swingStyle(makeWrapper())
+    expect(duration).toBe('0s')
+    expect(origin).toBe(centre)
+  })
+
+  test('hover_lift: true forwards through, arming the swing transition and pivot', () => {
+    const { duration, origin, centre } = swingStyle(makeWrapper({ hover_lift: true }))
+    expect(parseFloat(duration)).toBeGreaterThan(0)
+    expect(origin).not.toBe(centre)
   })
 })

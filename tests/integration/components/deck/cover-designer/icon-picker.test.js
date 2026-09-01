@@ -15,9 +15,6 @@ function makePicker(props = {}) {
       icon: undefined,
       palette: undefined,
       ...props
-    },
-    global: {
-      directives: { sfx: {} }
     }
   })
 }
@@ -66,7 +63,7 @@ describe('IconPicker', () => {
   })
 })
 
-describe('IconPicker — icon palette [obligation]', () => {
+describe('IconPicker — icon palette', () => {
   // coverIconPalette() keeps the icon legible against its own card's fill —
   // sits on the ui-icon itself, never the button, so the button's own
   // --color-accent (the deck's chosen palette) still drives its own fill.
@@ -85,7 +82,7 @@ describe('IconPicker — icon palette [obligation]', () => {
     })
   })
 
-  test('does not put data-palette on the option button itself [obligation]', () => {
+  test('does not put data-palette on the option button itself', () => {
     const wrapper = makePicker({ palette: 'yellow' })
     expect(
       wrapper.find('[data-testid="icon-picker__option-book"]').attributes('data-palette')
@@ -93,7 +90,7 @@ describe('IconPicker — icon palette [obligation]', () => {
   })
 })
 
-describe('IconPicker — colours only the selected option [obligation]', () => {
+describe('IconPicker — colours only the selected option', () => {
   // A fixed mid-review after every option was coloured, not just the picked
   // one — the selected icon alone takes the accent fill colour.
 

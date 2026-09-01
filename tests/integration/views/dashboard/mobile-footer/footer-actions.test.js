@@ -136,7 +136,10 @@ describe('DashboardFooterActions', () => {
 
   describe('study button', () => {
     test('is disabled when editing_decks is true', () => {
-      const wrapper = mountFooterActions({ editing_decks: true })
+      const wrapper = mountFooterActions({
+        editing_decks: true,
+        due_decks: [{ id: 1, due_count: 3 }]
+      })
 
       expect(
         wrapper
@@ -145,8 +148,11 @@ describe('DashboardFooterActions', () => {
       ).not.toBeUndefined()
     })
 
-    test('is enabled when editing_decks is false', () => {
-      const wrapper = mountFooterActions({ editing_decks: false })
+    test('is enabled when editing_decks is false and there are due cards', () => {
+      const wrapper = mountFooterActions({
+        editing_decks: false,
+        due_decks: [{ id: 1, due_count: 1 }]
+      })
 
       expect(
         wrapper
@@ -156,7 +162,10 @@ describe('DashboardFooterActions', () => {
     })
 
     test('calls study_session.start with due_decks on press', async () => {
-      const due_decks = [{ id: 1 }, { id: 2 }]
+      const due_decks = [
+        { id: 1, due_count: 2 },
+        { id: 2, due_count: 1 }
+      ]
       const wrapper = mountFooterActions({ due_decks })
 
       await wrapper.find('[data-testid="dashboard-footer-actions__study-button"]').trigger('click')
@@ -164,11 +173,42 @@ describe('DashboardFooterActions', () => {
       expect(mockStudyStart).toHaveBeenCalledWith(due_decks.map((deck) => deck.id))
     })
 
-    test('labels via the pluralized dashboard.mobile-footer.study-button key', () => {
-      const wrapper = mountFooterActions({ due_decks: [{ id: 1 }, { id: 2 }] })
+    test('renders a solid brand data-palette', () => {
+      const wrapper = mountFooterActions({ due_decks: [{ id: 1, due_count: 1 }] })
+
+      expect(
+        wrapper
+          .find('[data-testid="dashboard-footer-actions__study-button"]')
+          .attributes('data-palette')
+      ).toBe('brand')
+    })
+
+    test('is disabled and shows "No Cards Due" when the total due card count is zero', () => {
+      const wrapper = mountFooterActions({ due_decks: [{ id: 1, due_count: 0 }] })
+      const button = wrapper.find('[data-testid="dashboard-footer-actions__study-button"]')
+
+      expect(button.attributes('disabled')).not.toBeUndefined()
+      expect(button.text()).toBe('No Cards Due')
+    })
+
+    test('shows the singular label for exactly one due card', () => {
+      const wrapper = mountFooterActions({ due_decks: [{ id: 1, due_count: 1 }] })
 
       expect(wrapper.find('[data-testid="dashboard-footer-actions__study-button"]').text()).toBe(
-        'Study 2 Decks'
+        'Study 1 Card'
+      )
+    })
+
+    test('shows the plural label with the summed due card count', () => {
+      const wrapper = mountFooterActions({
+        due_decks: [
+          { id: 1, due_count: 3 },
+          { id: 2, due_count: 2 }
+        ]
+      })
+
+      expect(wrapper.find('[data-testid="dashboard-footer-actions__study-button"]').text()).toBe(
+        'Study 5 Cards'
       )
     })
   })

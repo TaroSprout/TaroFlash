@@ -8,7 +8,10 @@ import UiButton from '@/components/ui-kit/button.vue'
 import { useMemberStore } from '@/stores/member'
 import { memberCoverBindings } from '@/components/member/cover'
 import { useStudyModal } from '@/views/study-session/composables/study-modal'
+import { useSettingsModal } from '@/composables/settings/use-settings-modal'
 import { useNewDeckAction } from '../composables/new-deck-action'
+import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
+import { totalDueCardCount } from '@/utils/deck/due'
 
 type DashboardActionsPanelProps = {
   due_decks: Deck[]
@@ -29,9 +32,13 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const member_store = useMemberStore()
 const study_session = useStudyModal()
+const settings_modal = useSettingsModal()
 const { creating_deck, createNewDeck } = useNewDeckAction()
+// Never re-derive this from a media query: it has to say what the dock itself hides on.
+const { is_visible: dock_on_screen } = useMobileDock()
 
 const root_bindings = computed(() => memberCoverBindings(member_store.cover))
+const due_card_count = computed(() => totalDueCardCount(due_decks))
 
 const deck_entries = computed<OptionsPanelEntry[]>(() => [
   {
@@ -56,6 +63,10 @@ function onStudyAll() {
   study_session.start(due_decks.map((deck) => deck.id))
 }
 
+function onOpenSettings() {
+  settings_modal.open()
+}
+
 async function onSelect(value: string) {
   if (value === 'edit-decks') {
     emit('toggle-edit-decks')
@@ -76,7 +87,14 @@ async function onSelect(value: string) {
     body_class="bg-surface"
   >
     <template #polaroid>
-      <member-polaroid :avatar="member_store.cover.avatar" class="absolute top-1 -left-1 z-10" />
+      <div
+        data-testid="dashboard-actions-panel__polaroid"
+        class="group absolute top-1 -left-1 z-10 cursor-pointer"
+        v-sfx="{ hover: 'ui.hover' }"
+        @click="onOpenSettings"
+      >
+        <member-polaroid :avatar="member_store.cover.avatar" interactive />
+      </div>
     </template>
 
     <template #header>
@@ -102,15 +120,16 @@ async function onSelect(value: string) {
         data-testid="dashboard-actions-panel__study-button"
         size="xl"
         icon-left="book-flip-page"
-        data-palette="brand"
+        :data-palette="dock_on_screen ? undefined : 'brand'"
+        :neutral="dock_on_screen"
         full-width
-        :disabled="editing_decks || due_decks.length === 0"
+        :disabled="editing_decks || due_card_count === 0"
         @press="onStudyAll"
       >
         {{
-          due_decks.length === 0
+          due_card_count === 0
             ? t('dashboard.actions-panel.no-decks-due-label')
-            : t('dashboard.actions-panel.study-button', due_decks.length)
+            : t('dashboard.actions-panel.study-button', due_card_count)
         }}
       </ui-button>
     </template>

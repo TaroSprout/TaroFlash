@@ -73,7 +73,7 @@ afterEach(() => {
 // ── Tick firing ───────────────────────────────────────────────────────────────
 
 describe('useReviewInboxTickSfx — tick firing', () => {
-  test('fires a tick exactly once when scrolling crosses one card-pitch boundary [obligation]', async () => {
+  test('fires a tick exactly once when scrolling crosses one card-pitch boundary', async () => {
     const el = makeStripEl()
     const el_ref = ref(el)
     withSetup(el_ref)
@@ -84,7 +84,7 @@ describe('useReviewInboxTickSfx — tick firing', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('gesture.tick')
   })
 
-  test('does not fire when the scroll delta stays within the same quantized index [obligation]', async () => {
+  test('does not fire when the scroll delta stays within the same quantized index', async () => {
     const el = makeStripEl()
     const el_ref = ref(el)
     withSetup(el_ref)
@@ -97,8 +97,8 @@ describe('useReviewInboxTickSfx — tick firing', () => {
 
 // ── Overscroll clamp ──────────────────────────────────────────────────────────
 
-describe('useReviewInboxTickSfx — overscroll clamp [obligation]', () => {
-  test('clamps scrollLeft above scrollWidth-clientWidth before quantizing, avoiding a spurious extra tick [obligation]', async () => {
+describe('useReviewInboxTickSfx — overscroll clamp', () => {
+  test('clamps scrollLeft above scrollWidth-clientWidth before quantizing, avoiding a spurious extra tick', async () => {
     // max_scroll_left = 1000 - 300 = 700
     const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300 })
     const el_ref = ref(el)
@@ -127,8 +127,8 @@ describe('useReviewInboxTickSfx — overscroll clamp [obligation]', () => {
 
 // ── Mount-time seeding ────────────────────────────────────────────────────────
 
-describe('useReviewInboxTickSfx — seeds last_index from attach-time scrollLeft [obligation]', () => {
-  test('mounting mid-scroll does not fire a spurious tick on the next scroll when the index is unchanged [obligation]', async () => {
+describe('useReviewInboxTickSfx — seeds last_index from attach-time scrollLeft', () => {
+  test('mounting mid-scroll does not fire a spurious tick on the next scroll when the index is unchanged', async () => {
     const el = makeStripEl({ scrollLeft: 300 })
     const el_ref = ref(el)
     withSetup(el_ref)
@@ -176,8 +176,8 @@ describe('useReviewInboxTickSfx — teardown', () => {
 
 // ── Fine-pointer gating ───────────────────────────────────────────────────────
 
-describe('useReviewInboxTickSfx — fine-pointer gating [obligation]', () => {
-  test('does not emit when the pointer is fine, even when crossing a boundary [obligation]', async () => {
+describe('useReviewInboxTickSfx — fine-pointer gating', () => {
+  test('does not emit when the pointer is fine, even when crossing a boundary', async () => {
     mockIsFine.value = true
     const el = makeStripEl()
     const el_ref = ref(el)
@@ -188,7 +188,7 @@ describe('useReviewInboxTickSfx — fine-pointer gating [obligation]', () => {
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('index tracking still advances while fine, so unmuting mid-scroll does not catch up with a spurious tick [obligation]', async () => {
+  test('index tracking still advances while fine, so unmuting mid-scroll does not catch up with a spurious tick', async () => {
     mockIsFine.value = true
     const el = makeStripEl()
     const el_ref = ref(el)

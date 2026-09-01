@@ -126,7 +126,7 @@ describe('DeckSaveButton — empty title', () => {
     expect(saveDeck).not.toHaveBeenCalled()
   })
 
-  test('sets title_error to the required-title copy when title is empty [obligation]', async () => {
+  test('sets title_error to the required-title copy when title is empty', async () => {
     const { wrapper, editor } = makeSaveButton({ title: '', is_dirty: true })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
@@ -134,7 +134,7 @@ describe('DeckSaveButton — empty title', () => {
     expect(editor.title_error.value).toBe('Give your deck a name')
   })
 
-  test('does NOT show an error notice when title is empty (blank-title path) [obligation]', async () => {
+  test('does NOT show an error notice when title is empty (blank-title path)', async () => {
     const { wrapper } = makeSaveButton({ title: '', is_dirty: true })
 
     await wrapper.find('[data-testid="deck-settings__save-button"]').trigger('click')
@@ -152,7 +152,7 @@ describe('DeckSaveButton — empty title', () => {
   })
 })
 
-describe('DeckSaveButton — disabled state [obligation]', () => {
+describe('DeckSaveButton — disabled state', () => {
   test('disabled when not dirty', () => {
     const { wrapper } = makeSaveButton({ is_dirty: false })
     expect(
@@ -204,7 +204,7 @@ describe('DeckSaveButton — dirty with valid title', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('shows an error notice when saveDeck resolves false [obligation]', async () => {
+  test('shows an error notice when saveDeck resolves false', async () => {
     const { wrapper, saveDeck } = makeSaveButton({ title: 'My Deck', is_dirty: true })
     saveDeck.mockResolvedValue(false)
 
@@ -255,7 +255,7 @@ describe('DeckSaveButton — loading state', () => {
   })
 })
 
-describe('DeckSaveButton — empty-title check fires before not-dirty check [obligation]', () => {
+describe('DeckSaveButton — empty-title check fires before not-dirty check', () => {
   test('when not dirty AND title is empty: notice.error fires (title check runs first)', async () => {
     const { wrapper } = makeSaveButton({ title: '', is_dirty: false })
 
@@ -266,22 +266,22 @@ describe('DeckSaveButton — empty-title check fires before not-dirty check [obl
   })
 })
 
-describe('DeckSaveButton — reset button [obligation]', () => {
-  test('is disabled when not dirty [obligation]', () => {
+describe('DeckSaveButton — reset button', () => {
+  test('is disabled when not dirty', () => {
     const { wrapper } = makeSaveButton({ is_dirty: false })
     expect(
       wrapper.find('[data-testid="deck-settings__reset-button"]').attributes('data-disabled')
     ).toBe('true')
   })
 
-  test('is not disabled when dirty [obligation]', () => {
+  test('is not disabled when dirty', () => {
     const { wrapper } = makeSaveButton({ is_dirty: true })
     expect(
       wrapper.find('[data-testid="deck-settings__reset-button"]').attributes('data-disabled')
     ).toBe('false')
   })
 
-  test('pressing it while disabled does NOT call resetChanges, only plays ui.rejected [obligation]', async () => {
+  test('pressing it while disabled does NOT call resetChanges, only plays ui.rejected', async () => {
     const { wrapper, resetChanges } = makeSaveButton({ is_dirty: false })
 
     await wrapper.find('[data-testid="deck-settings__reset-button"]').trigger('click')
@@ -290,7 +290,7 @@ describe('DeckSaveButton — reset button [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
   })
 
-  test('pressing it while enabled calls resetChanges [obligation]', async () => {
+  test('pressing it while enabled calls resetChanges', async () => {
     const { wrapper, resetChanges } = makeSaveButton({ is_dirty: true })
 
     await wrapper.find('[data-testid="deck-settings__reset-button"]').trigger('click')

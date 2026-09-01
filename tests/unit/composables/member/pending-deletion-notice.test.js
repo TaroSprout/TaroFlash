@@ -59,10 +59,10 @@ beforeEach(() => {
 })
 
 describe('usePendingDeletionNotice', () => {
-  // ── open() idempotency [obligation] ───────────────────────────────────────
+  // ── open() idempotency ───────────────────────────────────────
 
-  describe('open() [obligation]', () => {
-    test('calling open() repeatedly produces exactly one panel notice, not one per call [obligation]', async () => {
+  describe('open()', () => {
+    test('calling open() repeatedly produces exactly one panel notice, not one per call', async () => {
       const { open } = await freshComposable()
 
       open()
@@ -89,10 +89,10 @@ describe('usePendingDeletionNotice', () => {
     })
   })
 
-  // ── onDismiss [obligation] ─────────────────────────────────────────────────
+  // ── onDismiss ─────────────────────────────────────────────────
 
-  describe('onDismiss [obligation]', () => {
-    test('signs the member out when the panel is dismissed while still pending [obligation]', async () => {
+  describe('onDismiss', () => {
+    test('signs the member out when the panel is dismissed while still pending', async () => {
       mockMember.pending_deletion = true
       const { open } = await freshComposable()
 
@@ -103,7 +103,7 @@ describe('usePendingDeletionNotice', () => {
       expect(mockSession.logout).toHaveBeenCalledOnce()
     })
 
-    test('does NOT sign out on dismiss when pending_deletion is already false (post-recovery) [obligation]', async () => {
+    test('does NOT sign out on dismiss when pending_deletion is already false (post-recovery)', async () => {
       mockMember.pending_deletion = false
       const { open } = await freshComposable()
 
@@ -128,10 +128,10 @@ describe('usePendingDeletionNotice', () => {
     })
   })
 
-  // ── onRecover [obligation] ─────────────────────────────────────────────────
+  // ── onRecover ─────────────────────────────────────────────────
 
-  describe('onRecover [obligation]', () => {
-    test('invalidates the query cache (never removes) and awaits it before navigating to dashboard [obligation]', async () => {
+  describe('onRecover', () => {
+    test('invalidates the query cache (never removes) and awaits it before navigating to dashboard', async () => {
       const callOrder = []
       mockQueryCache.invalidateQueries.mockImplementationOnce(async () => {
         callOrder.push('invalidate')
@@ -151,7 +151,7 @@ describe('usePendingDeletionNotice', () => {
       expect(mockRouterPush).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('does NOT call queryCache.remove — invalidate only, never remove [obligation]', async () => {
+    test('does NOT call queryCache.remove — invalidate only, never remove', async () => {
       const { open } = await freshComposable()
 
       open()
@@ -178,7 +178,7 @@ describe('usePendingDeletionNotice', () => {
       expect(mockNotice.success).toHaveBeenCalledWith('toast.success.account-restored')
     })
 
-    test('does NOT sign the member out on a successful recovery [obligation]', async () => {
+    test('does NOT sign the member out on a successful recovery', async () => {
       const { open } = await freshComposable()
 
       open()
@@ -208,9 +208,9 @@ describe('usePendingDeletionNotice', () => {
     })
   })
 
-  // ── the close-then-reopen loop regression [obligation] ─────────────────────
+  // ── the close-then-reopen loop regression ─────────────────────
 
-  test('a successful recovery does not leave the guard re-opening the panel — dismiss() clears the singleton so nothing re-triggers it [obligation]', async () => {
+  test('a successful recovery does not leave the guard re-opening the panel — dismiss() clears the singleton so nothing re-triggers it', async () => {
     const { open } = await freshComposable()
 
     open()
@@ -228,7 +228,7 @@ describe('usePendingDeletionNotice', () => {
     expect(mockNotice.warn).toHaveBeenCalledTimes(2)
   })
 
-  // ── sign-out action [obligation] ────────────────────────────────────────────
+  // ── sign-out action ────────────────────────────────────────────
 
   test('the sign-out action logs the member out and closes on click', async () => {
     const { open } = await freshComposable()

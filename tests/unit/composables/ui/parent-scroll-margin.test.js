@@ -83,7 +83,7 @@ describe('useParentScrollMargin', () => {
     vi.unstubAllGlobals()
   })
 
-  test("measures the element's parent, not the element itself [obligation]", () => {
+  test("measures the element's parent, not the element itself", () => {
     const el = ref(child)
     ;({ result, unmount } = withSetup(() => useParentScrollMargin(el)))
 
@@ -106,7 +106,7 @@ describe('useParentScrollMargin', () => {
     expect(result.measured.value).toBe(true)
   })
 
-  test('a burst of body resizes yields exactly one measure, debounced 120ms [obligation]', () => {
+  test('a burst of body resizes yields exactly one measure, debounced 120ms', () => {
     const onMeasure = vi.fn()
     const el = ref(child)
     ;({ unmount } = withSetup(() => useParentScrollMargin(el, { onMeasure })))
@@ -124,7 +124,7 @@ describe('useParentScrollMargin', () => {
     expect(onMeasure).toHaveBeenCalledOnce()
   })
 
-  test('runs onMeasure after each measurement, including the initial mount measure [obligation]', () => {
+  test('runs onMeasure after each measurement, including the initial mount measure', () => {
     const onMeasure = vi.fn()
     const el = ref(child)
     ;({ unmount } = withSetup(() => useParentScrollMargin(el, { onMeasure })))

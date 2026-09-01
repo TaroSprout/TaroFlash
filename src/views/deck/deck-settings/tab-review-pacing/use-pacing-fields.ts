@@ -122,8 +122,7 @@ export function usePacingFields(deck: Deck, draft: DeckDraft): PacingFields {
       values[key] = draft.pacing_overrides[key] ?? selected_preset.value?.[key] ?? deck[key]
     }
 
-    // Caps are nullable all the way down, so `??` can't distinguish "pinned
-    // uncapped" from "absent" — key presence is the only reliable signal.
+    // Caps are nullable, so only key presence distinguishes pinned-uncapped from absent.
     for (const key of CAP_KEYS) {
       values[key] =
         key in draft.pacing_overrides

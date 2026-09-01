@@ -88,13 +88,13 @@ beforeEach(() => {
 
 // ── category_cards resolution ────────────────────────────────────────────────
 
-describe('useSummarySelection — category_cards [obligation]', () => {
+describe('useSummarySelection — category_cards', () => {
   test('is empty when no category is open', () => {
     const { result } = makeSetup({ cards: [makeCard({ id: 1 })], results: [makeResult()] })
     expect(result.category_cards.value).toEqual([])
   })
 
-  test('resolves to the cards backing the open category, non-correct category [obligation]', () => {
+  test('resolves to the cards backing the open category, non-correct category', () => {
     const cards = [makeCard({ id: 5 }), makeCard({ id: 6 })]
     const results = [
       makeResult({ card_id: 5, is_new: true }),
@@ -105,7 +105,7 @@ describe('useSummarySelection — category_cards [obligation]', () => {
     expect(result.category_cards.value.map((c) => c.id)).toEqual([5, 6])
   })
 
-  test('the "correct" category includes both the correct and incorrect groups [obligation]', () => {
+  test('the "correct" category includes both the correct and incorrect groups', () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = [
       makeResult({ card_id: 1, passed: true }),
@@ -116,7 +116,7 @@ describe('useSummarySelection — category_cards [obligation]', () => {
     expect(result.category_cards.value.map((c) => c.id).sort()).toEqual([1, 2])
   })
 
-  test('silently drops a result whose card is absent from the session cards [obligation]', () => {
+  test('silently drops a result whose card is absent from the session cards', () => {
     const cards = [makeCard({ id: 5 })]
     const results = [
       makeResult({ card_id: 5, is_new: true }),
@@ -128,10 +128,10 @@ describe('useSummarySelection — category_cards [obligation]', () => {
   })
 })
 
-// ── selectAll — positive mode, no except_ids [obligation] ───────────────────
+// ── selectAll — positive mode, no except_ids ───────────────────
 
-describe('useSummarySelection — selectAll [obligation]', () => {
-  test('selects every currently loaded card on the open category page [obligation]', () => {
+describe('useSummarySelection — selectAll', () => {
+  test('selects every currently loaded card on the open category page', () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -142,7 +142,7 @@ describe('useSummarySelection — selectAll [obligation]', () => {
     expect(result.selection.all_cards_selected.value).toBe(true)
   })
 
-  test('does not switch into deck-wide select_all_mode — stays a positive id list [obligation]', () => {
+  test('does not switch into deck-wide select_all_mode — stays a positive id list', () => {
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -156,8 +156,8 @@ describe('useSummarySelection — selectAll [obligation]', () => {
 
 // ── bulk delete/move resolve the selected cards from category_cards ─────────
 
-describe('useSummarySelection — onDeleteSelected / onMoveSelected [obligation]', () => {
-  test('onDeleteSelected passes only the selected cards to deleteCards [obligation]', async () => {
+describe('useSummarySelection — onDeleteSelected / onMoveSelected', () => {
+  test('onDeleteSelected passes only the selected cards to deleteCards', async () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -171,7 +171,7 @@ describe('useSummarySelection — onDeleteSelected / onMoveSelected [obligation]
     )
   })
 
-  test('onMoveSelected passes only the selected cards to moveCards [obligation]', async () => {
+  test('onMoveSelected passes only the selected cards to moveCards', async () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -186,10 +186,10 @@ describe('useSummarySelection — onDeleteSelected / onMoveSelected [obligation]
   })
 })
 
-// ── per-card delete/move (⋯ menu) [obligation] ───────────────────────────────
+// ── per-card delete/move (⋯ menu) ───────────────────────────────
 
-describe('useSummarySelection — onDeleteCard / onMoveCard [obligation]', () => {
-  test('onDeleteCard(id) resolves the card from category_cards and deletes just it [obligation]', async () => {
+describe('useSummarySelection — onDeleteCard / onMoveCard', () => {
+  test('onDeleteCard(id) resolves the card from category_cards and deletes just it', async () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -202,7 +202,7 @@ describe('useSummarySelection — onDeleteCard / onMoveCard [obligation]', () =>
     )
   })
 
-  test('onDeleteCard(id) is a no-op for an id not on the open category page [obligation]', async () => {
+  test('onDeleteCard(id) is a no-op for an id not on the open category page', async () => {
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -212,7 +212,7 @@ describe('useSummarySelection — onDeleteCard / onMoveCard [obligation]', () =>
     expect(deleteCardsMock).not.toHaveBeenCalled()
   })
 
-  test('onMoveCard(id) resolves the card from category_cards and moves just it [obligation]', async () => {
+  test('onMoveCard(id) resolves the card from category_cards and moves just it', async () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -226,10 +226,10 @@ describe('useSummarySelection — onDeleteCard / onMoveCard [obligation]', () =>
   })
 })
 
-// ── onRemoved: deselects + drops from the session [obligation] ──────────────
+// ── onRemoved: deselects + drops from the session ──────────────
 
-describe('useSummarySelection — the shared onRemoved seam [obligation]', () => {
-  test('a card removed via bulk delete is deselected and dropped from the session [obligation]', async () => {
+describe('useSummarySelection — the shared onRemoved seam', () => {
+  test('a card removed via bulk delete is deselected and dropped from the session', async () => {
     deleteCardsMock.mockImplementationOnce((_target, onRemoved) => onRemoved(2))
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
@@ -243,13 +243,13 @@ describe('useSummarySelection — the shared onRemoved seam [obligation]', () =>
   })
 })
 
-// ── onSelectCard: the single selection-entry seam [obligation] ──────────────
+// ── onSelectCard: the single selection-entry seam ──────────────
 // Mirrors deck-view's actions.ts onSelectCard — both entering selection and
 // the sfx live here, centrally, so every entry point (card tap, item-options
 // "select") gets the same behaviour for free.
 
-describe('useSummarySelection — onSelectCard [obligation]', () => {
-  test('toggles the given card id and enters selection mode [obligation]', () => {
+describe('useSummarySelection — onSelectCard', () => {
+  test('toggles the given card id and enters selection mode', () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -260,7 +260,7 @@ describe('useSummarySelection — onSelectCard [obligation]', () => {
     expect(result.selection.isCardSelected(1)).toBe(true)
   })
 
-  test('emits the select sfx [obligation]', () => {
+  test('emits the select sfx', () => {
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -270,7 +270,7 @@ describe('useSummarySelection — onSelectCard [obligation]', () => {
     expect(emitSfxMock).toHaveBeenCalledWith('ui.select')
   })
 
-  test('enters selection mode without toggling any card when id is omitted [obligation]', () => {
+  test('enters selection mode without toggling any card when id is omitted', () => {
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]
     const { result } = makeSetup({ cards, results, category: 'new' })
@@ -283,10 +283,10 @@ describe('useSummarySelection — onSelectCard [obligation]', () => {
   })
 })
 
-// ── leaving the category exits selection + editing [obligation] ─────────────
+// ── leaving the category exits selection + editing ─────────────
 
-describe('useSummarySelection — leaving the category resets state [obligation]', () => {
-  test('changing category exits selection mode and clears the selection [obligation]', async () => {
+describe('useSummarySelection — leaving the category resets state', () => {
+  test('changing category exits selection mode and clears the selection', async () => {
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]
     const { result, category_ref } = makeSetup({ cards, results, category: 'new' })
@@ -303,10 +303,10 @@ describe('useSummarySelection — leaving the category resets state [obligation]
   })
 })
 
-// ── auto-close when the open category empties out [obligation] ──────────────
+// ── auto-close when the open category empties out ──────────────
 
-describe('useSummarySelection — auto-close on an emptied category [obligation]', () => {
-  test('calls closeCategory once the last card leaves the open category [obligation]', async () => {
+describe('useSummarySelection — auto-close on an emptied category', () => {
+  test('calls closeCategory once the last card leaves the open category', async () => {
     deleteCardsMock.mockImplementationOnce((_target, onRemoved) => onRemoved(1))
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]
@@ -318,7 +318,7 @@ describe('useSummarySelection — auto-close on an emptied category [obligation]
     expect(closeCategory).toHaveBeenCalledOnce()
   })
 
-  test('does NOT call closeCategory while cards remain on the page [obligation]', async () => {
+  test('does NOT call closeCategory while cards remain on the page', async () => {
     deleteCardsMock.mockImplementationOnce((_target, onRemoved) => onRemoved(1))
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
     const results = cards.map((c) => makeResult({ card_id: c.id, is_new: true }))
@@ -330,7 +330,7 @@ describe('useSummarySelection — auto-close on an emptied category [obligation]
     expect(closeCategory).not.toHaveBeenCalled()
   })
 
-  test('calls closeCategory once the last card is moved off the open category [obligation]', async () => {
+  test('calls closeCategory once the last card is moved off the open category', async () => {
     moveCardsMock.mockImplementationOnce((_target, onRemoved) => onRemoved(1))
     const cards = [makeCard({ id: 1 })]
     const results = [makeResult({ card_id: 1, is_new: true })]

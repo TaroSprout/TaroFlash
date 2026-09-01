@@ -80,7 +80,7 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('useEditorSurface', () => {
-  test('keys off the "w<md" breakpoint token [obligation]', () => {
+  test('keys off the "w<md" breakpoint token', () => {
     const ctx = mountSurface()
     active = ctx.app
     expect(mockUseMatchMedia).toHaveBeenCalledWith('w<md')
@@ -89,7 +89,7 @@ describe('useEditorSurface', () => {
   // ── openNewCard ─────────────────────────────────────────────────────────────
 
   describe('openNewCard', () => {
-    test('routes to the desktop editor at md+ [obligation]', () => {
+    test('routes to the desktop editor at md+', () => {
       const ctx = mountSurface({ is_mobile: false })
       active = ctx.app
       ctx.surface.openNewCard()
@@ -97,7 +97,7 @@ describe('useEditorSurface', () => {
       expect(ctx.mobile_editor.openNewCard).not.toHaveBeenCalled()
     })
 
-    test('routes to the mobile dock editor below md [obligation]', () => {
+    test('routes to the mobile dock editor below md', () => {
       const ctx = mountSurface({ is_mobile: true })
       active = ctx.app
       ctx.surface.openNewCard()
@@ -109,7 +109,7 @@ describe('useEditorSurface', () => {
   // ── startEditing ────────────────────────────────────────────────────────────
 
   describe('startEditing', () => {
-    test('toggles desktop edit mode at md+ [obligation]', () => {
+    test('toggles desktop edit mode at md+', () => {
       const ctx = mountSurface({ is_mobile: false })
       active = ctx.app
       ctx.surface.startEditing()
@@ -117,7 +117,7 @@ describe('useEditorSurface', () => {
       expect(ctx.mobile_editor.open_at).not.toHaveBeenCalled()
     })
 
-    test('opens the dock editor below md [obligation]', () => {
+    test('opens the dock editor below md', () => {
       const ctx = mountSurface({ is_mobile: true })
       active = ctx.app
       ctx.surface.startEditing()
@@ -129,14 +129,14 @@ describe('useEditorSurface', () => {
   // ── openCard ────────────────────────────────────────────────────────────────
 
   describe('openCard', () => {
-    test('returns false and does not open the dock at md+ [obligation]', () => {
+    test('returns false and does not open the dock at md+', () => {
       const ctx = mountSurface({ is_mobile: false })
       active = ctx.app
       expect(ctx.surface.openCard('c1')).toBe(false)
       expect(ctx.mobile_editor.open_at).not.toHaveBeenCalled()
     })
 
-    test('opens the dock on the given card and returns true below md [obligation]', () => {
+    test('opens the dock on the given card and returns true below md', () => {
       const ctx = mountSurface({ is_mobile: true })
       active = ctx.app
       expect(ctx.surface.openCard('c1')).toBe(true)

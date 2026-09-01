@@ -127,7 +127,7 @@ beforeEach(() => {
 // ── Free vs paid via member_store.plan ────────────────────────────────────────
 
 describe('plan-section — free vs paid identity', () => {
-  test('free member sees the free pill (not skeleton) even when query has no data [obligation]', async () => {
+  test('free member sees the free pill (not skeleton) even when query has no data', async () => {
     memberState.plan = 'free'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -150,7 +150,7 @@ describe('plan-section — free vs paid identity', () => {
     expect(pill.attributes('data-loading')).toBe('false')
   })
 
-  test('paid member with loading query renders skeleton pill (not free pill) [obligation]', async () => {
+  test('paid member with loading query renders skeleton pill (not free pill)', async () => {
     memberState.plan = 'paid'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -197,7 +197,7 @@ describe('plan-section — free vs paid identity', () => {
 // ── Error state ───────────────────────────────────────────────────────────────
 
 describe('plan-section — error state', () => {
-  test('renders the plan-error element when paid+errored [obligation]', async () => {
+  test('renders the plan-error element when paid+errored', async () => {
     memberState.plan = 'paid'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -218,7 +218,7 @@ describe('plan-section — error state', () => {
     expect(wrapper.find('[data-testid="plan-pill"]').exists()).toBe(false)
   })
 
-  test('the plan-error paragraph carries data-palette="danger" [obligation]', async () => {
+  test('the plan-error paragraph carries data-palette="danger"', async () => {
     memberState.plan = 'paid'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -240,7 +240,7 @@ describe('plan-section — error state', () => {
     ).toBe('danger')
   })
 
-  test('free member with error does NOT show the error — free member never loads billing [obligation]', async () => {
+  test('free member with error does NOT show the error — free member never loads billing', async () => {
     memberState.plan = 'free'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -265,7 +265,7 @@ describe('plan-section — error state', () => {
 // ── Plan name via PLANS[member.plan].displayName ───────────────────────────────
 
 describe('plan-section — plan name', () => {
-  test('pill name comes from PLANS.paid.displayName for a paid member [obligation]', async () => {
+  test('pill name comes from PLANS.paid.displayName for a paid member', async () => {
     memberState.plan = 'paid'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -283,7 +283,7 @@ describe('plan-section — plan name', () => {
     expect(wrapper.find('[data-testid="plan-pill__name"]').text()).toBe(PLANS.paid.displayName)
   })
 
-  test('pill name comes from PLANS.free.displayName for a free member [obligation]', async () => {
+  test('pill name comes from PLANS.free.displayName for a free member', async () => {
     memberState.plan = 'free'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -305,7 +305,7 @@ describe('plan-section — plan name', () => {
 // ── Cost display ──────────────────────────────────────────────────────────────
 
 describe('plan-section — cost display', () => {
-  test('shows cost when priceCents is set on the DTO [obligation]', async () => {
+  test('shows cost when priceCents is set on the DTO', async () => {
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
       props: { subscriptionQuery: makeSubscriptionQuery(baseSubscription) },
@@ -322,7 +322,7 @@ describe('plan-section — cost display', () => {
     expect(wrapper.find('[data-testid="plan-pill__cost-value"]').exists()).toBe(true)
   })
 
-  test('hides cost when priceCents is null on the DTO [obligation]', async () => {
+  test('hides cost when priceCents is null on the DTO', async () => {
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
       props: {
@@ -345,7 +345,7 @@ describe('plan-section — cost display', () => {
 // ── Status badge ──────────────────────────────────────────────────────────────
 
 describe('plan-section — status badge', () => {
-  test('active paid sub shows a status badge (Active) [obligation]', async () => {
+  test('active paid sub shows a status badge (Active)', async () => {
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
       props: { subscriptionQuery: makeSubscriptionQuery(baseSubscription) },
@@ -363,7 +363,7 @@ describe('plan-section — status badge', () => {
     expect(wrapper.find('[data-testid="plan-pill__status"]').text()).toBe('Active')
   })
 
-  test('canceling sub (cancelAtPeriodEnd=true) shows Canceled status badge [obligation]', async () => {
+  test('canceling sub (cancelAtPeriodEnd=true) shows Canceled status badge', async () => {
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
       props: {
@@ -405,7 +405,7 @@ describe('plan-section — status badge', () => {
 // ── PlanActions receives the subscription DTO ─────────────────────────────────
 
 describe('plan-section — plan-actions slot', () => {
-  test('passes subscription DTO to plan-actions slot [obligation]', async () => {
+  test('passes subscription DTO to plan-actions slot', async () => {
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
       props: { subscriptionQuery: makeSubscriptionQuery(baseSubscription) },
@@ -424,7 +424,7 @@ describe('plan-section — plan-actions slot', () => {
     )
   })
 
-  test('free-plan pill receives no #actions slot (plan-actions not rendered) [obligation]', async () => {
+  test('free-plan pill receives no #actions slot (plan-actions not rendered)', async () => {
     memberState.plan = 'free'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -445,10 +445,10 @@ describe('plan-section — plan-actions slot', () => {
   })
 })
 
-// ── PaidFeatures visibility [obligation] ──────────────────────────────────────
+// ── PaidFeatures visibility ──────────────────────────────────────
 
-describe('plan-section — paid-features visibility [obligation]', () => {
-  test('paid-features renders for free member with no error [obligation]', async () => {
+describe('plan-section — paid-features visibility', () => {
+  test('paid-features renders for free member with no error', async () => {
     memberState.plan = 'free'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -466,7 +466,7 @@ describe('plan-section — paid-features visibility [obligation]', () => {
     expect(wrapper.find('[data-testid="paid-features-stub"]').exists()).toBe(true)
   })
 
-  test('paid-features is suppressed for paid member [obligation]', async () => {
+  test('paid-features is suppressed for paid member', async () => {
     memberState.plan = 'paid'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {
@@ -484,7 +484,7 @@ describe('plan-section — paid-features visibility [obligation]', () => {
     expect(wrapper.find('[data-testid="paid-features-stub"]').exists()).toBe(false)
   })
 
-  test('paid-features is suppressed when errored (paid+error shows error view) [obligation]', async () => {
+  test('paid-features is suppressed when errored (paid+error shows error view)', async () => {
     memberState.plan = 'paid'
     const PlanSection = (await import('@/views/settings/tab-subscription/plan-section.vue')).default
     const wrapper = shallowMount(PlanSection, {

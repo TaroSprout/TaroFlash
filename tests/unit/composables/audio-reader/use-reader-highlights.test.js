@@ -193,7 +193,7 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  describe('mouse drag — fine-pointer ratchet [obligation]', () => {
+  describe('mouse drag — fine-pointer ratchet', () => {
     test('onPointerMove emits gesture.tick when a new word is entered during active drag', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl3 = addWord(contentEl, 3)
@@ -606,7 +606,7 @@ describe('useReaderHighlights', () => {
       expect(result.selection_preview.value).toBeNull()
     })
 
-    test('is non-null the instant a touch long-press arms with NO drag [obligation]', async () => {
+    test('is non-null the instant a touch long-press arms with NO drag', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 1, '語')
       const base = wordEl.querySelector('[data-word-base]')
@@ -629,7 +629,7 @@ describe('useReaderHighlights', () => {
       expect(result.selection_preview.value).not.toBeNull()
     })
 
-    test('selection_preview shape has text, x, top, bottom [obligation]', async () => {
+    test('selection_preview shape has text, x, top, bottom', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 2, '日本語')
       const base = wordEl.querySelector('[data-word-base]')
@@ -654,7 +654,7 @@ describe('useReaderHighlights', () => {
       expect(preview.bottom).toBe(80 + 24)
     })
 
-    test('selection_preview stays null for mouse pointerdown + drag [obligation]', async () => {
+    test('selection_preview stays null for mouse pointerdown + drag', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl1 = addWord(contentEl, 0, 'Hello')
       const wordEl2 = addWord(contentEl, 1, 'World')
@@ -680,7 +680,7 @@ describe('useReaderHighlights', () => {
       expect(result.selection_preview.value).toBeNull()
     })
 
-    test('selection_preview resets to null after commitTouch (pointerup) [obligation]', async () => {
+    test('selection_preview resets to null after commitTouch (pointerup)', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 3, '選')
       const base = wordEl.querySelector('[data-word-base]')
@@ -704,7 +704,7 @@ describe('useReaderHighlights', () => {
       expect(result.selection_preview.value).toBeNull()
     })
 
-    test('selection_preview resets to null after onPointerCancel [obligation]', async () => {
+    test('selection_preview resets to null after onPointerCancel', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 4, '語')
       const base = wordEl.querySelector('[data-word-base]')
@@ -801,7 +801,7 @@ describe('useReaderHighlights', () => {
   // A tap/click on a word the matcher covers selects the whole matched phrase;
   // a deliberate drag or long-press range-select still commits exactly what was
   // swept, so a long-press on a highlight selects freely as if it weren't there.
-  describe('match-aware selection [obligation]', () => {
+  describe('match-aware selection', () => {
     // Lay out words `2,3,4` as a horizontal row of base rects so commitRange can
     // measure a multi-word range.
     function addPhrase(contentEl) {
@@ -931,7 +931,7 @@ describe('useReaderHighlights', () => {
       vi.useRealTimers()
     })
 
-    // [obligation] Two rapid active_word changes should produce only one
+    // Two rapid active_word changes should produce only one
     // scrollWordIntoDeadzone call, not two.
     test('is debounced 100ms — two rapid changes fire only one scroll call', async () => {
       const active_word = ref(0)
@@ -958,7 +958,7 @@ describe('useReaderHighlights', () => {
       expect(mockScrollWordIntoDeadzone).toHaveBeenCalledTimes(1)
     })
 
-    // [obligation] clearTimeout called in onBeforeUnmount — no dangling timer.
+    // clearTimeout called in onBeforeUnmount — no dangling timer.
     test('timer is cleared on unmount — no dangling setTimeout', async () => {
       const active_word = ref(0)
       const { result: _result, contentEl, container } = withHighlights({ active_word })
@@ -990,7 +990,7 @@ describe('useReaderHighlights', () => {
     // positionInteraction when focus_index/anchor_index/committed changes.
     // We drive state via pointer events and inspect hover_lines after nextTick.
 
-    // [obligation] single-line range → one CursorBox
+    // single-line range → one CursorBox
     test('single-line range produces exactly one entry in hover_lines', async () => {
       const { result, contentEl } = withHighlights()
       contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 600)
@@ -1016,7 +1016,7 @@ describe('useReaderHighlights', () => {
       expect(result.hover_lines.value).toHaveLength(1)
     })
 
-    // [obligation] multi-line range → one box per line
+    // multi-line range → one box per line
     test('multi-line range produces one hover_lines entry per visual line', async () => {
       const { result, contentEl } = withHighlights()
       contentEl.getBoundingClientRect = () => new DOMRect(0, 0, 300, 600)
@@ -1057,7 +1057,7 @@ describe('useReaderHighlights', () => {
       expect(box1.top).toBe(b1.getBoundingClientRect().top - base.top - PAD_Y)
     })
 
-    // [obligation] null content ref → returns []
+    // null content ref → returns []
     test('hover_lines stays empty when content is not mounted', async () => {
       // A host that does NOT render ref="content" — content.value will be null.
       const { h: vueH, defineComponent, createApp: vueCreateApp } = require('vue')
@@ -1099,7 +1099,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('interactionLines — hides excess pills before shrinking hover_lines', () => {
-    // [obligation] Going from a 2-line selection to a 1-line selection should call
+    // Going from a 2-line selection to a 1-line selection should call
     // hideReaderCursor on the second pill element before Vue removes it — i.e.,
     // before hover_lines shrinks. We verify hideReaderCursor is called with an
     // element that was registered at index ≥ new line count.
@@ -1148,10 +1148,10 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  // ── Follow toggle [obligation] ────────────────────────────────────────────────
+  // ── Follow toggle ────────────────────────────────────────────────
 
   describe('follow toggle — following flag', () => {
-    test('following starts true [obligation]', () => {
+    test('following starts true', () => {
       const { result } = withHighlights()
       expect(result.following.value).toBe(true)
     })
@@ -1160,7 +1160,7 @@ describe('useReaderHighlights', () => {
       beforeEach(() => vi.useFakeTimers())
       afterEach(() => vi.useRealTimers())
 
-      test('followActiveWord is a no-op while following is false [obligation]', async () => {
+      test('followActiveWord is a no-op while following is false', async () => {
         const active_word = ref(0)
         const { result, contentEl } = withHighlights({ active_word })
         addWord(contentEl, 0)
@@ -1177,7 +1177,7 @@ describe('useReaderHighlights', () => {
 
       // A debounced scroll queued *before* following goes false must NOT execute once
       // the flag flips — the gate is checked at execution time inside the setTimeout.
-      test('a queued follow scroll is aborted when following flips false before timeout fires [obligation]', async () => {
+      test('a queued follow scroll is aborted when following flips false before timeout fires', async () => {
         const active_word = ref(0)
         const { result, contentEl } = withHighlights({ active_word })
         addWord(contentEl, 0)
@@ -1198,7 +1198,7 @@ describe('useReaderHighlights', () => {
   })
 
   describe('follow toggle — disableFollow trigger paths', () => {
-    test('touch drift past TAP_SLOP calls disableFollow — sets following false and cancels scroll [obligation]', async () => {
+    test('touch drift past TAP_SLOP calls disableFollow — sets following false and cancels scroll', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 1)
       stubElementFromPoint(() => wordEl)
@@ -1218,7 +1218,7 @@ describe('useReaderHighlights', () => {
       expect(mockCancelScroll).toHaveBeenCalledTimes(1)
     })
 
-    test('onPointerCancel (without range-select armed) calls disableFollow — sets following false [obligation]', async () => {
+    test('onPointerCancel (without range-select armed) calls disableFollow — sets following false', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 2)
       stubElementFromPoint(() => wordEl)
@@ -1236,7 +1236,7 @@ describe('useReaderHighlights', () => {
       beforeEach(() => vi.useFakeTimers())
       afterEach(() => vi.useRealTimers())
 
-      test('onPointerCancel during an armed range-select does NOT disable follow [obligation]', async () => {
+      test('onPointerCancel during an armed range-select does NOT disable follow', async () => {
         const { result, contentEl } = withHighlights()
         const wordEl = addWord(contentEl, 2)
         stubElementFromPoint(() => wordEl)
@@ -1256,7 +1256,7 @@ describe('useReaderHighlights', () => {
       })
     })
 
-    test('wheel event disables follow [obligation]', async () => {
+    test('wheel event disables follow', async () => {
       const { result } = withHighlights()
       expect(result.following.value).toBe(true)
 
@@ -1267,7 +1267,7 @@ describe('useReaderHighlights', () => {
       expect(mockCancelScroll).toHaveBeenCalledTimes(1)
     })
 
-    test('disableFollow is idempotent — second call while already false is a no-op [obligation]', async () => {
+    test('disableFollow is idempotent — second call while already false is a no-op', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 1)
       stubElementFromPoint(() => wordEl)
@@ -1296,8 +1296,8 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  describe('resumeFollow [obligation]', () => {
-    test('resumeFollow sets following back to true [obligation]', async () => {
+  describe('resumeFollow', () => {
+    test('resumeFollow sets following back to true', async () => {
       const { result, contentEl } = withHighlights()
       const wordEl = addWord(contentEl, 1)
       stubElementFromPoint(() => wordEl)
@@ -1317,7 +1317,7 @@ describe('useReaderHighlights', () => {
       expect(result.following.value).toBe(true)
     })
 
-    test('resumeFollow calls scrollLineIntoView with animate=true when playing [obligation]', async () => {
+    test('resumeFollow calls scrollLineIntoView with animate=true when playing', async () => {
       const active_word = ref(0)
       const is_playing = ref(true)
       const { result, contentEl } = withHighlights({ active_word, is_playing })
@@ -1335,7 +1335,7 @@ describe('useReaderHighlights', () => {
       expect(animate).toBe(true)
     })
 
-    test('resumeFollow still animates smoothly when paused [obligation]', async () => {
+    test('resumeFollow still animates smoothly when paused', async () => {
       const active_word = ref(0)
       const is_playing = ref(false)
       const { result, contentEl } = withHighlights({ active_word, is_playing })
@@ -1353,11 +1353,11 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  describe('disableFollow — idle auto-resume timer [obligation]', () => {
+  describe('disableFollow — idle auto-resume timer', () => {
     beforeEach(() => vi.useFakeTimers())
     afterEach(() => vi.useRealTimers())
 
-    test('re-arms following after FOLLOW_RESUME_IDLE_MS while playing, with no manual resume tap [obligation]', async () => {
+    test('re-arms following after FOLLOW_RESUME_IDLE_MS while playing, with no manual resume tap', async () => {
       const is_playing = ref(true)
       const { result } = withHighlights({ is_playing })
       expect(result.following.value).toBe(true)
@@ -1372,10 +1372,10 @@ describe('useReaderHighlights', () => {
       expect(result.following.value).toBe(true)
     })
 
-    // [obligation] Paused, the active word isn't advancing — there's nothing to
+    // Paused, the active word isn't advancing — there's nothing to
     // fall behind, so the idle timer must not yank the view back (e.g. away from
     // a term popover the member scrolled to read).
-    test('does NOT re-arm following after the idle window while paused [obligation]', async () => {
+    test('does NOT re-arm following after the idle window while paused', async () => {
       const is_playing = ref(false)
       const { result } = withHighlights({ is_playing })
 
@@ -1389,9 +1389,9 @@ describe('useReaderHighlights', () => {
       expect(result.following.value).toBe(false)
     })
 
-    // [obligation] A paused lapse leaves no timer pending; play starting later
+    // A paused lapse leaves no timer pending; play starting later
     // must re-arm one rather than leaving follow off forever.
-    test('re-arms once play starts after an idle window lapsed while paused [obligation]', async () => {
+    test('re-arms once play starts after an idle window lapsed while paused', async () => {
       const is_playing = ref(false)
       const { result } = withHighlights({ is_playing })
 
@@ -1409,7 +1409,7 @@ describe('useReaderHighlights', () => {
       expect(result.following.value).toBe(true)
     })
 
-    test('a second disableFollow call before the timer fires restarts the idle window [obligation]', async () => {
+    test('a second disableFollow call before the timer fires restarts the idle window', async () => {
       const is_playing = ref(true)
       const { result } = withHighlights({ is_playing })
 
@@ -1435,7 +1435,7 @@ describe('useReaderHighlights', () => {
       expect(result.following.value).toBe(true)
     })
 
-    test('calling resumeFollow manually cancels the pending auto re-arm [obligation]', async () => {
+    test('calling resumeFollow manually cancels the pending auto re-arm', async () => {
       const is_playing = ref(true)
       const { result } = withHighlights({ is_playing })
 
@@ -1457,8 +1457,8 @@ describe('useReaderHighlights', () => {
     })
   })
 
-  describe('follow_direction [obligation]', () => {
-    test('follow_direction is "up" when the active word centre is above the viewport centre [obligation]', async () => {
+  describe('follow_direction', () => {
+    test('follow_direction is "up" when the active word centre is above the viewport centre', async () => {
       const active_word = ref(0)
       const { result, contentEl } = withHighlights({ active_word })
       const word = addWord(contentEl, 0)
@@ -1476,7 +1476,7 @@ describe('useReaderHighlights', () => {
       expect(result.follow_direction.value).toBe('up')
     })
 
-    test('follow_direction is "down" when the active word centre is below the viewport centre [obligation]', async () => {
+    test('follow_direction is "down" when the active word centre is below the viewport centre', async () => {
       const active_word = ref(0)
       const { result, contentEl } = withHighlights({ active_word })
       const word = addWord(contentEl, 0)
@@ -1491,7 +1491,7 @@ describe('useReaderHighlights', () => {
       expect(result.follow_direction.value).toBe('down')
     })
 
-    test('scroll event does NOT update follow_direction while following is true [obligation]', async () => {
+    test('scroll event does NOT update follow_direction while following is true', async () => {
       const active_word = ref(0)
       const { result, contentEl } = withHighlights({ active_word })
       const word = addWord(contentEl, 0)
@@ -1506,7 +1506,7 @@ describe('useReaderHighlights', () => {
       expect(result.follow_direction.value).toBe(initial)
     })
 
-    test('follow_direction is recomputed when the active word advances while follow is off [obligation]', async () => {
+    test('follow_direction is recomputed when the active word advances while follow is off', async () => {
       const active_word = ref(0)
       const { result, contentEl } = withHighlights({ active_word })
       const w0 = addWord(contentEl, 0)

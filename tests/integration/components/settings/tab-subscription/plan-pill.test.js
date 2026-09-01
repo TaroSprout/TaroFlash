@@ -29,7 +29,7 @@ describe('plan-pill — loaded state', () => {
     expect(wrapper.find('[data-testid="plan-pill__cost"]').exists()).toBe(false)
   })
 
-  test('renders status badge as a separate element when status prop is set [obligation]', () => {
+  test('renders status badge as a separate element when status prop is set', () => {
     const wrapper = makePlanPill({ name: 'Builder', status: 'Active' })
     expect(wrapper.find('[data-testid="plan-pill__status"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="plan-pill__status"]').text()).toBe('Active')
@@ -50,7 +50,7 @@ describe('plan-pill — loaded state', () => {
     expect(wrapper.find('[data-testid="plan-pill__description"]').exists()).toBe(false)
   })
 
-  test('renders the actions slot when not loading [obligation]', () => {
+  test('renders the actions slot when not loading', () => {
     const wrapper = makePlanPill(
       { name: 'Builder', loading: false },
       { actions: () => h('button', { 'data-testid': 'actions-slot-content' }, 'Cancel') }
@@ -63,17 +63,17 @@ describe('plan-pill — loaded state', () => {
 // ── Loading state ─────────────────────────────────────────────────────────────
 
 describe('plan-pill — loading state', () => {
-  test('body has data-loading=true when loading=true [obligation]', () => {
+  test('body has data-loading=true when loading=true', () => {
     const wrapper = makePlanPill({ loading: true })
     expect(wrapper.find('[data-testid="plan-pill__body"]').attributes('data-loading')).toBe('true')
   })
 
-  test('body has data-loading=false when loading=false [obligation]', () => {
+  test('body has data-loading=false when loading=false', () => {
     const wrapper = makePlanPill({ loading: false })
     expect(wrapper.find('[data-testid="plan-pill__body"]').attributes('data-loading')).toBe('false')
   })
 
-  test('suppresses the actions slot when loading=true [obligation]', () => {
+  test('suppresses the actions slot when loading=true', () => {
     const wrapper = makePlanPill(
       { name: 'Builder', loading: true },
       { actions: () => h('button', { 'data-testid': 'actions-slot-content' }, 'Cancel') }
@@ -81,7 +81,7 @@ describe('plan-pill — loading state', () => {
     expect(wrapper.find('[data-testid="plan-pill__actions"]').exists()).toBe(false)
   })
 
-  test('shows plan-pill__skeleton (no primary content) when loading=true [obligation]', () => {
+  test('shows plan-pill__skeleton (no primary content) when loading=true', () => {
     const wrapper = makePlanPill({ loading: true })
     expect(wrapper.find('[data-testid="plan-pill__primary"]').exists()).toBe(false)
   })
@@ -89,7 +89,7 @@ describe('plan-pill — loading state', () => {
   // shimmer and bgx-diagonal-stripes must coexist on the loading body — the
   // fix's premise is that the sweep now blends over a patterned host instead
   // of the two being mutually exclusive.
-  test('keeps the shimmer variant alongside the bgx-diagonal-stripes pattern variant while loading [obligation]', () => {
+  test('keeps the shimmer variant alongside the bgx-diagonal-stripes pattern variant while loading', () => {
     const wrapper = makePlanPill({ loading: true })
     const classes = wrapper.find('[data-testid="plan-pill__body"]').classes()
     expect(classes).toContain('data-[loading=true]:shimmer')

@@ -21,7 +21,7 @@ function row(id) {
 }
 
 describe('fetchCardsInDeck', () => {
-  test('requests p_limit + 1 rows from the RPC — the lookahead row [obligation]', async () => {
+  test('requests p_limit + 1 rows from the RPC — the lookahead row', async () => {
     rpcMock.mockResolvedValueOnce({ data: [], error: null })
     await fetchCardsInDeck({ deck_id: 7, sort_by: 'default', query: null, offset: 0, limit: 50 })
     expect(rpcMock).toHaveBeenCalledWith('get_cards_in_deck', {
@@ -48,7 +48,7 @@ describe('fetchCardsInDeck', () => {
     )
   })
 
-  test('caps cards at limit even when the RPC returns the extra lookahead row [obligation]', async () => {
+  test('caps cards at limit even when the RPC returns the extra lookahead row', async () => {
     const rows = [row(1), row(2), row(3)]
     rpcMock.mockResolvedValueOnce({ data: rows, error: null })
 
@@ -63,7 +63,7 @@ describe('fetchCardsInDeck', () => {
     expect(page.cards).toEqual([row(1), row(2)])
   })
 
-  test('next_rank is the rank of the extra row past the page [obligation]', async () => {
+  test('next_rank is the rank of the extra row past the page', async () => {
     const rows = [row(1), row(2), row(3)]
     rpcMock.mockResolvedValueOnce({ data: rows, error: null })
 
@@ -78,7 +78,7 @@ describe('fetchCardsInDeck', () => {
     expect(page.next_rank).toBe('rank-3')
   })
 
-  test('next_rank is null at the end of the deck (fewer rows than limit + 1) [obligation]', async () => {
+  test('next_rank is null at the end of the deck (fewer rows than limit + 1)', async () => {
     const rows = [row(1), row(2)]
     rpcMock.mockResolvedValueOnce({ data: rows, error: null })
 

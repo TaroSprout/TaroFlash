@@ -119,7 +119,7 @@ describe('ModeStack', () => {
 
   // ── notifyModeSettled — called from overlay enter and grid enter completions
 
-  test('calls shell.notifyModeSettled after the overlay pane finishes entering [obligation]', async () => {
+  test('calls shell.notifyModeSettled after the overlay pane finishes entering', async () => {
     const shell = makeShell('view')
     mount(shell)
 
@@ -133,7 +133,7 @@ describe('ModeStack', () => {
     expect(shell.notifyModeSettled).toHaveBeenCalled()
   })
 
-  test('calls shell.notifyModeSettled after the grid pane finishes entering [obligation]', async () => {
+  test('calls shell.notifyModeSettled after the grid pane finishes entering', async () => {
     const shell = makeShell('edit')
     mount(shell)
 
@@ -177,10 +177,10 @@ describe('ModeStack', () => {
     expect(wrapper.attributes('style') ?? '').not.toContain('min-height')
   })
 
-  // ── below md: crossfade, never a clip/min-height transition [obligation] ──
+  // ── below md: crossfade, never a clip/min-height transition ──
 
-  describe('below md (mobile crossfade) [obligation]', () => {
-    test('a mode flip below md applies neither overflow-hidden nor min-height [obligation]', async () => {
+  describe('below md (mobile crossfade)', () => {
+    test('a mode flip below md applies neither overflow-hidden nor min-height', async () => {
       isMobileRef.value = true
       const shell = makeShell('view')
       const wrapper = mount(shell)
@@ -194,7 +194,7 @@ describe('ModeStack', () => {
       expect(wrapper.attributes('style') ?? '').not.toContain('min-height')
     })
 
-    test('slideOverlayUp is never called below md — the overlay crossfades instead [obligation]', async () => {
+    test('slideOverlayUp is never called below md — the overlay crossfades instead', async () => {
       isMobileRef.value = true
       const shell = makeShell('view')
       mount(shell)
@@ -208,8 +208,8 @@ describe('ModeStack', () => {
     })
   })
 
-  describe('at md and above (desktop slide) [obligation]', () => {
-    test('a mode flip at md+ applies overflow-hidden while the overlay slides in [obligation]', async () => {
+  describe('at md and above (desktop slide)', () => {
+    test('a mode flip at md+ applies overflow-hidden while the overlay slides in', async () => {
       isMobileRef.value = false
       const shell = makeShell('view')
       const wrapper = mount(shell)
@@ -224,7 +224,7 @@ describe('ModeStack', () => {
       expect(wrapper.classes()).toContain('overflow-hidden')
     })
 
-    test('slideOverlayUp drives the overlay in at md and above [obligation]', async () => {
+    test('slideOverlayUp drives the overlay in at md and above', async () => {
       isMobileRef.value = false
       const shell = makeShell('view')
       mount(shell)

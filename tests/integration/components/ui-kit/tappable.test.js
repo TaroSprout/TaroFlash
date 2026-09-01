@@ -36,10 +36,7 @@ import UiTappable from '@/components/ui-kit/tappable.vue'
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function mountTappable(props = {}) {
-  return mount(UiTappable, {
-    props,
-    global: { directives: { sfx: {} } }
-  })
+  return mount(UiTappable, { props })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -74,7 +71,7 @@ describe('UiTappable — tap event', () => {
   })
 })
 
-describe('UiTappable — sfx.press read at click time [obligation]', () => {
+describe('UiTappable — sfx.press read at click time', () => {
   test('uses sfx.press from the prop at mount time on first click', async () => {
     // Fine pointer so staged-tap fires audio immediately
     coarseRef.value = false
@@ -84,7 +81,7 @@ describe('UiTappable — sfx.press read at click time [obligation]', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('reflects sfx.press prop change on next click after mount [obligation]', async () => {
+  test('reflects sfx.press prop change on next click after mount', async () => {
     coarseRef.value = false
     const wrapper = mountTappable({ sfx: { press: 'ui.press' } })
 
@@ -139,7 +136,7 @@ describe('UiTappable — data-tap-active state', () => {
   })
 })
 
-describe('UiTappable — active prop [obligation]', () => {
+describe('UiTappable — active prop', () => {
   test('data-tap-active is "true" when active is true, with no hover or press', () => {
     const wrapper = mountTappable({ active: true })
     expect(wrapper.attributes('data-tap-active')).toBe('true')
@@ -151,7 +148,7 @@ describe('UiTappable — active prop [obligation]', () => {
   })
 })
 
-describe('UiTappable — active_on_hover [obligation]', () => {
+describe('UiTappable — active_on_hover', () => {
   test('hover does not set data-tap-active when active_on_hover is unset (default off)', async () => {
     fineRef.value = true
     const wrapper = mountTappable()

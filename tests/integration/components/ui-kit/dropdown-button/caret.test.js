@@ -36,35 +36,34 @@ import DropdownCaret from '@/components/ui-kit/dropdown-button/caret.vue'
 
 function mountCaret(props = {}) {
   return mount(DropdownCaret, {
-    props: { open: false, ...props },
-    global: { directives: { sfx: {} } }
+    props: { open: false, ...props }
   })
 }
 
 function mountCaretRealTransition(props = {}) {
   return mount(DropdownCaret, {
     props: { open: false, ...props },
-    global: { directives: { sfx: {} }, stubs: { transition: false } }
+    global: { stubs: { transition: false } }
   })
 }
 
 describe('DropdownCaret', () => {
   beforeEach(() => mockEmitSfx.mockClear())
 
-  // ── neutral fill [obligation] ────────────────────────────────────────────
+  // ── neutral fill ────────────────────────────────────────────
   // The split-button pair reads as two-tone: a neutral caret is the darker
   // companion of the (lighter) button beside it, an identity caret rings
   // itself in the accent instead.
 
-  describe('neutral fill [obligation]', () => {
-    test('neutral=true carries bg-raised-shade, the darker companion fill [obligation]', () => {
+  describe('neutral fill', () => {
+    test('neutral=true carries bg-raised-shade, the darker companion fill', () => {
       const wrapper = mountCaret({ neutral: true })
       expect(wrapper.find('[data-testid="dropdown-button__trigger"]').classes()).toContain(
         'bg-raised-shade'
       )
     })
 
-    test('neutral=false (identity caret) carries bg-raised-tint instead [obligation]', () => {
+    test('neutral=false (identity caret) carries bg-raised-tint instead', () => {
       const wrapper = mountCaret({ neutral: false })
       const trigger = wrapper.find('[data-testid="dropdown-button__trigger"]')
       expect(trigger.classes()).toContain('bg-raised-tint')
@@ -125,7 +124,7 @@ describe('DropdownCaret', () => {
       expect(wrapper.emitted('toggle')).toHaveLength(1)
     })
 
-    test('clicking the trigger span does not emit toggle when disabled [obligation]', async () => {
+    test('clicking the trigger span does not emit toggle when disabled', async () => {
       const wrapper = mountCaret({ open: false, disabled: true })
       await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('click')
       expect(wrapper.emitted('toggle')).toBeUndefined()
@@ -134,25 +133,25 @@ describe('DropdownCaret', () => {
     // The click handler lives on the always-present wrapper div, not the
     // transitioning trigger span — a click landing mid-flip (or in the
     // out-in gap) hits the wrapper, which would otherwise swallow it.
-    test('clicking the wrapper div (not the trigger span) emits toggle [obligation]', async () => {
+    test('clicking the wrapper div (not the trigger span) emits toggle', async () => {
       const wrapper = mountCaret({ open: false })
       await wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').trigger('click')
       expect(wrapper.emitted('toggle')).toHaveLength(1)
     })
 
-    test('clicking the wrapper div does not emit toggle when disabled [obligation]', async () => {
+    test('clicking the wrapper div does not emit toggle when disabled', async () => {
       const wrapper = mountCaret({ open: false, disabled: true })
       await wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').trigger('click')
       expect(wrapper.emitted('toggle')).toBeUndefined()
     })
 
-    test('Enter keydown on the trigger span does not emit toggle when disabled [obligation]', async () => {
+    test('Enter keydown on the trigger span does not emit toggle when disabled', async () => {
       const wrapper = mountCaret({ open: false, disabled: true })
       await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('keydown.enter')
       expect(wrapper.emitted('toggle')).toBeUndefined()
     })
 
-    test('Space keydown on the trigger span does not emit toggle when disabled [obligation]', async () => {
+    test('Space keydown on the trigger span does not emit toggle when disabled', async () => {
       const wrapper = mountCaret({ open: false, disabled: true })
       await wrapper.find('[data-testid="dropdown-button__trigger"]').trigger('keydown.space')
       expect(wrapper.emitted('toggle')).toBeUndefined()
@@ -186,14 +185,14 @@ describe('DropdownCaret', () => {
     })
   })
 
-  // ── transition hooks [obligation] ────────────────────────────────────────
+  // ── transition hooks ────────────────────────────────────────
   // Toggling open swaps the trigger span's key, so the wrapping <transition>
   // runs a real leave (old span, onLeave → flipLeave) + enter (new span,
   // onEnter → flipEnter) — @vue/test-utils stubs <transition> by default, so
   // these are only exercised with `stubs: { transition: false }`.
 
-  describe('transition hooks [obligation]', () => {
-    test('toggling open delegates the leave to flipLeave on the x axis [obligation]', async () => {
+  describe('transition hooks', () => {
+    test('toggling open delegates the leave to flipLeave on the x axis', async () => {
       const wrapper = mountCaretRealTransition({ open: false })
       flipLeaveMock.mockClear()
 
@@ -203,7 +202,7 @@ describe('DropdownCaret', () => {
       expect(flipLeaveMock).toHaveBeenCalledWith(expect.anything(), 'x', expect.any(Function))
     })
 
-    test('toggling open delegates the enter to flipEnter on the x axis [obligation]', async () => {
+    test('toggling open delegates the enter to flipEnter on the x axis', async () => {
       const wrapper = mountCaretRealTransition({ open: false })
       flipEnterMock.mockClear()
 

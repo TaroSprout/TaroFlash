@@ -14,16 +14,16 @@ function makeTwelveDecks() {
   return Array.from({ length: 12 }, (_, i) => makeDeck(i + 1, i + 1, i === 11))
 }
 
-// ── in_grace [obligation] ────────────────────────────────────────────────────
+// ── in_grace ────────────────────────────────────────────────────
 
 describe('useDeckGrace — in_grace', () => {
-  test('is true when at least one deck is_locked [obligation]', () => {
+  test('is true when at least one deck is_locked', () => {
     const decks = [makeDeck(1, 1, false), makeDeck(2, 2, true)]
     const { in_grace } = useDeckGrace(() => decks)
     expect(in_grace.value).toBe(true)
   })
 
-  test('is false when no deck is_locked [obligation]', () => {
+  test('is false when no deck is_locked', () => {
     const decks = [makeDeck(1, 1, false), makeDeck(2, 2, false)]
     const { in_grace } = useDeckGrace(() => decks)
     expect(in_grace.value).toBe(false)
@@ -35,10 +35,10 @@ describe('useDeckGrace — in_grace', () => {
   })
 })
 
-// ── lockedIds while in grace [obligation] ────────────────────────────────────
+// ── lockedIds while in grace ────────────────────────────────────
 
 describe('useDeckGrace — lockedIds while in grace', () => {
-  test('locks only the decks ranked below the top 10; the top 10 by rank are excluded [obligation]', () => {
+  test('locks only the decks ranked below the top 10; the top 10 by rank are excluded', () => {
     const decks = makeTwelveDecks()
     const { lockedIds } = useDeckGrace(() => decks)
     const locked = lockedIds.value
@@ -60,10 +60,10 @@ describe('useDeckGrace — lockedIds while in grace', () => {
   })
 })
 
-// ── lockedIds outside grace [obligation] ─────────────────────────────────────
+// ── lockedIds outside grace ─────────────────────────────────────
 
 describe('useDeckGrace — lockedIds outside grace', () => {
-  test('is empty even with more than 10 decks when none are locked [obligation]', () => {
+  test('is empty even with more than 10 decks when none are locked', () => {
     const decks = Array.from({ length: 15 }, (_, i) => makeDeck(i + 1, i + 1, false))
     const { lockedIds } = useDeckGrace(() => decks)
     expect(lockedIds.value.size).toBe(0)
@@ -75,10 +75,10 @@ describe('useDeckGrace — lockedIds outside grace', () => {
   })
 })
 
-// ── recomputes from local rank [obligation] ──────────────────────────────────
+// ── recomputes from local rank ──────────────────────────────────
 
 describe('useDeckGrace — recomputes from local rank', () => {
-  test('a rank mutation crossing the 10th position flips lockedIds membership without an is_locked change [obligation]', () => {
+  test('a rank mutation crossing the 10th position flips lockedIds membership without an is_locked change', () => {
     const decksRef = ref(makeTwelveDecks())
     const { lockedIds } = useDeckGrace(() => decksRef.value)
 

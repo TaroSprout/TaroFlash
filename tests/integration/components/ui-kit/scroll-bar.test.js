@@ -77,9 +77,9 @@ describe('UiScrollBar — thumb geometry', () => {
   })
 })
 
-// ── Drag interaction [obligation] ────────────────────────────────────────────
+// ── Drag interaction ────────────────────────────────────────────
 
-describe('UiScrollBar — drag moves scroll 1:1 and clamps at both ends [obligation]', () => {
+describe('UiScrollBar — drag moves scroll 1:1 and clamps at both ends', () => {
   test('dragging the thumb down emits a drag progress matching the pixel delta over the travel', async () => {
     const wrapper = mountScrollBar({ progress: 0, visible_fraction: 0.5 }, { trackHeight: 100 })
     await waitForUpdate()
@@ -137,9 +137,9 @@ describe('UiScrollBar — drag moves scroll 1:1 and clamps at both ends [obligat
   })
 })
 
-// ── Cleanup releases pointer capture [obligation] ────────────────────────────
+// ── Cleanup releases pointer capture ────────────────────────────
 
-describe('UiScrollBar — pointercancel and unmount leave dragging false with capture released [obligation]', () => {
+describe('UiScrollBar — pointercancel and unmount leave dragging false with capture released', () => {
   test('data-active flips true while dragging, false again on pointercancel', async () => {
     const wrapper = mountScrollBar({ progress: 0, visible_fraction: 0.5 }, { trackHeight: 100 })
     await waitForUpdate()
@@ -193,12 +193,12 @@ describe('UiScrollBar — pointercancel and unmount leave dragging false with ca
   })
 })
 
-// ── Visibility variant [obligation] ──────────────────────────────────────────
+// ── Visibility variant ──────────────────────────────────────────
 // The whole md-breakpoint fix rides on this one compound class — a plain
 // `pointer-fine:block` would show the bar below 832px again, and dropping the
 // `pointer-fine:` half would show it on a coarse (touch) pointer at any width.
 
-describe('UiScrollBar — track visibility class [obligation]', () => {
+describe('UiScrollBar — track visibility class', () => {
   test('carries the compound md:pointer-fine:block variant alongside hidden', async () => {
     const wrapper = mountScrollBar()
     await waitForUpdate()
@@ -223,9 +223,9 @@ describe('UiScrollBar — track visibility class [obligation]', () => {
   })
 })
 
-// ── Track press [obligation] ─────────────────────────────────────────────────
+// ── Track press ─────────────────────────────────────────────────
 
-describe('UiScrollBar — track press centres the handle on the press point [obligation]', () => {
+describe('UiScrollBar — track press centres the handle on the press point', () => {
   test('pressing the track emits a jump that centres the thumb on the press point', async () => {
     const wrapper = mountScrollBar({ progress: 0, visible_fraction: 0.5 }, { trackHeight: 100 })
     await waitForUpdate()

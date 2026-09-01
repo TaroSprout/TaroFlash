@@ -115,8 +115,8 @@ describe('UiTooltip', () => {
     })
   })
 
-  describe('overlay chrome — always renders, never accent [obligation]', () => {
-    test('popover carries data-station="float" and no data-palette regardless of trigger attrs [obligation]', async () => {
+  describe('overlay chrome — always renders, never accent', () => {
+    test('popover carries data-station="float" and no data-palette regardless of trigger attrs', async () => {
       const wrapper = mountTooltip({}, {}, { 'data-palette': 'danger' })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
@@ -127,8 +127,8 @@ describe('UiTooltip', () => {
     })
   })
 
-  describe('max_chars / is_multiline [obligation]', () => {
-    test('max_chars defaults to 32 and sets maxWidth to 32ch [obligation]', async () => {
+  describe('max_chars / is_multiline', () => {
+    test('max_chars defaults to 32 and sets maxWidth to 32ch', async () => {
       const wrapper = mountTooltip({ text: 'short' })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
@@ -137,7 +137,7 @@ describe('UiTooltip', () => {
       wrapper.unmount()
     })
 
-    test('data-multiline is "false" when text.length <= max_chars [obligation]', async () => {
+    test('data-multiline is "false" when text.length <= max_chars', async () => {
       const wrapper = mountTooltip({ text: 'short text' })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
 
@@ -146,7 +146,7 @@ describe('UiTooltip', () => {
       wrapper.unmount()
     })
 
-    test('data-multiline is "true" when text.length > max_chars [obligation]', async () => {
+    test('data-multiline is "true" when text.length > max_chars', async () => {
       const long_text = 'a'.repeat(40)
       const wrapper = mountTooltip({ text: long_text })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
@@ -156,7 +156,7 @@ describe('UiTooltip', () => {
       wrapper.unmount()
     })
 
-    test('a custom max_chars is respected for both maxWidth and the multiline threshold [obligation]', async () => {
+    test('a custom max_chars is respected for both maxWidth and the multiline threshold', async () => {
       const text = 'a'.repeat(10)
       const wrapper = mountTooltip({ text, max_chars: 8 })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')
@@ -168,7 +168,7 @@ describe('UiTooltip', () => {
       wrapper.unmount()
     })
 
-    test('a custom max_chars that exceeds text.length resolves data-multiline to "false" [obligation]', async () => {
+    test('a custom max_chars that exceeds text.length resolves data-multiline to "false"', async () => {
       const text = 'a'.repeat(10)
       const wrapper = mountTooltip({ text, max_chars: 20 })
       await dispatchPointer(wrapper, 'pointerenter', 'mouse')

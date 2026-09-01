@@ -16,8 +16,7 @@ function makeWrapper(props = {}) {
       message: 'We sent you a confirmation link.',
       close: vi.fn(),
       ...props
-    },
-    global: { directives: { sfx: {} } }
+    }
   })
 }
 
@@ -26,12 +25,12 @@ beforeEach(() => {
 })
 
 describe('SuccessPanel', () => {
-  test('[obligation] plays the notice.success sfx on mount', () => {
+  test('plays the notice.success sfx on mount', () => {
     makeWrapper()
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.success')
   })
 
-  test('[obligation] renders the passed icon, heading, and message props', () => {
+  test('renders the passed icon, heading, and message props', () => {
     const wrapper = makeWrapper({
       icon: 'check',
       heading: 'All set',
@@ -43,7 +42,7 @@ describe('SuccessPanel', () => {
     expect(wrapper.text()).toContain('Your password was updated.')
   })
 
-  test('[obligation] calls the close prop when the close button is pressed', async () => {
+  test('calls the close prop when the close button is pressed', async () => {
     const close = vi.fn()
     const wrapper = makeWrapper({ close })
 

@@ -81,9 +81,9 @@ describe('UiButtonGroup', () => {
     expect(getButtons(wrapper)).toHaveLength(3)
   })
 
-  // ── Border-radius per position [obligation] ────────────────────────────────
+  // ── Border-radius per position ────────────────────────────────
 
-  test('single item gets full-radius on all corners [obligation]', () => {
+  test('single item gets full-radius on all corners', () => {
     const wrapper = mountGroup({ options: SINGLE, size: 'xl' })
     const style = styleOf(getButtons(wrapper)[0])
     // Single item: borderRadius = r (22.5px for xl)
@@ -92,7 +92,7 @@ describe('UiButtonGroup', () => {
     expect(style).not.toContain('4px')
   })
 
-  test('first button: outer-left corners = size radius, inner-right = 4px [obligation]', () => {
+  test('first button: outer-left corners = size radius, inner-right = 4px', () => {
     const wrapper = mountGroup({ options: DOUBLE, size: 'xl' })
     const [first] = getButtons(wrapper)
     const style = styleOf(first)
@@ -100,7 +100,7 @@ describe('UiButtonGroup', () => {
     expect(style).toContain('22.5px 4px 4px 22.5px')
   })
 
-  test('last button: outer-right corners = size radius, inner-left = 4px [obligation]', () => {
+  test('last button: outer-right corners = size radius, inner-left = 4px', () => {
     const wrapper = mountGroup({ options: DOUBLE, size: 'xl' })
     const buttons = getButtons(wrapper)
     const last = buttons[buttons.length - 1]
@@ -109,7 +109,7 @@ describe('UiButtonGroup', () => {
     expect(style).toContain('4px 22.5px 22.5px 4px')
   })
 
-  test('middle buttons get all 4px corners [obligation]', () => {
+  test('middle buttons get all 4px corners', () => {
     const wrapper = mountGroup({ options: TRIPLE, size: 'xl' })
     const middle = getButtons(wrapper)[1]
     const style = styleOf(middle)
@@ -136,9 +136,9 @@ describe('UiButtonGroup', () => {
     expect(styleOf(first)).toContain('13px')
   })
 
-  // ── Padding-x override [obligation] ───────────────────────────────────────
+  // ── Padding-x override ───────────────────────────────────────
 
-  test('xl size sets --btn-padding-x to 18px on every button [obligation]', () => {
+  test('xl size sets --btn-padding-x to 18px on every button', () => {
     const wrapper = mountGroup({ options: TRIPLE, size: 'xl' })
     for (const btn of getButtons(wrapper)) {
       expect(styleOf(btn)).toContain('--btn-padding-x: 18px')
@@ -166,30 +166,30 @@ describe('UiButtonGroup', () => {
     }
   })
 
-  // ── active_value prop [obligation] ────────────────────────────────────────
+  // ── active_value prop ────────────────────────────────────────
 
-  test('button matching active_value has data-active="true" [obligation]', () => {
+  test('button matching active_value has data-active="true"', () => {
     const wrapper = mountGroup({ options: DOUBLE, active_value: 'a' })
     const buttons = getButtons(wrapper)
     expect(buttons[0].attributes('data-active')).toBe('true')
     expect(buttons[1].attributes('data-active')).toBeUndefined()
   })
 
-  test('no active_value — no button has data-active [obligation]', () => {
+  test('no active_value — no button has data-active', () => {
     const wrapper = mountGroup({ options: DOUBLE })
     for (const btn of getButtons(wrapper)) {
       expect(btn.attributes('data-active')).toBeUndefined()
     }
   })
 
-  test('active_value matching second option marks second button active [obligation]', () => {
+  test('active_value matching second option marks second button active', () => {
     const wrapper = mountGroup({ options: DOUBLE, active_value: 'b' })
     const buttons = getButtons(wrapper)
     expect(buttons[0].attributes('data-active')).toBeUndefined()
     expect(buttons[1].attributes('data-active')).toBe('true')
   })
 
-  test('active_value with no match leaves all buttons inactive [obligation]', () => {
+  test('active_value with no match leaves all buttons inactive', () => {
     const wrapper = mountGroup({ options: DOUBLE, active_value: 'z' })
     for (const btn of getButtons(wrapper)) {
       expect(btn.attributes('data-active')).toBeUndefined()
@@ -211,39 +211,39 @@ describe('UiButtonGroup', () => {
     expect(wrapper.emitted('press')[0][0]).toBe('b')
   })
 
-  // ── icon_only prop [obligation] ────────────────────────────────────────────
+  // ── icon_only prop ────────────────────────────────────────────
 
-  test('icon_only=true passes icon-only to every button [obligation]', () => {
+  test('icon_only=true passes icon-only to every button', () => {
     const wrapper = mountGroup({ options: TRIPLE, icon_only: true })
     for (const btn of getButtons(wrapper)) {
       expect(btn.attributes('data-icon-only')).toBe('true')
     }
   })
 
-  test('icon_only=false (default) does not set icon-only on buttons [obligation]', () => {
+  test('icon_only=false (default) does not set icon-only on buttons', () => {
     const wrapper = mountGroup({ options: TRIPLE, icon_only: false })
     for (const btn of getButtons(wrapper)) {
       expect(btn.attributes('data-icon-only')).toBeUndefined()
     }
   })
 
-  test('icon_only defaults to false — buttons render with label text [obligation]', () => {
+  test('icon_only defaults to false — buttons render with label text', () => {
     const wrapper = mountGroup({ options: DOUBLE })
     const buttons = getButtons(wrapper)
     expect(buttons[0].text()).toBe('A')
     expect(buttons[1].text()).toBe('B')
   })
 
-  // ── neutral prop passthrough [obligation] ──────────────────────────────────
+  // ── neutral prop passthrough ──────────────────────────────────
 
-  test('neutral=true forwards neutral to every button [obligation]', () => {
+  test('neutral=true forwards neutral to every button', () => {
     const wrapper = mountGroup({ options: TRIPLE, neutral: true })
     for (const btn of getButtons(wrapper)) {
       expect(btn.attributes('data-neutral')).toBe('true')
     }
   })
 
-  test('neutral defaults to false — no button receives neutral [obligation]', () => {
+  test('neutral defaults to false — no button receives neutral', () => {
     const wrapper = mountGroup({ options: TRIPLE })
     for (const btn of getButtons(wrapper)) {
       expect(btn.attributes('data-neutral')).toBeUndefined()

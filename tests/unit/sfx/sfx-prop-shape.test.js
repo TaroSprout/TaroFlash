@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vite-plus/test'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
-// ── the `sfx` prop is one shape across ui-kit and layout-kit [obligation] ────
+// ── the `sfx` prop is one shape across ui-kit and layout-kit ────
 
 function listVueFiles(dir) {
   const files = []

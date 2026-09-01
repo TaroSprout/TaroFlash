@@ -8,9 +8,8 @@ import { useNoticeStore } from '@/stores/notice-store'
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // App.vue's onMounted pulls in theme/session/member stores (which themselves
 // pull in vue-router + the member query), plus the audio player and its
-// lifecycle wiring, and the safe-area padding installer. None of that is
-// relevant to the member-error watcher under test, so every dependency is
-// mocked to keep the mount cheap and deterministic.
+// lifecycle wiring. None of that is relevant to the member-error watcher under
+// test, so every dependency is mocked to keep the mount cheap and deterministic.
 
 const {
   mockLoad,
@@ -18,18 +17,14 @@ const {
   mockStopLoading,
   mockForceLogout,
   mockSetup,
-  mockInstallAudioLifecycle,
-  mockInstallSafeAreaPadding,
-  mockTeardownSafeAreaPadding
+  mockInstallAudioLifecycle
 } = vi.hoisted(() => ({
   mockLoad: vi.fn(),
   mockStartLoading: vi.fn(),
   mockStopLoading: vi.fn(),
   mockForceLogout: vi.fn(),
   mockSetup: vi.fn(() => Promise.resolve()),
-  mockInstallAudioLifecycle: vi.fn(() => vi.fn()),
-  mockInstallSafeAreaPadding: vi.fn(),
-  mockTeardownSafeAreaPadding: vi.fn()
+  mockInstallAudioLifecycle: vi.fn(() => vi.fn())
 }))
 
 vi.mock('@/stores/theme', () => ({
@@ -58,10 +53,6 @@ vi.mock('@/sfx/lifecycle', () => ({
   installAudioLifecycle: mockInstallAudioLifecycle
 }))
 
-vi.mock('@/composables/ui/safe-area', () => ({
-  installSafeAreaPadding: mockInstallSafeAreaPadding
-}))
-
 // ── Mount helper ──────────────────────────────────────────────────────────────
 
 function mountApp() {
@@ -81,32 +72,13 @@ beforeEach(() => {
   mockMember.error = null
   mockMember.profile_missing = false
   mockForceLogout.mockReset()
-  mockInstallSafeAreaPadding.mockReset().mockReturnValue(mockTeardownSafeAreaPadding)
-  mockTeardownSafeAreaPadding.mockReset()
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('App', () => {
-  describe('safe-area padding lifecycle [obligation]', () => {
-    test('calls installSafeAreaPadding on mount [obligation]', () => {
-      const wrapper = mountApp()
-
-      expect(mockInstallSafeAreaPadding).toHaveBeenCalledTimes(1)
-      wrapper.unmount()
-    })
-
-    test('calls the returned teardown on unmount [obligation]', () => {
-      const wrapper = mountApp()
-
-      wrapper.unmount()
-
-      expect(mockTeardownSafeAreaPadding).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('member.error watcher [obligation]', () => {
-    test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy [obligation]', async () => {
+  describe('member.error watcher', () => {
+    test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy', async () => {
       const wrapper = mountApp()
       const notice = useNoticeStore()
 

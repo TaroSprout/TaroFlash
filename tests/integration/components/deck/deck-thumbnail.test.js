@@ -129,9 +129,9 @@ describe('DeckThumbnail', () => {
     expect(wrapper.find('[data-testid="thumbnail-action"]').exists()).toBe(true)
   })
 
-  // ── corner-action slot [obligation] ──────────────────────────────────────────
+  // ── corner-action slot ──────────────────────────────────────────
 
-  describe('corner-action slot [obligation]', () => {
+  describe('corner-action slot', () => {
     test('does not render the corner-action wrapper when the slot is not provided', () => {
       const wrapper = mountWithDeck()
       expect(wrapper.find('[data-testid="deck-thumbnail__corner-action"]').exists()).toBe(false)
@@ -148,9 +148,9 @@ describe('DeckThumbnail', () => {
     })
   })
 
-  // ── card-count label [obligation] ────────────────────────────────────────────
+  // ── card-count label ────────────────────────────────────────────
 
-  describe('card-count label [obligation]', () => {
+  describe('card-count label', () => {
     test('does not render the card-count label when deck.card_count is undefined', () => {
       const wrapper = mountWithDeck()
       expect(wrapper.find('[data-testid="deck-thumbnail__card-count"]').exists()).toBe(false)
@@ -178,9 +178,9 @@ describe('DeckThumbnail', () => {
     expect(wrapper.emitted('press')).toHaveLength(1)
   })
 
-  // ── rearranging/dragging/corner_action_always_visible [obligation] ───────────
+  // ── rearranging/dragging/corner_action_always_visible ───────────
 
-  describe('rearranging/dragging/corner_action_always_visible [obligation]', () => {
+  describe('rearranging/dragging/corner_action_always_visible', () => {
     test('rearranging adds pointer-events-none select-none to the Card and cursor-grab to the root', () => {
       const wrapper = mountWithDeck({}, { rearranging: true })
       const card = wrapper.findComponent({ name: 'Card' })
@@ -231,12 +231,12 @@ describe('DeckThumbnail', () => {
     })
   })
 
-  // ── active prop [obligation] ──────────────────────────────────────────────
+  // ── active prop ──────────────────────────────────────────────
   // Forwards to UiTappable's `active`, so the root carries data-tap-active —
   // never assert classes for this. The corner-action also stays visible while
   // active (it normally hover-fades).
 
-  describe('active prop [obligation]', () => {
+  describe('active prop', () => {
     test('active=true forwards to UiTappable and sets data-tap-active on the root', () => {
       const wrapper = mountWithDeck({}, { active: true })
       expect(wrapper.find('[data-testid="deck-thumbnail"]').attributes('data-tap-active')).toBe(
@@ -263,11 +263,11 @@ describe('DeckThumbnail', () => {
     })
   })
 
-  // ── lock badge / locked prop precedence [obligation] ─────────────────────────
+  // ── lock badge / locked prop precedence ─────────────────────────
   // `is_locked = locked ?? deck?.is_locked ?? false` — the `locked` prop always
   // wins when explicitly set, even against a contradicting deck.is_locked.
 
-  describe('lock badge [obligation]', () => {
+  describe('lock badge', () => {
     test('does not render the lock badge when neither locked nor deck.is_locked is set', () => {
       const wrapper = mountWithDeck()
       expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').exists()).toBe(false)
@@ -317,12 +317,12 @@ describe('DeckThumbnail', () => {
     })
   })
 
-  // ── lock/corner-action swap [obligation] ─────────────────────────────────────
+  // ── lock/corner-action swap ─────────────────────────────────────
   // With no corner-action slot (deck-header context) the lock stays put. With
   // one (dashboard grid), the lock and corner-action swap on hover/active —
   // never both visible at rest.
 
-  describe('lock/corner-action swap [obligation]', () => {
+  describe('lock/corner-action swap', () => {
     test('lock stays visible at rest and on hover when no corner-action slot is provided', () => {
       const wrapper = mountWithDeck({}, { locked: true })
       expect(wrapper.find('[data-testid="deck-thumbnail__lock"]').classes()).toContain(
@@ -364,7 +364,7 @@ describe('DeckThumbnail', () => {
 
   // ── sfx prop spread (obligation 7) ───────────────────────────────────────────
 
-  describe('sfx prop — default + override [obligation]', () => {
+  describe('sfx prop — default + override', () => {
     test('passes { hover: "ui.hover" } to UiTappable when sfx prop is omitted', () => {
       const wrapper = mountWithDeck()
       const sfx = wrapper.findComponent(UiTappableStub).props('sfx')

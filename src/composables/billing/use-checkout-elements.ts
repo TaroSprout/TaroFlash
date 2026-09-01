@@ -75,8 +75,7 @@ export function useCheckoutElements(options: UseCheckoutElementsOptions) {
     payment_element?.destroy()
   })
 
-  // Post-flush so the page has already been switched over to the new mode — the
-  // appearance is read back off the live element, not computed from the flag.
+  // Post-flush: the appearance is read off the live element, not computed from the flag.
   watch(
     is_dark,
     () => {

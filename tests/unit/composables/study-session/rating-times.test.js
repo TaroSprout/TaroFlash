@@ -12,7 +12,7 @@ const { mockGetRatingTimeCompact, mockGetRatingTimeFormat } = vi.hoisted(() => (
   mockGetRatingTimeFormat: vi.fn((grade) => `label-${grade}`)
 }))
 
-vi.mock('@/composables/fsrs', () => ({
+vi.mock('@/views/study-session/composables/fsrs', () => ({
   useRatingFormat: () => ({
     getRatingTimeCompact: mockGetRatingTimeCompact,
     getRatingTimeFormat: mockGetRatingTimeFormat
@@ -46,9 +46,9 @@ describe('useRatingTimes', () => {
     expect(mockGetRatingTimeFormat).toHaveBeenCalledWith(Rating.Good, { marker: 'preview-a' })
   })
 
-  // ── Frozen per active card, immune to unrelated re-renders [obligation] ────
+  // ── Frozen per active card, immune to unrelated re-renders ────
 
-  test('recomputes only when the preview identity changes — reading .value repeatedly does not re-invoke the source fns [obligation]', () => {
+  test('recomputes only when the preview identity changes — reading .value repeatedly does not re-invoke the source fns', () => {
     const preview = ref({ marker: 'card-1' })
     const times = useRatingTimes(preview)
 
@@ -61,7 +61,7 @@ describe('useRatingTimes', () => {
     expect(mockGetRatingTimeFormat).toHaveBeenCalledTimes(4)
   })
 
-  test('recomputes when the preview identity changes to a new active card [obligation]', () => {
+  test('recomputes when the preview identity changes to a new active card', () => {
     const preview = ref({ marker: 'card-1' })
     const times = useRatingTimes(preview)
     void times.value

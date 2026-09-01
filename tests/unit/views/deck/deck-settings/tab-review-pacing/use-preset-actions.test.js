@@ -101,10 +101,10 @@ beforeEach(() => {
   mockT.mockClear()
 })
 
-// ── other_follower_count [obligation] ──────────────────────────────────────────
+// ── other_follower_count ──────────────────────────────────────────
 
-describe('usePresetActions — other_follower_count [obligation]', () => {
-  test('excludes the deck currently being edited — a preset followed by the edited deck plus one other reports 1, not 2 [obligation]', async () => {
+describe('usePresetActions — other_follower_count', () => {
+  test('excludes the deck currently being edited — a preset followed by the edited deck plus one other reports 1, not 2', async () => {
     mockDecksData.value = [
       { id: 42, review_pacing_preset_id: 2 },
       { id: 99, review_pacing_preset_id: 2 }
@@ -138,7 +138,7 @@ describe('usePresetActions — other_follower_count [obligation]', () => {
 // ── onFork ───────────────────────────────────────────────────────────────────
 
 describe('usePresetActions — onFork', () => {
-  test('bails without writing when the prompt is cancelled (undefined) [obligation]', async () => {
+  test('bails without writing when the prompt is cancelled (undefined)', async () => {
     const pacing = makePacing()
     const editor = makeEditor()
     promptResponse(undefined)
@@ -151,7 +151,7 @@ describe('usePresetActions — onFork', () => {
     expect(editor.draft.review_pacing_preset_id).toBeNull()
   })
 
-  test('on success sets draft.review_pacing_preset_id to the newly created preset id and clears every override [obligation]', async () => {
+  test('on success sets draft.review_pacing_preset_id to the newly created preset id and clears every override', async () => {
     const pacing = makePacing()
     const editor = makeEditor({ draft: { pacing_overrides: { desired_retention: 0.8 } } })
     promptResponse('My Fork')
@@ -167,7 +167,7 @@ describe('usePresetActions — onFork', () => {
     expect(mockNotice.error).not.toHaveBeenCalled()
   })
 
-  test('carries all seven pacing fields in the create payload, not just name/retention/steps [obligation]', async () => {
+  test('carries all seven pacing fields in the create payload, not just name/retention/steps', async () => {
     const pacing = makePacing()
     const editor = makeEditor()
     promptResponse('My Fork')
@@ -185,7 +185,7 @@ describe('usePresetActions — onFork', () => {
     })
   })
 
-  test('on failure leaves the draft untouched and fires an error notice, does not repoint or clear overrides [obligation]', async () => {
+  test('on failure leaves the draft untouched and fires an error notice, does not repoint or clear overrides', async () => {
     const pacing = makePacing()
     const editor = makeEditor({
       draft: { review_pacing_preset_id: 2, pacing_overrides: { desired_retention: 0.8 } }
@@ -204,7 +204,7 @@ describe('usePresetActions — onFork', () => {
     expect(mockNotice.success).not.toHaveBeenCalled()
   })
 
-  test('persists the deck pacing sidecar immediately via save-deck-pacing mutation [obligation]', async () => {
+  test('persists the deck pacing sidecar immediately via save-deck-pacing mutation', async () => {
     const pacing = makePacing()
     const editor = makeEditor({ draft: { pacing_overrides: { desired_retention: 0.8 } } })
     promptResponse('My Fork')
@@ -240,7 +240,7 @@ describe('usePresetActions — onFork', () => {
 // ── onPush ───────────────────────────────────────────────────────────────────
 
 describe('usePresetActions — onPush', () => {
-  test('is a no-op when the selected preset is_system — no mutation, no alert [obligation]', async () => {
+  test('is a no-op when the selected preset is_system — no mutation, no alert', async () => {
     const pacing = makePacing({ selected_preset: SYSTEM_PRESET })
     const editor = makeEditor()
 
@@ -264,7 +264,7 @@ describe('usePresetActions — onPush', () => {
     expect(mockSavePacingMutateAsync).not.toHaveBeenCalled()
   })
 
-  test('on success clears every override, so the deck no longer diverges from the preset it just wrote [obligation]', async () => {
+  test('on success clears every override, so the deck no longer diverges from the preset it just wrote', async () => {
     const pacing = makePacing({ override_count: 2 })
     const editor = makeEditor({
       draft: { pacing_overrides: { desired_retention: 0.8, max_reviews_per_day: 10 } }
@@ -284,7 +284,7 @@ describe('usePresetActions — onPush', () => {
     expect(mockNotice.success).toHaveBeenCalledTimes(1)
   })
 
-  test('on failure leaves the draft untouched and fires an error notice [obligation]', async () => {
+  test('on failure leaves the draft untouched and fires an error notice', async () => {
     const pacing = makePacing({ override_count: 1 })
     const editor = makeEditor({ draft: { pacing_overrides: { desired_retention: 0.8 } } })
     confirmResponse(true)
@@ -299,7 +299,7 @@ describe('usePresetActions — onPush', () => {
     expect(mockNotice.error).toHaveBeenCalledTimes(1)
   })
 
-  test('persists the deck pacing sidecar immediately via save-deck-pacing mutation [obligation]', async () => {
+  test('persists the deck pacing sidecar immediately via save-deck-pacing mutation', async () => {
     const pacing = makePacing({ override_count: 1 })
     const editor = makeEditor({ draft: { pacing_overrides: { desired_retention: 0.8 } } })
     confirmResponse(true)
@@ -331,7 +331,7 @@ describe('usePresetActions — onPush', () => {
     expect(mockNotice.success).not.toHaveBeenCalled()
   })
 
-  test('after a successful push, the draft is no longer dirty w.r.t. pacing while unrelated staged edits stay dirty [obligation]', async () => {
+  test('after a successful push, the draft is no longer dirty w.r.t. pacing while unrelated staged edits stay dirty', async () => {
     const { editor, draftApi } = makeRealEditor({ base: { title: 'Original' } })
     editor.draft.title = 'Edited title'
     editor.draft.pacing_overrides.desired_retention = 0.8
@@ -357,7 +357,7 @@ describe('usePresetActions — onPush', () => {
 // ── onRename ─────────────────────────────────────────────────────────────────
 
 describe('usePresetActions — onRename', () => {
-  test('is a no-op when the selected preset is_system [obligation]', async () => {
+  test('is a no-op when the selected preset is_system', async () => {
     const pacing = makePacing({ selected_preset: SYSTEM_PRESET })
     const editor = makeEditor()
 
@@ -368,7 +368,7 @@ describe('usePresetActions — onRename', () => {
     expect(mockUpsertMutateAsync).not.toHaveBeenCalled()
   })
 
-  test('bails without mutating when the prompt is cancelled (undefined) [obligation]', async () => {
+  test('bails without mutating when the prompt is cancelled (undefined)', async () => {
     const pacing = makePacing()
     const editor = makeEditor()
     promptResponse(undefined)
@@ -379,7 +379,7 @@ describe('usePresetActions — onRename', () => {
     expect(mockUpsertMutateAsync).not.toHaveBeenCalled()
   })
 
-  test('bails without mutating when the returned name is unchanged [obligation]', async () => {
+  test('bails without mutating when the returned name is unchanged', async () => {
     const pacing = makePacing()
     const editor = makeEditor()
     promptResponse(MEMBER_PRESET.name)
@@ -420,7 +420,7 @@ describe('usePresetActions — onRename', () => {
     expect(mockNotice.success).not.toHaveBeenCalled()
   })
 
-  test('never calls the save-deck-pacing mutation — it only renames the preset, never touches the deck link or overrides [obligation]', async () => {
+  test('never calls the save-deck-pacing mutation — it only renames the preset, never touches the deck link or overrides', async () => {
     const pacing = makePacing()
     const editor = makeEditor()
     promptResponse('Renamed')
@@ -437,7 +437,7 @@ describe('usePresetActions — onRename', () => {
 // ── onDelete ─────────────────────────────────────────────────────────────────
 
 describe('usePresetActions — onDelete', () => {
-  test('is a no-op when the selected preset is_system — no mutation, no alert [obligation]', async () => {
+  test('is a no-op when the selected preset is_system — no mutation, no alert', async () => {
     const pacing = makePacing({ selected_preset: SYSTEM_PRESET })
     const editor = makeEditor()
 
@@ -460,7 +460,7 @@ describe('usePresetActions — onDelete', () => {
     expect(mockSavePacingMutateAsync).not.toHaveBeenCalled()
   })
 
-  test('on success sets draft.review_pacing_preset_id to null, mirroring the FK ON DELETE SET NULL [obligation]', async () => {
+  test('on success sets draft.review_pacing_preset_id to null, mirroring the FK ON DELETE SET NULL', async () => {
     const pacing = makePacing()
     const editor = makeEditor({ draft: { review_pacing_preset_id: 2 } })
     confirmResponse(true)
@@ -474,7 +474,7 @@ describe('usePresetActions — onDelete', () => {
     expect(mockNotice.success).toHaveBeenCalledTimes(1)
   })
 
-  test('on failure leaves the draft untouched and fires an error notice, does not null the preset id [obligation]', async () => {
+  test('on failure leaves the draft untouched and fires an error notice, does not null the preset id', async () => {
     const pacing = makePacing()
     const editor = makeEditor({ draft: { review_pacing_preset_id: 2 } })
     confirmResponse(true)
@@ -489,7 +489,7 @@ describe('usePresetActions — onDelete', () => {
     expect(mockNotice.success).not.toHaveBeenCalled()
   })
 
-  test('persists the deck pacing sidecar immediately via save-deck-pacing mutation [obligation]', async () => {
+  test('persists the deck pacing sidecar immediately via save-deck-pacing mutation', async () => {
     const pacing = makePacing()
     const editor = makeEditor({ draft: { review_pacing_preset_id: 2 } })
     confirmResponse(true)

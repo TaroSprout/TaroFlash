@@ -44,12 +44,12 @@ describe('DeckSkeleton (views/deck/skeleton.vue)', () => {
 
   // ── Scroll-lock side effects ───────────────────────────────────────────────
 
-  test('sets document.documentElement.style.overflow to "hidden" on mount [obligation]', () => {
+  test('sets document.documentElement.style.overflow to "hidden" on mount', () => {
     mountSkeleton()
     expect(document.documentElement.style.overflow).toBe('hidden')
   })
 
-  test('clears document.documentElement.style.overflow to "" on unmount [obligation]', () => {
+  test('clears document.documentElement.style.overflow to "" on unmount', () => {
     const wrapper = mountSkeleton()
     expect(document.documentElement.style.overflow).toBe('hidden')
 

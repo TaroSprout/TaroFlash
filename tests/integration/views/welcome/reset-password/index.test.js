@@ -60,8 +60,7 @@ import ResetPasswordModal from '@/views/welcome/reset-password/index.vue'
 
 function makeWrapper(close = vi.fn()) {
   return mount(ResetPasswordModal, {
-    props: { close },
-    global: { directives: { sfx: {} } }
+    props: { close }
   })
 }
 
@@ -144,10 +143,10 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  // ── onSubmit — success ordering [obligation] ────────────────────────────────
+  // ── onSubmit — success ordering ────────────────────────────────
 
-  describe('onSubmit — success ordering [obligation]', () => {
-    test('emits the success sfx immediately on a successful submit [obligation]', async () => {
+  describe('onSubmit — success ordering', () => {
+    test('emits the success sfx immediately on a successful submit', async () => {
       mockResetPasswordRefs.submit.mockResolvedValueOnce('success')
       const wrapper = makeWrapper()
 
@@ -157,7 +156,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       expect(mockEmitSfx).toHaveBeenCalledWith('notice.success')
     })
 
-    test('does NOT call close or route before the ~1400ms wait elapses [obligation]', async () => {
+    test('does NOT call close or route before the ~1400ms wait elapses', async () => {
       mockResetPasswordRefs.submit.mockResolvedValueOnce('success')
       const close = vi.fn()
       const wrapper = makeWrapper(close)
@@ -170,7 +169,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       expect(mockPush).not.toHaveBeenCalled()
     })
 
-    test('calls close and routes to authenticated only after the ~1400ms wait elapses [obligation]', async () => {
+    test('calls close and routes to authenticated only after the ~1400ms wait elapses', async () => {
       mockResetPasswordRefs.submit.mockResolvedValueOnce('success')
       const close = vi.fn()
       const wrapper = makeWrapper(close)
@@ -183,7 +182,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       expect(mockPush).toHaveBeenCalledWith({ name: 'authenticated' })
     })
 
-    test('calls close before routing (ordering) [obligation]', async () => {
+    test('calls close before routing (ordering)', async () => {
       mockResetPasswordRefs.submit.mockResolvedValueOnce('success')
       const calls = []
       const close = vi.fn(() => calls.push('close'))
@@ -197,7 +196,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       expect(calls).toEqual(['close', 'push'])
     })
 
-    test('the success page is shown during the wait window (before close/route) [obligation]', async () => {
+    test('the success page is shown during the wait window (before close/route)', async () => {
       mockResetPasswordRefs.submit.mockImplementationOnce(async () => {
         mockResetPasswordRefs.success.value = true
         return 'success'
@@ -215,10 +214,10 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
     })
   })
 
-  // ── success view shape [obligation] ─────────────────────────────────────────
+  // ── success view shape ─────────────────────────────────────────
 
-  describe('success view shape [obligation]', () => {
-    test('hides the dialog-card header (show_header=false) once success is true [obligation]', async () => {
+  describe('success view shape', () => {
+    test('hides the dialog-card header (show_header=false) once success is true', async () => {
       mockResetPasswordRefs.success.value = true
       const wrapper = makeWrapper()
       await flushTransition()
@@ -231,7 +230,7 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
       expect(wrapper.find('header[data-testid="dialog-card-header"]').exists()).toBe(true)
     })
 
-    test('renders the party-popper icon on the success page [obligation]', async () => {
+    test('renders the party-popper icon on the success page', async () => {
       mockResetPasswordRefs.success.value = true
       const wrapper = makeWrapper()
       await flushTransition()

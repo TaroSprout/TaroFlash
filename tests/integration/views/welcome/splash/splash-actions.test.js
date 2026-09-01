@@ -86,20 +86,20 @@ describe('SplashActions', () => {
     expect(wrapper.find('[data-testid="welcome-hero__actions"]').exists()).toBe(true)
   })
 
-  // ── see-more button visibility [obligation] ─────────────────────────────────
+  // ── see-more button visibility ─────────────────────────────────
 
   describe('see-more button', () => {
-    test('renders when width="desktop" regardless of height [obligation]', () => {
+    test('renders when width="desktop" regardless of height', () => {
       const wrapper = mountActions({ width: 'desktop', height: 'short' })
       expect(findByIcon(wrapper, 'arrow-down').exists()).toBe(true)
     })
 
-    test('renders when height="tall" regardless of width [obligation]', () => {
+    test('renders when height="tall" regardless of width', () => {
       const wrapper = mountActions({ width: 'tablet', height: 'tall' })
       expect(findByIcon(wrapper, 'arrow-down').exists()).toBe(true)
     })
 
-    test('does NOT render when width="tablet" AND height="short" [obligation]', () => {
+    test('does NOT render when width="tablet" AND height="short"', () => {
       const wrapper = mountActions({ width: 'tablet', height: 'short' })
       expect(findByIcon(wrapper, 'arrow-down').exists()).toBe(false)
     })
@@ -112,30 +112,30 @@ describe('SplashActions', () => {
     })
   })
 
-  // ── login button visibility [obligation] ───────────────────────────────────
+  // ── login button visibility ───────────────────────────────────
 
   describe('login button (welcome-hero__login)', () => {
-    test('renders when height="short" and width="tablet" [obligation]', () => {
+    test('renders when height="short" and width="tablet"', () => {
       const wrapper = mountActions({ height: 'short', width: 'tablet' })
       expect(wrapper.find('[data-testid="welcome-hero__login"]').exists()).toBe(true)
     })
 
-    test('does NOT render when height="tall" [obligation]', () => {
+    test('does NOT render when height="tall"', () => {
       const wrapper = mountActions({ height: 'tall', width: 'tablet' })
       expect(wrapper.find('[data-testid="welcome-hero__login"]').exists()).toBe(false)
     })
 
-    test('calls openLogin() when pressed [obligation]', async () => {
+    test('calls openLogin() when pressed', async () => {
       const wrapper = mountActions({ height: 'short', width: 'tablet' })
       await wrapper.find('[data-testid="welcome-hero__login"]').trigger('click')
       expect(mockOpenLogin).toHaveBeenCalled()
     })
   })
 
-  // ── signup button label [obligation] ──────────────────────────────────────
+  // ── signup button label ──────────────────────────────────────
 
   describe('signup button label', () => {
-    test('uses long copy when width="desktop" [obligation]', () => {
+    test('uses long copy when width="desktop"', () => {
       const wrapper = mountActions({ width: 'desktop' })
       // Real locale: 'welcome-view.signup-button' → "Make An Account"
       // Short: 'welcome-view.signup-button-short' → "Sign Up"
@@ -143,7 +143,7 @@ describe('SplashActions', () => {
       expect(text).toBe('Make An Account')
     })
 
-    test('uses short copy when width="tablet" [obligation]', () => {
+    test('uses short copy when width="tablet"', () => {
       const wrapper = mountActions({ width: 'tablet' })
       // Real locale: 'welcome-view.signup-button-short' → "Sign Up"
       const text = findByIcon(wrapper, 'account-circle-add').text()

@@ -1,17 +1,25 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
-import { defineComponent, h, useAttrs } from 'vue'
+import { defineComponent, h, nextTick, ref, useAttrs } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockStartStudy, mockCreateDeck, mockEmitSfx } = vi.hoisted(() => ({
+const { mockStartStudy, mockCreateDeck, mockEmitSfx, mockOpenSettings } = vi.hoisted(() => ({
   mockStartStudy: vi.fn(),
   mockCreateDeck: vi.fn(() => Promise.resolve({ id: 1 })),
-  mockEmitSfx: vi.fn()
+  mockEmitSfx: vi.fn(),
+  mockOpenSettings: vi.fn()
 }))
+
+// Module-level, not vi.hoisted, so Vue's ref() is available.
+const mockDockVisible = ref(false)
 
 vi.mock('@/views/study-session/composables/study-modal', () => ({
   useStudyModal: () => ({ start: mockStartStudy })
+}))
+
+vi.mock('@/composables/settings/use-settings-modal', () => ({
+  useSettingsModal: () => ({ open: mockOpenSettings })
 }))
 
 vi.mock('@/composables/deck/actions', () => ({
@@ -27,17 +35,24 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
+vi.mock('@/components/mobile-dock/use-mobile-dock', () => ({
+  useMobileDock: () => ({ is_visible: mockDockVisible })
+}))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const PolaroidStub = defineComponent({
   name: 'MemberPolaroid',
-  props: { avatar: { type: String, default: undefined } },
-  setup(props, { attrs }) {
+  props: {
+    avatar: { type: String, default: undefined },
+    interactive: { type: Boolean, default: false }
+  },
+  setup(props) {
     return () =>
       h('div', {
-        'data-testid': 'dashboard-actions-panel__polaroid',
+        'data-testid': 'member-polaroid-stub',
         'data-avatar': props.avatar,
-        class: attrs.class
+        'data-interactive': String(props.interactive)
       })
   }
 })
@@ -93,7 +108,7 @@ function wrapper_entry(wrapper) {
   return entries.find((e) => e.value === 'edit-decks')
 }
 
-function mount(due_decks = [], editing_decks = false, has_decks = false) {
+function mount(due_decks = [], editing_decks = false, has_decks = false, global_overrides = {}) {
   return shallowMount(DashboardActionsPanel, {
     props: { due_decks, editing_decks, has_decks },
     global: {
@@ -102,7 +117,9 @@ function mount(due_decks = [], editing_decks = false, has_decks = false) {
         MemberPolaroid: PolaroidStub,
         UiOptionsPanel: UiOptionsPanelStub,
         UiButton: UiButtonStub
-      }
+      },
+      directives: { sfx: {} },
+      ...global_overrides
     }
   })
 }
@@ -114,6 +131,8 @@ beforeEach(() => {
   mockCreateDeck.mockClear()
   mockCreateDeck.mockResolvedValue({ id: 1 })
   mockEmitSfx.mockClear()
+  mockDockVisible.value = false
+  mockOpenSettings.mockClear()
 })
 
 describe('DashboardActionsPanel — header', () => {
@@ -129,60 +148,139 @@ describe('DashboardActionsPanel — header', () => {
     ).toBe('Ada')
   })
 
-  test('passes the member store avatar into the polaroid and positions it itself [obligation]', () => {
+  test('passes the member store avatar into the interactive polaroid', () => {
     const wrapper = mount()
-    const polaroid = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    const polaroid = wrapper.find('[data-testid="member-polaroid-stub"]')
     expect(polaroid.attributes('data-avatar')).toBe('panda')
-    expect(polaroid.classes()).toContain('absolute')
+    expect(polaroid.attributes('data-interactive')).toBe('true')
+  })
+
+  test('the wrapper div carries the positioning classes moved off the polaroid', () => {
+    const wrapper = mount()
+    const polaroid_wrapper = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    expect(polaroid_wrapper.classes()).toContain('absolute')
+    expect(polaroid_wrapper.classes()).toContain('top-1')
+    expect(polaroid_wrapper.classes()).toContain('-left-1')
+    expect(polaroid_wrapper.classes()).toContain('z-10')
+  })
+
+  // `group` is load-bearing: the polaroid's swing is a `group-hover:` class, so
+  // it only ever fires if the wrapper opens the group. `cursor-pointer` is the
+  // affordance that says the polaroid is clickable at all.
+  test('the wrapper div opens the hover group and shows the click affordance', () => {
+    const wrapper = mount()
+    const polaroid_wrapper = wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]')
+    expect(polaroid_wrapper.classes()).toContain('group')
+    expect(polaroid_wrapper.classes()).toContain('cursor-pointer')
+  })
+
+  test('clicking the polaroid wrapper opens the settings modal on its default tab', async () => {
+    const wrapper = mount()
+    await wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]').trigger('click')
+    expect(mockOpenSettings).toHaveBeenCalledWith()
+  })
+
+  test('clicking the polaroid wrapper plays no sound', async () => {
+    const wrapper = mount()
+    await wrapper.find('[data-testid="dashboard-actions-panel__polaroid"]').trigger('click')
+    expect(mockEmitSfx).not.toHaveBeenCalled()
+  })
+
+  test('the polaroid wrapper wires v-sfx hover to ui.hover, with no click channel', () => {
+    let captured
+    const captureDirective = {
+      mounted: (_el, binding) => (captured = binding.value),
+      updated: (_el, binding) => (captured = binding.value)
+    }
+    mount([], false, false, { directives: { sfx: captureDirective } })
+
+    expect(captured.hover).toBe('ui.hover')
+    expect(captured.click).toBeUndefined()
   })
 })
 
 describe('DashboardActionsPanel — study button', () => {
   test('pressing the study button starts a study session with the due decks', async () => {
-    const due_decks = [{ id: 1 }, { id: 2 }]
+    const due_decks = [
+      { id: 1, due_count: 2 },
+      { id: 2, due_count: 1 }
+    ]
     const wrapper = mount(due_decks)
     await wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').trigger('click')
     expect(mockStartStudy).toHaveBeenCalledWith(due_decks.map((deck) => deck.id))
   })
 
-  test('is disabled while editing_decks is true [obligation]', () => {
-    const wrapper = mount([], true)
+  test('is disabled while editing_decks is true', () => {
+    const wrapper = mount([{ id: 1, due_count: 3 }], true)
     expect(
       wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
     ).not.toBeUndefined()
   })
 
-  test('is enabled when editing_decks is false and there are due decks [obligation]', () => {
-    const wrapper = mount([{ id: 1 }], false)
+  test('is enabled when editing_decks is false and there are due cards', () => {
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
     expect(
       wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
     ).toBeUndefined()
   })
 
-  test('is disabled when there are no due decks, even with editing_decks false [obligation]', () => {
-    const wrapper = mount([], false)
-    expect(
-      wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').attributes('disabled')
-    ).not.toBeUndefined()
+  test('is disabled and shows "No Cards Due" when the total due card count is zero', () => {
+    const wrapper = mount([{ id: 1, due_count: 0 }], false)
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('disabled')).not.toBeUndefined()
+    expect(button.text()).toBe('No Cards Due')
   })
 
-  test('shows the no-decks-due label when due_decks is empty [obligation]', () => {
-    const wrapper = mount([], false)
+  test('shows the singular label for exactly one due card', () => {
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
     expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toBe(
-      'No Decks Due'
+      'Study 1 Card'
     )
   })
 
-  test('shows the study label with count when due_decks is non-empty', () => {
-    const wrapper = mount([{ id: 1 }, { id: 2 }], false)
-    expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toContain(
-      '2'
+  test('shows the plural label with the summed due card count', () => {
+    const wrapper = mount(
+      [
+        { id: 1, due_count: 3 },
+        { id: 2, due_count: 2 }
+      ],
+      false
+    )
+    expect(wrapper.find('[data-testid="dashboard-actions-panel__study-button"]').text()).toBe(
+      'Study 5 Cards'
     )
   })
 })
 
+describe('DashboardActionsPanel — study button emphasis swap with the dock', () => {
+  test('drops data-palette and goes neutral when the mobile dock is on screen', () => {
+    mockDockVisible.value = true
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('data-palette')).toBeUndefined()
+    expect(button.attributes('neutral')).toBe('true')
+  })
+
+  test('renders data-palette="brand" and drops neutral when the mobile dock is off screen', () => {
+    mockDockVisible.value = false
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('data-palette')).toBe('brand')
+    expect(button.attributes('neutral')).toBe('false')
+  })
+
+  test('follows the dock going on screen after mount', async () => {
+    const wrapper = mount([{ id: 1, due_count: 1 }], false)
+    mockDockVisible.value = true
+    await nextTick()
+    const button = wrapper.find('[data-testid="dashboard-actions-panel__study-button"]')
+    expect(button.attributes('data-palette')).toBeUndefined()
+    expect(button.attributes('neutral')).toBe('true')
+  })
+})
+
 describe('DashboardActionsPanel — onSelect only wires new-deck', () => {
-  test('selecting new-deck creates a deck with a single argument, no options object [obligation]', async () => {
+  test('selecting new-deck creates a deck with a single argument, no options object', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="entry-new-deck"]').trigger('click')
     await Promise.resolve()
@@ -196,7 +294,7 @@ describe('DashboardActionsPanel — onSelect only wires new-deck', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  test('selecting new-deck while editing_decks is true does not create a deck, even bypassing the disabled UI state [obligation]', async () => {
+  test('selecting new-deck while editing_decks is true does not create a deck, even bypassing the disabled UI state', async () => {
     const wrapper = mount([], true)
     await wrapper.find('[data-testid="entry-new-deck"]').trigger('click')
     await Promise.resolve()
@@ -204,7 +302,7 @@ describe('DashboardActionsPanel — onSelect only wires new-deck', () => {
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('selecting edit-decks emits toggle-edit-decks and does not create a deck [obligation]', async () => {
+  test('selecting edit-decks emits toggle-edit-decks and does not create a deck', async () => {
     const wrapper = mount()
     await wrapper.find('[data-testid="entry-edit-decks"]').trigger('click')
     await Promise.resolve()
@@ -223,7 +321,7 @@ describe('DashboardActionsPanel — edit-decks entry reflects editing_decks stat
     expect(edit_entry.trailingIcon).toBe('pencil')
   })
 
-  test('shows the done-editing label and stop icon when editing [obligation]', () => {
+  test('shows the done-editing label and stop icon when editing', () => {
     const wrapper = mount([], true)
     const entries = wrapper.findComponent(UiOptionsPanelStub).props('entries')
     const edit_entry = entries.find((e) => e.value === 'edit-decks')
@@ -231,7 +329,7 @@ describe('DashboardActionsPanel — edit-decks entry reflects editing_decks stat
     expect(edit_entry.trailingIcon).toBe('stop')
   })
 
-  test('carries selected/selectedPalette reflecting editing_decks [obligation]', () => {
+  test('carries selected/selectedPalette reflecting editing_decks', () => {
     const not_editing = wrapper_entry(mount([], false))
     expect(not_editing.selected).toBe(false)
     expect(not_editing.selectedPalette).toBe('yellow')
@@ -259,7 +357,7 @@ describe('DashboardActionsPanel — edit-decks entry disabled when no decks', ()
   })
 })
 
-describe('DashboardActionsPanel — re-entrancy guard while creating [obligation]', () => {
+describe('DashboardActionsPanel — re-entrancy guard while creating', () => {
   test('disables the new-deck entry while a creation is in flight', async () => {
     let resolve_create
     mockCreateDeck.mockImplementation(() => new Promise((r) => (resolve_create = r)))

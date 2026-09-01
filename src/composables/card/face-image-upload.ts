@@ -184,8 +184,7 @@ export function useFaceImageUpload({ card, side, fileInput, rootEl }: UseFaceIma
     if (root && !root.contains(e.target as Node)) onDismissError()
   }
 
-  // Reveal waits for the refetched path to reach the DOM, not the upload call. `flush: 'post'`
-  // so the freshly-mounted <img> is queryable.
+  // Post-flush so the freshly-mounted <img> is queryable; reveal follows the DOM, not the upload.
   watch(
     image_path,
     (path) => {

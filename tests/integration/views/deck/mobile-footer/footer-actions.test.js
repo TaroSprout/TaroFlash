@@ -88,16 +88,34 @@ describe('mobile-footer/footer-actions', () => {
     expect(wrapper.find('[data-testid="deck-footer-actions__page-settings"]').exists()).toBe(true)
   })
 
-  test('pressing the page-settings trigger calls shell.openPageSettings [obligation]', async () => {
+  test('pressing the page-settings trigger calls shell.openPageSettings', async () => {
     const shell = makeShell()
     const wrapper = mountFooterActions(shell)
     await wrapper.find('[data-testid="deck-footer-actions__page-settings"]').trigger('click')
     expect(shell.openPageSettings).toHaveBeenCalledOnce()
   })
 
+  test('renders the page-settings trigger with the ghost variant, not the default filled one', () => {
+    const wrapper = mountFooterActions()
+    const trigger = wrapper.find('[data-testid="deck-footer-actions__page-settings"]')
+    expect(trigger.attributes('variant')).toBe('ghost')
+  })
+
+  test('the page-settings trigger matches its new-card and edit-menu siblings variant', () => {
+    const wrapper = mountFooterActions(makeShell({ is_rearranging: false }))
+    const page_settings = wrapper.find('[data-testid="deck-footer-actions__page-settings"]')
+    const new_card = wrapper.find('[data-testid="deck-footer-actions__new-card"]')
+    const edit_menu = wrapper.find('[data-testid="deck-footer-actions__edit-menu"]')
+
+    // Anchored to 'ghost' so the comparison can't pass by all three being undefined.
+    expect(page_settings.attributes('variant')).toBe('ghost')
+    expect(new_card.attributes('variant')).toBe('ghost')
+    expect(edit_menu.attributes('variant')).toBe('ghost')
+  })
+
   // ── is_rearranging toggle ─────────────────────────────────────────────────
 
-  test('shows stop-rearranging button when shell.is_rearranging is true [obligation]', () => {
+  test('shows stop-rearranging button when shell.is_rearranging is true', () => {
     const shell = makeShell({ is_rearranging: true })
     const wrapper = mountFooterActions(shell)
     expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
@@ -106,13 +124,21 @@ describe('mobile-footer/footer-actions', () => {
     expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(false)
   })
 
-  test('shows new-card button when shell.is_rearranging is false [obligation]', () => {
+  test('shows new-card button when shell.is_rearranging is false', () => {
     const shell = makeShell({ is_rearranging: false })
     const wrapper = mountFooterActions(shell)
     expect(wrapper.find('[data-testid="deck-footer-actions__new-card"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]').exists()).toBe(
       false
     )
+  })
+
+  test('stop-rearranging keeps its filled default variant with the yellow palette', () => {
+    const shell = makeShell({ is_rearranging: true })
+    const wrapper = mountFooterActions(shell)
+    const stop_rearranging = wrapper.find('[data-testid="deck-footer-actions__stop-rearranging"]')
+    expect(stop_rearranging.attributes('variant')).toBeUndefined()
+    expect(stop_rearranging.attributes('data-palette')).toBe('yellow')
   })
 
   test('pressing stop-rearranging calls shell.toggleRearrange', async () => {
@@ -122,7 +148,7 @@ describe('mobile-footer/footer-actions', () => {
     expect(shell.toggleRearrange).toHaveBeenCalledOnce()
   })
 
-  test('pressing the new-card button opens a new card on the mobile surface [obligation]', async () => {
+  test('pressing the new-card button opens a new card on the mobile surface', async () => {
     const mobile_editor = makeMobileEditor()
     const wrapper = mountFooterActions(makeShell({ is_rearranging: false }), mobile_editor, true)
     await wrapper.find('[data-testid="deck-footer-actions__new-card"]').trigger('click')

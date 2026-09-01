@@ -48,7 +48,7 @@ describe('prefetchMemberById', () => {
     expect(fetchMemberByIdMock).toHaveBeenCalledWith('user-1')
   })
 
-  test('calls refresh (not fetch) against the ensured entry so an in-flight request from the member store query is reused [obligation]', () => {
+  test('calls refresh (not fetch) against the ensured entry so an in-flight request from the member store query is reused', () => {
     const entry = { id: 'entry' }
     ensureSpy.mockReturnValue(entry)
     refreshSpy.mockResolvedValue({})

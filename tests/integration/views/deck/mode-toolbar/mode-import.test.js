@@ -43,7 +43,7 @@ function findButton(wrapper, testid) {
 }
 
 describe('mode-toolbar/mode-import', () => {
-  test('clicking close calls draft.dismiss, not draft.close [obligation]', async () => {
+  test('clicking close calls draft.dismiss, not draft.close', async () => {
     const draft = makeDraft()
     const wrapper = mount(draft)
     await findButton(wrapper, 'mode-import__close-button').vm.$emit('press')

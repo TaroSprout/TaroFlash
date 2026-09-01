@@ -65,7 +65,7 @@ describe('scrollLineIntoView', () => {
 // Deadzone band: 15px–35px. Scroll anchor: 20px from top of viewport.
 
 describe('scrollWordIntoDeadzone', () => {
-  // [obligation] word fully inside the deadzone band: no scroll fires.
+  // word fully inside the deadzone band: no scroll fires.
   test('no-op when word top ≥ 15% and bottom ≤ 35% of viewport', () => {
     const word = makeWord({ top: 16, bottom: 30 })
 
@@ -74,7 +74,7 @@ describe('scrollWordIntoDeadzone', () => {
     expect(scrollToMock).not.toHaveBeenCalled()
   })
 
-  // [obligation] word bottom exceeds the deadzone bottom → scroll fires.
+  // word bottom exceeds the deadzone bottom → scroll fires.
   test('scrolls when word exits bottom of deadzone (bottom > 35%)', () => {
     const word = makeWord({ top: 50, bottom: 60 })
 
@@ -84,7 +84,7 @@ describe('scrollWordIntoDeadzone', () => {
     expect(scrollToMock).toHaveBeenCalledWith({ top: 30, behavior: 'auto' })
   })
 
-  // [obligation] word above deadzone top → scroll fires.
+  // word above deadzone top → scroll fires.
   test('scrolls when word is above deadzone top (top < 15%)', () => {
     const word = makeWord({ top: 5, bottom: 15 })
 
@@ -126,7 +126,7 @@ describe('scrollWordIntoDeadzone', () => {
 })
 
 describe('cancelScroll', () => {
-  // [obligation] Re-issuing scrollTo at the current position interrupts any
+  // Re-issuing scrollTo at the current position interrupts any
   // in-flight native smooth scroll so it stops fighting a manual scroll.
   test('scrolls to the current position with behavior "auto" to interrupt any smooth scroll', () => {
     stubViewport({ scrollY: 234 })

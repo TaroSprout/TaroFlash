@@ -101,8 +101,7 @@ function mountContent(page = 'menu', props = {}) {
         AccountAccessMenu: MenuStub,
         EmailSection: EmailSectionStub,
         PasswordSection: PasswordSectionStub
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }
@@ -111,56 +110,56 @@ beforeEach(() => {
   sessionState.hasPassword = false
 })
 
-describe('AccountAccessContent — title computed [obligation]', () => {
-  test('title is the menu heading when page is "menu" [obligation]', () => {
+describe('AccountAccessContent — title computed', () => {
+  test('title is the menu heading when page is "menu"', () => {
     const wrapper = mountContent('menu')
     expect(wrapper.vm.title).toBe('Login Details')
   })
 
-  test('title is the email heading when page is "email" [obligation]', () => {
+  test('title is the email heading when page is "email"', () => {
     const wrapper = mountContent('email')
     expect(wrapper.vm.title).toBe('Update Email')
   })
 
-  test('title is the email heading when page is "email-success" [obligation]', () => {
+  test('title is the email heading when page is "email-success"', () => {
     const wrapper = mountContent('email-success')
     expect(wrapper.vm.title).toBe('Update Email')
   })
 
-  test('title is the password "set" heading when page is "password" and the member has no password identity [obligation]', () => {
+  test('title is the password "set" heading when page is "password" and the member has no password identity', () => {
     sessionState.hasPassword = false
     const wrapper = mountContent('password')
     expect(wrapper.vm.title).toBe('Set a password')
   })
 
-  test('title is the password "change" heading when page is "password" and the member already has a password identity [obligation]', () => {
+  test('title is the password "change" heading when page is "password" and the member already has a password identity', () => {
     sessionState.hasPassword = true
     const wrapper = mountContent('password')
     expect(wrapper.vm.title).toBe('Change password')
   })
 
-  test('title is the password heading when page is "password-success" [obligation]', () => {
+  test('title is the password heading when page is "password-success"', () => {
     sessionState.hasPassword = true
     const wrapper = mountContent('password-success')
     expect(wrapper.vm.title).toBe('Change password')
   })
 })
 
-describe('AccountAccessContent — no local max-width/gap constraint [obligation]', () => {
-  test('[obligation] the root carries no max-w class — width is sourced from an ancestor (dialog-card size, or the standalone tab layout)', () => {
+describe('AccountAccessContent — no local max-width/gap constraint', () => {
+  test('the root carries no max-w class — width is sourced from an ancestor (dialog-card size, or the standalone tab layout)', () => {
     const wrapper = mountContent('menu')
     const root = wrapper.find('[data-testid="account-access-content"]')
     expect(root.classes().some((c) => c.startsWith('max-w'))).toBe(false)
   })
 
-  test('[obligation] the root carries no gap-* class — the container only ever has one active child at a time via the pager', () => {
+  test('the root carries no gap-* class — the container only ever has one active child at a time via the pager', () => {
     const wrapper = mountContent('menu')
     const root = wrapper.find('[data-testid="account-access-content"]')
     expect(root.classes().some((c) => c.startsWith('gap-'))).toBe(false)
   })
 })
 
-describe('AccountAccessContent — page routing (5 pages) [obligation]', () => {
+describe('AccountAccessContent — page routing (5 pages)', () => {
   test('renders the menu by default', () => {
     const wrapper = mountContent('menu')
     expect(wrapper.find('[data-testid="account-access-menu-stub"]').exists()).toBe(true)
@@ -171,7 +170,7 @@ describe('AccountAccessContent — page routing (5 pages) [obligation]', () => {
     expect(wrapper.find('[data-testid="email-section-stub"]').exists()).toBe(true)
   })
 
-  test('renders the email-success success panel when page is "email-success" [obligation]', () => {
+  test('renders the email-success success panel when page is "email-success"', () => {
     const wrapper = mountContent('email-success')
     expect(wrapper.find('[data-testid="account-access-modal__email-pending"]').exists()).toBe(true)
   })
@@ -181,7 +180,7 @@ describe('AccountAccessContent — page routing (5 pages) [obligation]', () => {
     expect(wrapper.find('[data-testid="password-section-stub"]').exists()).toBe(true)
   })
 
-  test('renders the password-success success panel when page is "password-success" [obligation]', () => {
+  test('renders the password-success success panel when page is "password-success"', () => {
     const wrapper = mountContent('password-success')
     expect(wrapper.find('[data-testid="account-access-modal__password-success"]').exists()).toBe(
       true
@@ -194,13 +193,13 @@ describe('AccountAccessContent — page routing (5 pages) [obligation]', () => {
     expect(wrapper.emitted('update:page')).toEqual([['email']])
   })
 
-  test('email-section navigates to "email-success" when it emits pending [obligation]', async () => {
+  test('email-section navigates to "email-success" when it emits pending', async () => {
     const wrapper = mountContent('email')
     await wrapper.find('[data-testid="email-section-stub__go-pending"]').trigger('click')
     expect(wrapper.emitted('update:page')).toEqual([['email-success']])
   })
 
-  test('password-section navigates to "password-success" when it emits success [obligation]', async () => {
+  test('password-section navigates to "password-success" when it emits success', async () => {
     const wrapper = mountContent('password')
     await wrapper.find('[data-testid="password-section-stub__go-success"]').trigger('click')
     expect(wrapper.emitted('update:page')).toEqual([['password-success']])
@@ -214,9 +213,9 @@ describe('AccountAccessContent — page routing (5 pages) [obligation]', () => {
   })
 })
 
-describe('AccountAccessContent — onSuccessClose dual behavior [obligation]', () => {
-  describe('email-success page [obligation]', () => {
-    test('resets page back to "menu" when no close prop is passed [obligation]', async () => {
+describe('AccountAccessContent — onSuccessClose dual behavior', () => {
+  describe('email-success page', () => {
+    test('resets page back to "menu" when no close prop is passed', async () => {
       const wrapper = mountContent('email-success')
       await wrapper
         .find(
@@ -226,7 +225,7 @@ describe('AccountAccessContent — onSuccessClose dual behavior [obligation]', (
       expect(wrapper.emitted('update:page')).toEqual([['menu']])
     })
 
-    test('calls the close prop instead of resetting the page when one is passed [obligation]', async () => {
+    test('calls the close prop instead of resetting the page when one is passed', async () => {
       const close = vi.fn()
       const wrapper = mountContent('email-success', { close })
       await wrapper
@@ -239,8 +238,8 @@ describe('AccountAccessContent — onSuccessClose dual behavior [obligation]', (
     })
   })
 
-  describe('password-success page [obligation]', () => {
-    test('resets page back to "menu" when no close prop is passed [obligation]', async () => {
+  describe('password-success page', () => {
+    test('resets page back to "menu" when no close prop is passed', async () => {
       const wrapper = mountContent('password-success')
       await wrapper
         .find(
@@ -250,7 +249,7 @@ describe('AccountAccessContent — onSuccessClose dual behavior [obligation]', (
       expect(wrapper.emitted('update:page')).toEqual([['menu']])
     })
 
-    test('calls the close prop instead of resetting the page when one is passed [obligation]', async () => {
+    test('calls the close prop instead of resetting the page when one is passed', async () => {
       const close = vi.fn()
       const wrapper = mountContent('password-success', { close })
       await wrapper

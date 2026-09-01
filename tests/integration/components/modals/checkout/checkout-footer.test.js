@@ -7,12 +7,12 @@ function mountFooter(props) {
 }
 
 describe('CheckoutFooter — loading', () => {
-  test('[obligation] loading is true while status is loading', () => {
+  test('loading is true while status is loading', () => {
     const wrapper = mountFooter({ status: 'loading', is_ready: true })
     expect(wrapper.findComponent({ name: 'UiButton' }).props('loading')).toBe(true)
   })
 
-  test('[obligation] loading is true while status is confirming', () => {
+  test('loading is true while status is confirming', () => {
     const wrapper = mountFooter({ status: 'confirming', is_ready: true })
     expect(wrapper.findComponent({ name: 'UiButton' }).props('loading')).toBe(true)
   })
@@ -24,12 +24,12 @@ describe('CheckoutFooter — loading', () => {
 })
 
 describe('CheckoutFooter — disabled', () => {
-  test('[obligation] disabled when is_ready is false', () => {
+  test('disabled when is_ready is false', () => {
     const wrapper = mountFooter({ status: 'form', is_ready: false })
     expect(wrapper.findComponent({ name: 'UiButton' }).props('disabled')).toBe(true)
   })
 
-  test('[obligation] disabled when status is error', () => {
+  test('disabled when status is error', () => {
     const wrapper = mountFooter({ status: 'error', is_ready: true })
     expect(wrapper.findComponent({ name: 'UiButton' }).props('disabled')).toBe(true)
   })

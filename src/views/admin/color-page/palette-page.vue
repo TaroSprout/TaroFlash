@@ -137,9 +137,6 @@ watch(
             :title="t('admin.palette-page.add-shade-button')"
             @click="onAddShade(family)"
           >
-            <!-- The filled square lives on this inner chip, not on the button: painting the button
-                 itself made the tile the full cell — padding included — and so a swatch chip plus
-                 both paddings wide, sitting flush with the cell's top edge instead of the chips'. -->
             <span
               data-testid="palette-page__add-shade-chip"
               class="flex aspect-square w-full items-center justify-center rounded-2_5 border border-line bg-raised-shade"

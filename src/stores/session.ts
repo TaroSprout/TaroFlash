@@ -98,11 +98,11 @@ export const useSessionStore = defineStore('sessionStore', () => {
     startLoading()
 
     try {
-      if (!authenticated.value) {
-        const session = await getSession()
-        user.value = session?.user
-        if (authenticated.value) await refreshHasPassword()
-      }
+      if (authenticated.value) return authenticated.value
+
+      const session = await getSession()
+      user.value = session?.user
+      if (authenticated.value) await refreshHasPassword()
 
       return authenticated.value
     } catch (e: any) {
@@ -206,8 +206,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
       return
     }
 
-    // Covers the popup leg only — a redirect leg lands on /auth/callback in a
-    // fresh page load, where this function never runs.
+    // Popup leg only: a redirect lands on /auth/callback in a fresh page load.
     if (await isNewAccountSession()) tracking.trackSignupCompleted()
 
     onAuthenticated()

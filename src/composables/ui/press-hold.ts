@@ -82,9 +82,7 @@ export function usePressHold(options: PressHoldOptions = {}) {
 /** Eat the single click the browser fires when the hold's pointer releases. */
 function swallowNextClick() {
   function handler(event: Event) {
-    // stopImmediatePropagation, not stopPropagation: other document-capture
-    // listeners (e.g. the popover's outside-click close) register after this
-    // one and must not see the release click either.
+    // stopImmediatePropagation: later document-capture listeners must not see the release click.
     event.stopImmediatePropagation()
     event.preventDefault()
     document.removeEventListener('click', handler, { capture: true })

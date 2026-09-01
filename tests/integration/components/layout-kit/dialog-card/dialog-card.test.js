@@ -82,9 +82,9 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('DialogCard', () => {
-  // ── full_bleed_at drives its own provide per-instance [obligation] ─────────
+  // ── full_bleed_at drives its own provide per-instance ─────────
 
-  describe('full_bleed_at [obligation]', () => {
+  describe('full_bleed_at', () => {
     test('defaults to "w<sm | h<sm" when the prop is omitted', () => {
       mountCard()
       expect(capturedQueries).toContain('w<sm | h<sm')
@@ -127,25 +127,25 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── station [obligation] ──────────────────────────────────────────────────
+  // ── station ──────────────────────────────────────────────────
   // A dialog card stamps a constant station — it never varies with whatever
   // surface it happens to be mounted inside.
 
-  describe('station [obligation]', () => {
-    test('stamps the constant data-station="window" with no ambient surface [obligation]', () => {
+  describe('station', () => {
+    test('stamps the constant data-station="window" with no ambient surface', () => {
       const wrapper = mountCard()
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-station')).toBe('window')
     })
 
-    test('data-station="window" does not vary with a surrounding station [obligation]', () => {
+    test('data-station="window" does not vary with a surrounding station', () => {
       const wrapper = mountCardInsideStation('panel')
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('data-station')).toBe('window')
     })
   })
 
-  // ── size prop bundles width/height + full_bleed_at + content_max_width [obligation]
+  // ── size prop bundles width/height + full_bleed_at + content_max_width
 
-  describe('size [obligation]', () => {
+  describe('size', () => {
     test('defaults to "md" — applies w-150 h-160 and a 32.5rem content max width', () => {
       const wrapper = mountCard()
       const classes = wrapper.find('[data-testid="dialog-card"]').classes()
@@ -196,9 +196,9 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── content_breakout_max_width per size [obligation] ────────────────────────
+  // ── content_breakout_max_width per size ────────────────────────
 
-  describe('content_breakout_max_width [obligation]', () => {
+  describe('content_breakout_max_width', () => {
     test('size="sm" defaults --content-grid-breakout-max-width to 35rem', () => {
       const wrapper = mountCard({ size: 'sm' })
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
@@ -228,9 +228,9 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── mobile classes defeat caller desktop sizing classes [obligation] ───────
+  // ── mobile classes defeat caller desktop sizing classes ───────
 
-  describe('mobile sizing wins over caller desktop classes [obligation]', () => {
+  describe('mobile sizing wins over caller desktop classes', () => {
     test('applies h-full! w-full! rounded-none! on mobile even with a caller class also present', () => {
       matchState.value = true
       const wrapper = mountCard({ class: 'w-150 h-160' })
@@ -308,9 +308,9 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── show_header [obligation] ────────────────────────────────────────────────
+  // ── show_header ────────────────────────────────────────────────
 
-  describe('show_header [obligation]', () => {
+  describe('show_header', () => {
     test('hides the whole header (including the close button) when false', () => {
       const wrapper = mountCard({ title: 'x', show_header: false })
       expect(wrapper.findComponent({ name: 'DialogCardHeader' }).exists()).toBe(false)
@@ -323,9 +323,9 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── close_disabled [obligation] ─────────────────────────────────────────────
+  // ── close_disabled ─────────────────────────────────────────────
 
-  describe('close_disabled [obligation]', () => {
+  describe('close_disabled', () => {
     test('disables the built-in close button when true', () => {
       const wrapper = mountCard({ title: 'x', close_disabled: true })
       expect(wrapper.find('[data-testid="dialog-card__close"]').attributes('disabled')).toBe('')
@@ -339,9 +339,9 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── header-start slot [obligation] ──────────────────────────────────────────
+  // ── header-start slot ──────────────────────────────────────────
 
-  describe('#header-start slot [obligation]', () => {
+  describe('#header-start slot', () => {
     test('falls back to the built-in close button when not overridden', () => {
       const wrapper = mountCard({ title: 'x' })
       expect(wrapper.find('[data-testid="dialog-card__close"]').exists()).toBe(true)
@@ -357,10 +357,10 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── header-after slot [obligation] ────────────────────────────────────────
+  // ── header-after slot ────────────────────────────────────────
 
-  describe('#header-after slot [obligation]', () => {
-    test('renders header-after slot content when provided [obligation]', () => {
+  describe('#header-after slot', () => {
+    test('renders header-after slot content when provided', () => {
       const wrapper = mountCard(
         { title: 'x' },
         { 'header-after': () => h('div', { 'data-testid': 'header-after-content' }) }
@@ -369,7 +369,7 @@ describe('DialogCard', () => {
       expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(true)
     })
 
-    test('omits the after strip entirely when no header-after slot is provided [obligation]', () => {
+    test('omits the after strip entirely when no header-after slot is provided', () => {
       const wrapper = mountCard({ title: 'x' })
       expect(wrapper.find('[data-testid="dialog-card-header__after"]').exists()).toBe(false)
     })
@@ -405,10 +405,10 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── float_header [obligation] ───────────────────────────────────────────────
+  // ── float_header ───────────────────────────────────────────────
 
-  describe('float_header [obligation]', () => {
-    test('takes the header out of flow (absolute inset-x-0 top-0 z-10) when true [obligation]', () => {
+  describe('float_header', () => {
+    test('takes the header out of flow (absolute inset-x-0 top-0 z-10) when true', () => {
       const wrapper = mountCard({ title: 'x', float_header: true })
       const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
 
@@ -418,7 +418,7 @@ describe('DialogCard', () => {
       expect(classes).toContain('z-10')
     })
 
-    test('leaves the header in normal flow by default (no absolute classes) [obligation]', () => {
+    test('leaves the header in normal flow by default (no absolute classes)', () => {
       const wrapper = mountCard({ title: 'x' })
       const classes = wrapper.find('[data-testid="dialog-card-header"]').classes()
 
@@ -466,12 +466,12 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── --content-grid-padding regression [obligation] ──────────────────────────
+  // ── --content-grid-padding regression ──────────────────────────
   // The `content-grid-px-(--dialog-px)` Tailwind utility never generated a CSS
   // rule for a bare custom-property reference, so padding silently stayed 0.
   // The fix sets --content-grid-padding directly via inline style instead.
 
-  describe('--content-grid-padding [obligation]', () => {
+  describe('--content-grid-padding', () => {
     test('sets --content-grid-padding to var(--dialog-px) via inline style', () => {
       const wrapper = mountCard()
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
@@ -487,30 +487,33 @@ describe('DialogCard', () => {
     })
   })
 
-  // ── --content-grid-max-width mobile cap [obligation] ────────────────────────
-  // On mobile the content column is capped to 100% instead of resolving to the
-  // (larger) desktop size-based default or a caller override — otherwise a
-  // phone narrower than the size max-width still renders content flush against
-  // the edge.
+  // ── --content-grid-max-width holds on mobile ───────────────────
+  // The content column keeps its configured max width on mobile instead of
+  // collapsing to 100% — the content-grid CSS's own
+  // `min(100% - padding*2, max-width)` clamp already keeps narrow viewports
+  // from being over-constrained, so the component just hands down a fixed
+  // width unconditionally.
 
-  describe('--content-grid-max-width mobile cap [obligation]', () => {
-    test('resolves to 100% on mobile regardless of size', () => {
+  describe('--content-grid-max-width holds on mobile', () => {
+    test('resolves to the size default on mobile, not 100%', () => {
       matchState.value = true
       const wrapper = mountCard({ size: 'lg' })
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
-        '--content-grid-max-width: 100%'
-      )
+      const style = wrapper.find('[data-testid="dialog-card"]').attributes('style')
+
+      expect(style).toContain('--content-grid-max-width: 37rem')
+      expect(style).not.toContain('--content-grid-max-width: 100%')
     })
 
-    test('resolves to 100% on mobile even when content_max_width is explicitly set', () => {
+    test('an explicit content_max_width still wins on mobile', () => {
       matchState.value = true
       const wrapper = mountCard({ content_max_width: '50rem' })
-      expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
-        '--content-grid-max-width: 100%'
-      )
+      const style = wrapper.find('[data-testid="dialog-card"]').attributes('style')
+
+      expect(style).toContain('--content-grid-max-width: 50rem')
+      expect(style).not.toContain('--content-grid-max-width: 100%')
     })
 
-    test('falls back to the size default on desktop (not 100%)', () => {
+    test('resolves to the same size default on desktop as on mobile', () => {
       matchState.value = false
       const wrapper = mountCard({ size: 'lg' })
       expect(wrapper.find('[data-testid="dialog-card"]').attributes('style')).toContain(
@@ -525,14 +528,70 @@ describe('DialogCard', () => {
         '--content-grid-max-width: 50rem'
       )
     })
+
+    test.each([
+      ['sm', '25rem'],
+      ['md', '32.5rem'],
+      ['lg', '37rem']
+    ])(
+      'size="%s" hands down the fixed width %s, not a percentage, on mobile',
+      (size, expected_width) => {
+        matchState.value = true
+        const wrapper = mountCard({ size })
+        const style = wrapper.find('[data-testid="dialog-card"]').attributes('style')
+
+        expect(style).toContain(`--content-grid-max-width: ${expected_width}`)
+        expect(style).not.toMatch(/--content-grid-max-width:\s*\d+%/)
+      }
+    )
   })
 
-  // ── #toolbar slot reacts to being toggled [obligation] ──────────────────────
+  // ── --content-grid-breakout-max-width is unaffected by viewport
+
+  describe('--content-grid-breakout-max-width unaffected by viewport', () => {
+    test('resolves to the same value on mobile and desktop for a given size', () => {
+      matchState.value = true
+      const mobile = mountCard({ size: 'lg' })
+      const mobile_style = mobile.find('[data-testid="dialog-card"]').attributes('style')
+
+      matchState.value = false
+      const desktop = mountCard({ size: 'lg' })
+      const desktop_style = desktop.find('[data-testid="dialog-card"]').attributes('style')
+
+      expect(mobile_style).toContain('--content-grid-breakout-max-width: 40rem')
+      expect(desktop_style).toContain('--content-grid-breakout-max-width: 40rem')
+    })
+  })
+
+  // ── mobile-variant trigger unchanged ───────────────────────────
+  // The fix only dropped the mobile branch on --content-grid-max-width — the
+  // viewport computation itself, and everything else that keys off it (the
+  // exposed `viewport`, the mobile sizing classes), still work the same way.
+
+  describe('mobile-variant trigger unchanged', () => {
+    test('viewport is still driven by the resolved matchMedia query', () => {
+      matchState.value = true
+      const wrapper = mountCard({ full_bleed_at: 'w<sm' })
+      expect(wrapper.vm.viewport).toBe('mobile')
+    })
+
+    test('mobile sizing classes (h-full!/w-full!/rounded-none!) still key off the same viewport', () => {
+      matchState.value = true
+      const wrapper = mountCard()
+      const classes = wrapper.find('[data-testid="dialog-card"]').classes()
+
+      expect(classes).toContain('h-full!')
+      expect(classes).toContain('w-full!')
+      expect(classes).toContain('rounded-none!')
+    })
+  })
+
+  // ── #toolbar slot reacts to being toggled ──────────────────────
   // `slots.toolbar` is read from plain functions called in the template, not a
   // computed — useSlots() isn't reactive, so a computed would cache the first
   // answer and never see a conditionally-rendered #toolbar slot appear.
 
-  describe('#toolbar slot reactivity [obligation]', () => {
+  describe('#toolbar slot reactivity', () => {
     test('grid-rows class and --dialog-body-pb flip when a v-if toolbar slot toggles on', async () => {
       const Parent = defineComponent({
         setup() {

@@ -127,8 +127,7 @@ function mountDropdown(props = {}, { attrs = {}, slots = {} } = {}) {
         // menu, options) is present — shallowMount would otherwise stub them.
         DropdownCaret: false,
         DropdownMenu: false
-      },
-      directives: { sfx: {} }
+      }
     }
   })
 }
@@ -198,66 +197,66 @@ describe('UiDropdownButton', () => {
     expect(menu(wrapper).exists()).toBe(false)
   })
 
-  // ── Open-state reflection on trigger element [obligation] ─────────────────
+  // ── Open-state reflection on trigger element ─────────────────
 
-  test('trigger has aria-expanded=false when menu is closed [obligation]', () => {
+  test('trigger has aria-expanded=false when menu is closed', () => {
     const wrapper = mountDropdown()
     expect(trigger(wrapper).attributes('aria-expanded')).toBe('false')
   })
 
-  test('trigger has aria-expanded=true when menu is open [obligation]', async () => {
+  test('trigger has aria-expanded=true when menu is open', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     expect(trigger(wrapper).attributes('aria-expanded')).toBe('true')
   })
 
-  test('trigger has data-active=false when menu is closed [obligation]', () => {
+  test('trigger has data-active=false when menu is closed', () => {
     const wrapper = mountDropdown()
     expect(trigger(wrapper).attributes('data-active')).toBe('false')
   })
 
-  test('trigger has data-active=true when menu is open [obligation]', async () => {
+  test('trigger has data-active=true when menu is open', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     expect(trigger(wrapper).attributes('data-active')).toBe('true')
   })
 
-  // ── Split-button click contract [obligation] ──────────────────────────────
+  // ── Split-button click contract ──────────────────────────────
 
-  test('clicking the trigger does NOT fire consumer @click handler [obligation]', async () => {
+  test('clicking the trigger does NOT fire consumer @click handler', async () => {
     const onClick = vi.fn()
     const wrapper = mountDropdown({}, { attrs: { onClick } })
     await trigger(wrapper).trigger('click')
     expect(onClick).not.toHaveBeenCalled()
   })
 
-  test('clicking the trigger DOES toggle the menu open [obligation]', async () => {
+  test('clicking the trigger DOES toggle the menu open', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  test('clicking the label button (default slot) DOES fire consumer @click [obligation]', async () => {
+  test('clicking the label button (default slot) DOES fire consumer @click', async () => {
     const onClick = vi.fn()
     const wrapper = mountDropdown({}, { attrs: { onClick } })
     await mainButton(wrapper).trigger('click')
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  // ── Attr routing split [obligation] ──────────────────────────────────────
+  // ── Attr routing split ──────────────────────────────────────
 
-  test('data-theme attr lands on the popover container (non-on attr) [obligation]', () => {
+  test('data-theme attr lands on the popover container (non-on attr)', () => {
     const wrapper = mountDropdown({}, { attrs: { 'data-theme': 'blue-500' } })
     expect(popoverRoot(wrapper).attributes('data-theme')).toBe('blue-500')
   })
 
-  test('data-theme attr does NOT appear on the inner button [obligation]', () => {
+  test('data-theme attr does NOT appear on the inner button', () => {
     const wrapper = mountDropdown({}, { attrs: { 'data-theme': 'blue-500' } })
     // UiButtonStub forwards button_attrs which should be empty of non-on keys
     expect(mainButton(wrapper).attributes('data-theme')).toBeUndefined()
   })
 
-  test('consumer @click (on* handler) is routed to the inner button [obligation]', async () => {
+  test('consumer @click (on* handler) is routed to the inner button', async () => {
     // The main button stub forwards all attrs including onClick to the button element.
     // Confirm clicking the label area fires the consumer handler.
     const onClick = vi.fn()
@@ -266,9 +265,9 @@ describe('UiDropdownButton', () => {
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  // ── Select + close contract [obligation] ──────────────────────────────────
+  // ── Select + close contract ──────────────────────────────────
 
-  test('clicking an option emits "select" with the option object [obligation]', async () => {
+  test('clicking an option emits "select" with the option object', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     await options(wrapper)[0].trigger('click')
@@ -276,7 +275,7 @@ describe('UiDropdownButton', () => {
     expect(wrapper.emitted('select')[0][0]).toEqual(DEFAULT_OPTIONS[0])
   })
 
-  test('clicking an option closes the menu [obligation]', async () => {
+  test('clicking an option closes the menu', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     await options(wrapper)[0].trigger('click')
@@ -290,7 +289,7 @@ describe('UiDropdownButton', () => {
     expect(wrapper.emitted('select')[0][0]).toEqual(DEFAULT_OPTIONS[1])
   })
 
-  test('default-slot label content is unchanged after selecting an option [obligation]', async () => {
+  test('default-slot label content is unchanged after selecting an option', async () => {
     const wrapper = mountDropdown()
     const originalText = mainButton(wrapper).text()
     await trigger(wrapper).trigger('click')
@@ -314,21 +313,21 @@ describe('UiDropdownButton', () => {
     expect(menu(wrapper).exists()).toBe(false)
   })
 
-  // ── Keyboard a11y [obligation] ────────────────────────────────────────────
+  // ── Keyboard a11y ────────────────────────────────────────────
 
-  test('Enter keydown on trigger opens the menu [obligation]', async () => {
+  test('Enter keydown on trigger opens the menu', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('keydown', { key: 'Enter' })
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  test('Space keydown on trigger opens the menu [obligation]', async () => {
+  test('Space keydown on trigger opens the menu', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('keydown', { key: ' ' })
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  test('Enter keydown on trigger when open closes the menu [obligation]', async () => {
+  test('Enter keydown on trigger when open closes the menu', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     await trigger(wrapper).trigger('keydown', { key: 'Enter' })
@@ -340,15 +339,15 @@ describe('UiDropdownButton', () => {
     expect(trigger(wrapper).attributes('aria-haspopup')).toBe('menu')
   })
 
-  // ── No inline sizing styles on button or menu [obligation] ────────────────
+  // ── No inline sizing styles on button or menu ────────────────
 
-  test('main button carries no min-width inline style [obligation]', () => {
+  test('main button carries no min-width inline style', () => {
     const wrapper = mountDropdown()
     const style = mainButton(wrapper).attributes('style') ?? ''
     expect(style).not.toContain('min-width')
   })
 
-  test('menu carries no inline width or min-width style [obligation]', async () => {
+  test('menu carries no inline width or min-width style', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     const style = menu(wrapper).attributes('style') ?? ''
@@ -356,9 +355,9 @@ describe('UiDropdownButton', () => {
     expect(style).not.toContain('min-width')
   })
 
-  // ── match_reference_width wiring [obligation] ─────────────────────────────
+  // ── match_reference_width wiring ─────────────────────────────
 
-  test('popover receives match_reference_width prop [obligation]', () => {
+  test('popover receives match_reference_width prop', () => {
     // The prop is passed as a bare boolean attribute in the template
     // (`match_reference_width` without `:` binding). shallowMount stubs receive
     // bare boolean Vue attrs as "" (HTML attribute) or true depending on version;
@@ -374,41 +373,41 @@ describe('UiDropdownButton', () => {
     expect(hasAttr).toBe(true)
   })
 
-  // ── openOnTrigger prop [obligation] ──────────────────────────────────────
+  // ── openOnTrigger prop ──────────────────────────────────────
 
-  test('openOnTrigger=false (default): clicking the main button does NOT open the menu [obligation]', async () => {
+  test('openOnTrigger=false (default): clicking the main button does NOT open the menu', async () => {
     // Default behavior — back-compat: the main button does not open the dropdown
     const wrapper = mountDropdown({ openOnTrigger: false })
     await mainButton(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(false)
   })
 
-  test('openOnTrigger=true: clicking the main button opens the menu [obligation]', async () => {
+  test('openOnTrigger=true: clicking the main button opens the menu', async () => {
     const wrapper = mountDropdown({ openOnTrigger: true })
     await mainButton(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  test('openOnTrigger=true: clicking the main button again closes the menu [obligation]', async () => {
+  test('openOnTrigger=true: clicking the main button again closes the menu', async () => {
     const wrapper = mountDropdown({ openOnTrigger: true })
     await mainButton(wrapper).trigger('click')
     await mainButton(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(false)
   })
 
-  test('openOnTrigger=true: the caret still toggles the menu [obligation]', async () => {
+  test('openOnTrigger=true: the caret still toggles the menu', async () => {
     const wrapper = mountDropdown({ openOnTrigger: true })
     await trigger(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  test('openOnTrigger=false: the caret still toggles the menu [obligation]', async () => {
+  test('openOnTrigger=false: the caret still toggles the menu', async () => {
     const wrapper = mountDropdown({ openOnTrigger: false })
     await trigger(wrapper).trigger('click')
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  test('openOnTrigger=true: clicking caret does not double-fire (opens once) [obligation]', async () => {
+  test('openOnTrigger=true: clicking caret does not double-fire (opens once)', async () => {
     // The caret uses @click.stop so it doesn't bubble to the main button.
     // Clicking the caret once should open, not immediately close (double-fire would close it).
     const wrapper = mountDropdown({ openOnTrigger: true })
@@ -416,74 +415,74 @@ describe('UiDropdownButton', () => {
     expect(menu(wrapper).exists()).toBe(true)
   })
 
-  // ── hideTrigger + openOnTrigger gating [obligation] ───────────────────────
+  // ── hideTrigger + openOnTrigger gating ───────────────────────
 
-  test('hideTrigger+openOnTrigger: caret is NOT rendered [obligation]', () => {
+  test('hideTrigger+openOnTrigger: caret is NOT rendered', () => {
     const wrapper = mountDropdown({ hideTrigger: true, openOnTrigger: true })
     expect(wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').exists()).toBe(false)
   })
 
-  test('hideTrigger alone (no openOnTrigger): caret IS still rendered [obligation]', () => {
+  test('hideTrigger alone (no openOnTrigger): caret IS still rendered', () => {
     const wrapper = mountDropdown({ hideTrigger: true, openOnTrigger: false })
     expect(wrapper.find('[data-testid="dropdown-button__trigger-wrap"]').exists()).toBe(true)
   })
 
-  // ── trigger_style: open fill for transparent variants [obligation] ─────────
+  // ── trigger_style: open fill for transparent variants ─────────
 
-  test('ghost variant: main button gets --btn-bg-color style when menu is open [obligation]', async () => {
+  test('ghost variant: main button gets --btn-bg-color style when menu is open', async () => {
     const wrapper = mountDropdown({ variant: 'ghost' })
     await trigger(wrapper).trigger('click')
     expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
     expect(mainButton(wrapper).attributes('style')).toContain('var(--color-raised)')
   })
 
-  test('outline variant: main button gets --btn-bg-color style when menu is open [obligation]', async () => {
+  test('outline variant: main button gets --btn-bg-color style when menu is open', async () => {
     const wrapper = mountDropdown({ variant: 'outline' })
     await trigger(wrapper).trigger('click')
     expect(mainButton(wrapper).attributes('style')).toContain('--btn-bg-color')
     expect(mainButton(wrapper).attributes('style')).toContain('var(--color-raised)')
   })
 
-  test('solid variant: main button does NOT get --btn-bg-color style when menu is open [obligation]', async () => {
+  test('solid variant: main button does NOT get --btn-bg-color style when menu is open', async () => {
     const wrapper = mountDropdown({ variant: 'solid' })
     await trigger(wrapper).trigger('click')
     const style = mainButton(wrapper).attributes('style') ?? ''
     expect(style).not.toContain('--btn-bg-color')
   })
 
-  test('ghost variant: main button has no --btn-bg-color style when menu is closed [obligation]', () => {
+  test('ghost variant: main button has no --btn-bg-color style when menu is closed', () => {
     const wrapper = mountDropdown({ variant: 'ghost' })
     const style = mainButton(wrapper).attributes('style') ?? ''
     expect(style).not.toContain('--btn-bg-color')
   })
 
-  // ── consumer @click fires exactly once per activation [obligation] ────────
+  // ── consumer @click fires exactly once per activation ────────
 
-  test('consumer @click fires exactly once when main button is clicked (not merged into array) [obligation]', async () => {
+  test('consumer @click fires exactly once when main button is clicked (not merged into array)', async () => {
     const onClick = vi.fn()
     const wrapper = mountDropdown({}, { attrs: { onClick } })
     await mainButton(wrapper).trigger('click')
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  test('consumer @click fires exactly once even with openOnTrigger=true [obligation]', async () => {
+  test('consumer @click fires exactly once even with openOnTrigger=true', async () => {
     const onClick = vi.fn()
     const wrapper = mountDropdown({ openOnTrigger: true }, { attrs: { onClick } })
     await mainButton(wrapper).trigger('click')
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  // ── menu station is always float [obligation] ───────────────────────────────
+  // ── menu station is always float ───────────────────────────────
   // A menu is always a float station regardless of what surface its trigger
   // sits inside — it no longer takes a depth/float prop from the trigger.
 
-  test('the menu carries data-station="float" regardless of ambient surface [obligation]', async () => {
+  test('the menu carries data-station="float" regardless of ambient surface', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     expect(menu(wrapper).attributes('data-station')).toBe('float')
   })
 
-  test('the menu still carries data-station="float" when mounted inside a stationed ancestor [obligation]', async () => {
+  test('the menu still carries data-station="float" when mounted inside a stationed ancestor', async () => {
     const Parent = defineComponent({
       setup() {
         return () =>
@@ -505,8 +504,7 @@ describe('UiDropdownButton', () => {
           UiIcon: UiIconStub,
           DropdownCaret: false,
           DropdownMenu: false
-        },
-        directives: { sfx: {} }
+        }
       }
     })
 
@@ -514,37 +512,37 @@ describe('UiDropdownButton', () => {
     expect(menu(wrapper).attributes('data-station')).toBe('float')
   })
 
-  // ── shadow prop forwarded to popover [obligation] ─────────────────────────
+  // ── shadow prop forwarded to popover ─────────────────────────
 
-  test('shadow=true is forwarded to the popover [obligation]', () => {
+  test('shadow=true is forwarded to the popover', () => {
     const wrapper = mountDropdown({ shadow: true })
     const popover = wrapper.findComponent(UiPopoverStub)
     expect(popover.props('shadow')).toBe(true)
   })
 
-  test('shadow=false (default) forwards false to the popover [obligation]', () => {
+  test('shadow=false (default) forwards false to the popover', () => {
     const wrapper = mountDropdown({ shadow: false })
     const popover = wrapper.findComponent(UiPopoverStub)
     expect(popover.props('shadow')).toBe(false)
   })
 
-  // ── iconRight forwarding [obligation] ─────────────────────────────────────
+  // ── iconRight forwarding ─────────────────────────────────────
 
-  test('iconRight prop forwards to the inner UiButton [obligation]', () => {
+  test('iconRight prop forwards to the inner UiButton', () => {
     const wrapper = mountDropdown({ iconRight: 'carat-down' })
     expect(wrapper.findComponent(UiButtonStub).props('iconRight')).toBe('carat-down')
   })
 
-  // ── sfx emissions [obligation] ────────────────────────────────────────────
+  // ── sfx emissions ────────────────────────────────────────────
 
-  test('clicking the trigger emits ui.press [obligation]', async () => {
+  test('clicking the trigger emits ui.press', async () => {
     const wrapper = mountDropdown()
     mockEmitSfx.mockClear()
     await trigger(wrapper).trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('clicking the trigger again (close) emits ui.press [obligation]', async () => {
+  test('clicking the trigger again (close) emits ui.press', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
@@ -552,7 +550,7 @@ describe('UiDropdownButton', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('selecting an option does NOT emit ui.select (removed in menu refactor) [obligation]', async () => {
+  test('selecting an option does NOT emit ui.select (removed in menu refactor)', async () => {
     const wrapper = mountDropdown()
     await trigger(wrapper).trigger('click')
     mockEmitSfx.mockClear()
@@ -560,12 +558,12 @@ describe('UiDropdownButton', () => {
     expect(mockEmitSfx).not.toHaveBeenCalledWith('ui.select')
   })
 
-  // ── primaryDisabled prop [obligation] ─────────────────────────────────────
+  // ── primaryDisabled prop ─────────────────────────────────────
   // When primaryDisabled=true, the primary action button is disabled but the
   // caret trigger remains live so the menu can still be opened.
 
-  describe('primaryDisabled [obligation]', () => {
-    test('primaryDisabled=true passes disabled=true to the inner UiButton [obligation]', () => {
+  describe('primaryDisabled', () => {
+    test('primaryDisabled=true passes disabled=true to the inner UiButton', () => {
       // UiButtonStub receives the disabled prop forwarded from UiButton's
       // :disabled="primaryDisabled" binding.
       const wrapper = mountDropdown({ primaryDisabled: true })
@@ -578,7 +576,7 @@ describe('UiDropdownButton', () => {
       expect(hasDisabled).toBe(true)
     })
 
-    test('primaryDisabled=true: caret trigger is still rendered and clickable [obligation]', async () => {
+    test('primaryDisabled=true: caret trigger is still rendered and clickable', async () => {
       const wrapper = mountDropdown({ primaryDisabled: true })
       // The caret must exist
       expect(trigger(wrapper).exists()).toBe(true)
@@ -587,7 +585,7 @@ describe('UiDropdownButton', () => {
       expect(menu(wrapper).exists()).toBe(true)
     })
 
-    test('primaryDisabled=true: selecting an option still emits select [obligation]', async () => {
+    test('primaryDisabled=true: selecting an option still emits select', async () => {
       const wrapper = mountDropdown({ primaryDisabled: true })
       await trigger(wrapper).trigger('click')
       await options(wrapper)[0].trigger('click')
@@ -602,11 +600,11 @@ describe('UiDropdownButton', () => {
     })
   })
 
-  // ── triggerOnly prop [obligation] ─────────────────────────────────────────
+  // ── triggerOnly prop ─────────────────────────────────────────
   // When triggerOnly=true only the icon button is rendered (no label + caret).
   // Clicking it opens/closes the menu identical to the caret in normal mode.
 
-  describe('triggerOnly [obligation]', () => {
+  describe('triggerOnly', () => {
     test('triggerOnly=true renders a single icon button, not the label button + caret', () => {
       const wrapper = mountDropdown({ triggerOnly: true })
       // The icon-only button carries data-testid="dropdown-button__button"
@@ -615,7 +613,7 @@ describe('UiDropdownButton', () => {
       expect(trigger(wrapper).exists()).toBe(false)
     })
 
-    test('triggerOnly=true: clicking the button opens the menu [obligation]', async () => {
+    test('triggerOnly=true: clicking the button opens the menu', async () => {
       const wrapper = mountDropdown({ triggerOnly: true })
       await mainButton(wrapper).trigger('click')
       expect(menu(wrapper).exists()).toBe(true)
@@ -643,7 +641,7 @@ describe('UiDropdownButton', () => {
       expect(trigger(wrapper).exists()).toBe(true)
     })
 
-    test('triggerOnly=true forwards variant="ghost" to the trigger button [obligation]', () => {
+    test('triggerOnly=true forwards variant="ghost" to the trigger button', () => {
       // The trigger-only button must forward `variant` so callers can use ghost/outline styles.
       // Backward-compatible: defaults to "solid" when variant is not passed.
       const wrapper = mountDropdown({ triggerOnly: true, variant: 'ghost' })
@@ -651,16 +649,16 @@ describe('UiDropdownButton', () => {
       expect(wrapper.findComponent({ name: 'UiButton' }).props('variant')).toBe('ghost')
     })
 
-    test('triggerOnly=true defaults to variant="solid" when variant is not passed [obligation]', () => {
+    test('triggerOnly=true defaults to variant="solid" when variant is not passed', () => {
       const wrapper = mountDropdown({ triggerOnly: true })
       expect(wrapper.findComponent({ name: 'UiButton' }).props('variant')).toBe('solid')
     })
   })
 
-  // ── DropdownOption.separator [obligation] ──────────────────────────────────
+  // ── DropdownOption.separator ──────────────────────────────────
 
-  describe('DropdownOption.separator [obligation]', () => {
-    test('renders a divider above the option that sets separator: true [obligation]', async () => {
+  describe('DropdownOption.separator', () => {
+    test('renders a divider above the option that sets separator: true', async () => {
       const wrapper = mountDropdown({
         options: [
           { label: 'Select Cards', value: 'select' },
@@ -673,14 +671,14 @@ describe('UiDropdownButton', () => {
       expect(separators).toHaveLength(1)
     })
 
-    test('no divider renders when no option sets separator [obligation]', async () => {
+    test('no divider renders when no option sets separator', async () => {
       const wrapper = mountDropdown()
       await trigger(wrapper).trigger('click')
 
       expect(menu(wrapper).findAll('[data-testid="dropdown-button__separator"]')).toHaveLength(0)
     })
 
-    test('the divider sits immediately above its option in DOM order [obligation]', async () => {
+    test('the divider sits immediately above its option in DOM order', async () => {
       const wrapper = mountDropdown({
         options: [
           { label: 'Select Cards', value: 'select' },
@@ -702,11 +700,11 @@ describe('UiDropdownButton', () => {
     })
   })
 
-  // ── #panel slot [obligation] ──────────────────────────────────────────────
+  // ── #panel slot ──────────────────────────────────────────────
   // When a #panel slot is provided, its content renders inside the
   // dropdown-button__menu container and NO option rows are shown.
 
-  describe('#panel slot [obligation]', () => {
+  describe('#panel slot', () => {
     function mountDropdownWithPanel(panelContent = 'panel-content', props = {}) {
       return shallowMount(UiDropdownButton, {
         props: { ...props },
@@ -721,32 +719,31 @@ describe('UiDropdownButton', () => {
             UiIcon: UiIconStub,
             DropdownCaret: false,
             DropdownMenu: false
-          },
-          directives: { sfx: {} }
+          }
         }
       })
     }
 
-    test('with #panel slot: panel content appears inside dropdown-button__menu [obligation]', async () => {
+    test('with #panel slot: panel content appears inside dropdown-button__menu', async () => {
       const wrapper = mountDropdownWithPanel()
       await trigger(wrapper).trigger('click')
       expect(menu(wrapper).exists()).toBe(true)
       expect(menu(wrapper).find('[data-testid="custom-panel"]').exists()).toBe(true)
     })
 
-    test('with #panel slot: NO option rows are rendered [obligation]', async () => {
+    test('with #panel slot: NO option rows are rendered', async () => {
       const wrapper = mountDropdownWithPanel()
       await trigger(wrapper).trigger('click')
       expect(options(wrapper)).toHaveLength(0)
     })
 
-    test('without #panel slot but with options: option rows still render (fallback preserved) [obligation]', async () => {
+    test('without #panel slot but with options: option rows still render (fallback preserved)', async () => {
       const wrapper = mountDropdown()
       await trigger(wrapper).trigger('click')
       expect(options(wrapper)).toHaveLength(DEFAULT_OPTIONS.length)
     })
 
-    test('omitting options (no prop, no panel) must not crash [obligation]', () => {
+    test('omitting options (no prop, no panel) must not crash', () => {
       expect(() =>
         shallowMount(UiDropdownButton, {
           slots: {
@@ -760,14 +757,13 @@ describe('UiDropdownButton', () => {
               UiIcon: UiIconStub,
               DropdownCaret: false,
               DropdownMenu: false
-            },
-            directives: { sfx: {} }
+            }
           }
         })
       ).not.toThrow()
     })
 
-    test('match_reference_width is false when #panel slot is provided [obligation]', () => {
+    test('match_reference_width is false when #panel slot is provided', () => {
       const wrapper = mountDropdownWithPanel()
       const popover = wrapper.findComponent(UiPopoverStub)
       // When panel slot is present, match_reference_width should be false so the
@@ -775,21 +771,21 @@ describe('UiDropdownButton', () => {
       expect(popover.props('match_reference_width')).toBe(false)
     })
 
-    test('match_reference_width is true when no #panel slot and not triggerOnly [obligation]', () => {
+    test('match_reference_width is true when no #panel slot and not triggerOnly', () => {
       const wrapper = mountDropdown()
       const popover = wrapper.findComponent(UiPopoverStub)
       expect(popover.props('match_reference_width')).toBe(true)
     })
   })
 
-  // ── module singleton — close_open_menu [obligation] ───────────────────────
+  // ── module singleton — close_open_menu ───────────────────────
   // Only one dropdown menu may be open at a time app-wide. A long-press open
   // swallows the release click (see press-hold.ts), so outside-click close
   // alone can't be relied on to close a previously open menu — opening a new
   // dropdown must explicitly close whichever one was already open.
 
-  describe('module singleton — close_open_menu [obligation]', () => {
-    test('opening dropdown B while A is open closes A [obligation]', async () => {
+  describe('module singleton — close_open_menu', () => {
+    test('opening dropdown B while A is open closes A', async () => {
       const wrapperA = mountDropdown()
       const wrapperB = mountDropdown()
 
@@ -805,7 +801,7 @@ describe('UiDropdownButton', () => {
       wrapperB.unmount()
     })
 
-    test('unmounting an open dropdown releases the singleton slot so the next open is unaffected [obligation]', async () => {
+    test('unmounting an open dropdown releases the singleton slot so the next open is unaffected', async () => {
       const wrapperA = mountDropdown()
       await trigger(wrapperA).trigger('click')
       expect(menu(wrapperA).exists()).toBe(true)
@@ -828,9 +824,9 @@ describe('UiDropdownButton', () => {
     })
   })
 
-  // ── defineExpose { open, show } [obligation] ──────────────────────────────
+  // ── defineExpose { open, show } ──────────────────────────────
 
-  describe('defineExpose { open, show } [obligation]', () => {
+  describe('defineExpose { open, show }', () => {
     test('show() opens the menu', async () => {
       const wrapper = mountDropdown()
       wrapper.vm.show()

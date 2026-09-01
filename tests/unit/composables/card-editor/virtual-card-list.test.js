@@ -157,21 +157,21 @@ describe('useVirtualCardList', () => {
   })
 
   describe('addCard / appendCard / prependCard return client_id', () => {
-    test('addCard returns the client_id of the staged entry [obligation]', () => {
+    test('addCard returns the client_id of the staged entry', () => {
       const list = makeList()
       const client_id = list.addCard()
       expect(typeof client_id).toBe('string')
       expect(client_id).toBe(list.temp_entries.value[0].client_id)
     })
 
-    test('appendCard propagates the client_id returned by addCard [obligation]', () => {
+    test('appendCard propagates the client_id returned by addCard', () => {
       const list = makeList([makeCard({ id: 50 })])
       const client_id = list.appendCard(50)
       expect(typeof client_id).toBe('string')
       expect(client_id).toBe(list.temp_entries.value[0].client_id)
     })
 
-    test('prependCard propagates the client_id returned by addCard [obligation]', () => {
+    test('prependCard propagates the client_id returned by addCard', () => {
       const list = makeList([makeCard({ id: 50 })])
       const client_id = list.prependCard(50)
       expect(typeof client_id).toBe('string')
@@ -180,7 +180,7 @@ describe('useVirtualCardList', () => {
   })
 
   describe('addCardAtTop', () => {
-    test('anchors before the first persisted card (side=before) [obligation]', () => {
+    test('anchors before the first persisted card (side=before)', () => {
       const list = makeList([makeCard({ id: 100 }), makeCard({ id: 200 })])
       list.addCardAtTop()
       const entry = list.temp_entries.value[0]
@@ -188,7 +188,7 @@ describe('useVirtualCardList', () => {
       expect(entry.side).toBe('before')
     })
 
-    test('uses anchor=null and side=null on an empty deck [obligation]', () => {
+    test('uses anchor=null and side=null on an empty deck', () => {
       const list = makeList()
       list.addCardAtTop()
       const entry = list.temp_entries.value[0]
@@ -196,7 +196,7 @@ describe('useVirtualCardList', () => {
       expect(entry.side).toBeNull()
     })
 
-    test('unshifts so the new card renders at index 0 above any existing temps [obligation]', () => {
+    test('unshifts so the new card renders at index 0 above any existing temps', () => {
       const list = makeList([makeCard({ id: 100 })])
       const id1 = list.addCardAtTop()
       const id2 = list.addCardAtTop()
@@ -205,21 +205,21 @@ describe('useVirtualCardList', () => {
       expect(list.temp_entries.value[1].client_id).toBe(id1)
     })
 
-    test('renders the new card at index 0 in all_cards [obligation]', () => {
+    test('renders the new card at index 0 in all_cards', () => {
       const list = makeList([makeCard({ id: 100 })])
       list.addCardAtTop()
       expect(list.all_cards.value[0].id).toBeLessThan(0)
       expect(list.all_cards.value[1].id).toBe(100)
     })
 
-    test('returns the stable client_id of the staged card [obligation]', () => {
+    test('returns the stable client_id of the staged card', () => {
       const list = makeList([makeCard({ id: 100 })])
       const client_id = list.addCardAtTop()
       expect(typeof client_id).toBe('string')
       expect(client_id).toBe(list.temp_entries.value[0].client_id)
     })
 
-    test('anchors before the first persisted card, not a previously-staged temp [obligation]', () => {
+    test('anchors before the first persisted card, not a previously-staged temp', () => {
       // A temp id is negative and would raise on the server — the anchor must be real
       const list = makeList([makeCard({ id: 100 })])
       list.addCardAtTop() // stages a temp at position 0
@@ -328,7 +328,7 @@ describe('useVirtualCardList', () => {
   })
 
   describe('tail_rank', () => {
-    test('reads next_rank off the last loaded page [obligation]', () => {
+    test('reads next_rank off the last loaded page', () => {
       const list = useVirtualCardList(makeCardsQuery([makeCard({ id: 1 })], 'z9'), ref(10))
       expect(list.tail_rank.value).toBe('z9')
     })
@@ -351,7 +351,7 @@ describe('useVirtualCardList', () => {
   })
 
   describe('neighbourRanksFor', () => {
-    test('resolves the ranked neighbours around the staged slot [obligation]', () => {
+    test('resolves the ranked neighbours around the staged slot', () => {
       const list = useVirtualCardList(
         makeCardsQuery([
           { ...makeCard({ id: 1 }), rank: 'a0' },
@@ -367,7 +367,7 @@ describe('useVirtualCardList', () => {
       expect(next).toBe('a2')
     })
 
-    test('falls back to tail_rank when the staged card sits at the loaded end [obligation]', () => {
+    test('falls back to tail_rank when the staged card sits at the loaded end', () => {
       const list = useVirtualCardList(
         makeCardsQuery([{ ...makeCard({ id: 1 }), rank: 'a0' }], 'z9'),
         ref(10)

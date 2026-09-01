@@ -30,7 +30,7 @@ describe('flip', () => {
   // ── flipEnter ─────────────────────────────────────────────────────────────
 
   describe('flipEnter', () => {
-    test("axis 'x' maps to rotateX in fromTo [obligation]", () => {
+    test("axis 'x' maps to rotateX in fromTo", () => {
       flipEnter(el, 'x', done)
       expect(fromTo).toHaveBeenCalledTimes(1)
       const [, fromVars, toVars] = fromTo.mock.calls[0]
@@ -38,7 +38,7 @@ describe('flip', () => {
       expect(toVars).toHaveProperty('rotateX', 0)
     })
 
-    test("axis 'y' maps to rotateY in fromTo [obligation]", () => {
+    test("axis 'y' maps to rotateY in fromTo", () => {
       flipEnter(el, 'y', done)
       const [, fromVars, toVars] = fromTo.mock.calls[0]
       expect(fromVars).toHaveProperty('rotateY')
@@ -65,14 +65,14 @@ describe('flip', () => {
   // ── flipLeave ─────────────────────────────────────────────────────────────
 
   describe('flipLeave', () => {
-    test("axis 'x' maps to rotateX in to [obligation]", () => {
+    test("axis 'x' maps to rotateX in to", () => {
       flipLeave(el, 'x', done)
       expect(to).toHaveBeenCalledTimes(1)
       const [, opts] = to.mock.calls[0]
       expect(opts).toHaveProperty('rotateX', 60)
     })
 
-    test("axis 'y' maps to rotateY in to [obligation]", () => {
+    test("axis 'y' maps to rotateY in to", () => {
       flipLeave(el, 'y', done)
       const [, opts] = to.mock.calls[0]
       expect(opts).toHaveProperty('rotateY', 60)

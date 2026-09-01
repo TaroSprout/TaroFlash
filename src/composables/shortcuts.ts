@@ -13,8 +13,7 @@ export function useShortcuts(id: ScopeId, { priority }: { priority?: Priority } 
   const store = useShortcutStore()
   store.pushScope(id, priority)
 
-  // Symmetric to pushScope: pop + release focus when the owning component
-  // (or effect scope) tears down, so callers don't need manual `dispose()`.
+  // Pop and release focus on teardown, so callers never need a manual dispose().
   if (getCurrentScope()) {
     onScopeDispose(() => {
       store.clearNamespace(id)

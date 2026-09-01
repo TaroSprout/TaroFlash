@@ -120,18 +120,18 @@ beforeEach(() => {
 // ── Flat structure ────────────────────────────────────────────────────────────
 
 describe('TabSubscription — layout', () => {
-  test('always renders plan-section regardless of plan [obligation]', () => {
+  test('always renders plan-section regardless of plan', () => {
     const wrapper = makeTab()
     expect(wrapper.find('[data-testid="plan-section-stub"]').exists()).toBe(true)
   })
 
-  test('hides payment-methods-section for a free member [obligation]', () => {
+  test('hides payment-methods-section for a free member', () => {
     memberState.plan = 'free'
     const wrapper = makeTab()
     expect(wrapper.find('[data-testid="payment-methods-section-stub"]').exists()).toBe(false)
   })
 
-  test('renders payment-methods-section for a paid member [obligation]', () => {
+  test('renders payment-methods-section for a paid member', () => {
     memberState.plan = 'paid'
     const wrapper = makeTab()
     expect(wrapper.find('[data-testid="payment-methods-section-stub"]').exists()).toBe(true)

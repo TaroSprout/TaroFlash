@@ -75,7 +75,7 @@ describe('useDeleteCardsMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
-  test('onSettled invalidates the card index so deleted fronts are removed from highlights [obligation]', () => {
+  test('onSettled invalidates the card index so deleted fronts are removed from highlights', () => {
     const { onSettled } = configFrom(useDeleteCardsMutation)
     onSettled(undefined, undefined, [{ id: 1, deck_id: 10 }])
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
@@ -99,7 +99,7 @@ describe('useDeleteCardsMutation', () => {
   // ── onMutate — optimistic removal from every loaded view of the deck ───────
 
   describe('onMutate', () => {
-    test('drops the card from a loaded pages view before the mutation resolves [obligation]', () => {
+    test('drops the card from a loaded pages view before the mutation resolves', () => {
       const queryCache = makeFakeQueryCache([
         {
           key: ['cards', 10, 'pages', 'default', ''],
@@ -125,10 +125,10 @@ describe('useDeleteCardsMutation', () => {
       expect(stored.pages[0].cards.map((c) => c.id)).toEqual([2])
     })
 
-    // [obligation] a promoted temp's real_id lands in the persisted list; the
+    // a promoted temp's real_id lands in the persisted list; the
     // optimistic write must match it there too, or the row survives the
     // delete until the invalidated query refetches.
-    test('drops a just-promoted card from the persisted pages view [obligation]', () => {
+    test('drops a just-promoted card from the persisted pages view', () => {
       const queryCache = makeFakeQueryCache([
         {
           key: ['cards', 10, 'pages', 'default', ''],
@@ -144,9 +144,9 @@ describe('useDeleteCardsMutation', () => {
       expect(stored.pages[0].cards).toHaveLength(0)
     })
 
-    // [obligation] a non-default sort and a search view are both loaded under
+    // a non-default sort and a search view are both loaded under
     // the same ['cards', deck_id, 'pages'] prefix — every one loses the row.
-    test('drops the card from every loaded sort/search variant of the same deck [obligation]', () => {
+    test('drops the card from every loaded sort/search variant of the same deck', () => {
       const queryCache = makeFakeQueryCache([
         {
           key: ['cards', 10, 'pages', 'default', ''],
@@ -192,7 +192,7 @@ describe('useDeleteCardsMutation', () => {
   // ── onError — restore the snapshot for every key it touched ────────────────
 
   describe('onError', () => {
-    test('restores the deleted cards to their original position on refusal [obligation]', () => {
+    test('restores the deleted cards to their original position on refusal', () => {
       const original_data = {
         pages: [
           {
@@ -219,7 +219,7 @@ describe('useDeleteCardsMutation', () => {
       expect(restored.pages[0].cards.map((c) => c.id)).toEqual([1, 2])
     })
 
-    test('restores every touched view, not just one, on refusal [obligation]', () => {
+    test('restores every touched view, not just one, on refusal', () => {
       const default_data = { pages: [{ cards: [{ id: 1, deck_id: 10 }] }], pageParams: [0] }
       const search_data = { pages: [{ cards: [{ id: 1, deck_id: 10 }] }], pageParams: [0] }
       const queryCache = makeFakeQueryCache([
@@ -258,13 +258,13 @@ describe('useDeleteCardsInDeckMutation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['decks'], exact: true })
   })
 
-  test('onSettled invalidates the card index so bulk-deleted fronts are removed from highlights [obligation]', () => {
+  test('onSettled invalidates the card index so bulk-deleted fronts are removed from highlights', () => {
     const { onSettled } = configFrom(useDeleteCardsInDeckMutation)
     onSettled(undefined, undefined, { deck_id: 10, except_ids: [] })
     expect(invalidateSpy).toHaveBeenCalledWith({ key: ['cards', 'index'] })
   })
 
-  // [obligation] select-all delete has no correct optimistic write — it doesn't
+  // select-all delete has no correct optimistic write — it doesn't
   // know which cards it's keeping client-side, so it makes none at all and
   // relies solely on the onSettled invalidation to refetch.
   test('makes no optimistic cache write — no onMutate on the config', () => {

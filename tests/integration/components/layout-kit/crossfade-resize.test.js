@@ -57,17 +57,17 @@ afterEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('CrossfadeResize', () => {
-  test('renders root element with data-testid="crossfade-resize" [obligation]', () => {
+  test('renders root element with data-testid="crossfade-resize"', () => {
     const { cr } = makeCrossfadeWrapper()
     expect(cr.find('[data-testid="crossfade-resize"]').exists()).toBe(true)
   })
 
-  test('renders slotted content [obligation]', () => {
+  test('renders slotted content', () => {
     const { cr } = makeCrossfadeWrapper()
     expect(cr.find('[data-testid="pane-a"]').exists()).toBe(true)
   })
 
-  test('emits swap-start when the slot content changes (before-leave) [obligation]', async () => {
+  test('emits swap-start when the slot content changes (before-leave)', async () => {
     const { cr, slot_key } = makeCrossfadeWrapper()
 
     slot_key.value = 'b'
@@ -78,7 +78,7 @@ describe('CrossfadeResize', () => {
     expect(cr.emitted('swap-start')).toBeTruthy()
   })
 
-  test('emits swap-end after the enter transition completes (after-enter) [obligation]', async () => {
+  test('emits swap-end after the enter transition completes (after-enter)', async () => {
     const { cr, slot_key } = makeCrossfadeWrapper()
 
     slot_key.value = 'b'
@@ -89,7 +89,7 @@ describe('CrossfadeResize', () => {
     expect(cr.emitted('swap-end')).toBeTruthy()
   })
 
-  test('both swap-start and swap-end fire in sequence during a single slot swap [obligation]', async () => {
+  test('both swap-start and swap-end fire in sequence during a single slot swap', async () => {
     const { cr, slot_key } = makeCrossfadeWrapper()
 
     slot_key.value = 'b'
@@ -101,9 +101,9 @@ describe('CrossfadeResize', () => {
     expect(cr.emitted('swap-end')).toBeTruthy()
   })
 
-  // ── animateHeight prop [obligation] ────────────────────────────────────────
+  // ── animateHeight prop ────────────────────────────────────────
 
-  test('animateHeight defaults to true — tweens height via gsap.timeline [obligation]', async () => {
+  test('animateHeight defaults to true — tweens height via gsap.timeline', async () => {
     const { slot_key } = makeCrossfadeWrapper()
 
     slot_key.value = 'b'
@@ -114,7 +114,7 @@ describe('CrossfadeResize', () => {
     expect(gsap.timeline).toHaveBeenCalled()
   })
 
-  test('animateHeight=false snaps height via gsap.set instead of a timeline [obligation]', async () => {
+  test('animateHeight=false snaps height via gsap.set instead of a timeline', async () => {
     const { slot_key } = makeCrossfadeWrapper({ animateHeight: false })
 
     gsap.timeline.mockClear()

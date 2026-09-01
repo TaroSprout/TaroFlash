@@ -108,11 +108,21 @@ describe('FeedbackCard — content', () => {
     expect(wrapper.find('[data-testid="feedback-card__vote-count"]').text()).toBe('7')
   })
 
-  test('passes the member avatar and size="sm" to member-polaroid [obligation]', () => {
+  test('passes the member avatar and size="sm" to member-polaroid', () => {
     const wrapper = mountCard({ member_avatar: 'owl' })
     const polaroid = wrapper.findComponent(MemberPolaroid)
     expect(polaroid.props('avatar')).toBe('owl')
     expect(polaroid.props('size')).toBe('sm')
+  })
+
+  // ── REGRESSION GUARD — this call site stays decorative ────────
+  // The dashboard is the only interactive polaroid; this one gets no click
+  // handler, no hover wiring, and renders at rest same as before.
+
+  test('member-polaroid is not interactive here — no hover swing wiring', () => {
+    const wrapper = mountCard()
+    const polaroid = wrapper.findComponent(MemberPolaroid)
+    expect(polaroid.props('interactive')).toBeFalsy()
   })
 })
 
@@ -131,7 +141,7 @@ describe('FeedbackCard — vote toggle', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.info')
   })
 
-  test('plays ui.toggle-off sfx when un-voting [obligation]', async () => {
+  test('plays ui.toggle-off sfx when un-voting', async () => {
     const wrapper = mountCard({ voted_by_me: true })
     await wrapper.find('[data-testid="feedback-card__vote"]').trigger('click')
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.toggle-off')

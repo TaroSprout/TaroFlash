@@ -78,9 +78,9 @@ describe('DirectoryPage', () => {
     expect(wrapper.emitted('navigate')).toEqual([['danger-zone']])
   })
 
-  // ── entry fallback [obligation] ────────────────────────────────────────────
+  // ── entry fallback ────────────────────────────────────────────
 
-  test('an entry value with no matching page in the registry renders its raw value as label [obligation]', () => {
+  test('an entry value with no matching page in the registry renders its raw value as label', () => {
     const wrapper = mountPage({
       groups: [
         {

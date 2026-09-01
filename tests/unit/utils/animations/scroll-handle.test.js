@@ -57,7 +57,7 @@ describe('scrollHandleEnter', () => {
     expect(mockKillTweensOf).toHaveBeenCalledWith(el)
   })
 
-  test('reduced motion finishes the transition on the spot, with no tween [obligation]', () => {
+  test('reduced motion finishes the transition on the spot, with no tween', () => {
     stubReducedMotion(true)
 
     scrollHandleEnter(el, done)

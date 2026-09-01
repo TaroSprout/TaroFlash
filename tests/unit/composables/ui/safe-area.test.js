@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { createApp } from 'vue'
 
 function createMockVisualViewport(height, offsetTop = 0) {
   const handlers = { resize: new Set(), scroll: new Set() }
@@ -16,15 +17,35 @@ function createMockVisualViewport(height, offsetTop = 0) {
   }
 }
 
-describe('installSafeAreaPadding', () => {
-  let installSafeAreaPadding
+// useBottomChromeCover calls onScopeDispose, so every consumer needs a
+// component/effect-scope host to unmount for teardown to run.
+function mountConsumer(useBottomChromeCover) {
+  let result
+  const app = createApp({
+    setup() {
+      result = useBottomChromeCover()
+      return () => null
+    }
+  })
+  const el = document.createElement('div')
+  app.mount(el)
+  return {
+    app,
+    get is_covered() {
+      return result.is_covered
+    }
+  }
+}
+
+describe('useBottomChromeCover', () => {
+  let useBottomChromeCover
   let viewport
   let original_inner_height
+  const apps = []
 
   beforeEach(async () => {
     vi.resetModules()
     vi.useFakeTimers()
-    global.__matchMedia.matches = false
     original_inner_height = window.innerHeight
     Object.defineProperty(window, 'innerHeight', {
       value: 800,
@@ -37,171 +58,130 @@ describe('installSafeAreaPadding', () => {
       writable: true,
       configurable: true
     })
-    document.documentElement.style.removeProperty('--edge-safe-padding')
-    ;({ installSafeAreaPadding } = await import('@/composables/ui/safe-area'))
+    ;({ useBottomChromeCover } = await import('@/composables/ui/safe-area'))
   })
 
   afterEach(() => {
+    apps.splice(0).forEach((app) => app.unmount())
     vi.useRealTimers()
     Object.defineProperty(window, 'innerHeight', {
       value: original_inner_height,
       writable: true,
       configurable: true
     })
-    document.documentElement.style.removeProperty('--edge-safe-padding')
   })
 
-  function paddingVar() {
-    return document.documentElement.style.getPropertyValue('--edge-safe-padding')
+  function consumer() {
+    const c = mountConsumer(useBottomChromeCover)
+    apps.push(c.app)
+    return c
   }
 
   function fireResize() {
     viewport._fire('resize')
   }
 
-  function setCoarse(is_coarse) {
-    global.__matchMedia.matches = is_coarse
-    global.__matchMedia.listeners.forEach((listener) => listener())
-  }
+  // ── Starting state ───────────────────────────────────────────
 
-  // ── Non-coarse pointer (desktop) [obligation] ─────────────────────────────
-
-  test('resolves to 0px on install for a non-coarse (fine) pointer, regardless of any viewport gap [obligation]', () => {
-    global.__matchMedia.matches = false
-    // Even a large chrome gap must not matter on a fine pointer.
-    viewport.height = 700
-    viewport.offsetTop = 0
-
-    installSafeAreaPadding()
-
-    expect(paddingVar()).toBe('0px')
-  })
-
-  // ── Coarse pointer: chrome docked vs not [obligation] ─────────────────────
-
-  test('resolves to 0px when the chrome gap exceeds the threshold on a coarse pointer [obligation]', () => {
-    setCoarse(true)
-    // innerHeight (800) - (viewport.height + offsetTop) = 800 - 700 = 100 > 10
-    viewport.height = 700
-    viewport.offsetTop = 0
-
-    installSafeAreaPadding()
-
-    expect(paddingVar()).toBe('0px')
-  })
-
-  test('resolves to env(safe-area-inset-bottom) when the chrome gap is small on a coarse pointer [obligation]', () => {
-    setCoarse(true)
-    // 800 - (795 + 0) = 5 <= 10
-    viewport.height = 795
-    viewport.offsetTop = 0
-
-    installSafeAreaPadding()
-
-    expect(paddingVar()).toBe('env(safe-area-inset-bottom)')
-  })
-
-  test('accounts for visualViewport.offsetTop when computing the gap [obligation]', () => {
-    setCoarse(true)
-    // 800 - (750 + 45) = 5 <= 10, even though height alone would read as a big gap
-    viewport.height = 750
-    viewport.offsetTop = 45
-
-    installSafeAreaPadding()
-
-    expect(paddingVar()).toBe('env(safe-area-inset-bottom)')
-  })
-
-  // ── No visualViewport ──────────────────────────────────────────────────────
-
-  test('resolves to 0px when window.visualViewport is unavailable', () => {
-    setCoarse(true)
+  test('is_covered defaults false, so a consumer that never gets a real measurement still errs toward extra room', () => {
     Object.defineProperty(window, 'visualViewport', {
       value: undefined,
       writable: true,
       configurable: true
     })
 
-    installSafeAreaPadding()
+    const { is_covered } = consumer()
 
-    expect(paddingVar()).toBe('0px')
+    expect(is_covered.value).toBe(false)
   })
 
-  // ── Debounce + live updates ────────────────────────────────────────────────
+  // ── Measurement on install ──────────────────────────────────────────────
 
-  test('debounces a burst of resize events to a single re-measure after DEBOUNCE_MS', () => {
-    setCoarse(true)
-    viewport.height = 700 // large gap → 0px initially
-    installSafeAreaPadding()
-    expect(paddingVar()).toBe('0px')
+  test('resolves is_covered to true once the initial measurement finds a gap over the threshold', () => {
+    // innerHeight (800) - (viewport.height + offsetTop) = 800 - 700 = 100 > 10
+    viewport.height = 700
+    viewport.offsetTop = 0
 
-    viewport.height = 795 // small gap → should become env(...)
+    const { is_covered } = consumer()
+    vi.runAllTimers()
+
+    expect(is_covered.value).toBe(true)
+  })
+
+  test('resolves is_covered to false when the initial gap is at or under the threshold', () => {
+    // 800 - (795 + 0) = 5 <= 10
+    viewport.height = 795
+    viewport.offsetTop = 0
+
+    const { is_covered } = consumer()
+    vi.runAllTimers()
+
+    expect(is_covered.value).toBe(false)
+  })
+
+  test('accounts for visualViewport.offsetTop when computing the gap', () => {
+    // 800 - (750 + 45) = 5 <= 10, even though height alone would read as a big gap
+    viewport.height = 750
+    viewport.offsetTop = 45
+
+    const { is_covered } = consumer()
+    vi.runAllTimers()
+
+    expect(is_covered.value).toBe(false)
+  })
+
+  // ── Debounce + live updates ────────────────────────────────
+
+  test('debounces a burst of resize events to a single re-measure after ~120ms', () => {
+    viewport.height = 700 // large gap → covered once measured
+    const { is_covered } = consumer()
+    vi.runAllTimers()
+    expect(is_covered.value).toBe(true)
+
+    viewport.height = 795 // small gap → should become uncovered
     fireResize()
     vi.advanceTimersByTime(100)
     // Still within the debounce window
-    expect(paddingVar()).toBe('0px')
+    expect(is_covered.value).toBe(true)
 
     vi.advanceTimersByTime(20)
-    expect(paddingVar()).toBe('env(safe-area-inset-bottom)')
+    expect(is_covered.value).toBe(false)
   })
 
   test('re-measures on a scroll event too', () => {
-    setCoarse(true)
     viewport.height = 700
-    installSafeAreaPadding()
-    expect(paddingVar()).toBe('0px')
+    const { is_covered } = consumer()
+    vi.runAllTimers()
+    expect(is_covered.value).toBe(true)
 
     viewport.height = 795
     viewport._fire('scroll')
     vi.advanceTimersByTime(120)
 
-    expect(paddingVar()).toBe('env(safe-area-inset-bottom)')
+    expect(is_covered.value).toBe(false)
   })
 
-  test('re-measures when the pointer type flips from fine to coarse', async () => {
-    global.__matchMedia.matches = false
-    viewport.height = 795 // would be env(...) on coarse, but fine pointer forces 0px
+  // ── Consumer refcounting ────────────────────────────────────
 
-    installSafeAreaPadding()
-    expect(paddingVar()).toBe('0px')
-
-    setCoarse(true)
-    await Promise.resolve()
-
-    expect(paddingVar()).toBe('env(safe-area-inset-bottom)')
-  })
-
-  // ── Consumer refcounting ────────────────────────────────────────────────────
-
-  test('shares a single visualViewport listener pair across multiple installs', () => {
-    installSafeAreaPadding()
-    installSafeAreaPadding()
+  test('shares a single visualViewport listener pair across multiple consumers', () => {
+    consumer()
+    consumer()
 
     expect(viewport._handlerCount('resize')).toBe(1)
     expect(viewport._handlerCount('scroll')).toBe(1)
   })
 
   test('removes listeners only once the last consumer tears down', () => {
-    const teardownA = installSafeAreaPadding()
-    const teardownB = installSafeAreaPadding()
+    const a = consumer()
+    const b = consumer()
 
-    teardownA()
+    a.app.unmount()
+    apps.splice(apps.indexOf(a.app), 1)
     expect(viewport._handlerCount('resize')).toBe(1)
 
-    teardownB()
+    b.app.unmount()
+    apps.splice(apps.indexOf(b.app), 1)
     expect(viewport._handlerCount('resize')).toBe(0)
     expect(viewport._handlerCount('scroll')).toBe(0)
-  })
-
-  test('a second consumer does not re-measure — the value from the first install stands', () => {
-    setCoarse(true)
-    viewport.height = 700
-    installSafeAreaPadding()
-    expect(paddingVar()).toBe('0px')
-
-    document.documentElement.style.setProperty('--edge-safe-padding', 'sentinel')
-    installSafeAreaPadding()
-
-    expect(paddingVar()).toBe('sentinel')
   })
 })

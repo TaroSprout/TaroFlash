@@ -61,7 +61,7 @@ describe('useToggleFeedbackVoteMutation — mutation()', () => {
 
 // ── onMutate — optimistic cache flip ───────────────────────────────────────────
 
-describe('useToggleFeedbackVoteMutation — onMutate() [obligation]', () => {
+describe('useToggleFeedbackVoteMutation — onMutate()', () => {
   test('flips voted_by_me and increments vote_count when voting for the first time', () => {
     cached_data = [item(5, { voted_by_me: false, vote_count: 3 })]
     const { onMutate } = config()
@@ -133,7 +133,7 @@ describe('useToggleFeedbackVoteMutation — onMutate() [obligation]', () => {
 
 // ── onError — rollback ────────────────────────────────────────────────────────
 
-describe('useToggleFeedbackVoteMutation — onError() [obligation]', () => {
+describe('useToggleFeedbackVoteMutation — onError()', () => {
   test('restores the exact pre-toggle snapshot when the mutation errors', () => {
     const snapshot = [item(5, { voted_by_me: false, vote_count: 0 })]
     const { onError } = config()
@@ -154,7 +154,7 @@ describe('useToggleFeedbackVoteMutation — onError() [obligation]', () => {
 
 // ── onSettled — invalidation ───────────────────────────────────────────────────
 
-describe('useToggleFeedbackVoteMutation — onSettled() [obligation]', () => {
+describe('useToggleFeedbackVoteMutation — onSettled()', () => {
   test('invalidates the feedback-items query on settle after success', () => {
     const { onSettled } = config()
     onSettled(true, undefined, 5)

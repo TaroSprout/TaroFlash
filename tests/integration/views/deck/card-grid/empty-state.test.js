@@ -140,62 +140,62 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     matchMediaMock.mockReturnValue(ref(false)) // default: wide screen → md
   })
 
-  // ── Structure / testids [obligation] ─────────────────────────────────────
+  // ── Structure / testids ─────────────────────────────────────
 
-  test('renders card-grid-empty root [obligation]', () => {
+  test('renders card-grid-empty root', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="card-grid-empty"]').exists()).toBe(true)
   })
 
-  test('renders card-grid-empty__overlay [obligation]', () => {
+  test('renders card-grid-empty__overlay', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="card-grid-empty__overlay"]').exists()).toBe(true)
   })
 
-  test('renders card-grid-empty__content [obligation]', () => {
+  test('renders card-grid-empty__content', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="card-grid-empty__content"]').exists()).toBe(true)
   })
 
-  test('renders card-grid-empty__message [obligation]', () => {
+  test('renders card-grid-empty__message', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="card-grid-empty__message"]').exists()).toBe(true)
   })
 
-  test('renders card-grid-empty__create-button [obligation]', () => {
+  test('renders card-grid-empty__create-button', () => {
     const wrapper = mount()
     expect(wrapper.find('[data-testid="card-grid-empty__create-button"]').exists()).toBe(true)
   })
 
-  // ── Skeleton backdrop props [obligation] ──────────────────────────────────
+  // ── Skeleton backdrop props ──────────────────────────────────
 
-  test('skeleton has shimmer=false [obligation]', () => {
+  test('skeleton has shimmer=false', () => {
     const wrapper = mount()
     const skeleton = wrapper.find('[data-testid="card-grid-skeleton-stub"]')
     expect(skeleton.attributes('data-shimmer')).toBe('false')
   })
 
-  test('skeleton has count=24 [obligation]', () => {
+  test('skeleton has count=24', () => {
     const wrapper = mount()
     const skeleton = wrapper.find('[data-testid="card-grid-skeleton-stub"]')
     expect(skeleton.attributes('data-count')).toBe('24')
   })
 
-  test('skeleton has size="md" on wider screens (isCompact=false) [obligation]', () => {
+  test('skeleton has size="md" on wider screens (isCompact=false)', () => {
     const wrapper = mount({ isCompact: false })
     const skeleton = wrapper.find('[data-testid="card-grid-skeleton-stub"]')
     expect(skeleton.attributes('data-size')).toBe('md')
   })
 
-  test('skeleton has size="base" on narrow screens (isCompact=true) [obligation]', () => {
+  test('skeleton has size="base" on narrow screens (isCompact=true)', () => {
     const wrapper = mount({ isCompact: true })
     const skeleton = wrapper.find('[data-testid="card-grid-skeleton-stub"]')
     expect(skeleton.attributes('data-size')).toBe('base')
   })
 
-  // ── create button — desktop vs mobile [obligation] ────────────────────────
+  // ── create button — desktop vs mobile ────────────────────────
 
-  test('clicking the create button primary body calls newCard (desktop editor) at desktop width [obligation]', async () => {
+  test('clicking the create button primary body calls newCard (desktop editor) at desktop width', async () => {
     const newCard = vi.fn()
     const openNewCard = vi.fn()
     const wrapper = mount({
@@ -208,7 +208,7 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     expect(openNewCard).not.toHaveBeenCalled()
   })
 
-  test('clicking the create button primary body calls mobile_editor.openNewCard at phone width [obligation]', async () => {
+  test('clicking the create button primary body calls mobile_editor.openNewCard at phone width', async () => {
     const newCard = vi.fn()
     const openNewCard = vi.fn()
     const wrapper = mount({
@@ -221,12 +221,12 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     expect(newCard).not.toHaveBeenCalled()
   })
 
-  // ── create button — import dropdown entry [obligation] ────────────────────
+  // ── create button — import dropdown entry ────────────────────
   // The primary press → openNewCard regression risk is the handler moving from
   // @press to @click during the ui-button → ui-dropdown-button swap; selecting
   // the import option is a separate seam entirely, routed through the shell.
 
-  test('selecting the import option calls the injected shell setMode("import") [obligation]', async () => {
+  test('selecting the import option calls the injected shell setMode("import")', async () => {
     const setMode = vi.fn()
     const wrapper = mount({ shell: { setMode } })
     await wrapper
@@ -235,7 +235,7 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     expect(setMode).toHaveBeenCalledWith('import')
   })
 
-  test('selecting a non-import option does not call setMode [obligation]', async () => {
+  test('selecting a non-import option does not call setMode', async () => {
     const setMode = vi.fn()
     const wrapper = mount({ shell: { setMode } })
     // Only "import" is offered today, but the handler branches on option.value —
@@ -246,19 +246,19 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     expect(setMode).not.toHaveBeenCalled()
   })
 
-  test('selecting the import option with no shell injected does not throw [obligation]', async () => {
+  test('selecting the import option with no shell injected does not throw', async () => {
     const wrapper = mount({ shell: null })
     await expect(
       wrapper.find('[data-testid="card-grid-empty__create-button__option-import"]').trigger('click')
     ).resolves.not.toThrow()
   })
 
-  // ── heading uses i18n key [obligation] ────────────────────────────────────
+  // ── heading uses i18n key ────────────────────────────────────
   // Browser tests load real i18n (setup-browser.js). We assert the element
   // exists and contains non-empty translated text — this confirms the key
   // is wired without hard-coding the English value.
 
-  test('message element is non-empty (i18n key deck-view.empty-state.heading is wired) [obligation]', () => {
+  test('message element is non-empty (i18n key deck-view.empty-state.heading is wired)', () => {
     const wrapper = mount()
     const msg = wrapper.find('[data-testid="card-grid-empty__message"]')
     expect(msg.text().length).toBeGreaterThan(0)
@@ -280,7 +280,7 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     expect(matchMediaMock).toHaveBeenCalledWith('w<sm')
   })
 
-  // ── New prop surface (icon/message/show_button/size) [obligation] ────────
+  // ── New prop surface (icon/message/show_button/size) ────────
 
   test('defaults are unchanged: card-deck icon, default heading, create button shown, viewport-derived size', () => {
     const wrapper = mount()
@@ -303,7 +303,7 @@ describe('CardGridEmpty (card-grid/empty-state.vue)', () => {
     )
   })
 
-  test('show_button=false omits the create button entirely [obligation]', () => {
+  test('show_button=false omits the create button entirely', () => {
     const wrapper = mount({ props: { show_button: false } })
     expect(wrapper.find('[data-testid="card-grid-empty__create-button"]').exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'UiDropdownButton' }).exists()).toBe(false)

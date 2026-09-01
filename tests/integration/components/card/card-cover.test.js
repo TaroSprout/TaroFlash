@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
+import { shallowRef } from 'vue'
 import CardCover from '@/components/card/card-cover.vue'
 
 const revealFaceImageMock = vi.fn()
@@ -12,8 +13,8 @@ vi.mock('@/utils/animations/face-image', () => ({
 const DECODABLE_IMAGE =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
 
-function mountCover(cover) {
-  return shallowMount(CardCover, { props: { cover } })
+function mountCover(cover, cover_image) {
+  return shallowMount(CardCover, { props: { cover, cover_image } })
 }
 
 describe('CardCover', () => {
@@ -59,7 +60,7 @@ describe('CardCover', () => {
   })
 })
 
-describe('CardCover — icon palette [obligation]', () => {
+describe('CardCover — icon palette', () => {
   // coverIconPalette() keeps the icon legible against its own fill — yellow
   // by default, purple on a yellow cover — independent of the cover's own
   // data-palette (or lack of one).
@@ -78,7 +79,7 @@ describe('CardCover — icon palette [obligation]', () => {
     )
   })
 
-  test('keeps the icon coloured yellow on a palette-less (neutral) cover [obligation]', () => {
+  test('keeps the icon coloured yellow on a palette-less (neutral) cover', () => {
     const wrapper = mountCover({ icon: 'star' })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBeUndefined()
     expect(wrapper.find('[data-testid="card-cover__icon"]').attributes('data-palette')).toBe(
@@ -87,35 +88,35 @@ describe('CardCover — icon palette [obligation]', () => {
   })
 })
 
-describe('CardCover — image cover [obligation]', () => {
+describe('CardCover — image cover', () => {
   // A custom cover image fills the cover on its own — the palette/pattern/icon
   // chrome must never show behind it, not even before the image has decoded.
 
-  test('renders card-cover__image when cover.image_path is set [obligation]', () => {
+  test('renders card-cover__image when cover.image_path is set', () => {
     const wrapper = mountCover({ image_path: 'https://cdn/cover.png' })
     const img = wrapper.find('[data-testid="card-cover__image"]')
     expect(img.exists()).toBe(true)
     expect(img.attributes('src')).toBe('https://cdn/cover.png')
   })
 
-  test('does not render card-cover__icon when an image is set, even if an icon is also configured [obligation]', () => {
+  test('does not render card-cover__icon when an image is set, even if an icon is also configured', () => {
     const wrapper = mountCover({ image_path: 'https://cdn/cover.png', icon: 'star' })
     expect(wrapper.find('[data-testid="card-cover__icon"]').exists()).toBe(false)
   })
 
-  test('does not emit data-palette when an image is set, even if a palette is also configured [obligation]', () => {
+  test('does not emit data-palette when an image is set, even if a palette is also configured', () => {
     const wrapper = mountCover({ image_path: 'https://cdn/cover.png', palette: 'green' })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-palette')).toBeUndefined()
   })
 
-  test('shows the shared skeleton pattern while loading, not the deck cover pattern [obligation]', () => {
+  test('shows the shared skeleton pattern while loading, not the deck cover pattern', () => {
     const wrapper = mountCover({ image_path: 'https://cdn/cover.png', pattern: 'wave' })
     const el = wrapper.find('[data-testid="card-cover"]')
     expect(el.classes()).toContain('pattern-mask')
     expect(el.attributes('style')).toContain('--bgx-image: var(--bgx-diagonal-stripes)')
   })
 
-  test('does not point --bgx-image at the deck cover pattern while loading [obligation]', () => {
+  test('does not point --bgx-image at the deck cover pattern while loading', () => {
     const wrapper = mountCover({ image_path: 'https://cdn/cover.png', pattern: 'wave' })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('style')).not.toContain(
       'var(--bgx-wave)'
@@ -128,13 +129,13 @@ describe('CardCover — image cover [obligation]', () => {
     expect(wrapper.find('[data-testid="card-cover__icon"]').exists()).toBe(true)
   })
 
-  // ── shimmer-until-decode [obligation] ────────────────────────────────────
+  // ── shimmer-until-decode ────────────────────────────────────
   // jsdom has no real HTMLImageElement.decode (and this suite runs in a real
   // browser where decode() rejects for an unreachable test URL) — assert the
   // deterministic initial loading state, not the post-decode reveal, and
   // don't assert the gsap reveal animation itself.
 
-  test('sets data-loading on mount while the image has not decoded yet [obligation]', () => {
+  test('sets data-loading on mount while the image has not decoded yet', () => {
     const wrapper = mountCover({ image_path: 'https://cdn/cover.png' })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeDefined()
   })
@@ -144,12 +145,12 @@ describe('CardCover — image cover [obligation]', () => {
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeUndefined()
   })
 
-  // ── shimmer bleed [obligation] ────────────────────────────────────────────
+  // ── shimmer bleed ────────────────────────────────────────────
   // The sweep's ::after defaults to the padding box (--shimmer-bleed: 0px in
   // shimmer.css); the cover overrides it to its own border width so the sweep
   // crosses the border instead of stopping short of it.
 
-  test('sets --shimmer-bleed to the resolved cover border width while loading [obligation]', () => {
+  test('sets --shimmer-bleed to the resolved cover border width while loading', () => {
     // --face-border-width isn't defined by any station stylesheet in this
     // isolated mount, so give it a concrete value on the attach point and
     // confirm --shimmer-bleed tracks it — proves the property is wired to
@@ -172,7 +173,7 @@ describe('CardCover — image cover [obligation]', () => {
   })
 })
 
-describe('CardCover — decode resolves [obligation]', () => {
+describe('CardCover — decode resolves', () => {
   // Same decoded gate as above, exercised with a real decodable image so
   // el.decode() actually resolves instead of rejecting — covers the reveal
   // side of the shimmer/decoded toggle (data-loading clears; opacity classes
@@ -183,7 +184,7 @@ describe('CardCover — decode resolves [obligation]', () => {
     revealFaceImageMock.mockReset()
   })
 
-  test('clears data-loading once the image finishes decoding [obligation]', async () => {
+  test('clears data-loading once the image finishes decoding', async () => {
     const wrapper = mountCover({ image_path: DECODABLE_IMAGE })
     expect(wrapper.find('[data-testid="card-cover"]').attributes('data-loading')).toBeDefined()
 
@@ -192,7 +193,7 @@ describe('CardCover — decode resolves [obligation]', () => {
     })
   })
 
-  test('fires revealFaceImage on the decoded img element once decoding resolves [obligation]', async () => {
+  test('fires revealFaceImage on the decoded img element once decoding resolves', async () => {
     mountCover({ image_path: DECODABLE_IMAGE })
 
     await vi.waitFor(() => {
@@ -201,7 +202,7 @@ describe('CardCover — decode resolves [obligation]', () => {
     expect(revealFaceImageMock.mock.calls[0][0]).toBeInstanceOf(HTMLImageElement)
   })
 
-  test('drops the deck cover pattern-mask and data-palette once decoding resolves, even with both configured [obligation]', async () => {
+  test('drops the deck cover pattern-mask and data-palette once decoding resolves, even with both configured', async () => {
     const wrapper = mountCover({ image_path: DECODABLE_IMAGE, pattern: 'wave', palette: 'green' })
 
     await vi.waitFor(() => {
@@ -211,5 +212,24 @@ describe('CardCover — decode resolves [obligation]', () => {
     const el = wrapper.find('[data-testid="card-cover"]')
     expect(el.classes()).not.toContain('pattern-mask')
     expect(el.attributes('data-palette')).toBeUndefined()
+  })
+})
+
+describe('CardCover — cover_image ref wiring', () => {
+  // setImgEl feeds the rendered <img> into both useImageReveal's own img_el
+  // (already covered by the "decode resolves" suite above) and, when a
+  // cover_image staging interface is passed in, its image_el handle — the
+  // hook useCoverImage's onRemove uses to collapse the image before clearing it.
+
+  test('feeds the rendered <img> element into cover_image.image_el', () => {
+    const cover_image = { image_el: shallowRef(null) }
+    const wrapper = mountCover({ image_path: 'https://cdn/cover.png' }, cover_image)
+
+    const img = wrapper.find('[data-testid="card-cover__image"]')
+    expect(cover_image.image_el.value).toBe(img.element)
+  })
+
+  test('tolerates cover_image being absent — most call sites do not pass it', () => {
+    expect(() => mountCover({ image_path: 'https://cdn/cover.png' })).not.toThrow()
   })
 })

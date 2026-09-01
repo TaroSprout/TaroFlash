@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
+import { computed, shallowRef, type ComponentPublicInstance } from 'vue'
 import { SKELETON_COVER, coverBindings, coverIconPalette } from '@/utils/cover'
 import { useImageReveal } from '@/composables/card/image-reveal'
+import { type CoverImage } from '@/composables/deck/cover-image'
 import UiIcon from '@/components/ui-kit/icon.vue'
 
-const { cover } = defineProps<{
+const { cover, cover_image } = defineProps<{
   cover?: DeckCover
+  cover_image?: CoverImage
 }>()
 
-const img_el = useTemplateRef<HTMLImageElement>('img')
+const img_el = shallowRef<HTMLImageElement | null>(null)
 /** True once this cover has a custom image — palette/pattern/icon stay configured but stop rendering behind it. */
 const has_image = computed(() => !!cover?.image_path)
 const { decoded, onLoad } = useImageReveal(() => cover?.image_path, img_el)
@@ -20,6 +22,12 @@ const bindings = computed(() => {
 })
 
 const icon_palette = computed(() => coverIconPalette(cover?.palette))
+
+/** Feeds the rendered element to both the reveal composable and the remove animation's handle. */
+function setImgEl(el: Element | ComponentPublicInstance | null) {
+  img_el.value = el as HTMLImageElement | null
+  if (cover_image) cover_image.image_el.value = el as HTMLImageElement | null
+}
 </script>
 
 <template>
@@ -37,7 +45,7 @@ const icon_palette = computed(() => coverIconPalette(cover?.palette))
   >
     <img
       v-if="has_image"
-      ref="img"
+      :ref="setImgEl"
       data-testid="card-cover__image"
       :src="cover!.image_path"
       class="card-cover__image absolute inset-0 h-full w-full object-cover"

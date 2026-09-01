@@ -65,7 +65,7 @@ describe('NewDeckCard', () => {
     // Card renders its #front slot only when fully mounted — Card is stubbed
     // (and its slot content discarded) under shallowMount.
     const wrapper = fullMount(NewDeckCard, {
-      global: { stubs: { UiTappable: UiTappableStub }, directives: { sfx: {} } }
+      global: { stubs: { UiTappable: UiTappableStub } }
     })
     const outline = wrapper.find('[data-testid="new-deck-card__outline"]')
     expect(outline.exists()).toBe(true)
@@ -79,7 +79,7 @@ describe('NewDeckCard', () => {
     expect(wrapper.emitted('press')).toHaveLength(1)
   })
 
-  describe('disabled prop [obligation]', () => {
+  describe('disabled prop', () => {
     test('does not emit press when tapped while disabled', async () => {
       const wrapper = mount({ disabled: true })
       await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
@@ -93,7 +93,7 @@ describe('NewDeckCard', () => {
     })
   })
 
-  describe('loading prop [obligation]', () => {
+  describe('loading prop', () => {
     test('does not apply the disabled visual classes by default', () => {
       const wrapper = mount()
       const root = wrapper.find('[data-testid="new-deck-card"]')
@@ -109,8 +109,8 @@ describe('NewDeckCard', () => {
     })
   })
 
-  describe('disabled prop [obligation]', () => {
-    test('does not emit press when tapped while disabled [obligation]', async () => {
+  describe('disabled prop', () => {
+    test('does not emit press when tapped while disabled', async () => {
       const wrapper = mount({ disabled: true })
       await wrapper.find('[data-testid="new-deck-card"]').trigger('click')
       expect(wrapper.emitted('press')).toBeFalsy()

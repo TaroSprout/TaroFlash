@@ -74,21 +74,21 @@ describe('UiTagButton', () => {
     expect(leftStyle).toMatch(/padding-right:\s*\d+px/)
   })
 
-  test('size="lg" adds py-2.5 and text-xl classes to the button [obligation]', () => {
+  test('size="lg" adds py-2.5 and text-xl classes to the button', () => {
     const wrapper = mountTag({ size: 'lg' })
     const btn = wrapper.find('[data-testid="ui-kit-tag-button"]')
     expect(btn.classes()).toContain('py-2.5')
     expect(btn.classes()).toContain('text-xl')
   })
 
-  test('size="base" (default) uses py-2 and text-sm classes [obligation]', () => {
+  test('size="base" (default) uses py-2 and text-sm classes', () => {
     const wrapper = mountTag({ size: 'base' })
     const btn = wrapper.find('[data-testid="ui-kit-tag-button"]')
     expect(btn.classes()).toContain('py-2')
     expect(btn.classes()).toContain('text-sm')
   })
 
-  test('omitting size defaults to base py-2 and text-sm classes [obligation]', () => {
+  test('omitting size defaults to base py-2 and text-sm classes', () => {
     const wrapper = mountTag()
     const btn = wrapper.find('[data-testid="ui-kit-tag-button"]')
     expect(btn.classes()).toContain('py-2')
@@ -97,12 +97,12 @@ describe('UiTagButton', () => {
     expect(btn.classes()).not.toContain('text-xl')
   })
 
-  test('icon prop renders a ui-icon element before the slot content [obligation]', () => {
+  test('icon prop renders a ui-icon element before the slot content', () => {
     const wrapper = mountTag({ icon: 'star' }, 'Label')
     expect(wrapper.find('[data-testid="ui-icon"]').exists()).toBe(true)
   })
 
-  test('omitting icon renders no ui-icon element [obligation]', () => {
+  test('omitting icon renders no ui-icon element', () => {
     const wrapper = mountTag({}, 'Label')
     expect(wrapper.find('[data-testid="ui-icon"]').exists()).toBe(false)
   })

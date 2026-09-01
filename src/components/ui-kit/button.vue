@@ -81,16 +81,12 @@ const tooltip_active = computed(() => iconOnly && !!slots.default)
 const has_trailing = computed(() => !!slots.trailing)
 
 function onClick(e: MouseEvent) {
-  // The trailing slot (e.g. a split-button caret) owns its own action — clicks
-  // there don't fire the primary press, and aren't blocked when only the primary
-  // action is disabled.
+  // The trailing slot owns its own action, so it fires even when the primary is disabled.
   if ((e.target as HTMLElement).closest?.('.btn-trailing')) return
 
   if (disabled) {
     if (sfx.rejected !== false) emitSfx(sfx.rejected ?? 'ui.rejected')
 
-    // clickWhenDisabled still surfaces the press (e.g. to flag a validation
-    // error); otherwise a disabled button emits nothing and blocks the default.
     if (clickWhenDisabled) emit('press', e)
     else e.preventDefault()
     return
@@ -101,9 +97,7 @@ function onClick(e: MouseEvent) {
     return
   }
 
-  // A button stays silent on press unless the call site names a role. Most
-  // already play their own cue from the handler behind @press, so a default
-  // here would sound twice on every one of them.
+  // No default press cue: handlers behind @press play their own, so one here would double.
   tap((ev) => emit('press', ev), {
     preAudio: sfx.tap_pre || undefined,
     audio: sfx.press || undefined
@@ -136,6 +130,9 @@ function onClick(e: MouseEvent) {
         // Ghost is transparent at rest; fill it behind the content while the
         // coarse quiet tap sweeps, so the bgx reads against a surface.
         'data-[active=true]:bg-(--color-accent)': variant === 'ghost' && !disabled,
+        // Hover wash: a faint fill of the button's own text colour, so a brand
+        // ghost tints toward its brand colour and a neutral one toward ink.
+        'hover:bg-(--btn-text-color)/10': variant === 'ghost' && !disabled,
         'rounded-full!': roundedFull,
         'w-full!': fullWidth
       }
@@ -162,17 +159,17 @@ function onClick(e: MouseEvent) {
         'bg-(--color-raised)': loading && neutral && !inverted,
         'bg-(--color-accent)': loading && !(neutral && !inverted),
         hidden: !loading,
+        // Sweeps on hover and on the coarse quiet tap. Ghost always sweeps on
+        // both (its tint fill is added to the button root, behind the
+        // content) regardless of fancyHover; other variants respect it.
         'group-hover/btn:block group-data-[active=true]/btn:block':
-          !loading && !disabled && fancyHover && variant !== 'ghost',
+          !loading && !disabled && (variant === 'ghost' || fancyHover),
         // accent solid + ghost sweep the default accent sheen (--color-accent-
         // pattern). A NEUTRAL button's fill is --color-raised, so it sweeps the
         // neutral analog instead — raised over raised would be invisible.
         // inverted is a light button, so its shimmer is the accent colour itself.
         'bgx-color-[var(--color-raised-pattern)]': neutral && !inverted,
-        'bgx-color-[var(--color-accent)]': inverted,
-        // Ghost has no surface, so only the coarse quiet tap sweeps it (the
-        // accent fill is added to the button root, behind the content).
-        'group-data-[active=true]/btn:block': !loading && !disabled && variant === 'ghost'
+        'bgx-color-[var(--color-accent)]': inverted
       }"
     >
       <ui-icon v-if="loading" src="loading-dots" class="h-12 w-12 text-(--btn-text-color)" />

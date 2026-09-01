@@ -82,7 +82,7 @@ beforeEach(() => {
 // ── fetchPresets ────────────────────────────────────────────────────────────────
 
 describe('fetchPresets', () => {
-  test('selects *, ordering system presets first then by created_at [obligation]', async () => {
+  test('selects *, ordering system presets first then by created_at', async () => {
     mocks.order2Mock.mockResolvedValueOnce({ data: [presetRow], error: null })
     await fetchPresets()
     expect(mocks.selectMock).toHaveBeenCalledWith('*')
@@ -146,7 +146,7 @@ describe('createPreset', () => {
 // ── updatePreset ────────────────────────────────────────────────────────────────
 
 describe('updatePreset', () => {
-  test('updates with the payload (id omitted from the SET) scoped by .eq("id", id) [obligation]', async () => {
+  test('updates with the payload (id omitted from the SET) scoped by .eq("id", id)', async () => {
     mocks.updateSingleMock.mockResolvedValueOnce({ data: presetRow, error: null })
     await updatePreset({ id: 1, name: 'Renamed' })
     expect(mocks.updateMock).toHaveBeenCalledWith({ name: 'Renamed' })
@@ -171,7 +171,7 @@ describe('updatePreset', () => {
 describe('saveDeckPacing', () => {
   const pacing = { deck_id: 42, review_pacing_preset_id: 2, overrides: { desired_retention: 0.8 } }
 
-  test('upserts the pacing row scoped by onConflict: "deck_id" [obligation]', async () => {
+  test('upserts the pacing row scoped by onConflict: "deck_id"', async () => {
     mocks.upsertMock.mockResolvedValueOnce({ error: null })
     await saveDeckPacing(pacing)
     expect(mocks.upsertMock).toHaveBeenCalledWith(pacing, { onConflict: 'deck_id' })

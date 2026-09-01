@@ -53,8 +53,7 @@ export function useInfiniteScroll(
   onMounted(attach)
   onBeforeUnmount(detach)
 
-  // The sentinel may mount lazily (e.g. after v-if becomes truthy). Re-attach
-  // whenever the ref points at a new element.
+  // The sentinel can mount lazily, so re-attach whenever the ref changes element.
   watch(sentinel_ref, (el) => {
     detach()
     if (el) attach()

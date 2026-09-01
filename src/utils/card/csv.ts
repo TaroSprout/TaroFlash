@@ -174,9 +174,7 @@ function readRecord(
     i++
   }
 
-  // Stopping anywhere but a line break means the row was never the shape it
-  // looked like. Swallow the rest of it, so the next row starts on a clean line
-  // instead of the tail of this one being read as a card of its own.
+  // Swallow a malformed row's tail, or the next row starts mid-line and reads as a card.
   while (i < text.length && !isLineEnd(text[i])) {
     readable = false
     i++
@@ -246,8 +244,7 @@ export function parseCardText(text: string): CardImportResult {
       continue
     }
 
-    // Columns past the second are whatever the exporting app kept alongside
-    // the card; a TaroFlash card is only ever its two sides.
+    // A card is only ever two sides; later columns belong to the exporting app.
     cards.push({
       front_text: record.fields[0] ?? '',
       back_text: record.fields[1] ?? ''

@@ -116,7 +116,7 @@ beforeEach(() => {
   pressHoldCancelMock.mockClear()
 })
 
-describe('DeckGridItem — press emit [obligation]', () => {
+describe('DeckGridItem — press emit', () => {
   test('pressing the deck thumbnail emits press', async () => {
     const wrapper = mount({ deck: DECK })
     await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
@@ -124,7 +124,7 @@ describe('DeckGridItem — press emit [obligation]', () => {
   })
 })
 
-describe('DeckGridItem — rearranging mode suppresses press [obligation]', () => {
+describe('DeckGridItem — rearranging mode suppresses press', () => {
   test('pressing the thumbnail while rearranging does not emit press', async () => {
     const wrapper = mount({ deck: DECK, rearranging: true })
     await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
@@ -137,7 +137,7 @@ describe('DeckGridItem — rearranging mode suppresses press [obligation]', () =
   })
 })
 
-describe('DeckGridItem — jiggle sits on the wrapper, not DeckThumbnail root [obligation]', () => {
+describe('DeckGridItem — jiggle sits on the wrapper, not DeckThumbnail root', () => {
   test('applies .jiggle to the outer wrapper element while rearranging and not dragging', () => {
     const wrapper = mount({ deck: DECK, rearranging: true, dragging: false })
     expect(wrapper.classes()).toContain('jiggle')
@@ -155,7 +155,7 @@ describe('DeckGridItem — jiggle sits on the wrapper, not DeckThumbnail root [o
   })
 })
 
-describe('DeckGridItem — corner-action swaps to the delete button while rearranging [obligation]', () => {
+describe('DeckGridItem — corner-action swaps to the delete button while rearranging', () => {
   test('renders DeckGridDeleteButton with the deck while rearranging', () => {
     const wrapper = mount({ deck: DECK, rearranging: true })
     const delete_button = wrapper.findComponent(DeckGridDeleteButtonStub)
@@ -169,7 +169,7 @@ describe('DeckGridItem — corner-action swaps to the delete button while rearra
   })
 })
 
-describe('DeckGridItem — forwards rearranging/dragging to DeckThumbnail [obligation]', () => {
+describe('DeckGridItem — forwards rearranging/dragging to DeckThumbnail', () => {
   test('forwards rearranging as corner_action_always_visible and rearranging', () => {
     const wrapper = mount({ deck: DECK, rearranging: true })
     const thumbnail = wrapper.findComponent(DeckThumbnailStub)
@@ -183,7 +183,7 @@ describe('DeckGridItem — forwards rearranging/dragging to DeckThumbnail [oblig
   })
 })
 
-describe('DeckGridItem — forwards locked to DeckThumbnail [obligation]', () => {
+describe('DeckGridItem — forwards locked to DeckThumbnail', () => {
   test('forwards locked=true from its own locked prop', () => {
     const wrapper = mount({ deck: DECK, locked: true })
     expect(wrapper.findComponent(DeckThumbnailStub).props('locked')).toBe(true)
@@ -207,7 +207,7 @@ describe('DeckGridItem — testid rename to dashboard__deck-options-button', () 
   })
 })
 
-describe('DeckGridItem — trigger icon swap [obligation]', () => {
+describe('DeckGridItem — trigger icon swap', () => {
   test('shows the "more" icon when the dropdown is closed', () => {
     const wrapper = mount({ deck: DECK })
     expect(
@@ -226,7 +226,7 @@ describe('DeckGridItem — trigger icon swap [obligation]', () => {
   })
 })
 
-describe('DeckGridItem — DeckThumbnail active prop mirrors the dropdown open state [obligation]', () => {
+describe('DeckGridItem — DeckThumbnail active prop mirrors the dropdown open state', () => {
   test('DeckThumbnail is not active while the dropdown is closed', () => {
     const wrapper = mount({ deck: DECK })
     expect(wrapper.findComponent(DeckThumbnailStub).props('active')).toBe(false)
@@ -241,7 +241,7 @@ describe('DeckGridItem — DeckThumbnail active prop mirrors the dropdown open s
   })
 })
 
-describe('DeckGridItem — dropdown select forwards to useDeckOptionsMenu.onSelect [obligation]', () => {
+describe('DeckGridItem — dropdown select forwards to useDeckOptionsMenu.onSelect', () => {
   test('selecting an option calls onSelect with the option and the deck', async () => {
     const wrapper = mount({ deck: DECK })
     await wrapper.find('[data-testid="dropdown-stub__select"]').trigger('click')
@@ -251,7 +251,7 @@ describe('DeckGridItem — dropdown select forwards to useDeckOptionsMenu.onSele
     )
   })
 
-  test('clicking a dropdown option does not bubble a click into the thumbnail (no press emit) [obligation]', async () => {
+  test('clicking a dropdown option does not bubble a click into the thumbnail (no press emit)', async () => {
     // Regression: dropdown-button drops all on* attrs in trigger-only mode, so
     // `.stop` lives on the wrapper div around it — without that, selecting a
     // menu option would bubble into DeckThumbnail's tappable and navigate.
@@ -261,7 +261,7 @@ describe('DeckGridItem — dropdown select forwards to useDeckOptionsMenu.onSele
   })
 })
 
-describe('DeckGridItem — pending guards [obligation]', () => {
+describe('DeckGridItem — pending guards', () => {
   test('pressing the thumbnail while pending does not emit press', async () => {
     const wrapper = mount({ deck: DECK, pending: true })
     await wrapper.find('[data-testid="deck-thumbnail"]').trigger('click')
@@ -304,7 +304,7 @@ describe('DeckGridItem — pending guards [obligation]', () => {
   })
 })
 
-describe('DeckGridItem — mode arbitration on pointerdown [obligation]', () => {
+describe('DeckGridItem — mode arbitration on pointerdown', () => {
   test('a touch pointerdown in normal mode arms a hold that calls the dropdown show()', async () => {
     const wrapper = mount({ deck: DECK })
     await wrapper.trigger('pointerdown', { pointerType: 'touch' })

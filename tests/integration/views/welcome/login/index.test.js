@@ -62,18 +62,18 @@ function mountLoginTrigger() {
 describe('LoginTrigger (login/index.vue)', () => {
   // ── Structure ──────────────────────────────────────────────────────────────
 
-  test('renders the dropdown trigger with data-testid="login__trigger" [obligation]', () => {
+  test('renders the dropdown trigger with data-testid="login__trigger"', () => {
     const wrapper = mountLoginTrigger()
     expect(wrapper.find('[data-testid="login__trigger"]').exists()).toBe(true)
   })
 
-  test('provides a #panel slot to UiDropdownButton [obligation]', () => {
+  test('provides a #panel slot to UiDropdownButton', () => {
     mountLoginTrigger()
     expect(capturedPanelSlot).not.toBeNull()
     expect(typeof capturedPanelSlot).toBe('function')
   })
 
-  test('renders LoginDialog inside the #panel slot [obligation]', () => {
+  test('renders LoginDialog inside the #panel slot', () => {
     const wrapper = mountLoginTrigger()
     expect(wrapper.find('[data-testid="login-dialog-stub"]').exists()).toBe(true)
   })

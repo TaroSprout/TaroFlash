@@ -122,14 +122,14 @@ beforeEach(() => {
   mockDeleteCardImage.mockReset().mockResolvedValue(undefined)
 })
 
-describe('useFaceImageUpload — pending flag [obligation]', () => {
+describe('useFaceImageUpload — pending flag', () => {
   test('pending is false initially', () => {
     const { result, unmount } = withUpload()
     expect(result.pending.value).toBe(false)
     unmount()
   })
 
-  test('pending is true while deleteCardImage is in flight [obligation]', async () => {
+  test('pending is true while deleteCardImage is in flight', async () => {
     let resolve
     mockDeleteCardImage.mockImplementationOnce(() => new Promise((r) => (resolve = r)))
     const { result, unmount } = withUpload()
@@ -148,7 +148,7 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
     unmount()
   })
 
-  test('pending is false after deleteCardImage resolves successfully [obligation]', async () => {
+  test('pending is false after deleteCardImage resolves successfully', async () => {
     const { result, unmount } = withUpload()
 
     await result.onRemove()
@@ -158,7 +158,7 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
     unmount()
   })
 
-  test('pending is false after deleteCardImage rejects (error path) [obligation]', async () => {
+  test('pending is false after deleteCardImage rejects (error path)', async () => {
     mockDeleteCardImage.mockRejectedValueOnce(new Error('server error'))
     const { result, unmount } = withUpload()
 
@@ -170,8 +170,8 @@ describe('useFaceImageUpload — pending flag [obligation]', () => {
   })
 })
 
-describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
-  test('emits ui.snappy_button_5 immediately (before the await) [obligation]', async () => {
+describe('useFaceImageUpload — onRemove sfx timing', () => {
+  test('emits ui.snappy_button_5 immediately (before the await)', async () => {
     let resolveDeleteCard
     mockDeleteCardImage.mockImplementationOnce(() => new Promise((r) => (resolveDeleteCard = r)))
     const { result, unmount } = withUpload()
@@ -187,7 +187,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     unmount()
   })
 
-  test('emits ui.trash_crumple_short only after deleteCardImage resolves [obligation]', async () => {
+  test('emits ui.trash_crumple_short only after deleteCardImage resolves', async () => {
     let resolveDeleteCard
     mockDeleteCardImage.mockImplementationOnce(() => new Promise((r) => (resolveDeleteCard = r)))
     const { result, unmount } = withUpload()
@@ -208,7 +208,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     unmount()
   })
 
-  test('does NOT emit ui.trash_crumple_short when deleteCardImage rejects [obligation]', async () => {
+  test('does NOT emit ui.trash_crumple_short when deleteCardImage rejects', async () => {
     mockDeleteCardImage.mockRejectedValueOnce(new Error('delete failed'))
     const { result, unmount } = withUpload()
 
@@ -220,7 +220,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     unmount()
   })
 
-  test('delete failure calls notice.error with the delete-failed message [obligation]', async () => {
+  test('delete failure calls notice.error with the delete-failed message', async () => {
     mockDeleteCardImage.mockRejectedValueOnce(new Error('delete failed'))
     const { result, unmount } = withUpload()
 
@@ -231,7 +231,7 @@ describe('useFaceImageUpload — onRemove sfx timing [obligation]', () => {
     unmount()
   })
 
-  test('successful delete does NOT call notice.error [obligation]', async () => {
+  test('successful delete does NOT call notice.error', async () => {
     const { result, unmount } = withUpload()
 
     await result.onRemove()
@@ -297,8 +297,8 @@ describe('useFaceImageUpload — can_upload', () => {
   })
 })
 
-describe('useFaceImageUpload — reveal via image_path watcher [obligation]', () => {
-  test('revealFaceImage does NOT fire on upload resolution directly [obligation]', async () => {
+describe('useFaceImageUpload — reveal via image_path watcher', () => {
+  test('revealFaceImage does NOT fire on upload resolution directly', async () => {
     // The reveal fires from a flush:post watcher on image_path, not from the upload promise.
     // onRemove calls deleteCardImage (not setCardImage), so reveal_pending is NOT set —
     // revealFaceImage must NOT be called.
@@ -369,8 +369,8 @@ describe('useFaceImageUpload — onDismissError', () => {
   })
 })
 
-describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', () => {
-  test('pending is true while setCardImage is in flight during upload [obligation]', async () => {
+describe('useFaceImageUpload — uploadFile via onFile callback', () => {
+  test('pending is true while setCardImage is in flight during upload', async () => {
     let resolveUpload
     mockSetCardImage.mockImplementationOnce(() => new Promise((r) => (resolveUpload = r)))
     const { result, onFile, unmount } = withUpload()
@@ -387,7 +387,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('pending is false after upload resolves successfully [obligation]', async () => {
+  test('pending is false after upload resolves successfully', async () => {
     const { result, onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
@@ -397,7 +397,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('pending is false after upload error (catch path) [obligation]', async () => {
+  test('pending is false after upload error (catch path)', async () => {
     mockSetCardImage.mockRejectedValueOnce(new Error('upload failed'))
     const { result, onFile, unmount } = withUpload()
 
@@ -408,7 +408,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('emits music_plink_ok and does NOT call notice.error on successful upload [obligation]', async () => {
+  test('emits music_plink_ok and does NOT call notice.error on successful upload', async () => {
     const { onFile, unmount } = withUpload()
 
     await onFile(new File(['x'], 'img.png', { type: 'image/png' }))
@@ -419,7 +419,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('upload failure with cause "insert" shows the card-image-save-failed toast [obligation]', async () => {
+  test('upload failure with cause "insert" shows the card-image-save-failed toast', async () => {
     mockSetCardImage.mockRejectedValueOnce(new Error('save failed', { cause: 'insert' }))
     const { result, onFile, unmount } = withUpload()
 
@@ -432,7 +432,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('upload failure with cause "upload" shows the card-image-upload-failed toast [obligation]', async () => {
+  test('upload failure with cause "upload" shows the card-image-upload-failed toast', async () => {
     mockSetCardImage.mockRejectedValueOnce(new Error('upload failed', { cause: 'upload' }))
     const { onFile, unmount } = withUpload()
 
@@ -443,7 +443,7 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
     unmount()
   })
 
-  test('a non-Error rejection (no .cause) shows the card-image-upload-failed toast [obligation]', async () => {
+  test('a non-Error rejection (no .cause) shows the card-image-upload-failed toast', async () => {
     mockSetCardImage.mockRejectedValueOnce('some non-error rejection')
     const { onFile, unmount } = withUpload()
 
@@ -466,8 +466,8 @@ describe('useFaceImageUpload — uploadFile via onFile callback [obligation]', (
   })
 })
 
-describe('useFaceImageUpload — image_path watcher sets reveal_pending [obligation]', () => {
-  test('revealFaceImage is called when image_path changes after a successful upload [obligation]', async () => {
+describe('useFaceImageUpload — image_path watcher sets reveal_pending', () => {
+  test('revealFaceImage is called when image_path changes after a successful upload', async () => {
     // The reveal fires from the flush:post watcher on image_path when reveal_pending is set.
     // After a successful upload, reveal_pending=true; then when image_path changes, reveal fires.
     const { onFile, cardRef, unmount } = withUpload({ card: makeCard({ id: 1 }) })
@@ -541,8 +541,8 @@ describe('useFaceImageUpload — dragCue wiring to useImageDropzone', () => {
   })
 })
 
-describe('useFaceImageUpload — reactive side [obligation]', () => {
-  test('image_path re-derives when side ref changes from front to back [obligation]', async () => {
+describe('useFaceImageUpload — reactive side', () => {
+  test('image_path re-derives when side ref changes from front to back', async () => {
     const card = makeCard({ front_image_path: 'img/front.jpg', back_image_path: 'img/back.jpg' })
     const { result, sideRef, unmount } = withUpload({ card, side: 'front' })
 
@@ -555,7 +555,7 @@ describe('useFaceImageUpload — reactive side [obligation]', () => {
     unmount()
   })
 
-  test('has_image updates when side changes to a side without an image [obligation]', async () => {
+  test('has_image updates when side changes to a side without an image', async () => {
     const card = makeCard({ front_image_path: 'img/front.jpg', back_image_path: null })
     const { result, sideRef, unmount } = withUpload({ card, side: 'front' })
 

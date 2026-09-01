@@ -42,14 +42,14 @@ const { mockCoverCommit, mockCoverDiscardStaged } = vi.hoisted(() => ({
   mockCoverDiscardStaged: vi.fn()
 }))
 
-// useCardsInDeckInfiniteQuery is called inside useDeckEditor to power the
-// design preview. Stub it so unit tests don't need Pinia Colada / getActivePinia.
-const { mockCardsInDeckInfiniteQuery } = vi.hoisted(() => ({
-  mockCardsInDeckInfiniteQuery: vi.fn(() => ({ data: { value: undefined } }))
+// useFirstCardInDeckQuery is called inside useDeckEditor to power the design
+// preview. Stub it so unit tests don't need Pinia Colada / getActivePinia.
+const { mockFirstCardInDeckQuery } = vi.hoisted(() => ({
+  mockFirstCardInDeckQuery: vi.fn(() => ({ data: { value: undefined } }))
 }))
 
 vi.mock('@/api/cards', () => ({
-  useCardsInDeckInfiniteQuery: mockCardsInDeckInfiniteQuery
+  useFirstCardInDeckQuery: mockFirstCardInDeckQuery
 }))
 
 vi.mock('@/api/decks', () => ({
@@ -65,10 +65,16 @@ vi.mock('@/api/decks', () => ({
   })
 }))
 
+// Spied factory (not just the returned methods) so tests can assert
+// useDeckActions itself is never invoked for an existing deck — mounting it
+// mounts useCan() -> useMemberDeckCountQuery(), which an existing-deck edit
+// must never fire.
+const { mockUseDeckActions } = vi.hoisted(() => ({
+  mockUseDeckActions: vi.fn()
+}))
+
 vi.mock('@/composables/deck/actions', () => ({
-  useDeckActions: () => ({
-    createDeck: mockCreateDeck
-  })
+  useDeckActions: mockUseDeckActions
 }))
 
 vi.mock('@/composables/deck/cover-image', () => ({
@@ -136,6 +142,10 @@ describe('useDeckEditor', () => {
     mockUpsertMutateAsync.mockResolvedValue({ id: 1, title: 'Saved Deck' })
     mockCreateDeck.mockClear()
     mockCreateDeck.mockResolvedValue({ id: 99, title: 'Created Deck' })
+    mockUseDeckActions.mockClear()
+    mockUseDeckActions.mockReturnValue({ createDeck: mockCreateDeck })
+    mockFirstCardInDeckQuery.mockClear()
+    mockFirstCardInDeckQuery.mockReturnValue({ data: { value: undefined } })
     mockDeleteDeck.mockClear()
     mockResetReviews.mockClear()
     mockResetReviews.mockResolvedValue(undefined)
@@ -212,7 +222,7 @@ describe('useDeckEditor', () => {
   // ── pacing draft fields ────────────────────────────────────────────────────
 
   describe('pacing draft fields', () => {
-    test('initializes review_pacing_preset_id and pacing_overrides from the deck [obligation]', () => {
+    test('initializes review_pacing_preset_id and pacing_overrides from the deck', () => {
       const deck = makeDeck({
         review_pacing_preset_id: 3,
         pacing_overrides: { desired_retention: 85, leech_threshold: 12 }
@@ -280,7 +290,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('rebases the draft on a successful existing-deck save, so is_dirty clears without closing [obligation]', async () => {
+    test('rebases the draft on a successful existing-deck save, so is_dirty clears without closing', async () => {
       const deck = makeDeck({ title: 'Original' })
       const { editor, unmount } = withDeckEditor(deck)
 
@@ -314,9 +324,9 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    // ── cover_image.commit() pre-step [obligation] ────────────────────────────
+    // ── cover_image.commit() pre-step ────────────────────────────
 
-    test('calls cover_image.commit() before the upsert mutation for an existing deck [obligation]', async () => {
+    test('calls cover_image.commit() before the upsert mutation for an existing deck', async () => {
       const { editor, unmount } = withDeckEditor(makeDeck())
 
       await editor.saveDeck()
@@ -326,7 +336,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('a commit() rejection with cause "insert" shows the cover-image-save-failed toast, skips the upsert, and returns null [obligation]', async () => {
+    test('a commit() rejection with cause "insert" shows the cover-image-save-failed toast, skips the upsert, and returns null', async () => {
       mockCoverCommit.mockRejectedValueOnce(new Error('insert failed', { cause: 'insert' }))
       const { editor, unmount } = withDeckEditor(makeDeck())
 
@@ -338,7 +348,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('a commit() rejection with cause "upload" shows the cover-image-upload-failed toast, skips the upsert, and returns null [obligation]', async () => {
+    test('a commit() rejection with cause "upload" shows the cover-image-upload-failed toast, skips the upsert, and returns null', async () => {
       mockCoverCommit.mockRejectedValueOnce(new Error('upload failed', { cause: 'upload' }))
       const { editor, unmount } = withDeckEditor(makeDeck())
 
@@ -350,7 +360,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('a non-Error commit() rejection (no .cause) shows the cover-image-upload-failed toast [obligation]', async () => {
+    test('a non-Error commit() rejection (no .cause) shows the cover-image-upload-failed toast', async () => {
       mockCoverCommit.mockRejectedValueOnce('some non-error rejection')
       const { editor, unmount } = withDeckEditor(makeDeck())
 
@@ -360,7 +370,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('a successful commit() is followed by the upsert + rebase [obligation]', async () => {
+    test('a successful commit() is followed by the upsert + rebase', async () => {
       const deck = makeDeck({ title: 'Original' })
       const { editor, unmount } = withDeckEditor(deck)
 
@@ -376,16 +386,16 @@ describe('useDeckEditor', () => {
 
   // ── rebase ─────────────────────────────────────────────────────────────────
   // Exposed directly (not just through saveDeck) so preset actions can persist
-  // just the pacing slice on their own and rebase only those keys [obligation].
+  // just the pacing slice on their own and rebase only those keys.
 
   describe('rebase', () => {
-    test('exposes the underlying useDraft rebase function [obligation]', () => {
+    test('exposes the underlying useDraft rebase function', () => {
       const { editor, unmount } = withDeckEditor(makeDeck())
       expect(typeof editor.rebase).toBe('function')
       unmount()
     })
 
-    test('rebase([key]) adopts only that key, leaving other staged edits dirty [obligation]', () => {
+    test('rebase([key]) adopts only that key, leaving other staged edits dirty', () => {
       const deck = makeDeck({ title: 'Original' })
       const { editor, unmount } = withDeckEditor(deck)
 
@@ -500,7 +510,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('flips to true when only draft.pacing_overrides is mutated [obligation]', () => {
+    test('flips to true when only draft.pacing_overrides is mutated', () => {
       const { editor, unmount } = withDeckEditor(makeDeck())
       editor.draft.pacing_overrides.desired_retention = 80
       expect(editor.is_dirty.value).toBe(true)
@@ -510,8 +520,8 @@ describe('useDeckEditor', () => {
 
   // ── resetChanges ───────────────────────────────────────────────────────────
 
-  describe('resetChanges [obligation]', () => {
-    test('restores cover/config/card_attributes to their original deck values without mutating the original deck object [obligation]', () => {
+  describe('resetChanges', () => {
+    test('restores cover/config/card_attributes to their original deck values without mutating the original deck object', () => {
       const deck = makeDeck({
         cover_config: { color: '#ff0000', theme: 'sunrise' },
         study_config: { shuffle: false, starting_side: 'front' },
@@ -539,7 +549,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('is_dirty is false again after resetChanges, across title/config/cover/card_attributes/pacing edits [obligation]', () => {
+    test('is_dirty is false again after resetChanges, across title/config/cover/card_attributes/pacing edits', () => {
       const deck = makeDeck({
         cover_config: { color: '#ff0000' },
         study_config: { shuffle: false }
@@ -559,7 +569,7 @@ describe('useDeckEditor', () => {
       unmount()
     })
 
-    test('calls cover_image.discardStaged() [obligation]', () => {
+    test('calls cover_image.discardStaged()', () => {
       const { editor, unmount } = withDeckEditor(makeDeck())
 
       editor.resetChanges()
@@ -657,26 +667,56 @@ describe('useDeckEditor', () => {
   // ── preview_front_text / preview_back_text ─────────────────────────────────
 
   describe('preview_front_text / preview_back_text', () => {
-    test('are undefined when the query returns no data (unsaved deck) [obligation]', () => {
+    test('are undefined when the query returns no data (unsaved deck)', () => {
       const { editor, unmount } = withDeckEditor()
       expect(editor.preview_front_text.value).toBeUndefined()
       expect(editor.preview_back_text.value).toBeUndefined()
       unmount()
     })
 
-    // [obligation] regression: first_card used to read pages[0][0] directly —
-    // a page is now { cards, next_rank }, so the preview must read pages[0].cards[0]
-    test('reads the first card off pages[0].cards[0] under the { cards, next_rank } page shape [obligation]', () => {
-      mockCardsInDeckInfiniteQuery.mockReturnValueOnce({
-        data: {
-          value: {
-            pages: [{ cards: [{ front_text: 'Front A', back_text: 'Back A' }], next_rank: null }]
-          }
-        }
+    // regression: first_card now reads useFirstCardInDeckQuery's
+    // flat array directly (data.value?.[0]), not the old infinite-query page
+    // shape (data.value.pages[0].cards[0]).
+    test('reads the first card off data.value[0] under the flat-array shape from useFirstCardInDeckQuery', () => {
+      mockFirstCardInDeckQuery.mockReturnValueOnce({
+        data: { value: [{ front_text: 'Front A', back_text: 'Back A' }] }
       })
       const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
       expect(editor.preview_front_text.value).toBe('Front A')
       expect(editor.preview_back_text.value).toBe('Back A')
+      unmount()
+    })
+
+    test('an empty deck (query resolves to []) yields first_card undefined, so preview text is undefined too', () => {
+      mockFirstCardInDeckQuery.mockReturnValueOnce({ data: { value: [] } })
+      const { editor, unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(editor.preview_front_text.value).toBeUndefined()
+      expect(editor.preview_back_text.value).toBeUndefined()
+      unmount()
+    })
+  })
+
+  // ── useDeckActions instantiation ────────────────────────────────────────────
+  // useDeckActions() mounts useCan() -> useMemberDeckCountQuery(); an existing
+  // deck's edit must never fire that request, so it's only instantiated when
+  // there's no deck id yet (the create path).
+
+  describe('useDeckActions instantiation', () => {
+    test('is NOT invoked when a deck with an id is passed', () => {
+      const { unmount } = withDeckEditor(makeDeck({ id: 1 }))
+      expect(mockUseDeckActions).not.toHaveBeenCalled()
+      unmount()
+    })
+
+    test('IS invoked when no deck is passed', () => {
+      const { unmount } = withDeckEditor()
+      expect(mockUseDeckActions).toHaveBeenCalledOnce()
+      unmount()
+    })
+
+    test('IS invoked when a deck with no id is passed', () => {
+      const { unmount } = withDeckEditor(makeDeck({ id: undefined }))
+      expect(mockUseDeckActions).toHaveBeenCalledOnce()
       unmount()
     })
   })

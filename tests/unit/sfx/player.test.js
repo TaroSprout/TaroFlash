@@ -72,7 +72,7 @@ describe('audio_player.play', () => {
     expect(settled).toBe(true)
   })
 
-  test('enqueues when the audio system is not yet unlocked [obligation]', async () => {
+  test('enqueues when the audio system is not yet unlocked', async () => {
     engineMock.isUnlocked.mockReturnValue(false)
     loadSound('click_04')
 
@@ -97,7 +97,7 @@ describe('audio_player.play', () => {
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.3)
   })
 
-  test('skips engine.play when the resolved bus is muted to 0 — hover bus [obligation]', async () => {
+  test('skips engine.play when the resolved bus is muted to 0 — hover bus', async () => {
     audio_player.volume_settings = { ...BUS_DEFAULTS, hover: 0 }
     loadSound('tap_05', { volume: 0.1, default_bus: 'hover' })
 
@@ -106,7 +106,7 @@ describe('audio_player.play', () => {
     expect(engineMock.play).not.toHaveBeenCalled()
   })
 
-  test('skips engine.play for any bus muted to 0 — interface bus [obligation]', async () => {
+  test('skips engine.play for any bus muted to 0 — interface bus', async () => {
     audio_player.volume_settings = { ...BUS_DEFAULTS, interface: 0 }
     loadSound('select', { volume: 0.3, default_bus: 'interface' })
 
@@ -115,7 +115,7 @@ describe('audio_player.play', () => {
     expect(engineMock.play).not.toHaveBeenCalled()
   })
 
-  test('plays with volume = base_volume × (bus_setting / 5) for non-zero bus [obligation]', async () => {
+  test('plays with volume = base_volume × (bus_setting / 5) for non-zero bus', async () => {
     audio_player.volume_settings = { ...BUS_DEFAULTS, hover: 2 }
     const buffer = loadSound('type_01', { volume: 0.4, default_bus: 'hover' })
 
@@ -207,14 +207,14 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
     vi.useRealTimers()
   })
 
-  test('setVolumeConfig sets both volume_settings and committed_volume_settings [obligation]', () => {
+  test('setVolumeConfig sets both volume_settings and committed_volume_settings', () => {
     const cfg = { interface: 7, hover: 2 }
     audio_player.setVolumeConfig(cfg)
     expect(audio_player.volume_settings).toEqual(cfg)
     expect(audio_player.committed_volume_settings).toEqual(cfg)
   })
 
-  test('previewVolumeConfig sets volume_settings but leaves committed_volume_settings untouched [obligation]', () => {
+  test('previewVolumeConfig sets volume_settings but leaves committed_volume_settings untouched', () => {
     const committed = { interface: 5, hover: 5 }
     audio_player.setVolumeConfig(committed)
     audio_player.previewVolumeConfig({ interface: 2, hover: 2 })
@@ -222,7 +222,7 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
     expect(audio_player.committed_volume_settings).toEqual(committed)
   })
 
-  test('commit→preview→reset restores the committed value, not the preview [obligation]', () => {
+  test('commit→preview→reset restores the committed value, not the preview', () => {
     const committed = { interface: 3, hover: 3 }
     audio_player.setVolumeConfig(committed)
     audio_player.previewVolumeConfig({ interface: 9, hover: 9 })
@@ -230,7 +230,7 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
     expect(audio_player.volume_settings).toEqual(committed)
   })
 
-  test('resetSettings uses committed baseline for volume multiplier after preview [obligation]', async () => {
+  test('resetSettings uses committed baseline for volume multiplier after preview', async () => {
     // commit interface=2 → multiplier 2/5=0.4; preview interface=10 → 2.0; reset → back to 0.4
     audio_player.setVolumeConfig({ interface: 2, hover: 5 })
     audio_player.previewVolumeConfig({ interface: 10, hover: 5 })
@@ -242,21 +242,21 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 0.2)
   })
 
-  test('previewVolumeConfig stores a copy — mutating the caller object does not change player state [obligation]', () => {
+  test('previewVolumeConfig stores a copy — mutating the caller object does not change player state', () => {
     const cfg = { interface: 5, hover: 5 }
     audio_player.previewVolumeConfig(cfg)
     cfg.interface = 99
     expect(audio_player.volume_settings.interface).toBe(5)
   })
 
-  test('setVolumeConfig stores a copy — mutating the caller object does not change committed baseline [obligation]', () => {
+  test('setVolumeConfig stores a copy — mutating the caller object does not change committed baseline', () => {
     const cfg = { interface: 5, hover: 5 }
     audio_player.setVolumeConfig(cfg)
     cfg.interface = 99
     expect(audio_player.committed_volume_settings.interface).toBe(5)
   })
 
-  test('volume multiplier uses live volume_settings (previewed value) during preview [obligation]', async () => {
+  test('volume multiplier uses live volume_settings (previewed value) during preview', async () => {
     audio_player.setVolumeConfig({ interface: 5, hover: 5 })
     audio_player.previewVolumeConfig({ interface: 10, hover: 5 })
 
@@ -266,7 +266,7 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
     expect(engineMock.play).toHaveBeenCalledWith(buffer, 1.0)
   })
 
-  test('volume_settings and committed_volume_settings default to BUS_DEFAULTS, not hardcoded literals [obligation]', async () => {
+  test('volume_settings and committed_volume_settings default to BUS_DEFAULTS, not hardcoded literals', async () => {
     // Verify the bus keys match BUS_DEFAULTS — if a new bus is added to config the player
     // picks it up automatically because it spreads BUS_DEFAULTS rather than inlining values
     const { BUS_DEFAULTS: defaults } = await import('@/sfx/config')
@@ -280,7 +280,7 @@ describe('audio_player.previewVolumeConfig / resetSettings', () => {
   })
 })
 
-describe('audio_player — preview_bus routes a drag onto the bus the slider sets [obligation]', () => {
+describe('audio_player — preview_bus routes a drag onto the bus the slider sets', () => {
   beforeEach(() => {
     engineMock.play.mockReset().mockResolvedValue(undefined)
     engineMock.isUnlocked.mockReturnValue(true)
@@ -335,7 +335,7 @@ describe('audio_player._onUnlock', () => {
     vi.useRealTimers()
   })
 
-  test('plays queued sound by calling _play directly — engine.play fires synchronously [obligation]', () => {
+  test('plays queued sound by calling _play directly — engine.play fires synchronously', () => {
     // _onUnlock calls this._play() (not this.play()), bypassing the 10ms debounce.
     // _play() itself has no awaits before calling engine.play(), so engine.play fires
     // within the same synchronous call stack as _onUnlock().
@@ -401,7 +401,7 @@ describe('audio_player.setup', () => {
     await expect(audio_player.setup()).rejects.toThrow('Failed to load audio')
   })
 
-  test('_loadSound throws descriptive error when audio file is not in the glob [obligation]', async () => {
+  test('_loadSound throws descriptive error when audio file is not in the glob', async () => {
     // Temporarily add a key with an extension not captured by the glob (flac is excluded)
     // so that AUDIO_FILES[path] is undefined, triggering the new early-throw guard.
     const { SOUNDS } = await import('@/sfx/config')
@@ -422,7 +422,7 @@ describe('audio_player.setup', () => {
   })
 })
 
-describe('gesture.tick end to end at zero interface volume [obligation]', () => {
+describe('gesture.tick end to end at zero interface volume', () => {
   beforeEach(() => {
     engineMock.resume.mockReset().mockResolvedValue(true)
     engineMock.play.mockReset().mockResolvedValue(undefined)

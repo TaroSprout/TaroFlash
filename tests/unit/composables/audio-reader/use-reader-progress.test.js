@@ -134,7 +134,7 @@ describe('useReaderProgress', () => {
       expect(player.resumeAt).not.toHaveBeenCalled()
     })
 
-    test('stays paused after restoring — resumeAt is called but play is never called [obligation]', async () => {
+    test('stays paused after restoring — resumeAt is called but play is never called', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 42 })
       const player = makePlayer({ play: vi.fn() })
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
@@ -212,7 +212,7 @@ describe('useReaderProgress', () => {
       })
     })
 
-    test('saves on visibilitychange when document.hidden is true (tab switch / close) [obligation]', async () => {
+    test('saves on visibilitychange when document.hidden is true (tab switch / close)', async () => {
       const spy = spyOnVisibilityChange()
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
       const player = makePlayer()
@@ -235,7 +235,7 @@ describe('useReaderProgress', () => {
       spy.restore()
     })
 
-    test('does not save on visibilitychange when document is visible (returning to foreground) [obligation]', async () => {
+    test('does not save on visibilitychange when document is visible (returning to foreground)', async () => {
       const spy = spyOnVisibilityChange()
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
       const player = makePlayer()
@@ -253,7 +253,7 @@ describe('useReaderProgress', () => {
       spy.restore()
     })
 
-    test('throttle by playback: does not save while playing when advance < 5s since last save [obligation]', async () => {
+    test('throttle by playback: does not save while playing when advance < 5s since last save', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
       const player = makePlayer()
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
@@ -270,7 +270,7 @@ describe('useReaderProgress', () => {
       expect(mutateSpy).not.toHaveBeenCalled()
     })
 
-    test('throttle by playback: saves once current_time advances ≥ 5s since last save [obligation]', async () => {
+    test('throttle by playback: saves once current_time advances ≥ 5s since last save', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
       const player = makePlayer()
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))
@@ -290,7 +290,7 @@ describe('useReaderProgress', () => {
       })
     })
 
-    test('does not save via throttle watcher when not playing [obligation]', async () => {
+    test('does not save via throttle watcher when not playing', async () => {
       collectionRef.current = ref({ id: 5, last_lesson_id: 2, last_position_seconds: 0 })
       const player = makePlayer()
       ;[, app] = withSetup(() => useReaderProgress(ref(5), ref(2), player))

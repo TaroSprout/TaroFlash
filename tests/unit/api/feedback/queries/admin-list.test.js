@@ -23,18 +23,18 @@ function config() {
 }
 
 describe('useAdminFeedbackItemsQuery', () => {
-  test('uses the ["feedback-items", "admin"] key [obligation]', () => {
+  test('uses the ["feedback-items", "admin"] key', () => {
     const { key } = config()
     expect(key).toEqual(['feedback-items', 'admin'])
   })
 
-  test("key is prefixed by useUpdateFeedbackItemMutation's invalidateQueries({ key: ['feedback-items'] }) so a write refetches this list [obligation]", () => {
+  test("key is prefixed by useUpdateFeedbackItemMutation's invalidateQueries({ key: ['feedback-items'] }) so a write refetches this list", () => {
     const { key } = config()
     const invalidated_prefix = ['feedback-items']
     expect(key.slice(0, invalidated_prefix.length)).toEqual(invalidated_prefix)
   })
 
-  test('delegates to fetchAllFeedbackItems, not fetchFeedbackItems — admin sees unpublished items too [obligation]', () => {
+  test('delegates to fetchAllFeedbackItems, not fetchFeedbackItems — admin sees unpublished items too', () => {
     const { query } = config()
     expect(query).toBe(fetchAllFeedbackItemsMock)
   })

@@ -18,8 +18,7 @@ beforeEach(() => {
 
 function mountSuccess(props = {}) {
   return mount(ForgotPasswordSuccess, {
-    props: { close: vi.fn(), ...props },
-    global: { directives: { sfx: {} } }
+    props: { close: vi.fn(), ...props }
   })
 }
 

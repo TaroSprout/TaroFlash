@@ -3,9 +3,10 @@ import { shallowMount, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 
 // Hoist shared mock refs before vi.mock calls
-const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
+const { coarseRef, mockEmitSfx, mockLoadAvatarUrl } = vi.hoisted(() => ({
   coarseRef: { value: false },
-  mockEmitSfx: vi.fn()
+  mockEmitSfx: vi.fn(),
+  mockLoadAvatarUrl: vi.fn()
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -17,6 +18,14 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
+vi.mock('@/components/member/avatars', () => ({
+  loadAvatarUrl: mockLoadAvatarUrl
+}))
+
+vi.mock('@/assets/avatars/frog.svg?url', () => ({
+  default: '/mock/frog.svg'
+}))
+
 vi.mock('gsap', () => ({
   gsap: {
     to: vi.fn((_el, opts) => opts?.onComplete?.()),
@@ -25,6 +34,7 @@ vi.mock('gsap', () => ({
 }))
 
 import MemberBadge from '@/components/member/member-badge.vue'
+import AvatarImageReal from '@/components/member/avatar-image.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
 
 // AvatarImage stub
@@ -60,8 +70,7 @@ function mountBadge(props = {}) {
   return shallowMount(MemberBadge, {
     props,
     global: {
-      stubs: { AvatarImage: AvatarImageStub, UiTappable: UiTappableStub, UiButton: UiButtonStub },
-      directives: { sfx: {} }
+      stubs: { AvatarImage: AvatarImageStub, UiTappable: UiTappableStub, UiButton: UiButtonStub }
     }
   })
 }
@@ -69,32 +78,33 @@ function mountBadge(props = {}) {
 describe('MemberBadge', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockLoadAvatarUrl.mockReset()
   })
 
   // ── data-testid structure ──────────────────────────────────────────────────
 
   describe('data-testid attributes', () => {
-    test('renders member-badge root element [obligation]', () => {
+    test('renders member-badge root element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__avatar element [obligation]', () => {
+    test('renders member-badge__avatar element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__avatar"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__info element [obligation]', () => {
+    test('renders member-badge__info element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__info"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__name element [obligation]', () => {
+    test('renders member-badge__name element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__name"]').exists()).toBe(true)
     })
 
-    test('renders member-badge__description element [obligation]', () => {
+    test('renders member-badge__description element', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__description"]').exists()).toBe(true)
     })
@@ -103,12 +113,12 @@ describe('MemberBadge', () => {
   // ── i18n fallbacks ─────────────────────────────────────────────────────────
 
   describe('i18n fallbacks when props are absent', () => {
-    test('shows name-placeholder when displayName is absent [obligation]', () => {
+    test('shows name-placeholder when displayName is absent', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__name"]').text()).toBe('Member Name')
     })
 
-    test('shows description-fallback when description is absent [obligation]', () => {
+    test('shows description-fallback when description is absent', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__description"]').text()).toBe(
         'No description yet'
@@ -194,11 +204,29 @@ describe('MemberBadge', () => {
         'panda'
       )
     })
+
+    // Mounts the real avatar-image so the placeholder/frog split lands through
+    // this surface, not just the component's own tests.
+    test('shows the shimmer placeholder rather than the frog while the cover avatar is unresolved', async () => {
+      mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
+      const wrapper = shallowMount(MemberBadge, {
+        props: { cover: { palette: 'blue', pattern: 'wave', avatar: 'panda' } },
+        global: {
+          stubs: { UiTappable: UiTappableStub, UiButton: UiButtonStub, AvatarImage: false },
+          directives: { sfx: {} }
+        }
+      })
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(AvatarImageReal).exists()).toBe(true)
+      expect(wrapper.find('[data-testid="avatar-image__placeholder"]').exists()).toBe(true)
+      expect(wrapper.find('img').exists()).toBe(false)
+    })
   })
 
-  // ── editable / edit-avatar [obligation] ──────────────────────────────────
+  // ── editable / edit-avatar ──────────────────────────────────
 
-  describe('editable [obligation]', () => {
+  describe('editable', () => {
     test('the edit-avatar button is absent when editable is unset', () => {
       const wrapper = mountBadge()
       expect(wrapper.find('[data-testid="member-badge__avatar-edit"]').exists()).toBe(false)
@@ -225,10 +253,10 @@ describe('MemberBadge', () => {
     // Real UiTappable + UiButton so the native click actually bubbles through
     // the DOM — this is the only way to catch a regression in the
     // e.stopPropagation() guard onEditAvatar relies on.
-    test('the click does not bubble to the badge tappable in a real DOM tree [obligation]', async () => {
+    test('the click does not bubble to the badge tappable in a real DOM tree', async () => {
       const wrapper = mount(MemberBadge, {
         props: { editable: true },
-        global: { stubs: { AvatarImage: AvatarImageStub }, directives: { sfx: {} } }
+        global: { stubs: { AvatarImage: AvatarImageStub } }
       })
 
       await wrapper.find('[data-testid="member-badge__avatar-edit"]').trigger('click')

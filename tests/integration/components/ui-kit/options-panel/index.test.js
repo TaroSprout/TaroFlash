@@ -30,7 +30,7 @@ const MANY_ENTRIES = Array.from({ length: 20 }, (_, i) => ({
 function makePanel(props = {}, options = {}) {
   return mount(OptionsPanel, {
     props: { entries: ENTRIES, ...props },
-    global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } },
+    global: { stubs: { UiIcon: IconStub } },
     ...options
   })
 }
@@ -53,7 +53,7 @@ function makeOverflowingPanel(height = 60) {
   const wrapper = mount(OptionsPanel, {
     attachTo: document.body,
     props: { entries: MANY_ENTRIES, scrollable: true },
-    global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } }
+    global: { stubs: { UiIcon: IconStub } }
   })
   _activeWrappers.push(wrapper)
 
@@ -70,7 +70,7 @@ describe('OptionsPanel', () => {
 
   // ── Default rendering (no leading/trailing slots supplied) ─────────────────
 
-  test('renders one row per entry with the default icon and a trailing chevron when no slots are provided [obligation]', () => {
+  test('renders one row per entry with the default icon and a trailing chevron when no slots are provided', () => {
     const wrapper = makePanel()
     const cards = wrapper.findAll('[data-testid="options-panel__card"]')
     expect(cards).toHaveLength(2)
@@ -97,7 +97,7 @@ describe('OptionsPanel', () => {
 
   // ── disabled entries ─────────────────────────────────────────────────────
 
-  test('a disabled entry does not emit select when tapped [obligation]', async () => {
+  test('a disabled entry does not emit select when tapped', async () => {
     const wrapper = makePanel({
       entries: [...ENTRIES, { value: 'locked', label: 'Locked', disabled: true }]
     })
@@ -107,12 +107,12 @@ describe('OptionsPanel', () => {
 
   // ── interactive: false ───────────────────────────────────────────────────
 
-  test('interactive=false renders plain rows with no UiTappable [obligation]', () => {
+  test('interactive=false renders plain rows with no UiTappable', () => {
     const wrapper = makePanel({ interactive: false })
     expect(wrapper.findComponent({ name: 'UiTappable' }).exists()).toBe(false)
   })
 
-  test('interactive=false never emits select even when a row is clicked [obligation]', async () => {
+  test('interactive=false never emits select even when a row is clicked', async () => {
     const wrapper = makePanel({ interactive: false })
     await wrapper.find('[data-testid="options-panel__card"][data-value="profile"]').trigger('click')
     expect(wrapper.emitted('select')).toBeUndefined()
@@ -120,14 +120,14 @@ describe('OptionsPanel', () => {
 
   // ── scrollable ────────────────────────────────────────────────────────────
 
-  test('content div clips overflow by default (scrollable unset) [obligation]', () => {
+  test('content div clips overflow by default (scrollable unset)', () => {
     const wrapper = makePanel()
     const content = wrapper.find('[data-testid="options-panel__content"]')
     expect(content.classes()).toContain('overflow-hidden')
     expect(content.classes()).not.toContain('overflow-y-auto')
   })
 
-  test('scrollable=true swaps the content element for a scroll-region instead of a plain div [obligation]', () => {
+  test('scrollable=true swaps the content element for a scroll-region instead of a plain div', () => {
     const wrapper = makePanel({ scrollable: true })
     const content = wrapper.find('[data-testid="options-panel__content"]')
     expect(content.attributes('data-scroll')).toBe('self')
@@ -136,20 +136,20 @@ describe('OptionsPanel', () => {
 
   // The window station paints `raised` and `well` the same colour, so a handle
   // drawn inside the panel is invisible — it hangs in an outside gutter instead.
-  test('scrollable=true hangs the handle in an outside gutter, not inside the panel [obligation]', () => {
+  test('scrollable=true hangs the handle in an outside gutter, not inside the panel', () => {
     const wrapper = makePanel({ scrollable: true })
     const content = wrapper.find('[data-testid="options-panel__content"]')
     expect(content.attributes('data-gutter')).toBe('outside')
   })
 
-  test('scrollable unset renders no scroll-region and no handle [obligation]', () => {
+  test('scrollable unset renders no scroll-region and no handle', () => {
     const wrapper = makePanel()
     const content = wrapper.find('[data-testid="options-panel__content"]')
     expect(content.attributes('data-scroll')).toBeUndefined()
     expect(wrapper.find('[data-testid="scroll-region__handle"]').exists()).toBe(false)
   })
 
-  test('scrollable=true shows a scroll-region__handle once content overflows [obligation]', async () => {
+  test('scrollable=true shows a scroll-region__handle once content overflows', async () => {
     const wrapper = makeOverflowingPanel()
     await waitForUpdate()
 
@@ -163,7 +163,7 @@ describe('OptionsPanel', () => {
     expect(wrapper.find('[data-testid="options-panel__overlay"]').exists()).toBe(false)
   })
 
-  test('renders the overlay slot content absolutely positioned over the panel [obligation]', () => {
+  test('renders the overlay slot content absolutely positioned over the panel', () => {
     const wrapper = makePanel(
       {},
       { slots: { overlay: () => h('div', { 'data-testid': 'overlay-content' }, 'overlay') } }
@@ -194,7 +194,7 @@ describe('OptionsPanel', () => {
     })
   })
 
-  // ── selected state [obligation] ──────────────────────────────────────────
+  // ── selected state ──────────────────────────────────────────
 
   test('a selected entry gets data-active=true and data-palette from selectedPalette', () => {
     const wrapper = makePanel({
@@ -243,7 +243,7 @@ describe('OptionsPanel', () => {
     const wrapper = mount(OptionsPanel, {
       props: { entries: ENTRIES },
       attrs: { 'data-testid': 'move-cards__deck-list' },
-      global: { stubs: { UiIcon: IconStub }, directives: { sfx: {} } }
+      global: { stubs: { UiIcon: IconStub } }
     })
     expect(wrapper.find('[data-testid="move-cards__deck-list__content"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="options-panel__content"]').exists()).toBe(false)

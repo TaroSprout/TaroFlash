@@ -16,8 +16,8 @@ describe('TabReviewHistory', () => {
     expect(wrapper.find('[data-testid="tab-review-history"]').exists()).toBe(true)
   })
 
-  // [obligation] placeholder tab renders the coming-soon copy
-  test('renders the coming-soon placeholder copy [obligation]', () => {
+  // placeholder tab renders the coming-soon copy
+  test('renders the coming-soon placeholder copy', () => {
     const wrapper = makeTab()
     const placeholder = wrapper.find('[data-testid="tab-review-history__placeholder"]')
     expect(placeholder.exists()).toBe(true)

@@ -2,14 +2,17 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
+const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
+  mockEmitSfx: vi.fn(),
+  mockEmitHoverSfx: vi.fn()
+}))
 const { mockUseMatchMedia } = vi.hoisted(() => ({ mockUseMatchMedia: vi.fn() }))
 const { pressHoldArmMock, pressHoldCancelMock } = vi.hoisted(() => ({
   pressHoldArmMock: vi.fn(),
   pressHoldCancelMock: vi.fn()
 }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
+vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: mockEmitHoverSfx }))
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: mockUseMatchMedia }))
 vi.mock('@/composables/ui/press-hold', () => ({
   usePressHold: () => ({ arm: pressHoldArmMock, cancel: pressHoldCancelMock })
@@ -94,6 +97,7 @@ const UiDropdownButtonStub = defineComponent({
   }
 })
 
+import { vSfx } from '@/sfx/directive'
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
@@ -103,7 +107,8 @@ function makeEditor({ is_selecting = false } = {}) {
     actions: {
       onSelectCard: vi.fn(),
       onMoveCards: vi.fn(),
-      onDeleteCards: vi.fn()
+      onDeleteCards: vi.fn(),
+      onDeleteCardImmediate: vi.fn()
     },
     editCard: vi.fn(),
     selection: {
@@ -116,7 +121,13 @@ function makeMobileEditor() {
   return { open_at: vi.fn() }
 }
 
-function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } = {}) {
+function mountGridItem({
+  props = {},
+  editor,
+  mobile_editor,
+  is_mobile = false,
+  attachTo = document.body
+} = {}) {
   const ed = editor ?? makeEditor()
   const is_mobile_ref = ref(is_mobile)
   mockUseMatchMedia.mockReturnValue(is_mobile_ref)
@@ -130,9 +141,10 @@ function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } 
         selected: false,
         ...props
       },
-      attachTo: document.body,
+      attachTo,
       global: {
         provide,
+        directives: { sfx: vSfx },
         stubs: { Card: CardStub, UiRadio: UiRadioStub, UiDropdownButton: UiDropdownButtonStub }
       }
     }),
@@ -144,6 +156,7 @@ function mountGridItem({ props = {}, editor, mobile_editor, is_mobile = false } 
 describe('GridItem (card-grid/grid-item.vue)', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockEmitHoverSfx.mockClear()
     mockUseMatchMedia.mockReturnValue(ref(false))
     pressHoldArmMock.mockClear()
     pressHoldCancelMock.mockClear()
@@ -159,7 +172,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('active_side re-syncs when the side prop changes [obligation]', async () => {
+  test('active_side re-syncs when the side prop changes', async () => {
     // Regression: active_side was only seeded once via ref(side), so changing
     // the deck default in Page Settings required a full page refresh to show.
     const { wrapper } = mountGridItem({ props: { side: 'front' } })
@@ -169,7 +182,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')
   })
 
-  test('active_side re-syncs to the new side prop even after a manual flip [obligation]', async () => {
+  test('active_side re-syncs to the new side prop even after a manual flip', async () => {
     const { wrapper } = mountGridItem({ props: { side: 'front' } })
     const card = wrapper.find('[data-testid="card-stub"]')
 
@@ -206,9 +219,9 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-back')
   })
 
-  // ── a back-facing grid reads its own `side` prop, not a hardcoded 'back' [obligation] ──
+  // ── a back-facing grid reads its own `side` prop, not a hardcoded 'back' ──
 
-  test('on a back-facing grid, flipping away from the default emits card.flip-away [obligation]', async () => {
+  test('on a back-facing grid, flipping away from the default emits card.flip-away', async () => {
     const { wrapper } = mountGridItem({ props: { side: 'back' } })
     const card = wrapper.find('[data-testid="card-stub"]')
 
@@ -218,7 +231,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('card.flip-away')
   })
 
-  test('on a back-facing grid, flipping back to the default emits card.flip-back [obligation]', async () => {
+  test('on a back-facing grid, flipping back to the default emits card.flip-back', async () => {
     const { wrapper } = mountGridItem({ props: { side: 'back' } })
     const card = wrapper.find('[data-testid="card-stub"]')
 
@@ -253,7 +266,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="ui-radio-stub"]').exists()).toBe(false)
   })
 
-  test('mirrors hover onto the radio active prop [obligation]', async () => {
+  test('mirrors hover onto the radio active prop', async () => {
     const editor = makeEditor({ is_selecting: true })
     const { wrapper } = mountGridItem({ editor })
     const root = wrapper.find('[data-testid="grid-item"]')
@@ -278,35 +291,35 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="grid-item-menu-stub"]').exists()).toBe(false)
   })
 
-  test('onMenuSelect: select option routes to onSelectCard with the card id [obligation]', async () => {
+  test('onMenuSelect: select option routes to onSelectCard with the card id', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
     await wrapper.find('[data-testid="grid-item-menu-stub__select"]').trigger('click')
     expect(editor.actions.onSelectCard).toHaveBeenCalledWith(1)
   })
 
-  test('onMenuSelect: move option routes to onMoveCards with the card id [obligation]', async () => {
+  test('onMenuSelect: move option routes to onMoveCards with the card id', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
     await wrapper.find('[data-testid="grid-item-menu-stub__move"]').trigger('click')
     expect(editor.actions.onMoveCards).toHaveBeenCalledWith(1)
   })
 
-  test('onMenuSelect: delete option routes to onDeleteCards with the card id [obligation]', async () => {
+  test('onMenuSelect: delete option routes to onDeleteCards with the card id', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
     await wrapper.find('[data-testid="grid-item-menu-stub__delete"]').trigger('click')
     expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
   })
 
-  test('onMenuSelect: edit option routes to editCard with the card id [obligation]', async () => {
+  test('onMenuSelect: edit option routes to editCard with the card id', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
     await wrapper.find('[data-testid="grid-item-menu-stub__edit"]').trigger('click')
     expect(editor.editCard).toHaveBeenCalledWith(1)
   })
 
-  test('onMenuSelect: unknown value is a no-op [obligation]', async () => {
+  test('onMenuSelect: unknown value is a no-op', async () => {
     const editor = makeEditor({ is_selecting: false })
     const { wrapper } = mountGridItem({ editor })
     // Emit an unknown option value directly on the UiDropdownButton stub
@@ -317,9 +330,9 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(editor.editCard).not.toHaveBeenCalled()
   })
 
-  // ── selection guard (non-collapsed selection) [obligation] ─────────────────
+  // ── selection guard (non-collapsed selection) ─────────────────
 
-  test('onCardClick does NOT flip when window.getSelection() is non-collapsed [obligation]', async () => {
+  test('onCardClick does NOT flip when window.getSelection() is non-collapsed', async () => {
     // A click that ends a text-drag should not also flip the card.
     const origGetSelection = window.getSelection
     window.getSelection = () => ({ isCollapsed: false })
@@ -333,7 +346,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     window.getSelection = origGetSelection
   })
 
-  test('onCardClick DOES flip when window.getSelection() is collapsed [obligation]', async () => {
+  test('onCardClick DOES flip when window.getSelection() is collapsed', async () => {
     const origGetSelection = window.getSelection
     window.getSelection = () => ({ isCollapsed: true })
 
@@ -346,7 +359,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     window.getSelection = origGetSelection
   })
 
-  test('onCardClick DOES flip when window.getSelection() returns null [obligation]', async () => {
+  test('onCardClick DOES flip when window.getSelection() returns null', async () => {
     const origGetSelection = window.getSelection
     window.getSelection = () => null
 
@@ -358,9 +371,9 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     window.getSelection = origGetSelection
   })
 
-  // ── onCardMouseDown / multi-click prevention [obligation] ──────────────────
+  // ── onCardMouseDown / multi-click prevention ──────────────────
 
-  test('onCardMouseDown calls preventDefault when detail > 1 [obligation]', async () => {
+  test('onCardMouseDown calls preventDefault when detail > 1', async () => {
     const { wrapper } = mountGridItem()
     const card = wrapper.find('[data-testid="card-stub"]')
     let prevented = false
@@ -373,7 +386,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(prevented).toBe(true)
   })
 
-  test('onCardMouseDown does NOT call preventDefault when detail === 1 [obligation]', () => {
+  test('onCardMouseDown does NOT call preventDefault when detail === 1', () => {
     const { wrapper } = mountGridItem()
     const card = wrapper.find('[data-testid="card-stub"]')
     let prevented = false
@@ -385,9 +398,9 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(prevented).toBe(false)
   })
 
-  // ── mobile tap behavior [obligation] ──────────────────────────────────────
+  // ── mobile tap behavior ──────────────────────────────────────
 
-  test('below md a tap calls mobile_editor.open_at(card.client_id) instead of flipping [obligation]', async () => {
+  test('below md a tap calls mobile_editor.open_at(card.client_id) instead of flipping', async () => {
     const mobile_editor = makeMobileEditor()
     const { wrapper } = mountGridItem({ is_mobile: true, mobile_editor })
     const card = wrapper.find('[data-testid="card-stub"]')
@@ -401,7 +414,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 
-  test('below md a tap is a no-op when no mobile_editor is provided [obligation]', async () => {
+  test('below md a tap is a no-op when no mobile_editor is provided', async () => {
     const { wrapper } = mountGridItem({ is_mobile: true })
     const card = wrapper.find('[data-testid="card-stub"]')
     const side_before = card.attributes('data-side')
@@ -412,7 +425,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(card.attributes('data-side')).toBe(side_before)
   })
 
-  test('below md a tap while selecting still calls onSelectCard [obligation]', async () => {
+  test('below md a tap while selecting still calls onSelectCard', async () => {
     const editor = makeEditor({ is_selecting: true })
     const mobile_editor = makeMobileEditor()
     const { wrapper } = mountGridItem({ is_mobile: true, editor, mobile_editor })
@@ -424,7 +437,7 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(mobile_editor.open_at).not.toHaveBeenCalled()
   })
 
-  test('at md+ a click flips the card (not the mobile editor) [obligation]', async () => {
+  test('at md+ a click flips the card (not the mobile editor)', async () => {
     const mobile_editor = makeMobileEditor()
     const { wrapper } = mountGridItem({ is_mobile: false, mobile_editor })
     const card = wrapper.find('[data-testid="card-stub"]')
@@ -435,9 +448,9 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(card.attributes('data-side')).toBe('back')
   })
 
-  // ── mode arbitration on pointerdown [obligation] ──────────────────────────
+  // ── mode arbitration on pointerdown ──────────────────────────
 
-  describe('mode arbitration on pointerdown [obligation]', () => {
+  describe('mode arbitration on pointerdown', () => {
     test('a touch pointerdown in normal mode arms a hold that calls the dropdown show()', async () => {
       const { wrapper } = mountGridItem()
       await wrapper.find('[data-testid="grid-item"]').trigger('pointerdown', {
@@ -473,6 +486,113 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
       })
 
       expect(pressHoldArmMock).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── v-sfx hover binding ────────────────────────────────────
+
+  describe('v-sfx hover binding', () => {
+    function hoverRoot(wrapper) {
+      wrapper
+        .find('[data-testid="grid-item"]')
+        .element.dispatchEvent(
+          new PointerEvent('pointerenter', { bubbles: true, pointerType: 'mouse' })
+        )
+    }
+
+    test('plain browsing (neither selecting nor rearranging) still plays ui.hover', () => {
+      // This is the case that regressed: the hover binding must not require
+      // is_selecting or rearranging to resolve to a hover sound.
+      const { wrapper } = mountGridItem()
+      hoverRoot(wrapper)
+      expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+
+    test('while selecting, hover still plays ui.hover', () => {
+      const editor = makeEditor({ is_selecting: true })
+      const { wrapper } = mountGridItem({ editor })
+      hoverRoot(wrapper)
+      expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+
+    test('while rearranging, hover still plays ui.hover', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      hoverRoot(wrapper)
+      expect(mockEmitHoverSfx).toHaveBeenCalledWith('ui.hover')
+    })
+  })
+
+  // ── reorder-mode corner delete button ────────────────────────
+  // The button is a reorder-mode-only affordance — it must never appear
+  // alongside the selection radio or the idle-mode more-menu.
+
+  describe('reorder-mode corner delete button', () => {
+    test('renders only when rearranging', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(true)
+    })
+
+    test('is absent while selecting', () => {
+      const editor = makeEditor({ is_selecting: true })
+      const { wrapper } = mountGridItem({ editor })
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
+    })
+
+    test('is absent in idle mode (not rearranging, not selecting)', () => {
+      const { wrapper } = mountGridItem()
+      expect(wrapper.find('[data-testid="card-grid-item__delete-button"]').exists()).toBe(false)
+    })
+
+    test('clicking it calls onDeleteCardImmediate with the card id and the positioned grid cell, never confirmDelete/onDeleteCards', async () => {
+      const editor = makeEditor()
+      const grid_cell = document.createElement('div')
+      grid_cell.setAttribute('data-testid', 'card-grid__item')
+      document.body.appendChild(grid_cell)
+
+      const { wrapper } = mountGridItem({
+        props: { card: { id: 9, client_id: 'c9' }, rearranging: true },
+        editor,
+        attachTo: grid_cell
+      })
+
+      await wrapper.find('[data-testid="card-grid-item__delete-button"]').trigger('click')
+
+      expect(editor.actions.onDeleteCardImmediate).toHaveBeenCalledWith(9, grid_cell)
+      expect(editor.actions.onDeleteCards).not.toHaveBeenCalled()
+
+      wrapper.unmount()
+      grid_cell.remove()
+    })
+
+    test('its pointerdown.stop keeps the ancestor grid drag-start listener from firing', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true } })
+      const outerAncestorHandler = vi.fn()
+      const outer = document.createElement('div')
+      outer.addEventListener('pointerdown', outerAncestorHandler)
+      outer.appendChild(wrapper.element)
+      document.body.appendChild(outer)
+
+      const button = wrapper.find('[data-testid="card-grid-item__delete-button"]').element
+      const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
+      button.dispatchEvent(event)
+
+      expect(outerAncestorHandler).not.toHaveBeenCalled()
+
+      outer.remove()
+    })
+  })
+
+  // ── card-menu delete path stays unchanged ────────────────────
+
+  describe('card-menu delete path', () => {
+    test('the more-menu delete option still routes through onDeleteCards, not onDeleteCardImmediate', async () => {
+      const editor = makeEditor({ is_selecting: false })
+      const { wrapper } = mountGridItem({ editor })
+
+      await wrapper.find('[data-testid="grid-item-menu-stub__delete"]').trigger('click')
+
+      expect(editor.actions.onDeleteCards).toHaveBeenCalledWith(1)
+      expect(editor.actions.onDeleteCardImmediate).not.toHaveBeenCalled()
     })
   })
 })

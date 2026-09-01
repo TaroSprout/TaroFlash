@@ -48,14 +48,14 @@ function mountStudyCardEdit({ props = {}, card_attributes } = {}) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('StudyCardEdit', () => {
-  // ── Testid obligations [obligation] ────────────────────────────────────────
+  // ── Testid obligations ────────────────────────────────────────
 
-  test('root element carries data-testid="study-card-edit" [obligation]', () => {
+  test('root element carries data-testid="study-card-edit"', () => {
     const wrapper = mountStudyCardEdit()
     expect(wrapper.find('[data-testid="study-card-edit"]').exists()).toBe(true)
   })
 
-  test('input element carries data-testid="study-card-edit__input" [obligation]', () => {
+  test('input element carries data-testid="study-card-edit__input"', () => {
     const wrapper = mountStudyCardEdit()
     expect(wrapper.find('[data-testid="study-card-edit__input"]').exists()).toBe(true)
   })
@@ -75,7 +75,7 @@ describe('StudyCardEdit', () => {
     expect(stub.props('side')).toBe('back')
   })
 
-  // ── Placeholder [obligation] ──────────────────────────────────────────────
+  // ── Placeholder ──────────────────────────────────────────────
 
   test('shows front placeholder when side is front', () => {
     const wrapper = mountStudyCardEdit({ props: { side: 'front' } })

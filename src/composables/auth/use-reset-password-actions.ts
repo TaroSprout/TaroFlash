@@ -58,8 +58,7 @@ export function useResetPasswordActions() {
       return 'invalid'
     }
 
-    // 'same-password' isn't meaningful here — there's no prior password to compare
-    // against from the recovery flow's perspective — so it falls through to 'error'.
+    // Recovery has no prior password, so 'same-password' falls through to 'error'.
     return 'error'
   }
 

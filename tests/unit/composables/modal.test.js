@@ -294,7 +294,7 @@ describe('useModalAfterEnter', () => {
     return { result, app }
   }
 
-  test('returns an already-resolved promise when called outside a modal context (no injected id) [obligation]', async () => {
+  test('returns an already-resolved promise when called outside a modal context (no injected id)', async () => {
     // Mount without providing MODAL_ID_KEY
     let result
     mount(
@@ -315,7 +315,7 @@ describe('useModalAfterEnter', () => {
     expect(resolved).toBe(true)
   })
 
-  test('returns a pending promise when called inside a modal context (id is injected) [obligation]', async () => {
+  test('returns a pending promise when called inside a modal context (id is injected)', async () => {
     const { result } = mountWithId('modal-abc')
 
     let resolved = false
@@ -327,7 +327,7 @@ describe('useModalAfterEnter', () => {
     expect(resolved).toBe(false)
   })
 
-  test('resolveModalAfterEnter resolves the promise registered for the matching id [obligation]', async () => {
+  test('resolveModalAfterEnter resolves the promise registered for the matching id', async () => {
     const { result } = mountWithId('modal-xyz')
 
     let resolved = false

@@ -124,7 +124,7 @@ describe('SchedulingSection — rendering', () => {
     expect(slot.find('[data-testid="tab-review-pacing__relearning-steps"]').exists()).toBe(true)
   })
 
-  test('caps the retention spinbox at DESIRED_RETENTION_BOUNDS (70-97) [obligation]', () => {
+  test('caps the retention spinbox at DESIRED_RETENTION_BOUNDS (70-97)', () => {
     const { wrapper } = makeWrapper()
     const spinbox = wrapper.find(
       '[data-testid="tab-review-pacing__retention"] [data-testid="ui-spinbox"]'
@@ -194,10 +194,10 @@ describe('SchedulingSection — spinbox writes', () => {
   })
 })
 
-// ── reset wiring [obligation] ──────────────────────────────────────────────────
+// ── reset wiring ──────────────────────────────────────────────────
 
-describe('SchedulingSection — reset wiring [obligation]', () => {
-  test('resetting the max-interval row calls fields.max_interval.reset [obligation]', async () => {
+describe('SchedulingSection — reset wiring', () => {
+  test('resetting the max-interval row calls fields.max_interval.reset', async () => {
     const resetMaxInterval = vi.fn()
     const { wrapper } = makeWrapper({
       fieldOverrides: {
@@ -212,7 +212,7 @@ describe('SchedulingSection — reset wiring [obligation]', () => {
     expect(resetMaxInterval).toHaveBeenCalledOnce()
   })
 
-  test('resetting the leech-threshold row calls fields.leech_threshold.reset [obligation]', async () => {
+  test('resetting the leech-threshold row calls fields.leech_threshold.reset', async () => {
     const resetLeechThreshold = vi.fn()
     const { wrapper } = makeWrapper({
       fieldOverrides: {

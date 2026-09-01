@@ -72,7 +72,7 @@ describe('useSummaryCardEdit — editing_card_id / editing_card', () => {
     expect(result.editing_card.value).toEqual(card)
   })
 
-  test('start(id) for an id not in the list resolves editing_card to undefined [obligation]', () => {
+  test('start(id) for an id not in the list resolves editing_card to undefined', () => {
     const { result } = makeSetup([makeCard({ id: 1 })])
 
     result.start(999)
@@ -90,7 +90,7 @@ describe('useSummaryCardEdit — editing_card_id / editing_card', () => {
     expect(result.editing_card.value).toBeUndefined()
   })
 
-  test('editing_card tracks the cards list reactively — a card dropped from the list resolves to undefined [obligation]', () => {
+  test('editing_card tracks the cards list reactively — a card dropped from the list resolves to undefined', () => {
     const { result, cards_ref } = makeSetup([makeCard({ id: 42 })])
     result.start(42)
     expect(result.editing_card.value).toBeDefined()
@@ -103,8 +103,8 @@ describe('useSummaryCardEdit — editing_card_id / editing_card', () => {
 
 // ── useCardMutations deck_id getter reads the editing card's OWN deck_id ────
 
-describe('useSummaryCardEdit — mutations deck_id getter [obligation]', () => {
-  test('the deck_id getter passed to useCardMutations reads the currently-editing card own deck_id [obligation]', () => {
+describe('useSummaryCardEdit — mutations deck_id getter', () => {
+  test('the deck_id getter passed to useCardMutations reads the currently-editing card own deck_id', () => {
     const { result } = makeSetup([makeCard({ id: 42, deck_id: 77 })])
     result.start(42)
 
@@ -120,7 +120,7 @@ describe('useSummaryCardEdit — mutations deck_id getter [obligation]', () => {
 
 // ── update() ──────────────────────────────────────────────────────────────────
 
-describe('useSummaryCardEdit — update() [obligation]', () => {
+describe('useSummaryCardEdit — update()', () => {
   test('is a no-op when nothing is being edited', async () => {
     const { result } = makeSetup()
 
@@ -129,7 +129,7 @@ describe('useSummaryCardEdit — update() [obligation]', () => {
     expect(saveCardMock).not.toHaveBeenCalled()
   })
 
-  test('update(front, text) calls saveCard with front_text and patches via updateCard [obligation]', async () => {
+  test('update(front, text) calls saveCard with front_text and patches via updateCard', async () => {
     const card = makeCard({ id: 42 })
     const { result, updateCard } = makeSetup([card])
     result.start(42)
@@ -142,7 +142,7 @@ describe('useSummaryCardEdit — update() [obligation]', () => {
     expect(updateCard).toHaveBeenCalledWith(42, { front_text: 'Hello' })
   })
 
-  test('update(back, text) calls saveCard with back_text [obligation]', async () => {
+  test('update(back, text) calls saveCard with back_text', async () => {
     const card = makeCard({ id: 42 })
     const { result, updateCard } = makeSetup([card])
     result.start(42)
@@ -152,7 +152,7 @@ describe('useSummaryCardEdit — update() [obligation]', () => {
     expect(updateCard).toHaveBeenCalledWith(42, { back_text: 'World' })
   })
 
-  test('saving is true during the await and false after [obligation]', async () => {
+  test('saving is true during the await and false after', async () => {
     let resolve
     saveCardMock.mockImplementationOnce(() => new Promise((r) => (resolve = r)))
     const { result } = makeSetup([makeCard({ id: 42 })])
@@ -166,7 +166,7 @@ describe('useSummaryCardEdit — update() [obligation]', () => {
     expect(result.saving.value).toBe(false)
   })
 
-  test('shows an error notice and resets saving on a rejected save [obligation]', async () => {
+  test('shows an error notice and resets saving on a rejected save', async () => {
     saveCardMock.mockRejectedValueOnce(new Error('boom'))
     const { result, updateCard } = makeSetup([makeCard({ id: 42 })])
     result.start(42)

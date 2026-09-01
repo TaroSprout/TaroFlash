@@ -91,7 +91,7 @@ beforeEach(() => {
 // ── status precedence ──────────────────────────────────────────────────────────
 
 describe('useCheckout — status precedence', () => {
-  test('[obligation] is_success overrides load_error and is_loading once a submit completes', async () => {
+  test('is_success overrides load_error and is_loading once a submit completes', async () => {
     vi.useFakeTimers()
     elementsState.load_error.value = false
     mockConfirm.mockResolvedValue({ status: 'success' })
@@ -107,7 +107,7 @@ describe('useCheckout — status precedence', () => {
     expect(status.value).toBe('success')
   })
 
-  test('[obligation] load_error overrides loading', () => {
+  test('load_error overrides loading', () => {
     elementsState.load_error.value = true
     elementsState.is_loading.value = true
     const { status } = withSetup(() => useCheckout(vi.fn()))
@@ -136,7 +136,7 @@ describe('useCheckout — status precedence', () => {
 // ── onSubmit — non-success confirm ─────────────────────────────────────────────
 
 describe('useCheckout — onSubmit non-success confirm', () => {
-  test('[obligation] returns without invalidating, syncing, or closing when confirm() is not a success', async () => {
+  test('returns without invalidating, syncing, or closing when confirm() is not a success', async () => {
     mockConfirm.mockResolvedValue({ status: 'error', message: 'declined' })
     const close = vi.fn()
     const { onSubmit, status } = withSetup(() => useCheckout(close))
@@ -154,7 +154,7 @@ describe('useCheckout — onSubmit non-success confirm', () => {
 // ── onSubmit — successful confirm + sync ───────────────────────────────────────
 
 describe('useCheckout — onSubmit success path', () => {
-  test('[obligation] waitForUpgradeSync stops polling as soon as plan flips to paid', async () => {
+  test('waitForUpgradeSync stops polling as soon as plan flips to paid', async () => {
     vi.useFakeTimers()
     mockConfirm.mockResolvedValue({ status: 'success' })
     mockRefetch
@@ -171,7 +171,7 @@ describe('useCheckout — onSubmit success path', () => {
     expect(mockRefetch).toHaveBeenCalledTimes(3)
   })
 
-  test('[obligation] waitForUpgradeSync gives up after SYNC_MAX_ATTEMPTS (8) polls', async () => {
+  test('waitForUpgradeSync gives up after SYNC_MAX_ATTEMPTS (8) polls', async () => {
     vi.useFakeTimers()
     mockConfirm.mockResolvedValue({ status: 'success' })
     mockRefetch.mockResolvedValue({ data: { plan: 'free' } })
@@ -185,7 +185,7 @@ describe('useCheckout — onSubmit success path', () => {
     expect(mockRefetch).toHaveBeenCalledTimes(8)
   })
 
-  test('[obligation] invalidates the billing cache key, plays success_1, then auto-closes with {upgraded:true}', async () => {
+  test('invalidates the billing cache key, plays success_1, then auto-closes with {upgraded:true}', async () => {
     vi.useFakeTimers()
     mockConfirm.mockResolvedValue({ status: 'success' })
     mockRefetch.mockResolvedValue({ data: { plan: 'paid' } })
@@ -203,8 +203,8 @@ describe('useCheckout — onSubmit success path', () => {
   })
 
   // Resubscribing clears the downgrade-grace lock, so the deck list's
-  // is_locked flags need a refetch alongside billing [obligation]
-  test('[obligation] also invalidates the decks cache key so the downgrade-grace lock clears', async () => {
+  // is_locked flags need a refetch alongside billing
+  test('also invalidates the decks cache key so the downgrade-grace lock clears', async () => {
     vi.useFakeTimers()
     mockConfirm.mockResolvedValue({ status: 'success' })
     mockRefetch.mockResolvedValue({ data: { plan: 'paid' } })
@@ -236,7 +236,7 @@ describe('useCheckout — mount/unmount chimes', () => {
 // ── useModalRequestClose wiring ──────────────────────────────────────────────────
 
 describe('useCheckout — request-close handler', () => {
-  test('[obligation] is a no-op while status is confirming', () => {
+  test('is a no-op while status is confirming', () => {
     elementsState.is_submitting.value = true
     const close = vi.fn()
     withSetup(() => useCheckout(close), 'modal-a')
@@ -246,7 +246,7 @@ describe('useCheckout — request-close handler', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  test('[obligation] calls close() with no payload in every other status', () => {
+  test('calls close() with no payload in every other status', () => {
     const close = vi.fn()
     withSetup(() => useCheckout(close), 'modal-b')
 
@@ -255,7 +255,7 @@ describe('useCheckout — request-close handler', () => {
     expect(close).toHaveBeenCalledWith()
   })
 
-  test('[obligation] still allows manual close during the success status', async () => {
+  test('still allows manual close during the success status', async () => {
     vi.useFakeTimers()
     mockConfirm.mockResolvedValue({ status: 'success' })
     mockRefetch.mockResolvedValue({ data: { plan: 'paid' } })

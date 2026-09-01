@@ -48,7 +48,7 @@ describe('useResumeStudySession', () => {
     unmount()
   })
 
-  test('does nothing when the persisted session has an empty deck_ids list [obligation]', () => {
+  test('does nothing when the persisted session has an empty deck_ids list', () => {
     readPersistedSessionMock.mockReturnValue({
       deck_ids: [],
       card_ids: [10],
@@ -62,7 +62,7 @@ describe('useResumeStudySession', () => {
     unmount()
   })
 
-  test('starts the study modal with the persisted deck_ids directly, no deck refetch [obligation]', () => {
+  test('starts the study modal with the persisted deck_ids directly, no deck refetch', () => {
     readPersistedSessionMock.mockReturnValue({
       deck_ids: [1, 2],
       card_ids: [10],

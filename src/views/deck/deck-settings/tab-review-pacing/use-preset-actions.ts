@@ -82,8 +82,7 @@ export function usePresetActions(pacing: PacingFields, editor: DeckEditor): Pres
     )
     if (!created.ok) return
 
-    // The new preset already holds these values verbatim, so the overrides that
-    // produced it are now pure noise — drop them and follow it cleanly.
+    // The new preset holds these values, so the overrides that produced it are noise.
     draft.review_pacing_preset_id = created.data.id
     pacing.resetAllOverrides()
 
@@ -118,11 +117,7 @@ export function usePresetActions(pacing: PacingFields, editor: DeckEditor): Pres
     )
     if (!saved.ok) return
 
-    // Without this the deck keeps overrides identical to the preset it just
-    // wrote — divergence badges lit while nothing actually differs. The push
-    // itself already hit the server, so the clear is persisted alongside it
-    // rather than staged: a refresh before Save would otherwise resurrect the
-    // very overrides the user just promoted.
+    // Persist the clear, not stage it: a refresh before Save would resurrect the promoted overrides.
     pacing.resetAllOverrides()
     const cleared = await persistPacing('push-failed')
     if (!cleared.ok) return
@@ -168,8 +163,7 @@ export function usePresetActions(pacing: PacingFields, editor: DeckEditor): Pres
     const deleted = await runWrite(() => delete_mutation.mutateAsync(preset.id), 'delete-failed')
     if (!deleted.ok) return
 
-    // The FK is ON DELETE SET NULL, so the server already dropped the link —
-    // mirror that on the draft or Save would write the dead id straight back.
+    // The server already dropped the link, so mirror it or Save writes the dead id back.
     draft.review_pacing_preset_id = null
 
     const unlinked = await persistPacing('delete-failed')

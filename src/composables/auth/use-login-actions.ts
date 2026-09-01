@@ -98,8 +98,7 @@ export function useLoginActions() {
   watch(email, () => clearOnInput('email'))
   watch(password, () => clearOnInput('password'))
 
-  // reactive() so callers can pass the whole instance as a single prop and the
-  // form can `v-model="auth.email"` without unwrapping each ref by hand.
+  // reactive() so a caller can pass the whole instance and `v-model` its fields.
   return reactive({
     email,
     password,

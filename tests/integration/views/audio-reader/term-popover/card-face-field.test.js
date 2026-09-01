@@ -7,8 +7,7 @@ import CardFaceField from '@/views/audio-reader/term-popover/card-face-field.vue
 // doesn't warn on an unresolved directive.
 function mountField(props = {}) {
   return mount(CardFaceField, {
-    props: { side: 'front', text: 'Dog', placeholder: 'Front of the card', ...props },
-    global: { directives: { sfx: {} } }
+    props: { side: 'front', text: 'Dog', placeholder: 'Front of the card', ...props }
   })
 }
 
@@ -52,7 +51,7 @@ describe('CardFaceField', () => {
     expect(typeof emitted_value).toBe('string')
   })
 
-  test('forwards the error prop through to the card face [obligation]', () => {
+  test('forwards the error prop through to the card face', () => {
     const wrapper = mountField({ error: true })
     expect(wrapper.find('[data-testid="card-face-field"]').attributes('data-error')).toBeDefined()
   })

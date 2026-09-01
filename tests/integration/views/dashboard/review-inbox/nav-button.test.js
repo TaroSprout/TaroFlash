@@ -16,8 +16,7 @@ import ReviewInboxNavButton from '@/views/dashboard/review-inbox/nav-button.vue'
 
 function mountButton(props) {
   return mount(ReviewInboxNavButton, {
-    props,
-    global: { directives: { sfx: {} } }
+    props
   })
 }
 
@@ -41,20 +40,20 @@ describe('ReviewInboxNavButton — direction', () => {
   })
 })
 
-describe('ReviewInboxNavButton — disabled renders nothing [obligation]', () => {
-  test('renders no button at all when disabled=true [obligation]', () => {
+describe('ReviewInboxNavButton — disabled renders nothing', () => {
+  test('renders no button at all when disabled=true', () => {
     const wrapper = mountButton({ direction: 'next', disabled: true })
     expect(wrapper.find('[data-testid="review-inbox__next-btn"]').exists()).toBe(false)
   })
 
-  test('renders the button when disabled=false [obligation]', () => {
+  test('renders the button when disabled=false', () => {
     const wrapper = mountButton({ direction: 'next', disabled: false })
     expect(wrapper.find('[data-testid="review-inbox__next-btn"]').exists()).toBe(true)
   })
 })
 
 describe('ReviewInboxNavButton — press event', () => {
-  test('emits press when tapped [obligation]', async () => {
+  test('emits press when tapped', async () => {
     const wrapper = mountButton({ direction: 'next' })
     await wrapper.find('[data-testid="review-inbox__next-btn"]').trigger('click')
     expect(wrapper.emitted('press')).toBeTruthy()

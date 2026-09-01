@@ -162,7 +162,7 @@ describe('useReviewInboxScroll — recompute triggers', () => {
 // ── prev / next ───────────────────────────────────────────────────────────────
 
 describe('useReviewInboxScroll — prev / next', () => {
-  test('next() steps by 3 card-widths worth of scroll [obligation]', () => {
+  test('next() steps by 3 card-widths worth of scroll', () => {
     const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300, scrollLeft: 0 })
     const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
     const { next } = withSetup(() => [], el)
@@ -173,7 +173,7 @@ describe('useReviewInboxScroll — prev / next', () => {
     expect(scroll_to).toHaveBeenCalledWith({ left: 300, behavior: 'smooth' })
   })
 
-  test('prev() steps by 3 card-widths worth of scroll in the negative direction [obligation]', () => {
+  test('prev() steps by 3 card-widths worth of scroll in the negative direction', () => {
     const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300, scrollLeft: 400 })
     const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
     const { prev } = withSetup(() => [], el)
@@ -183,7 +183,7 @@ describe('useReviewInboxScroll — prev / next', () => {
     expect(scroll_to).toHaveBeenCalledWith({ left: 100, behavior: 'smooth' })
   })
 
-  test('next() clamps the target to max_scroll_left when the remaining distance is under 3 card-widths [obligation]', () => {
+  test('next() clamps the target to max_scroll_left when the remaining distance is under 3 card-widths', () => {
     // max_scroll_left = 500 - 300 = 200; unclamped target would be 150 + 300 = 450
     const el = makeStripEl({ scrollWidth: 500, clientWidth: 300, scrollLeft: 150 })
     const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})
@@ -194,7 +194,7 @@ describe('useReviewInboxScroll — prev / next', () => {
     expect(scroll_to).toHaveBeenCalledWith({ left: 200, behavior: 'smooth' })
   })
 
-  test('prev() clamps the target to 0 when the remaining distance to the start is under 3 card-widths [obligation]', () => {
+  test('prev() clamps the target to 0 when the remaining distance to the start is under 3 card-widths', () => {
     // unclamped target would be 100 - 300 = -200
     const el = makeStripEl({ scrollWidth: 1000, clientWidth: 300, scrollLeft: 100 })
     const scroll_to = vi.spyOn(el, 'scrollTo').mockImplementation(() => {})

@@ -37,7 +37,7 @@ describe('useTaroPhoneStore — open / close', () => {
   })
 })
 
-// ── openApp — hide/reopen contract [obligation] ────────────────────────────────
+// ── openApp — hide/reopen contract ────────────────────────────────
 
 describe('useTaroPhoneStore — openApp hide/reopen contract', () => {
   test('hides the phone synchronously when called', () => {
@@ -65,7 +65,7 @@ describe('useTaroPhoneStore — openApp hide/reopen contract', () => {
   })
 })
 
-// ── openApp — idempotency against double resolution [obligation] ──────────────
+// ── openApp — idempotency against double resolution ──────────────
 
 describe('useTaroPhoneStore — openApp idempotency', () => {
   test('a stale finally does not force is_open back to true once was_hidden_for_app_modal was already cleared', async () => {
@@ -97,7 +97,7 @@ describe('useTaroPhoneStore — openApp idempotency', () => {
   })
 })
 
-// ── reset — logout teardown [obligation] ──────────────────────────────────────
+// ── reset — logout teardown ──────────────────────────────────────
 
 describe('useTaroPhoneStore — reset', () => {
   test('closes the phone so no stale open state leaks into the next session', () => {

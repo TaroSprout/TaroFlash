@@ -11,11 +11,9 @@ const { t } = useI18n()
       <p class="text-lg leading-relaxed">{{ t('privacy-policy.intro') }}</p>
     </div>
 
-    <!-- Section 1: Information We Collect -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-1.title') }}</h2>
 
-      <!-- Account Information -->
       <div>
         <h3 class="text-2xl">
           {{ t('privacy-policy.section-1.subsection-1.title') }}
@@ -31,7 +29,6 @@ const { t } = useI18n()
         <p class="leading-relaxed">{{ t('privacy-policy.section-1.subsection-1.footer') }}</p>
       </div>
 
-      <!-- Google Sign-In Data -->
       <div>
         <h3 class="text-2xl">
           {{ t('privacy-policy.section-1.subsection-2.title') }}
@@ -47,7 +44,6 @@ const { t } = useI18n()
       </div>
     </section>
 
-    <!-- Section 2: How We Use Your Information -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-2.title') }}</h2>
       <p class="leading-relaxed">{{ t('privacy-policy.section-2.content') }}</p>
@@ -60,7 +56,6 @@ const { t } = useI18n()
       <p class="leading-relaxed">{{ t('privacy-policy.section-2.footer') }}</p>
     </section>
 
-    <!-- Section 3: Data Storage and Security -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-3.title') }}</h2>
       <ul class="list-disc list-inside ml-4 space-y-2">
@@ -72,7 +67,6 @@ const { t } = useI18n()
       </ul>
     </section>
 
-    <!-- Section 4: Data Sharing -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-4.title') }}</h2>
       <p class="leading-relaxed">{{ t('privacy-policy.section-4.content-1') }}</p>
@@ -85,25 +79,21 @@ const { t } = useI18n()
       <p class="leading-relaxed">{{ t('privacy-policy.section-4.footer') }}</p>
     </section>
 
-    <!-- Section 5: Future Social Features -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-5.title') }}</h2>
       <p class="leading-relaxed">{{ t('privacy-policy.section-5.content') }}</p>
     </section>
 
-    <!-- Section 6: Data Deletion -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-6.title') }}</h2>
       <p class="leading-relaxed">{{ t('privacy-policy.section-6.content') }}</p>
     </section>
 
-    <!-- Section 7: Changes to This Policy -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-7.title') }}</h2>
       <p class="leading-relaxed">{{ t('privacy-policy.section-7.content') }}</p>
     </section>
 
-    <!-- Section 8: Contact -->
     <section>
       <h2 class="text-3xl">{{ t('privacy-policy.section-8.title') }}</h2>
       <p class="leading-relaxed">{{ t('privacy-policy.section-8.content') }}</p>

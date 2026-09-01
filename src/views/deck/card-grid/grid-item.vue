@@ -4,6 +4,7 @@ import UiRadio from '@/components/ui-kit/radio.vue'
 import UiDropdownButton, {
   type DropdownOption
 } from '@/components/ui-kit/dropdown-button/index.vue'
+import CardGridDeleteButton from './delete-button.vue'
 import { emitSfx } from '@/sfx/bus'
 import { inject, ref, useTemplateRef, watch } from 'vue'
 import { usePressHold } from '@/composables/ui/press-hold'
@@ -69,8 +70,7 @@ function onCardClick() {
   if (sel && !sel.isCollapsed) return
 
   active_side.value = active_side.value === 'front' ? 'back' : 'front'
-  // The grid picks which face it shows, so the cue reads against that face and
-  // not against the front.
+  // The cue reads against the face the grid is showing, not the front.
   emitSfx(active_side.value === side ? 'card.flip-back' : 'card.flip-away')
 }
 
@@ -95,7 +95,7 @@ watch(
       'pointer-fine:hover:scale-101': is_selecting,
       jiggle: rearranging && !dragging
     }"
-    v-sfx="{ hover: is_selecting || rearranging ? 'ui.hover' : undefined }"
+    v-sfx="{ hover: 'ui.hover' }"
     @mouseenter="is_hovering = true"
     @mouseleave="is_hovering = false"
     @pointerdown="onPointerdown"
@@ -131,6 +131,10 @@ watch(
       :options="menu_options"
       @select="onMenuSelect"
     />
+
+    <div v-if="rearranging" class="absolute -top-1 -right-1">
+      <card-grid-delete-button :card_id="card.id!" @pointerdown.stop />
+    </div>
   </div>
 </template>
 

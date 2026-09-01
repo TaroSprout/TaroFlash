@@ -158,7 +158,7 @@ describe('TabProfile', () => {
     expect(input.attributes('maxlength')).toBe('12')
   })
 
-  test('name input error reflects editor.name_error.value [obligation]', async () => {
+  test('name input error reflects editor.name_error.value', async () => {
     const editor = makeEditor()
     editor.name_error.value = 'Give this member a name'
     const { wrapper } = makeTab(editor)
@@ -198,14 +198,14 @@ describe('TabProfile', () => {
     expect(wrapper.find('[data-testid="tab-profile__preview"]').exists()).toBe(false)
   })
 
-  test('shows member-badge (not member-card) preview on sheet layout [obligation]', () => {
+  test('shows member-badge (not member-card) preview on sheet layout', () => {
     const { wrapper } = makeTab(makeEditor(), 'phone')
     const preview = wrapper.find('[data-testid="tab-profile__preview"]')
     expect(preview.exists()).toBe(true)
     expect(preview.attributes('data-stub')).toBe('member-badge')
   })
 
-  describe('member-badge avatar edit wiring [obligation]', () => {
+  describe('member-badge avatar edit wiring', () => {
     afterEach(() => useModal().pop())
 
     test('passes editable to member-badge', () => {

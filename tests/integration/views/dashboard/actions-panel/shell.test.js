@@ -50,7 +50,7 @@ describe('DashboardActionsPanelShell (views/dashboard/actions-panel/shell.vue)',
     expect(body.classes()).toContain('cloud-top-[40px]')
   })
 
-  test('body wrapper stamps the constant data-station="panel" [obligation]', () => {
+  test('body wrapper stamps the constant data-station="panel"', () => {
     const wrapper = mountShell({})
     const body = wrapper.find('[data-testid="dashboard-actions-panel-shell__body"]')
     expect(body.attributes('data-station')).toBe('panel')

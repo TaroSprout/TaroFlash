@@ -41,13 +41,13 @@ async function withGuard(composableFn) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('useWindowRefocusGuard — core flag semantics', () => {
-  test('consumeWindowRefocus returns false when nothing is pending [obligation]', async () => {
+  test('consumeWindowRefocus returns false when nothing is pending', async () => {
     const { result, unmount } = await withGuard()
     expect(result.consumeWindowRefocus()).toBe(false)
     unmount()
   })
 
-  test('flagWindowBlur then consumeWindowRefocus returns true once [obligation]', async () => {
+  test('flagWindowBlur then consumeWindowRefocus returns true once', async () => {
     const { result, unmount } = await withGuard()
 
     result.flagWindowBlur()
@@ -55,7 +55,7 @@ describe('useWindowRefocusGuard — core flag semantics', () => {
     unmount()
   })
 
-  test('consumeWindowRefocus returns false after the flag has been consumed [obligation]', async () => {
+  test('consumeWindowRefocus returns false after the flag has been consumed', async () => {
     const { result, unmount } = await withGuard()
 
     result.flagWindowBlur()
@@ -78,8 +78,8 @@ describe('useWindowRefocusGuard — core flag semantics', () => {
   })
 })
 
-describe('useWindowRefocusGuard — module singleton (shared pending flag) [obligation]', () => {
-  test('flag set by one instance is consumable by another [obligation]', async () => {
+describe('useWindowRefocusGuard — module singleton (shared pending flag)', () => {
+  test('flag set by one instance is consumable by another', async () => {
     // Both instances share the same module-scope `pending` flag.
     const { useWindowRefocusGuard } = await import('@/composables/ui/window-refocus-guard')
     const apps = []
@@ -188,8 +188,8 @@ describe('useWindowRefocusGuard — window focus listener lifecycle', () => {
   })
 })
 
-describe('useWindowRefocusGuard — focus listener clears stale pending flag [obligation]', () => {
-  test('window focus event clears a stale pending flag via requestAnimationFrame [obligation]', async () => {
+describe('useWindowRefocusGuard — focus listener clears stale pending flag', () => {
+  test('window focus event clears a stale pending flag via requestAnimationFrame', async () => {
     const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
       // Call the callback synchronously so we can assert immediately
       cb(0)

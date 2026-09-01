@@ -31,17 +31,31 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: ['dist/**', 'supabase/**'],
+    jsPlugins: ['./scripts/lint-rules/comment-authoring.js'],
     options: {
       typeAware: true,
       typeCheck: false
     },
+    overrides: [
+      {
+        // The same paths .claude/rules/comment-authoring.md governs; tests are the test-authoring rule's.
+        files: ['src/**', 'scripts/**', 'supabase/**/*.ts'],
+        rules: {
+          'comment-authoring/no-template-comment': 'error',
+          'comment-authoring/single-line-body-comment': 'error'
+        }
+      },
+      {
+        files: ['tests/**'],
+        rules: {
+          'comment-authoring/no-obligation-vocabulary': 'error'
+        }
+      }
+    ],
     rules: {
       'no-console': 'warn',
       'no-floating-promises': 'off',
-      // `warn`, not `error`: 14 pre-existing sites (11 src/, 3 scripts/)
-      // already exceed depth 2, and this rule's owner can't touch source to
-      // clear them.
-      'max-depth': ['warn', 2]
+      'max-depth': ['error', 2]
     }
   },
   plugins: [
@@ -117,6 +131,9 @@ export default defineConfig({
         '**/types/**',
         '**/src/utils/logger.ts',
         '**/src/utils/uid.ts',
+        // Static legal copy: a translation call per line, nothing a test could assert.
+        '**/src/views/privacy-policy.vue',
+        '**/src/views/terms-of-service.vue',
         ...coverageConfigDefaults.exclude
       ]
     }

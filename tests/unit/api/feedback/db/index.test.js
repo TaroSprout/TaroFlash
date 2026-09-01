@@ -34,7 +34,7 @@ beforeEach(() => {
 // ── fetchFeedbackItems ─────────────────────────────────────────────────────────
 
 describe('fetchFeedbackItems', () => {
-  test('calls the feedback_items_with_votes rpc, selects *, and filters visibility to public [obligation]', async () => {
+  test('calls the feedback_items_with_votes rpc, selects *, and filters visibility to public', async () => {
     mocks.eqMock.mockResolvedValueOnce({ data: [{ id: 1 }], error: null })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await fetchFeedbackItems()
@@ -67,7 +67,7 @@ describe('fetchFeedbackItems', () => {
 // ── fetchAllFeedbackItems ────────────────────────────────────────────────────
 
 describe('fetchAllFeedbackItems', () => {
-  test('calls the feedback_items_with_votes rpc and selects * without a visibility filter [obligation]', async () => {
+  test('calls the feedback_items_with_votes rpc and selects * without a visibility filter', async () => {
     mocks.selectMock.mockResolvedValueOnce({ data: [], error: null })
     mocks.rpcMock.mockReturnValueOnce({ select: mocks.selectMock })
     await fetchAllFeedbackItems()
@@ -76,7 +76,7 @@ describe('fetchAllFeedbackItems', () => {
     expect(mocks.eqMock).not.toHaveBeenCalled()
   })
 
-  test('sorts unpublished items first, then newest-first within each group [obligation]', async () => {
+  test('sorts unpublished items first, then newest-first within each group', async () => {
     // Interleaved by date across the two visibility groups so a naive
     // single-key (created_at only) sort would fail this assertion.
     const rows = [

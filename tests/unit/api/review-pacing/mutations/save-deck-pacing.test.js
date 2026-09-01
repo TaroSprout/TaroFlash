@@ -42,7 +42,7 @@ describe('useSaveDeckPacingMutation — mutation()', () => {
 })
 
 describe('useSaveDeckPacingMutation — onSettled()', () => {
-  test('invalidates the decks query on settle [obligation]', () => {
+  test('invalidates the decks query on settle', () => {
     // The deck's pacing values are resolved server-side, so any link/override
     // change restates every one of them — the decks query has to refetch.
     const { onSettled } = config()

@@ -12,7 +12,7 @@ vi.mock('@/composables/modal', () => ({
 // the import reference differs from a re-read of the same module path.
 const settingsComponentMatcher = expect.any(Object)
 
-describe('useSettingsModal — call shape [obligation]', () => {
+describe('useSettingsModal — call shape', () => {
   beforeEach(() => {
     mockOpen.mockReset()
   })
@@ -31,7 +31,7 @@ describe('useSettingsModal — call shape [obligation]', () => {
     })
   })
 
-  test('[obligation] sources the mobile thresholds from SETTINGS_SHEET_BREAKPOINTS, shared with the recede/restore pin check', () => {
+  test('sources the mobile thresholds from SETTINGS_SHEET_BREAKPOINTS, shared with the recede/restore pin check', () => {
     mockOpen.mockReturnValueOnce({ response: Promise.resolve(undefined) })
 
     const { open } = useSettingsModal()

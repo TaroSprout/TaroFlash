@@ -24,7 +24,7 @@ function entries(wrapper) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('StatsPanel', () => {
-  describe('correct row exemption [obligation]', () => {
+  describe('correct row exemption', () => {
     test('renders the correct row even when its group is empty', () => {
       const wrapper = mountPanel(makeSummary())
       const values = entries(wrapper).map((e) => e.value)
@@ -44,7 +44,7 @@ describe('StatsPanel', () => {
     })
   })
 
-  describe('other rows hidden when empty [obligation]', () => {
+  describe('other rows hidden when empty', () => {
     test('hides new/strengthened/weakened/stuck rows when their groups are empty', () => {
       const wrapper = mountPanel(makeSummary())
       const values = entries(wrapper).map((e) => e.value)

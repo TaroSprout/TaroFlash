@@ -115,9 +115,7 @@ function matchCached(media: string): Ref<boolean> {
   mq.addEventListener('change', () => (r!.value = mq.matches))
   cache.set(media, r)
 
-  // iOS Safari's viewport is still settling when a page's first script runs, so the
-  // very first answer can be wrong — re-check once next frame and correct it.
-  // →[K:media-query-ios-first-paint-stale]
+  // iOS Safari's viewport is still settling on first script, so the first answer can be wrong. →[K:media-query-ios-first-paint-stale]
   requestAnimationFrame(() => {
     if (r!.value !== mq.matches) r!.value = mq.matches
   })

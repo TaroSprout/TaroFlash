@@ -28,7 +28,7 @@ beforeEach(() => {
 
 describe('useModalRecede', () => {
   describe('normal case (single push/pop)', () => {
-    test('opening a second modal recedes the first, not the top [obligation]', async () => {
+    test('opening a second modal recedes the first, not the top', async () => {
       const { open, modal_stack } = useModal()
       const { receded_ids } = useModalRecede()
 
@@ -44,7 +44,7 @@ describe('useModalRecede', () => {
       expect(receded_ids.has(idB)).toBe(false)
     })
 
-    test('closing the top modal restores the previously-receded one [obligation]', async () => {
+    test('closing the top modal restores the previously-receded one', async () => {
       const { open, modal_stack } = useModal()
       const { receded_ids } = useModalRecede()
 
@@ -63,8 +63,8 @@ describe('useModalRecede', () => {
     })
   })
 
-  describe('batch stack-size jumps [obligation]', () => {
-    test('a jump from 1 to 3 entries in one tick still recedes everything except the top [obligation]', async () => {
+  describe('batch stack-size jumps', () => {
+    test('a jump from 1 to 3 entries in one tick still recedes everything except the top', async () => {
       const { open, modal_stack } = useModal()
       const { receded_ids } = useModalRecede()
 
@@ -84,7 +84,7 @@ describe('useModalRecede', () => {
       expect(receded_ids.has(ids[2])).toBe(false)
     })
 
-    test('a collapse from 3 to 1 entry in one tick still restores the sole remaining entry [obligation]', async () => {
+    test('a collapse from 3 to 1 entry in one tick still restores the sole remaining entry', async () => {
       const { open, pop, modal_stack } = useModal()
       const { receded_ids } = useModalRecede()
 
@@ -127,7 +127,7 @@ describe('useModalRecede', () => {
       expect(gsap_module.gsap.to).toHaveBeenCalled()
     })
 
-    test('setModalEl(id, null) clears the id out of receded_ids (unmount cleanup) [obligation]', async () => {
+    test('setModalEl(id, null) clears the id out of receded_ids (unmount cleanup)', async () => {
       const { open, modal_stack } = useModal()
       const { receded_ids, setModalEl } = useModalRecede()
 

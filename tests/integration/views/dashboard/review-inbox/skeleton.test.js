@@ -29,7 +29,7 @@ function mountSkeleton(props = {}) {
   })
 }
 
-describe('ReviewInboxSkeleton (views/dashboard/review-inbox/skeleton.vue) [obligation]', () => {
+describe('ReviewInboxSkeleton (views/dashboard/review-inbox/skeleton.vue)', () => {
   test('renders the root with data-testid="review-inbox-skeleton"', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="review-inbox-skeleton"]').exists()).toBe(true)
@@ -62,7 +62,7 @@ describe('ReviewInboxSkeleton (views/dashboard/review-inbox/skeleton.vue) [oblig
     }
   })
 
-  test('every label no longer carries animate-pulse [obligation]', () => {
+  test('every label no longer carries animate-pulse', () => {
     const wrapper = mountSkeleton()
     for (const label of wrapper.findAll('[data-testid="review-inbox-skeleton__label"]')) {
       expect(label.classes()).not.toContain('animate-pulse')

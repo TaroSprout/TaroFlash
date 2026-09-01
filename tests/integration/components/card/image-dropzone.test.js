@@ -48,8 +48,7 @@ function mountDropzone(props = {}) {
   return shallowMount(ImageDropzone, {
     props,
     global: {
-      stubs: { UiButton: UiButtonStub, FaceOverlay: FaceOverlayStub },
-      directives: { sfx: {} }
+      stubs: { UiButton: UiButtonStub, FaceOverlay: FaceOverlayStub }
     }
   })
 }
@@ -124,46 +123,46 @@ describe('ImageDropzone', () => {
     expect(wrapper.find('[data-testid="image-dropzone__replace"]').exists()).toBe(false)
   })
 
-  // ── FaceOverlay delegation [obligation] ──────────────────────────────────────
+  // ── FaceOverlay delegation ──────────────────────────────────────
   // image-dropzone now delegates its scrim/error chrome to <face-overlay> (an
   // "inset" variant) instead of rendering its own __scrim/__error markup.
 
-  test('region mode renders the FaceOverlay (inset variant) when no error [obligation]', () => {
+  test('region mode renders the FaceOverlay (inset variant) when no error', () => {
     const wrapper = mountDropzone({ mode: 'region', image: 'https://example.com/img.jpg' })
     const overlay = wrapper.find('[data-testid="face-overlay-stub"]')
     expect(overlay.exists()).toBe(true)
     expect(overlay.attributes('data-variant')).toBe('inset')
   })
 
-  test('corners mode does NOT render the FaceOverlay when there is no error [obligation]', () => {
+  test('corners mode does NOT render the FaceOverlay when there is no error', () => {
     const wrapper = mountDropzone({ mode: 'corners' })
     expect(wrapper.find('[data-testid="face-overlay-stub"]').exists()).toBe(false)
   })
 
-  test('corners mode DOES render the FaceOverlay when there is an error [obligation]', () => {
+  test('corners mode DOES render the FaceOverlay when there is an error', () => {
     const wrapper = mountDropzone({ mode: 'corners', error: 'File too large' })
     expect(wrapper.find('[data-testid="face-overlay-stub"]').exists()).toBe(true)
   })
 
-  test('forwards the error prop to the FaceOverlay [obligation]', () => {
+  test('forwards the error prop to the FaceOverlay', () => {
     const wrapper = mountDropzone({ mode: 'region', error: 'File too large' })
     expect(wrapper.find('[data-testid="face-overlay-stub"]').attributes('data-error')).toBe(
       'File too large'
     )
   })
 
-  test('forwards the active prop to the FaceOverlay [obligation]', () => {
+  test('forwards the active prop to the FaceOverlay', () => {
     const wrapper = mountDropzone({ mode: 'region', active: true })
     expect(wrapper.find('[data-testid="face-overlay-stub"]').attributes('data-active')).toBe('true')
   })
 
-  test('the FaceOverlay browse click re-emits browse [obligation]', async () => {
+  test('the FaceOverlay browse click re-emits browse', async () => {
     const wrapper = mountDropzone({ mode: 'region', image: 'https://example.com/img.jpg' })
     await wrapper.find('[data-testid="face-overlay-stub__browse"]').trigger('click')
     expect(wrapper.emitted('browse')).toHaveLength(1)
   })
 
-  test('the FaceOverlay dismiss-error click re-emits dismiss-error [obligation]', async () => {
+  test('the FaceOverlay dismiss-error click re-emits dismiss-error', async () => {
     const wrapper = mountDropzone({ mode: 'region', error: 'oops' })
     await wrapper.find('[data-testid="face-overlay-stub__dismiss-error"]').trigger('click')
     expect(wrapper.emitted('dismiss-error')).toHaveLength(1)
@@ -171,13 +170,13 @@ describe('ImageDropzone', () => {
 
   // ── event contracts ───────────────────────────────────────────────────────────
 
-  test('__replace click emits browse in corners mode [obligation]', async () => {
+  test('__replace click emits browse in corners mode', async () => {
     const wrapper = mountDropzone({ mode: 'corners' })
     await wrapper.find('[data-testid="image-dropzone__replace"]').trigger('click')
     expect(wrapper.emitted('browse')).toHaveLength(1)
   })
 
-  test('__remove click emits remove [obligation]', async () => {
+  test('__remove click emits remove', async () => {
     const wrapper = mountDropzone({ mode: 'region', image: 'https://example.com/img.jpg' })
     await wrapper.find('[data-testid="image-dropzone__remove"]').trigger('click')
     expect(wrapper.emitted('remove')).toHaveLength(1)
@@ -200,26 +199,26 @@ describe('ImageDropzone', () => {
     expect(wrapper.find('[data-testid="image-dropzone"]').attributes('data-active')).toBeUndefined()
   })
 
-  // ── remove_label / replace_label are copy-agnostic [obligation] ──────────
+  // ── remove_label / replace_label are copy-agnostic ──────────
   // No baked-in default — the tooltip renders exactly the label the caller
   // passes; card callers pass the card wording (t('card.image-editor.*')).
 
-  test('renders exactly the passed remove_label [obligation]', () => {
+  test('renders exactly the passed remove_label', () => {
     const wrapper = mountDropzone({ mode: 'corners', remove_label: 'Remove image' })
     expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).toBe('Remove image')
   })
 
-  test('renders no label text when remove_label is omitted (no baked-in default) [obligation]', () => {
+  test('renders no label text when remove_label is omitted (no baked-in default)', () => {
     const wrapper = mountDropzone({ mode: 'corners' })
     expect(wrapper.find('[data-testid="image-dropzone__remove"]').text()).toBe('')
   })
 
-  test('renders exactly the passed replace_label [obligation]', () => {
+  test('renders exactly the passed replace_label', () => {
     const wrapper = mountDropzone({ mode: 'corners', replace_label: 'Replace image' })
     expect(wrapper.find('[data-testid="image-dropzone__replace"]').text()).toBe('Replace image')
   })
 
-  test('renders no label text when replace_label is omitted (no baked-in default) [obligation]', () => {
+  test('renders no label text when replace_label is omitted (no baked-in default)', () => {
     const wrapper = mountDropzone({ mode: 'corners' })
     expect(wrapper.find('[data-testid="image-dropzone__replace"]').text()).toBe('')
   })

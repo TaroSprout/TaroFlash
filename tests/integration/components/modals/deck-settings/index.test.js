@@ -49,6 +49,24 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockAlertWarn })
 }))
 
+// Spied so a regression test can assert that opening settings for an
+// existing deck never mounts the member-deck-count query — useDeckEditor is
+// mocked below, so this pins DeckSettings' own contract: it never reaches
+// for either of these directly, only through the editor composable
+//.
+const { mockUseMemberDeckCountQuery, mockUseDeckActions } = vi.hoisted(() => ({
+  mockUseMemberDeckCountQuery: vi.fn(() => ({ data: { value: 0 } })),
+  mockUseDeckActions: vi.fn(() => ({ createDeck: vi.fn() }))
+}))
+
+vi.mock('@/api/decks', () => ({
+  useMemberDeckCountQuery: mockUseMemberDeckCountQuery
+}))
+
+vi.mock('@/composables/deck/actions', () => ({
+  useDeckActions: mockUseDeckActions
+}))
+
 // Mock the window-chrome composable directly — its own tuck/restore/snap
 // contract (edge-on timing, no-op guards) is covered by
 // tests/unit/views/deck/deck-settings/window-chrome.test.js. Here we only
@@ -158,7 +176,11 @@ vi.mock('@/components/deck/pinned-preview.vue', async () => {
   return {
     default: defineComponent({
       name: 'DeckPinnedPreview',
-      props: { cover_editing: Boolean, cover_image: { type: Object, default: undefined } },
+      props: {
+        cover_editing: Boolean,
+        cover_image: { type: Object, default: undefined },
+        hover_lift: Boolean
+      },
       emits: ['update:side'],
       setup(_props, { emit }) {
         return () =>
@@ -276,7 +298,7 @@ describe('DeckSettings — header_title reflects the deck title, not the active 
   })
 })
 
-describe('DeckSettings — pages prop composition [obligation]', () => {
+describe('DeckSettings — pages prop composition', () => {
   test('passes a Page[] with details excluded from the sidebar (sidebar: false)', () => {
     const { wrapper } = makeWrapper()
     const pw = wrapper.findComponent({ name: 'PagedWindow' })
@@ -301,7 +323,7 @@ describe('DeckSettings — pages prop composition [obligation]', () => {
 
 // ── initial_page / initial_side ────────────────────────────────────────────────
 
-describe('DeckSettings — initial_page / initial_side [obligation]', () => {
+describe('DeckSettings — initial_page / initial_side', () => {
   test('initial_page prop opens that tab directly', () => {
     const { wrapper } = makeWrapper({ initial_page: 'design' })
     expect(wrapper.find('[data-testid="tab-design-stub"]').exists()).toBe(true)
@@ -431,9 +453,9 @@ describe('DeckSettings — overlay preview forwards side changes only on the des
   })
 })
 
-// ── is_full_bleed [obligation] ─────────────────────────────────────────────────
+// ── is_full_bleed ─────────────────────────────────────────────────
 
-describe('DeckSettings — is_full_bleed is phone-exempt regardless of PAGE_META [obligation]', () => {
+describe('DeckSettings — is_full_bleed is phone-exempt regardless of PAGE_META', () => {
   test('a full-bleed tab (review-pacing) does not claim full-bleed on phone layout', async () => {
     const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     await setLayout('phone')
@@ -446,28 +468,28 @@ describe('DeckSettings — is_full_bleed is phone-exempt regardless of PAGE_META
     expect(wrapper.vm.is_full_bleed).toBe(true)
   })
 
-  // [obligation] paged-window's stretch_page prop is only true when the
+  // paged-window's stretch_page prop is only true when the
   // displayed tab is full-bleed — every other tab keeps the content-hugging
   // layout paged-window has always used.
-  test('passes stretch_page: true to paged-window while a full-bleed tab is displayed on desktop [obligation]', async () => {
+  test('passes stretch_page: true to paged-window while a full-bleed tab is displayed on desktop', async () => {
     const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     await setLayout('desktop')
     expect(wrapper.findComponent({ name: 'PagedWindow' }).props('stretch_page')).toBe(true)
   })
 
-  test('passes stretch_page: false to paged-window on phone layout, where is_full_bleed is exempt [obligation]', async () => {
+  test('passes stretch_page: false to paged-window on phone layout, where is_full_bleed is exempt', async () => {
     const { wrapper } = makeWrapper({ initial_page: 'review-pacing' })
     await setLayout('phone')
     expect(wrapper.findComponent({ name: 'PagedWindow' }).props('stretch_page')).toBe(false)
   })
 })
 
-// ── Chrome remount re-snap [obligation] ────────────────────────────────────────
+// ── Chrome remount re-snap ────────────────────────────────────────
 // The preview/aside sit behind v-if on phone layout. Crossing desktop -> phone
 // -> desktop while a full-bleed page is displayed must re-apply the tucked
 // pose on remount, since the elements come back untucked by default.
 
-describe('DeckSettings — chrome remount re-snap [obligation]', () => {
+describe('DeckSettings — chrome remount re-snap', () => {
   test('first mount straight onto a full-bleed page snaps instead of animating', async () => {
     makeWrapper({ initial_page: 'review-pacing' })
     await nextTick()
@@ -557,6 +579,15 @@ describe('DeckSettings — pinned-preview cover_editing / cover_image wiring', (
     const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
     expect(preview.props('cover_image')).toEqual(mockEditor.editor.cover_image)
   })
+
+  // Deck-settings is the one call site that opts the pinned
+  // preview into the hover lift — TARO-389's whole point.
+  test('passes hover_lift: true to the pinned preview', async () => {
+    const { wrapper } = makeWrapper()
+    await nextTick()
+    const preview = wrapper.findComponent({ name: 'DeckPinnedPreview' })
+    expect(preview.props('hover_lift')).toBe(true)
+  })
 })
 
 // ── Layout poses across breakpoints ───────────────────────────────────────────
@@ -578,5 +609,15 @@ describe('DeckSettings — layout poses across breakpoints', () => {
     expect(wrapper.find('[data-testid="deck-settings__aside"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="deck-preview-stub"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="deck-save-button-stub"]').exists()).toBe(true)
+  })
+})
+
+// ── Deck-count query never fires for an existing deck ────────────
+
+describe('DeckSettings — opening settings for an existing deck never mounts the member-deck-count query', () => {
+  test('useMemberDeckCountQuery and useDeckActions are not called when mounting for a deck with an id', () => {
+    makeWrapper({ deck: deckFixture.one({ overrides: { id: 1 } }) })
+    expect(mockUseMemberDeckCountQuery).not.toHaveBeenCalled()
+    expect(mockUseDeckActions).not.toHaveBeenCalled()
   })
 })

@@ -49,8 +49,7 @@ export const useNoticeStore = defineStore('notice', () => {
     const persist = options?.persist ?? Boolean(options?.actions?.length)
     const variant = options?.variant ?? 'toast'
 
-    // Only one panel notice may be visible at a time; a newer one replaces
-    // any existing panel. Toasts are unaffected and may still stack.
+    // One panel at a time; a newer one replaces it. Toasts still stack.
     if (variant === 'panel') {
       const existing_panels = notices.value.filter((n) => n.variant === 'panel')
       for (const panel of existing_panels) removeNotice(panel)

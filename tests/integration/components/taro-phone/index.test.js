@@ -73,14 +73,14 @@ afterEach(() => {
   wrapper?.unmount()
 })
 
-describe('TaroPhoneIndex — open/close emit the phone-specific roles [obligation]', () => {
-  test('openPhone emits phone.open, never dialog.open [obligation]', () => {
+describe('TaroPhoneIndex — open/close emit the phone-specific roles', () => {
+  test('openPhone emits phone.open, never dialog.open', () => {
     // beforeEach already drove the open click that put the phone in its open state.
     expect(mockEmitSfx).toHaveBeenCalledWith('phone.open')
     expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.open')
   })
 
-  test('closing via esc emits phone.close, never dialog.open [obligation]', async () => {
+  test('closing via esc emits phone.close, never dialog.open', async () => {
     mockEmitSfx.mockClear()
 
     escHandlerRef.current()
@@ -106,7 +106,7 @@ describe('TaroPhoneIndex — openApp hide/reopen integration', () => {
   })
 })
 
-describe('TaroPhoneIndex — outside click regression [obligation]', () => {
+describe('TaroPhoneIndex — outside click regression', () => {
   test('a synthetic click on document does NOT close the phone after openApp reopens it', async () => {
     const store = useTaroPhoneStore()
     const deferred = makeDeferredResult()

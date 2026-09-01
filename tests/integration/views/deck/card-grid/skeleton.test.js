@@ -39,8 +39,7 @@ function mountSkeleton(props = {}) {
   return shallowMount(CardGridSkeleton, {
     props,
     global: {
-      stubs: { Card: CardStub },
-      directives: { sfx: {} }
+      stubs: { Card: CardStub }
     }
   })
 }
@@ -50,19 +49,19 @@ function mountSkeleton(props = {}) {
 describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
   // ── default props ──────────────────────────────────────────────────────────
 
-  test('renders 40 skeleton items by default (count=40) [obligation]', () => {
+  test('renders 40 skeleton items by default (count=40)', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(40)
   })
 
-  test('renders count=40 Card stubs by default (one per item) [obligation]', () => {
+  test('renders count=40 Card stubs by default (one per item)', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.findAll('[data-testid="card-stub"]')).toHaveLength(40)
   })
 
   // ── count prop ─────────────────────────────────────────────────────────────
 
-  test('renders exactly count items when count prop is provided [obligation]', () => {
+  test('renders exactly count items when count prop is provided', () => {
     const wrapper = mountSkeleton({ count: 24 })
     expect(wrapper.findAll('[data-testid="card-grid-skeleton__item"]')).toHaveLength(24)
   })
@@ -74,7 +73,7 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
 
   // ── shimmer prop ───────────────────────────────────────────────────────────
 
-  test('all cards have shimmer=true when shimmer prop is omitted (default true) [obligation]', () => {
+  test('all cards have shimmer=true when shimmer prop is omitted (default true)', () => {
     const wrapper = mountSkeleton()
     const cards = wrapper.findAllComponents(CardStub)
     for (const card of cards) {
@@ -82,7 +81,7 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     }
   })
 
-  test('all cards have shimmer=false when shimmer=false is passed [obligation]', () => {
+  test('all cards have shimmer=false when shimmer=false is passed', () => {
     const wrapper = mountSkeleton({ shimmer: false })
     const cards = wrapper.findAllComponents(CardStub)
     for (const card of cards) {
@@ -90,9 +89,9 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     }
   })
 
-  // ── DEFAULT_COVER (no palette — neutral chrome / diagonal-stripes) [obligation]
+  // ── DEFAULT_COVER (no palette — neutral chrome / diagonal-stripes)
 
-  test('each card uses DEFAULT_COVER with no palette (neutral chrome) [obligation]', () => {
+  test('each card uses DEFAULT_COVER with no palette (neutral chrome)', () => {
     const wrapper = mountSkeleton()
     const cards = wrapper.findAll('[data-testid="card-stub"]')
     for (const card of cards) {
@@ -100,7 +99,7 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     }
   })
 
-  test('each card uses DEFAULT_COVER pattern=diagonal-stripes [obligation]', () => {
+  test('each card uses DEFAULT_COVER pattern=diagonal-stripes', () => {
     const wrapper = mountSkeleton()
     const cards = wrapper.findAll('[data-testid="card-stub"]')
     for (const card of cards) {
@@ -124,51 +123,51 @@ describe('CardGridSkeleton (card-grid/skeleton.vue)', () => {
     expect(wrapper.find('[data-testid="card-grid-skeleton"]').exists()).toBe(true)
   })
 
-  // ── size prop drives grid_style columns [obligation] ──────────────────────
+  // ── size prop drives grid_style columns ──────────────────────
   // XL_CARD_WIDTH=260, CARD_SCALE: base=0.65, md=0.85, xl=1
 
-  test('grid style uses 169px columns for size="base" [obligation]', () => {
+  test('grid style uses 169px columns for size="base"', () => {
     const wrapper = mountSkeleton({ size: 'base' })
     expect(wrapper.find('.grid').attributes('style')).toContain(
       'grid-template-columns: repeat(auto-fill, 169px)'
     )
   })
 
-  test('grid style uses 221px columns for size="md" (default) [obligation]', () => {
+  test('grid style uses 221px columns for size="md" (default)', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('.grid').attributes('style')).toContain(
       'grid-template-columns: repeat(auto-fill, 221px)'
     )
   })
 
-  test('grid style uses 260px columns for size="xl" [obligation]', () => {
+  test('grid style uses 260px columns for size="xl"', () => {
     const wrapper = mountSkeleton({ size: 'xl' })
     expect(wrapper.find('.grid').attributes('style')).toContain(
       'grid-template-columns: repeat(auto-fill, 260px)'
     )
   })
 
-  // ── size prop drives gap scaling [obligation] ─────────────────────────────
+  // ── size prop drives gap scaling ─────────────────────────────
   // gap = 8 * card_scale: base=5.2px, md=6.8px, xl=8px
 
-  test('gap is 5.2px for size="base" (8 * 0.65) [obligation]', () => {
+  test('gap is 5.2px for size="base" (8 * 0.65)', () => {
     const wrapper = mountSkeleton({ size: 'base' })
     expect(wrapper.find('.grid').attributes('style')).toContain('gap: 5.2px')
   })
 
-  test('gap is 6.8px for size="md" (8 * 0.85) [obligation]', () => {
+  test('gap is 6.8px for size="md" (8 * 0.85)', () => {
     const wrapper = mountSkeleton()
     expect(wrapper.find('.grid').attributes('style')).toContain('gap: 6.8px')
   })
 
-  test('gap is 8px for size="xl" (8 * 1) [obligation]', () => {
+  test('gap is 8px for size="xl" (8 * 1)', () => {
     const wrapper = mountSkeleton({ size: 'xl' })
     expect(wrapper.find('.grid').attributes('style')).toContain('gap: 8px')
   })
 
   // ── no deckViewShellKey injection needed ──────────────────────────────────
 
-  test('renders without any provider context (no inject dependency) [obligation]', () => {
+  test('renders without any provider context (no inject dependency)', () => {
     // skeleton.vue reads size from its own prop, not from deckViewShellKey inject
     const wrapper = mountSkeleton()
     expect(wrapper.find('[data-testid="card-grid-skeleton"]').exists()).toBe(true)

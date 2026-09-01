@@ -165,7 +165,7 @@ describe('deck-hero/actions', () => {
     expect(studyBtn(wrapper).exists()).toBe(true)
   })
 
-  test('renders the search-bar and study-button together on mobile [obligation]', () => {
+  test('renders the search-bar and study-button together on mobile', () => {
     const wrapper = mount({ is_mobile: true })
     expect(wrapper.find('[data-testid="deck-hero__mobile-actions"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="search-bar-stub"]').exists()).toBe(true)
@@ -179,13 +179,13 @@ describe('deck-hero/actions', () => {
 
   // ── mobile: search hides the rest-actions ───────────────────────────────────
 
-  test('mobile rest-actions (study button) hide while searching [obligation]', () => {
+  test('mobile rest-actions (study button) hide while searching', () => {
     const wrapper = mount({ is_mobile: true, search: makeSearch({ is_searching: true }) })
     expect(wrapper.find('[data-testid="deck-hero__mobile-actions-rest"]').exists()).toBe(false)
     expect(studyBtn(wrapper).exists()).toBe(false)
   })
 
-  test('mobile rest-actions show when not searching [obligation]', () => {
+  test('mobile rest-actions show when not searching', () => {
     const wrapper = mount({ is_mobile: true, search: makeSearch({ is_searching: false }) })
     expect(wrapper.find('[data-testid="deck-hero__mobile-actions-rest"]').exists()).toBe(true)
     expect(studyBtn(wrapper).exists()).toBe(true)
@@ -245,7 +245,7 @@ describe('deck-hero/actions', () => {
     expect(selectBtn(wrapper).exists()).toBe(true)
   })
 
-  test('clicking appearance option opens deck-settings modal with design tab and front side [obligation]', async () => {
+  test('clicking appearance option opens deck-settings modal with design tab and front side', async () => {
     const deck = { id: 5, title: 'Test', card_count: 5, due_count: 1 }
     mockUseDeckQuery.mockReturnValue({ data: ref(deck) })
     const wrapper = mount({ deck: { id: 5 }, editor: makeEditor() })
@@ -256,12 +256,12 @@ describe('deck-hero/actions', () => {
     })
   })
 
-  test('appearance option is the last dropdown option (icon align-horizontal-frame) [obligation]', () => {
+  test('appearance option is the last dropdown option (icon align-horizontal-frame)', () => {
     const wrapper = mount({ editor: makeEditor() })
     expect(optionBtns(wrapper)[4].exists()).toBe(true)
   })
 
-  test('clicking appearance when no editor is injected still opens the settings modal [obligation]', async () => {
+  test('clicking appearance when no editor is injected still opens the settings modal', async () => {
     const deck = { id: 9 }
     mockUseDeckQuery.mockReturnValue({ data: ref(deck) })
     const wrapper = mount({ deck: { id: 9 } })
@@ -272,30 +272,30 @@ describe('deck-hero/actions', () => {
     })
   })
 
-  // ── mobile — edit button hidden [obligation] ──────────────────────────────
+  // ── mobile — edit button hidden ──────────────────────────────
   // At mobile (<md) actions.vue hides the edit/dropdown button entirely;
   // the mobile edit affordance lives in footer-actions.vue instead.
 
-  test('edit button does not render at mobile [obligation]', () => {
+  test('edit button does not render at mobile', () => {
     const wrapper = mount({ shell: makeShell({ mode: 'view' }), is_mobile: true })
     expect(editBtn(wrapper).exists()).toBe(false)
   })
 
-  // ── rearranging state [obligation] ────────────────────────────────────────
+  // ── rearranging state ────────────────────────────────────────
 
-  test('shows rearrange-done label when shell is rearranging [obligation]', () => {
+  test('shows rearrange-done label when shell is rearranging', () => {
     const shell = makeShell({ is_rearranging: true })
     const wrapper = mount({ shell })
     expect(editBtn(wrapper).text()).toContain('Done')
   })
 
-  test('rearrange option (index 1) is disabled when already rearranging [obligation]', () => {
+  test('rearrange option (index 1) is disabled when already rearranging', () => {
     const shell = makeShell({ is_rearranging: true })
     const wrapper = mount({ shell })
     expect(optionBtns(wrapper)[1].exists()).toBe(true)
   })
 
-  test('clicking edit while rearranging calls toggleRearrange [obligation]', async () => {
+  test('clicking edit while rearranging calls toggleRearrange', async () => {
     const shell = makeShell({ is_rearranging: true })
     const wrapper = mount({ shell })
     await editBtn(wrapper).trigger('click')
@@ -303,7 +303,7 @@ describe('deck-hero/actions', () => {
     expect(shell.toggleMode).not.toHaveBeenCalled()
   })
 
-  test('at md+ clicking edit calls toggleMode even when mobile_editor is provided [obligation]', async () => {
+  test('at md+ clicking edit calls toggleMode even when mobile_editor is provided', async () => {
     const toggleMode = vi.fn()
     const mobile_editor = makeMobileEditor()
     const wrapper = mount({
@@ -316,16 +316,16 @@ describe('deck-hero/actions', () => {
     expect(mobile_editor.open_at).not.toHaveBeenCalled()
   })
 
-  // ── isSelecting disables study + edit-cards [obligation] ────────────────────
+  // ── isSelecting disables study + edit-cards ────────────────────
   // Regression guard: the desktop (v-else) study-button branch never received
   // the :disabled binding at all — only the mobile branch did.
 
-  test('disables the study button on mobile while isSelecting [obligation]', () => {
+  test('disables the study button on mobile while isSelecting', () => {
     const wrapper = mount({ is_mobile: true, isSelecting: true })
     expect(studyBtn(wrapper).attributes('data-disabled')).toBe('true')
   })
 
-  test('disables the study button on desktop while isSelecting [obligation]', () => {
+  test('disables the study button on desktop while isSelecting', () => {
     const wrapper = mount({ is_mobile: false, isSelecting: true })
     expect(studyBtn(wrapper).attributes('data-disabled')).toBe('true')
   })
@@ -335,7 +335,7 @@ describe('deck-hero/actions', () => {
     expect(studyBtn(wrapper).attributes('data-disabled')).toBe('false')
   })
 
-  test('disables the edit-cards dropdown while isSelecting [obligation]', () => {
+  test('disables the edit-cards dropdown while isSelecting', () => {
     const wrapper = mount({ isSelecting: true })
     expect(editBtn(wrapper).attributes('disabled')).toBeDefined()
   })

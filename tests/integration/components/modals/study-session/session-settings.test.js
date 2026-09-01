@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import SessionSettings from '@/views/study-session/session-settings/index.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
@@ -76,9 +76,9 @@ describe('SessionSettings', () => {
     expect(wrapper.find('[data-testid="session-settings__order"]').exists()).toBe(true)
   })
 
-  // ── Scrolls through scroll-region, not a native overflow-y-auto root [obligation] ─
+  // ── Scrolls through scroll-region, not a native overflow-y-auto root ─
 
-  test('the root scrolls through scroll-region rather than a bare overflow-y-auto [obligation]', () => {
+  test('the root scrolls through scroll-region rather than a bare overflow-y-auto', () => {
     const wrapper = mountSettings()
     const root = wrapper.find('[data-testid="session-settings"]')
     expect(root.attributes('data-scroll')).toBe('self')
@@ -86,7 +86,7 @@ describe('SessionSettings', () => {
     expect(root.find('[data-testid="scroll-region__scroller"]').exists()).toBe(true)
   })
 
-  // ── ratings_mode: writable computed over show_all_ratings [obligation] ────
+  // ── ratings_mode: writable computed over show_all_ratings ────
 
   describe('ratings mode', () => {
     test('reflects "Simple" as the active option when show_all_ratings is false', () => {
@@ -115,6 +115,23 @@ describe('SessionSettings', () => {
     })
   })
 
+  // ── ratings-mode tooltip copy, rewritten off the four rating-label names ─
+
+  test('the ratings-mode tooltip renders the rewritten description', async () => {
+    const wrapper = mountSettings()
+    const trigger = wrapper
+      .find('[data-testid="session-settings__rating"] [data-testid="field-row__label"]')
+      .find('.ui-tooltip-trigger')
+    trigger.element.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+    await flushPromises()
+
+    const tooltip = document.body.querySelector('[data-testid="ui-tooltip"]')
+    expect(tooltip).not.toBeNull()
+    expect(tooltip.textContent).toBe(
+      'Pick how finely you grade a card — a quick pass/fail, or a four-point scale.'
+    )
+  })
+
   // ── show_rating_buttons toggle ─────────────────────────────────────────────
 
   test('the rating-buttons toggle reflects show_rating_buttons', () => {
@@ -134,10 +151,10 @@ describe('SessionSettings', () => {
     expect(mockShowRatingButtons.value).toBe(true)
   })
 
-  // ── show_button_preview toggle, disabled when show_rating_buttons is off [obligation] ─
+  // ── show_button_preview toggle, disabled when show_rating_buttons is off ─
 
-  describe('button preview toggle [obligation]', () => {
-    test('is enabled (not data-disabled) when show_rating_buttons is true [obligation]', () => {
+  describe('button preview toggle', () => {
+    test('is enabled (not data-disabled) when show_rating_buttons is true', () => {
       mockShowRatingButtons.value = true
       const wrapper = mountSettings()
       const toggle = wrapper.find(
@@ -146,7 +163,7 @@ describe('SessionSettings', () => {
       expect(toggle.attributes('data-disabled')).toBe('false')
     })
 
-    test('is disabled when show_rating_buttons is false [obligation]', () => {
+    test('is disabled when show_rating_buttons is false', () => {
       mockShowRatingButtons.value = false
       const wrapper = mountSettings()
       const toggle = wrapper.find(
@@ -178,16 +195,16 @@ describe('SessionSettings', () => {
     expect(mockShowCardPreview.value).toBe(false)
   })
 
-  // ── multi_deck_ordering option group — desktop (actions slot) vs mobile [obligation] ─
+  // ── multi_deck_ordering option group — desktop (actions slot) vs mobile ─
 
-  describe('multi-deck ordering control placement [obligation]', () => {
-    test('renders exactly one order-control on desktop (actions slot) [obligation]', () => {
+  describe('multi-deck ordering control placement', () => {
+    test('renders exactly one order-control on desktop (actions slot)', () => {
       mediaState.is_mobile.value = false
       const wrapper = mountSettings()
       expect(wrapper.findAll('[data-testid="session-settings__order-control"]')).toHaveLength(1)
     })
 
-    test('renders exactly one order-control on mobile (below the label) [obligation]', () => {
+    test('renders exactly one order-control on mobile (below the label)', () => {
       mediaState.is_mobile.value = true
       const wrapper = mountSettings()
       expect(wrapper.findAll('[data-testid="session-settings__order-control"]')).toHaveLength(1)

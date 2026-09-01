@@ -25,7 +25,7 @@ beforeEach(() => {
 })
 
 describe('usePrompt — ask()', () => {
-  test('calls emitSfx with the default open audio when openAudio is omitted [obligation]', () => {
+  test('calls emitSfx with the default open audio when openAudio is omitted', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create' })
     expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
@@ -37,7 +37,7 @@ describe('usePrompt — ask()', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
   })
 
-  test('passes default cancelAudio to the prompt component when cancelAudio is omitted [obligation]', () => {
+  test('passes default cancelAudio to the prompt component when cancelAudio is omitted', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create' })
     expect(mockOpen).toHaveBeenCalledWith(
@@ -74,7 +74,7 @@ describe('usePrompt — ask()', () => {
     )
   })
 
-  test('opens the modal with mode: popup [obligation]', () => {
+  test('opens the modal with mode: popup', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create' })
     expect(mockOpen).toHaveBeenCalledWith(anyComponent, expect.objectContaining({ mode: 'popup' }))

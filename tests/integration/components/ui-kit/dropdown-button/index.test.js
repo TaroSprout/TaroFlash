@@ -72,25 +72,25 @@ describe('DropdownButton', () => {
     expect(wrapper.text()).not.toContain('Label')
   })
 
-  // ── disabled prop [obligation] ───────────────────────────────────────────────
+  // ── disabled prop ───────────────────────────────────────────────
 
   test('disabled=true disables the primary button', () => {
     const wrapper = mountDropdown({ disabled: true })
     expect(primaryButton(wrapper).attributes('aria-disabled')).toBe('true')
   })
 
-  test('disabled=true marks the caret trigger aria-disabled [obligation]', () => {
+  test('disabled=true marks the caret trigger aria-disabled', () => {
     const wrapper = mountDropdown({ disabled: true })
     expect(caretTrigger(wrapper).attributes('aria-disabled')).toBe('true')
   })
 
-  test('clicking the caret trigger does not open the popover when disabled=true [obligation]', async () => {
+  test('clicking the caret trigger does not open the popover when disabled=true', async () => {
     const wrapper = mountDropdown({ disabled: true })
     await caretTrigger(wrapper).trigger('click')
     expect(popover(wrapper).attributes('data-active')).toBe('false')
   })
 
-  test('Enter keydown on the caret does not open the popover when disabled=true [obligation]', async () => {
+  test('Enter keydown on the caret does not open the popover when disabled=true', async () => {
     const wrapper = mountDropdown({ disabled: true })
     await caretTrigger(wrapper).trigger('keydown.enter')
     expect(popover(wrapper).attributes('data-active')).toBe('false')
@@ -126,11 +126,11 @@ describe('DropdownButton', () => {
     expect(popover(wrapper).attributes('data-active')).toBe('false')
   })
 
-  // ── menu station [obligation] ────────────────────────────────────────────
+  // ── menu station ────────────────────────────────────────────
   // The menu is always a float station, whether or not the trigger sits
   // inside a stationed ancestor — there is no depth/float prop to forward.
 
-  test('the opened menu carries data-station="float" [obligation]', async () => {
+  test('the opened menu carries data-station="float"', async () => {
     const wrapper = mountDropdown({ options: [{ value: 'a', label: 'Option A' }] })
     await caretTrigger(wrapper).trigger('click')
 

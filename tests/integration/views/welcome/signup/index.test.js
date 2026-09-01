@@ -169,9 +169,9 @@ describe('SignupDialog (signup/index.vue)', () => {
 
   // ── onSubmit: success path ─────────────────────────────────────────────────
 
-  // [obligation] on email success the dialog delegates to session.onAuthenticated()
+  // on email success the dialog delegates to session.onAuthenticated()
   // (the single post-auth funnel) instead of pushing + closing itself.
-  test('on success: calls session.onAuthenticated() [obligation]', async () => {
+  test('on success: calls session.onAuthenticated()', async () => {
     mocks.authSubmit.mockResolvedValueOnce('success')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -185,7 +185,7 @@ describe('SignupDialog (signup/index.vue)', () => {
     expect(mocks.onAuthenticated).toHaveBeenCalledOnce()
   })
 
-  test('on success: does not call close() itself — onAuthenticated owns teardown [obligation]', async () => {
+  test('on success: does not call close() itself — onAuthenticated owns teardown', async () => {
     mocks.authSubmit.mockResolvedValueOnce('success')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -200,7 +200,7 @@ describe('SignupDialog (signup/index.vue)', () => {
 
   // ── onSubmit: error path ───────────────────────────────────────────────────
 
-  test('on error: shows alert.warn [obligation]', async () => {
+  test('on error: shows alert.warn', async () => {
     mocks.authSubmit.mockResolvedValueOnce('error')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -213,7 +213,7 @@ describe('SignupDialog (signup/index.vue)', () => {
     expect(mocks.alertWarn).toHaveBeenCalled()
   })
 
-  test('on error: modal stays open (close NOT called) [obligation]', async () => {
+  test('on error: modal stays open (close NOT called)', async () => {
     mocks.authSubmit.mockResolvedValueOnce('error')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -228,7 +228,7 @@ describe('SignupDialog (signup/index.vue)', () => {
 
   // ── onSubmit: invalid path ─────────────────────────────────────────────────
 
-  test('on invalid: modal stays open, no alert [obligation]', async () => {
+  test('on invalid: modal stays open, no alert', async () => {
     mocks.authSubmit.mockResolvedValueOnce('invalid')
     const close = vi.fn()
     const wrapper = mountSignupDialog({ close })
@@ -244,7 +244,7 @@ describe('SignupDialog (signup/index.vue)', () => {
 
   // ── form @submit wiring ────────────────────────────────────────────────────
 
-  test('form submit event triggers onSubmit (calls auth.submit) [obligation]', async () => {
+  test('form submit event triggers onSubmit (calls auth.submit)', async () => {
     mocks.authSubmit.mockResolvedValueOnce('invalid')
     const wrapper = mountSignupDialog()
 

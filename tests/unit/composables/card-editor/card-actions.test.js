@@ -9,6 +9,11 @@ const { modalOpenMock, alertWarnMock, emitSfxMock, mockT } = vi.hoisted(() => ({
   mockT: vi.fn((key) => key)
 }))
 
+const { mockPopDeckIn, mockPopDeckOut } = vi.hoisted(() => ({
+  mockPopDeckIn: vi.fn((_el, done) => done?.()),
+  mockPopDeckOut: vi.fn((_el, done) => done?.())
+}))
+
 const { mockNotice } = vi.hoisted(() => ({
   mockNotice: { error: vi.fn(), success: vi.fn(), warn: vi.fn() }
 }))
@@ -29,6 +34,10 @@ vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/api/cards', () => ({ useAllCardsInDeckQuery: mockUseAllCardsInDeckQuery }))
 vi.mock('@/utils/download', () => ({ downloadTextFile: mockDownloadTextFile }))
+vi.mock('@/utils/animations/deck-grid', () => ({
+  popDeckIn: mockPopDeckIn,
+  popDeckOut: mockPopDeckOut
+}))
 vi.mock('@/utils/card/csv', () => ({
   cardsToCsv: mockCardsToCsv,
   deckExportFilename: (title) => `${title ?? 'deck'}.csv`
@@ -142,6 +151,8 @@ describe('useCardActions', () => {
     mockDownloadTextFile.mockReset()
     mockCardsToCsv.mockReset().mockReturnValue('csv-body')
     mockUseAllCardsInDeckQuery.mockReset()
+    mockPopDeckIn.mockClear()
+    mockPopDeckOut.mockClear()
   })
 
   // ── onSelectCard ──────────────────────────────────────────────────────────
@@ -215,7 +226,7 @@ describe('useCardActions', () => {
       expect(args.cards.map((c) => c.id)).toEqual([7])
     })
 
-    test('runs cleanup on confirm: refetch + exitSelection (mode is NOT reset) [obligation]', async () => {
+    test('runs cleanup on confirm: refetch + exitSelection (mode is NOT reset)', async () => {
       alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
       const persisted = [makeCard({ id: 1 })]
       const exitMode = vi.fn()
@@ -242,7 +253,7 @@ describe('useCardActions', () => {
       expect(args.except_ids).toEqual([3, 4])
     })
 
-    test('shows an error notice and skips cleanup when deleteCards rejects [obligation]', async () => {
+    test('shows an error notice and skips cleanup when deleteCards rejects', async () => {
       alertWarnMock.mockReturnValueOnce({ response: Promise.resolve(true) })
       const persisted = [makeCard({ id: 1 })]
       const mutations = makeMutations()
@@ -258,6 +269,74 @@ describe('useCardActions', () => {
       expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
       expect(selection.exitSelection).not.toHaveBeenCalled()
       expect(deck_query.refetch).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── onDeleteCardImmediate ─────────────────────────────────────────────────
+  // The grid's reorder-mode corner button: no confirm alert, fires the delete
+  // cue directly.
+
+  describe('onDeleteCardImmediate', () => {
+    test('fires the card.delete sfx directly, without going through confirmDelete', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
+
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
+
+      expect(emitSfxMock).toHaveBeenCalledWith('card.delete')
+      expect(alertWarnMock).not.toHaveBeenCalled()
+      expect(mutations.deleteCards).toHaveBeenCalledOnce()
+    })
+
+    test('calls mutations.deleteCards with the card in the cards array', async () => {
+      const persisted = [makeCard({ id: 5 })]
+      const { actions, mutations } = makeActions({ list: makeList({ persisted }) })
+
+      await actions.onDeleteCardImmediate(5, document.createElement('div'))
+
+      const [args] = mutations.deleteCards.mock.calls[0]
+      expect(args.cards.map((c) => c.id)).toEqual([5])
+    })
+
+    test('retires the card temp entry before the mutation and runs afterDelete on success', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const list = makeList({ persisted })
+      const retireTempsSpy = vi.spyOn(list, 'retireTemps')
+      const { actions, mutations, selection, deck_query } = makeActions({ list })
+
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
+
+      expect(retireTempsSpy).toHaveBeenCalledWith([1])
+      expect(mutations.deleteCards).toHaveBeenCalledOnce()
+      expect(selection.exitSelection).toHaveBeenCalledOnce()
+      expect(deck_query.refetch).toHaveBeenCalledOnce()
+    })
+
+    test('restores the retired temp entry and shows an error notice when the mutation rejects', async () => {
+      const persisted = [makeCard({ id: 1 })]
+      const temp_entries = [{ index: 0, real_id: 1, card: { id: 1 } }]
+      const mutations = makeMutations()
+      mutations.deleteCards.mockRejectedValueOnce(new Error('boom'))
+      const list = makeList({ persisted, temp_entries })
+      const restoreTempsSpy = vi.spyOn(list, 'restoreTemps')
+      const { actions, selection, deck_query } = makeActions({ list, mutations })
+
+      await actions.onDeleteCardImmediate(1, document.createElement('div'))
+
+      expect(mockNotice.error).toHaveBeenCalledWith('toast.error.delete-cards-failed')
+      expect(restoreTempsSpy).toHaveBeenCalledOnce()
+      expect(list.temp_entries.value).toEqual(temp_entries)
+      expect(selection.exitSelection).not.toHaveBeenCalled()
+      expect(deck_query.refetch).not.toHaveBeenCalled()
+    })
+
+    test('is a no-op when the card is not found', async () => {
+      const { actions, mutations } = makeActions({ list: makeList({ persisted: [] }) })
+
+      await actions.onDeleteCardImmediate(999, document.createElement('div'))
+
+      expect(mutations.deleteCards).not.toHaveBeenCalled()
+      expect(emitSfxMock).not.toHaveBeenCalledWith('card.delete')
     })
   })
 
@@ -296,7 +375,7 @@ describe('useCardActions', () => {
       expect(mutations.moveCards).not.toHaveBeenCalled()
     })
 
-    test('the move closure passed to the modal fires the mutation with the chosen destination [obligation]', async () => {
+    test('the move closure passed to the modal fires the mutation with the chosen destination', async () => {
       // Mirrors what move-cards.vue does: invoke the passed `move` closure with
       // the chosen deck before resolving with the modal response.
       modalOpenMock.mockImplementationOnce((_component, options) => ({
@@ -355,9 +434,9 @@ describe('useCardActions', () => {
       expect(vars.except_ids).toEqual([3, 4])
     })
 
-    // [obligation] whole-deck move sizes its rank mint from the caller's own
+    // whole-deck move sizes its rank mint from the caller's own
     // count rather than a server round-trip — the move closure must forward it.
-    test('select-all mode: the move closure passes the resolved count to the mutation [obligation]', async () => {
+    test('select-all mode: the move closure passes the resolved count to the mutation', async () => {
       modalOpenMock.mockImplementationOnce((_component, options) => ({
         response: options.props.move(55).then(() => ({ deck_id: 55 }))
       }))
@@ -388,7 +467,7 @@ describe('useCardActions', () => {
       expect(options.props.cards).toHaveLength(2)
     })
 
-    test('the move closure passed to the modal lets a rejected mutation propagate [obligation]', async () => {
+    test('the move closure passed to the modal lets a rejected mutation propagate', async () => {
       // Error handling now lives entirely inside move-cards.vue — this composable's
       // `move` closure must not swallow a rejection with a local try/catch.
       modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
@@ -406,7 +485,7 @@ describe('useCardActions', () => {
       await expect(options.props.move(42)).rejects.toThrow('boom')
     })
 
-    test('does not run cleanup (exitSelection/refetch) when the modal is dismissed [obligation]', async () => {
+    test('does not run cleanup (exitSelection/refetch) when the modal is dismissed', async () => {
       modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const { actions, selection, deck_query } = makeActions({
@@ -433,7 +512,7 @@ describe('useCardActions', () => {
   // ── onExportCards / onExportSelection ────────────────────────────────────
 
   describe('onExportCards', () => {
-    test('fetches the whole deck via the all-cards query, ignoring the current selection [obligation]', async () => {
+    test('fetches the whole deck via the all-cards query, ignoring the current selection', async () => {
       const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
       const all_cards_query = makeAllCardsQuery(cards)
       const selection = makeSelection({ selected_ids: [1] })
@@ -445,7 +524,7 @@ describe('useCardActions', () => {
       expect(mockCardsToCsv).toHaveBeenCalledWith(cards)
     })
 
-    test('downloads with the deck-title filename and toasts the real exported count [obligation]', async () => {
+    test('downloads with the deck-title filename and toasts the real exported count', async () => {
       const cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
       const deck_query = makeDeckQuery({ title: 'My Deck' })
       const { actions } = makeActions({ all_cards_query: makeAllCardsQuery(cards), deck_query })
@@ -457,7 +536,7 @@ describe('useCardActions', () => {
       expect(mockNotice.success).toHaveBeenCalledWith('toast.success.cards-exported')
     })
 
-    test('is a no-op on an empty deck: no download, no toast [obligation]', async () => {
+    test('is a no-op on an empty deck: no download, no toast', async () => {
       const { actions } = makeActions({ all_cards_query: makeAllCardsQuery([]) })
 
       await actions.onExportCards()
@@ -468,7 +547,7 @@ describe('useCardActions', () => {
   })
 
   describe('onExportSelection', () => {
-    test('normal mode exports exactly filterSelected(persisted_cards), without hitting the all-cards fetch [obligation]', async () => {
+    test('normal mode exports exactly filterSelected(persisted_cards), without hitting the all-cards fetch', async () => {
       const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
       const selection = makeSelection({ selected_ids: [1, 3] })
       const all_cards_query = makeAllCardsQuery(persisted)
@@ -480,7 +559,7 @@ describe('useCardActions', () => {
       expect(mockCardsToCsv).toHaveBeenCalledWith([persisted[0], persisted[2]])
     })
 
-    test('select-all mode fetches the whole deck and filters out only the deselected ids [obligation]', async () => {
+    test('select-all mode fetches the whole deck and filters out only the deselected ids', async () => {
       const all_cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]
       const selection = makeSelection({ select_all: true, deselected: [2] })
       const all_cards_query = makeAllCardsQuery(all_cards)
@@ -492,7 +571,7 @@ describe('useCardActions', () => {
       expect(mockCardsToCsv).toHaveBeenCalledWith([all_cards[0], all_cards[2]])
     })
 
-    test('select-all mode with everything deselected is a no-op: no download, no toast [obligation]', async () => {
+    test('select-all mode with everything deselected is a no-op: no download, no toast', async () => {
       const all_cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
       const selection = makeSelection({ select_all: true, deselected: [1, 2] })
       const { actions } = makeActions({ selection, all_cards_query: makeAllCardsQuery(all_cards) })
@@ -503,7 +582,7 @@ describe('useCardActions', () => {
       expect(mockNotice.success).not.toHaveBeenCalled()
     })
 
-    test('toasts the real exported count, not the nominal selected_count, when they diverge [obligation]', async () => {
+    test('toasts the real exported count, not the nominal selected_count, when they diverge', async () => {
       // makeSelection's selected_count sentinel for select-all is 9999 — the real
       // resolved list after filtering deselected ids is only 2 cards.
       const all_cards = [makeCard({ id: 1 }), makeCard({ id: 2 }), makeCard({ id: 3 })]

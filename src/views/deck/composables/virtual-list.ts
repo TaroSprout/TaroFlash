@@ -83,10 +83,7 @@ export function useVirtualCardList(
     temp_entries.value.filter((e) => e.real_id === null || !persisted_id_set.value.has(e.real_id))
   )
 
-  // A promoted temp is retired the moment the persisted list carries its card:
-  // the server's copy renders the row from then on, and an entry kept past that
-  // point would put the card back on screen the next time it leaves the deck —
-  // deleted, or moved somewhere else. →[K:deck-temp-card-handoff]
+  // Retire a promoted temp as soon as the persisted list carries it, or the card returns after a delete or move. →[K:deck-temp-card-handoff]
   watch(persisted_id_set, (ids) => {
     const kept = temp_entries.value.filter((e) => e.real_id === null || !ids.has(e.real_id))
     if (kept.length !== temp_entries.value.length) temp_entries.value = kept

@@ -65,13 +65,13 @@ describe('resolveRankNeighbours', () => {
     expect(next).toBe('a1')
   })
 
-  test('skips unranked (staged) entries walking left for prev [obligation]', () => {
+  test('skips unranked (staged) entries walking left for prev', () => {
     const cards = [ranked('a0'), unranked, unranked]
     const { prev } = resolveRankNeighbours(cards, 3)
     expect(prev).toBe('a0')
   })
 
-  test('skips unranked (staged) entries walking right for next [obligation]', () => {
+  test('skips unranked (staged) entries walking right for next', () => {
     const cards = [ranked('a0'), unranked, unranked, ranked('a3')]
     const { next } = resolveRankNeighbours(cards, 1)
     expect(next).toBe('a3')
@@ -83,7 +83,7 @@ describe('resolveRankNeighbours', () => {
     expect(prev).toBeNull()
   })
 
-  test('next falls back to tail_rank when nothing ranked lies to the right — page-boundary case [obligation]', () => {
+  test('next falls back to tail_rank when nothing ranked lies to the right — page-boundary case', () => {
     const cards = [ranked('a0'), ranked('a1')]
     const { next } = resolveRankNeighbours(cards, 2, 'z9')
     expect(next).toBe('z9')

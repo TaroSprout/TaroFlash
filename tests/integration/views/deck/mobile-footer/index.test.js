@@ -7,6 +7,7 @@ const { claimHeightMock, releaseHeightMock } = vi.hoisted(() => ({
   releaseHeightMock: vi.fn()
 }))
 vi.mock('@/components/mobile-dock/use-mobile-dock', () => ({
+  DEFAULT_BREAKPOINT: 'xl',
   useMobileDock: () => ({ claimHeight: claimHeightMock, releaseHeight: releaseHeightMock })
 }))
 
@@ -91,7 +92,7 @@ function mount({
 }
 
 describe('mobile-footer/index', () => {
-  test('wires crossfade-resize swap-start/swap-end to claimHeight/releaseHeight [obligation]', async () => {
+  test('wires crossfade-resize swap-start/swap-end to claimHeight/releaseHeight', async () => {
     claimHeightMock.mockClear()
     releaseHeightMock.mockClear()
     const wrapper = mount()
@@ -103,7 +104,7 @@ describe('mobile-footer/index', () => {
     expect(releaseHeightMock).toHaveBeenCalledOnce()
   })
 
-  test('renders footer-import under a stable key — the same node persists across an is_expanded flip [obligation]', async () => {
+  test('renders footer-import under a stable key — the same node persists across an is_expanded flip', async () => {
     const is_expanded = ref(true)
     const wrapper = mount({ mode: 'import', is_expanded, attachTo: document.body })
 
@@ -124,7 +125,7 @@ describe('mobile-footer/index', () => {
     expect(wrapper.find('[data-testid="mobile-page-settings-stub"]').exists()).toBe(false)
   })
 
-  test('shows mobile-page-settings when is_page_settings_open is true [obligation]', () => {
+  test('shows mobile-page-settings when is_page_settings_open is true', () => {
     const wrapper = mount({ page_settings_open: true })
     expect(wrapper.find('[data-testid="mobile-page-settings-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="footer-actions-stub"]').exists()).toBe(false)
@@ -136,19 +137,19 @@ describe('mobile-footer/index', () => {
     expect(wrapper.find('[data-testid="footer-actions-stub"]').exists()).toBe(false)
   })
 
-  test('bulk-actions takes priority over page settings when both are open [obligation]', () => {
+  test('bulk-actions takes priority over page settings when both are open', () => {
     const wrapper = mount({ is_selecting: true, page_settings_open: true })
     expect(wrapper.find('[data-testid="footer-bulk-actions-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="mobile-page-settings-stub"]').exists()).toBe(false)
   })
 
-  test('shows footer-import when shell.mode is import [obligation]', () => {
+  test('shows footer-import when shell.mode is import', () => {
     const wrapper = mount({ mode: 'import' })
     expect(wrapper.find('[data-testid="footer-import-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="footer-actions-stub"]').exists()).toBe(false)
   })
 
-  test('bulk-actions takes priority over import mode when both apply [obligation]', () => {
+  test('bulk-actions takes priority over import mode when both apply', () => {
     const wrapper = mount({ is_selecting: true, mode: 'import' })
     expect(wrapper.find('[data-testid="footer-bulk-actions-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="footer-import-stub"]').exists()).toBe(false)

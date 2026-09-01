@@ -34,8 +34,7 @@ function removeCardsFromDeckCaches(queryCache: QueryCache, cards: CardBase[]): D
 
     snapshot.push({ key: entry.key, data })
 
-    // Page offsets are re-derived from the loaded page lengths, so the
-    // shortened pages need no renumbering here.
+    // Offsets are re-derived from page lengths, so shortened pages need no renumbering.
     queryCache.setQueryData<CardPages>(entry.key, {
       pages: data.pages.map((page) => ({
         ...page,

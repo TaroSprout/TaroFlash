@@ -26,8 +26,7 @@ function rightInset(el: HTMLElement) {
     node = node.offsetParent as HTMLElement | null
   }
 
-  // clientWidth, not innerWidth: it excludes a classic scrollbar's own width,
-  // which innerWidth counts as page space the content never gets.
+  // clientWidth, not innerWidth: innerWidth counts a classic scrollbar as page space.
   return document.documentElement.clientWidth - right
 }
 
@@ -82,8 +81,7 @@ export function providePageAnchor() {
     onBeforeUnmount(() => setAnchor(null))
   }
 
-  // The pane's own box never changes when the window widens around a capped
-  // column, so the window is what reports that move.
+  // A capped column's box never changes as the window widens, so the window reports the move.
   window.addEventListener('resize', schedule, { passive: true })
 
   onBeforeUnmount(() => {

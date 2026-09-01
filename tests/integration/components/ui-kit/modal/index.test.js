@@ -550,16 +550,16 @@ describe('mobile breakpoint forwarding', () => {
   })
 })
 
-// ── recede/restore choreography [obligation] ─────────────────────────────────
+// ── recede/restore choreography ─────────────────────────────────
 
-describe('recede/restore choreography [obligation]', () => {
+describe('recede/restore choreography', () => {
   beforeEach(() => {
     const { modal_stack, pop } = useModal()
     while (modal_stack.value.length > 0) pop()
     request_close_handlers.clear()
   })
 
-  test('opening a second modal on top recedes the first (not the top) [obligation]', async () => {
+  test('opening a second modal on top recedes the first (not the top)', async () => {
     const { open } = useModal()
     const wrapper = mountModal()
 
@@ -573,7 +573,7 @@ describe('recede/restore choreography [obligation]', () => {
     expect(entries[1].element.inert).toBe(false)
   })
 
-  test('closing the top modal restores the previously-receded one [obligation]', async () => {
+  test('closing the top modal restores the previously-receded one', async () => {
     const { open } = useModal()
     const wrapper = mountModal()
 
@@ -592,7 +592,7 @@ describe('recede/restore choreography [obligation]', () => {
     expect(entries[0].element.inert).toBe(false)
   })
 
-  test('a batch jump in stack size (1 → 3 in one tick) still receded everything except the top [obligation]', async () => {
+  test('a batch jump in stack size (1 → 3 in one tick) still receded everything except the top', async () => {
     const { open } = useModal()
     const wrapper = mountModal()
 
@@ -612,7 +612,7 @@ describe('recede/restore choreography [obligation]', () => {
     expect(entries[2].element.inert).toBe(false)
   })
 
-  test('a batch shrink in stack size (3 → 1 in one tick) still restores the sole remaining entry [obligation]', async () => {
+  test('a batch shrink in stack size (3 → 1 in one tick) still restores the sole remaining entry', async () => {
     const { open, pop } = useModal()
     const wrapper = mountModal()
 
@@ -638,9 +638,9 @@ describe('recede/restore choreography [obligation]', () => {
 })
 
 // ── receded modal blocks clicks via `inert`, even with a descendant
-// pointer-events-auto override [obligation] ──────────────────────────────────
+// pointer-events-auto override ──────────────────────────────────
 
-describe('a receded modal is unclickable even when a descendant sets pointer-events-auto [obligation]', () => {
+describe('a receded modal is unclickable even when a descendant sets pointer-events-auto', () => {
   beforeEach(() => {
     const { modal_stack, pop } = useModal()
     while (modal_stack.value.length > 0) pop()
@@ -653,7 +653,7 @@ describe('a receded modal is unclickable even when a descendant sets pointer-eve
   // actual guarantee — unfocusable, un-hit-testable descendants — is asserted
   // via focus, since that's enforced by the browser regardless of how the
   // interaction was dispatched.
-  test('a pointer-events-auto descendant of the receded (non-top) modal cannot receive focus [obligation]', async () => {
+  test('a pointer-events-auto descendant of the receded (non-top) modal cannot receive focus', async () => {
     const onDescendantClick = vi.fn()
     const { open } = useModal()
     const wrapper = mountModal()
@@ -672,7 +672,7 @@ describe('a receded modal is unclickable even when a descendant sets pointer-eve
     expect(document.activeElement).not.toBe(button)
   })
 
-  test('the same pointer-events-auto descendant can receive focus once its modal becomes the top again [obligation]', async () => {
+  test('the same pointer-events-auto descendant can receive focus once its modal becomes the top again', async () => {
     const onDescendantClick = vi.fn()
     const { open } = useModal()
     const wrapper = mountModal()

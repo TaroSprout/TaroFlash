@@ -21,6 +21,18 @@ import {
 // later; admin-only v1 is English.
 const TARGET_LANG = 'English'
 
+/** Whether `next` carries the same span/palette per word as `prev`, so a refetch that changed nothing can be skipped. */
+function sameMatches(prev: Map<number, CardMatch>, next: Map<number, CardMatch>): boolean {
+  if (prev.size !== next.size) return false
+
+  for (const [k, v] of next) {
+    const p = prev.get(k)
+    if (!p || p.lo !== v.lo || p.hi !== v.hi || p.palette !== v.palette) return false
+  }
+
+  return true
+}
+
 /**
  * Orchestrate a lesson for reading: fetch it, shape its transcript into
  * paragraphs, stream the audio, sync the active word to playback, and hold the
@@ -77,18 +89,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   watch(
     () => matchesByWord(themed_matches.value),
     (next) => {
-      const prev = matches.value
-      if (prev.size === next.size) {
-        let same = true
-        for (const [k, v] of next) {
-          const p = prev.get(k)
-          if (!p || p.lo !== v.lo || p.hi !== v.hi || p.palette !== v.palette) {
-            same = false
-            break
-          }
-        }
-        if (same) return
-      }
+      if (sameMatches(matches.value, next)) return
       matches.value = next
     },
     { immediate: true }

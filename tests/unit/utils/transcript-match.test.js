@@ -19,9 +19,9 @@ function entry(term, deck_ids) {
   return { term, deck_ids }
 }
 
-// ── normalizeForMatch [obligation] ────────────────────────────────────────────
+// ── normalizeForMatch ────────────────────────────────────────────
 
-describe('normalizeForMatch [obligation]', () => {
+describe('normalizeForMatch', () => {
   test('lowercases the input', () => {
     expect(normalizeForMatch('Hello')).toBe('hello')
     expect(normalizeForMatch('WORLD')).toBe('world')
@@ -33,7 +33,7 @@ describe('normalizeForMatch [obligation]', () => {
     expect(normalizeForMatch('you?')).toBe('you')
   })
 
-  test('collapses inner whitespace to a single space — does NOT drop it [obligation]', () => {
+  test('collapses inner whitespace to a single space — does NOT drop it', () => {
     // "good morning" with two spaces collapses to one
     expect(normalizeForMatch('good  morning')).toBe('good morning')
     // A plain two-word term stays as two words separated by one space
@@ -45,7 +45,7 @@ describe('normalizeForMatch [obligation]', () => {
     expect(normalizeForMatch('吗？')).toBe('吗')
   })
 
-  test('keeps INTERNAL punctuation intact [obligation]', () => {
+  test('keeps INTERNAL punctuation intact', () => {
     // The comma is internal to the term — cleanTerm only strips edges
     expect(normalizeForMatch('说,真')).toBe('说,真')
     // Hyphen inside a word
@@ -53,13 +53,13 @@ describe('normalizeForMatch [obligation]', () => {
     expect(normalizeForMatch('well-being,')).toBe('well-being')
   })
 
-  test('returns "" for punctuation-only input [obligation]', () => {
+  test('returns "" for punctuation-only input', () => {
     expect(normalizeForMatch('…')).toBe('')
     expect(normalizeForMatch('  ')).toBe('')
     expect(normalizeForMatch('.')).toBe('')
   })
 
-  test('internal comma is KEPT so "说,真" does NOT equal a "说" card [obligation]', () => {
+  test('internal comma is KEPT so "说,真" does NOT equal a "说" card', () => {
     // "说,真" normalises to "说,真", not "说" — the comma is internal, not edge
     const normalised = normalizeForMatch('说,真')
     expect(normalised).not.toBe('说')
@@ -67,16 +67,16 @@ describe('normalizeForMatch [obligation]', () => {
   })
 })
 
-// ── buildCardTermMap [obligation] ─────────────────────────────────────────────
+// ── buildCardTermMap ─────────────────────────────────────────────
 
-describe('buildCardTermMap [obligation]', () => {
+describe('buildCardTermMap', () => {
   test('maps each term to its deck_ids', () => {
     const map = buildCardTermMap([entry('Cat', [1]), entry('dog', [2])])
     expect(map.get('cat')).toEqual([1])
     expect(map.get('dog')).toEqual([2])
   })
 
-  test('merges deck_ids across case/punctuation variants ("Cat"→[1] + "cat"→[2] → "cat"→[1,2]) [obligation]', () => {
+  test('merges deck_ids across case/punctuation variants ("Cat"→[1] + "cat"→[2] → "cat"→[1,2])', () => {
     const map = buildCardTermMap([entry('Cat', [1]), entry('cat', [2])])
     const ids = map.get('cat')
     expect(ids).toContain(1)
@@ -91,7 +91,7 @@ describe('buildCardTermMap [obligation]', () => {
     expect(ids).toContain(4)
   })
 
-  test('skips blank/punctuation-only fronts [obligation]', () => {
+  test('skips blank/punctuation-only fronts', () => {
     const map = buildCardTermMap([entry('', [1]), entry('…', [2]), entry('cat', [3])])
     // Only 'cat' should be in the map — blank/punct fronts are skipped
     expect(map.size).toBe(1)
@@ -113,9 +113,9 @@ describe('buildCardTermMap [obligation]', () => {
   })
 })
 
-// ── decksForTerm [obligation] ─────────────────────────────────────────────────
+// ── decksForTerm ─────────────────────────────────────────────────
 
-describe('decksForTerm [obligation]', () => {
+describe('decksForTerm', () => {
   test('returns deck_ids for a known term (case-insensitive lookup)', () => {
     const map = buildCardTermMap([entry('Cat', [1])])
     expect(decksForTerm(map, 'cat')).toEqual([1])
@@ -123,7 +123,7 @@ describe('decksForTerm [obligation]', () => {
     expect(decksForTerm(map, 'CAT')).toEqual([1])
   })
 
-  test('returns [] for an unknown term [obligation]', () => {
+  test('returns [] for an unknown term', () => {
     const map = buildCardTermMap([entry('cat', [1])])
     expect(decksForTerm(map, 'dog')).toEqual([])
   })
@@ -133,15 +133,15 @@ describe('decksForTerm [obligation]', () => {
   })
 })
 
-// ── matchCardsInWords [obligation] ────────────────────────────────────────────
+// ── matchCardsInWords ────────────────────────────────────────────
 
-describe('matchCardsInWords [obligation]', () => {
+describe('matchCardsInWords', () => {
   test('returns [] when terms map is empty', () => {
     const words = [word('cat ', 0), word('dog ', 1)]
     expect(matchCardsInWords(words, new Map())).toEqual([])
   })
 
-  test('single-word exact match — lo and hi are the global word .index, not array position [obligation]', () => {
+  test('single-word exact match — lo and hi are the global word .index, not array position', () => {
     // Words start at index 10 to prove global index is used, not array pos
     const words = [word('cat ', 10), word('dog ', 11)]
     const map = buildCardTermMap([entry('cat', [1])])
@@ -152,7 +152,7 @@ describe('matchCardsInWords [obligation]', () => {
     expect(matches[0].deck_ids).toEqual([1])
   })
 
-  test('multi-word match — "new york" card matches the two-word span [obligation]', () => {
+  test('multi-word match — "new york" card matches the two-word span', () => {
     const words = [word('good ', 5), word('morning ', 6)]
     const map = buildCardTermMap([entry('good morning', [2])])
     const matches = matchCardsInWords(words, map)
@@ -162,7 +162,7 @@ describe('matchCardsInWords [obligation]', () => {
     expect(matches[0].term).toBe('good morning')
   })
 
-  test('leftmost-longest wins — "new york" beats "new" when both are cards [obligation]', () => {
+  test('leftmost-longest wins — "new york" beats "new" when both are cards', () => {
     // 'new' at index 20, 'york' at index 21; with cards for both 'new' and 'new york',
     // the longer 'new york' span should win.
     const words = [word('new ', 20), word('york ', 21), word('city ', 22)]
@@ -176,7 +176,7 @@ describe('matchCardsInWords [obligation]', () => {
     expect(matches[0].hi).toBe(21)
   })
 
-  test('non-overlapping — words consumed by a match are not re-used [obligation]', () => {
+  test('non-overlapping — words consumed by a match are not re-used', () => {
     // 'new york' is consumed; the next match starts at 'city'
     const words = [word('new ', 20), word('york ', 21), word('city ', 22)]
     const map = buildCardTermMap([entry('new york', [1]), entry('city', [2])])
@@ -188,7 +188,7 @@ describe('matchCardsInWords [obligation]', () => {
     expect(matches[1].hi).toBe(22)
   })
 
-  test('EXACT word-span equality — substring-only match is NOT a hit [obligation]', () => {
+  test('EXACT word-span equality — substring-only match is NOT a hit', () => {
     // 'cat' is a card but 'catfish' should not match even if it contains 'cat'
     const words = [word('catfish ', 0)]
     const map = buildCardTermMap([entry('cat', [1])])
@@ -237,10 +237,10 @@ describe('matchCardsInWords [obligation]', () => {
   })
 })
 
-// ── matchesByWord [obligation] ────────────────────────────────────────────────
+// ── matchesByWord ────────────────────────────────────────────────
 
-describe('matchesByWord [obligation]', () => {
-  test('maps EVERY index in [lo, hi] to the same match object [obligation]', () => {
+describe('matchesByWord', () => {
+  test('maps EVERY index in [lo, hi] to the same match object', () => {
     const match = { lo: 10, hi: 12, term: 'new york city', deck_ids: [1] }
     const byWord = matchesByWord([match])
     expect(byWord.get(10)).toBe(match)
@@ -248,7 +248,7 @@ describe('matchesByWord [obligation]', () => {
     expect(byWord.get(12)).toBe(match)
   })
 
-  test('uses the global word .index values (lo/hi), not array positions [obligation]', () => {
+  test('uses the global word .index values (lo/hi), not array positions', () => {
     // lo=10, hi=10 — index 10 should be in the map; adjacent indices 9/11 should not
     const match = { lo: 10, hi: 10, term: 'cat', deck_ids: [1] }
     const byWord = matchesByWord([match])

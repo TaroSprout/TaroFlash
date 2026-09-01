@@ -1,7 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { shallowMount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import UiButton from '@/components/ui-kit/button.vue'
+
+vi.mock('@/sfx/bus', () => ({
+  emitSfx: vi.fn(),
+  emitHoverSfx: vi.fn()
+}))
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -45,7 +50,7 @@ const UiButtonStub = defineComponent({
 
 import BackButton from '@/views/app-shell/nav-bar/back-button.vue'
 
-function mount(routeName) {
+function mountStubbed(routeName) {
   mockCurrentRoute.value = { name: routeName }
   return shallowMount(BackButton, {
     global: { stubs: { UiButton: UiButtonStub } }
@@ -54,25 +59,25 @@ function mount(routeName) {
 
 // ── Visibility by route name (obligation 6) ───────────────────────────────────
 
-describe('back-button — visibility [obligation]', () => {
+describe('back-button — visibility', () => {
   test('is hidden (v-if removes it) when on the dashboard route', () => {
-    const wrapper = mount('dashboard')
+    const wrapper = mountStubbed('dashboard')
     expect(wrapper.findComponent(UiButton).exists()).toBe(false)
   })
 
   test('is visible on a non-dashboard route (deck)', () => {
-    const wrapper = mount('deck')
+    const wrapper = mountStubbed('deck')
     expect(wrapper.findComponent(UiButton).exists()).toBe(true)
   })
 
   test('is visible on any other named route', () => {
-    const wrapper = mount('settings')
+    const wrapper = mountStubbed('settings')
     expect(wrapper.findComponent(UiButton).exists()).toBe(true)
   })
 
   test('is hidden specifically when route.name is "dashboard" string', () => {
     // Guards against case-sensitivity or partial-match regressions
-    const wrapper = mount('dashboard')
+    const wrapper = mountStubbed('dashboard')
     expect(wrapper.html()).not.toContain('<button')
   })
 })
@@ -87,17 +92,58 @@ describe('back-button — press handler', () => {
 
   test('calls router.go(-1) when there is a router-tracked previous entry', async () => {
     mockHistoryState.back = '/dashboard'
-    const wrapper = mount('deck')
+    const wrapper = mountStubbed('deck')
     await wrapper.findComponent(UiButtonStub).trigger('click')
     expect(mockGo).toHaveBeenCalledWith(-1)
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  test('falls back to the dashboard route when history.state.back is falsy [obligation]', async () => {
+  test('falls back to the dashboard route when history.state.back is falsy', async () => {
     mockHistoryState.back = null
-    const wrapper = mount('deck')
+    const wrapper = mountStubbed('deck')
     await wrapper.findComponent(UiButtonStub).trigger('click')
     expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
     expect(mockGo).not.toHaveBeenCalled()
+  })
+})
+
+// ── Resolved chrome — on-accent role, not neutral (TARO-240) ──────────────────
+// Mounts the real UiButton (only UiTooltip is stubbed, forwarding its merged
+// class onto a real <button>) so the class list reflects UiButton's own
+// `neutral` branch instead of a stub that can't tell the two apart.
+
+const UiTooltipSlotStub = defineComponent({
+  name: 'UiTooltip',
+  inheritAttrs: false,
+  props: ['element', 'gap', 'suppress', 'text'],
+  setup(_props, { slots, attrs }) {
+    return () => h('button', { ...attrs, 'data-testid': 'ui-kit-button' }, slots.default?.())
+  }
+})
+
+function mountReal(routeName) {
+  mockCurrentRoute.value = { name: routeName }
+  return mount(BackButton, {
+    global: { stubs: { UiTooltip: UiTooltipSlotStub }, directives: { sfx: {} } }
+  })
+}
+
+describe('back-button — resolved chrome', () => {
+  test('does not carry the neutral/raised chrome variant class', () => {
+    const wrapper = mountReal('deck')
+    const class_list = wrapper.find('[data-testid="ui-kit-button"]').classes()
+    expect(class_list).not.toContain('ui-kit-btn--neutral')
+  })
+
+  test('carries the on-accent bg-color override class', () => {
+    const wrapper = mountReal('deck')
+    const class_list = wrapper.find('[data-testid="ui-kit-button"]').classes()
+    expect(class_list).toContain('[--btn-bg-color:var(--color-on-accent)]!')
+  })
+
+  test('carries the on-accent text-color override class', () => {
+    const wrapper = mountReal('deck')
+    const class_list = wrapper.find('[data-testid="ui-kit-button"]').classes()
+    expect(class_list).toContain('[--btn-text-color:var(--color-accent)]!')
   })
 })

@@ -79,8 +79,8 @@ describe('useCardEdit — editing flag', () => {
 
 // ── editing resets on card change ─────────────────────────────────────────────
 
-describe('useCardEdit — editing resets when active card id changes [obligation]', () => {
-  test('editing resets to false when active_card.id changes [obligation]', async () => {
+describe('useCardEdit — editing resets when active card id changes', () => {
+  test('editing resets to false when active_card.id changes', async () => {
     const { result, active_card } = makeSetup()
     result.start()
     expect(result.editing.value).toBe(true)
@@ -109,13 +109,13 @@ describe('useCardEdit — editing resets when active card id changes [obligation
 
 // ── saving flag ───────────────────────────────────────────────────────────────
 
-describe('useCardEdit — saving flag [obligation]', () => {
+describe('useCardEdit — saving flag', () => {
   test('saving is false initially', () => {
     const { result } = makeSetup()
     expect(result.saving.value).toBe(false)
   })
 
-  test('saving is true during the await [obligation]', async () => {
+  test('saving is true during the await', async () => {
     let resolve
     saveCardMock.mockImplementationOnce(() => new Promise((r) => (resolve = r)))
     const { result } = makeSetup()
@@ -128,13 +128,13 @@ describe('useCardEdit — saving flag [obligation]', () => {
     expect(result.saving.value).toBe(false)
   })
 
-  test('saving is false after update resolves [obligation]', async () => {
+  test('saving is false after update resolves', async () => {
     const { result } = makeSetup()
     await result.update('front', 'New text')
     expect(result.saving.value).toBe(false)
   })
 
-  test('saving resets to false after a failed save (finally), instead of getting stuck [obligation]', async () => {
+  test('saving resets to false after a failed save (finally), instead of getting stuck', async () => {
     saveCardMock.mockRejectedValueOnce(new Error('boom'))
     const { result } = makeSetup()
 
@@ -143,7 +143,7 @@ describe('useCardEdit — saving flag [obligation]', () => {
     expect(result.saving.value).toBe(false)
   })
 
-  test('shows an error notice when saveCard rejects [obligation]', async () => {
+  test('shows an error notice when saveCard rejects', async () => {
     saveCardMock.mockRejectedValueOnce(new Error('boom'))
     const { result } = makeSetup()
 
@@ -155,8 +155,8 @@ describe('useCardEdit — saving flag [obligation]', () => {
 
 // ── update() routes through useCardMutations.saveCard ─────────────────────────
 
-describe('useCardEdit — update() calls saveCard [obligation]', () => {
-  test('update(front, text) calls saveCard with front_text [obligation]', async () => {
+describe('useCardEdit — update() calls saveCard', () => {
+  test('update(front, text) calls saveCard with front_text', async () => {
     const card = makeCard({ id: 42 })
     const { result } = makeSetup({ card, deck_id: () => 10 })
 
@@ -167,7 +167,7 @@ describe('useCardEdit — update() calls saveCard [obligation]', () => {
     })
   })
 
-  test('update(back, text) calls saveCard with back_text [obligation]', async () => {
+  test('update(back, text) calls saveCard with back_text', async () => {
     const card = makeCard({ id: 42 })
     const { result } = makeSetup({ card })
 
@@ -187,7 +187,7 @@ describe('useCardEdit — update() calls saveCard [obligation]', () => {
     expect(saveCardMock).not.toHaveBeenCalled()
   })
 
-  test('update() is a no-op when active_card has no id [obligation]', async () => {
+  test('update() is a no-op when active_card has no id', async () => {
     const { result, updateCard } = makeSetup({ card: { ...makeCard(), id: undefined } })
 
     await result.update('front', 'noop')
@@ -199,8 +199,8 @@ describe('useCardEdit — update() calls saveCard [obligation]', () => {
 
 // ── update() patches the session's own card copy via updateCard ───────────────
 
-describe('useCardEdit — update() patches the session card via updateCard [obligation]', () => {
-  test('calls updateCard with the card id and patched values after saveCard resolves [obligation]', async () => {
+describe('useCardEdit — update() patches the session card via updateCard', () => {
+  test('calls updateCard with the card id and patched values after saveCard resolves', async () => {
     const card = makeCard({ id: 42 })
     const { result, updateCard } = makeSetup({ card })
 
@@ -209,7 +209,7 @@ describe('useCardEdit — update() patches the session card via updateCard [obli
     expect(updateCard).toHaveBeenCalledWith(42, { front_text: 'Hello' })
   })
 
-  test('calls updateCard with back_text values [obligation]', async () => {
+  test('calls updateCard with back_text values', async () => {
     const card = makeCard({ id: 42 })
     const { result, updateCard } = makeSetup({ card })
 

@@ -18,8 +18,8 @@ describe('MEMBER_PREFERENCES_DEFAULTS', () => {
     expect(MEMBER_PREFERENCES_DEFAULTS.accessibility.left_hand).toBe(false)
   })
 
-  // [obligation] show_all_ratings flipped false->true regression guard
-  test('study.show_all_ratings defaults to false (regression guard on the flip from true) [obligation]', () => {
+  // show_all_ratings flipped false->true regression guard
+  test('study.show_all_ratings defaults to false (regression guard on the flip from true)', () => {
     expect(MEMBER_PREFERENCES_DEFAULTS.study.show_all_ratings).toBe(false)
   })
 
@@ -42,8 +42,8 @@ describe('toBusVolumes', () => {
     })
   })
 
-  // [obligation] mute is applied through the volume path — muted ignores slider values
-  test('returns interface: 0, hover: 0 when muted is true, ignoring slider values [obligation]', () => {
+  // mute is applied through the volume path — muted ignores slider values
+  test('returns interface: 0, hover: 0 when muted is true, ignoring slider values', () => {
     expect(toBusVolumes({ muted: true, interface_sounds: 8, hover_sounds: 9 })).toEqual({
       interface: 0,
       hover: 0
@@ -70,14 +70,14 @@ describe('withMemberPreferencesDefaults', () => {
     expect(result.study.show_all_ratings).toBe(false)
   })
 
-  // [obligation] partial prefs with no `audio` key → all audio fields default
+  // partial prefs with no `audio` key → all audio fields default
   test('partial prefs with no audio key → audio fields default (muted=false, both buses=5)', () => {
     const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
     expect(result.audio).toEqual({ muted: false, interface_sounds: 5, hover_sounds: 5 })
   })
 
-  // [obligation] partial prefs with audio.muted=true is preserved through the merge
-  test('partial prefs with audio.muted=true → resolved muted is true [obligation]', () => {
+  // partial prefs with audio.muted=true is preserved through the merge
+  test('partial prefs with audio.muted=true → resolved muted is true', () => {
     const result = withMemberPreferencesDefaults({ audio: { muted: true } })
     expect(result.audio.muted).toBe(true)
   })
@@ -98,8 +98,8 @@ describe('withMemberPreferencesDefaults', () => {
     expect(result.audio.hover_sounds).toBe(5)
   })
 
-  // [obligation] partial audio.muted=true + missing bus keys merges correctly over defaults
-  test('partial audio.muted=true with missing bus keys merges correctly over defaults [obligation]', () => {
+  // partial audio.muted=true + missing bus keys merges correctly over defaults
+  test('partial audio.muted=true with missing bus keys merges correctly over defaults', () => {
     const result = withMemberPreferencesDefaults({ audio: { muted: true } })
     expect(result.audio).toEqual({ muted: true, interface_sounds: 5, hover_sounds: 5 })
   })
@@ -116,9 +116,9 @@ describe('withMemberPreferencesDefaults', () => {
     expect(result.accessibility.left_hand).toBe(true)
   })
 
-  // ── study namespace [obligation] ──────────────────────────────────────────
+  // ── study namespace ──────────────────────────────────────────
 
-  test('partial prefs with no study key → study defaults to the full five-key shape [obligation]', () => {
+  test('partial prefs with no study key → study defaults to the full five-key shape', () => {
     const result = withMemberPreferencesDefaults({ accessibility: { left_hand: true } })
     expect(result.study).toEqual({
       show_all_ratings: false,
@@ -129,54 +129,54 @@ describe('withMemberPreferencesDefaults', () => {
     })
   })
 
-  // [obligation] a stored `true` for show_all_ratings survives the default flip
-  test('a stored show_all_ratings=true is preserved even though the default flipped to false [obligation]', () => {
+  // a stored `true` for show_all_ratings survives the default flip
+  test('a stored show_all_ratings=true is preserved even though the default flipped to false', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
     expect(result.study.show_all_ratings).toBe(true)
   })
 
-  test('partial prefs with study.show_all_ratings=false is preserved [obligation]', () => {
+  test('partial prefs with study.show_all_ratings=false is preserved', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: false } })
     expect(result.study.show_all_ratings).toBe(false)
   })
 
-  // [obligation] each new study key falls back to its own default independently
-  test('show_rating_buttons falls back to its default (true) when absent [obligation]', () => {
+  // each new study key falls back to its own default independently
+  test('show_rating_buttons falls back to its default (true) when absent', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
     expect(result.study.show_rating_buttons).toBe(true)
   })
 
-  test('a stored show_rating_buttons=false is preserved [obligation]', () => {
+  test('a stored show_rating_buttons=false is preserved', () => {
     const result = withMemberPreferencesDefaults({ study: { show_rating_buttons: false } })
     expect(result.study.show_rating_buttons).toBe(false)
   })
 
-  test('show_button_preview falls back to its default (false) when absent [obligation]', () => {
+  test('show_button_preview falls back to its default (false) when absent', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
     expect(result.study.show_button_preview).toBe(false)
   })
 
-  test('a stored show_button_preview=true is preserved [obligation]', () => {
+  test('a stored show_button_preview=true is preserved', () => {
     const result = withMemberPreferencesDefaults({ study: { show_button_preview: true } })
     expect(result.study.show_button_preview).toBe(true)
   })
 
-  test('show_card_preview falls back to its default (true) when absent [obligation]', () => {
+  test('show_card_preview falls back to its default (true) when absent', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
     expect(result.study.show_card_preview).toBe(true)
   })
 
-  test('a stored show_card_preview=false is preserved [obligation]', () => {
+  test('a stored show_card_preview=false is preserved', () => {
     const result = withMemberPreferencesDefaults({ study: { show_card_preview: false } })
     expect(result.study.show_card_preview).toBe(false)
   })
 
-  test('multi_deck_ordering falls back to its default ("random") when absent [obligation]', () => {
+  test('multi_deck_ordering falls back to its default ("random") when absent', () => {
     const result = withMemberPreferencesDefaults({ study: { show_all_ratings: true } })
     expect(result.study.multi_deck_ordering).toBe('random')
   })
 
-  test('a stored multi_deck_ordering="sequential" is preserved [obligation]', () => {
+  test('a stored multi_deck_ordering="sequential" is preserved', () => {
     const result = withMemberPreferencesDefaults({ study: { multi_deck_ordering: 'sequential' } })
     expect(result.study.multi_deck_ordering).toBe('sequential')
   })

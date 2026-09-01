@@ -9,21 +9,29 @@ export type SaveReviewVars = {
   log: ReviewLog
 }
 
-// Trap: a missed invalidation fails silently →[K:silent-stale-cache]
+// A missed invalidation fails silently — nothing errors, the data just goes stale. →[K:silent-stale-cache]
 export function useSaveReviewMutation() {
-  const queryCache = useQueryCache()
   return useMutation({
-    mutation: (vars: SaveReviewVars) => saveReview(vars.card_id, vars.card, vars.log),
-    onSettled: () => {
-      queryCache.invalidateQueries({ key: ['decks'] })
-    }
+    mutation: (vars: SaveReviewVars) => saveReview(vars.card_id, vars.card, vars.log)
   })
 }
 
+/**
+ * Refreshes every reviewed deck's own data plus the dashboard's due counts.
+ * Fired once when a study session reaches its summary, not per review, so a
+ * session of any length still costs one deck-list refetch rather than one per
+ * rating — and takes every reviewed deck at once so that single refetch fires
+ * only once per session rather than once per deck.
+ */
 export function useFlushDeckReviews() {
   const queryCache = useQueryCache()
-  return (deck_id: number) => {
-    queryCache.invalidateQueries({ key: ['deck', deck_id] })
-    queryCache.invalidateQueries({ key: ['cards', deck_id] })
+  return (deck_ids: number[]) => {
+    for (const deck_id of deck_ids) {
+      queryCache.invalidateQueries({ key: ['deck', deck_id] })
+      queryCache.invalidateQueries({ key: ['cards', deck_id] })
+    }
+
+    // exact: true keeps this off the deck *count*, which no review can ever change.
+    queryCache.invalidateQueries({ key: ['decks'], exact: true })
   }
 }

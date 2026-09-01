@@ -61,8 +61,6 @@ function toggle() {
       <page-settings-panel />
     </div>
 
-    <!-- The panel casts its own shadow (`bevel-drop-sm`), so this popover doesn't take the
-         `shadow` prop — that would compound with it — and the arrow carries its own instead. -->
     <template #arrow>
       <div
         data-station="float"

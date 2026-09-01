@@ -9,3 +9,6 @@ const i18n = createI18n({
 })
 
 config.global.plugins = [i18n]
+
+// A no-op default, so a real unresolved-directive warning stands out; tests exercising sound pass the real one.
+config.global.directives = { sfx: {} }

@@ -79,13 +79,13 @@ beforeEach(() => {
 // ── onMounted / onBeforeUnmount sfx ──────────────────────────────────────────────
 
 describe('useChangeCard — mount/unmount chimes', () => {
-  test('[obligation] plays dialog.open-chime on mount', () => {
+  test('plays dialog.open-chime on mount', () => {
     withSetup(() => useChangeCard(vi.fn()))
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open-chime')
     expect(mockEmitSfx).not.toHaveBeenCalledWith('dialog.open')
   })
 
-  test('[obligation] plays dialog.close on unmount', () => {
+  test('plays dialog.close on unmount', () => {
     withSetup(() => useChangeCard(vi.fn()))
     app.unmount()
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
@@ -109,7 +109,7 @@ describe('useChangeCard — onSubmit non-success confirm', () => {
 
 // ── onSubmit — successful confirm ────────────────────────────────────────────────
 
-describe('useChangeCard — onSubmit success path [obligation]', () => {
+describe('useChangeCard — onSubmit success path', () => {
   test('invalidates the payment-methods cache key on a successful confirm', async () => {
     mockConfirm.mockResolvedValue({
       status: 'success',

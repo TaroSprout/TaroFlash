@@ -94,8 +94,7 @@ export function useCardListController(opts: Options) {
 
     const client_id = insert()
 
-    // Assign in the same tick as insert — the row mounts before any later
-    // microtask. →[K:deck-focus-microtask-ordering]
+    // Assign in the same tick as the insert; the row mounts before any later microtask. →[K:deck-focus-microtask-ordering]
     if (focus) {
       pending_focus_client_id.value = client_id
       pending_grow_client_id.value = client_id
@@ -149,12 +148,10 @@ export function useCardListController(opts: Options) {
     const stack_mounted = list.all_cards.value.length > 0
     const entered = opts.shell.setMode('edit')
 
-    // Only await the edit-pane slide when it's mounted to slide — an empty
-    // deck has no mode-stack yet, and awaiting would hang forever.
+    // An empty deck has no mode-stack, so awaiting the slide would hang forever.
     if (stack_mounted) await entered
 
-    // The new row's autofocus is programmatic and stays silent, so the chime
-    // plays alone.
+    // The programmatic autofocus is silent, so this cue plays alone.
     emitSfx('ui.press')
     addCardAtTop()
   }
@@ -186,8 +183,7 @@ export function useCardListController(opts: Options) {
     // No grow-in — that stays reserved for freshly-added cards (`claimGrow`).
     pending_focus_client_id.value = entry.client_id
 
-    // mode-stack owns the window scroll + pane transforms while sliding, so
-    // scroll only once the transition settles.
+    // mode-stack owns the scroll while sliding, so scroll only once it settles.
     await opts.shell.setMode('edit')
     list_scroller.value?.scrollToCard(entry.client_id)
   }
@@ -305,9 +301,7 @@ export function useCardListController(opts: Options) {
   function persistEdit(id: number, staged: CardEntry | undefined, values: Partial<Card>) {
     const entry = staged && list.findEntryByClientId(staged.client_id)
 
-    // An entry that left the list while its own insert ran was either refused
-    // by the cap — nothing to update — or retired because the server's copy
-    // arrived, in which case the edit belongs to that copy.
+    // An entry that left mid-insert was either capped or superseded by the server's copy.
     if (staged && !entry && staged.real_id === null) return
 
     if (entry?.real_id === null) return insertTemp(id, entry, values)

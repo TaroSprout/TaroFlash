@@ -3,9 +3,11 @@ import UiIcon from '@/components/ui-kit/icon.vue'
 
 type UiPinnedCardProps = {
   tucked?: boolean
+  // Swing the card toward upright on hover, pivoting at the clip.
+  hover_lift?: boolean
 }
 
-const { tucked = false } = defineProps<UiPinnedCardProps>()
+const { tucked = false, hover_lift = false } = defineProps<UiPinnedCardProps>()
 
 defineSlots<{
   backdrop(): any
@@ -14,7 +16,12 @@ defineSlots<{
 </script>
 
 <template>
-  <div data-testid="ui-pinned-card" class="relative">
+  <div
+    data-testid="ui-pinned-card"
+    class="relative"
+    :class="hover_lift && 'group/pinned-card'"
+    v-sfx="hover_lift ? { hover: 'ui.hover' } : undefined"
+  >
     <slot name="backdrop"></slot>
 
     <div
@@ -27,7 +34,15 @@ defineSlots<{
     </div>
 
     <div data-testid="ui-pinned-card__card" class="rotate-4 drop-shadow-sm">
-      <slot></slot>
+      <div
+        data-testid="ui-pinned-card__swing"
+        :class="
+          hover_lift &&
+          'origin-[calc(100%_-_124px)_0px] transition-transform duration-150 ease-out group-hover/pinned-card:-rotate-2'
+        "
+      >
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>

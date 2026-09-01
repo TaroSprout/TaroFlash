@@ -55,7 +55,7 @@ beforeEach(() => {
 // ── fetchMemberById ───────────────────────────────────────────────────────────
 
 describe('fetchMemberById', () => {
-  test('selects the explicit member column list, including delete_at and the plans(deck_limit, cards_per_deck_limit) embed [obligation]', async () => {
+  test('selects the explicit member column list, including delete_at and the plans(deck_limit, cards_per_deck_limit) embed', async () => {
     makeChain({ data: baseMemberRow, error: null })
     await fetchMemberById('user-1')
     expect(mocks.selectMock).toHaveBeenCalledWith(
@@ -63,7 +63,7 @@ describe('fetchMemberById', () => {
     )
   })
 
-  test('select does not include stripe_customer_id, stripe_subscription_id, or updated_at [obligation]', async () => {
+  test('select does not include stripe_customer_id, stripe_subscription_id, or updated_at', async () => {
     makeChain({ data: baseMemberRow, error: null })
     await fetchMemberById('user-1')
     const [columns] = mocks.selectMock.mock.calls[0]
@@ -83,13 +83,13 @@ describe('fetchMemberById', () => {
     expect(eq).toHaveBeenCalledWith('id', 'user-1')
   })
 
-  test('rethrows the supabase error instead of swallowing it [obligation]', async () => {
+  test('rethrows the supabase error instead of swallowing it', async () => {
     const err = { message: 'not found' }
     makeChain({ data: null, error: err })
     await expect(fetchMemberById('user-1')).rejects.toBe(err)
   })
 
-  test('returns null (not a throw) when RLS filters the row out (PGRST116) [obligation]', async () => {
+  test('returns null (not a throw) when RLS filters the row out (PGRST116)', async () => {
     const err = { code: 'PGRST116', message: 'Cannot coerce the result to a single JSON object' }
     makeChain({ data: null, error: err })
     await expect(fetchMemberById('user-1')).resolves.toBeNull()
@@ -99,7 +99,7 @@ describe('fetchMemberById', () => {
 // ── upsertMember ──────────────────────────────────────────────────────────────
 
 describe('upsertMember', () => {
-  test('calls update with the payload (id omitted from the SET) scoped by .eq("id", id) [obligation]', async () => {
+  test('calls update with the payload (id omitted from the SET) scoped by .eq("id", id)', async () => {
     mocks.updateEqMock.mockResolvedValue({ error: null })
     await upsertMember(baseMemberRow)
 
@@ -109,7 +109,7 @@ describe('upsertMember', () => {
     expect(mocks.updateEqMock).toHaveBeenCalledWith('id', id)
   })
 
-  test('never calls .upsert() — a partial payload would violate NOT NULL constraints [obligation]', async () => {
+  test('never calls .upsert() — a partial payload would violate NOT NULL constraints', async () => {
     mocks.updateEqMock.mockResolvedValue({ error: null })
     await upsertMember({ id: 'user-1', preferences: { study: { show_all_ratings: true } } })
 

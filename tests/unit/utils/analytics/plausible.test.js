@@ -23,7 +23,7 @@ afterEach(() => {
 })
 
 describe('trackPageview', () => {
-  test('does nothing when VITE_PLAUSIBLE_SITE_ID is unset [obligation]', async () => {
+  test('does nothing when VITE_PLAUSIBLE_SITE_ID is unset', async () => {
     vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', '')
     const { trackPageview } = await import('@/utils/analytics/plausible')
 
@@ -33,7 +33,7 @@ describe('trackPageview', () => {
     expect(window.plausible).toBeUndefined()
   })
 
-  test('injects the per-site script, disables autocapture, and fires a pageview when the site id is set [obligation]', async () => {
+  test('injects the per-site script, disables autocapture, and fires a pageview when the site id is set', async () => {
     vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', SITE_ID)
     const { trackPageview } = await import('@/utils/analytics/plausible')
 
@@ -47,7 +47,7 @@ describe('trackPageview', () => {
     expect(window.plausible?.q).toContainEqual(['pageview'])
   })
 
-  test('injects the script only once across repeated calls, but fires a pageview every time [obligation]', async () => {
+  test('injects the script only once across repeated calls, but fires a pageview every time', async () => {
     vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', SITE_ID)
     const { trackPageview } = await import('@/utils/analytics/plausible')
 
@@ -60,7 +60,7 @@ describe('trackPageview', () => {
 })
 
 describe('trackEvent', () => {
-  test('does nothing when VITE_PLAUSIBLE_SITE_ID is unset [obligation]', async () => {
+  test('does nothing when VITE_PLAUSIBLE_SITE_ID is unset', async () => {
     vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', '')
     const { trackEvent } = await import('@/utils/analytics/plausible')
 
@@ -79,7 +79,7 @@ describe('trackEvent', () => {
     expect(window.plausible?.q).toContainEqual(['Signup Completed'])
   })
 
-  test('never sends a second argument alongside the event name [obligation]', async () => {
+  test('never sends a second argument alongside the event name', async () => {
     vi.stubEnv('VITE_PLAUSIBLE_SITE_ID', SITE_ID)
     const { trackEvent } = await import('@/utils/analytics/plausible')
 

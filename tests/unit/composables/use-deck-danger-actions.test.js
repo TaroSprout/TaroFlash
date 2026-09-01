@@ -108,7 +108,7 @@ describe('useDeckDangerActions', () => {
       expect(close).not.toHaveBeenCalled()
     })
 
-    test('deletes and closes immediately without a success notice [obligation]', async () => {
+    test('deletes and closes immediately without a success notice', async () => {
       const editor = makeEditor({ deleteOk: true })
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)
@@ -120,7 +120,7 @@ describe('useDeckDangerActions', () => {
       expect(mockNotice.success).not.toHaveBeenCalled()
     })
 
-    test('navigates to dashboard when viewing the deleted deck [obligation]', async () => {
+    test('navigates to dashboard when viewing the deleted deck', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'deck'
       mockRoute.params = { id: '42' }
@@ -133,7 +133,7 @@ describe('useDeckDangerActions', () => {
       expect(mockRouter.push).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
-    test('does not navigate when viewing an unrelated route [obligation]', async () => {
+    test('does not navigate when viewing an unrelated route', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'dashboard'
       const { onDelete } = useDeckDangerActions(editor, deck, close)
@@ -145,7 +145,7 @@ describe('useDeckDangerActions', () => {
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('does not navigate when viewing a different deck [obligation]', async () => {
+    test('does not navigate when viewing a different deck', async () => {
       const editor = makeEditor({ deleteOk: true })
       mockRoute.name = 'deck'
       mockRoute.params = { id: '99' }
@@ -158,7 +158,7 @@ describe('useDeckDangerActions', () => {
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    test('failure path shows a toast-variant error notice and bails [obligation]', async () => {
+    test('failure path shows a toast-variant error notice and bails', async () => {
       const editor = makeEditor({ deleteOk: false })
       const { onDelete } = useDeckDangerActions(editor, deck, close)
       confirmResponse(true)

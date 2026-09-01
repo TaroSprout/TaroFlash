@@ -155,7 +155,7 @@ describe('FeedbackSubmitDialog — submit button state', () => {
 
 // ── Submit payload ───────────────────────────────────────────────────────────
 
-describe('FeedbackSubmitDialog — submit payload [obligation]', () => {
+describe('FeedbackSubmitDialog — submit payload', () => {
   test('always submits type: "other", regardless of input, since users do not categorize their own feedback', async () => {
     const { wrapper } = mountDialog()
     await fillTitle(wrapper, 'Add dark mode')
@@ -193,7 +193,7 @@ describe('FeedbackSubmitDialog — submit payload [obligation]', () => {
 
 // ── Success / failure wiring ─────────────────────────────────────────────────
 
-describe('FeedbackSubmitDialog — success wiring [obligation]', () => {
+describe('FeedbackSubmitDialog — success wiring', () => {
   test('calls close(true) after a successful submit', async () => {
     const { wrapper, close } = mountDialog()
     await fillTitle(wrapper, 'Add dark mode')
@@ -212,7 +212,7 @@ describe('FeedbackSubmitDialog — success wiring [obligation]', () => {
   })
 })
 
-describe('FeedbackSubmitDialog — failure wiring [obligation]', () => {
+describe('FeedbackSubmitDialog — failure wiring', () => {
   test('shows the feedback-submit-failed error toast when the mutation rejects', async () => {
     mutateAsyncMock.mockRejectedValue(new Error('network down'))
     const { wrapper } = mountDialog()

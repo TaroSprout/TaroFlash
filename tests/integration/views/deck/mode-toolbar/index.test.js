@@ -40,13 +40,13 @@ describe('mode-toolbar/index', () => {
     expect(wrapper.find('[data-testid="mode-select-stub"]').exists()).toBe(false)
   })
 
-  test('renders ModeSelect when selecting below xl (tablet range) [obligation]', () => {
+  test('renders ModeSelect when selecting below xl (tablet range)', () => {
     const wrapper = mount({ is_selecting: true, is_desktop: false })
     expect(wrapper.find('[data-testid="mode-select-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="mode-view-stub"]').exists()).toBe(false)
   })
 
-  test('renders ModeView when selecting at true desktop (xl and above) [obligation]', () => {
+  test('renders ModeView when selecting at true desktop (xl and above)', () => {
     const wrapper = mount({ is_selecting: true, is_desktop: true })
     expect(wrapper.find('[data-testid="mode-view-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="mode-select-stub"]').exists()).toBe(false)

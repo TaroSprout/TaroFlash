@@ -95,12 +95,12 @@ describe('useSessionPrefs', () => {
     expect(prefs.multi_deck_ordering.value).toBe('sequential')
   })
 
-  // ── Hydration continues until the first edit (dirty) [obligation] ─────────
+  // ── Hydration continues until the first edit (dirty) ─────────
   // A hook created before the member query resolves must reflect the loaded
   // values once they arrive, and must not clobber real stored prefs once the
   // member has made an edit (auth-restore race).
 
-  test('reflects a member_store.preferences update that arrives after creation, before any edit [obligation]', async () => {
+  test('reflects a member_store.preferences update that arrives after creation, before any edit', async () => {
     mockMemberStore.preferences = { study: { ...DEFAULT_STUDY, show_all_ratings: false } }
     const prefs = useSessionPrefs()
     expect(prefs.show_all_ratings.value).toBe(false)
@@ -112,7 +112,7 @@ describe('useSessionPrefs', () => {
     expect(prefs.show_all_ratings.value).toBe(true)
   })
 
-  test('stops hydrating from the store once the member has made a local edit (dirty) [obligation]', async () => {
+  test('stops hydrating from the store once the member has made a local edit (dirty)', async () => {
     mockMemberStore.preferences = { study: { ...DEFAULT_STUDY, show_all_ratings: false } }
     const prefs = useSessionPrefs()
 
@@ -126,9 +126,9 @@ describe('useSessionPrefs', () => {
     expect(prefs.show_all_ratings.value).toBe(true)
   })
 
-  // ── Creating + seeding must NOT auto-save [obligation] ────────────────────
+  // ── Creating + seeding must NOT auto-save ────────────────────
 
-  test('creating the hook and having the store hydrate later does not call the upsert mutation [obligation]', async () => {
+  test('creating the hook and having the store hydrate later does not call the upsert mutation', async () => {
     const prefs = useSessionPrefs()
     void prefs
 
@@ -140,9 +140,9 @@ describe('useSessionPrefs', () => {
     expect(mockUpsertMember.mutateAsync).not.toHaveBeenCalled()
   })
 
-  // ── A user edit persists the WHOLE study blob, debounced [obligation] ─────
+  // ── A user edit persists the WHOLE study blob, debounced ─────
 
-  test('editing one pref upserts all five study keys from the current local state [obligation]', () => {
+  test('editing one pref upserts all five study keys from the current local state', () => {
     const prefs = useSessionPrefs()
 
     prefs.show_card_preview.value = false
@@ -162,7 +162,7 @@ describe('useSessionPrefs', () => {
     })
   })
 
-  test('audio/accessibility namespaces pass through untouched on save [obligation]', () => {
+  test('audio/accessibility namespaces pass through untouched on save', () => {
     mockMemberStore.preferences = {
       study: { ...DEFAULT_STUDY },
       audio: { muted: true, interface_sounds: 3, hover_sounds: 2 },
@@ -203,7 +203,7 @@ describe('useSessionPrefs', () => {
     expect(mockUpsertMember.mutateAsync).not.toHaveBeenCalled()
   })
 
-  test('toasts an error when the save fails, keeping the local value applied [obligation]', async () => {
+  test('toasts an error when the save fails, keeping the local value applied', async () => {
     mockUpsertMember.mutateAsync.mockRejectedValueOnce(new Error('network down'))
     const prefs = useSessionPrefs()
 
@@ -217,7 +217,7 @@ describe('useSessionPrefs', () => {
     expect(prefs.show_card_preview.value).toBe(false)
   })
 
-  test('does not toast when the save succeeds [obligation]', async () => {
+  test('does not toast when the save succeeds', async () => {
     const prefs = useSessionPrefs()
 
     prefs.show_card_preview.value = false

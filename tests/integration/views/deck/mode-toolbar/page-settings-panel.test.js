@@ -145,7 +145,7 @@ describe('PageSettingsPanel', () => {
     expect(group.find('[data-testid="option-front"]').attributes('data-active')).toBe('false')
   })
 
-  test('selecting a face option calls setGridFace with that value [obligation]', async () => {
+  test('selecting a face option calls setGridFace with that value', async () => {
     const { wrapper, shell } = mountPanel(makeShell({ grid_face_val: 'front' }))
     await wrapper.find('[data-testid="option-back"]').trigger('click')
     expect(shell.setGridFace).toHaveBeenCalledWith('back')
@@ -180,9 +180,9 @@ describe('PageSettingsPanel', () => {
     expect(shell.setSortBy).toHaveBeenCalledWith('difficulty')
   })
 
-  // ── Face and size are independent controls [obligation] ───────────────────
+  // ── Face and size are independent controls ───────────────────
 
-  test('changing card face does not affect card size selection [obligation]', async () => {
+  test('changing card face does not affect card size selection', async () => {
     const { wrapper, shell } = mountPanel(
       makeShell({ grid_face_val: 'front', grid_size_val: 'md' })
     )

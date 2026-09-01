@@ -54,7 +54,7 @@ describe('insertCard', () => {
     })
   })
 
-  test('uses the given rank as-is without looking up the deck tail [obligation]', async () => {
+  test('uses the given rank as-is without looking up the deck tail', async () => {
     singleMock.mockResolvedValueOnce({ data: { id: 1, rank: 'a0' }, error: null })
 
     await insertCard({ deck_id: 10, rank: 'a0', front_text: 'Q', back_text: 'A' })
@@ -63,7 +63,7 @@ describe('insertCard', () => {
     expect(rankBetweenMock).not.toHaveBeenCalled()
   })
 
-  test('mints a key after the deck tail when rank is omitted (append) [obligation]', async () => {
+  test('mints a key after the deck tail when rank is omitted (append)', async () => {
     tailRankMock.mockResolvedValueOnce('a0')
     rankBetweenMock.mockReturnValueOnce('a1')
     singleMock.mockResolvedValueOnce({ data: { id: 1, rank: 'a1' }, error: null })

@@ -89,7 +89,7 @@ describe('SectionRoadmap', () => {
     expect(wrapper.find('[data-testid="welcome-roadmap"]').exists()).toBe(true)
   })
 
-  test('the section carries data-palette="success" [obligation]', () => {
+  test('the section carries data-palette="success"', () => {
     const wrapper = mountRoadmap()
     expect(wrapper.find('[data-testid="welcome-roadmap"]').attributes('data-palette')).toBe(
       'success'
@@ -106,13 +106,13 @@ describe('SectionRoadmap', () => {
     expect(wrapper.find('[data-testid="welcome-roadmap__list"]').exists()).toBe(true)
   })
 
-  test('passes interactive=false so the roadmap list is purely informational [obligation]', () => {
+  test('passes interactive=false so the roadmap list is purely informational', () => {
     const wrapper = mountRoadmap()
     const panel = wrapper.findComponent({ name: 'UiOptionsPanel' })
     expect(panel.props('interactive')).toBe(false)
   })
 
-  test('stamps the constant data-station="panel" [obligation]', () => {
+  test('stamps the constant data-station="panel"', () => {
     const wrapper = mountRoadmap()
     expect(wrapper.find('[data-testid="welcome-roadmap__panel"]').attributes('data-station')).toBe(
       'panel'
@@ -186,7 +186,7 @@ describe('SectionRoadmap', () => {
 
   // ── Import/export shipped ─────────────────────────────────────────────────
 
-  test('import-export item shows the done-label text, not upcoming-label [obligation]', () => {
+  test('import-export item shows the done-label text, not upcoming-label', () => {
     const wrapper = mountRoadmap()
     const importExportItem = wrapper.find(
       `[data-testid="options-panel__card"][data-value="${IMPORT_EXPORT_KEY}"]`
@@ -195,7 +195,7 @@ describe('SectionRoadmap', () => {
     expect(importExportItem.text()).not.toContain('Upcoming')
   })
 
-  test('import-export item renders a check icon [obligation]', () => {
+  test('import-export item renders a check icon', () => {
     const wrapper = mountRoadmap()
     const importExportItem = wrapper.find(
       `[data-testid="options-panel__card"][data-value="${IMPORT_EXPORT_KEY}"]`

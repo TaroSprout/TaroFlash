@@ -56,22 +56,22 @@ describe('useForgotPasswordActions', () => {
     })
   })
 
-  // ── submit() — validation [obligation] ───────────────────────────────────
+  // ── submit() — validation ───────────────────────────────────
 
-  describe('submit() — validation failure [obligation]', () => {
-    test('returns "invalid" when email is empty [obligation]', async () => {
+  describe('submit() — validation failure', () => {
+    test('returns "invalid" when email is empty', async () => {
       const auth = useForgotPasswordActions()
       const result = await auth.submit()
       expect(result).toBe('invalid')
     })
 
-    test('sets errors.email-required message when email is empty [obligation]', async () => {
+    test('sets errors.email-required message when email is empty', async () => {
       const auth = useForgotPasswordActions()
       await auth.submit()
       expect(auth.errors.email).toBe('forgot-password-modal.form-validation.email-required')
     })
 
-    test('sets errors.email-invalid message when email is malformed [obligation]', async () => {
+    test('sets errors.email-invalid message when email is malformed', async () => {
       const auth = useForgotPasswordActions()
       auth.email = 'not-an-email'
       await nextTick()
@@ -79,23 +79,23 @@ describe('useForgotPasswordActions', () => {
       expect(auth.errors.email).toBe('forgot-password-modal.form-validation.email-invalid')
     })
 
-    test('does NOT call session.requestPasswordReset when validation fails [obligation]', async () => {
+    test('does NOT call session.requestPasswordReset when validation fails', async () => {
       const auth = useForgotPasswordActions()
       await auth.submit()
       expect(mockRequestPasswordReset).not.toHaveBeenCalled()
     })
 
-    test('emits digi_powerdown sfx on validation failure [obligation]', async () => {
+    test('emits digi_powerdown sfx on validation failure', async () => {
       const auth = useForgotPasswordActions()
       await auth.submit()
       expect(mockEmitSfx).toHaveBeenCalledWith('ui.rejected')
     })
   })
 
-  // ── submit() — success [obligation] ──────────────────────────────────────
+  // ── submit() — success ──────────────────────────────────────
 
-  describe('submit() — success [obligation]', () => {
-    test('returns "success" and sets success=true when the outcome is "success" [obligation]', async () => {
+  describe('submit() — success', () => {
+    test('returns "success" and sets success=true when the outcome is "success"', async () => {
       mockRequestPasswordReset.mockResolvedValueOnce('success')
       const auth = useForgotPasswordActions()
       auth.email = 'user@example.com'
@@ -119,10 +119,10 @@ describe('useForgotPasswordActions', () => {
     })
   })
 
-  // ── submit() — error [obligation] ────────────────────────────────────────
+  // ── submit() — error ────────────────────────────────────────
 
-  describe('submit() — error path (account-enumeration prevention) [obligation]', () => {
-    test('returns "error" and shows the generic message on the "error" outcome [obligation]', async () => {
+  describe('submit() — error path (account-enumeration prevention)', () => {
+    test('returns "error" and shows the generic message on the "error" outcome', async () => {
       mockRequestPasswordReset.mockResolvedValueOnce('error')
       const auth = useForgotPasswordActions()
       auth.email = 'user@example.com'
@@ -135,7 +135,7 @@ describe('useForgotPasswordActions', () => {
       expect(auth.success).toBe(false)
     })
 
-    test('emits etc_woodblock_stuck sfx on error [obligation]', async () => {
+    test('emits etc_woodblock_stuck sfx on error', async () => {
       mockRequestPasswordReset.mockResolvedValueOnce('error')
       const auth = useForgotPasswordActions()
       auth.email = 'user@example.com'

@@ -95,8 +95,6 @@ function onCommitName() {
           :style="{ backgroundColor: hex }"
           :title="t('admin.palette-page.pick-color-label')"
         >
-          <!-- The native picker anchors itself to its own input, so the input covers the swatch
-               rather than being hidden away off-screen. -->
           <input
             data-testid="shade-editor__color-input"
             type="color"
@@ -106,8 +104,6 @@ function onCommitName() {
           />
         </label>
 
-        <!-- Out of flow under the swatch: the header's height stays the swatch's, so the hex can sit
-             directly beneath it without pushing the name field or the channels down. -->
         <button
           type="button"
           data-testid="shade-editor__hex"
@@ -134,8 +130,6 @@ function onCommitName() {
       </div>
     </header>
 
-    <!-- The header's hex readout hangs out of flow below it and claims no height, so the clearance
-         it needs is carried here and by the header's own bottom margin. -->
     <div data-testid="shade-editor__channels" class="flex items-center gap-2 mt-5">
       <ui-spinbox
         v-for="channel in CHANNELS"
@@ -155,13 +149,6 @@ function onCommitName() {
         {{ t('admin.palette-page.blast-radius-heading', { count: bindings.length }) }}
       </h3>
 
-      <!-- The editor is teleported to the body, outside the admin modal the scroll lock keeps
-           scrollable, so this list opts itself back in or its handle is decorative. The attribute
-           rides the region rather than the box inside it — the region owns the element that
-           actually scrolls. →[K:scroll-lock-teleport-opt-in]
-
-           `--scroll-content-inset` is the `p-2` the well already had, so the handle draws in that
-           same band and the rows stop exactly where they did before. -->
       <scroll-region
         v-if="bindings.length > 0"
         data-testid="shade-editor__bindings"

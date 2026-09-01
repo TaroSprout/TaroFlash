@@ -12,7 +12,7 @@ vi.mock('gsap', () => ({
 }))
 
 // Card's flip transition now delegates to flipEnter/flipLeave instead of an
-// inline GSAP copy [obligation] — spy on the util so the delegation + the
+// inline GSAP copy — spy on the util so the delegation + the
 // flip-complete/flip-out-complete emits can be asserted directly. onComplete
 // fires asynchronously, like the real GSAP animation — calling it
 // synchronously races Vue's own transition lifecycle and throws.
@@ -43,7 +43,7 @@ function mountCard(props = {}, slots = {}, extraOpts = {}) {
   return shallowMount(Card, {
     props: { side: 'front', ...props },
     slots,
-    global: { stubs: { CardFace: CardFaceStub }, directives: { sfx: {} } },
+    global: { stubs: { CardFace: CardFaceStub } },
     ...extraOpts
   })
 }
@@ -51,7 +51,7 @@ function mountCard(props = {}, slots = {}, extraOpts = {}) {
 // FaceImageLayer stub — mirrors the real component's defineExpose surface so
 // the card's data-active/data-dragging/data-loading + image_controls wiring
 // (previously owned by the deleted image-uploader.vue wrapper) can be
-// asserted directly on the card root [obligation].
+// asserted directly on the card root.
 const FaceImageLayerStub = defineComponent({
   name: 'FaceImageLayer',
   props: ['card', 'side', 'attributes', 'root', 'disabled'],
@@ -98,8 +98,7 @@ function mountEditableCard(props = {}, slots = {}) {
     props: { side: 'front', mode: 'edit', image_editing: true, ...props },
     slots,
     global: {
-      stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub },
-      directives: { sfx: {} }
+      stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub }
     }
   })
 }
@@ -156,35 +155,35 @@ describe('Card (cover side)', () => {
     expect(wrapper.find('[data-testid="card"]').attributes('data-error')).toBeDefined()
   })
 
-  test('does not set data-palette on the root when error is false [obligation]', () => {
+  test('does not set data-palette on the root when error is false', () => {
     const wrapper = mountCard({ error: false })
     expect(wrapper.find('[data-testid="card"]').attributes('data-palette')).toBeUndefined()
   })
 
-  test('sets data-palette="danger" on the root when error is true [obligation]', () => {
+  test('sets data-palette="danger" on the root when error is true', () => {
     const wrapper = mountCard({ error: true })
     expect(wrapper.find('[data-testid="card"]').attributes('data-palette')).toBe('danger')
   })
 
-  // ── shimmer prop [obligation] ─────────────────────────────────────────────
+  // ── shimmer prop ─────────────────────────────────────────────
 
-  test('renders .card-shimmer overlay when shimmer=true [obligation]', () => {
+  test('renders .card-shimmer overlay when shimmer=true', () => {
     const wrapper = mountCard({ shimmer: true })
     expect(wrapper.find('.card-shimmer').exists()).toBe(true)
   })
 
-  test('does not render .card-shimmer overlay when shimmer=false [obligation]', () => {
+  test('does not render .card-shimmer overlay when shimmer=false', () => {
     const wrapper = mountCard({ shimmer: false })
     expect(wrapper.find('.card-shimmer').exists()).toBe(false)
   })
 
-  test('does not render .card-shimmer when shimmer is omitted (defaults to false) [obligation]', () => {
+  test('does not render .card-shimmer when shimmer is omitted (defaults to false)', () => {
     const wrapper = mountCard()
     expect(wrapper.find('.card-shimmer').exists()).toBe(false)
   })
 })
 
-describe('Card slot-forwarding [obligation]', () => {
+describe('Card slot-forwarding', () => {
   // ── #image slot forwarding ────────────────────────────────────────────────────
   // The card forwards the caller's #image slot to the active face's #image slot.
   // When no #image slot is provided the face uses its default <img> from the
@@ -236,7 +235,7 @@ describe('Card slot-forwarding [obligation]', () => {
   })
 })
 
-describe('Card — flip delegates to flipEnter/flipLeave [obligation]', () => {
+describe('Card — flip delegates to flipEnter/flipLeave', () => {
   // @vue/test-utils auto-stubs <transition> by default, which never invokes
   // @enter/@leave — unstub it here so the real transition lifecycle (and the
   // card's onEnter/onLeave delegation to flip.ts) actually runs. The mocked
@@ -246,7 +245,7 @@ describe('Card — flip delegates to flipEnter/flipLeave [obligation]', () => {
   function mountRealTransition(props = {}) {
     return mount(Card, {
       props: { side: 'cover', ...props },
-      global: { directives: { sfx: {} }, stubs: { transition: false } }
+      global: { stubs: { transition: false } }
     })
   }
 
@@ -269,7 +268,7 @@ describe('Card — flip delegates to flipEnter/flipLeave [obligation]', () => {
   })
 })
 
-describe('Card — edit-state attrs owned by the card root [obligation]', () => {
+describe('Card — edit-state attrs owned by the card root', () => {
   // Previously set by the deleted image-uploader.vue wrapper; the card root
   // itself now sources data-active/data-dragging/data-loading off the mounted
   // FaceImageLayer's exposed state.
@@ -298,15 +297,14 @@ describe('Card — edit-state attrs owned by the card root [obligation]', () => 
     const cover_side = shallowMount(Card, {
       props: { side: 'cover', mode: 'edit', image_editing: true },
       global: {
-        stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub },
-        directives: { sfx: {} }
+        stubs: { CardFace: CardFaceStub, FaceImageLayer: FaceImageLayerStub }
       }
     })
     expect(cover_side.find('[data-testid="face-image-layer-stub"]').exists()).toBe(false)
   })
 })
 
-describe('Card — cover-image edit layer [obligation]', () => {
+describe('Card — cover-image edit layer', () => {
   // The shared cover_image staging interface (from useCoverImage) — a minimal
   // fake with just the pieces the card root + cover-image-layer read.
   function makeCoverImage(overrides = {}) {
@@ -327,6 +325,13 @@ describe('Card — cover-image edit layer [obligation]', () => {
       ...overrides
     }
   }
+
+  test('passes cover_image to card-cover', () => {
+    const cover_image = makeCoverImage()
+    const wrapper = mountCard({ side: 'cover', cover_image })
+    const coverStub = wrapper.findComponent({ name: 'CardCover' })
+    expect(coverStub.props('cover_image')).toEqual(cover_image)
+  })
 
   test('mounts cover-image-layer when cover_editing + cover_image are set on the cover side', () => {
     const wrapper = mountCard({ side: 'cover', cover_editing: true, cover_image: makeCoverImage() })
@@ -387,7 +392,7 @@ describe('Card — disabled prop', () => {
   })
 })
 
-describe('Card — defineExpose image_controls [obligation]', () => {
+describe('Card — defineExpose image_controls', () => {
   test('exposes openPicker/onRemove from the mounted image layer', () => {
     const wrapper = mountEditableCard()
     expect(wrapper.vm.image_controls).not.toBeNull()
@@ -401,7 +406,7 @@ describe('Card — defineExpose image_controls [obligation]', () => {
   })
 })
 
-describe('Card — #editor slot wrapper [obligation]', () => {
+describe('Card — #editor slot wrapper', () => {
   test('renders the card__editor wrapper when an #editor slot is provided', () => {
     const wrapper = mountCard(
       { side: 'front' },
@@ -422,12 +427,11 @@ describe('Card — region-dropzone image slot substitution', () => {
   // face's #image slot with <image-dropzone> instead of the caller's #image
   // slot / the face's default <img> — on both the front and back faces.
 
-  test('renders image-dropzone in the front face #image slot, passing the card remove_label [obligation]', async () => {
+  test('renders image-dropzone in the front face #image slot, passing the card remove_label', async () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'front', mode: 'edit', image_editing: true },
       global: {
-        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() },
-        directives: { sfx: {} }
+        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() }
       }
     })
     await wrapper.vm.$nextTick()
@@ -436,12 +440,11 @@ describe('Card — region-dropzone image slot substitution', () => {
     expect(dropzone.props('remove_label')).toBe('Remove image')
   })
 
-  test('renders image-dropzone in the back face #image slot, passing the card remove_label [obligation]', async () => {
+  test('renders image-dropzone in the back face #image slot, passing the card remove_label', async () => {
     const wrapper = shallowMount(Card, {
       props: { side: 'back', mode: 'edit', image_editing: true },
       global: {
-        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() },
-        directives: { sfx: {} }
+        stubs: { CardFace: CardFaceStub, FaceImageLayer: makeRegionDropzoneStub() }
       }
     })
     await wrapper.vm.$nextTick()

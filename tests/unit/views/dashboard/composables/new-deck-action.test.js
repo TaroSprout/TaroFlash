@@ -32,7 +32,7 @@ describe('useNewDeckAction', () => {
     mockEmitSfx.mockClear()
   })
 
-  test('calls deck_actions.createDeck with a single argument, no options object [obligation]', async () => {
+  test('calls deck_actions.createDeck with a single argument, no options object', async () => {
     const useNewDeckAction = await loadUseNewDeckAction()
     const { createNewDeck } = useNewDeckAction()
 
@@ -91,7 +91,7 @@ describe('useNewDeckAction', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
   })
 
-  describe('module-scoped single-flight guard across separate instances [obligation]', () => {
+  describe('module-scoped single-flight guard across separate instances', () => {
     test('a create started via one useNewDeckAction() instance blocks another instance', async () => {
       let resolveCreate
       mockCreateDeck.mockReturnValueOnce(

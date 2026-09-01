@@ -88,9 +88,9 @@ describe('useMemberStore', () => {
     expect(store.has_member).toBe(true)
   })
 
-  // ── email sourced from session, not the stale profile row [obligation] ────
+  // ── email sourced from session, not the stale profile row ────
 
-  test('email comes from the session, not the (potentially stale) member query row [obligation]', () => {
+  test('email comes from the session, not the (potentially stale) member query row', () => {
     sessionUser.value = { id: 'user-1', email: 'fresh@test.com' }
     memberRef.value = { id: 'user-1', email: 'stale@test.com' }
 
@@ -111,9 +111,9 @@ describe('useMemberStore', () => {
     expect(store.has_member).toBe(true)
   })
 
-  // ── preferences always resolved [obligation] ───────────────────────────────
+  // ── preferences always resolved ───────────────────────────────
 
-  test('preferences resolves to full defaults when the member query has no data yet [obligation]', () => {
+  test('preferences resolves to full defaults when the member query has no data yet', () => {
     sessionUser.value = { id: 'user-1' }
     memberRef.value = null
 
@@ -136,7 +136,7 @@ describe('useMemberStore', () => {
     })
   })
 
-  test('preferences resolves to full defaults when member.preferences is null [obligation]', () => {
+  test('preferences resolves to full defaults when member.preferences is null', () => {
     sessionUser.value = { id: 'user-1' }
     memberRef.value = { id: 'user-1', preferences: null }
 
@@ -151,7 +151,7 @@ describe('useMemberStore', () => {
     })
   })
 
-  test('preferences merges a partial payload with defaults, never dropping a field [obligation]', () => {
+  test('preferences merges a partial payload with defaults, never dropping a field', () => {
     sessionUser.value = { id: 'user-1' }
     memberRef.value = { id: 'user-1', preferences: { study: { show_all_ratings: false } } }
 
@@ -167,10 +167,10 @@ describe('useMemberStore', () => {
     expect(store.preferences.accessibility).toEqual({ left_hand: false })
   })
 
-  // ── deck_limit / cards_per_deck_limit — null-safe against the plans embed [obligation]
+  // ── deck_limit / cards_per_deck_limit — null-safe against the plans embed
 
-  describe('deck_limit / cards_per_deck_limit [obligation]', () => {
-    test('reads limits from the embedded plans object when present [obligation]', () => {
+  describe('deck_limit / cards_per_deck_limit', () => {
+    test('reads limits from the embedded plans object when present', () => {
       sessionUser.value = { id: 'user-1' }
       memberRef.value = { id: 'user-1', plans: { deck_limit: 5, cards_per_deck_limit: 200 } }
 
@@ -180,7 +180,7 @@ describe('useMemberStore', () => {
       expect(store.cards_per_deck_limit).toBe(200)
     })
 
-    test('falls back to null when plans is null (e.g. inactive plan row) [obligation]', () => {
+    test('falls back to null when plans is null (e.g. inactive plan row)', () => {
       sessionUser.value = { id: 'user-1' }
       memberRef.value = { id: 'user-1', plans: null }
 
@@ -190,7 +190,7 @@ describe('useMemberStore', () => {
       expect(store.cards_per_deck_limit).toBeNull()
     })
 
-    test('falls back to null when plans is undefined (e.g. member query has no data yet) [obligation]', () => {
+    test('falls back to null when plans is undefined (e.g. member query has no data yet)', () => {
       sessionUser.value = { id: 'user-1' }
       memberRef.value = null
 
@@ -260,10 +260,10 @@ describe('useMemberStore', () => {
     })
   })
 
-  // ── pending_deletion / delete_at [obligation] ──────────────────────────────
+  // ── pending_deletion / delete_at ──────────────────────────────
 
-  describe('pending_deletion / delete_at [obligation]', () => {
-    test('pending_deletion is false and delete_at is null when the member has no delete_at [obligation]', () => {
+  describe('pending_deletion / delete_at', () => {
+    test('pending_deletion is false and delete_at is null when the member has no delete_at', () => {
       sessionUser.value = { id: 'user-1' }
       memberRef.value = { id: 'user-1', delete_at: null }
 
@@ -273,7 +273,7 @@ describe('useMemberStore', () => {
       expect(store.delete_at).toBeNull()
     })
 
-    test('pending_deletion is true and delete_at reflects the deadline once the account is archived [obligation]', () => {
+    test('pending_deletion is true and delete_at reflects the deadline once the account is archived', () => {
       sessionUser.value = { id: 'user-1' }
       memberRef.value = { id: 'user-1', delete_at: '2026-08-05T00:00:00Z' }
 
@@ -283,7 +283,7 @@ describe('useMemberStore', () => {
       expect(store.delete_at).toBe('2026-08-05T00:00:00Z')
     })
 
-    test('pending_deletion is false and delete_at is null when the member query has no data yet [obligation]', () => {
+    test('pending_deletion is false and delete_at is null when the member query has no data yet', () => {
       sessionUser.value = { id: 'user-1' }
       memberRef.value = null
 
@@ -294,16 +294,16 @@ describe('useMemberStore', () => {
     })
   })
 
-  // ── error — passthrough from the query [obligation] ────────────────────────
+  // ── error — passthrough from the query ────────────────────────
 
-  describe('error [obligation]', () => {
+  describe('error', () => {
     test('is undefined/null when the query has no error', () => {
       sessionUser.value = { id: 'user-1' }
       const store = useMemberStore()
       expect(store.error).toBeFalsy()
     })
 
-    test('passes the query error straight through [obligation]', () => {
+    test('passes the query error straight through', () => {
       sessionUser.value = { id: 'user-1' }
       const err = new Error('fetch failed')
       memberErrorRef.value = err

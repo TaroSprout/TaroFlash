@@ -53,7 +53,7 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     while (mounted_wrappers.length > 0) mounted_wrappers.pop().unmount()
   })
 
-  test('renders the bar with select-all, move, and delete [obligation]', () => {
+  test('renders the bar with select-all, move, and delete', () => {
     const { wrapper } = mountBar()
 
     expect(wrapper.find('[data-testid="session-summary__bulk-actions"]').exists()).toBe(true)
@@ -66,7 +66,7 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
 
   // Review removed the cancel button + count tag row outright — only
   // select-all/move/delete remain.
-  test('does not render a cancel button or a count tag [obligation]', () => {
+  test('does not render a cancel button or a count tag', () => {
     const { wrapper } = mountBar()
 
     expect(wrapper.find('[data-testid="session-summary__bulk-actions-cancel"]').exists()).toBe(
@@ -77,7 +77,7 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
 
   // ── Select all / deselect all ────────────────────────────────────────────
 
-  test('pressing select-all calls selectAllSummaryCards when not everything is selected [obligation]', async () => {
+  test('pressing select-all calls selectAllSummaryCards when not everything is selected', async () => {
     const { wrapper, controller } = mountBar(makeController({ all_cards_selected: false }))
     await wrapper.find('[data-testid="session-summary__bulk-actions-select-all"]').trigger('click')
 
@@ -85,7 +85,7 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     expect(controller.summary_selection.clearSelectedCards).not.toHaveBeenCalled()
   })
 
-  test('pressing select-all calls clearSelectedCards when everything is already selected [obligation]', async () => {
+  test('pressing select-all calls clearSelectedCards when everything is already selected', async () => {
     const { wrapper, controller } = mountBar(makeController({ all_cards_selected: true }))
     await wrapper.find('[data-testid="session-summary__bulk-actions-select-all"]').trigger('click')
 
@@ -103,9 +103,9 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     expect(tooltip?.textContent).toContain('Deselect all')
   })
 
-  // ── Move / Delete: disabled until something is selected [obligation] ────
+  // ── Move / Delete: disabled until something is selected ────
 
-  test('move and delete are disabled when nothing is selected [obligation]', () => {
+  test('move and delete are disabled when nothing is selected', () => {
     const { wrapper } = mountBar(makeController({ selected_count: 0 }))
 
     expect(
@@ -118,7 +118,7 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     ).toBeDefined()
   })
 
-  test('move and delete are enabled once something is selected [obligation]', () => {
+  test('move and delete are enabled once something is selected', () => {
     const { wrapper } = mountBar(makeController({ selected_count: 1 }))
 
     expect(
@@ -131,13 +131,13 @@ describe('BulkActionsBar (session-summary/bulk-actions-bar.vue)', () => {
     ).toBeUndefined()
   })
 
-  test('pressing move calls onMoveSummarySelected [obligation]', async () => {
+  test('pressing move calls onMoveSummarySelected', async () => {
     const { wrapper, controller } = mountBar(makeController({ selected_count: 1 }))
     await wrapper.find('[data-testid="session-summary__bulk-actions-move"]').trigger('click')
     expect(controller.onMoveSummarySelected).toHaveBeenCalledOnce()
   })
 
-  test('pressing delete calls onDeleteSummarySelected [obligation]', async () => {
+  test('pressing delete calls onDeleteSummarySelected', async () => {
     const { wrapper, controller } = mountBar(makeController({ selected_count: 1 }))
     await wrapper.find('[data-testid="session-summary__bulk-actions-delete"]').trigger('click')
     expect(controller.onDeleteSummarySelected).toHaveBeenCalledOnce()

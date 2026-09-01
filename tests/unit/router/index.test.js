@@ -275,7 +275,7 @@ describe('router — the single auth checkpoint', () => {
     })
 
     test.each([['/welcome'], ['/privacy'], ['/terms']])(
-      '%s is marked marketing and counts a pageview [obligation]',
+      '%s is marked marketing and counts a pageview',
       (path) => {
         const to = resolveTo(path)
 
@@ -290,7 +290,7 @@ describe('router — the single auth checkpoint', () => {
       ['/deck/123'],
       ['/audio-reader/collection/1/lesson/2'],
       ['/auth/callback']
-    ])('%s is not marked marketing and does not count a pageview [obligation]', (path) => {
+    ])('%s is not marked marketing and does not count a pageview', (path) => {
       const to = resolveTo(path)
 
       afterEachHolder.current(to)

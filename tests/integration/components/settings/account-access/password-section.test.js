@@ -42,8 +42,7 @@ const UiTooltipStub = defineComponent({
 function makeWrapper() {
   return mount(PasswordSection, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub },
-      directives: { sfx: {} }
+      stubs: { UiTooltip: UiTooltipStub }
     }
   })
 }
@@ -65,14 +64,14 @@ beforeEach(() => {
 describe('PasswordSection', () => {
   // ── Structure ─────────────────────────────────────────────────────────────
 
-  test('renders the password section container — a pure form, always [obligation]', () => {
+  test('renders the password section container — a pure form, always', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="account-access-modal__password-section"]').exists()).toBe(
       true
     )
   })
 
-  test('renders unchanged when success flips true — no internal success panel [obligation]', async () => {
+  test('renders unchanged when success flips true — no internal success panel', async () => {
     const wrapper = makeWrapper()
     mockPasswordActions.success.value = true
     await wrapper.vm.$nextTick()
@@ -198,15 +197,15 @@ describe('PasswordSection', () => {
     })
   })
 
-  // ── emits 'success' exactly once when success flips true [obligation] ──────
+  // ── emits 'success' exactly once when success flips true ──────
 
-  describe('emits "success" exactly once when success flips true [obligation]', () => {
-    test('does not emit "success" while success is false [obligation]', () => {
+  describe('emits "success" exactly once when success flips true', () => {
+    test('does not emit "success" while success is false', () => {
       const wrapper = makeWrapper()
       expect(wrapper.emitted('success')).toBeUndefined()
     })
 
-    test('emits "success" when success flips to true [obligation]', async () => {
+    test('emits "success" when success flips to true', async () => {
       const wrapper = makeWrapper()
       mockPasswordActions.success.value = true
       await wrapper.vm.$nextTick()
@@ -214,7 +213,7 @@ describe('PasswordSection', () => {
       expect(wrapper.emitted('success')).toHaveLength(1)
     })
 
-    test('does not re-emit when success stays true across another update [obligation]', async () => {
+    test('does not re-emit when success stays true across another update', async () => {
       const wrapper = makeWrapper()
       mockPasswordActions.success.value = true
       await wrapper.vm.$nextTick()

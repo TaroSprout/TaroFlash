@@ -64,7 +64,7 @@ describe('DeckGridSortOptions — selected prop drives data-active', () => {
 })
 
 describe('DeckGridSortOptions — click behavior', () => {
-  test('clicking a non-selected option emits select with that key and plays ui.press [obligation]', async () => {
+  test('clicking a non-selected option emits select with that key and plays ui.press', async () => {
     const wrapper = mount({ selected: 'custom' })
 
     await wrapper.find('[data-testid="deck-grid-sort-options__date-created"]').trigger('click')
@@ -73,7 +73,7 @@ describe('DeckGridSortOptions — click behavior', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('clicking the currently selected option still emits select but plays ui.deselect [obligation]', async () => {
+  test('clicking the currently selected option still emits select but plays ui.deselect', async () => {
     const wrapper = mount({ selected: 'custom' })
 
     await wrapper.find('[data-testid="deck-grid-sort-options__custom"]').trigger('click')

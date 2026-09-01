@@ -46,23 +46,23 @@ describe('emitSfx', () => {
     expect(player.play).toHaveBeenCalledWith('click_07', { bus: undefined, debounce: undefined })
   })
 
-  // ── preview_bus [obligation] ────────────────────────────────────────────────
+  // ── preview_bus ────────────────────────────────────────────────
 
-  test('preview_bus overrides the bus the role would otherwise resolve to [obligation]', async () => {
+  test('preview_bus overrides the bus the role would otherwise resolve to', async () => {
     mockRoleDef.mockReturnValue({ sound: 'click_07', bus: 'interface' })
     await emitSfx('gesture.tick', 'hover')
     expect(player.play).toHaveBeenCalledWith('click_07', { bus: 'hover', debounce: undefined })
   })
 
-  test('preview_bus never changes which sound plays [obligation]', async () => {
+  test('preview_bus never changes which sound plays', async () => {
     mockRoleDef.mockReturnValue({ sound: 'click_07', bus: 'interface' })
     await emitSfx('gesture.tick', 'hover')
     expect(player.play.mock.calls[0][0]).toBe('click_07')
   })
 
-  // ── array sound [obligation] ────────────────────────────────────────────────
+  // ── array sound ────────────────────────────────────────────────
 
-  test('an array sound picks one uniformly at random [obligation]', async () => {
+  test('an array sound picks one uniformly at random', async () => {
     mockRoleDef.mockReturnValue({ sound: ['click_04', 'click_07', 'tap_05'], bus: 'hover' })
     vi.spyOn(Math, 'random').mockReturnValue(0)
     await emitSfx('ui.hover')
@@ -70,7 +70,7 @@ describe('emitSfx', () => {
     Math.random.mockRestore()
   })
 
-  test('an array sound picks the last entry when Math.random returns ~1 [obligation]', async () => {
+  test('an array sound picks the last entry when Math.random returns ~1', async () => {
     mockRoleDef.mockReturnValue({ sound: ['click_04', 'click_07', 'tap_05'], bus: 'hover' })
     vi.spyOn(Math, 'random').mockReturnValue(0.999)
     await emitSfx('ui.hover')
@@ -78,7 +78,7 @@ describe('emitSfx', () => {
     Math.random.mockRestore()
   })
 
-  test('an empty array resolves silently without touching the player [obligation]', async () => {
+  test('an empty array resolves silently without touching the player', async () => {
     mockRoleDef.mockReturnValue({ sound: [] })
     await emitSfx('ui.hover')
     expect(player.play).not.toHaveBeenCalled()
@@ -106,18 +106,18 @@ describe('emitHoverSfx', () => {
     expect(player.play).toHaveBeenCalledWith('click_07', { bus: 'hover', debounce: undefined })
   })
 
-  // ── touch-primary [obligation] ──────────────────────────────────────────────
+  // ── touch-primary ──────────────────────────────────────────────
 
-  test('stays silent on a touch-primary pointer [obligation]', async () => {
+  test('stays silent on a touch-primary pointer', async () => {
     window.ontouchstart = null
     await emitHoverSfx('ui.hover')
     expect(player.play).not.toHaveBeenCalled()
     delete window.ontouchstart
   })
 
-  // ── stationary after click [obligation] ─────────────────────────────────────
+  // ── stationary after click ─────────────────────────────────────
 
-  test('stays silent when the pointer is stationary after a click [obligation]', async () => {
+  test('stays silent when the pointer is stationary after a click', async () => {
     pointerStationaryAfterClick.mockReturnValueOnce(true)
     await emitHoverSfx('ui.hover')
     expect(player.play).not.toHaveBeenCalled()

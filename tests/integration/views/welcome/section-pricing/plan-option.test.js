@@ -46,7 +46,7 @@ describe('PlanOption — structure', () => {
     expect(wrapper.find('[data-testid="plan-option__name"]').text()).toBe('Deck Builder')
   })
 
-  test('stamps the constant data-station="panel" [obligation]', () => {
+  test('stamps the constant data-station="panel"', () => {
     const wrapper = mountOption()
     expect(wrapper.find('[data-testid="plan-option"]').attributes('data-station')).toBe('panel')
   })

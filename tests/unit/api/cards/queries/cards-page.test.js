@@ -33,7 +33,7 @@ beforeEach(() => {
 })
 
 describe('cardsInDeckQueryKey', () => {
-  test('with only deck_id produces the default sort + empty query key [obligation]', () => {
+  test('with only deck_id produces the default sort + empty query key', () => {
     // drag-reorder mutation calls cardsInDeckQueryKey(deck_id) with no other args
     // and must always hit the default-sort cache
     expect(cardsInDeckQueryKey(5)).toEqual(['cards', 5, 'pages', CARDS_PAGE_SIZE, 'default', ''])
@@ -50,7 +50,7 @@ describe('cardsInDeckQueryKey', () => {
     ])
   })
 
-  test('includes sort_by and query in the key so different combos get separate cache entries [obligation]', () => {
+  test('includes sort_by and query in the key so different combos get separate cache entries', () => {
     const key_a = cardsInDeckQueryKey(1, 'default', '')
     const key_b = cardsInDeckQueryKey(1, 'difficulty', '')
     const key_c = cardsInDeckQueryKey(1, 'default', 'cat')
@@ -78,7 +78,7 @@ describe('cardsInDeckQueryKey', () => {
 })
 
 describe('useCardsInDeckInfiniteQuery', () => {
-  test('passes empty string search_query as null to fetchCardsInDeck — no spurious ilike [obligation]', () => {
+  test('passes empty string search_query as null to fetchCardsInDeck — no spurious ilike', () => {
     useCardsInDeckInfiniteQuery(ref(10), ref('default'), ref(''))
     const [{ query }] = useInfiniteQueryMock.mock.calls[0]
     // Invoke the query fn with a fake pageParam
@@ -93,7 +93,7 @@ describe('useCardsInDeckInfiniteQuery', () => {
     expect(fetchCardsInDeckMock).toHaveBeenCalledWith(expect.objectContaining({ query: 'cat' }))
   })
 
-  test('key fn includes sort_by and search_query so different combos produce different keys [obligation]', () => {
+  test('key fn includes sort_by and search_query so different combos produce different keys', () => {
     useCardsInDeckInfiniteQuery(ref(5), ref('default'), ref(''))
     const [{ key }] = useInfiniteQueryMock.mock.calls[0]
     const key_default_empty = key()
@@ -106,7 +106,7 @@ describe('useCardsInDeckInfiniteQuery', () => {
     expect(key_default_empty).not.toEqual(key_difficulty_empty)
   })
 
-  test('key fn changes when search_query changes [obligation]', () => {
+  test('key fn changes when search_query changes', () => {
     const search_query = ref('')
     useCardsInDeckInfiniteQuery(ref(5), ref('default'), search_query)
     const [{ key }] = useInfiniteQueryMock.mock.calls[0]
@@ -124,15 +124,15 @@ describe('useCardsInDeckInfiniteQuery', () => {
     expect(key()).toEqual(cardsInDeckQueryKey(7))
   })
 
-  // [obligation] has-more is a fact (next_rank !== null), not inferred from page length
-  test('getNextPageParam returns null when next_rank is null — end of the deck [obligation]', () => {
+  // has-more is a fact (next_rank !== null), not inferred from page length
+  test('getNextPageParam returns null when next_rank is null — end of the deck', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
     const short_page = { cards: Array.from({ length: 10 }, () => ({})), next_rank: null }
     expect(getNextPageParam(short_page, [short_page])).toBe(null)
   })
 
-  test('getNextPageParam returns the summed cards length across pages when next_rank is set [obligation]', () => {
+  test('getNextPageParam returns the summed cards length across pages when next_rank is set', () => {
     useCardsInDeckInfiniteQuery(ref(10))
     const [{ getNextPageParam }] = useInfiniteQueryMock.mock.calls[0]
     const full_page = {

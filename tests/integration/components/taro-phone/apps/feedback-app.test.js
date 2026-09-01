@@ -19,7 +19,7 @@ vi.mock('@/composables/feedback/use-feedback-modal', () => ({
   useFeedbackModal: () => ({ open: mockFeedbackModalOpen })
 }))
 
-describe('FeedbackApp — openApp wiring [obligation]', () => {
+describe('FeedbackApp — openApp wiring', () => {
   test('pressing the app launches the feedback modal through phone.openApp', async () => {
     const modal_result = { response: Promise.resolve(undefined) }
     mockFeedbackModalOpen.mockReturnValueOnce(modal_result)

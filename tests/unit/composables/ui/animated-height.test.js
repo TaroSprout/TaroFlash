@@ -89,7 +89,7 @@ describe('useAnimatedHeight', () => {
       expect(wrapper.value.style.height).toBe('50px')
     })
 
-    test('resets height to empty string and calls onSettled on the next frame [obligation]', async () => {
+    test('resets height to empty string and calls onSettled on the next frame', async () => {
       const wrapper = ref(makeEl(0))
       const content = ref(makeEl(0))
       const onSettled = vi.fn()
@@ -104,7 +104,7 @@ describe('useAnimatedHeight', () => {
       expect(onSettled).toHaveBeenCalledTimes(1)
     })
 
-    test('does not call gsap.to in snap mode [obligation]', () => {
+    test('does not call gsap.to in snap mode', () => {
       const wrapper = ref(makeEl(0))
       const content = ref(makeEl(0))
       withSetup(wrapper, content)
@@ -140,7 +140,7 @@ describe('useAnimatedHeight', () => {
   })
 
   describe('animate mode', () => {
-    test('tweens height via gsap.to with overflow hidden during the tween [obligation]', () => {
+    test('tweens height via gsap.to with overflow hidden during the tween', () => {
       const wrapper = ref(makeEl(0))
       const content = ref(makeEl(0))
       withSetup(wrapper, content, () => true, undefined, true)
@@ -154,7 +154,7 @@ describe('useAnimatedHeight', () => {
       )
     })
 
-    test('clears overflow and calls onSettled from onComplete [obligation]', () => {
+    test('clears overflow and calls onSettled from onComplete', () => {
       const wrapper = ref(makeEl(0))
       const content = ref(makeEl(0))
       const onSettled = vi.fn()
@@ -191,7 +191,7 @@ describe('useAnimatedHeight', () => {
       expect(observer.disconnected).toBe(true)
     })
 
-    test('re-observes a new content element when the content ref changes [obligation]', async () => {
+    test('re-observes a new content element when the content ref changes', async () => {
       const wrapper = ref(makeEl(0))
       const content = ref(makeEl(50))
       withSetup(wrapper, content)

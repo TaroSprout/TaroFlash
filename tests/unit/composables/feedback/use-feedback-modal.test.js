@@ -15,7 +15,7 @@ vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx
 }))
 
-describe('useFeedbackModal — call shape [obligation]', () => {
+describe('useFeedbackModal — call shape', () => {
   beforeEach(() => {
     mockOpen.mockReset()
     mockEmitSfx.mockClear()

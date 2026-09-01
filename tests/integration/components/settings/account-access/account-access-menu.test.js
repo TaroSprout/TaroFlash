@@ -66,8 +66,7 @@ const OptionsPanelStub = defineComponent({
 function makeWrapper() {
   return mount(AccountAccessMenu, {
     global: {
-      stubs: { UiTooltip: UiTooltipStub, UiOptionsPanel: OptionsPanelStub },
-      directives: { sfx: {} }
+      stubs: { UiTooltip: UiTooltipStub, UiOptionsPanel: OptionsPanelStub }
     }
   })
 }
@@ -117,7 +116,7 @@ describe('AccountAccessMenu', () => {
     expect(mockGoogleActions.onConnect).not.toHaveBeenCalled()
   })
 
-  test('[obligation] disables the google button, blocking the press, when the google identity is the last remaining identity', async () => {
+  test('disables the google button, blocking the press, when the google identity is the last remaining identity', async () => {
     mockGoogleActions.hasGoogleIdentity.value = true
     mockGoogleActions.hasPasswordIdentity.value = false
     const wrapper = makeWrapper()

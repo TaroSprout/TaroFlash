@@ -71,7 +71,7 @@ describe('useSaveCardMutation', () => {
     expect(saveCardMock).toHaveBeenCalledWith(card, values)
   })
 
-  test('onSettled invalidates the card index so the highlight overlay stays in sync [obligation]', () => {
+  test('onSettled invalidates the card index so the highlight overlay stays in sync', () => {
     // Front-text edits change which terms are indexed; the card index query
     // must be marked stale so the highlight overlay updates after a save.
     const { onSettled } = configFrom()
@@ -91,11 +91,11 @@ describe('useSaveCardMutation', () => {
     expect(filter).toEqual({ key: ['cards', 10, 'pages'] })
   })
 
-  // [obligation] regression: patchCardInDeckCache used to walk pages as Card[]
+  // regression: patchCardInDeckCache used to walk pages as Card[]
   // directly, so `page.map` threw on every page under the { cards, next_rank }
   // shape — a toast per keystroke with no network request. Assert against a
   // real page object (not a bare array) so this drift can't slip back in.
-  test('onMutate updater merges values into the matching card within a { cards, next_rank } page, leaving siblings intact [obligation]', () => {
+  test('onMutate updater merges values into the matching card within a { cards, next_rank } page, leaving siblings intact', () => {
     const { onMutate } = configFrom()
     onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
 
@@ -122,7 +122,7 @@ describe('useSaveCardMutation', () => {
     expect(next.pages[0].cards[1]).toEqual({ id: 6, deck_id: 10, front_text: 'X', back_text: 'Y' })
   })
 
-  test('onMutate updater leaves other pages untouched and preserves next_rank [obligation]', () => {
+  test('onMutate updater leaves other pages untouched and preserves next_rank', () => {
     const { onMutate } = configFrom()
     onMutate({ card: { id: 5, deck_id: 10 }, values: { front_text: 'F1' } })
 
