@@ -34,15 +34,13 @@ export function snapPinnedPreview(el: HTMLElement, tucked: boolean) {
 function flipToPose(el: HTMLElement, pose: PreviewPose, onEdgeOn: () => void) {
   const tl = gsap.timeline()
 
-  // Set the perspective before the first rotate, never alongside it — the
-  // opening frame renders as a flat squish otherwise.
+  // Set perspective before the first rotate, never alongside it, or the opening frame squishes flat.
   tl.set(el, { transformPerspective: FLIP_PERSPECTIVE })
   tl.to(el, { rotateY: 90, duration: HALF_TURN_DURATION, ease: 'power2.in', onComplete: onEdgeOn })
   tl.set(el, { rotateY: -90 })
   tl.to(el, { rotateY: 0, duration: HALF_TURN_DURATION, ease: 'power2.out' })
 
-  // Keep the travel spanning both halves of the turn — split after it, the
-  // card reads as turning and then sliding, two moves instead of one.
+  // Span the travel across both halves of the turn, or it reads as turning then sliding.
   tl.to(el, { ...pose, duration: HALF_TURN_DURATION * 2, ease: 'power2.inOut' }, 0)
 
   return new Promise<void>((resolve) => {

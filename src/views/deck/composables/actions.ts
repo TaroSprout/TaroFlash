@@ -88,8 +88,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
       return
     }
 
-    // The deck-wide path stays un-optimistic, so its placeholders only go once
-    // the server has taken the cards.
+    // Un-optimistic on purpose: placeholders only go once the server has taken the cards.
     if ('except_ids' in resolved.args) {
       list.retireTemps(promotedTempIdsExcept(resolved.args.except_ids))
     }
@@ -169,8 +168,7 @@ export function useCardActions({ list, selection, mutations, deck_query, deck_id
     const target = await openMoveModal(resolved.preview_cards, resolved.count, deck_id, move)
     if (!target) return
 
-    // Same placeholder problem as delete: the source deck's refetch can't take
-    // away a row the persisted list never carried. →[K:deck-temp-card-handoff]
+    // The source deck's refetch can't remove a row the persisted list never carried. →[K:deck-temp-card-handoff]
     list.retireTemps(
       'card_ids' in resolved.args
         ? resolved.args.card_ids
