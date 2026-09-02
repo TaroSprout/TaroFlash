@@ -13,17 +13,44 @@ Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
 
 CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
 than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails (→[K:proxy-pass-not-evidence]).
-Run `pnpm type-check` before pushing anything that touches types.
+Run `pnpm type-check` before any point where a branch leaves your hands — pushing it yourself, or
+handing it back to whatever pushes it next.
+
+## Node version
+
+`vp fmt` and `vp check` can fail on `vite.config.ts` with `ERR_UNKNOWN_FILE_EXTENSION`, quoting a
+Node engine minimum your version already satisfies (seen: fails on 22.14, works on 26) — the stated
+minimum is wrong, not the toolchain. Switch to a newer Node rather than debugging the config or the
+error message. `vp test` is unaffected.
+
+## Lint
+
+- **Configure lint rules only in `vite.config.ts`'s `lint` block.** `vp lint` silently ignores a root
+  `.oxlintrc.json` — a rule set there never runs, `vp lint` still reports zero errors, and
+  `./node_modules/.bin/oxlint` on the same file with the same config proves the gap
+  (→[K:proxy-pass-not-evidence]).
+- **Oxlint only sees a Vue SFC's `<script>` block.** The template is invisible to its AST — a rule
+  reporting a position outside the script block is rejected outright — and an SFC with no `<script>`
+  at all is never visited.
 
 ## Never `pnpm`
 
 - **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm
   rewrites the lockfile importer spec away from the `@latest` override, and CI's frozen-lockfile
   check then fails with "specifiers in the lockfile don't match specifiers in package.json".
-- `pnpm type-check` is the sole exception, and only as the pre-push gate above.
+- `pnpm type-check` is the sole exception, and only as the gate above.
 - **Upgrade a tool rather than working around it.** If a CLI is too old for a feature we want, offer
   the upgrade — don't accumulate one-off `curl`/SQL workarounds. Work around only when upgrading is
   genuinely blocked, and say why.
+
+## Worktrees
+
+- **Install and invoke `vp` from inside the worktree, never a sibling checkout's binary.** Run
+  `vp install` there first, then call only that worktree's own `./node_modules/.bin/vp`. A pnpm
+  binary shim hardcodes `NODE_PATH` to the checkout it was generated in, so running another
+  checkout's `vp` with your cwd set to the worktree still resolves modules through the wrong
+  `node_modules` — Vitest loads two mismatched runner instances, and the failures (collection errors,
+  a `vi.mock` deadlock) look like broken test infra rather than a binary-path mistake.
 
 ## Imports
 

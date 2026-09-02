@@ -134,6 +134,15 @@ Skip the scratch worktree only when `<branch>` is checked out **and** `git statu
 behind; check it per [`git-workflow`](../../rules/git-workflow.md) and remove it before you stop or
 report, not only on the path where the rewrite succeeded.
 
+**`git worktree add` can fail** — most commonly because `<branch>` is already checked out in a
+sibling worktree. Check its own exit status directly; never pipe it through `tail`/`head`/`grep`
+first, which replaces that status with the filter's and lets `set -e` sail past a failed checkout.
+Then `cd` into the new path and confirm you landed there
+([`git-workflow`](../../rules/git-workflow.md), →[K:worktree-write-target]) before running anything from this step onward —
+`filter-branch`, `reset --soft`, or any commit: a `cd` into a directory that was never created fails
+silently, and for `git reset --soft` / `git commit` that means rewriting the user's own checked-out
+branch.
+
 Inside it, use `git filter-branch --msg-filter` with `case` on `$GIT_COMMIT` (pre-rewrite SHA). Preserves authorship, dates, trailers, parentage — only subject changes.
 
 ```sh
@@ -196,7 +205,7 @@ node scripts/knowledge-lint.mjs
 node scripts/migration-knowledge-gate.mjs --base origin/<base>
 ```
 
-- **Type-check uses `pnpm type-check` (vue-tsc), not `vp`.** CI runs `pnpm type-check`, and vue-tsc is stricter than `vp check`'s type pass — a `vp`-clean tree can still fail CI on types. Use the same command CI uses so the gate actually matches it.
+- Why `pnpm type-check` and not `vp check`: [`toolchain → The type-check gate`](../../rules/toolchain.md#the-type-check-gate).
 - **The knowledge check runs on every branch, not just doc branches.** A pointer breaks when the code it names moves. `migration-knowledge-gate.mjs` only speaks when the branch adds a migration; its answer goes in that migration's header, per [`knowledge-addressing`](../../rules/knowledge-addressing.md).
 - If all clean → continue to the push.
 - If they report errors → fix them. Most lint hits are mechanical (unused import left by a refactor, `prefer-const`, missing return); `vp lint --fix` / `vp fmt <path>` handle the auto-fixable ones — name the paths you touched, per [`FE-formatting`](../../rules/FE-formatting.md). Type errors after a refactor are usually moved/renamed symbols or a changed signature — chase them to the changed call sites.

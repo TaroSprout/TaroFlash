@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-05-06T00:00:00Z
+lastUpdated: 2026-08-28T23:00:23Z
 paths:
   - 'src/**/*.vue'
 ---
@@ -49,6 +49,9 @@ Drop `cursor-pointer` and the hover affordances for the disabled branch and let 
 
 ## Clipping containers stay full-bleed
 
+One instance of "A class can bind its host to a contract" below: `overflow-hidden`'s clip is the
+contract, and the padding it would collide with is what moves off the host.
+
 Any container that clips overflow — height/crossfade transitions, `overflow-hidden` swap wrappers — carries **no padding of its own**. Define the padding as a CSS var on an owning parent and have the slotted children apply it (`px-(--window-px)`, `px-(--dock-px)`).
 
 The app leans on outlines and shadows that overflow their element boxes; if the clipping container holds the padding, those get cut off at its edge mid-tween. Insetting the children instead leaves the overflow room to render.
@@ -56,9 +59,29 @@ The app leans on outlines and shadows that overflow their element boxes; if the 
 ## A caller's class doesn't beat the component's own
 
 A component's root `class` merges with a caller's, but stylesheet order — not the merge — decides
-which utility wins. Never hardcode on the root a utility a caller is meant to override (`relative`
-vs. their `absolute`, a fixed `w-*`); put it on the inner element instead.
+which utility wins. **This holds however the component's declaration is written** — a hardcoded
+utility in the template (`class="relative"`) and a same-specificity rule in its own `<style>` block
+(`.some-root { position: relative }`) both beat a caller's override on that same root exactly the
+same way; neither form is safer than the other. `position` is the property that bites hardest,
+because it's also the property most callers pass in to place the component (`absolute`, `fixed`) —
+but the same cascade-order trap applies to any property a caller might reasonably expect to override
+(a fixed `w-*`, `z-*`, `overflow`). Never let the component's root itself declare a property a caller
+is meant to override, from either source; give the component an inner element to carry that
+property, leaving the root free.
 
 ## Shaped edges
 
 `src/styles/border-utils.css` defines `wave-bottom-[<length>]`, `wave-top-[<length>]` and `cloud-bottom-[<length>]` — CSS masks that carve a shaped edge. Use them; don't hand-roll SVG.
+
+## A class can bind its host to a contract
+
+Any class — stock Tailwind or a hand-rolled `@utility` in `src/styles/*.css` — can claim the element
+it lands on for a contract of its own: a positioning context it depends on, an `overflow` it sets and
+therefore clips, a stacking context, a fill it expects to own. `overflow-hidden` is stock and imposes
+exactly this ("Clipping containers stay full-bleed" above); a custom utility does too, and the way to
+find out is to read its own definition in `src/styles/*.css` — the header comment when the file has
+one (`shimmer.css`), the ruleset itself when it doesn't (`bg-utils.css` sets `position: relative` and
+`isolation: isolate` on `bgx-*`'s host with no header at all). Whatever the contract collides with on
+that host — padding, a fill, a caller's position override — moves to a child or a parent instead of
+being fought on the host itself, including a child that overhangs the host's own bounds.
+[`theming/bgx`](./theming/bgx.md) is the other instance, for `bgx-*`'s stacking.

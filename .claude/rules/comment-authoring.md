@@ -4,6 +4,7 @@ paths:
   - 'src/**'
   - 'supabase/**/*.ts'
   - 'scripts/**'
+  - 'tests/**'
 ---
 
 # Comment authoring
@@ -42,11 +43,20 @@ a missing knowledge entry, not a longer comment.
 comment on the same line answer different questions, so a request for one is never grounds to delete
 the other — add the one asked for and leave the rest, unless the request specifically supersedes it.
 
+**Inside `tests/`, the position table collapses to one row.** A test's name and its `describe`/`it`
+structure already carry what a JSDoc, a file-top comment, or an above-symbol doc would elsewhere — the
+only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
+
 ## Gates
 
 Five, each failed on its own. Fail one, rewrite or delete.
 
-- **A competent stranger would otherwise get it wrong.** If they wouldn't, delete it.
+- **The reader is never a hypothetical stranger — it's an agent with your own knowledge, or the
+  user, who already has more context than either.** Test it as: would you, given only the code and
+  no memory of writing it, still get this wrong? If not, delete it. What survives is what neither
+  general language/framework/browser knowledge nor the code itself supplies — a decision this
+  codebase made, a value tied to something outside it, or a platform quirk obscure enough that
+  "well known" doesn't cover it.
 - **It prescribes rather than narrates** — what to do or not do, never what the code does.
 - **The opener completes the symbol's name, at that symbol's own altitude.** Never restate the name,
   never zoom out past it, never justify it.
@@ -54,7 +64,7 @@ Five, each failed on its own. Fail one, rewrite or delete.
   technical term is earned by being grounded, never led with.
 - **Everything past the first idea is load-bearing.** Cut whatever the first idea already bought.
 
-**A regex literal always fails the competent-stranger gate.** Its own syntax is never the intent, so
+**A regex literal always fails the actual-reader gate.** Its own syntax is never the intent, so
 it carries a comment in its position's shape naming what it matches, in plain words — not the regex
 syntax restated, not why it matches that.
 
@@ -87,6 +97,8 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
   (→[K:build-unfinished-markers]).
 - The readable sentence is never optional. A pointer replaces the explanation, never the knowledge —
   someone skimming a diff gets the constraint without leaving the file.
+- **The citation is the last token in its comment block.** It trails the readable sentence; never a
+  further line, of any kind, beneath it.
 
 ## Spokes
 

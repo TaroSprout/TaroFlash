@@ -55,6 +55,15 @@
             "command": "jq -r '.tool_input.file_path // empty' | xargs -r vp fmt > /dev/null 2>&1 || true"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fp=$(jq -r '.tool_input.file_path // empty')\ncase \"$fp\" in\n  *src/sfx/roles.ts|*src/sfx/config.ts) ;;\n  *) exit 0 ;;\nesac\ngit rev-parse --show-toplevel >/dev/null 2>&1 || exit 0\nroles_old=$(git show HEAD:src/sfx/roles.ts 2>/dev/null) || exit 0\nROLES_OLD=\"$roles_old\" node -e \"\nconst fs = require('fs');\nfunction usedSounds(src) {\n  const used = new Set();\n  const arrays = {};\n  for (const m of src.matchAll(/const (\\w+): SoundKey\\[\\] = \\[([^\\]]*)\\]/g)) {\n    arrays[m[1]] = [...m[2].matchAll(/'([^']+)'/g)].map(x => x[1]);\n  }\n  for (const m of src.matchAll(/sound:\\s*([^,}\\n]+)/g)) {\n    const val = m[1].trim();\n    if (val.startsWith('[') || val.startsWith(String.fromCharCode(39))) {\n      for (const s of val.matchAll(/'([^']+)'/g)) used.add(s[1]);\n    } else if (arrays[val]) {\n      arrays[val].forEach(s => used.add(s));\n    }\n  }\n  return used;\n}\nfunction declaredSounds(src) {\n  const m = src.match(/export const SOUNDS = \\{([\\s\\S]*?)\\n\\} satisfies/);\n  if (!m) return new Set();\n  return new Set([...m[1].matchAll(/^\\s*(\\w+):/gm)].map(x => x[1]));\n}\nconst rolesOld = process.env.ROLES_OLD;\nconst rolesNew = fs.readFileSync('src/sfx/roles.ts', 'utf8');\nconst configNew = fs.readFileSync('src/sfx/config.ts', 'utf8');\nconst oldUsed = usedSounds(rolesOld);\nconst newUsed = usedSounds(rolesNew);\nconst newDeclared = declaredSounds(configNew);\nconst newlyOrphaned = [...oldUsed].filter(k => !newUsed.has(k) && newDeclared.has(k));\nif (newlyOrphaned.length) {\n  console.error('This edit stops any role from referencing ' + newlyOrphaned.join(', ') + ', but src/sfx/config.ts still declares it in SOUNDS -- that sound now plays for nothing. Give it a role, point the reassigned role somewhere new instead, or delete it from SOUNDS to retire it on purpose.');\n  process.exit(2);\n}\n\"\n"
+          }
+        ]
       }
     ],
     "SessionStart": [

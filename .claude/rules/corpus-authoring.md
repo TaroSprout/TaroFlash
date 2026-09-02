@@ -96,10 +96,15 @@ the flip-side framing and a link to the deep walkthrough, and the topic's frontm
 ([`knowledge-addressing`](./knowledge-addressing.md)), and nothing else restates it:
 
 - `hazards.md` lists the slug, its topic, and where it's echoed — one line each, no prose to drift.
-- Every trap is **echoed** in the directory it bites, as a one-line comment naming the trap and then
-  citing it — `// Trap: a pin is presence, not difference →[K:pin-is-presence-not-difference]`. The
-  label is what a reader acts on and is never dropped; the claim behind it stays in the block, so
-  the echo cannot drift. A trap with no directory to echo into is listed in `CLAUDE.md` instead.
+- Every trap is **echoed** in the directory it bites, as a comment in that site's own shape that
+  passes every [`comment-authoring`](./comment-authoring.md) gate on its own — competent-stranger
+  included, so an echo nobody reading that site would need doesn't ship. It states the constraint
+  _this_ call site must satisfy, in its own words — never the hazard block's opening sentence, and
+  never opened with the word "Trap", which reads as a duplicate of the corpus entry's own lead
+  instead of a pointer to it. The citation is the comment's last token, per
+  [`comment-authoring → Pointers`](./comment-authoring.md#pointers):
+  `// a pin's absence isn't evidence the two sides differ — check both before treating it as one →[K:pin-is-presence-not-difference]`.
+  A trap with no directory to echo into is listed in `CLAUDE.md` instead.
 - **Anchor a schema fact in `supabase/schemas/`, never in `supabase/migrations/`** — a migration is
   append-only, so a pointer written into one can never be corrected.
 

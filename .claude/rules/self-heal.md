@@ -47,7 +47,7 @@ candidate row instead of a file.
 
 | The correction is about                                                                    | It lands in                                                                                     |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| how a skill runs                                                                           | that skill's `SKILL.md`                                                                         |
+| how a skill or an agent runs                                                               | that skill's `SKILL.md`, or that agent's definition in `.claude/agents/`                        |
 | a domain that already has a rule file                                                      | extend the nearest one                                                                          |
 | a domain with no rule file                                                                 | a new path-triggered `.claude/rules/*.md`                                                       |
 | repo-wide and non-negotiable                                                               | a CLAUDE.md guideline                                                                           |

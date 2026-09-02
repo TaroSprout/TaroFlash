@@ -4,7 +4,7 @@ domain: theming
 status: current
 hazard: true
 related: [theming]
-updated: 2026-08-15
+updated: 2026-08-28
 ---
 
 # Surface stations
@@ -43,10 +43,9 @@ owns its own look.
 - **window** — something laid over the page: a dialog, an app-window, a sheet.
 - **float** — chrome that floats over anything: a menu, a popover, a tooltip, a toast.
 
-## Nothing is derived [K:surface-stations-hand-authored]
+## Each station is tuned by hand, with no formula linking it to the others [K:surface-stations-hand-authored]
 
-Each station is tuned by hand, in both light and dark, with no formula linking it to the others. The
-payoff: retuning one station — making panels a shade darker, say — never nudges page, window, or
+Both light and dark are tuned separately. The payoff: retuning one station — making panels a shade darker, say — never nudges page, window, or
 float along with it, because none of them were computed from it in the first place. The cost is the
 mirror image — there's no shared source keeping the four in step, so staying visually coherent across
 stations is a judgment call made anew each time one is touched, not a guarantee the system enforces.
@@ -66,7 +65,7 @@ never the station, never a shade:
 
 ## A few roles never re-author — by station, not by mode
 
-`card`/`on-card`, `mat`, and `knockout` are fixed on the station axis only: the same color
+`card`/`on-card`/`card-line`, `mat`, and `knockout` are fixed on the station axis only: the same color
 regardless of which station they sit in, never picked up from a station's own set. Each opts out for
 the same reason — it isn't actually resting on a station's surface. A flashcard carries its own
 identity everywhere it appears; an avatar's mat is color-tuned once per mode, so an avatar image
@@ -75,6 +74,10 @@ outline around it — sits directly on an accent fill, not on the station behind
 station would sink it into whatever's behind the swatch. `knockout` has no `on-knockout` companion —
 content sitting on a knockout fill (the checkmark on a selected swatch) reads its color off the
 accent roles instead.
+
+A line drawn on the flashcard takes `card-line`, the fixed group's own line member — never a
+station's `line` role, which is tuned per station and per mode and so carries no guarantee against
+the card's fixed fill.
 
 They are **not** fixed on the mode axis. Each still swaps to a dark rendition when the page goes
 dark — `stations.css` carries a `[data-mode='dark']` value for each of them, same as any

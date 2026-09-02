@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-08T00:00:00Z
+lastUpdated: 2026-08-30T00:00:00Z
 paths:
   - '.claude/rules/**/*.md'
   - 'CLAUDE.md'
@@ -45,6 +45,17 @@ A bullet that fails any gate is not a rule. Cut it or rewrite it.
   budget; too narrow means the rule never arrives.
   - Bad: `paths: ['src/**/*.{ts,vue}']` on a rule about migration ordering.
   - Good: `paths: ['supabase/migrations/**']`.
+- **One clause.** The bold lead is a label, not budget — the rule is the single sentence after it.
+  A second sentence is either a second rule (split it) or rationale (cut it); a trailing Bad/Good
+  pair illustrates and doesn't count toward the sentence.
+  - Bad: `**Extract the fetch.** Components that both fetch and render are hard to test and reuse,
+so pull data access into a composable once the component grows past a couple of props.`
+  - Good: `A component that both renders and fetches gets split — the fetch moves to a composable.`
+- **Lossless.** The cut is the rationale, never the clause a reviewer holds against the diff — a
+  rule that won't compress without losing that clause stays longer; length is never the gate, the
+  clause surviving it is.
+  - Bad: `Never write a comment.` — short, but the discriminator (derivable from the code) is gone.
+  - Good: `A comment survives only if you could not derive it from the code.`
 
 ## Forbidden constructs
 
@@ -54,6 +65,8 @@ A bullet that fails any gate is not a rule. Cut it or rewrite it.
 - **Line numbers.** They are wrong by the next commit.
 - **A code block longer than the rule it illustrates.** Trim the example to the contrast.
 - **A bare "see also".** A link earns its place by carrying the rule you are not restating.
+- **A rule stated as a floating paragraph instead of a bullet.** Prose that isn't inside a `##`
+  cluster's bullet list is unfailable — no bullet, nothing a diff review can hold the rule against.
 
 ## Spokes
 

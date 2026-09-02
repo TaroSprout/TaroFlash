@@ -34,15 +34,16 @@ string from elsewhere in the app as a substitute. Name each one in your report.
 
 ## Your worktree, and only your worktree
 
-Run `pwd` first and confirm you are inside `.claude/worktrees/agent-<id>`. Every read, write, `cd`
-and git command runs from there, and **every file path is built from that worktree root** — a bare
-path outside it is the shared checkout a human may be editing live.
+Every read, write, `cd` and git command runs from `.claude/worktrees/agent-<id>`, and **every file
+path is built from that worktree root** — a bare path outside it is the shared checkout a human may
+be editing live. [`git-workflow`](../rules/git-workflow.md) owns verifying you're actually there
+before you write (→[K:worktree-write-target]).
 
 - **A fresh ticket or freeform build renames** the worktree's existing branch to a conventional name
   (`git branch -m feat/…`). Never `git checkout -b`, which orphans the placeholder branch as junk. **A
   fix is already on its target branch** — commit onto it as-is, no rename.
-- If a change ever lands on the shared checkout, **stop and report it**. Never `git checkout` /
-  `git restore` / revert a file there, and never bare `git stash` / `git stash pop`
+- If a change ever lands on the shared checkout, **stop and report it** — don't revert it yourself.
+  Never `git checkout` / `git restore` a file there, and never bare `git stash` / `git stash pop`
   ([`git-workflow`](../rules/git-workflow.md)) — the stash stack is shared across worktrees.
 
 ## Loop
@@ -52,7 +53,10 @@ path outside it is the shared checkout a human may be editing live.
    instruction/fix as given.
 3. **Commit in batches of ~5 files**, conventional messages, explicit pathspecs, never `git add -A`
    ([`commit-authoring`](../rules/commit-authoring.md)). A run that stalls then costs one batch.
-4. `node scripts/knowledge-lint.mjs` before each commit; `vp check` green before you report.
+4. `node scripts/knowledge-lint.mjs` before each commit; `vp check` **and** `pnpm type-check` green
+   before you report — every ticket, including a one-line change. `vp check` can pass while
+   `vue-tsc` still fails ([`toolchain`](../rules/toolchain.md)), and diff size is never grounds to
+   skip either gate.
 
 **Partial and committed beats complete and parked — including the report.** Out of road means commit
 what you have, name what you never reached, and report anyway. There is never a turn that ends with
@@ -69,10 +73,16 @@ you waiting on something.
   "work better" or "look consistent" — a hover state to keep a restyled background legible, a related
   prop nudged to match — is still unrequested scope; the requester decides whether it's needed, not
   you. An adjacent defect you spot goes in the report.
+- **How you verified something is report prose, never a code comment.** A prompt that asks you to
+  show your work, explain a mechanism, or prove you didn't take something on trust is asking for your
+  Output section — a comment in the diff still stands or falls on its own
+  [`comment-authoring`](../rules/comment-authoring.md) gates, regardless of what the prompt demanded
+  of the run that wrote it.
 
 ## Output
 
-Branch name; what changed per file; whether `node scripts/knowledge-lint.mjs` and `vp check` passed;
+Branch name; what changed per file; whether `node scripts/knowledge-lint.mjs`, `vp check`, and
+`pnpm type-check` passed;
 for a ticket, each acceptance criterion marked met or unmet with a one-line reason for any unmet; for
 a freeform build or fix, the instruction restated against what landed; what a test should cover;
 every `[K:gap: …]` and `COPY-TBD` you left, with its file and line.

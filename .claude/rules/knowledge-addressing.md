@@ -130,8 +130,7 @@ sentences; a slug buried mid-paragraph yields nothing at all.
 
 Write the fact, not the section it lives in — `Nothing is derived` names a topic's argument, and
 reaches the reviewer as a line that says nothing. `slugs.statement` in the config sets the floor;
-`enforced` is `false` while the declarations that predate the rule are reworded, and flips to `true`
-in the change that clears the last one.
+`enforced` is `true` — a thin declaration fails CI the moment it lands.
 
 ## Mechanising a prose rule [K:knowledge-mechanisation]
 

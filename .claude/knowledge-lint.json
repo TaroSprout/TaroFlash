@@ -54,7 +54,7 @@
       "knowledge-pr-digest"
     ],
     "statement": {
-      "enforced": false,
+      "enforced": true,
       "min_words": 5
     }
   }
