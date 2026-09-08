@@ -80,22 +80,72 @@ describe('NavBar — logo lockup visibility (feat/mobile-header-collapse)', () =
     return wrapper
   }
 
-  test('the logo lockup is not rendered below sm', async () => {
+  test('the lockup renders below sm (only the wordmark text hides, not the whole lockup)', async () => {
     await page.viewport(375, 812)
     mountNavBarAttached()
 
     const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
 
-    expect(getComputedStyle(lockup.element).display).toBe('none')
+    expect(getComputedStyle(lockup.element).display).not.toBe('none')
   })
 
-  test('the logo lockup renders from sm and up', async () => {
+  test('the lockup renders from sm and up too', async () => {
     await page.viewport(1280, 900)
     mountNavBarAttached()
 
     const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
 
     expect(getComputedStyle(lockup.element).display).not.toBe('none')
+  })
+
+  test('the logo icon renders below sm', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    expect(wrapper.findComponent(UiIcon).exists()).toBe(true)
+  })
+
+  test('the logo icon renders from sm and up', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    expect(wrapper.findComponent(UiIcon).exists()).toBe(true)
+  })
+
+  test('the wordmark text is hidden below sm', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    const wordmark = wrapper.find('[data-testid="nav-bar__wordmark"]')
+
+    expect(getComputedStyle(wordmark.element).display).toBe('none')
+  })
+
+  test('the wordmark text shows from sm and up', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    const wordmark = wrapper.find('[data-testid="nav-bar__wordmark"]')
+
+    expect(getComputedStyle(wordmark.element).display).not.toBe('none')
+  })
+
+  test('the lockup is absolutely centered below sm', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(getComputedStyle(lockup.element).position).toBe('absolute')
+  })
+
+  test('the lockup sits in static flow from sm and up', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(getComputedStyle(lockup.element).position).not.toBe('absolute')
   })
 })
 

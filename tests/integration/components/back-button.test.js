@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
-import UiButton from '@/components/ui-kit/button.vue'
+import '@/styles/main.css'
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: vi.fn(),
@@ -75,28 +75,49 @@ function mountStubbed(routeName) {
   })
 }
 
-// ── Visibility by route name (obligation 6) ───────────────────────────────────
+// ── Visibility by route name (feat/mobile-header-collapse) ───────────────────
+// The button is always rendered now (never v-if'd away) so it keeps reserving
+// the header's height; `invisible` (visibility: hidden) is what hides it on
+// the dashboard route, so the effect is checked via getComputedStyle rather
+// than the class name.
 
 describe('back-button — visibility', () => {
-  test('is hidden (v-if removes it) when on the dashboard route', () => {
-    const wrapper = mountStubbed('dashboard')
-    expect(wrapper.findComponent(UiButton).exists()).toBe(false)
+  let attached_wrapper
+
+  afterEach(() => {
+    attached_wrapper?.unmount()
+    attached_wrapper = undefined
+  })
+
+  function mountAttached(routeName) {
+    mockCurrentRoute.value = { name: routeName }
+    attached_wrapper = shallowMount(BackButton, {
+      attachTo: document.body,
+      global: { stubs: { UiButton: UiButtonStub } }
+    })
+    return attached_wrapper
+  }
+
+  test('stays rendered but visually hidden on the dashboard route', () => {
+    const wrapper = mountAttached('dashboard')
+    const button = wrapper.find('button')
+
+    expect(button.exists()).toBe(true)
+    expect(getComputedStyle(button.element).visibility).toBe('hidden')
   })
 
   test('is visible on a non-dashboard route (deck)', () => {
-    const wrapper = mountStubbed('deck')
-    expect(wrapper.findComponent(UiButton).exists()).toBe(true)
+    const wrapper = mountAttached('deck')
+    const button = wrapper.find('button')
+
+    expect(getComputedStyle(button.element).visibility).not.toBe('hidden')
   })
 
   test('is visible on any other named route', () => {
-    const wrapper = mountStubbed('settings')
-    expect(wrapper.findComponent(UiButton).exists()).toBe(true)
-  })
+    const wrapper = mountAttached('settings')
+    const button = wrapper.find('button')
 
-  test('is hidden specifically when route.name is "dashboard" string', () => {
-    // Guards against case-sensitivity or partial-match regressions
-    const wrapper = mountStubbed('dashboard')
-    expect(wrapper.html()).not.toContain('<button')
+    expect(getComputedStyle(button.element).visibility).not.toBe('hidden')
   })
 })
 
@@ -167,8 +188,9 @@ describe('back-button — resolved chrome', () => {
 })
 
 // ── Mobile vs desktop chrome (feat/mobile-header-collapse) ────────────────────
-// is_mobile flips both icon-only and size — asserted through the real UiButton
-// so the label's presence in btn-content (not just the prop) is what's checked.
+// is_mobile only flips icon-only now — size is a constant `sm` at every
+// breakpoint — asserted through the real UiButton so the label's presence in
+// btn-content (not just the prop) is what's checked.
 
 describe('back-button — mobile vs desktop', () => {
   afterEach(() => {
@@ -187,11 +209,11 @@ describe('back-button — mobile vs desktop', () => {
     expect(label.text()).toBe('Back')
   })
 
-  test('on mobile, sizes up to base', () => {
+  test('on mobile, stays at the constant sm size', () => {
     mockIsMobile.value = true
     const wrapper = mountReal('deck')
 
-    expect(wrapper.find('[data-testid="ui-kit-button"]').classes()).toContain('ui-kit-btn--base')
+    expect(wrapper.find('[data-testid="ui-kit-button"]').classes()).toContain('ui-kit-btn--sm')
   })
 
   test('on sm+, stays icon-only with no visible label in the content', () => {
@@ -205,7 +227,7 @@ describe('back-button — mobile vs desktop', () => {
     expect(label.exists()).toBe(false)
   })
 
-  test('on sm+, sizes down to sm', () => {
+  test('on sm+, stays at the same constant sm size', () => {
     mockIsMobile.value = false
     const wrapper = mountReal('deck')
 
