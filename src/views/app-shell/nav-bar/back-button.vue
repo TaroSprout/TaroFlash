@@ -26,10 +26,10 @@ function onBack() {
 
 <template>
   <ui-button
-    v-if="visible"
     icon-left="arrow-left"
-    :size="is_mobile ? 'base' : 'sm'"
+    size="sm"
     :icon-only="!is_mobile"
+    :class="{ invisible: !visible }"
     class="[--btn-bg-color:var(--color-on-accent)]! [--btn-text-color:var(--color-accent)]!"
     :sfx="{ tap_pre: 'ui.press', press: 'nav.page-back' }"
     @press="onBack"
