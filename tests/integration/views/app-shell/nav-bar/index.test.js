@@ -3,6 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import { page } from 'vite-plus/test/browser/context'
 import NavBar from '@/views/app-shell/nav-bar/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import '@/styles/main.css'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,84 @@ describe('NavBar — logo lockup responsive classes', () => {
 
     expect(lockup.exists()).toBe(true)
     expect(lockup.classes()).toContain('min-h-9')
+  })
+})
+
+describe('NavBar — logo lockup visibility (feat/mobile-header-collapse)', () => {
+  // getComputedStyle only resolves a real value once the element is connected
+  // to the document — the other describes in this file never need that, so
+  // this stays a local helper rather than changing mountNavBar for everyone.
+  function mountNavBarAttached() {
+    wrapper = shallowMount(NavBar, { attachTo: document.body })
+    return wrapper
+  }
+
+  test('the lockup renders below sm (only the wordmark text hides, not the whole lockup)', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(getComputedStyle(lockup.element).display).not.toBe('none')
+  })
+
+  test('the lockup renders from sm and up too', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(getComputedStyle(lockup.element).display).not.toBe('none')
+  })
+
+  test('the logo icon renders below sm', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    expect(wrapper.findComponent(UiIcon).exists()).toBe(true)
+  })
+
+  test('the logo icon renders from sm and up', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    expect(wrapper.findComponent(UiIcon).exists()).toBe(true)
+  })
+
+  test('the wordmark text is hidden below sm', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    const wordmark = wrapper.find('[data-testid="nav-bar__wordmark"]')
+
+    expect(getComputedStyle(wordmark.element).display).toBe('none')
+  })
+
+  test('the wordmark text shows from sm and up', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    const wordmark = wrapper.find('[data-testid="nav-bar__wordmark"]')
+
+    expect(getComputedStyle(wordmark.element).display).not.toBe('none')
+  })
+
+  test('the lockup is absolutely centered below sm', async () => {
+    await page.viewport(375, 812)
+    mountNavBarAttached()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(getComputedStyle(lockup.element).position).toBe('absolute')
+  })
+
+  test('the lockup sits in static flow from sm and up', async () => {
+    await page.viewport(1280, 900)
+    mountNavBarAttached()
+
+    const lockup = wrapper.find('[data-testid="nav-bar__logo-lockup"]')
+
+    expect(getComputedStyle(lockup.element).position).not.toBe('absolute')
   })
 })
 
