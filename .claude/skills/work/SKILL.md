@@ -1,6 +1,6 @@
 ---
 name: work
-description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass and PR prep per branch, and stays live for review feedback — every fix dispatched, never edited inline by the orchestrator. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
+description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
 allowed-tools: Read, Write, Bash, Agent
 argument-hint: '[<ID> <ID> …] [--count N] [--epic <name|url>] ["<instruction>"]'
 arguments:
@@ -17,9 +17,10 @@ lastUpdated: 2026-08-15T00:00:00Z
 
 ## What this skill does
 
-Pulls work — named tickets, an auto-pulled batch, a whole epic, or a freeform instruction — and lands
-each unit at an **open PR** for your review. It never merges and never marks a ticket `Done` — you
-close the loop.
+Pulls work — named tickets, an auto-pulled batch, a whole epic, or a freeform instruction — lands and
+tests every unit on a branch you can run live, **checkpoints with you for a live-review round on that
+branch**, dispatches your fixes, and only once you close the round does it open a **PR** per unit for
+a lighter post-PR round. It never merges and never marks a ticket `Done` — you close the loop.
 
 **One session, always orchestrated, one invariant above everything else: the orchestrator never opens
 a source file and never reads Notion JSON.** It holds one row per ticket in a run ledger and delegates
@@ -30,8 +31,8 @@ everything that would cost it context:
   criteria to a payload file and hands the orchestrator a path, never the body itself.
 - **The build** is [`ticket-builder`](../../agents/ticket-builder.md)'s, one per ticket/instruction, in
   its own worktree, pinned to the `Assignee` model (`sonnet` for freeform, which has no `Assignee`).
-- **The test pass, PR prep, and every review fix** are each their own dispatch (§ Procedure,
-  § Review & feedback loop) — the orchestrator receives a verdict, never a diff.
+- **The test pass, PR prep, and every review fix** are each their own dispatch (§ Procedure, § 4d,
+  § PR feedback loop) — the orchestrator receives a verdict, never a diff.
 
 The orchestrator runs from the **home tree** — wherever it was spawned, the main checkout or a
 worktree you made before starting. It never enters, creates, or removes a worktree of its own.
@@ -78,7 +79,7 @@ the `Blocked By` relation means one waits, and a chain is worked a link at a tim
 ticket's **body** can carry a free-text `## Blocked on` section recording an **external** blocker —
 an account to provision, a domain to add, a secret to set — something no builder can resolve. The
 `board-agent` fetches bodies at SELECT, so this surfaces in the same pass as everything else: named
-at the single gate (§ The gate) rather than judged around or asked about mid-run. The orchestrator
+at the first gate (§ The gate) rather than judged around or asked about mid-run. The orchestrator
 never guesses "doable anyway" — only the user knows whether it's actually cleared.
 
 ## Run ledger
@@ -118,7 +119,7 @@ Dispatch `board-agent` with `SELECT` and the run's mode:
 `## Blocked on` + summary, payload path) and writes each candidate's body/AC to its own payload file.
 The orchestrator never opens that file.
 
-### 2. THE GATE — one interactive pause, and the only one
+### 2. THE GATE — the first of two interactive pauses
 
 Echo the plan from the SELECT table: what will be worked, in what order (waves, for `--epic`). Then
 echo **everything it will not work**: ungroomed epic tickets, blocked rows, `Assignee = Me`, and any
@@ -129,8 +130,9 @@ Every echoed row — worked or not — carries its title alongside the id, since
 returned one. An id-plus-reason row makes the user ask for the title before they can judge the row;
 don't make them ask for data you already have.
 
-**After the user's OK, the run is uninterrupted until every PR is green** — no mid-run questions.
-Everything that used to pause becomes a decision plus a ledger line (§ Run ledger) instead.
+**After the user's OK, the run is uninterrupted until every branch is landed and tested** — no
+mid-run questions until the all-work-done checkpoint (§ 4c), the second and last pause. Everything
+that used to pause in between becomes a decision plus a ledger line (§ Run ledger) instead.
 
 ### 3. CLAIM ALL
 
@@ -171,10 +173,9 @@ every wave, and gates the next wave's fan-out the same way it gates § 5's PR st
 **A finished branch reaches the tree the user is looking at before anything else happens to it** —
 before the test pass, before PR prep, before CI runs at all. The instant a `ticket-builder` reports
 its branch done, merge it forward into the integration branch on the home tree (single-ticket or
-freeform run: `git checkout <branch>` directly, once the branch exists) — the same merge-forward the
-feedback loop already runs per fix (§ Review & feedback loop step 1), just starting here instead of
-at teardown. Never wait for the test pass to finish, CI to go green, or the PR to open before doing
-this.
+freeform run: `git checkout <branch>` directly, once the branch exists) — the same merge-forward
+§ 4d and § PR feedback loop reuse per fix, just starting here instead of at teardown. Never wait for
+the test pass to finish, CI to go green, or the PR to open before doing this.
 
 ### 4b. TEST PASS — one dispatch per branch, sequential
 
@@ -195,9 +196,30 @@ fails the knowledge check until the topic lands and the site cites it. A `COPY-T
 **not** dispatched — no agent can settle wording — but it does not hold the ticket either
 (§ Copy never blocks the build).
 
+### 4c. ALL-WORK-DONE CHECKPOINT — the second interactive pause
+
+Once every branch's build and test pass are in (§ 4a, § 4b), stop. Report what has landed: the
+integration branch's state, or the single home-tree branch's state for a single-ticket/freeform run —
+which tickets/instructions landed, and any `[K:gap: …]`/`COPY-TBD` markers still open. No PR exists yet.
+The user reviews the live branch through their own dev server and gives feedback from actually using
+it. The run does not proceed to § 5 until the user says the round is closed.
+
+### 4d. LIVE REVIEW — pre-PR feedback on the branch the user is running
+
+While the checkpoint is open, every piece of feedback is dispatched, never edited inline: a
+`ticket-builder` works it in a throwaway worktree ([`git-workflow`](../../rules/git-workflow.md),
+→[K:worktree-write-target]), commits, and reports back. The orchestrator merges that branch forward
+into the integration branch on the home tree (single-ticket or freeform run: the one branch already
+checked out there). This is the one dispatch-and-merge-forward mechanic — § PR feedback loop reuses
+it verbatim after PRs open; don't invent a second one there. Tests stay untouched until the user asks;
+then run **one** consolidated `update-tests` pass, dispatched the same way as § 4b, over everything
+the round changed. Dispatch self-heal for this round (§ Self-heal) before continuing. Repeat until the
+user says the live-review round is done — that close is what starts § 5.
+
 ### 5. ORCHESTRATE PRs
 
-Once every branch's test pass is done, turn them into PRs. One PR per ticket/instruction:
+Once the live-review round (§ 4d) is closed, turn every landed branch into a PR. One PR per
+ticket/instruction:
 
 a. **READINESS CHECK** — if a builder reported it couldn't satisfy acceptance, or left `vp check` red
 it couldn't fix, don't open its PR; treat the ticket as stuck (§ Stuck / blocked).
@@ -250,7 +272,7 @@ stranded in `In Progress`.
 
 Tally: worked → `Review` (PR links, noting stacked pairs and epic waves), `Blocked` (reasons + which
 need human conflict resolution), waiting on copy (the string options), skipped. Then enter the
-**Review & feedback loop** below.
+**PR feedback loop** below.
 
 - **Decisions & assumptions** — one line per entry in the run ledger's decision log. No narrative.
 
@@ -271,37 +293,33 @@ merged PR or a new wave just rebuilds it. A merge that conflicts is a real cross
 exactly as § 5b/c already handles one. A single-ticket or freeform run has no integration branch — the home
 tree tracks that one branch instead, checked out the moment the builder reports (§ 4a).
 
-## Review & feedback loop
+## PR feedback loop (post-PR)
 
-Opening the PRs is not the end of the run — it's the handoff into review. After PRs are open the run
-**stays live and waits for the user's feedback**. The user reviews the PRs themselves and will
-usually come back **one PR at a time**, leaving comments on that PR.
+Opening the PRs is not the end of the run — it's a second, lighter round after the live-review round
+(§ 4d) already closed once. After PRs are open the run **stays live and waits for the user's
+feedback**. The user reviews the PRs themselves and will usually come back **one PR at a time**,
+leaving comments on that PR.
 
-Every follow-up — user review feedback, a red CI run, or any other fix a PR needs — is handled the
-same way:
+Every follow-up — PR review feedback, a red CI run, or any other fix a PR needs — is dispatched by
+the **same dispatch-and-merge-forward mechanic as § 4d**, on the owning ticket branch: nothing new to
+learn here, only the round is lighter and the target is a PR rather than a checkpoint. Fixes to
+different PRs no longer serialize — only the merge-forward does.
 
-1. **Every fix is dispatched, never edited inline.** A `ticket-builder` works the fix on the owning
-   ticket branch, in a **throwaway worktree** ([`git-workflow`](../../rules/git-workflow.md),
-   →[K:worktree-write-target]) — it commits there and reports back. The orchestrator then merges
-   that branch forward into the
-   **integration branch, in the home tree** (single-PR runs: the checked-out branch). The fix lands
-   on the correct PR _and_ appears under the user without them moving anything. Fixes to different
-   PRs no longer serialize — only the merge-forward does.
-2. **Routing is the run ledger's job.** Feedback left on a PR carries its number and routes itself.
+1. **Routing is the run ledger's job.** Feedback left on a PR carries its number and routes itself.
    Feedback given in chat routes by matching subject and touched files against the ledger's file
-   index; genuinely ambiguous feedback asks — safe here because this is all post-handoff, past the one
-   gate.
-3. **Leave tests alone until the user asks.** Default to **not touching tests** during the feedback
+   index; genuinely ambiguous feedback asks — safe here because this is all post-handoff, past both
+   gates.
+2. **Leave tests alone until the user asks.** Default to **not touching tests** during the feedback
    loop — the golden "no tests" rule is back in force. Do **not** run `update-tests` per fix. When the
    user says they're ready for tests, run **one** consolidated `update-tests` pass, dispatched the
    same way as § 4b, over everything the review changed.
-4. **Batch the gate and the push per PR — don't run either per item.** Apply and commit each piece of
+3. **Batch the gate and the push per PR — don't run either per item.** Apply and commit each piece of
    feedback as it comes; hold `vp check` and the push until the user signals the round is done, then
    run it once and push once for that PR's batch. CI green again is what closes the round — no local
    full-suite run.
-5. **Answer the thread.** PR feedback gets a reply prefixed `🤖 Claude:`; chat feedback is answered in
+4. **Answer the thread.** PR feedback gets a reply prefixed `🤖 Claude:`; chat feedback is answered in
    chat. Leave the ticket in `Review`.
-6. **Dispatch self-heal for this round before starting the next PR** (§ Self-heal) — every standing
+5. **Dispatch self-heal for this round before starting the next PR** (§ Self-heal) — every standing
    preference the user stated this round, not only claim/handoff/review mechanics.
 
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself.**
@@ -312,8 +330,8 @@ Run every review correction through [`self-heal.md`](../../rules/self-heal.md), 
 ticket PR. Specific to this skill:
 
 - The **orchestrator** dispatches — builders and fix worktrees are gone by the time feedback lands.
-  It dispatches in the background and returns to the feedback loop; it never pauses the run to write a
-  rule itself.
+  It dispatches in the background and returns to whichever loop is active (§ 4d, § PR feedback loop);
+  it never pauses the run to write a rule itself.
 - Review feedback is this skill's richest signal. A miss about **claim, PR handoff, or review
   mechanics** heals this skill; a miss about the **code** routes by the table in the rule.
 - Gate 2 (execution, not spec): feedback showing the _ticket / AC_ was wrong is a `/triage`–`/groom`
@@ -335,12 +353,13 @@ ticket PR. Specific to this skill:
 - **Never work a ticket whose blocker's code hasn't landed** (§ Blockers) — skip it silently when
   auto-pulling; warn when the user named it explicitly; never re-gate a later epic wave on it.
 - Never work an `On Hold` or `Assignee = Me` ticket.
-- **A prose `## Blocked on` section is named at the single gate, not judged around mid-run.**
+- **A prose `## Blocked on` section is named at the first gate, not judged around mid-run.**
 - **The orchestrator never opens a source file and never reads Notion JSON** — SELECT, blocker
   resolution, claim, and handoff are `board-agent`'s; the test pass, PR prep, and every fix are each
   their own dispatch. What reaches the orchestrator is a table, a path, a URL, or an exit code.
-- **Exactly one interactive pause, at selection** (§ The gate). After the user's OK, nothing pauses
-  the run again — a stuck ticket parks `Blocked` and the run continues.
+- **Exactly two interactive pauses: selection** (§ The gate) **and the all-work-done checkpoint**
+  (§ 4c). Between them, nothing pauses the run — a stuck ticket parks `Blocked` and the run continues.
+  No PR opens before the checkpoint's live-review round (§ 4d) closes.
 - **Copy never blocks the build** (§ 5) — a `COPY-TBD` PR still opens; it waits on the user, the run
   doesn't wait on it.
 - **Never ask any subagent to spawn another.** `ticket-builder` carries no `Agent`/`Skill` tool, so it
@@ -351,7 +370,8 @@ ticket PR. Specific to this skill:
 - The orchestrator runs from the **home tree** (§ 0) — a multi-PR run stays on its **integration
   branch** for the whole run (§ Integration branch); it never edits ticket code itself, builders do,
   in their own worktrees, torn down at handoff (except a stuck ticket's, left for inspection).
-  Post-open fixes follow the same dispatch-and-merge-forward shape (§ Review & feedback loop).
+  Pre-PR and post-open fixes both follow the same dispatch-and-merge-forward shape (§ 4d,
+  § PR feedback loop).
 - Every PR must merge cleanly (vs `master` and vs the other in-flight PRs) and be CI-green (bar a lone
   `COPY-TBD`) before handoff. A conflict needing human judgment → raise it + `Blocked`; never guess.
 - Successful tickets leave **no worktree and no `worktree-agent-*` branch** behind — builders rename
