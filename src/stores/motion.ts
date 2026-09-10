@@ -15,18 +15,13 @@ function readSignals(): MotionSignals {
 }
 
 export const useMotionStore = defineStore('motion', () => {
-  // Fixed for the session: hardware can't change under a running tab, and a stable
-  // tier keeps every animation reading one budget from first paint onward.
   const tier: MotionTier = tierFromSignals(readSignals())
   const factors = MOTION_TIER_FACTORS[tier]
 
-  // Kept separate from the tier: a reduced-motion request never demotes the tier,
-  // and a minimal-tier device is never treated as having requested reduced motion.
-  const prefers_reduced_motion = useMatchMedia('reduced-motion')
+  const prefers_reduced_motion = useMatchMedia('reduced-motion') // never demotes the tier itself
   const has_coarse_pointer = useMatchMedia('coarse')
 
-  // The only writer of `data-motion`, the way theme.ts owns `data-mode`. Written
-  // once because the tier never changes; reduced-motion and pointer stay off it.
+  /** The only writer of `data-motion`, the way `theme.ts` owns `data-mode`. */
   function load(): void {
     document.documentElement.setAttribute('data-motion', tier)
   }
