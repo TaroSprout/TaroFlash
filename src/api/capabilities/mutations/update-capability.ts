@@ -1,9 +1,9 @@
 import { useMutation, useQueryCache } from '@pinia/colada'
-import { updateCapabilitySwitch, type UpdateCapabilitySwitchParams } from '../db'
+import { updateCapability, type UpdateCapabilityParams } from '../db'
 import { useSessionStore } from '@/stores/session'
 
 type QueryCache = ReturnType<typeof useQueryCache>
-type SwitchesSnapshot = CapabilitySwitch[] | undefined
+type SwitchesSnapshot = Capability[] | undefined
 
 /**
  * Flips the switch row in the cache the instant it's toggled, so the control
@@ -13,7 +13,7 @@ type SwitchesSnapshot = CapabilitySwitch[] | undefined
 function setSwitchInCache(
   queryCache: QueryCache,
   cache_key: string[],
-  params: UpdateCapabilitySwitchParams
+  params: UpdateCapabilityParams
 ): SwitchesSnapshot {
   const snapshot = queryCache.getQueryData(cache_key) as SwitchesSnapshot
   if (!snapshot) return undefined
@@ -27,19 +27,19 @@ function setSwitchInCache(
 }
 
 /** Flips a capability switch. Refused server-side for anyone but an admin. */
-export function useUpdateCapabilitySwitchMutation() {
+export function useUpdateCapabilityMutation() {
   const queryCache = useQueryCache()
   const session = useSessionStore()
 
   return useMutation({
-    mutation: (params: UpdateCapabilitySwitchParams) => updateCapabilitySwitch(params),
-    onMutate: (params: UpdateCapabilitySwitchParams) => {
-      const cache_key = ['capability-switches', session.user?.id ?? '']
+    mutation: (params: UpdateCapabilityParams) => updateCapability(params),
+    onMutate: (params: UpdateCapabilityParams) => {
+      const cache_key = ['capabilities', session.user?.id ?? '']
       return { cache_key, snapshot: setSwitchInCache(queryCache, cache_key, params) }
     },
     onError: (_error, _params, { cache_key, snapshot }) => {
       if (snapshot) queryCache.setQueryData(cache_key, snapshot)
     },
-    onSettled: () => queryCache.invalidateQueries({ key: ['capability-switches'] })
+    onSettled: () => queryCache.invalidateQueries({ key: ['capabilities'] })
   })
 }

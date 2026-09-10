@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiToggle from '@/components/ui-kit/toggle.vue'
-import { useUpdateCapabilitySwitchMutation } from '@/api/capabilities'
+import { useUpdateCapabilityMutation } from '@/api/capabilities'
 
-const { item } = defineProps<{ item: CapabilitySwitch }>()
+const { item } = defineProps<{ item: Capability }>()
 
 const { t } = useI18n()
-const updateSwitch = useUpdateCapabilitySwitchMutation()
+const updateSwitch = useUpdateCapabilityMutation()
 
 function onToggle(next: boolean) {
   updateSwitch.mutate({ key: item.key, state: next ? 'on' : 'off' })

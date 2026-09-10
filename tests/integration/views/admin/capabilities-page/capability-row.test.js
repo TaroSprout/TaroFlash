@@ -1,22 +1,22 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import SwitchRow from '@/views/admin/switches-page/switch-row.vue'
+import CapabilityRow from '@/views/admin/capabilities-page/capability-row.vue'
 
 const { mutateMock } = vi.hoisted(() => ({ mutateMock: vi.fn() }))
 
 vi.mock('@/api/capabilities', () => ({
-  useUpdateCapabilitySwitchMutation: () => ({ mutate: mutateMock })
+  useUpdateCapabilityMutation: () => ({ mutate: mutateMock })
 }))
 
 function mountRow(item) {
-  return mount(SwitchRow, { props: { item } })
+  return mount(CapabilityRow, { props: { item } })
 }
 
 beforeEach(() => {
   mutateMock.mockClear()
 })
 
-describe('SwitchRow — rendering', () => {
+describe('CapabilityRow — rendering', () => {
   test('reflects an on row as checked', () => {
     const wrapper = mountRow({ key: 'audio_reader', state: 'on' })
     expect(wrapper.find('input[type="checkbox"]').element.checked).toBe(true)
@@ -36,7 +36,7 @@ describe('SwitchRow — rendering', () => {
   })
 })
 
-describe('SwitchRow — toggling', () => {
+describe('CapabilityRow — toggling', () => {
   test('flipping the toggle on calls the mutation with the row key and state "on"', async () => {
     const wrapper = mountRow({ key: 'audio_reader', state: 'off' })
     await wrapper.find('input[type="checkbox"]').setValue(true)

@@ -4,25 +4,25 @@ import { createPinia } from 'pinia'
 import { PiniaColada, useQueryCache } from '@pinia/colada'
 import { flushPromises } from '@vue/test-utils'
 
-const { updateCapabilitySwitchMock } = vi.hoisted(() => ({
-  updateCapabilitySwitchMock: vi.fn()
+const { updateCapabilityMock } = vi.hoisted(() => ({
+  updateCapabilityMock: vi.fn()
 }))
 
 vi.mock('@/api/capabilities/db', () => ({
-  updateCapabilitySwitch: updateCapabilitySwitchMock
+  updateCapability: updateCapabilityMock
 }))
 
 vi.mock('@/stores/session', () => ({
   useSessionStore: () => ({ user: { id: 'member-123' } })
 }))
 
-import { useUpdateCapabilitySwitchMutation } from '@/api/capabilities/mutations/update-switch'
+import { useUpdateCapabilityMutation } from '@/api/capabilities/mutations/update-capability'
 
 function mountHost() {
   let mutation, query_cache
   const app = createApp({
     setup() {
-      mutation = useUpdateCapabilitySwitchMutation()
+      mutation = useUpdateCapabilityMutation()
       query_cache = useQueryCache()
       return () => null
     }
@@ -33,16 +33,16 @@ function mountHost() {
   return { app, mutation, query_cache }
 }
 
-const cacheKey = ['capability-switches', 'member-123']
+const cacheKey = ['capabilities', 'member-123']
 
 beforeEach(() => {
-  updateCapabilitySwitchMock.mockReset()
+  updateCapabilityMock.mockReset()
 })
 
-describe('useUpdateCapabilitySwitchMutation', () => {
+describe('useUpdateCapabilityMutation', () => {
   test('onMutate flips the targeted row in the cache before the write resolves', async () => {
     let resolveWrite
-    updateCapabilitySwitchMock.mockReturnValue(
+    updateCapabilityMock.mockReturnValue(
       new Promise((resolve) => {
         resolveWrite = resolve
       })
@@ -67,7 +67,7 @@ describe('useUpdateCapabilitySwitchMutation', () => {
   })
 
   test('onError rolls back to the exact prior snapshot', async () => {
-    updateCapabilitySwitchMock.mockRejectedValue(new Error('write refused'))
+    updateCapabilityMock.mockRejectedValue(new Error('write refused'))
     const { app, mutation, query_cache } = mountHost()
     const original = [
       { key: 'audio_reader', state: 'off' },
@@ -83,20 +83,20 @@ describe('useUpdateCapabilitySwitchMutation', () => {
     app.unmount()
   })
 
-  test('onSettled invalidates every query keyed under the capability-switches prefix', async () => {
-    updateCapabilitySwitchMock.mockResolvedValue(undefined)
+  test('onSettled invalidates every query keyed under the capabilities prefix', async () => {
+    updateCapabilityMock.mockResolvedValue(undefined)
     const { app, mutation, query_cache } = mountHost()
     query_cache.setQueryData(cacheKey, [{ key: 'audio_reader', state: 'off' }])
     const invalidateSpy = vi.spyOn(query_cache, 'invalidateQueries')
 
     await mutation.mutateAsync({ key: 'audio_reader', state: 'on' })
 
-    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['capability-switches'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ key: ['capabilities'] })
     app.unmount()
   })
 
   test('does nothing to the cache when no snapshot existed at mutate time', async () => {
-    updateCapabilitySwitchMock.mockResolvedValue(undefined)
+    updateCapabilityMock.mockResolvedValue(undefined)
     const { app, mutation, query_cache } = mountHost()
 
     await mutation.mutateAsync({ key: 'audio_reader', state: 'on' })

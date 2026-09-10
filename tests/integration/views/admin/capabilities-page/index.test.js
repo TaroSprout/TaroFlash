@@ -1,13 +1,13 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
-import SwitchesPage from '@/views/admin/switches-page/index.vue'
+import CapabilitiesPage from '@/views/admin/capabilities-page/index.vue'
 
 const mockSwitches = ref(undefined)
 
 vi.mock('@/api/capabilities', () => ({
-  useCapabilitySwitchesQuery: () => ({ data: mockSwitches }),
-  useUpdateCapabilitySwitchMutation: () => ({ mutate: vi.fn() })
+  useCapabilitiesQuery: () => ({ data: mockSwitches }),
+  useUpdateCapabilityMutation: () => ({ mutate: vi.fn() })
 }))
 
 const SwitchRowStub = defineComponent({
@@ -19,8 +19,8 @@ const SwitchRowStub = defineComponent({
 })
 
 function mountPage() {
-  return shallowMount(SwitchesPage, {
-    global: { stubs: { SwitchRow: SwitchRowStub } }
+  return shallowMount(CapabilitiesPage, {
+    global: { stubs: { CapabilityRow: SwitchRowStub } }
   })
 }
 
@@ -28,13 +28,13 @@ beforeEach(() => {
   mockSwitches.value = undefined
 })
 
-describe('SwitchesPage', () => {
+describe('CapabilitiesPage', () => {
   test('renders no rows while the switches query is pending', () => {
     const wrapper = mountPage()
     expect(wrapper.findAllComponents(SwitchRowStub)).toHaveLength(0)
   })
 
-  test('renders one switch-row per row from useCapabilitySwitchesQuery', () => {
+  test('renders one switch-row per row from useCapabilitiesQuery', () => {
     mockSwitches.value = [
       { key: 'audio_reader', state: 'on' },
       { key: 'other_switch', state: 'off' }

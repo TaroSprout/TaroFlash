@@ -12,7 +12,7 @@ export async function fetchCapabilities(): Promise<Capability[]> {
   return (data ?? []) as Capability[]
 }
 
-export type UpdateCapabilitySwitchParams = {
+export type UpdateCapabilityParams = {
   key: CapabilityKey
   state: CapabilityState
 }
@@ -21,9 +21,9 @@ export type UpdateCapabilitySwitchParams = {
  * Flips a capability switch's state. RLS refuses the write for anyone but an
  * admin (`can_manage_capabilities()`); this function never re-checks the role.
  */
-export async function updateCapabilitySwitch(params: UpdateCapabilitySwitchParams): Promise<void> {
+export async function updateCapability(params: UpdateCapabilityParams): Promise<void> {
   const { error } = await supabase
-    .from('capability_switches')
+    .from('capabilities')
     .update({ state: params.state })
     .eq('key', params.key)
 

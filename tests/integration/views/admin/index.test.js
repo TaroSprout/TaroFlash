@@ -39,12 +39,12 @@ vi.mock('@/views/admin/color-page/roles-page.vue', async () => {
   }
 })
 
-vi.mock('@/views/admin/switches-page/index.vue', async () => {
+vi.mock('@/views/admin/capabilities-page/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
   return {
     default: defineComponent({
-      name: 'SwitchesPage',
-      setup: () => () => h('div', { 'data-testid': 'switches-page-stub' })
+      name: 'CapabilitiesPage',
+      setup: () => () => h('div', { 'data-testid': 'capabilities-page-stub' })
     })
   }
 })
@@ -100,13 +100,13 @@ describe('Admin — chrome', () => {
     expect(pw.props('pages').map((p) => p.value)).toEqual(['feedback', 'palette', 'roles'])
   })
 
-  test('inserts the switches page for an admin', () => {
+  test('inserts the capabilities page for an admin', () => {
     manageCapabilities.value = true
     const { wrapper } = mountAdmin()
     const pw = wrapper.findComponent(PagedWindowStub)
     expect(pw.props('pages').map((p) => p.value)).toEqual([
       'feedback',
-      'switches',
+      'capabilities',
       'palette',
       'roles'
     ])
@@ -161,14 +161,14 @@ describe('Admin — content', () => {
     expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(false)
   })
 
-  test('renders the switches page when displayed_page is switches for an admin', async () => {
+  test('renders the capabilities page when displayed_page is capabilities for an admin', async () => {
     manageCapabilities.value = true
     const { wrapper } = mountAdmin()
     const pw = wrapper.findComponent(PagedWindowStub)
-    pw.vm.$emit('update:active', 'switches')
+    pw.vm.$emit('update:active', 'capabilities')
     await nextTick()
 
-    expect(wrapper.find('[data-testid="switches-page-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="capabilities-page-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(false)
   })
 })

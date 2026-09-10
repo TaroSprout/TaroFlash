@@ -43,7 +43,7 @@
   "admin.feedback-page.status.done": "Shipped",
   "admin.page.palette": "Palette",
   "admin.page.roles": "Roles",
-  "admin.page.switches": "Features",
+  "admin.page.capabilities": "Capabilities",
   "admin.capabilities.audio_reader.name": "Audio reader",
   "admin.capabilities.audio_reader.description": "Lesson playback, transcription, and term lookups.",
   "admin.color-tuner.undo-button": "Undo",

@@ -14,7 +14,7 @@ vi.mock('@/supabase-client', () => ({
 
 vi.mock('@/utils/logger', () => ({ default: loggerMock }))
 
-import { fetchCapabilities, updateCapabilitySwitch } from '@/api/capabilities/db'
+import { fetchCapabilities, updateCapability } from '@/api/capabilities/db'
 
 beforeEach(() => {
   fromMock.mockReset()
@@ -62,13 +62,13 @@ describe('fetchCapabilities', () => {
   })
 })
 
-describe('updateCapabilitySwitch', () => {
+describe('updateCapability', () => {
   test('updates the state for the given key', async () => {
     eqMock.mockResolvedValueOnce({ error: null })
 
-    await updateCapabilitySwitch({ key: 'audio_reader', state: 'on' })
+    await updateCapability({ key: 'audio_reader', state: 'on' })
 
-    expect(fromMock).toHaveBeenCalledWith('capability_switches')
+    expect(fromMock).toHaveBeenCalledWith('capabilities')
     expect(updateMock).toHaveBeenCalledWith({ state: 'on' })
     expect(eqMock).toHaveBeenCalledWith('key', 'audio_reader')
   })
@@ -77,9 +77,7 @@ describe('updateCapabilitySwitch', () => {
     const error = new Error('refused')
     eqMock.mockResolvedValueOnce({ error })
 
-    await expect(updateCapabilitySwitch({ key: 'audio_reader', state: 'off' })).rejects.toThrow(
-      'refused'
-    )
+    await expect(updateCapability({ key: 'audio_reader', state: 'off' })).rejects.toThrow('refused')
     expect(loggerMock.error).toHaveBeenCalledWith('refused')
   })
 })

@@ -1,1 +1,1 @@
-export * from './update-switch'
+export * from './update-capability'

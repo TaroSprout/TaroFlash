@@ -4,26 +4,21 @@ import { createPinia } from 'pinia'
 import { PiniaColada, useQueryCache } from '@pinia/colada'
 import { flushPromises } from '@vue/test-utils'
 
-const {
-  updateCapabilitySwitchMock,
-  fetchCapabilitySwitchesMock,
-  roleRef,
-  deckCountRef,
-  serverRows
-} = vi.hoisted(() => {
-  return {
-    updateCapabilitySwitchMock: vi.fn(),
-    fetchCapabilitySwitchesMock: vi.fn(),
-    roleRef: { value: 'admin' },
-    deckCountRef: { value: 0 },
-    serverRows: []
-  }
-})
+const { updateCapabilityMock, fetchCapabilitiesMock, roleRef, deckCountRef, serverRows } =
+  vi.hoisted(() => {
+    return {
+      updateCapabilityMock: vi.fn(),
+      fetchCapabilitiesMock: vi.fn(),
+      roleRef: { value: 'admin' },
+      deckCountRef: { value: 0 },
+      serverRows: []
+    }
+  })
 
 vi.mock('@/api/capabilities/db', () => ({
   // fake row store: writes mutate it, reads reflect it
-  updateCapabilitySwitch: updateCapabilitySwitchMock,
-  fetchCapabilitySwitches: fetchCapabilitySwitchesMock
+  updateCapability: updateCapabilityMock,
+  fetchCapabilities: fetchCapabilitiesMock
 }))
 
 vi.mock('@/stores/session', () => ({
@@ -46,7 +41,7 @@ vi.mock('@/api/decks', () => ({
 }))
 
 import { useCan } from '@/composables/can'
-import { useUpdateCapabilitySwitchMutation } from '@/api/capabilities/mutations/update-switch'
+import { useUpdateCapabilityMutation } from '@/api/capabilities/mutations/update-capability'
 
 function mountHost(pinia) {
   // hosts the mutation and useCan in one cache, like the running app
@@ -54,7 +49,7 @@ function mountHost(pinia) {
   const app = createApp({
     setup() {
       can = useCan()
-      mutation = useUpdateCapabilitySwitchMutation()
+      mutation = useUpdateCapabilityMutation()
       query_cache = useQueryCache()
       return () => null
     }
@@ -69,11 +64,11 @@ beforeEach(() => {
   serverRows.length = 0
   serverRows.push({ key: 'audio_reader', state: 'off' })
 
-  updateCapabilitySwitchMock.mockReset().mockImplementation(async (params) => {
+  updateCapabilityMock.mockReset().mockImplementation(async (params) => {
     const row = serverRows.find((r) => r.key === params.key)
     if (row) row.state = params.state
   })
-  fetchCapabilitySwitchesMock
+  fetchCapabilitiesMock
     .mockReset()
     .mockImplementation(async () => serverRows.map((r) => ({ ...r })))
 
