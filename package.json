@@ -20,7 +20,8 @@
     "knowledge:check": "node scripts/knowledge-lint.mjs",
     "knowledge:migrations": "node scripts/migration-knowledge-gate.mjs",
     "build:email-templates": "node scripts/build-email-templates.mjs",
-    "gen:palette-css": "node scripts/gen-palette-css.ts"
+    "gen:palette-css": "node scripts/gen-palette-css.ts",
+    "gen:motion-css": "node scripts/gen-motion-css.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

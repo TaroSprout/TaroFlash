@@ -217,11 +217,6 @@
   --bevel-md: 5px;
   --bevel-lg: 6px;
 
-  /* Transitions */
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration-150: 150ms;
-  --duration-100: 100ms;
-
   /* Breakpoints */
   --breakpoint-xs: 32rem;
   --breakpoint-sm: 40rem;
@@ -285,6 +280,11 @@
   --text-8xl: 60px;
   --text-8xl--line-height: 100%;
 }
+
+/* Imported after the `--*: initial` reset above, not with the top-of-file
+   imports, so its `@theme` durations and easings survive the reset that wipes
+   every token declared before it. */
+@import '@/styles/motion.gen.css';
 
 /* Background-pattern images. Declared after the `--*: initial` reset above so it
    doesn't wipe them. `static` forces every var to be emitted even when no
