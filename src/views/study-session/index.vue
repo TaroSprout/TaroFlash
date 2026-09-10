@@ -8,7 +8,7 @@ import SessionHeaderMenu from './session-header-menu.vue'
 import SessionProgress from './session-studying/session-progress.vue'
 import SessionToolbar from './session-toolbar.vue'
 import SummarySelectButton from './session-summary/summary-select-button.vue'
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, ref } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
@@ -50,16 +50,14 @@ const {
   resetToDefaults,
   openSummaryCategory,
   closeSummaryCategory,
-  stopSummaryEdit
+  stopSummaryEdit,
+  flipSummaryEditingCard
 } = provideStudySessionController({ deck_ids, onClosed })
 
 const primed_grade = ref<Grade | null>(null)
 providePrimedGrade(primed_grade)
 
 const summary_seen = ref(false)
-
-const studying_pane = useTemplateRef('studying_pane')
-const summary_category_pane = useTemplateRef('summary_category_pane')
 
 const phase = computed<'studying' | 'summary'>(() =>
   state.value === 'summary' ? 'summary' : 'studying'
@@ -151,19 +149,9 @@ function onPaneEnterStart() {
   summary_seen.value = true
 }
 
-/** Rating buttons prime a grade; the fling animation runs on the card stage. */
-function onRated(grade: Grade) {
-  studying_pane.value?.rate(grade)
-}
-
-/** The session footer's Flip button, for a summary category card being edited. */
-function onFlipSummaryEditingCard() {
-  summary_category_pane.value?.flipEditingCard()
-}
-
 /** Toolbar's Flip button — a summary card's editor flips it in place, the regular editor flips the active card. */
 function onToolbarFlip() {
-  if (toolbar_variant.value === 'summary-edit') onFlipSummaryEditingCard()
+  if (toolbar_variant.value === 'summary-edit') flipSummaryEditingCard()
   else flipCurrentCard()
 }
 
@@ -282,15 +270,10 @@ function onToggleSummarySelecting() {
             key="settings"
             class="absolute inset-0 z-10"
           />
-          <session-studying
-            v-else-if="current_page === 'studying'"
-            key="studying"
-            ref="studying_pane"
-          />
+          <session-studying v-else-if="current_page === 'studying'" key="studying" />
           <session-summary-category
             v-else-if="summary_category"
             key="summary-category"
-            ref="summary_category_pane"
             class="absolute inset-0 z-10"
             :results="results"
             :category="summary_category"
@@ -311,7 +294,6 @@ function onToggleSummarySelecting() {
         :variant="toolbar_variant"
         :prefs_are_default="prefs_are_default"
         @started="startSession"
-        @rated="onRated"
         @flip="onToolbarFlip"
         @done="onToolbarDone"
         @reset="resetToDefaults"

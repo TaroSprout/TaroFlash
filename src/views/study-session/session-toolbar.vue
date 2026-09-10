@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { type Grade } from 'ts-fsrs'
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/components/ui-kit/button.vue'
 import RatingButtons from './session-studying/rating-buttons/index.vue'
@@ -23,7 +22,6 @@ const { variant, prefs_are_default } = defineProps<SessionToolbarProps>()
 
 const emit = defineEmits<{
   (e: 'started'): void
-  (e: 'rated', grade: Grade): void
   (e: 'flip'): void
   (e: 'done'): void
   (e: 'reset'): void
@@ -41,7 +39,6 @@ const { t } = useI18n()
         key="rating"
         class="mx-auto max-w-117"
         @started="emit('started')"
-        @rated="emit('rated', $event)"
       />
       <study-flip-done-footer
         v-else-if="variant === 'edit'"

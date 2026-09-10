@@ -7,12 +7,11 @@ import { useInjectedStudySessionController } from '@/views/study-session/composa
 
 const emit = defineEmits<{
   (e: 'started'): void
-  (e: 'rated', grade: import('ts-fsrs').Grade): void
 }>()
 
 const { t } = useI18n()
 
-const { display_side, show_all_ratings, show_rating_buttons, loading } =
+const { display_side, show_all_ratings, show_rating_buttons, loading, flingActiveCard } =
   useInjectedStudySessionController()
 </script>
 
@@ -37,9 +36,9 @@ const { display_side, show_all_ratings, show_rating_buttons, loading } =
       data-testid="rating-buttons__group"
       :class="{ 'invisible pointer-events-none': !show_rating_buttons }"
     >
-      <advanced-rating-buttons v-if="show_all_ratings" @rated="emit('rated', $event)" />
+      <advanced-rating-buttons v-if="show_all_ratings" @rated="flingActiveCard" />
 
-      <simple-rating-buttons v-else @rated="emit('rated', $event)" />
+      <simple-rating-buttons v-else @rated="flingActiveCard" />
     </div>
   </div>
 </template>

@@ -2,7 +2,7 @@
 import Card from '@/components/card/index.vue'
 import StudyCard from './study-card.vue'
 import StudyCardEdit from './study-card-edit.vue'
-import { computed, onUnmounted, useTemplateRef } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import type { gsap } from 'gsap'
 import { type Grade } from 'ts-fsrs'
 import { coverCardBeforeEnter, coverCardEnter } from '@/utils/animations/session-intro'
@@ -10,8 +10,6 @@ import { useDeckResolution } from '../../deck-resolution'
 import { useCoverCarousel } from '@/views/study-session/composables/cover-carousel'
 import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 import { usePrimedGrade } from './primed-grade-context'
-
-defineExpose({ rate })
 
 const {
   loading,
@@ -29,17 +27,17 @@ const {
   onCardReviewed,
   onDragProgress,
   onNextCardFlipped,
-  onEditUpdate
+  onEditUpdate,
+  activeCardEl
 } = useInjectedStudySessionController()
 
 const resolution = useDeckResolution()
 const primed_grade = usePrimedGrade()
-const study_card_ref = useTemplateRef('study-card')
 
 const { current_cover } = useCoverCarousel(
   () => resolution.covers.value,
   () => display_side.value === 'cover',
-  () => study_card_ref.value?.el()
+  () => activeCardEl()
 )
 
 const preview_appearance = computed(() => resolution.appearanceFor(next_card.value?.deck_id))
@@ -50,11 +48,6 @@ const card_view = computed<'loading' | 'edit' | 'read'>(() => {
   if (editing.value) return 'edit'
   return 'read'
 })
-
-/** Triggers the fling animation on the active card; its review follows. */
-function rate(grade: Grade) {
-  study_card_ref.value?.rate(grade)
-}
 
 function onDragRating(grade: Grade | null) {
   primed_grade.value = grade
@@ -115,7 +108,6 @@ onUnmounted(() => cover_tween?.kill())
     >
       <study-card
         v-if="card_view === 'read' && active_card"
-        ref="study-card"
         :key="active_card?.id"
         :card="active_card"
         :side="display_side"
