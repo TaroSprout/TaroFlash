@@ -506,10 +506,6 @@ describe('card-grid/scroll-grid', () => {
     })
   })
 
-  // ── idle jiggle rotation ───────────────────────────────────────────────
-  // The shared jiggle keyframe defaults --jiggle-rotation to 1.4deg; unlike
-  // the dashboard deck grid, this grid never overrides it.
-
   describe('idle jiggle rotation', () => {
     const ONE_CARD = [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
 

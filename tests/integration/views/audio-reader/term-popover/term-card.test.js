@@ -1,9 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { h } from 'vue'
-// The shimmer sweep's ::after pseudo-element only exists once Tailwind's
-// utilities are loaded — tests/setup-browser.js loads no stylesheet on its own.
-import '@/styles/main.css'
+import '@/styles/main.css' // loads Tailwind utilities so the shimmer ::after exists
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -271,10 +269,8 @@ describe('TermCard', () => {
 
     test('the second and third body lines stagger their sweep with an animation-delay', () => {
       mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
-      // Computed pseudo-element styles only resolve for an element attached
-      // to the document.
       const wrapper = mountCard({ term: '猫', sentence: 'test' })
-      document.body.append(wrapper.element)
+      document.body.append(wrapper.element) // ::after styles only resolve once attached to the document
 
       const line1 = wrapper.find('[data-testid="term-card__skeleton-line-1"]').element
       const line2 = wrapper.find('[data-testid="term-card__skeleton-line-2"]').element
