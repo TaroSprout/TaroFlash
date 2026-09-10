@@ -201,6 +201,39 @@ describe('useCan', () => {
     })
   })
 
+  describe('manageCapabilities', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    test('true when member role is admin', () => {
+      roleRef.value = 'admin'
+      expect(useCan().manageCapabilities.value).toBe(true)
+    })
+
+    test('false when member role is moderator', () => {
+      roleRef.value = 'moderator'
+      expect(useCan().manageCapabilities.value).toBe(false)
+    })
+
+    test('false when member role is null', () => {
+      roleRef.value = null
+      expect(useCan().manageCapabilities.value).toBe(false)
+    })
+
+    test('false for a moderator even under the DEV-mode carve-out moderateFeedback grants', () => {
+      vi.stubEnv('DEV', true)
+      roleRef.value = 'moderator'
+      expect(useCan().manageCapabilities.value).toBe(false)
+    })
+
+    test('false for any signed-in member under DEV mode, unlike moderateFeedback', () => {
+      vi.stubEnv('DEV', true)
+      roleRef.value = 'member'
+      expect(useCan().manageCapabilities.value).toBe(false)
+    })
+  })
+
   describe('moderateFeedback', () => {
     afterEach(() => {
       vi.unstubAllEnvs()
