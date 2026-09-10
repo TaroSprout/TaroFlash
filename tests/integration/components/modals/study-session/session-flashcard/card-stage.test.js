@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import CardStage from '@/views/study-session/session-studying/card/card-stage.vue'
 import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
 
@@ -18,7 +18,9 @@ const {
   next_card_side,
   preview_style,
   show_all_ratings,
-  show_card_preview
+  show_card_preview,
+  mock_active_card_el,
+  mock_covers
 } = await vi.hoisted(async () => {
   const { ref } = await import('vue')
   return {
@@ -31,7 +33,9 @@ const {
     next_card_side: ref('cover'),
     preview_style: ref({}),
     show_all_ratings: ref(false),
-    show_card_preview: ref(true)
+    show_card_preview: ref(true),
+    mock_active_card_el: ref(undefined),
+    mock_covers: ref([])
   }
 })
 
@@ -68,14 +72,24 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
     onCardReviewed: mockOnCardReviewed,
     onDragProgress: mockOnDragProgress,
     onNextCardFlipped: mockOnNextCardFlipped,
-    onEditUpdate: mockOnEditUpdate
+    onEditUpdate: mockOnEditUpdate,
+    activeCardEl: () => mock_active_card_el.value
   })
 }))
 
-// Deck resolution is an inject seam; these tests don't exercise the cover
-// carousel, so a single-cover (idle) resolution keeps it inert.
+// Single-cover (idle) resolution keeps the cover carousel inert by default.
 vi.mock('@/views/study-session/deck-resolution', () => ({
-  useDeckResolution: () => ({ appearanceFor: () => ({}), covers: { value: [] } })
+  useDeckResolution: () => ({ appearanceFor: () => ({}), covers: mock_covers })
+}))
+
+const { mockCycleCoverCard, mockResetCoverCard } = vi.hoisted(() => ({
+  mockCycleCoverCard: vi.fn(() => ({ eventCallback: vi.fn(), kill: vi.fn() })),
+  mockResetCoverCard: vi.fn()
+}))
+
+vi.mock('@/utils/animations/cover-carousel', () => ({
+  cycleCoverCard: (...args) => mockCycleCoverCard(...args),
+  resetCoverCard: (...args) => mockResetCoverCard(...args)
 }))
 
 const { mockRegister } = vi.hoisted(() => ({
@@ -168,6 +182,8 @@ function mountCardStage(overrides = {}) {
   next_card_side.value = overrides.next_card_side ?? 'cover'
   show_all_ratings.value = overrides.show_all_ratings ?? false
   show_card_preview.value = overrides.show_card_preview ?? true
+  mock_active_card_el.value = 'active_card_el' in overrides ? overrides.active_card_el : undefined
+  mock_covers.value = overrides.covers ?? []
 
   return mount(CardStage, {
     attachTo: document.body,
@@ -201,6 +217,8 @@ describe('CardStage', () => {
     mockOnDragProgress.mockClear()
     mockOnNextCardFlipped.mockClear()
     mockOnEditUpdate.mockClear()
+    mockCycleCoverCard.mockClear()
+    mockResetCoverCard.mockClear()
   })
 
   // ── card_view computed ────────────────────────────────────────
@@ -368,12 +386,38 @@ describe('CardStage', () => {
     expect(mockOnEditUpdate).toHaveBeenCalledWith('front', 'new text')
   })
 
-  // ── rate() expose ─────────────────────────────────────────────
+  // ── cover carousel wiring: controller.activeCardEl feeds the carousel ─────
 
-  test('rate() is a no-op when study-card is not rendered (loading)', () => {
-    const wrapper = mountCardStage({ loading: true })
+  test('the carousel runs while activeCardEl resolves an element and multiple covers are in play', async () => {
+    const el = document.createElement('div')
+    mountCardStage({
+      display_side: 'cover',
+      active_card: makeCard(),
+      active_card_el: el,
+      covers: [{ id: 1 }, { id: 2 }]
+    })
+    await nextFrame()
 
-    expect(() => wrapper.vm.rate(1)).not.toThrow()
+    expect(mockCycleCoverCard).toHaveBeenCalledWith(el, expect.any(Function))
+  })
+
+  test('the carousel stops once the active card handle clears (activeCardEl returns undefined)', async () => {
+    const el = document.createElement('div')
+    mountCardStage({
+      display_side: 'cover',
+      active_card: makeCard(),
+      active_card_el: el,
+      covers: [{ id: 1 }, { id: 2 }]
+    })
+    await nextFrame()
+    const timeline = mockCycleCoverCard.mock.results.at(-1)?.value
+
+    mock_active_card_el.value = undefined
+    await nextTick()
+    await nextFrame()
+
+    // No element left to reset — stopping the carousel only kills the in-flight timeline.
+    expect(timeline.kill).toHaveBeenCalled()
   })
 
   // ── transition hooks: cover-card rise only on the cover side ──────────────

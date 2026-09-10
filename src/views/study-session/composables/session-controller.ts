@@ -1,4 +1,4 @@
-import { computed, inject, provide, ref, watch, type InjectionKey } from 'vue'
+import { computed, inject, provide, ref, shallowRef, watch, type InjectionKey } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useSessionEngine } from './session-engine'
 import { useCardPreview } from './card-preview'
@@ -15,6 +15,17 @@ import type { PersistedSession } from './session-persistence'
 import type { SummaryCategory } from '../session-summary/aggregate'
 
 export type StudySessionController = ReturnType<typeof useStudySessionController>
+
+/** The mounted study card's imperative surface: fling it off-screen, and read its element. */
+type ActiveCardHandle = {
+  fling: (grade: Grade) => void
+  el: () => HTMLElement | undefined
+}
+
+/** The mounted summary card editor's imperative surface: flip the card being edited. */
+type SummaryEditorHandle = {
+  flip: () => void
+}
 
 const StudySessionControllerKey: InjectionKey<StudySessionController> = Symbol(
   'study-session.controller'
@@ -98,6 +109,9 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
 
   const active_page = ref<'settings' | null>(null)
   const summary_category = ref<SummaryCategory | null>(null)
+
+  const active_card_handle = shallowRef<ActiveCardHandle | null>(null)
+  const summary_editor_handle = shallowRef<SummaryEditorHandle | null>(null)
 
   const rating_times = useRatingTimes(() => engine.active_card_preview.value)
 
@@ -193,6 +207,35 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     engine.reviewCard(grade)
   }
 
+  function registerActiveCard(handle: ActiveCardHandle) {
+    active_card_handle.value = handle
+  }
+
+  /** Only the card that registered clears its own handle, so a card leaving after its replacement mounted can't drop the live one. */
+  function unregisterActiveCard(handle: ActiveCardHandle) {
+    if (active_card_handle.value === handle) active_card_handle.value = null
+  }
+
+  function flingActiveCard(grade: Grade) {
+    active_card_handle.value?.fling(grade)
+  }
+
+  function activeCardEl() {
+    return active_card_handle.value?.el()
+  }
+
+  function registerSummaryEditor(handle: SummaryEditorHandle) {
+    summary_editor_handle.value = handle
+  }
+
+  function unregisterSummaryEditor(handle: SummaryEditorHandle) {
+    if (summary_editor_handle.value === handle) summary_editor_handle.value = null
+  }
+
+  function flipSummaryEditingCard() {
+    summary_editor_handle.value?.flip()
+  }
+
   // The session ends once `state` reaches `summary` — flush every deck's queued reviews.
   watch(
     () => engine.state.value,
@@ -258,6 +301,13 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     onMoveSummaryCard,
     onSelectSummaryCard,
     requestClose,
-    onCardReviewed
+    onCardReviewed,
+    registerActiveCard,
+    unregisterActiveCard,
+    flingActiveCard,
+    activeCardEl,
+    registerSummaryEditor,
+    unregisterSummaryEditor,
+    flipSummaryEditingCard
   }
 }

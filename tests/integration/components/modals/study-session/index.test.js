@@ -99,6 +99,7 @@ const {
   mockSelectAllSummaryCards,
   mockOnDeleteSummarySelected,
   mockOnMoveSummarySelected,
+  mockFlipSummaryEditingCard,
   controllerMock,
   capturedControllerOptions
 } = await vi.hoisted(async () => {
@@ -137,6 +138,7 @@ const {
   const mockSelectAllSummaryCards = vi.fn()
   const mockOnDeleteSummarySelected = vi.fn()
   const mockOnMoveSummarySelected = vi.fn()
+  const mockFlipSummaryEditingCard = vi.fn()
 
   const controllerMock = {
     state: state_ref,
@@ -175,7 +177,8 @@ const {
     stopSummaryEdit: mockStopSummaryEdit,
     selectAllSummaryCards: mockSelectAllSummaryCards,
     onDeleteSummarySelected: mockOnDeleteSummarySelected,
-    onMoveSummarySelected: mockOnMoveSummarySelected
+    onMoveSummarySelected: mockOnMoveSummarySelected,
+    flipSummaryEditingCard: mockFlipSummaryEditingCard
   }
 
   return {
@@ -212,6 +215,7 @@ const {
     mockSelectAllSummaryCards,
     mockOnDeleteSummarySelected,
     mockOnMoveSummarySelected,
+    mockFlipSummaryEditingCard,
     controllerMock,
     capturedControllerOptions: { current: null }
   }
@@ -249,13 +253,10 @@ const SessionSummaryStub = defineComponent({
   }
 })
 
-const mockFlipEditingCard = vi.fn()
-
 const SessionSummaryCategoryStub = defineComponent({
   name: 'SessionSummaryCategory',
   props: ['results', 'category'],
-  setup(_props, { expose }) {
-    expose({ flipEditingCard: mockFlipEditingCard })
+  setup() {
     return () => h('div', { 'data-testid': 'session-summary-category-stub' })
   }
 })
@@ -273,7 +274,7 @@ const SessionSettingsStub = defineComponent({
 // stubbed here rather than fully hydrated.
 const RatingButtonsStub = defineComponent({
   name: 'RatingButtons',
-  emits: ['started', 'rated'],
+  emits: ['started'],
   setup() {
     return () => h('div', { 'data-testid': 'rating-buttons-stub' })
   }
@@ -364,7 +365,7 @@ describe('StudySession (index.vue)', () => {
     mockSelectAllSummaryCards.mockClear()
     mockOnDeleteSummarySelected.mockClear()
     mockOnMoveSummarySelected.mockClear()
-    mockFlipEditingCard.mockClear()
+    mockFlipSummaryEditingCard.mockClear()
     state_ref.value = 'studying'
     results_ref.value = []
     is_cover_ref.value = false
@@ -643,7 +644,7 @@ describe('StudySession (index.vue)', () => {
       expect(close).toHaveBeenCalledOnce()
     })
 
-    test('category editing: shows the flip/done footer, wired to flipEditingCard/stopSummaryEdit', async () => {
+    test('category editing: shows the flip/done footer, wired to flipSummaryEditingCard/stopSummaryEdit', async () => {
       const { wrapper } = makeWrapper()
       await finishSession([])
       await openCategoryPage()
@@ -654,7 +655,7 @@ describe('StudySession (index.vue)', () => {
       expect(wrapper.find('[data-testid="study-flip-done-footer"]').exists()).toBe(true)
 
       await wrapper.find('[data-testid="study-flip-done-footer__flip"]').trigger('click')
-      expect(mockFlipEditingCard).toHaveBeenCalledOnce()
+      expect(mockFlipSummaryEditingCard).toHaveBeenCalledOnce()
 
       await wrapper.find('[data-testid="study-flip-done-footer__done"]').trigger('click')
       expect(mockStopSummaryEdit).toHaveBeenCalledOnce()

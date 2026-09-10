@@ -8,6 +8,18 @@ import SummaryCardEditor from '@/views/study-session/session-summary/category-pa
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
+const { mockRegisterSummaryEditor, mockUnregisterSummaryEditor } = vi.hoisted(() => ({
+  mockRegisterSummaryEditor: vi.fn(),
+  mockUnregisterSummaryEditor: vi.fn()
+}))
+
+vi.mock('@/views/study-session/composables/session-controller', () => ({
+  useInjectedStudySessionController: () => ({
+    registerSummaryEditor: mockRegisterSummaryEditor,
+    unregisterSummaryEditor: mockUnregisterSummaryEditor
+  })
+}))
+
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const StudyCardEditStub = defineComponent({
@@ -45,11 +57,18 @@ function mountEditor(props = {}) {
   })
 }
 
+function flip() {
+  const handle = mockRegisterSummaryEditor.mock.calls.at(-1)?.[0]
+  handle?.flip()
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SummaryCardEditor', () => {
   beforeEach(() => {
     mockEmitSfx.mockClear()
+    mockRegisterSummaryEditor.mockClear()
+    mockUnregisterSummaryEditor.mockClear()
   })
 
   test('renders the editor root and the card editor for the given card', () => {
@@ -65,14 +84,11 @@ describe('SummaryCardEditor', () => {
     )
   })
 
-  // ── exposed flip() ──────────────────────────────────────────
-  // The Flip button now lives in the session's shared toolbar footer, which
-  // reaches this editor's flip() through a template ref — no in-component
-  // Flip/Done buttons anymore.
+  // ── flip via the controller handle ────────────────────────────
 
   test('flip() switches to the back side and plays a transition sfx', async () => {
     const wrapper = mountEditor()
-    wrapper.vm.flip()
+    flip()
     await nextTick()
 
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
@@ -84,15 +100,33 @@ describe('SummaryCardEditor', () => {
   test('calling flip() twice returns to the front and plays the opposite sfx', async () => {
     const wrapper = mountEditor()
 
-    wrapper.vm.flip()
+    flip()
     await nextTick()
-    wrapper.vm.flip()
+    flip()
     await nextTick()
 
     expect(wrapper.find('[data-testid="study-card-edit-stub"]').attributes('data-side')).toBe(
       'front'
     )
     expect(mockEmitSfx).toHaveBeenLastCalledWith('card.flip-back')
+  })
+
+  // ── controller registration ────────────────────────────────────────────────
+
+  test('registers a handle with the controller on mount, exposing flip', () => {
+    mountEditor()
+
+    expect(mockRegisterSummaryEditor).toHaveBeenCalledOnce()
+    expect(typeof mockRegisterSummaryEditor.mock.calls[0][0].flip).toBe('function')
+  })
+
+  test('unregisters the same handle instance from the controller on unmount', () => {
+    const wrapper = mountEditor()
+    const handle = mockRegisterSummaryEditor.mock.calls[0][0]
+
+    wrapper.unmount()
+
+    expect(mockUnregisterSummaryEditor).toHaveBeenCalledWith(handle)
   })
 
   // ── update forwarding ─────────────────────────────────────────────────────

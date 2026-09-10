@@ -22,6 +22,7 @@ const { display_side, show_all_ratings, show_rating_buttons, loading, show_butto
   })
 
 const rating_times = { value: { bare: {}, label: {} } }
+const { mockFlingActiveCard } = vi.hoisted(() => ({ mockFlingActiveCard: vi.fn() }))
 
 vi.mock('@/views/study-session/composables/session-controller', () => ({
   useInjectedStudySessionController: () => ({
@@ -30,7 +31,8 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
     show_rating_buttons,
     loading,
     show_button_preview,
-    rating_times
+    rating_times,
+    flingActiveCard: mockFlingActiveCard
   })
 }))
 
@@ -63,6 +65,7 @@ describe('RatingButtons', () => {
     show_rating_buttons.value = true
     show_button_preview.value = false
     rating_times.value = { bare: {}, label: {} }
+    mockFlingActiveCard.mockClear()
   })
 
   // ── show_rating_buttons: footprint preserved, not removed ─────
@@ -125,11 +128,11 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__start"]').exists()).toBe(false)
     })
 
-    test('clicking Again emits "rated" with Rating.Again', async () => {
+    test('clicking Again flings the active card with Rating.Again', async () => {
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
 
-      expect(wrapper.emitted('rated')).toHaveLength(1)
-      expect(wrapper.emitted('rated')[0]).toEqual([Rating.Again])
+      expect(mockFlingActiveCard).toHaveBeenCalledTimes(1)
+      expect(mockFlingActiveCard).toHaveBeenCalledWith(Rating.Again)
     })
   })
 
@@ -158,18 +161,18 @@ describe('RatingButtons', () => {
       expect(wrapper.find('[data-testid="rating-buttons__good"]').exists()).toBe(true)
     })
 
-    test('clicking Again emits "rated" with Rating.Again', async () => {
+    test('clicking Again flings the active card with Rating.Again', async () => {
       await wrapper.find('[data-testid="rating-buttons__again"]').trigger('click')
 
-      expect(wrapper.emitted('rated')).toHaveLength(1)
-      expect(wrapper.emitted('rated')[0]).toEqual([Rating.Again])
+      expect(mockFlingActiveCard).toHaveBeenCalledTimes(1)
+      expect(mockFlingActiveCard).toHaveBeenCalledWith(Rating.Again)
     })
 
-    test('clicking Good emits "rated" with Rating.Good', async () => {
+    test('clicking Good flings the active card with Rating.Good', async () => {
       await wrapper.find('[data-testid="rating-buttons__good"]').trigger('click')
 
-      expect(wrapper.emitted('rated')).toHaveLength(1)
-      expect(wrapper.emitted('rated')[0]).toEqual([Rating.Good])
+      expect(mockFlingActiveCard).toHaveBeenCalledTimes(1)
+      expect(mockFlingActiveCard).toHaveBeenCalledWith(Rating.Good)
     })
   })
 

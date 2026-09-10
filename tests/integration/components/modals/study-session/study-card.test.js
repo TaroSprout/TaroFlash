@@ -15,6 +15,18 @@ const { mockEmitSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn()
 }))
 
+const { mockRegisterActiveCard, mockUnregisterActiveCard } = vi.hoisted(() => ({
+  mockRegisterActiveCard: vi.fn(),
+  mockUnregisterActiveCard: vi.fn()
+}))
+
+vi.mock('@/views/study-session/composables/session-controller', () => ({
+  useInjectedStudySessionController: () => ({
+    registerActiveCard: mockRegisterActiveCard,
+    unregisterActiveCard: mockUnregisterActiveCard
+  })
+}))
+
 // Captures shortcut handlers by combo so tests can invoke them directly.
 const { capturedShortcuts, mockShortcutRegister } = vi.hoisted(() => {
   const capturedShortcuts = {}
@@ -70,9 +82,9 @@ const CardStub = defineComponent({
  * empty list — appearanceFor(undefined-or-unknown deck_id) resolves to `{}`,
  * matching the "no matching deck" fallback exercised by most of this file's
  * tests. Returns `.findComponent(StudyCard)` — a VueWrapper scoped to the
- * StudyCard instance itself — so every existing `wrapper.vm.rate(...)` /
- * `wrapper.emitted(...)` call site below keeps working unchanged against the
- * actual StudyCard instance, not the wrapping host component.
+ * StudyCard instance itself — so every existing `wrapper.emitted(...)` call
+ * site below keeps working unchanged against the actual StudyCard instance,
+ * not the wrapping host component.
  */
 function mountStudyCardWithDeckContext(decks, card_data, extra_props = {}) {
   const Wrapper = defineComponent({
@@ -109,6 +121,11 @@ function getCallbacks() {
   return { el: call[0], callbacks: call[1] }
 }
 
+function rate(grade) {
+  const handle = mockRegisterActiveCard.mock.calls.at(-1)?.[0]
+  handle?.fling(grade)
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('StudyCard', () => {
@@ -116,6 +133,8 @@ describe('StudyCard', () => {
     mockRegister.mockClear()
     mockShortcutRegister.mockClear()
     mockEmitSfx.mockClear()
+    mockRegisterActiveCard.mockClear()
+    mockUnregisterActiveCard.mockClear()
     // Clear captured shortcut handlers between tests
     for (const key of Object.keys(capturedShortcuts)) delete capturedShortcuts[key]
   })
@@ -130,7 +149,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Again)
+    rate(Rating.Again)
     await flushPromises()
 
     const { el } = getCallbacks()
@@ -142,7 +161,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Hard)
+    rate(Rating.Hard)
     await flushPromises()
 
     const { el } = getCallbacks()
@@ -154,7 +173,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Easy)
+    rate(Rating.Easy)
     await flushPromises()
 
     const { el } = getCallbacks()
@@ -167,7 +186,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Hard)
+    rate(Rating.Hard)
     await flushPromises()
 
     const cardEl = wrapper.find('[data-testid="study-card"]').element
@@ -182,7 +201,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Easy)
+    rate(Rating.Easy)
     await flushPromises()
 
     const cardEl = wrapper.find('[data-testid="study-card"]').element
@@ -197,7 +216,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Hard)
+    rate(Rating.Hard)
     await flushPromises()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('card.grade-good')
@@ -457,7 +476,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('card.grade-good')
@@ -467,7 +486,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Again)
+    rate(Rating.Again)
     await flushPromises()
 
     expect(mockEmitSfx).toHaveBeenCalledWith('card.grade-again')
@@ -477,7 +496,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     const cardEl = wrapper.find('[data-testid="study-card"]').element
@@ -492,7 +511,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Again)
+    rate(Rating.Again)
     await flushPromises()
 
     const cardEl = wrapper.find('[data-testid="study-card"]').element
@@ -507,7 +526,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     const cardEl = wrapper.find('[data-testid="study-card"]').element
@@ -562,7 +581,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'cover' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     expect(wrapper.emitted('reviewed')).toBeFalsy()
@@ -679,7 +698,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     const last = wrapper.emitted('drag-progress').at(-1)
@@ -815,7 +834,7 @@ describe('StudyCard', () => {
     await flushPromises()
 
     // Start a fling to set is_animating = true
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     const sfxCallsBefore = mockEmitSfx.mock.calls.length
@@ -833,7 +852,7 @@ describe('StudyCard', () => {
     await flushPromises()
 
     // Start a fling to set is_animating = true
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     const sfxCallsBefore = mockEmitSfx.mock.calls.length
@@ -850,7 +869,7 @@ describe('StudyCard', () => {
     await flushPromises()
 
     // First rate() sets is_animating = true
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     // Simulate transitionend to emit reviewed once
@@ -861,7 +880,7 @@ describe('StudyCard', () => {
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
 
     // Calling rate() again while is_animating is still true (stays true after reviewed)
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     // reviewed must still be length 1
@@ -872,7 +891,7 @@ describe('StudyCard', () => {
     const wrapper = mountStudyCard({ side: 'back' })
     await flushPromises()
 
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     // Emit transitionend so reviewed fires
@@ -884,7 +903,7 @@ describe('StudyCard', () => {
 
     // Even after reviewed, is_animating should still block rate()
     const sfxCallsBefore = mockEmitSfx.mock.calls.length
-    wrapper.vm.rate(Rating.Good)
+    rate(Rating.Good)
     await flushPromises()
 
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
@@ -1191,5 +1210,36 @@ describe('StudyCard', () => {
 
     expect(wrapper.emitted('reviewed')).toHaveLength(1)
     expect(wrapper.emitted('reviewed')[0][0]).toBe(Rating.Good)
+  })
+
+  // ── controller registration ────────────────────────────────────────────────
+
+  test('registers a handle with the controller on mount, exposing fling and el', async () => {
+    mountStudyCard({ side: 'back' })
+    await flushPromises()
+
+    expect(mockRegisterActiveCard).toHaveBeenCalledOnce()
+    const handle = mockRegisterActiveCard.mock.calls[0][0]
+    expect(typeof handle.fling).toBe('function')
+    expect(typeof handle.el).toBe('function')
+  })
+
+  test('unregisters the same handle instance from the controller on unmount', async () => {
+    const scoped = mountStudyCard({ side: 'back' })
+    await flushPromises()
+
+    const handle = mockRegisterActiveCard.mock.calls[0][0]
+    scoped.vm.$.appContext.app.unmount()
+
+    expect(mockUnregisterActiveCard).toHaveBeenCalledWith(handle)
+  })
+
+  test('handle.el() returns the card element', async () => {
+    mountStudyCard({ side: 'back' })
+    await flushPromises()
+
+    const handle = mockRegisterActiveCard.mock.calls[0][0]
+    const { el } = getCallbacks()
+    expect(handle.el()).toBe(el)
   })
 })

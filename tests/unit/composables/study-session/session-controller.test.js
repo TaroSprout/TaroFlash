@@ -699,4 +699,109 @@ describe('session-controller', () => {
     const persisted = JSON.parse(sessionStorage.getItem('study-session'))
     expect(persisted.completed).toBe(true)
   })
+
+  // ── active card handle: fling/el seam ───────────────────────────────────────
+
+  describe('active card handle', () => {
+    test('flingActiveCard reaches the registered card handle with the given grade', () => {
+      const { controller } = makeController()
+      const handle = { fling: vi.fn(), el: vi.fn() }
+      controller.registerActiveCard(handle)
+
+      controller.flingActiveCard('good')
+
+      expect(handle.fling).toHaveBeenCalledWith('good')
+    })
+
+    test('flingActiveCard is a no-op when no card is registered', () => {
+      const { controller } = makeController()
+
+      expect(() => controller.flingActiveCard('good')).not.toThrow()
+    })
+
+    test('activeCardEl reads the registered handle’s el()', () => {
+      const { controller } = makeController()
+      const el = document.createElement('div')
+      controller.registerActiveCard({ fling: vi.fn(), el: () => el })
+
+      expect(controller.activeCardEl()).toBe(el)
+    })
+
+    test('activeCardEl is undefined when no card is registered', () => {
+      const { controller } = makeController()
+
+      expect(controller.activeCardEl()).toBeUndefined()
+    })
+
+    // A stale card unregistering must not clear the newer card's live handle.
+    test('unregistering a stale handle after a newer one registered leaves the newer handle intact', () => {
+      const { controller } = makeController()
+      const old_handle = { fling: vi.fn(), el: vi.fn() }
+      const new_handle = { fling: vi.fn(), el: vi.fn() }
+
+      controller.registerActiveCard(old_handle)
+      controller.registerActiveCard(new_handle)
+      controller.unregisterActiveCard(old_handle)
+
+      controller.flingActiveCard('good')
+      expect(new_handle.fling).toHaveBeenCalledWith('good')
+      expect(old_handle.fling).not.toHaveBeenCalled()
+    })
+
+    test('unregistering the current handle clears it', () => {
+      const { controller } = makeController()
+      const handle = { fling: vi.fn(), el: vi.fn() }
+      controller.registerActiveCard(handle)
+
+      controller.unregisterActiveCard(handle)
+
+      expect(() => controller.flingActiveCard('good')).not.toThrow()
+      expect(handle.fling).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── summary editor handle: flip seam ────────────────────────────────────────
+
+  describe('summary editor handle', () => {
+    test('flipSummaryEditingCard reaches the registered editor handle', () => {
+      const { controller } = makeController()
+      const handle = { flip: vi.fn() }
+      controller.registerSummaryEditor(handle)
+
+      controller.flipSummaryEditingCard()
+
+      expect(handle.flip).toHaveBeenCalledOnce()
+    })
+
+    test('flipSummaryEditingCard is a no-op when no editor is registered', () => {
+      const { controller } = makeController()
+
+      expect(() => controller.flipSummaryEditingCard()).not.toThrow()
+    })
+
+    test('unregistering the editor handle on unmount clears it', () => {
+      const { controller } = makeController()
+      const handle = { flip: vi.fn() }
+      controller.registerSummaryEditor(handle)
+
+      controller.unregisterSummaryEditor(handle)
+
+      controller.flipSummaryEditingCard()
+      expect(handle.flip).not.toHaveBeenCalled()
+    })
+
+    test('unregistering a stale editor handle after a newer one registered leaves the newer handle intact', () => {
+      const { controller } = makeController()
+      const old_handle = { flip: vi.fn() }
+      const new_handle = { flip: vi.fn() }
+
+      controller.registerSummaryEditor(old_handle)
+      controller.registerSummaryEditor(new_handle)
+      controller.unregisterSummaryEditor(old_handle)
+
+      controller.flipSummaryEditingCard()
+      expect(new_handle.flip).toHaveBeenCalledOnce()
+      expect(old_handle.flip).not.toHaveBeenCalled()
+    })
+  })
 })

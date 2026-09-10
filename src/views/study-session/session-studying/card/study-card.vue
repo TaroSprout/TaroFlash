@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import Card from '@/components/card/index.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { type Grade, Rating } from 'ts-fsrs'
 import { emitSfx } from '@/sfx/bus'
 import { useGestures } from '@/composables/ui/gestures'
 import { useShortcuts } from '@/composables/shortcuts'
 import { useI18n } from 'vue-i18n'
 import { useDeckResolution } from '../../deck-resolution'
+import { useInjectedStudySessionController } from '@/views/study-session/composables/session-controller'
 
 const DRAG_RATING_CONFIG = {
   [Rating.Hard]: { icon: 'smiley-unhappy', label_key: 'study.flashcard.rating.hard-button' },
   [Rating.Good]: { icon: 'smiley-happy', label_key: 'study.flashcard.rating.good-button' },
   [Rating.Easy]: { icon: 'smiley-very-happy', label_key: 'study.flashcard.rating.easy-button' }
 } as const
-
-defineExpose({ rate, el: () => card_ref.value?.$el as HTMLElement | undefined })
 
 type StudyCardProps = {
   card?: Card
@@ -30,6 +29,7 @@ const { card, side, rating_labels, show_all_ratings, cover_override } =
   defineProps<StudyCardProps>()
 
 const resolution = useDeckResolution()
+const { registerActiveCard, unregisterActiveCard } = useInjectedStudySessionController()
 
 const emit = defineEmits<{
   (e: 'started'): void
@@ -64,6 +64,8 @@ const is_animating = ref(false)
 const { register } = useGestures()
 const shortcuts = useShortcuts('study-card')
 
+const card_handle = { fling: rate, el: () => card_ref.value?.$el as HTMLElement | undefined }
+
 const appearance = computed(() => resolution.appearanceFor(card?.deck_id))
 
 const passVisible = computed(() => card_offset.value > SWIPE_DISTANCE_THRESHOLD)
@@ -89,9 +91,13 @@ onMounted(() => {
   shortcuts.register({ combo: 'arrowright', handler: () => swipe(el, 1) })
   shortcuts.register({ combo: 'arrowleft', handler: () => swipe(el, -1) })
   shortcuts.register({ combo: 'space', handler: () => triggerCardFlip() })
+
+  registerActiveCard(card_handle)
 })
 
-/** Triggers the fling animation for a given grade. Called by the parent via template ref. */
+onUnmounted(() => unregisterActiveCard(card_handle))
+
+/** Flings the active card for a grade; its review follows. */
 function rate(grade: Grade) {
   if (side === 'cover' || is_animating.value) return
 
