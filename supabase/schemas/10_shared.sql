@@ -151,6 +151,51 @@ GRANT ALL ON FUNCTION public.set_member_id() TO authenticated;
 GRANT ALL ON FUNCTION public.set_member_id() TO service_role;
 
 
+-- Reads the switch row bare: on → true, off → false, missing row → false. No
+-- caller fallback argument — the server fails closed and never substitutes a
+-- default, because if it can't reach the row the action isn't running anyway.
+-- The client's code-constant fallback is a separate thing, for its pending
+-- window only →[K:capability-server-has-no-fallback]
+CREATE FUNCTION public.capability_is_live(p_key text) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select coalesce(
+    (select state = 'on' from public.capability_switches where key = p_key),
+    false
+  )
+$$;
+
+
+ALTER FUNCTION public.capability_is_live(p_key text) OWNER TO postgres;
+
+
+-- SECURITY DEFINER, so not left executable by anon (guarded by pgTAP
+-- 00043_definer_function_anon_grants). v1 has no anon-facing call site; a later
+-- ticket that gates an anon-visible resource grants anon here and adds its review
+-- entry then.
+REVOKE ALL ON FUNCTION public.capability_is_live(p_key text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.capability_is_live(p_key text) FROM anon;
+GRANT ALL ON FUNCTION public.capability_is_live(p_key text) TO authenticated;
+GRANT ALL ON FUNCTION public.capability_is_live(p_key text) TO service_role;
+
+
+CREATE FUNCTION public.can_manage_capabilities() RETURNS boolean
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  select auth_role() = 'admin'
+$$;
+
+
+ALTER FUNCTION public.can_manage_capabilities() OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.can_manage_capabilities() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.can_manage_capabilities() TO service_role;
+GRANT ALL ON FUNCTION public.can_manage_capabilities() TO authenticated;
+
+
 GRANT USAGE ON SCHEMA public TO postgres;
 GRANT USAGE ON SCHEMA public TO anon;
 GRANT USAGE ON SCHEMA public TO authenticated;
