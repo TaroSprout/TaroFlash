@@ -43,6 +43,8 @@
   "admin.feedback-page.status.done": "Shipped",
   "admin.page.palette": "Palette",
   "admin.page.roles": "Roles",
+  "admin.capabilities.audio_reader.name": "Audio reader",
+  "admin.capabilities.audio_reader.description": "Lesson playback, transcription, and term lookups.",
   "admin.color-tuner.undo-button": "Undo",
   "admin.color-tuner.redo-button": "Redo",
   "admin.color-tuner.undo-empty-label": "Nothing to undo",

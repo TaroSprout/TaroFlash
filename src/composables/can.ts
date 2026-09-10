@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { useMemberStore } from '@/stores/member'
 import { useMemberDeckCountQuery } from '@/api/decks'
+import { useCapabilities } from '@/api/capabilities'
 
 /**
  * Capability checks for the current member.
@@ -20,6 +21,7 @@ import { useMemberDeckCountQuery } from '@/api/decks'
 export function useCan() {
   const member = useMemberStore()
   const deckCount = useMemberDeckCountQuery()
+  const { isLive } = useCapabilities()
 
   const useProFeature = computed(() => member.plan === 'paid')
 
@@ -31,9 +33,12 @@ export function useCan() {
 
   const useCardImages = computed(() => member.plan === 'paid')
 
-  // Admin-only for now (the audio reader is unreleased). Re-enforced server-side
-  // in the transcribe-audio / translate-term edge functions — this gate is UX.
-  const useAudioReader = computed(() => member.role === 'admin')
+  // Rides the audio_reader launch flag on top of the admin check. Fallback
+  // false: a launch flag stays dark until proven live, so before the switch
+  // state has loaded — or if the read is unreachable — the reader stays hidden.
+  // Re-enforced server-side by can_read_lesson_audio() across the four audio
+  // edge functions; this gate is UX.
+  const useAudioReader = computed(() => isLive('audio_reader', false) && member.role === 'admin')
 
   // Open to any signed-in member in a local dev build, so a solo developer can
   // exercise moderation without seeding a role. Re-enforced server-side by
