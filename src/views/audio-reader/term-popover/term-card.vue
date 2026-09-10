@@ -225,7 +225,11 @@ watch(
             {{ result.reading }}
           </span>
 
-          <span v-else-if="is_loading" class="term-card__skeleton h-4 w-24 rounded-2 bg-skeleton" />
+          <span
+            v-else-if="is_loading"
+            data-testid="term-card__skeleton-reading"
+            class="term-card__skeleton shimmer relative h-4 w-24 rounded-2 bg-skeleton"
+          />
         </div>
 
         <ui-divider class="my-3">
@@ -253,9 +257,18 @@ watch(
             aria-busy="true"
             :aria-label="t('audio-reader.popover.loading')"
           >
-            <span class="term-card__skeleton h-6 w-3/5 rounded-2 bg-skeleton" />
-            <span class="term-card__skeleton h-4 w-full rounded-2 bg-skeleton" />
-            <span class="term-card__skeleton h-4 w-4/5 rounded-2 bg-skeleton" />
+            <span
+              data-testid="term-card__skeleton-line-1"
+              class="term-card__skeleton shimmer relative h-6 w-3/5 rounded-2 bg-skeleton"
+            />
+            <span
+              data-testid="term-card__skeleton-line-2"
+              class="term-card__skeleton shimmer relative h-4 w-full rounded-2 bg-skeleton"
+            />
+            <span
+              data-testid="term-card__skeleton-line-3"
+              class="term-card__skeleton shimmer relative h-4 w-4/5 rounded-2 bg-skeleton"
+            />
           </div>
 
           <p
@@ -313,33 +326,11 @@ watch(
 </template>
 
 <style>
-.term-card__skeleton {
-  position: relative;
-  overflow: hidden;
-}
-
-/* A light gradient sweeps L→R across each bar; staggered so the lines cascade.
-   Gated behind the reduce-animations toggle — bars sit static when it's on. */
-body:not(.animation-safe) .term-card__skeleton::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, var(--color-skeleton-sheen), transparent);
-  animation: term-card-skeleton-sweep 1.4s ease-in-out infinite;
-}
-
-body:not(.animation-safe) .term-card__skeleton:nth-child(2)::after {
+.term-card__skeleton:nth-child(2)::after {
   animation-delay: 0.1s;
 }
 
-body:not(.animation-safe) .term-card__skeleton:nth-child(3)::after {
+.term-card__skeleton:nth-child(3)::after {
   animation-delay: 0.2s;
-}
-
-@keyframes term-card-skeleton-sweep {
-  to {
-    transform: translateX(100%);
-  }
 }
 </style>

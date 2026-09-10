@@ -11,6 +11,7 @@
 @import '@/styles/content-grid.css';
 @import '@/styles/bg-utils.css';
 @import '@/styles/shimmer.css';
+@import '@/styles/jiggle.css';
 @import '@/styles/outline-utils.css';
 
 @theme {

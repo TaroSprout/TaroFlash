@@ -104,34 +104,3 @@ function onOptionSelect(option: DropdownOption) {
     </div>
   </div>
 </template>
-
-<style scoped>
-/* iOS-style "edit mode" jiggle, ported from the deck-view card grid. Phase +
-   tempo are set per card via --jiggle-* so the grid doesn't beat in unison. */
-@keyframes deck-grid-item-jiggle {
-  0% {
-    transform: rotate(calc(var(--jiggle-rotation, 1.4deg) * -1));
-  }
-  50% {
-    transform: rotate(var(--jiggle-rotation, 1.4deg));
-  }
-  100% {
-    transform: rotate(calc(var(--jiggle-rotation, 1.4deg) * -1));
-  }
-}
-
-/* .jiggle sits on a wrapper around DeckThumbnail, not DeckThumbnail's own
-   root — that root also carries a hover-scale transform (see deck-thumbnail.vue),
-   and one element can't animate + hover-transition the same `transform`
-   property without one clobbering the other. */
-.jiggle {
-  animation: deck-grid-item-jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
-  animation-delay: var(--jiggle-delay, 0s);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .jiggle {
-    animation: none;
-  }
-}
-</style>

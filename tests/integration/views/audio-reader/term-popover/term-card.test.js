@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
 import { h } from 'vue'
+import '@/styles/main.css' // loads Tailwind utilities so the shimmer ::after exists
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -238,6 +239,48 @@ describe('TermCard', () => {
       await flushPromises()
 
       expect(wrapper.find('[data-testid="term-card__loading"]').exists()).toBe(false)
+    })
+  })
+
+  describe('loading skeleton shimmer', () => {
+    test('the reading skeleton carries the shared shimmer class', () => {
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+
+      expect(wrapper.find('[data-testid="term-card__skeleton-reading"]').classes()).toContain(
+        'shimmer'
+      )
+    })
+
+    test('each body skeleton line carries the shared shimmer class', () => {
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+
+      expect(wrapper.find('[data-testid="term-card__skeleton-line-1"]').classes()).toContain(
+        'shimmer'
+      )
+      expect(wrapper.find('[data-testid="term-card__skeleton-line-2"]').classes()).toContain(
+        'shimmer'
+      )
+      expect(wrapper.find('[data-testid="term-card__skeleton-line-3"]').classes()).toContain(
+        'shimmer'
+      )
+    })
+
+    test('the second and third body lines stagger their sweep with an animation-delay', () => {
+      mutateAsyncMock.mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = mountCard({ term: '猫', sentence: 'test' })
+      document.body.append(wrapper.element) // ::after styles only resolve once attached to the document
+
+      const line1 = wrapper.find('[data-testid="term-card__skeleton-line-1"]').element
+      const line2 = wrapper.find('[data-testid="term-card__skeleton-line-2"]').element
+      const line3 = wrapper.find('[data-testid="term-card__skeleton-line-3"]').element
+
+      expect(getComputedStyle(line1, '::after').animationDelay).toBe('0s')
+      expect(getComputedStyle(line2, '::after').animationDelay).toBe('0.1s')
+      expect(getComputedStyle(line3, '::after').animationDelay).toBe('0.2s')
+
+      wrapper.element.remove()
     })
   })
 
