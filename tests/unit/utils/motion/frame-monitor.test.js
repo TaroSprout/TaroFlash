@@ -20,11 +20,11 @@ beforeEach(() => {
 })
 
 describe('FrameMonitor', () => {
-  test('snapshot before any tick reports no duration and no dropped frames', () => {
+  test('snapshot before any tick reports zero fps and no dropped frames', () => {
     const monitor = new FrameMonitor()
     monitor.start()
 
-    expect(monitor.snapshot()).toEqual({ frameMs: 0, droppedFrames: 0 })
+    expect(monitor.snapshot()).toEqual({ fps: 0, droppedFrames: 0 })
   })
 
   test('start schedules the rAF loop and a second start does not re-schedule it', () => {
@@ -35,7 +35,7 @@ describe('FrameMonitor', () => {
     expect(requestAnimationFrame).toHaveBeenCalledTimes(1)
   })
 
-  test('counts frames whose duration exceeds the frame budget', () => {
+  test('derives fps and dropped-frame count from the recorded durations', () => {
     const monitor = new FrameMonitor()
     monitor.start()
 
@@ -47,7 +47,7 @@ describe('FrameMonitor', () => {
 
     const snapshot = monitor.snapshot()
     expect(snapshot.droppedFrames).toBe(2)
-    expect(snapshot.frameMs).toBe(40)
+    expect(snapshot.fps).toBeCloseTo((4 / 90) * 1000)
   })
 
   test('drops a frame from the count once it ages past the rolling 1s window', () => {

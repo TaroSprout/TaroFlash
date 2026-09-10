@@ -6,8 +6,8 @@ import { PERF_BUDGET } from '@/utils/motion/perf-budget'
 const { mockStart, mockStop, mockSnapshot, mockScanPerf } = vi.hoisted(() => ({
   mockStart: vi.fn(),
   mockStop: vi.fn(),
-  mockSnapshot: vi.fn(() => ({ frameMs: 5, droppedFrames: 1 })),
-  mockScanPerf: vi.fn(() => ({ onScreenElementCount: 10, standingEffectAreaRatio: 0.1 }))
+  mockSnapshot: vi.fn(() => ({ fps: 55, droppedFrames: 1 })),
+  mockScanPerf: vi.fn(() => ({ onScreenElementCount: 10 }))
 }))
 
 vi.mock('@/utils/motion/frame-monitor', () => ({
@@ -70,10 +70,9 @@ describe('usePerfOverlay', () => {
     expect(mockSnapshot).toHaveBeenCalledTimes(1)
     expect(mockScanPerf).toHaveBeenCalledTimes(1)
     expect(result.state).toMatchObject({
-      frameMs: 5,
+      fps: 55,
       droppedFrames: 1,
-      onScreenElementCount: 10,
-      standingEffectAreaRatio: 0.1
+      onScreenElementCount: 10
     })
 
     vi.advanceTimersByTime(500)
