@@ -13,6 +13,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 
 const {
   mockLoad,
+  mockMotionLoad,
   mockStartLoading,
   mockStopLoading,
   mockForceLogout,
@@ -20,6 +21,7 @@ const {
   mockInstallAudioLifecycle
 } = vi.hoisted(() => ({
   mockLoad: vi.fn(),
+  mockMotionLoad: vi.fn(),
   mockStartLoading: vi.fn(),
   mockStopLoading: vi.fn(),
   mockForceLogout: vi.fn(),
@@ -29,6 +31,10 @@ const {
 
 vi.mock('@/stores/theme', () => ({
   useThemeStore: () => ({ load: mockLoad })
+}))
+
+vi.mock('@/stores/motion', () => ({
+  useMotionStore: () => ({ load: mockMotionLoad })
 }))
 
 vi.mock('@/stores/session', () => ({
@@ -77,6 +83,15 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('App', () => {
+  describe('motion setup', () => {
+    test('calls motion.load on mount', () => {
+      const wrapper = mountApp()
+
+      expect(mockMotionLoad).toHaveBeenCalled()
+      wrapper.unmount()
+    })
+  })
+
   describe('member.error watcher', () => {
     test('fires a panel notice with closable:false and a Refresh action when member.error becomes truthy', async () => {
       const wrapper = mountApp()

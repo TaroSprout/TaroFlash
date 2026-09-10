@@ -12,6 +12,12 @@
   }
 }
 
+@custom-variant reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+}
+
 @custom-variant tap {
   &:where(:focus-visible, [data-active='true']) {
     @slot;

@@ -44,6 +44,10 @@ describe('useMatchMedia', () => {
       expect(compiledFor('light')).toBe('(prefers-color-scheme: light)')
     })
 
+    test('reduced motion', () => {
+      expect(compiledFor('reduced-motion')).toBe('(prefers-reduced-motion: reduce)')
+    })
+
     test('width at-or-above uses a bare min-width', () => {
       const q = compiledFor('w>=md')
       expect(q).toContain('(min-width:')

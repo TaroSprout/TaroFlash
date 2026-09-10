@@ -25,6 +25,10 @@ const COLOR_SCHEME = {
   light: '(prefers-color-scheme: light)'
 } as const
 
+const MOTION = {
+  'reduced-motion': '(prefers-reduced-motion: reduce)'
+} as const
+
 type DimensionAtom = { axis: 'width' | 'height'; below: boolean; length: string }
 type FeatureAtom = { feature: string }
 type Atom = DimensionAtom | FeatureAtom
@@ -50,6 +54,7 @@ function parseAtom(token: string): Atom {
 
   if (token in POINTER) return { feature: POINTER[token as keyof typeof POINTER] }
   if (token in COLOR_SCHEME) return { feature: COLOR_SCHEME[token as keyof typeof COLOR_SCHEME] }
+  if (token in MOTION) return { feature: MOTION[token as keyof typeof MOTION] }
 
   throw new Error(`useMatchMedia: unknown atom "${token}"`)
 }
