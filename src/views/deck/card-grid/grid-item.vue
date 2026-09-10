@@ -137,31 +137,3 @@ watch(
     </div>
   </div>
 </template>
-
-<style scoped>
-/* iOS-style "edit mode" jiggle. Phase + tempo are set per card via the
-   --jiggle-* vars so the grid doesn't beat in unison. The dragged card opts out
-   (its lift owns the transform). */
-@keyframes grid-item-jiggle {
-  0% {
-    transform: rotate(-1.4deg);
-  }
-  50% {
-    transform: rotate(1.4deg);
-  }
-  100% {
-    transform: rotate(-1.4deg);
-  }
-}
-
-.grid-item.jiggle {
-  animation: grid-item-jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
-  animation-delay: var(--jiggle-delay, 0s);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .grid-item.jiggle {
-    animation: none;
-  }
-}
-</style>
