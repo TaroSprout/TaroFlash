@@ -22,10 +22,6 @@ vi.mock('@/utils/motion/perf-scan', () => ({
   scanPerf: mockScanPerf
 }))
 
-// ── Host app ──────────────────────────────────────────────────────────────────
-// usePerfOverlay relies on onMounted/onBeforeUnmount, so it needs a real
-// component context to fire either hook.
-
 let app
 let result
 

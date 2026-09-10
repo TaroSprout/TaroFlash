@@ -1,11 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { FrameMonitor } from '@/utils/motion/frame-monitor'
 
-// ── rAF stub ──────────────────────────────────────────────────────────────────
-// FrameMonitor drives itself off `requestAnimationFrame`, so the timeline is
-// simulated by capturing the scheduled callback and invoking it by hand with
-// chosen timestamps.
-
 let raf_callback
 
 function tick(timestamp) {
@@ -64,9 +59,8 @@ describe('FrameMonitor', () => {
     timestamp += 40
     tick(timestamp) // 40ms — dropped, recorded at ts=40
 
-    // advance past the 1s window in on-budget 16ms steps, so no further
-    // frame is dropped along the way
     for (let i = 0; i < 65; i++) {
+      // on-budget 16ms steps past the 1s window, so nothing else drops
       timestamp += 16
       tick(timestamp)
     }
