@@ -1,4 +1,4 @@
--- knowledge: can_read_lesson_audio, capability_is_live — corpus/authz/capability-switches.md
+-- knowledge: can_read_lesson_audio, capability_is_live — corpus/authz/capabilities.md
 --
 -- Migrate the audio reader onto the audio_reader capability switch. The RPC now
 -- composes capability_is_live('audio_reader') with the existing admin check, so
@@ -23,6 +23,6 @@ $function$
 -- until an admin flips it. DML isn't emitted by db diff, so it's hand-written
 -- here. ON CONFLICT DO NOTHING keeps it idempotent and never stomps a state an
 -- admin has already set in an environment where the row exists.
-insert into public.capability_switches (key, state)
+insert into public.capabilities (key, state)
 values ('audio_reader', 'off')
 on conflict (key) do nothing;

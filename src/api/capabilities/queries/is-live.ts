@@ -1,4 +1,4 @@
-import { useCapabilitySwitchesQuery } from './switches'
+import { useCapabilitiesQuery } from './capabilities'
 
 /**
  * The client's read layer for capability switches — every launch-flagged
@@ -11,7 +11,7 @@ import { useCapabilitySwitchesQuery } from './switches'
  * →[K:capability-server-has-no-fallback]
  */
 export function useCapabilities() {
-  const query = useCapabilitySwitchesQuery()
+  const query = useCapabilitiesQuery()
 
   function isLive(key: CapabilityKey, fallback: boolean): boolean {
     const switches = query.data.value

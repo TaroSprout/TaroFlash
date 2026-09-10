@@ -2,11 +2,11 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
 let switchesData
 
-vi.mock('@/api/capabilities/queries/switches', async () => {
+vi.mock('@/api/capabilities/queries/capabilities', async () => {
   const { ref } = await vi.importActual('vue')
   switchesData = ref(undefined)
   return {
-    useCapabilitySwitchesQuery: () => ({ data: switchesData })
+    useCapabilitiesQuery: () => ({ data: switchesData })
   }
 })
 

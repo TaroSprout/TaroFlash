@@ -15,7 +15,7 @@ SELECT plan(3);
 
 -- Test 1: the audio_reader switch is seeded at 'off'.
 SELECT is(
-  (SELECT state::text FROM public.capability_switches WHERE key = 'audio_reader'),
+  (SELECT state::text FROM public.capabilities WHERE key = 'audio_reader'),
   'off',
   'the audio_reader switch is seeded off'
 );
@@ -37,7 +37,7 @@ SELECT is(
 );
 
 SET LOCAL role = 'postgres';
-UPDATE public.capability_switches SET state = 'on' WHERE key = 'audio_reader';
+UPDATE public.capabilities SET state = 'on' WHERE key = 'audio_reader';
 SELECT tests.set_claims('44444444-4444-4444-4444-444444444444'::uuid);
 SET LOCAL role = 'authenticated';
 

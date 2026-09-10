@@ -1,2 +1,2 @@
-export * from './switches'
+export * from './capabilities'
 export * from './is-live'

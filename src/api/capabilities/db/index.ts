@@ -6,13 +6,13 @@ import logger from '@/utils/logger'
  * signed-in member; changing a switch is admin-only and refused at the
  * database, never here.
  */
-export async function fetchCapabilitySwitches(): Promise<CapabilitySwitch[]> {
-  const { data, error } = await supabase.from('capability_switches').select('key, state')
+export async function fetchCapabilities(): Promise<Capability[]> {
+  const { data, error } = await supabase.from('capabilities').select('key, state')
 
   if (error) {
     logger.error(error.message)
     throw error
   }
 
-  return (data ?? []) as CapabilitySwitch[]
+  return (data ?? []) as Capability[]
 }

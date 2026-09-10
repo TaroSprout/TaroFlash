@@ -14,7 +14,7 @@ vi.mock('@/supabase-client', () => ({
 
 vi.mock('@/utils/logger', () => ({ default: loggerMock }))
 
-import { fetchCapabilitySwitches } from '@/api/capabilities/db'
+import { fetchCapabilities } from '@/api/capabilities/db'
 
 beforeEach(() => {
   fromMock.mockReset()
@@ -23,13 +23,13 @@ beforeEach(() => {
   fromMock.mockReturnValue({ select: selectMock })
 })
 
-describe('fetchCapabilitySwitches', () => {
-  test('selects key, state from capability_switches', async () => {
+describe('fetchCapabilities', () => {
+  test('selects key, state from capabilities', async () => {
     selectMock.mockResolvedValueOnce({ data: [], error: null })
 
-    await fetchCapabilitySwitches()
+    await fetchCapabilities()
 
-    expect(fromMock).toHaveBeenCalledWith('capability_switches')
+    expect(fromMock).toHaveBeenCalledWith('capabilities')
     expect(selectMock).toHaveBeenCalledWith('key, state')
   })
 
@@ -37,7 +37,7 @@ describe('fetchCapabilitySwitches', () => {
     const rows = [{ key: 'audio_reader', state: 'on' }]
     selectMock.mockResolvedValueOnce({ data: rows, error: null })
 
-    const result = await fetchCapabilitySwitches()
+    const result = await fetchCapabilities()
 
     expect(result).toEqual(rows)
   })
@@ -45,7 +45,7 @@ describe('fetchCapabilitySwitches', () => {
   test('returns an empty array when data is null', async () => {
     selectMock.mockResolvedValueOnce({ data: null, error: null })
 
-    const result = await fetchCapabilitySwitches()
+    const result = await fetchCapabilities()
 
     expect(result).toEqual([])
   })
@@ -54,7 +54,7 @@ describe('fetchCapabilitySwitches', () => {
     const error = new Error('boom')
     selectMock.mockResolvedValueOnce({ data: null, error })
 
-    await expect(fetchCapabilitySwitches()).rejects.toThrow('boom')
+    await expect(fetchCapabilities()).rejects.toThrow('boom')
     expect(loggerMock.error).toHaveBeenCalledWith('boom')
   })
 })
