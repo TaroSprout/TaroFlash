@@ -7,10 +7,6 @@ const { state, budget } = usePerfOverlay()
 
 const fps = computed(() => Math.round(state.fps))
 const element_ratio = computed(() => state.onScreenElementCount / budget.maxOnScreenElements)
-const effect_ratio = computed(
-  () => state.standingEffectAreaRatio / budget.maxStandingEffectAreaRatio
-)
-const effect_percent = computed(() => Math.round(effect_ratio.value * 100))
 </script>
 
 <template>
@@ -23,9 +19,6 @@ const effect_percent = computed(() => Math.round(effect_ratio.value * 100))
     </div>
     <div data-testid="perf-overlay__elements" :class="budgetRatioClass(element_ratio)">
       elements: {{ state.onScreenElementCount }}
-    </div>
-    <div data-testid="perf-overlay__effect-coverage" :class="budgetRatioClass(effect_ratio)">
-      effect coverage: {{ effect_percent }}%
     </div>
   </div>
 </template>

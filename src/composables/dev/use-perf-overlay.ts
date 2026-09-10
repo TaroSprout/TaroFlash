@@ -9,15 +9,13 @@ export interface PerfOverlayState {
   fps: number
   droppedFrames: number
   onScreenElementCount: number
-  standingEffectAreaRatio: number
 }
 
 export function usePerfOverlay() {
   const state = reactive<PerfOverlayState>({
     fps: 0,
     droppedFrames: 0,
-    onScreenElementCount: 0,
-    standingEffectAreaRatio: 0
+    onScreenElementCount: 0
   })
 
   const monitor = new FrameMonitor()
@@ -33,7 +31,6 @@ export function usePerfOverlay() {
       state.fps = frame.fps
       state.droppedFrames = frame.droppedFrames
       state.onScreenElementCount = scan.onScreenElementCount
-      state.standingEffectAreaRatio = scan.standingEffectAreaRatio
     }, SCAN_INTERVAL_MS)
   })
 

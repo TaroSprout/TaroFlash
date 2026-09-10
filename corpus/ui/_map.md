@@ -3,7 +3,6 @@
 Shared interface mechanics — chrome, gestures, and viewport detection used across views.
 
 - [[mobile-dock]] — the floating bar owns its own height tween; a second one nested inside fights it ⚠️
-- [[perf-overlay]] — the dev overlay's standing-effect scan only sees CSS-authored ambient loops; a JS-driven one leaves no mark to match ⚠️
 - [[layout-kit]] — `app-window`'s root is full-width; every caller sets its own cap on non-mobile screens ⚠️
 - [[keyboard-detection]] — no browser event says the keyboard opened; `useKeyboardOpen` infers it from the visual viewport shrinking
 - [[media-query]] — `useMatchMedia` turns a short token string like `w>=md` into a live CSS media query

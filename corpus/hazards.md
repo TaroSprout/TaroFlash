@@ -54,7 +54,6 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:mid-gesture-mutation-kills-momentum-scroll] | [[scroll-region]]      | `src/components/layout-kit/scroll-region/index.vue`, `src/components/layout-kit/app-window/index.vue`                    |
 | →[K:page-boxes-are-height-pinned]               | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`                                                          |
 | →[K:scroll-lock-teleport-opt-in]                | [[scroll-lock]]        | `src/composables/ui/scroll-lock.ts`, `src/views/admin/color-page/shade-editor.vue`                                       |
-| →[K:perf-scan-no-js-loop-marker]                | [[perf-overlay]]       | `src/utils/motion/perf-scan.ts`                                                                                          |
 
 A trap with no directory to echo it into is listed in `CLAUDE.md` instead, so it
 is paid for in every session. There are none today.
