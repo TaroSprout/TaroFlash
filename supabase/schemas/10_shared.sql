@@ -161,7 +161,7 @@ CREATE FUNCTION public.capability_is_live(p_key text) RETURNS boolean
     SET search_path TO 'public'
     AS $$
   select coalesce(
-    (select state = 'on' from public.capability_switches where key = p_key),
+    (select state = 'on' from public.capabilities where key = p_key),
     false
   )
 $$;

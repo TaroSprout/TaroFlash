@@ -1,12 +1,12 @@
 -- =============================================================================
--- Capability switches introduced in 20260910172958_capability_switches.sql
+-- Capability switches introduced in 20260910172958_capabilities.sql
 --
 --   - capability_is_live(key) reads the switch row's state; a missing row
---     reads as not live, never a fallback (corpus/authz/capability-switches.md).
+--     reads as not live, never a fallback (corpus/authz/capabilities.md).
 --   - capability_is_live is SECURITY DEFINER but locked to `authenticated` —
 --     it must never be anon-executable, feeding the 00043 definer-function
 --     anon-grant guard.
---   - Any authenticated member can SELECT capability_switches; only an admin
+--   - Any authenticated member can SELECT capabilities; only an admin
 --     can INSERT/UPDATE. Moderator and ordinary member writes are refused at
 --     the database.
 -- =============================================================================
@@ -17,8 +17,8 @@ SELECT plan(10);
 
 -- ── capability_is_live() reads the switch row ─────────────────────────────────
 
-INSERT INTO public.capability_switches (key, state) VALUES ('test_switch_on', 'on');
-INSERT INTO public.capability_switches (key, state) VALUES ('test_switch_off', 'off');
+INSERT INTO public.capabilities (key, state) VALUES ('test_switch_on', 'on');
+INSERT INTO public.capabilities (key, state) VALUES ('test_switch_off', 'off');
 
 -- Test 1: seeded 'on' switch reads live.
 SELECT is(
@@ -72,17 +72,17 @@ UPDATE public.members SET role = 'admin'
 SELECT tests.set_claims('11111111-1111-1111-1111-111111111111'::uuid);
 SET LOCAL role = 'authenticated';
 
--- Test 6: any authenticated member can SELECT capability_switches.
+-- Test 6: any authenticated member can SELECT capabilities.
 SELECT is(
-  (SELECT count(*)::int FROM public.capability_switches WHERE key = 'test_switch_on'),
+  (SELECT count(*)::int FROM public.capabilities WHERE key = 'test_switch_on'),
   1,
-  'an ordinary member can select capability_switches'
+  'an ordinary member can select capabilities'
 );
 
 -- Test 7: ordinary member cannot insert a capability switch.
 SELECT throws_ok(
   $$
-    INSERT INTO public.capability_switches (key, state) VALUES ('test_switch_member', 'on')
+    INSERT INTO public.capabilities (key, state) VALUES ('test_switch_member', 'on')
   $$,
   NULL,
   NULL,
@@ -97,7 +97,7 @@ SET LOCAL role = 'authenticated';
 -- Test 8: moderator cannot insert a capability switch.
 SELECT throws_ok(
   $$
-    INSERT INTO public.capability_switches (key, state) VALUES ('test_switch_mod', 'on')
+    INSERT INTO public.capabilities (key, state) VALUES ('test_switch_mod', 'on')
   $$,
   NULL,
   NULL,
@@ -105,11 +105,11 @@ SELECT throws_ok(
 );
 
 -- Test 9: moderator's update to an existing switch is silently dropped by RLS.
-UPDATE public.capability_switches SET state = 'on' WHERE key = 'test_switch_off';
+UPDATE public.capabilities SET state = 'on' WHERE key = 'test_switch_off';
 
 SET LOCAL role = 'postgres';
 SELECT is(
-  (SELECT state::text FROM public.capability_switches WHERE key = 'test_switch_off'),
+  (SELECT state::text FROM public.capabilities WHERE key = 'test_switch_off'),
   'off',
   'a moderator cannot update a capability switch'
 );
@@ -121,7 +121,7 @@ SET LOCAL role = 'authenticated';
 -- Test 10: admin can insert and update a capability switch.
 SELECT lives_ok(
   $$
-    INSERT INTO public.capability_switches (key, state) VALUES ('test_switch_admin', 'on')
+    INSERT INTO public.capabilities (key, state) VALUES ('test_switch_admin', 'on')
   $$,
   'an admin can insert a capability switch'
 );

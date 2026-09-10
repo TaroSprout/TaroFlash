@@ -23,7 +23,7 @@ ALTER TYPE public.capability_state OWNER TO postgres;
 -- baseline column, so the row's own `state` is what reads until an admin changes
 -- it. `targeted` and the `targeting` slot are reserved for later cohort work and
 -- unreachable in v1 (writes only ever set off/on).
-CREATE TABLE public.capability_switches (
+CREATE TABLE public.capabilities (
     key text NOT NULL,
     state public.capability_state DEFAULT 'off'::public.capability_state NOT NULL,
     targeting jsonb,
@@ -32,32 +32,32 @@ CREATE TABLE public.capability_switches (
 );
 
 
-ALTER TABLE public.capability_switches OWNER TO postgres;
+ALTER TABLE public.capabilities OWNER TO postgres;
 
 
-ALTER TABLE ONLY public.capability_switches
-    ADD CONSTRAINT capability_switches_pkey PRIMARY KEY (key);
+ALTER TABLE ONLY public.capabilities
+    ADD CONSTRAINT capabilities_pkey PRIMARY KEY (key);
 
 
-ALTER TABLE ONLY public.capability_switches
-    ADD CONSTRAINT capability_switches_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.members(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY public.capabilities
+    ADD CONSTRAINT capabilities_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.members(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
-ALTER TABLE public.capability_switches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.capabilities ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "members can read capability switches" ON public.capability_switches FOR SELECT TO authenticated USING (true);
+CREATE POLICY "members can read capabilities" ON public.capabilities FOR SELECT TO authenticated USING (true);
 
 
-CREATE POLICY "admins can insert capability switches" ON public.capability_switches FOR INSERT TO authenticated WITH CHECK (public.can_manage_capabilities());
+CREATE POLICY "admins can insert capabilities" ON public.capabilities FOR INSERT TO authenticated WITH CHECK (public.can_manage_capabilities());
 
 
-CREATE POLICY "admins can update capability switches" ON public.capability_switches FOR UPDATE TO authenticated USING (public.can_manage_capabilities()) WITH CHECK (public.can_manage_capabilities());
+CREATE POLICY "admins can update capabilities" ON public.capabilities FOR UPDATE TO authenticated USING (public.can_manage_capabilities()) WITH CHECK (public.can_manage_capabilities());
 
 
-CREATE POLICY "admins can delete capability switches" ON public.capability_switches FOR DELETE TO authenticated USING (public.can_manage_capabilities());
+CREATE POLICY "admins can delete capabilities" ON public.capabilities FOR DELETE TO authenticated USING (public.can_manage_capabilities());
 
 
-GRANT ALL ON TABLE public.capability_switches TO anon;
-GRANT ALL ON TABLE public.capability_switches TO authenticated;
-GRANT ALL ON TABLE public.capability_switches TO service_role;
+GRANT ALL ON TABLE public.capabilities TO anon;
+GRANT ALL ON TABLE public.capabilities TO authenticated;
+GRANT ALL ON TABLE public.capabilities TO service_role;

@@ -1,5 +1,5 @@
 ---
-id: capability-switches
+id: capabilities
 domain: authz
 status: current
 hazard: true
@@ -7,7 +7,7 @@ related: [permissions]
 updated: 2026-09-10
 ---
 
-# Capability switches
+# Capabilities
 
 A table of runtime switches that turn parts of the app on and off without a
 deploy — read the same way the app already reads a member's plan and role.
