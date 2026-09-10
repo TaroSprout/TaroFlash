@@ -1,5 +1,5 @@
 ---
-lastUpdated: 2026-08-14T00:00:00Z
+lastUpdated: 2026-09-10T00:00:00Z
 paths:
   - 'src/**'
   - 'supabase/**/*.ts'
@@ -33,24 +33,26 @@ In `<style>`, a comment above a selector is a symbol doc; **one above a single c
 property line, inside a rule block, is body position** — same single-line shape as script, not a
 JSDoc-style paragraph, however many properties in the block each want documenting.
 
-**A body comment sits trailing on the line it annotates, wrapping above only when it doesn't fit
-there.** Above-the-line is the fallback shape, not the default.
-
-**There is no line cap.** Length follows position — a comment that outgrows its position's shape is
-a missing knowledge entry, not a longer comment.
-
-**A symbol keeps every position that earns its place.** An above-symbol comment and a trailing
-comment on the same line answer different questions, so a request for one is never grounds to delete
-the other — add the one asked for and leave the rest, unless the request specifically supersedes it.
-
-**Inside `tests/`, the position table collapses to one row.** A test's name and its `describe`/`it`
-structure already carry what a JSDoc, a file-top comment, or an above-symbol doc would elsewhere — the
-only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
+- **A body comment sits trailing on the line it annotates, wrapping above only when it doesn't fit
+  there.** Above-the-line is the fallback shape, not the default.
+- **There is no line cap.** Length follows position — a comment that outgrows its position's shape is
+  a missing knowledge entry, not a longer comment.
+- **A symbol keeps every position that earns its place.** An above-symbol comment and a trailing
+  comment on the same line answer different questions, so a request for one is never grounds to
+  delete the other — add the one asked for and leave the rest, unless the request specifically
+  supersedes it.
+- **Inside `tests/`, the position table collapses to one row.** A test's name and its `describe`/`it`
+  structure already carry what a JSDoc, a file-top comment, or an above-symbol doc would elsewhere —
+  the only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
 
 ## Gates
 
-Five, each failed on its own. Fail one, rewrite or delete.
+Six, each failed on its own. Fail one, rewrite or delete.
 
+- **Being exported, public, or shaped like an interface earns a symbol no comment by itself.** A
+  JSDoc is earned by passing the gates below, never granted on sight to every declaration the
+  position table lets carry one — a self-describing object literal keyed by its own values, or a
+  two-field interface whose fields name themselves, gets none.
 - **The reader is never a hypothetical stranger — it's an agent with your own knowledge, or the
   user, who already has more context than either.** Test it as: would you, given only the code and
   no memory of writing it, still get this wrong? If not, delete it. What survives is what neither
