@@ -75,12 +75,21 @@ corpus source echo (the `// Trap: …` comment) goes to `corpus-author`, never s
    reporting "coherent" is a success, not a null result to apologize for.
 3. For each finding, `grep` its citers, draft the fix, and dispatch it as one `Agent` call to the
    owning writer, `run_in_background`, per [`self-heal → Dispatch`](../rules/self-heal.md#dispatch).
-4. Delete the markers in `.claude/heals/` you swept — the count resets only on a sweep, never a merge.
+4. Delete the markers in `.claude/heals/` you swept — the count resets only on a sweep, never a
+   merge. This is a write you make yourself, not a dispatch: do it inside a `self-heal` worktree per
+   [`shipping`](../rules/self-heal/shipping.md) steps 1 and 6, never in whatever checkout your own
+   run happens to be executing in — a maintenance sweep launched mid-task (mid-`/work`, say) is
+   running inside someone else's shared checkout, and deleting there is the stray write
+   [`git-workflow`](../rules/git-workflow.md)'s worktree-write-target rule
+   (→[K:worktree-write-target]) forbids, same as it would for `harness-author` or `corpus-author`.
 
 ## Shipping
 
-You dispatch; you don't ship. Each writer you commission follows
+You dispatch; you don't ship the findings — each writer you commission follows
 [`self-heal → shipping`](../rules/self-heal/shipping.md) itself and lands on the one `self-heal` PR.
+The marker cleanup in Loop step 4 is the one write that's yours, not a dispatch, and it follows that
+same worktree discipline: commit it there, push to `self-heal`, remove the worktree — skip only its
+step 3 (no fresh marker for a sweep's own cleanup, per that spec's own carve-out).
 
 ## Output
 
