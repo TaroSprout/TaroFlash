@@ -102,8 +102,11 @@ This governs the **chat**; ticket bodies follow
 
 **Open at altitude, in product terms; drop to detail on demand.** The first present — the
 checkpoint — is a bird's-eye view: what the ticket changes for the user and the decisions that need
-settling, phrased the way a user would experience them. **No filepaths, symbols, or SQL in that
-opening** — it should be scannable in seconds, never a wall of text.
+settling, phrased the way a user would experience them. **No filepaths, symbols, SQL, or mechanism
+vocabulary anywhere in the checkpoint** — the constraint covers every decision's own one-liner, not
+only the framing line above them; a technical epic is the case this bites hardest, because mechanism
+words feel native to the domain being described. It should be scannable in seconds, never a wall of
+text.
 
 **Grooming is expensive for the user's attention — spend it only on decisions.** The checkpoint has
 a hard ceiling: a one-line framing plus the open decisions, nothing else. **The framing line names
@@ -125,7 +128,8 @@ opened.)
 
 Either way, no walls of text:
 
-- A decision is **one line of what + one line of why**, not an essay.
+- A decision is **one line of what + one line of why**, not an essay — and both lines stay in the
+  same plain product terms as the opening, never the mechanism's own vocabulary.
 - Options go in short lists or a table, never prose comparison.
 - Long detail belongs in the ticket body, not the chat.
 - Lead with the recommendation, then the trade-off.
