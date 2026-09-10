@@ -6,16 +6,15 @@ import { scanPerf } from '@/utils/motion/perf-scan'
 const SCAN_INTERVAL_MS = 500
 
 export interface PerfOverlayState {
-  frameMs: number
+  fps: number
   droppedFrames: number
   onScreenElementCount: number
   standingEffectAreaRatio: number
 }
 
-/** Drives the dev perf overlay: a rolling frame monitor plus a periodic DOM scan, both read against `PERF_BUDGET`. */
 export function usePerfOverlay() {
   const state = reactive<PerfOverlayState>({
-    frameMs: 0,
+    fps: 0,
     droppedFrames: 0,
     onScreenElementCount: 0,
     standingEffectAreaRatio: 0
@@ -31,7 +30,7 @@ export function usePerfOverlay() {
       const frame = monitor.snapshot()
       const scan = scanPerf()
 
-      state.frameMs = frame.frameMs
+      state.fps = frame.fps
       state.droppedFrames = frame.droppedFrames
       state.onScreenElementCount = scan.onScreenElementCount
       state.standingEffectAreaRatio = scan.standingEffectAreaRatio

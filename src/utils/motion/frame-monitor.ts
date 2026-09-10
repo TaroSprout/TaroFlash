@@ -3,15 +3,14 @@ import { PERF_BUDGET } from './perf-budget'
 const ROLLING_WINDOW_MS = 1000
 
 export interface FrameSnapshot {
-  frameMs: number
+  fps: number
   droppedFrames: number
 }
 
-/** Counts frames that miss the frame budget over a rolling 1s window, via `requestAnimationFrame`. */
+/** Tracks frame durations over a rolling 1s window, exposing the average fps and dropped-frame count the dev overlay reads. */
 export class FrameMonitor {
   private durations: { timestamp: number; duration: number }[] = []
   private lastTimestamp: number | null = null
-  private latestDuration = 0
   private rafId: number | null = null
 
   start() {
@@ -31,14 +30,15 @@ export class FrameMonitor {
     const droppedFrames = this.durations.filter(
       (frame) => frame.duration > PERF_BUDGET.frameMs
     ).length
+    const totalDuration = this.durations.reduce((sum, frame) => sum + frame.duration, 0)
+    const fps = totalDuration > 0 ? (this.durations.length / totalDuration) * 1000 : 0
 
-    return { frameMs: this.latestDuration, droppedFrames }
+    return { fps, droppedFrames }
   }
 
   private tick = (timestamp: number) => {
     if (this.lastTimestamp !== null) {
-      this.latestDuration = timestamp - this.lastTimestamp
-      this.durations.push({ timestamp, duration: this.latestDuration })
+      this.durations.push({ timestamp, duration: timestamp - this.lastTimestamp })
 
       const cutoff = timestamp - ROLLING_WINDOW_MS
       while (this.durations.length && this.durations[0].timestamp < cutoff) {
