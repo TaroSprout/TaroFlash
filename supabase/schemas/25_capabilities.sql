@@ -2,7 +2,7 @@
 -- canonical definition. Run `supabase db diff -f <name>` after editing to
 -- produce the migration.
 --
--- The switch row itself. Loads after 20_members.sql because updated_by is an FK
+-- The capability row itself. Loads after 20_members.sql because updated_by is an FK
 -- to members; the functions that read and gate it (capability_is_live,
 -- can_manage_capabilities) live in 10_shared.sql alongside auth_role/auth_plan,
 -- which likewise read a members-backed row from before members is declared.
@@ -18,7 +18,7 @@ CREATE TYPE public.capability_state AS ENUM (
 ALTER TYPE public.capability_state OWNER TO postgres;
 
 
--- Runtime switches an admin can flip without a deploy, read the same way the app
+-- Runtime capabilities an admin can flip without a deploy, read the same way the app
 -- reads plan and role. The seeded row is the baseline — there is no separate
 -- baseline column, so the row's own `state` is what reads until an admin changes
 -- it. `targeted` and the `targeting` slot are reserved for later cohort work and

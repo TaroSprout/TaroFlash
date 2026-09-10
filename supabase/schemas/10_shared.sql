@@ -151,7 +151,7 @@ GRANT ALL ON FUNCTION public.set_member_id() TO authenticated;
 GRANT ALL ON FUNCTION public.set_member_id() TO service_role;
 
 
--- Reads the switch row bare: on → true, off → false, missing row → false. No
+-- Reads the capability row bare: on → true, off → false, missing row → false. No
 -- caller fallback argument — the server fails closed and never substitutes a
 -- default, because if it can't reach the row the action isn't running anyway.
 -- The client's code-constant fallback is a separate thing, for its pending
