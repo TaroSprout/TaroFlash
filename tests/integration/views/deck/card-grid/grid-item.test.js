@@ -167,6 +167,23 @@ describe('GridItem (card-grid/grid-item.vue)', () => {
     expect(wrapper.find('[data-testid="grid-item"]').exists()).toBe(true)
   })
 
+  describe('idle jiggle', () => {
+    test('applies .jiggle while rearranging and not dragging', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true, dragging: false } })
+      expect(wrapper.find('[data-testid="grid-item"]').classes()).toContain('jiggle')
+    })
+
+    test('omits .jiggle while dragging — the dragged card opts out', () => {
+      const { wrapper } = mountGridItem({ props: { rearranging: true, dragging: true } })
+      expect(wrapper.find('[data-testid="grid-item"]').classes()).not.toContain('jiggle')
+    })
+
+    test('omits .jiggle when not rearranging', () => {
+      const { wrapper } = mountGridItem()
+      expect(wrapper.find('[data-testid="grid-item"]').classes()).not.toContain('jiggle')
+    })
+  })
+
   test('initial side comes from the side prop', () => {
     const { wrapper } = mountGridItem({ props: { side: 'back' } })
     expect(wrapper.find('[data-testid="card-stub"]').attributes('data-side')).toBe('back')

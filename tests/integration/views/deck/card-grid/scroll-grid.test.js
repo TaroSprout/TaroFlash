@@ -506,6 +506,43 @@ describe('card-grid/scroll-grid', () => {
     })
   })
 
+  // ── idle jiggle rotation ───────────────────────────────────────────────
+  // The shared jiggle keyframe defaults --jiggle-rotation to 1.4deg; unlike
+  // the dashboard deck grid, this grid never overrides it.
+
+  describe('idle jiggle rotation', () => {
+    const ONE_CARD = [{ id: 1, client_id: 'c1', front_text: 'q', back_text: 'a' }]
+
+    test('does not set --jiggle-rotation, leaving the shared 1.4deg default in effect', () => {
+      const wrapper = mountScrollGrid(
+        makeEditor(),
+        makeShell(),
+        makeSearch({ displayed_cards: ONE_CARD })
+      )
+
+      const style = wrapper.find('[data-testid="grid-item-stub"]').attributes('style') ?? ''
+      expect(style).not.toContain('--jiggle-rotation')
+    })
+
+    test('still varies --jiggle-delay and --jiggle-duration per card index', () => {
+      const cards = [
+        { id: 1, client_id: 'c1', front_text: 'q1', back_text: 'a1' },
+        { id: 2, client_id: 'c2', front_text: 'q2', back_text: 'a2' }
+      ]
+      const wrapper = mountScrollGrid(
+        makeEditor(),
+        makeShell(),
+        makeSearch({ displayed_cards: cards })
+      )
+
+      const items = wrapper.findAll('[data-testid="grid-item-stub"]')
+      const first_style = items[0].attributes('style') ?? ''
+      const second_style = items[1].attributes('style') ?? ''
+      expect(first_style).toContain('--jiggle-delay')
+      expect(first_style).not.toBe(second_style)
+    })
+  })
+
   // ── useReorderDrag options — real geometry/scroll closures ──
   // The engine itself is mocked above (so pointerdown tests assert on wiring,
   // not the engine's internals) — these tests invoke the captured option
