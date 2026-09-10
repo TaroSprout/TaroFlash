@@ -1,4 +1,4 @@
-import { computed, inject, provide, ref, watch, type InjectionKey } from 'vue'
+import { computed, inject, provide, ref, shallowRef, watch, type InjectionKey } from 'vue'
 import { type Grade } from 'ts-fsrs'
 import { useSessionEngine } from './session-engine'
 import { useCardPreview } from './card-preview'
@@ -110,8 +110,8 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   const active_page = ref<'settings' | null>(null)
   const summary_category = ref<SummaryCategory | null>(null)
 
-  const active_card_handle = ref<ActiveCardHandle | null>(null)
-  const summary_editor_handle = ref<SummaryEditorHandle | null>(null)
+  const active_card_handle = shallowRef<ActiveCardHandle | null>(null)
+  const summary_editor_handle = shallowRef<SummaryEditorHandle | null>(null)
 
   const rating_times = useRatingTimes(() => engine.active_card_preview.value)
 
