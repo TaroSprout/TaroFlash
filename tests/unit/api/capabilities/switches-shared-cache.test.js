@@ -1,10 +1,3 @@
-// Regression coverage for the shared ['capability-switches', memberId] cache
-// entry: the admin's switch-row mutation and useCan().useAudioReader both
-// read/write through the same Pinia Colada entry, so the downstream visibility
-// gate has to pick up an admin's flip without a page reload, and the value has
-// to survive the admin panel unmounting and remounting (closing and reopening
-// the modal) since the cache lives on the shared Pinia instance, not on the
-// modal's own component tree.
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -27,9 +20,8 @@ const {
   }
 })
 
-// A fake server-side row store: the write mutates it, the read reflects it —
-// mirroring what the real onSettled invalidation-triggered refetch would see.
 vi.mock('@/api/capabilities/db', () => ({
+  // fake row store: writes mutate it, reads reflect it
   updateCapabilitySwitch: updateCapabilitySwitchMock,
   fetchCapabilitySwitches: fetchCapabilitySwitchesMock
 }))
@@ -56,13 +48,8 @@ vi.mock('@/api/decks', () => ({
 import { useCan } from '@/composables/can'
 import { useUpdateCapabilitySwitchMutation } from '@/api/capabilities/mutations/update-switch'
 
-/**
- * Hosts the admin's row mutation and a downstream reader (useAudioReader) in
- * the same Pinia Colada cache, the way the running app does: the switches
- * page and the dashboard both read through the shared ['capability-switches']
- * entry.
- */
 function mountHost(pinia) {
+  // hosts the mutation and useCan in one cache, like the running app
   let can, mutation, query_cache
   const app = createApp({
     setup() {
@@ -106,9 +93,7 @@ describe('capability-switches shared cache', () => {
     await Promise.resolve()
     await Promise.resolve()
 
-    // The optimistic flip is visible before the underlying write — and any
-    // onSettled invalidation refetch it triggers — has resolved.
-    expect(can.useAudioReader.value).toBe(true)
+    expect(can.useAudioReader.value).toBe(true) // optimistic flip, before the write resolves
 
     await pending
     app.unmount()
@@ -123,12 +108,9 @@ describe('capability-switches shared cache', () => {
     await flushPromises()
     expect(first.can.useAudioReader.value).toBe(true)
 
-    // Close the admin panel: unmount the consuming component tree. The query
-    // cache lives on the shared Pinia instance, not on this tree.
-    first.app.unmount()
+    first.app.unmount() // closes the panel; the cache lives on Pinia, not this tree
 
-    // Reopen: a fresh component tree reading through the same Pinia instance.
-    const second = mountHost(pinia)
+    const second = mountHost(pinia) // fresh tree, same Pinia instance
     await flushPromises()
     await flushPromises()
 

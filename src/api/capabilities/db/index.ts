@@ -17,8 +17,10 @@ export type UpdateCapabilitySwitchParams = {
   state: CapabilityState
 }
 
-// RLS refuses the write for anyone but an admin (can_manage_capabilities()), so
-// this function doesn't re-check the role itself — the database is the gate.
+/**
+ * Flips a capability switch's state. RLS refuses the write for anyone but an
+ * admin (`can_manage_capabilities()`); this function never re-checks the role.
+ */
 export async function updateCapabilitySwitch(params: UpdateCapabilitySwitchParams): Promise<void> {
   const { error } = await supabase
     .from('capability_switches')
