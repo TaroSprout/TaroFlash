@@ -3,13 +3,7 @@ import { resolve } from 'node:path'
 
 import { describe, test, expect, vi, beforeAll } from 'vite-plus/test'
 
-// gen-motion-css.ts writes its output at import time (top-level side effect) —
-// stub only writeFileSync so the real generator still runs (and gets coverage
-// credit) without touching the committed .gen.css file, and capture the
-// emitted content to compare against what's actually committed. Re-implementing
-// the emitter here instead would pass even when the committed file has drifted
-// from src/utils/motion/vocabulary.ts, which is the exact regression this
-// suite exists to catch.
+// Stub writeFileSync so the real generator runs and its output can be captured, never overwriting the committed file.
 const { writeFileSyncMock } = vi.hoisted(() => ({ writeFileSyncMock: vi.fn() }))
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal()
@@ -20,9 +14,7 @@ vi.mock('node:fs', async (importOriginal) => {
   }
 })
 
-// The script resolves its output path via `new URL(..., import.meta.url)` —
-// under the test module runner import.meta.url isn't a real file:// URL, so
-// stub fileURLToPath to a throwaway path rather than fighting the runner.
+// import.meta.url isn't a real file:// URL under the test runner, so stub fileURLToPath to a throwaway path.
 vi.mock('node:url', async (importOriginal) => {
   const actual = await importOriginal()
   const fileURLToPathMock = vi.fn(() => '/tmp/motion.gen.css')

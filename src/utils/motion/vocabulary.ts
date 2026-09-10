@@ -10,7 +10,6 @@
  * native Tailwind utility — read the numbers from `TRAVEL`.
  */
 
-/** A duration named once, read as seconds for GSAP or milliseconds for timers and CSS. */
 export interface Duration {
   readonly ms: number
   readonly s: number
@@ -20,7 +19,6 @@ function duration(ms: number): Duration {
   return { ms, s: ms / 1000 }
 }
 
-/** The full duration scale, keyed by its millisecond value. */
 export const DURATIONS = {
   0: duration(0),
   100: duration(100),
@@ -30,11 +28,8 @@ export const DURATIONS = {
   500: duration(500)
 } as const
 
-/** A named easing paired across the two engines that consume it. */
 export interface Easing {
-  /** The GSAP ease string, passed as a tween's `ease`. */
   readonly gsap: string
-  /** The CSS `cubic-bezier()` that settles like the GSAP ease, for a `transition`. */
   readonly css: string
 }
 
@@ -50,7 +45,6 @@ export const EASINGS = {
   'spring-strong': { gsap: 'back.out(2)', css: 'cubic-bezier(0.34, 1.8, 0.64, 1)' }
 } as const
 
-/** Travel distances in pixels, keyed by their pixel value. */
 export const TRAVEL = {
   8: 8,
   16: 16,
