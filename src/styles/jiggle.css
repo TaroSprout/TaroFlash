@@ -1,10 +1,6 @@
-/* iOS-style "edit mode" wobble, shared by the dashboard deck grid and the
-   card grid. Phase + tempo are set per card via --jiggle-* so a grid doesn't
-   beat in unison; a caller opting a card out (e.g. the one being dragged)
-   simply omits the class. Put it on a wrapper, not on an element that also
-   carries its own transform (a hover-scale, a drag lift) — one element can't
-   animate + transition the same `transform` property without one clobbering
-   the other. */
+/* Put this on a wrapper, never on an element that also carries its own
+   transform (a hover-scale, a drag lift): a running animation and a transition
+   can't both drive `transform` without one clobbering the other. */
 @utility jiggle {
   animation: jiggle var(--jiggle-duration, 0.26s) ease-in-out infinite;
   animation-delay: var(--jiggle-delay, 0s);

@@ -326,8 +326,6 @@ watch(
 </template>
 
 <style>
-/* Staggers the shared shimmer sweep so the three loading lines cascade
-   instead of sweeping in unison. */
 .term-card__skeleton:nth-child(2)::after {
   animation-delay: 0.1s;
 }
