@@ -1,25 +1,18 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import SessionStudying from '@/views/study-session/session-studying/index.vue'
 
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
-// session-studying/index.vue is now a bare presentational shell: it renders
-// card-stage and exposes rate(), which forwards to the mounted card stage's
-// own fling animation. Rating buttons and the flip/done footer live in the
-// session's toolbar row now, wired at study-session/index.vue.
-
-const mockRate = vi.fn()
+// ── Helpers ───────────────────────────────────────────────────────────────────
+// session-studying/index.vue is a bare presentational shell around card-stage,
+// which now self-injects the session controller directly (no rate() relay).
 
 const CardStageStub = defineComponent({
   name: 'CardStage',
-  setup(_props, { expose }) {
-    expose({ rate: mockRate })
+  setup() {
     return () => h('div', { 'data-testid': 'card-stage-stub' })
   }
 })
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function mountSessionStudying(stubs = { CardStage: CardStageStub }) {
   return mount(SessionStudying, {
@@ -30,10 +23,6 @@ function mountSessionStudying(stubs = { CardStage: CardStageStub }) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SessionStudying (index.vue)', () => {
-  beforeEach(() => {
-    mockRate.mockClear()
-  })
-
   // ── Structure ───────────────────────────────────────────────────────────────
 
   test('renders the session-flashcard root and card-stage', () => {
@@ -48,13 +37,5 @@ describe('SessionStudying (index.vue)', () => {
   test('carries pt-9 so its content clears the floating header progress bar', () => {
     const wrapper = mountSessionStudying()
     expect(wrapper.find('[data-testid="session-flashcard"]').classes()).toContain('pt-9')
-  })
-
-  // ── exposed rate() delegates to the card stage ────────────────
-
-  test('rate() forwards the grade to the mounted card stage', () => {
-    const wrapper = mountSessionStudying()
-    wrapper.vm.rate(3)
-    expect(mockRate).toHaveBeenCalledWith(3)
   })
 })

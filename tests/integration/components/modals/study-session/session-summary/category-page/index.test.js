@@ -49,14 +49,11 @@ const CategorySectionStub = defineComponent({
   }
 })
 
-const mockFlip = vi.fn()
-
 const SummaryCardEditorStub = defineComponent({
   name: 'SummaryCardEditor',
   props: ['card'],
   emits: ['update'],
-  setup(props, { expose }) {
-    expose({ flip: mockFlip })
+  setup(props) {
     return () =>
       h('div', {
         'data-testid': 'summary-card-editor-stub',
@@ -101,7 +98,6 @@ describe('CategoryPage (category-page/index.vue)', () => {
     mockThresholdFor.mockReset().mockReturnValue(24)
     mockEditingCard.value = undefined
     mockOnSummaryEditUpdate.mockClear()
-    mockFlip.mockClear()
   })
 
   describe('card editor sub-state', () => {
@@ -135,27 +131,6 @@ describe('CategoryPage (category-page/index.vue)', () => {
         .vm.$emit('update', 'front', 'New front text')
 
       expect(mockOnSummaryEditUpdate).toHaveBeenCalledWith('front', 'New front text')
-    })
-  })
-
-  // ── exposed flipEditingCard() reaches the mounted editor ──────
-
-  describe('flipEditingCard()', () => {
-    test('calls flip() on the mounted card editor', () => {
-      mockEditingCard.value = makeCard({ id: 1 })
-      const wrapper = mountPage({ results: [], category: 'new', cards: [] })
-
-      wrapper.vm.flipEditingCard()
-
-      expect(mockFlip).toHaveBeenCalledOnce()
-    })
-
-    test('does not throw when no card is being edited (editor unmounted)', () => {
-      mockEditingCard.value = undefined
-      const wrapper = mountPage({ results: [], category: 'new', cards: [] })
-
-      expect(() => wrapper.vm.flipEditingCard()).not.toThrow()
-      expect(mockFlip).not.toHaveBeenCalled()
     })
   })
 
