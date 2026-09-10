@@ -12,3 +12,5 @@ Format — one line each, em dash before the epitaph:
 - [K:no-nested-height-animation] — misrouted: was a general animation rule in `animations.md`,
   cited from nowhere; the underlying fact is a property of the mobile dock, not a general practice,
   and belongs in `corpus/` cited from the dock's own source instead.
+- [K:perf-scan-no-js-loop-marker] — the perf overlay's standing-effect scan was removed along with
+  the effect-coverage metric it backed.

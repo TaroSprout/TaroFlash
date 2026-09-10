@@ -10,7 +10,7 @@ import { noticeToastListLeave } from '@/utils/animations/notice-toast'
 import { applyMemberVolumes, setupAudio } from '@/sfx/volume-seam'
 import { installAudioLifecycle } from '@/sfx/lifecycle'
 import { useSessionStore } from '@/stores/session'
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import logger from '@/utils/logger'
 import { useThemeStore } from '@/stores/theme'
 import { useMotionStore } from '@/stores/motion'
@@ -24,6 +24,11 @@ const session = useSessionStore()
 const theme = useThemeStore()
 const motion = useMotionStore()
 const member = useMemberStore()
+
+// `false` in a production build, so the dynamic import below is dead code Rollup drops from the bundle.
+const PerfOverlay = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('@/components/dev/perf-overlay.vue'))
+  : null
 
 watch(
   () => member.error,
@@ -125,4 +130,6 @@ onBeforeUnmount(() => {
   <teleport to="[data-testid='app-modal-container']">
     <ui-modal />
   </teleport>
+
+  <component :is="PerfOverlay" v-if="PerfOverlay" />
 </template>
