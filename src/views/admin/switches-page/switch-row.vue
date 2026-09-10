@@ -1,0 +1,38 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import UiToggle from '@/components/ui-kit/toggle.vue'
+import { useUpdateCapabilitySwitchMutation } from '@/api/capabilities'
+
+const { item } = defineProps<{ item: CapabilitySwitch }>()
+
+const { t } = useI18n()
+const updateSwitch = useUpdateCapabilitySwitchMutation()
+
+function onToggle(next: boolean) {
+  updateSwitch.mutate({ key: item.key, state: next ? 'on' : 'off' })
+}
+</script>
+
+<template>
+  <div
+    data-testid="admin-switches-row"
+    data-station="panel"
+    class="bg-surface rounded-8 flex w-full items-center gap-4 p-6"
+  >
+    <ui-toggle
+      data-testid="admin-switches-row__toggle"
+      class="w-full"
+      :checked="item.state === 'on'"
+      @update:checked="(value) => onToggle(Boolean(value))"
+    >
+      <span class="flex flex-col gap-1">
+        <span data-testid="admin-switches-row__name" class="text-ink text-lg">
+          {{ t(`admin.capabilities.${item.key}.name`) }}
+        </span>
+        <span data-testid="admin-switches-row__description" class="text-ink-muted text-base">
+          {{ t(`admin.capabilities.${item.key}.description`) }}
+        </span>
+      </span>
+    </ui-toggle>
+  </div>
+</template>
