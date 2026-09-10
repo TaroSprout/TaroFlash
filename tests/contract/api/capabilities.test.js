@@ -7,7 +7,7 @@ let testKey
 
 beforeEach(async () => {
   session = await signInAsTestUser()
-  testKey = `contract-switch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  testKey = `contract-capability-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 })
 
 afterEach(async () => {
@@ -17,12 +17,12 @@ afterEach(async () => {
 })
 
 describe('fetchCapabilities (contract)', () => {
-  test('returns the key and state for a switch row visible to any signed-in member', async () => {
+  test('returns the key and state for a capability row visible to any signed-in member', async () => {
     const { error } = await adminClient.from('capabilities').insert({ key: testKey, state: 'on' })
     expect(error).toBeNull()
 
-    const switches = await fetchCapabilities()
+    const capabilities = await fetchCapabilities()
 
-    expect(switches).toContainEqual({ key: testKey, state: 'on' })
+    expect(capabilities).toContainEqual({ key: testKey, state: 'on' })
   })
 })

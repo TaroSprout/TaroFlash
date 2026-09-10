@@ -33,7 +33,7 @@ describe('fetchCapabilities', () => {
     expect(selectMock).toHaveBeenCalledWith('key, state')
   })
 
-  test('returns the switch rows', async () => {
+  test('returns the capability rows', async () => {
     const rows = [{ key: 'audio_reader', state: 'on' }]
     selectMock.mockResolvedValueOnce({ data: rows, error: null })
 

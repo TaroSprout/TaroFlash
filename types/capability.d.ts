@@ -6,7 +6,7 @@ type CapabilityState = 'off' | 'on' | 'targeted'
 // capability; `audio_reader` is the first.
 type CapabilityKey = 'audio_reader'
 
-// The client only ever reads a switch's key and state — targeting and the audit
+// The client only ever reads a capability's key and state — targeting and the audit
 // columns stay server-side.
 type Capability = {
   key: CapabilityKey

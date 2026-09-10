@@ -168,7 +168,7 @@ describe('useCan', () => {
   })
 
   describe('useAudioReader', () => {
-    test('true when member role is admin and the audio_reader switch is live', () => {
+    test('true when member role is admin and the audio_reader capability is live', () => {
       roleRef.value = 'admin'
       audioReaderLive = true
       expect(useCan().useAudioReader.value).toBe(true)
@@ -184,7 +184,7 @@ describe('useCan', () => {
       expect(useCan().useAudioReader.value).toBe(false)
     })
 
-    test('false for an admin when the audio_reader switch is not live', () => {
+    test('false for an admin when the audio_reader capability is not live', () => {
       roleRef.value = 'admin'
       audioReaderLive = false
       expect(useCan().useAudioReader.value).toBe(false)

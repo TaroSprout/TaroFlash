@@ -116,9 +116,9 @@ GRANT ALL ON FUNCTION public.can_moderate_feedback() TO service_role;
 GRANT ALL ON FUNCTION public.can_moderate_feedback() TO authenticated;
 
 
--- The audio reader rides a launch flag: live only when the audio_reader switch
+-- The audio reader rides a launch flag: live only when the audio_reader capability
 -- is on AND the caller passes the existing role check. capability_is_live reads
--- the seeded switch row bare (missing/off → false), so a switch nobody has
+-- the seeded capability row bare (missing/off → false), so a capability nobody has
 -- flipped on keeps the reader dark for everyone, admins included. Gates all four
 -- audio edge functions at once — they share this RPC.
 CREATE FUNCTION public.can_read_lesson_audio() RETURNS boolean
