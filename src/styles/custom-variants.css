@@ -12,8 +12,6 @@
   }
 }
 
-/* Gates on the OS preference itself, so a utility marked `reduced-motion:` turns
-   its motion off exactly when the member has asked the system for less. */
 @custom-variant reduced-motion {
   @media (prefers-reduced-motion: reduce) {
     @slot;

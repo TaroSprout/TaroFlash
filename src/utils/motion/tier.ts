@@ -1,4 +1,3 @@
-/** How much motion a device is trusted to play, coarsest to richest. */
 export type MotionTier = 'minimal' | 'lean' | 'full'
 
 /** Per-tier knobs the driver, stage, and CSS read to decide how they honor a tier. */
