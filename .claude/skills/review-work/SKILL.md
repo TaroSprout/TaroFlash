@@ -49,11 +49,13 @@ The reviewable set, by rule family:
 
 - **`code-style`** — every changed `src/**/*.{ts,vue}` (its `paths:`).
 - **`comment-authoring`** — every changed file under `src/**`, `supabase/**/*.ts`, `scripts/**`, or
-  `tests/**` (its `paths:`).
+  `tests/**` (its `paths:`). This **includes `.css`/`.scss`** under `src/**` — `comment-authoring`'s
+  position table governs `<style>`-block comment shape, so stylesheet comments are reviewed too.
 
-Drop everything else (`*.md`, `*.json`, `*.css`, lockfiles, fixtures, config). Only **added or
-modified** lines are in scope — a pre-existing violation the diff never touched is not this run's
-job. The one exception: a comment the diff made stale (its subject line changed underneath it) is in
+Exclude only the comment-free, code-free types (`*.md`, `*.json`, lockfiles) and anything outside
+both rules' `paths:` — nothing there carries a comment or a function to hold a gate against. Only
+**added or modified** lines are in scope — a pre-existing violation the diff never touched is not
+this run's job. The one exception: a comment the diff made stale (its subject line changed underneath it) is in
 scope even if the comment line itself didn't change.
 
 ## Step 2 — Load the gate list, don't review from memory
