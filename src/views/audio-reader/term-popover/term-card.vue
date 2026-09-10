@@ -227,6 +227,7 @@ watch(
 
           <span
             v-else-if="is_loading"
+            data-testid="term-card__skeleton-reading"
             class="term-card__skeleton shimmer relative h-4 w-24 rounded-2 bg-skeleton"
           />
         </div>
@@ -256,9 +257,18 @@ watch(
             aria-busy="true"
             :aria-label="t('audio-reader.popover.loading')"
           >
-            <span class="term-card__skeleton shimmer relative h-6 w-3/5 rounded-2 bg-skeleton" />
-            <span class="term-card__skeleton shimmer relative h-4 w-full rounded-2 bg-skeleton" />
-            <span class="term-card__skeleton shimmer relative h-4 w-4/5 rounded-2 bg-skeleton" />
+            <span
+              data-testid="term-card__skeleton-line-1"
+              class="term-card__skeleton shimmer relative h-6 w-3/5 rounded-2 bg-skeleton"
+            />
+            <span
+              data-testid="term-card__skeleton-line-2"
+              class="term-card__skeleton shimmer relative h-4 w-full rounded-2 bg-skeleton"
+            />
+            <span
+              data-testid="term-card__skeleton-line-3"
+              class="term-card__skeleton shimmer relative h-4 w-4/5 rounded-2 bg-skeleton"
+            />
           </div>
 
           <p
