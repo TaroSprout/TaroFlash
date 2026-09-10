@@ -27,7 +27,6 @@ function hasStandingEffect(el: Element): boolean {
   return style.animationName !== 'none' && style.animationIterationCount === 'infinite'
 }
 
-/** Scans the current DOM for the element count and standing-effect coverage the perf overlay reads. */
 export function scanPerf(root: ParentNode = document.body): PerfScanSnapshot {
   const elements = root.querySelectorAll('*')
   let onScreenElementCount = 0
