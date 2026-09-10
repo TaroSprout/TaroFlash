@@ -57,7 +57,6 @@ function mountEditor(props = {}) {
   })
 }
 
-/** Flips the editor through the handle it registered with the controller. */
 function flip() {
   const handle = mockRegisterSummaryEditor.mock.calls.at(-1)?.[0]
   handle?.flip()
@@ -86,9 +85,6 @@ describe('SummaryCardEditor', () => {
   })
 
   // ── flip via the controller handle ────────────────────────────
-  // The Flip button lives in the session's shared toolbar footer, which
-  // reaches this editor through the session controller's register/unregister
-  // seam — no in-component Flip/Done buttons anymore.
 
   test('flip() switches to the back side and plays a transition sfx', async () => {
     const wrapper = mountEditor()

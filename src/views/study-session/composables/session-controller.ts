@@ -216,12 +216,10 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     if (active_card_handle.value === handle) active_card_handle.value = null
   }
 
-  /** Flings the active card for a grade — the rating buttons' path to the card. */
   function flingActiveCard(grade: Grade) {
     active_card_handle.value?.fling(grade)
   }
 
-  /** The active card's element, read by the cover carousel. */
   function activeCardEl() {
     return active_card_handle.value?.el()
   }
@@ -234,7 +232,6 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     if (summary_editor_handle.value === handle) summary_editor_handle.value = null
   }
 
-  /** Flips the summary card being edited — the footer Flip button's path. */
   function flipSummaryEditingCard() {
     summary_editor_handle.value?.flip()
   }

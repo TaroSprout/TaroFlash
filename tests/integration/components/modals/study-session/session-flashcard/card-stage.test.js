@@ -77,8 +77,7 @@ vi.mock('@/views/study-session/composables/session-controller', () => ({
   })
 }))
 
-// Deck resolution is an inject seam; most of these tests don't exercise the
-// cover carousel, so a single-cover (idle) resolution keeps it inert by default.
+// Single-cover (idle) resolution keeps the cover carousel inert by default.
 vi.mock('@/views/study-session/deck-resolution', () => ({
   useDeckResolution: () => ({ appearanceFor: () => ({}), covers: mock_covers })
 }))
@@ -417,8 +416,7 @@ describe('CardStage', () => {
     await nextTick()
     await nextFrame()
 
-    // With no element left to reset, stopping the carousel only kills the
-    // in-flight timeline — resetCoverCard has nothing to act on.
+    // No element left to reset — stopping the carousel only kills the in-flight timeline.
     expect(timeline.kill).toHaveBeenCalled()
   })
 

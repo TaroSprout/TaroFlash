@@ -121,7 +121,6 @@ function getCallbacks() {
   return { el: call[0], callbacks: call[1] }
 }
 
-/** Triggers the fling animation through the handle the card registered with the controller. */
 function rate(grade) {
   const handle = mockRegisterActiveCard.mock.calls.at(-1)?.[0]
   handle?.fling(grade)

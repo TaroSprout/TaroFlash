@@ -97,7 +97,7 @@ onMounted(() => {
 
 onUnmounted(() => unregisterActiveCard(card_handle))
 
-/** Flings the active card for a grade; its review follows. Dispatched by the controller. */
+/** Flings the active card for a grade; its review follows. */
 function rate(grade: Grade) {
   if (side === 'cover' || is_animating.value) return
 

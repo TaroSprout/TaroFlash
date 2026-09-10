@@ -733,9 +733,7 @@ describe('session-controller', () => {
       expect(controller.activeCardEl()).toBeUndefined()
     })
 
-    // An old card unmounting after its replacement has already mounted must
-    // not drop the new card's handle — only the card that registered a given
-    // handle may clear it.
+    // A stale card unregistering must not clear the newer card's live handle.
     test('unregistering a stale handle after a newer one registered leaves the newer handle intact', () => {
       const { controller } = makeController()
       const old_handle = { fling: vi.fn(), el: vi.fn() }

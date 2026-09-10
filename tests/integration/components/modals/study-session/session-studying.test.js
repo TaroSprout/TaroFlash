@@ -4,8 +4,7 @@ import { defineComponent, h } from 'vue'
 import SessionStudying from '@/views/study-session/session-studying/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-// session-studying/index.vue is a bare presentational shell around card-stage,
-// which now self-injects the session controller directly (no rate() relay).
+// index.vue is a bare shell around card-stage — no rate() relay anymore.
 
 const CardStageStub = defineComponent({
   name: 'CardStage',

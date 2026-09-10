@@ -22,7 +22,7 @@ const editor_handle = { flip }
 onMounted(() => registerSummaryEditor(editor_handle))
 onUnmounted(() => unregisterSummaryEditor(editor_handle))
 
-/** Flip/Done render in the session footer; the footer's Flip button dispatches through the controller to this. */
+/** Flip/Done render in the session footer, not in this component. */
 function flip() {
   emitSfx(side.value === 'front' ? 'card.flip-away' : 'card.flip-back')
   side.value = side.value === 'front' ? 'back' : 'front'
