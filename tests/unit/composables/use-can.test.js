@@ -5,6 +5,13 @@ let deckCountRef
 let roleRef
 let deckLimitRef
 let cardsPerDeckLimitRef
+let audioReaderLive
+
+vi.mock('@/api/capabilities', () => ({
+  useCapabilities: () => ({
+    isLive: (key, fallback) => (key === 'audio_reader' ? audioReaderLive : fallback)
+  })
+}))
 
 vi.mock('@/stores/member', async () => {
   const { ref } = await vi.importActual('vue')
@@ -47,6 +54,7 @@ describe('useCan', () => {
     roleRef.value = null
     deckLimitRef.value = 5
     cardsPerDeckLimitRef.value = 200
+    audioReaderLive = true
   })
 
   describe('useProFeature', () => {
@@ -160,8 +168,9 @@ describe('useCan', () => {
   })
 
   describe('useAudioReader', () => {
-    test('true when member role is admin', () => {
+    test('true when member role is admin and the audio_reader switch is live', () => {
       roleRef.value = 'admin'
+      audioReaderLive = true
       expect(useCan().useAudioReader.value).toBe(true)
     })
 
@@ -172,6 +181,12 @@ describe('useCan', () => {
 
     test('false when member role is null', () => {
       roleRef.value = null
+      expect(useCan().useAudioReader.value).toBe(false)
+    })
+
+    test('false for an admin when the audio_reader switch is not live', () => {
+      roleRef.value = 'admin'
+      audioReaderLive = false
       expect(useCan().useAudioReader.value).toBe(false)
     })
 
