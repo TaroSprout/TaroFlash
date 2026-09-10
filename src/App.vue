@@ -13,6 +13,7 @@ import { useSessionStore } from '@/stores/session'
 import { onMounted, onBeforeUnmount } from 'vue'
 import logger from '@/utils/logger'
 import { useThemeStore } from '@/stores/theme'
+import { useMotionStore } from '@/stores/motion'
 import { useMemberStore } from '@/stores/member'
 import { withMemberPreferencesDefaults } from '@/utils/member/preferences'
 import { watch } from 'vue'
@@ -21,6 +22,7 @@ const { t } = useI18n()
 const notice = useNoticeStore()
 const session = useSessionStore()
 const theme = useThemeStore()
+const motion = useMotionStore()
 const member = useMemberStore()
 
 watch(
@@ -70,6 +72,7 @@ const scheduleIdle =
 onMounted(() => {
   try {
     theme.load()
+    motion.load()
     session.startLoading()
   } catch (e: any) {
     logger.error(e.message, e)
