@@ -123,7 +123,6 @@ function onKeydown(e: KeyboardEvent) {
   border-radius: var(--radius-2);
 
   transition: all 100ms ease-in-out;
-  animation: background-slide 2s linear infinite;
   outline: none;
 }
 
