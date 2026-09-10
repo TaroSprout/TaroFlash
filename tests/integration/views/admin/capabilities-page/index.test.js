@@ -3,58 +3,58 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import CapabilitiesPage from '@/views/admin/capabilities-page/index.vue'
 
-const mockSwitches = ref(undefined)
+const mockCapabilities = ref(undefined)
 
 vi.mock('@/api/capabilities', () => ({
-  useCapabilitiesQuery: () => ({ data: mockSwitches }),
+  useCapabilitiesQuery: () => ({ data: mockCapabilities }),
   useUpdateCapabilityMutation: () => ({ mutate: vi.fn() })
 }))
 
-const SwitchRowStub = defineComponent({
-  name: 'SwitchRow',
+const CapabilityRowStub = defineComponent({
+  name: 'CapabilityRow',
   props: ['item'],
   setup(props) {
-    return () => h('div', { 'data-testid': 'switch-row-stub', 'data-item-key': props.item.key })
+    return () => h('div', { 'data-testid': 'capability-row-stub', 'data-item-key': props.item.key })
   }
 })
 
 function mountPage() {
   return shallowMount(CapabilitiesPage, {
-    global: { stubs: { CapabilityRow: SwitchRowStub } }
+    global: { stubs: { CapabilityRow: CapabilityRowStub } }
   })
 }
 
 beforeEach(() => {
-  mockSwitches.value = undefined
+  mockCapabilities.value = undefined
 })
 
 describe('CapabilitiesPage', () => {
-  test('renders no rows while the switches query is pending', () => {
+  test('renders no rows while the capabilities query is pending', () => {
     const wrapper = mountPage()
-    expect(wrapper.findAllComponents(SwitchRowStub)).toHaveLength(0)
+    expect(wrapper.findAllComponents(CapabilityRowStub)).toHaveLength(0)
   })
 
-  test('renders one switch-row per row from useCapabilitiesQuery', () => {
-    mockSwitches.value = [
+  test('renders one capability-row per row from useCapabilitiesQuery', () => {
+    mockCapabilities.value = [
       { key: 'audio_reader', state: 'on' },
-      { key: 'other_switch', state: 'off' }
+      { key: 'other_capability', state: 'off' }
     ]
     const wrapper = mountPage()
-    expect(wrapper.findAllComponents(SwitchRowStub)).toHaveLength(2)
+    expect(wrapper.findAllComponents(CapabilityRowStub)).toHaveLength(2)
   })
 
-  test('passes each row through to its switch-row', () => {
-    mockSwitches.value = [{ key: 'audio_reader', state: 'on' }]
+  test('passes each row through to its capability-row', () => {
+    mockCapabilities.value = [{ key: 'audio_reader', state: 'on' }]
     const wrapper = mountPage()
-    expect(wrapper.findComponent(SwitchRowStub).props('item')).toEqual({
+    expect(wrapper.findComponent(CapabilityRowStub).props('item')).toEqual({
       key: 'audio_reader',
       state: 'on'
     })
   })
 
-  test('renders no rows when the switches list is empty', () => {
-    mockSwitches.value = []
+  test('renders no rows when the capabilities list is empty', () => {
+    mockCapabilities.value = []
     const wrapper = mountPage()
-    expect(wrapper.findAllComponents(SwitchRowStub)).toHaveLength(0)
+    expect(wrapper.findAllComponents(CapabilityRowStub)).toHaveLength(0)
   })
 })

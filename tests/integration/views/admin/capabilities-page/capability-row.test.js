@@ -29,8 +29,8 @@ describe('CapabilityRow — rendering', () => {
 
   test('renders the translated name and description for the row', () => {
     const wrapper = mountRow({ key: 'audio_reader', state: 'on' })
-    expect(wrapper.find('[data-testid="admin-switches-row__name"]').text()).toBe('Audio reader')
-    expect(wrapper.find('[data-testid="admin-switches-row__description"]').text()).toBe(
+    expect(wrapper.find('[data-testid="admin-capabilities-row__name"]').text()).toBe('Audio reader')
+    expect(wrapper.find('[data-testid="admin-capabilities-row__description"]').text()).toBe(
       'Lesson playback, transcription, and term lookups.'
     )
   })

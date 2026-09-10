@@ -15,7 +15,7 @@ const { close } = defineProps<{ close: () => void }>()
 const { t } = useI18n()
 const { manageCapabilities } = useCan()
 
-// Reactive rather than a plain array: the switches entry only shows for an
+// Reactive rather than a plain array: the capabilities entry only shows for an
 // admin, and manageCapabilities can change under the same modal instance.
 const pages = computed<Page[]>(() => [
   { value: 'feedback', icon: 'megaphone', label: t('admin.page.feedback') },

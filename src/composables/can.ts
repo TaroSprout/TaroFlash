@@ -37,7 +37,7 @@ export function useCan() {
   // edge functions; this gate is UX.
   const useAudioReader = computed(() => isLive('audio_reader', false) && member.role === 'admin')
 
-  // Admin-only, no moderator or local-dev carve-out — flipping a switch changes
+  // Admin-only, no moderator or local-dev carve-out — changing a capability changes
   // production behavior for every member. Re-enforced server-side by
   // can_manage_capabilities(); this gate is UX.
   const manageCapabilities = computed(() => member.role === 'admin')

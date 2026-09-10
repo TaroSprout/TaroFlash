@@ -18,7 +18,7 @@ export type UpdateCapabilityParams = {
 }
 
 /**
- * Flips a capability switch's state. RLS refuses the write for anyone but an
+ * Updates a capability's state. RLS refuses the write for anyone but an
  * admin (`can_manage_capabilities()`); this function never re-checks the role.
  */
 export async function updateCapability(params: UpdateCapabilityParams): Promise<void> {

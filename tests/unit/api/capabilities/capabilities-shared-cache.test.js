@@ -76,7 +76,7 @@ beforeEach(() => {
   deckCountRef.value = 0
 })
 
-describe('capability-switches shared cache', () => {
+describe('capabilities shared cache', () => {
   test('flipping the row cascades to useAudioReader before the write resolves', async () => {
     const pinia = createPinia()
     const { app, can, mutation } = mountHost(pinia)

@@ -6,30 +6,30 @@ import { useUpdateCapabilityMutation } from '@/api/capabilities'
 const { item } = defineProps<{ item: Capability }>()
 
 const { t } = useI18n()
-const updateSwitch = useUpdateCapabilityMutation()
+const updateCapability = useUpdateCapabilityMutation()
 
 function onToggle(next: boolean) {
-  updateSwitch.mutate({ key: item.key, state: next ? 'on' : 'off' })
+  updateCapability.mutate({ key: item.key, state: next ? 'on' : 'off' })
 }
 </script>
 
 <template>
   <div
-    data-testid="admin-switches-row"
+    data-testid="admin-capabilities-row"
     data-station="panel"
     class="bg-surface rounded-8 flex w-full items-center gap-4 p-6"
   >
     <ui-toggle
-      data-testid="admin-switches-row__toggle"
+      data-testid="admin-capabilities-row__toggle"
       class="w-full"
       :checked="item.state === 'on'"
       @update:checked="(value) => onToggle(Boolean(value))"
     >
       <span class="flex flex-col gap-1">
-        <span data-testid="admin-switches-row__name" class="text-ink text-lg">
+        <span data-testid="admin-capabilities-row__name" class="text-ink text-lg">
           {{ t(`admin.capabilities.${item.key}.name`) }}
         </span>
-        <span data-testid="admin-switches-row__description" class="text-ink-muted text-base">
+        <span data-testid="admin-capabilities-row__description" class="text-ink-muted text-base">
           {{ t(`admin.capabilities.${item.key}.description`) }}
         </span>
       </span>

@@ -50,7 +50,7 @@ describe('useUpdateCapabilityMutation', () => {
     const { app, mutation, query_cache } = mountHost()
     query_cache.setQueryData(cacheKey, [
       { key: 'audio_reader', state: 'off' },
-      { key: 'other_switch', state: 'on' }
+      { key: 'other_capability', state: 'on' }
     ])
 
     const pending = mutation.mutateAsync({ key: 'audio_reader', state: 'on' })
@@ -58,7 +58,7 @@ describe('useUpdateCapabilityMutation', () => {
 
     expect(query_cache.getQueryData(cacheKey)).toEqual([
       { key: 'audio_reader', state: 'on' },
-      { key: 'other_switch', state: 'on' }
+      { key: 'other_capability', state: 'on' }
     ])
 
     resolveWrite()
@@ -71,7 +71,7 @@ describe('useUpdateCapabilityMutation', () => {
     const { app, mutation, query_cache } = mountHost()
     const original = [
       { key: 'audio_reader', state: 'off' },
-      { key: 'other_switch', state: 'on' }
+      { key: 'other_capability', state: 'on' }
     ]
     query_cache.setQueryData(cacheKey, original)
 
