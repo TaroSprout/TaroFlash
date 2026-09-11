@@ -5,7 +5,8 @@ import { useModalRecede } from '@/components/ui-kit/modal/use-modal-recede'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockTimelineTo } = vi.hoisted(() => ({ mockTimelineTo: vi.fn() })) // recede/restore drive gsap.timeline, not gsap.set/to directly
+// recede/restore drive gsap.timeline, not gsap.set/to directly
+const { mockTimelineTo } = vi.hoisted(() => ({ mockTimelineTo: vi.fn() }))
 
 vi.mock('gsap', () => ({
   gsap: {
