@@ -1,5 +1,13 @@
 import { describe, test, expect } from 'vite-plus/test'
-import { tierFromSignals } from '@/utils/motion/tier'
+import { MOTION_TIER_FACTORS, tierFromSignals } from '@/utils/motion/tier'
+
+describe('MOTION_TIER_FACTORS', () => {
+  test('height_tween_budget scales down per tier, zero on minimal', () => {
+    expect(MOTION_TIER_FACTORS.full.height_tween_budget).toBe(4)
+    expect(MOTION_TIER_FACTORS.lean.height_tween_budget).toBe(2)
+    expect(MOTION_TIER_FACTORS.minimal.height_tween_budget).toBe(0)
+  })
+})
 
 describe('tierFromSignals', () => {
   test('device_memory absent returns full regardless of core count', () => {
