@@ -1,6 +1,6 @@
 ---
 name: work
-description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A harness-conformance review (`review-work`) then enforces the comment and code-style rules on every branch before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
+description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A harness-conformance review swarm (`swarm-reviewer` running `review-work`, one agent per concern) then enforces the comment and code-style rules over the integration branch before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
 allowed-tools: Read, Write, Bash, Agent
 argument-hint: '[<ID> <ID> …] [--count N] [--epic <name|url>] ["<instruction>"]'
 arguments:
@@ -216,23 +216,32 @@ then run **one** consolidated `update-tests` pass, dispatched the same way as §
 the round changed. Dispatch self-heal for this round (§ Self-heal) before continuing. Repeat until the
 user says the live-review round is done — that close is what starts § 4e.
 
-### 4e. HARNESS REVIEW — the conformance gate before any PR
+### 4e. HARNESS REVIEW — the conformance swarm before any PR
 
-Once the live-review round (§ 4d) is closed, dispatch a `general-purpose` agent per landed branch to
-run the [`review-work` skill](../../skills/review-work/SKILL.md) inside that branch's worktree — one
-enforcement pass over the branch's diff against [`comment-authoring`](../../rules/comment-authoring.md)
-and [`code-style`](../../rules/code-style.md), with strong prejudice. It is **read-only**: it reports
-findings and never edits, so these can run concurrently, capped at ~4 like § 4.
+Once the live-review round (§ 4d) is closed, run the conformance swarm over the **integration
+branch** — the single diff `git diff master...HEAD` on the home tree already carries every landed
+branch (§ 4a merged each one forward). Dispatch one [`swarm-reviewer`](../../agents/swarm-reviewer.md)
+per concern in [`review-work`](../../skills/review-work/SKILL.md)'s roster, in a single message so they
+run concurrently — each runs `review-work --concern <name>` over that diff and reports findings for
+its one rule family. **The count is the roster's, not the branch count**: a nine-branch run is still
+one `swarm-reviewer` per concern. They are **read-only** and never edit.
 
-Each finding routes itself as a fix through the **same dispatch-and-merge-forward mechanic as § 4d** —
-a `ticket-builder` on the owning branch, merged forward into the integration branch — never applied
-by the orchestrator. This adds no interactive pause: conformance findings are mechanical and route
-automatically. **§ 5 does not begin until every landed branch's review comes back `clean`.** A run
-with no landed branches (all stuck) skips this step.
+Each finding comes back branch-agnostic — `file + quoted offender + exact edit`. **Attribute it to
+the branch that owns it** before routing: the run ledger's _files touched_ column (§ Run ledger) maps
+the file to its branch; when two branches touched that file, `git blame` the integration line to the
+commit, then the branch that carries it. Then route the fix through the **same
+dispatch-and-merge-forward mechanic as § 4d** — a `ticket-builder` on the owning branch, merged
+forward into the integration branch — never applied by the orchestrator. This adds no interactive
+pause: conformance findings are mechanical and route automatically. **§ 5 does not begin until every
+concern comes back `clean`.** A run with no landed branches (all stuck) skips this step.
+
+A single-ticket or freeform run has no integration branch — the one home-tree branch is the diff, and
+attribution is trivial (one branch owns every finding). The swarm and routing are otherwise
+identical.
 
 ### 5. ORCHESTRATE PRs
 
-Once § 4e comes back clean on every landed branch, turn every landed branch into a PR. One PR per
+Once § 4e comes back clean on every concern, turn every landed branch into a PR. One PR per
 ticket/instruction:
 
 a. **READINESS CHECK** — if a builder reported it couldn't satisfy acceptance, or left `vp check` red
@@ -374,9 +383,10 @@ ticket PR. Specific to this skill:
 - **Exactly two interactive pauses: selection** (§ The gate) **and the all-work-done checkpoint**
   (§ 4c). Between them, nothing pauses the run — a stuck ticket parks `Blocked` and the run continues.
   No PR opens before the checkpoint's live-review round (§ 4d) closes.
-- **No PR opens before harness review comes back clean** (§ 4e) — `review-work` enforces
-  `comment-authoring` and `code-style` on every landed branch; its findings route as fixes through
-  the § 4d mechanic, never applied by the orchestrator.
+- **No PR opens before harness review comes back clean** (§ 4e) — a `swarm-reviewer` per concern runs
+  `review-work` over the integration branch, enforcing `comment-authoring` and `code-style`; each
+  finding is attributed to its owning branch and routes as a fix through the § 4d mechanic, never
+  applied by the orchestrator.
 - **Copy never blocks the build** (§ 5) — a `COPY-TBD` PR still opens; it waits on the user, the run
   doesn't wait on it.
 - **Never ask any subagent to spawn another.** `ticket-builder` carries no `Agent`/`Skill` tool, so it
