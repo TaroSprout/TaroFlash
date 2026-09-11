@@ -16,7 +16,6 @@ const { updateCapabilityMock, fetchCapabilitiesMock, roleRef, deckCountRef, serv
   })
 
 vi.mock('@/api/capabilities/db', () => ({
-  // fake row store: writes mutate it, reads reflect it
   updateCapability: updateCapabilityMock,
   fetchCapabilities: fetchCapabilitiesMock
 }))
@@ -44,7 +43,6 @@ import { useCan } from '@/composables/can'
 import { useUpdateCapabilityMutation } from '@/api/capabilities/mutations/update-capability'
 
 function mountHost(pinia) {
-  // hosts the mutation and useCan in one cache, like the running app
   let can, mutation, query_cache
   const app = createApp({
     setup() {

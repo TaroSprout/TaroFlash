@@ -7,8 +7,7 @@ type CapabilitiesSnapshot = Capability[] | undefined
 
 /**
  * Updates the capability row in the cache the instant it's toggled, so the control
- * responds under the finger. `onError` restores the exact snapshot rather than
- * flipping the flag back, in case another write raced in between.
+ * responds under the finger. Returns the prior snapshot so the caller can restore it exactly.
  */
 function setCapabilityInCache(
   queryCache: QueryCache,
