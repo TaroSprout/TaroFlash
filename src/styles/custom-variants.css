@@ -6,9 +6,15 @@
   }
 }
 
-@custom-variant animation-safe {
-  body:not(.animation-safe) & {
-    @slot;
+/* Decorative looping tap/hover sweeps run only when the device tier still keeps
+   standing effects (`data-motion` is not `minimal`, written by the motion store)
+   and the OS isn't asking for reduced motion. Replaces the old always-on
+   `animation-safe` gate, which never quieted for either. */
+@custom-variant motion-rich {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion='minimal']) & {
+      @slot;
+    }
   }
 }
 

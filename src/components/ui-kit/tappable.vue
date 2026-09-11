@@ -71,7 +71,7 @@ function onPointerLeave() {
     <slot />
     <div
       v-if="bgx"
-      class="absolute inset-0 -z-10 rounded-[inherit] bgx-diagonal-stripes animation-safe:group-data-[tap-active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
+      class="absolute inset-0 -z-10 rounded-[inherit] bgx-diagonal-stripes motion-rich:group-data-[tap-active=true]/tappable:bgx-slide pointer-events-none hidden group-data-[tap-active=true]/tappable:block"
       :style="{ '--bgx-fill': bgx_color }"
     />
   </component>

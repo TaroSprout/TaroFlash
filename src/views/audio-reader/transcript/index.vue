@@ -310,7 +310,7 @@ watch(
       >
         <div
           data-testid="transcript-view__hover-texture"
-          class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/pill:block"
+          class="absolute inset-0 hidden rounded-2 bgx-diagonal-stripes motion-rich:bgx-slide bgx-color-[currentColor] group-data-[playing=true]/pill:block"
         />
       </div>
 
