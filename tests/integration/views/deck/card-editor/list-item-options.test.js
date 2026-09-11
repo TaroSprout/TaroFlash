@@ -4,6 +4,7 @@ import { defineComponent, h, useAttrs } from 'vue'
 
 vi.mock('@/utils/animations/button-tap', () => ({
   playButtonTap: vi.fn(),
+  playButtonSweep: vi.fn(),
   BUTTON_TAP_DURATION: 0.1
 }))
 

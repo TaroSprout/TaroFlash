@@ -2,6 +2,9 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import BulkActionsBar from '@/views/study-session/session-summary/bulk-actions-bar.vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { capturedController } = vi.hoisted(() => ({ capturedController: { current: null } }))
 

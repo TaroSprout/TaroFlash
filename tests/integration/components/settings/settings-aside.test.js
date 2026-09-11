@@ -1,6 +1,9 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { memberState } = vi.hoisted(() => ({ memberState: { email: 'chris@example.com' } }))
 

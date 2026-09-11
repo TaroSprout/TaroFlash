@@ -11,7 +11,10 @@ const { mockEmitSfx, mockEmitHoverSfx, coarseRef, fineRef, mockPlayButtonTap } =
     fineRef,
     mockEmitSfx: vi.fn(),
     mockEmitHoverSfx: vi.fn(),
-    mockPlayButtonTap: vi.fn(() => ({ peak: Promise.resolve(), done: Promise.resolve() }))
+    mockPlayButtonTap: vi.fn(() => ({
+      mark: vi.fn(() => Promise.resolve()),
+      done: Promise.resolve()
+    }))
   }
 })
 
@@ -26,11 +29,15 @@ vi.mock('@/composables/ui/media-query', () => ({
 
 vi.mock('@/utils/animations/button-tap', () => ({
   BUTTON_TAP_DURATION: 0.1,
-  playButtonTap: mockPlayButtonTap
+  playButtonTap: mockPlayButtonTap,
+  playButtonSweep: vi.fn(() => ({ mark: vi.fn(() => Promise.resolve()), done: Promise.resolve() }))
 }))
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Component import (after mocks) ────────────────────────────────────────────
 
+import { motionStoreStub } from '@tests/fixtures/motion'
 import UiTappable from '@/components/ui-kit/tappable.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -45,7 +52,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   coarseRef.value = true
   fineRef.value = false
-  mockPlayButtonTap.mockReturnValue({ peak: Promise.resolve(), done: Promise.resolve() })
+  mockPlayButtonTap.mockReturnValue({
+    mark: vi.fn(() => Promise.resolve()),
+    done: Promise.resolve()
+  })
 })
 
 describe('UiTappable — root element', () => {
@@ -122,7 +132,7 @@ describe('UiTappable — data-tap-active state', () => {
     coarseRef.value = true
     let resolvePeak
     mockPlayButtonTap.mockReturnValue({
-      peak: new Promise((r) => (resolvePeak = r)),
+      mark: vi.fn(() => new Promise((r) => (resolvePeak = r))),
       done: Promise.resolve()
     })
     const wrapper = mountTappable({ animate: 'pop' })

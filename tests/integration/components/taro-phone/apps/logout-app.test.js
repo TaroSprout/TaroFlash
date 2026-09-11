@@ -1,6 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import LogoutApp from '@/components/taro-phone/apps/logout-app.vue'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ({ value: false })

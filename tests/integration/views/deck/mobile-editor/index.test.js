@@ -4,6 +4,9 @@ import { defineComponent, h, nextTick, ref } from 'vue'
 import ModalUiKit from '@/components/ui-kit/modal/index.vue'
 import { useModal, request_close_handlers } from '@/composables/modal'
 import { useMobileCardEditor } from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

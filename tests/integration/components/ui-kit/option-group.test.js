@@ -20,13 +20,17 @@ vi.mock('@/composables/ui/media-query', () => ({
 
 vi.mock('@/utils/animations/button-tap', () => ({
   BUTTON_TAP_DURATION: 0,
-  playButtonTap: vi.fn(() => ({ peak: Promise.resolve(), done: Promise.resolve() }))
+  playButtonTap: vi.fn(() => ({ mark: vi.fn(() => Promise.resolve()), done: Promise.resolve() })),
+  playButtonSweep: vi.fn(() => ({ mark: vi.fn(() => Promise.resolve()), done: Promise.resolve() }))
 }))
 
 vi.mock('gsap', () => ({
   gsap: { to: vi.fn((_el, opts) => opts?.onComplete?.()) }
 }))
 
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
+
+import { motionStoreStub } from '@tests/fixtures/motion'
 import UiOptionGroup from '@/components/ui-kit/option-group.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

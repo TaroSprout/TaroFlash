@@ -2,6 +2,9 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 import '@/styles/main.css'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: vi.fn(),

@@ -4,6 +4,9 @@ import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import SimpleRatingButtons from '@/views/study-session/session-studying/rating-buttons/simple.vue'
 import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

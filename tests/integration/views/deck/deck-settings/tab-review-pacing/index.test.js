@@ -2,6 +2,9 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, reactive } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

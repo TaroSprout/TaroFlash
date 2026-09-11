@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -11,12 +12,12 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
-vi.mock('gsap', () => ({
-  gsap: {
-    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
-  }
-}))
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock()
+  return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
+})
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // Mock usePlayOnTap — the tap-animation intercept is a cross-cutting concern
 // not under test here. The mock just returns a no-op `interceptClick` so the

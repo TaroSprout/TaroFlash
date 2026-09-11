@@ -41,9 +41,12 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ref(false)
 }))
 
-vi.mock('gsap', () => ({
-  gsap: { to: vi.fn((_el, opts) => opts?.onComplete?.()) }
-}))
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock()
+  return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
+})
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: vi.fn(),
@@ -51,6 +54,8 @@ vi.mock('@/sfx/bus', () => ({
 }))
 
 // ── Component import (after mocks) ────────────────────────────────────────────
+
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 
 import DeckGridDeleteButton from '@/views/dashboard/deck-grid/delete-button.vue'
 

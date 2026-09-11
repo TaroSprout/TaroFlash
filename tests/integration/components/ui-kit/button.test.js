@@ -2,17 +2,31 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, useAttrs } from 'vue'
 
-const { coarseRef, mockEmitSfx } = vi.hoisted(() => ({
-  coarseRef: { value: true },
-  mockEmitSfx: vi.fn()
-}))
+const { coarseRef, mockEmitSfx, mockPlayButtonTap, mockPlayButtonSweep } = vi.hoisted(() => {
+  function resolvedHandle() {
+    return {
+      mark: () => Promise.resolve(),
+      done: Promise.resolve(),
+      cancel: () => {},
+      finish: () => {}
+    }
+  }
+  return {
+    coarseRef: { value: true },
+    mockEmitSfx: vi.fn(),
+    mockPlayButtonTap: vi.fn(resolvedHandle),
+    mockPlayButtonSweep: vi.fn(resolvedHandle)
+  }
+})
 
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => coarseRef
 }))
 
-vi.mock('gsap', () => ({
-  gsap: { to: vi.fn((_el, opts) => opts?.onComplete?.()) }
+vi.mock('@/utils/animations/button-tap', () => ({
+  BUTTON_TAP_DURATION: 0.1,
+  playButtonTap: mockPlayButtonTap, // button.vue's tap-pop runs through useStagedTap → this driver call; mock it so no real GSAP timeline runs
+  playButtonSweep: mockPlayButtonSweep
 }))
 
 vi.mock('@/sfx/bus', () => ({
@@ -21,8 +35,26 @@ vi.mock('@/sfx/bus', () => ({
   emitStudySfx: vi.fn()
 }))
 
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
+
+import { motionStoreStub } from '@tests/fixtures/motion'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
+
+function makeHandle() {
+  let resolve_mark
+  let resolve_done
+  const mark_promise = new Promise((r) => (resolve_mark = r))
+  const done_promise = new Promise((r) => (resolve_done = r))
+  return {
+    mark: () => mark_promise,
+    done: done_promise,
+    cancel: () => {},
+    finish: () => {},
+    resolveMark: () => resolve_mark(),
+    resolveDone: () => resolve_done()
+  }
+}
 
 // A UiTooltip stub that forwards attrs and renders slot content so inner
 // data-testid elements (ui-kit-button__content, ui-kit-button__trailing) are
@@ -123,17 +155,8 @@ describe('UiButton', () => {
     })
 
     test('toggles data-active while the tap is in flight', async () => {
-      let resolveTween
-      const { gsap } = await import('gsap')
-      gsap.to.mockImplementationOnce(
-        (_el, opts) =>
-          new Promise((resolve) => {
-            resolveTween = () => {
-              opts.onComplete()
-              resolve()
-            }
-          })
-      )
+      const handle = makeHandle()
+      mockPlayButtonTap.mockReturnValueOnce(handle)
 
       const onClick = vi.fn()
       const wrapper = shallowMount(UiButton, {
@@ -145,7 +168,8 @@ describe('UiButton', () => {
 
       expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
 
-      resolveTween()
+      handle.resolveMark()
+      handle.resolveDone()
     })
 
     test('does not intercept on pointer:fine — handler fires natively', async () => {
@@ -168,11 +192,12 @@ describe('UiButton', () => {
         attrs: { onClick }
       })
 
-      const { gsap } = await import('gsap')
-      gsap.to.mockClear()
+      mockPlayButtonTap.mockClear()
+      mockPlayButtonSweep.mockClear()
       await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
 
-      expect(gsap.to).not.toHaveBeenCalled()
+      expect(mockPlayButtonTap).not.toHaveBeenCalled()
+      expect(mockPlayButtonSweep).not.toHaveBeenCalled()
       expect(onClick).toHaveBeenCalledTimes(1)
     })
 
@@ -282,8 +307,7 @@ describe('UiButton', () => {
       })
 
       test('tapAnimate=false still toggles data-active on a coarse tap', async () => {
-        const { gsap } = await import('gsap')
-        gsap.to.mockClear()
+        mockPlayButtonTap.mockClear()
 
         const onClick = vi.fn()
         const wrapper = shallowMount(UiButton, {
@@ -299,9 +323,8 @@ describe('UiButton', () => {
         expect(wrapper.find('[data-testid="ui-kit-button"]').attributes('data-active')).toBe('true')
       })
 
-      test('tapAnimate=false does NOT invoke the GSAP tween', async () => {
-        const { gsap } = await import('gsap')
-        gsap.to.mockClear()
+      test('tapAnimate=false does NOT invoke the pop tap-tween', async () => {
+        mockPlayButtonTap.mockClear()
 
         const onClick = vi.fn()
         const wrapper = shallowMount(UiButton, {
@@ -314,7 +337,7 @@ describe('UiButton', () => {
           .element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await wrapper.vm.$nextTick()
 
-        expect(gsap.to).not.toHaveBeenCalled()
+        expect(mockPlayButtonTap).not.toHaveBeenCalled()
       })
 
       test('tapAnimate=false still fires press sfx when sfx.press is set', async () => {
@@ -333,9 +356,8 @@ describe('UiButton', () => {
         expect(mockEmitSfx).toHaveBeenCalledWith('ui.select')
       })
 
-      test('tapAnimate=true (default) still uses GSAP tween', async () => {
-        const { gsap } = await import('gsap')
-        gsap.to.mockClear()
+      test('tapAnimate=true uses the pop tap-tween', async () => {
+        mockPlayButtonTap.mockClear()
 
         const wrapper = shallowMount(UiButton, {
           props: { playOnTap: true, tapAnimate: true },
@@ -344,7 +366,7 @@ describe('UiButton', () => {
 
         await wrapper.find('[data-testid="ui-kit-button"]').trigger('click')
 
-        expect(gsap.to).toHaveBeenCalled()
+        expect(mockPlayButtonTap).toHaveBeenCalled()
       })
     })
   })
@@ -394,17 +416,8 @@ describe('UiButton', () => {
     })
 
     test('active=true and playing both set data-active="true" (not duplicated)', async () => {
-      let resolveTween
-      const { gsap } = await import('gsap')
-      gsap.to.mockImplementationOnce(
-        (_el, opts) =>
-          new Promise((resolve) => {
-            resolveTween = () => {
-              opts.onComplete()
-              resolve()
-            }
-          })
-      )
+      const handle = makeHandle()
+      mockPlayButtonTap.mockReturnValueOnce(handle)
 
       coarseRef.value = true
       const wrapper = shallowMount(UiButton, {
@@ -420,7 +433,8 @@ describe('UiButton', () => {
       // attributes() returns a flat object — duplicate attrs would merge; just
       // verify the single attribute has the right value.
 
-      resolveTween()
+      handle.resolveMark()
+      handle.resolveDone()
     })
   })
 
@@ -463,12 +477,11 @@ describe('UiButton', () => {
   // ── playOnTap bails for clicks inside .btn-trailing ──────────
 
   describe('playOnTap — trailing region bail', () => {
-    test('clicking inside .btn-trailing skips the play-on-tap intercept so GSAP is NOT called', async () => {
+    test('clicking inside .btn-trailing skips the play-on-tap intercept so no tap animation runs', async () => {
       // Verify that the `onCaptureClick` guard bails when the click target is
       // inside `.btn-trailing`, leaving the event for the caret's own handler.
-      // We confirm GSAP is never invoked — the tap-pop animation is the intercept.
-      const { gsap } = await import('gsap')
-      gsap.to.mockClear()
+      mockPlayButtonTap.mockClear()
+      mockPlayButtonSweep.mockClear()
 
       const onClick = vi.fn()
       const wrapper = mountButtonWithSlots(
@@ -487,8 +500,8 @@ describe('UiButton', () => {
       caretInner.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       await wrapper.vm.$nextTick()
 
-      // The tap-pop GSAP animation must NOT have been triggered.
-      expect(gsap.to).not.toHaveBeenCalled()
+      expect(mockPlayButtonTap).not.toHaveBeenCalled() // the tap animation must NOT have been triggered
+      expect(mockPlayButtonSweep).not.toHaveBeenCalled()
     })
   })
 
@@ -564,10 +577,8 @@ describe('UiButton', () => {
     test('clicking inside .btn-trailing is NOT blocked when primary is disabled', async () => {
       // The guard in onCaptureClick bails early (returns without stopping) when the
       // click originates inside .btn-trailing, even when disabled=true.
-      // Verify this by confirming GSAP is not called (no intercept on trailing clicks),
-      // and the primary consumer @click is also not called (trailing is its own handler).
-      const { gsap } = await import('gsap')
-      gsap.to.mockClear()
+      mockPlayButtonTap.mockClear() // no tap animation on trailing clicks, and the primary consumer @click stays uncalled — trailing is its own handler
+      mockPlayButtonSweep.mockClear()
 
       const primaryClick = vi.fn()
       const wrapper = mountButtonWithSlots(
@@ -595,7 +606,8 @@ describe('UiButton', () => {
       await wrapper.vm.$nextTick()
 
       // The play-on-tap intercept must NOT be triggered for trailing clicks
-      expect(gsap.to).not.toHaveBeenCalled()
+      expect(mockPlayButtonTap).not.toHaveBeenCalled()
+      expect(mockPlayButtonSweep).not.toHaveBeenCalled()
     })
 
     test('disabled=true fires ui.rejected, not ui.press', async () => {

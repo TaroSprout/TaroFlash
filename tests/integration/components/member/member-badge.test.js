@@ -1,6 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // Hoist shared mock refs before vi.mock calls
 const { coarseRef, mockEmitSfx, mockLoadAvatarUrl } = vi.hoisted(() => ({

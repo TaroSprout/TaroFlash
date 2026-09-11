@@ -1,6 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import SessionSettings from '@/views/study-session/session-settings/index.vue'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 

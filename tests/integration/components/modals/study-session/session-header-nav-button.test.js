@@ -1,6 +1,9 @@
-import { describe, test, expect, afterEach } from 'vite-plus/test'
+import { describe, test, expect, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import SessionHeaderNavButton from '@/views/study-session/session-header-nav-button.vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const mounted_wrappers = []
 

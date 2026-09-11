@@ -1,7 +1,9 @@
-import { ref } from 'vue'
+import { onScopeDispose, ref } from 'vue'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
+import { useMotionStore } from '@/stores/motion'
+import { BUTTON_TAP_DURATION, playButtonSweep, playButtonTap } from '@/utils/animations/button-tap'
 import { emitSfx } from '@/sfx/bus'
+import type { MotionHandle } from '@/utils/motion/types'
 import type { SfxRole } from '@/sfx/roles'
 
 export type StagedTapAnimate = 'pop' | 'quiet'
@@ -58,6 +60,13 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
   const playing = ref(false)
   const is_coarse = useMatchMedia('coarse')
+  const motion = useMotionStore()
+
+  // The event handler runs outside a Vue scope, so the driver can't auto-cancel
+  // its handle on unmount — track the live one and settle it here instead, or a
+  // control torn down mid-tap latches `playing` and can't be reused.
+  let active_handle: MotionHandle | null = null
+  onScopeDispose(() => active_handle?.cancel())
 
   /**
    * Returns an async click handler. On fine pointers the main audio and the
@@ -85,24 +94,33 @@ export function useStagedTap(options: StagedTapOptions = {}) {
 
       playing.value = true
 
-      if (animate === 'pop') {
-        const target = e.currentTarget as HTMLElement
-        const { peak, done } = playButtonTap(target, duration, { yoyo, hold })
-        await peak
+      const target = e.currentTarget as HTMLElement
+      const quiet_tier = motion.prefers_reduced_motion || motion.tier === 'minimal'
+
+      if (animate === 'pop' && !quiet_tier) {
+        const handle = playButtonTap(target, { yoyo, hold, duration })
+        active_handle = handle
+
+        await handle.mark('peak')
         if (phase === 'peak') {
           playTapAudio(tapOpts)
           action?.(e)
         }
-        await done
+
+        await handle.done
         if (phase === 'done') action?.(e)
       } else {
-        await new Promise<void>((resolve) => setTimeout(resolve, duration * 1000))
+        const handle = playButtonSweep(target, duration)
+        active_handle = handle
+
+        await handle.done
         if (phase !== 'press') {
           playTapAudio(tapOpts)
           action?.(e)
         }
       }
 
+      active_handle = null
       playing.value = false
     }
   }

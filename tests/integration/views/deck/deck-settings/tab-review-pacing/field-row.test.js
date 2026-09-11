@@ -3,6 +3,9 @@ import { mount } from '@vue/test-utils'
 import { h, ref } from 'vue'
 import FieldRow from '@/views/deck/deck-settings/tab-review-pacing/field-row.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 function makeField({ overridden = false, reset = vi.fn() } = {}) {
   return { overridden: ref(overridden), reset }

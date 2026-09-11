@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 
 // Vue Test Utils stubs the built-in <transition> by default (no lifecycle
 // hooks fire). Wait through the real JS-hook cycle — 2x rAF even with
@@ -27,17 +28,24 @@ vi.mock('vue-router', () => ({
 // never completes within the same call stack as the leave hook, and calling
 // done() synchronously during a real (unstubbed) unmount transition crashes
 // Vue's internal removal bookkeeping (`afterLeave` reads a detached parentNode).
-vi.mock('gsap', () => ({
-  gsap: {
-    fromTo: vi.fn((_el, _from, opts) => {
-      Promise.resolve().then(() => opts?.onComplete?.())
-    }),
-    to: vi.fn((_el, opts) => {
-      Promise.resolve().then(() => opts?.onComplete?.())
-    }),
-    set: vi.fn()
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock()
+  return {
+    gsap: {
+      fromTo: vi.fn((_el, _from, opts) => {
+        Promise.resolve().then(() => opts?.onComplete?.())
+      }),
+      to: vi.fn((_el, opts) => {
+        Promise.resolve().then(() => opts?.onComplete?.())
+      }),
+      set: vi.fn(),
+      timeline: m.timeline,
+      isTweening: m.isTweening
+    }
   }
-}))
+})
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // The real composable returns a plain object of refs (no reactive() wrapper)
 // and the component destructures it, so each ref auto-unwraps as a top-level

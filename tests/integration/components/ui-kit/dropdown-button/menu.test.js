@@ -19,15 +19,14 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 
-// GSAP mock — not used by menu directly, but usePlayOnTap imports button-tap
-// which uses gsap; mock it defensively so no real audio/animation runs.
-vi.mock('gsap', () => ({
-  gsap: {
-    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
-  }
-}))
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock() // not used by menu directly, but usePlayOnTap imports button-tap, which runs on the motion driver; mock its timeline so no real animation runs
+  return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
+})
 
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
+
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 import DropdownMenu from '@/components/ui-kit/dropdown-button/menu.vue'
 
 const SAMPLE_OPTIONS = [

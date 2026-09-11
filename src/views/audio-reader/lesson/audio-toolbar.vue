@@ -31,7 +31,7 @@ type AudioToolbarProps = {
 const SKIP_SECONDS = 10
 // Striped texture that slides across a transport button while its tap-pop plays.
 // `currentColor` makes the stripes track each button's own icon color.
-const TAP_BGX = 'bgx-diagonal-stripes animation-safe:bgx-slide bgx-color-[currentColor]'
+const TAP_BGX = 'bgx-diagonal-stripes motion-rich:bgx-slide bgx-color-[currentColor]'
 const SPEED_OPTIONS: DropdownOption[] = [
   { label: '0.5x', value: 0.5 },
   { label: '0.75x', value: 0.75 },

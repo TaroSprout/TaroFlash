@@ -2,7 +2,10 @@ import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
 import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import PresetHeader from '@/views/deck/deck-settings/tab-review-pacing/preset-header.vue'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 // Fade transitions resolve instantly so the reset button is present/absent

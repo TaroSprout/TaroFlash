@@ -18,7 +18,16 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: (query) => (query === 'fine' ? fineRef : coarseRef)
 }))
 
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock()
+  return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
+})
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
+
 // ── Component imports (after mocks) ───────────────────────────────────────────
+
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 
 import UiSpinbox from '@/components/ui-kit/spinbox/index.vue'
 import SpinboxButton from '@/components/ui-kit/spinbox/button.vue'

@@ -3,6 +3,7 @@ import { shallowMount, mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h, nextTick, ref } from 'vue'
 import { card } from '@tests/fixtures/card'
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 // Generates the real Tailwind utilities and stations.css roles this file's
 // theming obligations need — without it, `bg-well`/`bg-skeleton`/`shimmer`
 // resolve to nothing and every computed-style assertion below is vacuous.
@@ -37,18 +38,26 @@ vi.mock('@/api/decks', () => ({
   useMemberDecksQuery: () => mockDecksData
 }))
 
-// shake()'s gsap.timeline().to().to().to().to() chain resolves its own
-// `onComplete` — fire it synchronously so shake()'s Promise settles.
-vi.mock('gsap', () => ({
-  gsap: {
-    timeline: (opts) => {
-      const tl = { to: () => tl }
-      gsapTimelineMock(opts)
-      opts?.onComplete?.()
-      return tl
+// shake() now runs on the motion driver, so gsap needs the driver-shaped
+// timeline (self-completing `play`, `isTweening`, `set`) the shared fixture
+// provides. `gsapTimelineMock` stays the spy that proves shake fired.
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock()
+  return {
+    gsap: {
+      timeline: (opts) => {
+        gsapTimelineMock(opts)
+        return m.timeline(opts)
+      },
+      isTweening: m.isTweening,
+      set: m.set
     }
   }
-}))
+})
+
+// Keep the driver on the full tier with reduced-motion off so shake() actually
+// runs and the spy above records the call.
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 vi.mock('@/composables/can', () => ({
   useCan: () => ({

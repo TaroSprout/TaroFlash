@@ -5,8 +5,11 @@ import { defineComponent, h } from 'vue'
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: vi.fn() }))
 
+import { motionStoreStub } from '@tests/fixtures/motion'
 import OptionsPanel from '@/components/ui-kit/options-panel/index.vue'
 import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const IconStub = defineComponent({
   name: 'UiIcon',

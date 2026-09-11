@@ -3,6 +3,9 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
 import StudySession from '@/views/study-session/index.vue'
 import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 

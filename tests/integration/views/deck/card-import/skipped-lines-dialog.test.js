@@ -3,6 +3,9 @@ import { mount as vueMount } from '@vue/test-utils'
 import SkippedLinesDialog from '@/views/deck/card-import/skipped-lines-dialog.vue'
 import { vSfx } from '@/sfx/directive'
 import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),

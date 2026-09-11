@@ -51,7 +51,7 @@ const padding = computed(() => {
       <div
         v-if="fancyHover"
         data-testid="ui-kit-tag-button__hover-fx"
-        class="absolute! inset-0 bgx-diagonal-stripes bgx-color-[var(--tagbtn-bg)] animation-safe:group-hover/tag-btn:bgx-slide pointer-events-none"
+        class="absolute! inset-0 bgx-diagonal-stripes bgx-color-[var(--tagbtn-bg)] motion-rich:group-hover/tag-btn:bgx-slide pointer-events-none"
       />
     </button>
   </span>

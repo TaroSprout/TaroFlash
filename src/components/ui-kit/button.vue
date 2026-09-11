@@ -151,7 +151,7 @@ function onClick(e: MouseEvent) {
     </div>
 
     <div
-      class="absolute inset-0 bgx-diagonal-stripes animation-safe:bgx-slide rounded-(--btn-border-radius) pointer-events-none"
+      class="absolute inset-0 bgx-diagonal-stripes motion-rich:bgx-slide rounded-(--btn-border-radius) pointer-events-none"
       :class="{
         'flex items-center justify-center': loading,
         // Loading fills the button with its own rest colour — a neutral button

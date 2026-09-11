@@ -1,6 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // Vue Test Utils stubs the built-in <transition> by default (no lifecycle
 // hooks fire). Wait through the real JS-hook cycle — 2x rAF even with

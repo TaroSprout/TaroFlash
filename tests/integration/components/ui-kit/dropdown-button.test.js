@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -11,12 +12,12 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
-vi.mock('gsap', () => ({
-  gsap: {
-    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
-  }
-}))
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock()
+  return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
+})
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // Stub floating-ui used transitively by UiPopover; include `size` which is now
 // used by the match_reference_width middleware path.

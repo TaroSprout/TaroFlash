@@ -1,5 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount as vueMount } from '@vue/test-utils'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { mockEmitSfx, mockEmitHoverSfx } = vi.hoisted(() => ({
   mockEmitSfx: vi.fn(),

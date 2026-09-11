@@ -1,10 +1,12 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import DirectoryPage from '@/components/layout-kit/paged-window/directory-page.vue'
 import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
 
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ({ value: false }) }))
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const groups = [
   {

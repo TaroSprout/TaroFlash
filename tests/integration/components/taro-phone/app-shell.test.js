@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
+import { createGsapTimelineMock, motionStoreStub } from '@tests/fixtures/motion'
 import AppShell from '@/components/taro-phone/app-shell.vue'
 
 const { coarseRef } = vi.hoisted(() => ({ coarseRef: { value: false } }))
@@ -8,24 +9,12 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => coarseRef
 }))
 
-// app-shell's staged tap uses animate: 'pop' + yoyo, which drives a GSAP
-// timeline. Resolve the timeline's onComplete/call hooks synchronously so the
-// staged peak/done promises settle without waiting on real animation frames.
-vi.mock('gsap', () => ({
-  gsap: {
-    timeline: vi.fn((opts) => {
-      const tl = {
-        to: () => tl,
-        call: (fn) => {
-          fn?.()
-          return tl
-        }
-      }
-      opts?.onComplete?.()
-      return tl
-    })
-  }
-}))
+vi.mock('gsap', () => {
+  const m = createGsapTimelineMock() // app-shell's staged tap drives this timeline; resolve synchronously so staged peak/done promises settle without real frames
+  return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
+})
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 function makeWrapper(props = {}) {
   return mount(AppShell, { props: { title: 'Settings', ...props } })

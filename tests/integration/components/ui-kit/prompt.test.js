@@ -2,6 +2,9 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import UiPrompt from '@/components/ui-kit/prompt.vue'
 import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
