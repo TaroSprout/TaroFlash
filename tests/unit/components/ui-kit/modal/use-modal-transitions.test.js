@@ -17,9 +17,6 @@ vi.mock('@/components/ui-kit/modal/mobile-below', () => ({
   isMobileFor: mockIsMobileFor
 }))
 
-// A fake `Motion` factory: `enter`/`leave` are spies returning another spy (the
-// invokable motion) that produces a handle whose `done` only resolves when the
-// test calls `resolve()` — mirrors how the real motion driver settles.
 const { registry, makeConfig } = vi.hoisted(() => {
   const registry = { handles: [] }
   function motionFor() {

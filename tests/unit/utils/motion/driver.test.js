@@ -1,12 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { effectScope } from 'vue'
 
-// ── Hoisted gsap mock ──────────────────────────────────────────────────────────
-// Each `gsap.timeline()` call gets its own fake timeline that records `to`/
-// `fromTo`/`call` invocations and only fires `onComplete` when `progress(1)` is
-// invoked — the driver only ever plays a paused timeline and never runs a real
-// tween, so the fake stands in for the whole GSAP timeline surface it uses.
-
 const { makeTimeline, timelines, mockIsTweening, mockSet } = vi.hoisted(() => {
   const timelines = []
   function makeTimeline() {

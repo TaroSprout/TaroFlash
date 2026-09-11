@@ -63,13 +63,9 @@ export function scaleFadeOut(el: Element, done: () => void) {
   gsap.to(el, { scale: 0.8, opacity: 0, duration: 0.2, ease: 'expo.out', onComplete: done })
 }
 
-const DIALOG_RISE = '200px'
+const DIALOG_RISE = '200px' // These three are modal-structural geometry, not vocabulary travel tokens.
 const SHEET_TRAVEL = '100%'
 const POPUP_SCALE = 0.8
-
-// The driver-authored modal transitions (#405 adopter). The rise, sheet travel and popup scale are
-// structural to the modal, not vocabulary travel steps; duration and easing come from the tokens.
-// expo.out had no vocabulary equivalent, so it maps to the strong ease-out; spring is back.out(1.7).
 
 export const dialogEnterMotion = defineMotion({
   from: { translateY: DIALOG_RISE, opacity: 0 },

@@ -8,7 +8,7 @@ export type TravelToken = keyof typeof TRAVEL
 /**
  * The properties a motion may touch. Transform-family and opacity only, so every
  * motion stays on the compositor; layout and height motion route through the
- * stage primitive (#406) rather than animating a layout property here.
+ * stage primitive rather than animating a layout property here.
  */
 export interface MotionVars {
   x?: number | string

@@ -14,7 +14,7 @@ import type {
   TravelToken
 } from './types'
 
-// The element is promoted to its own layer for exactly the properties a motion may touch.
+/** The properties a motion may touch, promoted to their own layer for its duration. */
 const WILL_CHANGE = 'transform, opacity'
 
 interface Mark {
@@ -42,11 +42,7 @@ function resolveEase(token: EaseToken): string {
   return EASINGS[token].gsap
 }
 
-/**
- * Owns a single motion while it runs: builds a paused timeline, promotes the
- * element and releases the hint on settle, exposes named marks as promises, and
- * ties the tween to the caller's scope so an unmount cancels it.
- */
+/** Called outside a Vue scope, the caller must `cancel()` the returned handle itself — auto-cleanup only fires inside an active scope. */
 function runMotion(
   el: HTMLElement,
   build: (ctx: MotionContext) => void,
@@ -122,7 +118,7 @@ function runMotion(
   }
 }
 
-// A takeover starts from the element's live values, so a fresh `from` placement is skipped mid-flight.
+/** A takeover starts from the element's live values, so a fresh `from` placement is skipped mid-flight. */
 function applyTween(ctx: MotionContext, el: HTMLElement, spec: DeclarativeMotionSpec) {
   const to: MotionVars & gsap.TweenVars = {
     ...spec.to,
