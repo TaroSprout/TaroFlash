@@ -7,16 +7,24 @@ import PalettePage from './color-page/palette-page.vue'
 import RolesPage from './color-page/roles-page.vue'
 import { colorTunerKey, useColorTuner } from './color-page/use-color-tuner'
 import FeedbackPage from './feedback-page/index.vue'
+import CapabilitiesPage from './capabilities-page/index.vue'
+import { useCan } from '@/composables/can'
 
 const { close } = defineProps<{ close: () => void }>()
 
 const { t } = useI18n()
+const { manageCapabilities } = useCan()
 
-const pages: Page[] = [
+// Reactive rather than a plain array: the capabilities entry only shows for an
+// admin, and manageCapabilities can change under the same modal instance.
+const pages = computed<Page[]>(() => [
   { value: 'feedback', icon: 'megaphone', label: t('admin.page.feedback') },
+  ...(manageCapabilities.value
+    ? [{ value: 'capabilities', icon: 'keyhole', label: t('admin.page.capabilities') }]
+    : []),
   { value: 'palette', icon: 'paint-brush', label: t('admin.page.palette') },
   { value: 'roles', icon: 'design-services', label: t('admin.page.roles') }
-]
+])
 
 // The tuner lives above the pages that read it, so switching between palette and roles keeps one
 // undo history rather than two.
@@ -48,6 +56,7 @@ const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'ph
     <template #default="{ displayed_page }">
       <palette-page v-if="displayed_page === 'palette'" />
       <roles-page v-else-if="displayed_page === 'roles'" />
+      <capabilities-page v-else-if="displayed_page === 'capabilities'" />
       <feedback-page v-else />
     </template>
   </paged-window>

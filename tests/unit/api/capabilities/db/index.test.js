@@ -1,7 +1,9 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-const { selectMock, fromMock, loggerMock } = vi.hoisted(() => ({
+const { selectMock, updateMock, eqMock, fromMock, loggerMock } = vi.hoisted(() => ({
   selectMock: vi.fn(),
+  updateMock: vi.fn(),
+  eqMock: vi.fn(),
   fromMock: vi.fn(),
   loggerMock: { error: vi.fn(), warn: vi.fn(), info: vi.fn() }
 }))
@@ -12,13 +14,16 @@ vi.mock('@/supabase-client', () => ({
 
 vi.mock('@/utils/logger', () => ({ default: loggerMock }))
 
-import { fetchCapabilities } from '@/api/capabilities/db'
+import { fetchCapabilities, updateCapability } from '@/api/capabilities/db'
 
 beforeEach(() => {
   fromMock.mockReset()
   selectMock.mockReset()
+  updateMock.mockReset()
+  eqMock.mockReset()
   loggerMock.error.mockClear()
-  fromMock.mockReturnValue({ select: selectMock })
+  fromMock.mockReturnValue({ select: selectMock, update: updateMock })
+  updateMock.mockReturnValue({ eq: eqMock })
 })
 
 describe('fetchCapabilities', () => {
@@ -54,5 +59,25 @@ describe('fetchCapabilities', () => {
 
     await expect(fetchCapabilities()).rejects.toThrow('boom')
     expect(loggerMock.error).toHaveBeenCalledWith('boom')
+  })
+})
+
+describe('updateCapability', () => {
+  test('updates the state for the given key', async () => {
+    eqMock.mockResolvedValueOnce({ error: null })
+
+    await updateCapability({ key: 'audio_reader', state: 'on' })
+
+    expect(fromMock).toHaveBeenCalledWith('capabilities')
+    expect(updateMock).toHaveBeenCalledWith({ state: 'on' })
+    expect(eqMock).toHaveBeenCalledWith('key', 'audio_reader')
+  })
+
+  test('logs and throws on a write error', async () => {
+    const error = new Error('refused')
+    eqMock.mockResolvedValueOnce({ error })
+
+    await expect(updateCapability({ key: 'audio_reader', state: 'off' })).rejects.toThrow('refused')
+    expect(loggerMock.error).toHaveBeenCalledWith('refused')
   })
 })

@@ -1,7 +1,13 @@
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
 import Admin from '@/views/admin/index.vue'
+
+const manageCapabilities = { value: false }
+
+vi.mock('@/composables/can', () => ({
+  useCan: () => ({ manageCapabilities })
+}))
 
 vi.mock('@/views/admin/feedback-page/index.vue', async () => {
   const { defineComponent, h } = await import('vue')
@@ -29,6 +35,16 @@ vi.mock('@/views/admin/color-page/roles-page.vue', async () => {
     default: defineComponent({
       name: 'RolesPage',
       setup: () => () => h('div', { 'data-testid': 'roles-page-stub' })
+    })
+  }
+})
+
+vi.mock('@/views/admin/capabilities-page/index.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'CapabilitiesPage',
+      setup: () => () => h('div', { 'data-testid': 'capabilities-page-stub' })
     })
   }
 })
@@ -65,6 +81,10 @@ function mountAdmin(close = vi.fn()) {
   }
 }
 
+beforeEach(() => {
+  manageCapabilities.value = false
+})
+
 describe('Admin — chrome', () => {
   test('passes the Admin Tools title to PagedWindow', () => {
     const { wrapper } = mountAdmin()
@@ -73,10 +93,23 @@ describe('Admin — chrome', () => {
     )
   })
 
-  test('registers three pages: feedback, palette, roles', () => {
+  test('registers three pages for a non-admin: feedback, palette, roles', () => {
+    manageCapabilities.value = false
     const { wrapper } = mountAdmin()
     const pw = wrapper.findComponent(PagedWindowStub)
     expect(pw.props('pages').map((p) => p.value)).toEqual(['feedback', 'palette', 'roles'])
+  })
+
+  test('inserts the capabilities page for an admin', () => {
+    manageCapabilities.value = true
+    const { wrapper } = mountAdmin()
+    const pw = wrapper.findComponent(PagedWindowStub)
+    expect(pw.props('pages').map((p) => p.value)).toEqual([
+      'feedback',
+      'capabilities',
+      'palette',
+      'roles'
+    ])
   })
 
   test('close event forwards to the close prop', async () => {
@@ -125,6 +158,17 @@ describe('Admin — content', () => {
     await nextTick()
 
     expect(wrapper.find('[data-testid="roles-page-stub"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(false)
+  })
+
+  test('renders the capabilities page when displayed_page is capabilities for an admin', async () => {
+    manageCapabilities.value = true
+    const { wrapper } = mountAdmin()
+    const pw = wrapper.findComponent(PagedWindowStub)
+    pw.vm.$emit('update:active', 'capabilities')
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="capabilities-page-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="feedback-page-stub"]').exists()).toBe(false)
   })
 })

@@ -37,6 +37,11 @@ export function useCan() {
   // edge functions; this gate is UX.
   const useAudioReader = computed(() => isLive('audio_reader', false) && member.role === 'admin')
 
+  // Admin-only, no moderator or local-dev carve-out — changing a capability changes
+  // production behavior for every member. Re-enforced server-side by
+  // can_manage_capabilities(); this gate is UX.
+  const manageCapabilities = computed(() => member.role === 'admin')
+
   // Open to any signed-in member in a local dev build, so a solo developer can
   // exercise moderation without seeding a role. Re-enforced server-side by
   // can_moderate_feedback() — a local developer without the role still can't write.
@@ -54,5 +59,13 @@ export function useCan() {
     return limit === null || count + adding <= limit
   }
 
-  return { useProFeature, createDeck, useCardImages, useAudioReader, moderateFeedback, addCards }
+  return {
+    useProFeature,
+    createDeck,
+    useCardImages,
+    useAudioReader,
+    manageCapabilities,
+    moderateFeedback,
+    addCards
+  }
 }
