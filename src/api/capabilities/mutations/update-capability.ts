@@ -13,10 +13,10 @@ function setCapabilityInCache(
   const snapshot = queryCache.getQueryData(cache_key) as CapabilitiesSnapshot
   if (!snapshot) return undefined
 
-  queryCache.setQueryData(
-    cache_key,
-    snapshot.map((row) => (row.key === params.key ? { ...row, state: params.state } : row))
+  const next = snapshot.map((row) =>
+    row.key === params.key ? { ...row, state: params.state } : row
   )
+  queryCache.setQueryData(cache_key, next)
 
   return snapshot
 }
