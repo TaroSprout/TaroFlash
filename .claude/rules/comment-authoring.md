@@ -46,6 +46,10 @@ JSDoc-style paragraph, however many properties in the block each want documentin
   the only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
   [K:tests-comment-collapse] A JSDoc block, a section banner, and a multi-line above-line block are
   rejected mechanically by `scripts/check-test-comment-shape.mjs`, wired as a `PreToolUse` hook.
+- **A trailing `//` on a statement with no terminating semicolon breaks ASI** — Rolldown's parser
+  joins that line to the next statement instead of ending it, a parse error `vp lint`/`vue-tsc` never
+  catch since neither runs the file through Rolldown. A single above-line `//` is the correct shape
+  there; the hook permits it, rejecting only two or more consecutive above-line comments.
 - **The same collapse governs a pgTAP file under `supabase/tests/`.** `plan()` and each assertion's
   description string carry what a file-top banner or a `-- ────` section divider would restate — the
   only shape allowed is a single trailing `--` line, same gates as anywhere else.
