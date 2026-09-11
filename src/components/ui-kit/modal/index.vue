@@ -13,7 +13,7 @@ const { modal_stack } = useModal()
 const modal_container = useTemplateRef<{ $el: HTMLElement }>('modal_container')
 const { requestClose } = useModalGuards(() => modal_container.value?.$el)
 const { receded_ids, setModalEl } = useModalRecede()
-const { onBeforeEnter, onEnter, onAfterEnter, onLeave } = useModalTransitions()
+const { onEnter, onAfterEnter, onLeave } = useModalTransitions()
 
 const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
 </script>
@@ -40,7 +40,6 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
 
   <transition-group
     :css="false"
-    @before-enter="onBeforeEnter"
     @enter="onEnter"
     @after-enter="onAfterEnter"
     @leave="onLeave"

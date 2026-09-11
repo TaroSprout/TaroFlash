@@ -1,62 +1,41 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 
 const {
-  mockSlideUpFadeIn,
-  mockSlideDownFadeOut,
-  mockSlideUpFromEdge,
-  mockSlideDownToEdge,
-  mockSpringScaleIn,
-  mockScaleFadeOut
+  mockDialogEnterMotion,
+  mockDialogLeaveMotion,
+  mockSheetEnterMotion,
+  mockSheetLeaveMotion,
+  mockPopupEnterMotion,
+  mockPopupLeaveMotion
 } = vi.hoisted(() => ({
-  mockSlideUpFadeIn: vi.fn(),
-  mockSlideDownFadeOut: vi.fn(),
-  mockSlideUpFromEdge: vi.fn(),
-  mockSlideDownToEdge: vi.fn(),
-  mockSpringScaleIn: vi.fn(),
-  mockScaleFadeOut: vi.fn()
+  mockDialogEnterMotion: vi.fn(),
+  mockDialogLeaveMotion: vi.fn(),
+  mockSheetEnterMotion: vi.fn(),
+  mockSheetLeaveMotion: vi.fn(),
+  mockPopupEnterMotion: vi.fn(),
+  mockPopupLeaveMotion: vi.fn()
 }))
 
 vi.mock('@/utils/animations/modal', () => ({
-  slideUpFadeIn: mockSlideUpFadeIn,
-  slideDownFadeOut: mockSlideDownFadeOut,
-  slideUpFromEdge: mockSlideUpFromEdge,
-  slideDownToEdge: mockSlideDownToEdge,
-  springScaleIn: mockSpringScaleIn,
-  scaleFadeOut: mockScaleFadeOut
+  dialogEnterMotion: mockDialogEnterMotion,
+  dialogLeaveMotion: mockDialogLeaveMotion,
+  sheetEnterMotion: mockSheetEnterMotion,
+  sheetLeaveMotion: mockSheetLeaveMotion,
+  popupEnterMotion: mockPopupEnterMotion,
+  popupLeaveMotion: mockPopupLeaveMotion
 }))
 
 import { MODAL_MODE_CONFIG } from '@/components/ui-kit/modal/mode-config'
 
-function reset() {
-  mockSlideUpFadeIn.mockClear()
-  mockSlideDownFadeOut.mockClear()
-  mockSlideUpFromEdge.mockClear()
-  mockSlideDownToEdge.mockClear()
-  mockSpringScaleIn.mockClear()
-  mockScaleFadeOut.mockClear()
-}
-
 describe('MODAL_MODE_CONFIG — dialog', () => {
-  test('enter always uses slideUpFadeIn regardless of is_mobile', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG.dialog.enter(el, true, done)
-    expect(mockSlideUpFadeIn).toHaveBeenCalledWith(el, done)
-
-    reset()
-    MODAL_MODE_CONFIG.dialog.enter(el, false, done)
-    expect(mockSlideUpFadeIn).toHaveBeenCalledWith(el, done)
+  test('enter resolves to dialogEnterMotion regardless of is_mobile', () => {
+    expect(MODAL_MODE_CONFIG.dialog.enter(true)).toBe(mockDialogEnterMotion)
+    expect(MODAL_MODE_CONFIG.dialog.enter(false)).toBe(mockDialogEnterMotion)
   })
 
-  test('leave always uses slideDownFadeOut regardless of is_mobile', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG.dialog.leave(el, true, done)
-    expect(mockSlideDownFadeOut).toHaveBeenCalledWith(el, done)
+  test('leave resolves to dialogLeaveMotion regardless of is_mobile', () => {
+    expect(MODAL_MODE_CONFIG.dialog.leave(true)).toBe(mockDialogLeaveMotion)
+    expect(MODAL_MODE_CONFIG.dialog.leave(false)).toBe(mockDialogLeaveMotion)
   })
 
   test('containerClass centers items', () => {
@@ -65,65 +44,35 @@ describe('MODAL_MODE_CONFIG — dialog', () => {
 })
 
 describe('MODAL_MODE_CONFIG — mobile-sheet', () => {
-  test('enter uses slideUpFromEdge when is_mobile is true', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG['mobile-sheet'].enter(el, true, done)
-
-    expect(mockSlideUpFromEdge).toHaveBeenCalledWith(el, done)
-    expect(mockSlideUpFadeIn).not.toHaveBeenCalled()
+  test('enter resolves to sheetEnterMotion when is_mobile is true', () => {
+    expect(MODAL_MODE_CONFIG['mobile-sheet'].enter(true)).toBe(mockSheetEnterMotion)
   })
 
-  test('enter uses slideUpFadeIn when is_mobile is false', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG['mobile-sheet'].enter(el, false, done)
-
-    expect(mockSlideUpFadeIn).toHaveBeenCalledWith(el, done)
-    expect(mockSlideUpFromEdge).not.toHaveBeenCalled()
+  test('enter resolves to dialogEnterMotion when is_mobile is false', () => {
+    expect(MODAL_MODE_CONFIG['mobile-sheet'].enter(false)).toBe(mockDialogEnterMotion)
   })
 
-  test('leave uses slideDownToEdge when is_mobile is true', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG['mobile-sheet'].leave(el, true, done)
-
-    expect(mockSlideDownToEdge).toHaveBeenCalledWith(el, done)
+  test('leave resolves to sheetLeaveMotion when is_mobile is true', () => {
+    expect(MODAL_MODE_CONFIG['mobile-sheet'].leave(true)).toBe(mockSheetLeaveMotion)
   })
 
-  test('leave uses slideDownFadeOut when is_mobile is false', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG['mobile-sheet'].leave(el, false, done)
-
-    expect(mockSlideDownFadeOut).toHaveBeenCalledWith(el, done)
+  test('leave resolves to dialogLeaveMotion when is_mobile is false', () => {
+    expect(MODAL_MODE_CONFIG['mobile-sheet'].leave(false)).toBe(mockDialogLeaveMotion)
   })
 })
 
 describe('MODAL_MODE_CONFIG — popup', () => {
-  test('enter always uses springScaleIn regardless of is_mobile', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    MODAL_MODE_CONFIG.popup.enter(el, true, done)
-    expect(mockSpringScaleIn).toHaveBeenCalledWith(el, done)
+  test('enter resolves to popupEnterMotion regardless of is_mobile', () => {
+    expect(MODAL_MODE_CONFIG.popup.enter(true)).toBe(mockPopupEnterMotion)
+    expect(MODAL_MODE_CONFIG.popup.enter(false)).toBe(mockPopupEnterMotion)
   })
 
-  test('leave always uses scaleFadeOut regardless of is_mobile', () => {
-    reset()
-    const el = document.createElement('div')
-    const done = vi.fn()
+  test('leave resolves to popupLeaveMotion regardless of is_mobile', () => {
+    expect(MODAL_MODE_CONFIG.popup.leave(true)).toBe(mockPopupLeaveMotion)
+    expect(MODAL_MODE_CONFIG.popup.leave(false)).toBe(mockPopupLeaveMotion)
+  })
 
-    MODAL_MODE_CONFIG.popup.leave(el, true, done)
-    expect(mockScaleFadeOut).toHaveBeenCalledWith(el, done)
+  test('containerClass centers items', () => {
+    expect(MODAL_MODE_CONFIG.popup.containerClass).toBe('items-center')
   })
 })

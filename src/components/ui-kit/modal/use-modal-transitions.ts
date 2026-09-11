@@ -7,29 +7,17 @@ function getModeConfig(el: Element) {
   return MODAL_MODE_CONFIG[mode]
 }
 
-/** Wraps a transition's `done` callback so it also clears the `will-change` hint. */
-function clearWillChangeThen(el: HTMLElement, done: () => void) {
-  return () => {
-    el.style.willChange = ''
-    done()
-  }
-}
-
 /**
  * Per-entry enter/leave transitions for the modal stack's `<transition-group>`,
- * dispatched by mode (dialog/mobile-sheet/popup) via `MODAL_MODE_CONFIG`.
+ * dispatched by mode (dialog/mobile-sheet/popup) via `MODAL_MODE_CONFIG`. Each
+ * transition runs on the motion driver, which owns the `will-change` toggle.
  * Backs `ui-kit/modal/index.vue`.
  */
 export function useModalTransitions() {
-  function onBeforeEnter(el: Element) {
-    ;(el as HTMLElement).style.willChange = 'transform, opacity'
-  }
-
   function onEnter(el: Element, done: () => void) {
-    const html_el = el as HTMLElement
     const config = getModeConfig(el)
-
-    config.enter(el, isMobileFor(el), clearWillChangeThen(html_el, done))
+    const handle = config.enter(isMobileFor(el))(el as HTMLElement)
+    void handle.done.then(done)
   }
 
   function onAfterEnter(el: Element) {
@@ -38,12 +26,10 @@ export function useModalTransitions() {
   }
 
   function onLeave(el: Element, done: () => void) {
-    const html_el = el as HTMLElement
-    html_el.style.willChange = 'transform, opacity'
-
     const config = getModeConfig(el)
-    config.leave(el, isMobileFor(el), clearWillChangeThen(html_el, done))
+    const handle = config.leave(isMobileFor(el))(el as HTMLElement)
+    void handle.done.then(done)
   }
 
-  return { onBeforeEnter, onEnter, onAfterEnter, onLeave }
+  return { onEnter, onAfterEnter, onLeave }
 }

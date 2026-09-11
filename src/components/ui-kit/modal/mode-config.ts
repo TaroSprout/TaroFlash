@@ -1,24 +1,25 @@
 import type { ModalMode } from '@/composables/modal'
+import type { Motion } from '@/utils/motion/types'
 import {
-  slideUpFadeIn,
-  slideDownFadeOut,
-  slideUpFromEdge,
-  slideDownToEdge,
-  springScaleIn,
-  scaleFadeOut
+  dialogEnterMotion,
+  dialogLeaveMotion,
+  sheetEnterMotion,
+  sheetLeaveMotion,
+  popupEnterMotion,
+  popupLeaveMotion
 } from '@/utils/animations/modal'
 
 type ModeConfig = {
   containerClass: string
-  enter(el: Element, is_mobile: boolean, done: () => void): void
-  leave(el: Element, is_mobile: boolean, done: () => void): void
+  enter(is_mobile: boolean): Motion
+  leave(is_mobile: boolean): Motion
 }
 
 export const MODAL_MODE_CONFIG: Record<ModalMode, ModeConfig> = {
   dialog: {
     containerClass: 'items-center',
-    enter: (el, _, done) => slideUpFadeIn(el, done),
-    leave: (el, _, done) => slideDownFadeOut(el, done)
+    enter: () => dialogEnterMotion,
+    leave: () => dialogLeaveMotion
   },
 
   // Static string, not a computed class — a reactive one triggers Safari's
@@ -26,15 +27,13 @@ export const MODAL_MODE_CONFIG: Record<ModalMode, ModeConfig> = {
   'mobile-sheet': {
     containerClass:
       'items-center mobile-modal:flex-col mobile-modal:overflow-y-auto mobile-modal:overscroll-y-contain mobile-modal:justify-start mobile-modal:pt-4 mobile-modal:pointer-events-auto',
-    enter: (el, is_mobile, done) =>
-      is_mobile ? slideUpFromEdge(el, done) : slideUpFadeIn(el, done),
-    leave: (el, is_mobile, done) =>
-      is_mobile ? slideDownToEdge(el, done) : slideDownFadeOut(el, done)
+    enter: (is_mobile) => (is_mobile ? sheetEnterMotion : dialogEnterMotion),
+    leave: (is_mobile) => (is_mobile ? sheetLeaveMotion : dialogLeaveMotion)
   },
 
   popup: {
     containerClass: 'items-center',
-    enter: (el, _, done) => springScaleIn(el, done),
-    leave: (el, _, done) => scaleFadeOut(el, done)
+    enter: () => popupEnterMotion,
+    leave: () => popupLeaveMotion
   }
 }
