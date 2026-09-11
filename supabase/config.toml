@@ -52,6 +52,7 @@ schema_paths = [
   "./schemas/00_extensions.sql",
   "./schemas/10_shared.sql",
   "./schemas/20_members.sql",
+  "./schemas/25_capabilities.sql",
   "./schemas/30_decks/*.sql",
   "./schemas/40_cards/*.sql",
   "./schemas/50_media.sql",

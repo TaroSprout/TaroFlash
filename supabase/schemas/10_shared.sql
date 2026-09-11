@@ -151,6 +151,45 @@ GRANT ALL ON FUNCTION public.set_member_id() TO authenticated;
 GRANT ALL ON FUNCTION public.set_member_id() TO service_role;
 
 
+-- Reads the capability row bare; no fallback — the server fails closed. →[K:capability-server-has-no-fallback]
+CREATE FUNCTION public.capability_is_live(p_key text) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select coalesce(
+    (select state = 'on' from public.capabilities where key = p_key),
+    false
+  )
+$$;
+
+
+ALTER FUNCTION public.capability_is_live(p_key text) OWNER TO postgres;
+
+
+-- SECURITY DEFINER, so not left executable by anon (guarded by pgTAP
+-- 00043_definer_function_anon_grants).
+REVOKE ALL ON FUNCTION public.capability_is_live(p_key text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.capability_is_live(p_key text) FROM anon;
+GRANT ALL ON FUNCTION public.capability_is_live(p_key text) TO authenticated;
+GRANT ALL ON FUNCTION public.capability_is_live(p_key text) TO service_role;
+
+
+CREATE FUNCTION public.can_manage_capabilities() RETURNS boolean
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  select auth_role() = 'admin'
+$$;
+
+
+ALTER FUNCTION public.can_manage_capabilities() OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.can_manage_capabilities() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.can_manage_capabilities() TO service_role;
+GRANT ALL ON FUNCTION public.can_manage_capabilities() TO authenticated;
+
+
 GRANT USAGE ON SCHEMA public TO postgres;
 GRANT USAGE ON SCHEMA public TO anon;
 GRANT USAGE ON SCHEMA public TO authenticated;

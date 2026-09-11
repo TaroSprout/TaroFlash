@@ -22,6 +22,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:card-rank-byte-collation]                   | [[cards]]              | `supabase/schemas/40_cards/`                                                                                             |
 | →[K:ownership-stamp-empty-under-service-role]   | [[members]]            | `supabase/schemas/` (`set_member_id`)                                                                                    |
 | →[K:permission-widening-ripples]                | [[permissions]]        | `supabase/schemas/` (the `can_` functions)                                                                               |
+| →[K:capability-server-has-no-fallback]          | [[capabilities]]       | `supabase/schemas/10_shared.sql` (`capability_is_live`)                                                                  |
 | →[K:media-lifetime-follows-notes]               | [[media]]              | `src/api/media/`                                                                                                         |
 | →[K:client-owns-the-schedule]                   | [[scheduling]]         | `src/views/study-session/`                                                                                               |
 | →[K:reward-tally-survives-reset]                | [[rewards]]            | `supabase/schemas/85_rewards/`                                                                                           |
