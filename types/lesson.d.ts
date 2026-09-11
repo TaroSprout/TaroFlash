@@ -8,6 +8,10 @@ type TranscriptSegment = {
   text: string
   // Target-language translation of this sentence, added after transcription.
   translation?: string
+  // Silent seconds before this sentence — the paragraph-break strength, stored on
+  // the sentence row rather than recomputed from timing. Absent on lessons that
+  // predate relational storage.
+  paragraph_gap?: number
 }
 
 type TranscriptWord = {
@@ -38,6 +42,23 @@ type LessonTranscript = {
   chapters?: TranscriptChapter[]
 }
 
+// One persisted transcript sentence, as stored in lesson_sentences. Assembled
+// back into a LessonTranscript for the reader (src/utils/lesson/transcript.ts).
+// `translation` / `readings` / `chapter_title` are null until the matching
+// enrichment phase fills them; `readings` is one entry per word, index-aligned
+// to `words`.
+type LessonSentenceRow = {
+  ordinal: number
+  start_seconds: number
+  end_seconds: number
+  text: string
+  words: TranscriptWord[]
+  paragraph_gap: number
+  translation: string | null
+  readings: (string | null)[] | null
+  chapter_title: string | null
+}
+
 // One Whisper-sized slice of the source audio. A long upload is split client-side
 // into overlapping windows; the worker transcribes them in order and stitches the
 // results back with `offset`. A short file is a single chunk pointing at
@@ -66,7 +87,9 @@ type Lesson = {
   collection_id: number
   title: string
   audio_path: string
-  transcript: LessonTranscript
+  // Assembled from the lesson's lesson_sentences rows when a single lesson is
+  // fetched for the reader; absent on a collection-list row, which never reads it.
+  transcript?: LessonTranscript
   lang?: string
   status: LessonStatus
   // Chapter order within the collection (numeric sort key, server-assigned).
