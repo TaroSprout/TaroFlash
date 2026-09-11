@@ -1,4 +1,5 @@
 import { gsap } from 'gsap'
+import { pinOutOfFlow } from '../pin-out-of-flow'
 
 const DURATION = 0.5
 const SCALE = 0.95
@@ -54,14 +55,8 @@ export function fadeScaleEnter(el: Element, done: () => void) {
 // Keep the overflow clip — while absolute, the grid resolves its height against
 // the stack and would otherwise flash a scrollbar and shift its content.
 export function fadeScaleLeave(el: Element, vp: ModeSwitchViewport, done: () => void) {
-  gsap.set(el, {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    overflow: 'hidden',
-    y: scrollCompensation(vp)
-  })
+  pinOutOfFlow(el as HTMLElement)
+  gsap.set(el, { overflow: 'hidden', y: scrollCompensation(vp) })
   gsap.to(el, {
     opacity: 0,
     scale: SCALE,
@@ -104,7 +99,8 @@ export function cancelOverlayAnimation(el: Element) {
 export function slideOverlayDown(el: Element, vp: ModeSwitchViewport, done: () => void) {
   const from = scrollCompensation(vp)
 
-  gsap.set(el, { position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 1, y: from })
+  pinOutOfFlow(el as HTMLElement)
+  gsap.set(el, { zIndex: 1, y: from })
   gsap.to(el, {
     y: from + window.innerHeight,
     opacity: from < 0 ? 0 : 1,

@@ -1,5 +1,5 @@
-import { gsap } from 'gsap'
 import { scaleFadeOut } from './modal'
+import { pinOutOfFlow } from './pin-out-of-flow'
 
 /**
  * Leave handler for a toast living inside a TransitionGroup list: freezes the
@@ -7,15 +7,7 @@ import { scaleFadeOut } from './modal'
  * into the gap immediately, then plays the shared scale-out.
  */
 export function noticeToastListLeave(el: Element, done: () => void) {
-  const { offsetTop, offsetLeft, offsetWidth, offsetHeight } = el as HTMLElement
-
-  gsap.set(el, {
-    position: 'absolute',
-    top: offsetTop,
-    left: offsetLeft,
-    width: offsetWidth,
-    height: offsetHeight
-  })
+  pinOutOfFlow(el as HTMLElement, { freeze: true })
 
   scaleFadeOut(el, done)
 }
