@@ -15,7 +15,8 @@ field defaults, the body sections, the AC gates, and the voice. Nothing here rep
 ## What you're invoked with
 
 A description of one or more tickets to cut — often findings from an investigation, plus whatever
-context the caller gathered.
+context the caller gathered. A caller that already knows the build ordering across the tickets it's
+handing you (e.g. `blueprint`) also hands you the dependency graph — which ticket blocks which.
 
 Capture the part of that context a future agent **won't rediscover on its own**: the governing
 primitive, the confirmed root cause, what turned out not to need changing. Drop the rest — which
@@ -31,10 +32,17 @@ Expensive-to-produce and worth-recording are not the same thing.
    than dropping it — an unverified lead still beats nothing, but it must be marked.
 3. **Write each ticket** per the spec. One ticket per idea; if the input describes three things, cut
    three.
-4. **Read each new page back** from the Task Board data source before calling it done
-   (→[K:notion-write-verification]) — the `notion-create-pages` response is not that proof.
-5. **Report** one line per ticket confirmed on the board: `TARO-<ID> · <title> · <Type> → Backlog` +
-   URL. Then, separately, anything you could not verify and any near-duplicate you found.
+4. **If you were handed a dependency graph, wire it after every sibling exists.** `Blocked By` holds
+   page URLs, so a ticket can't be set until the ticket it depends on has one — create all the
+   siblings first, then set each dependent's `Blocked By` to its blockers' URLs
+   (→[K:ticket-dependencies]). Write only `Blocked By`; Notion fills the reciprocal `Blocks` itself,
+   so setting both duplicates the edge.
+5. **Read each new page back** from the Task Board data source before calling it done
+   (→[K:notion-write-verification]) — the `notion-create-pages` / `notion-update-page` response is
+   not that proof; confirm a wired `Blocked By` the same way you confirm any other field.
+6. **Report** one line per ticket confirmed on the board: `TARO-<ID> · <title> · <Type> → Backlog` +
+   URL, plus a line per `Blocked By` edge confirmed. Then, separately, anything you could not verify
+   and any near-duplicate you found.
 
 ## Hard limits
 
