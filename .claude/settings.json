@@ -37,6 +37,15 @@
         ]
       },
       {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/check-test-comment-shape.mjs"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

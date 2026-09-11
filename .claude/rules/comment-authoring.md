@@ -44,6 +44,8 @@ JSDoc-style paragraph, however many properties in the block each want documentin
 - **Inside `tests/`, the position table collapses to one row.** A test's name and its `describe`/`it`
   structure already carry what a JSDoc, a file-top comment, or an above-symbol doc would elsewhere —
   the only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
+  [K:tests-comment-collapse] A JSDoc block, a section banner, and a multi-line above-line block are
+  rejected mechanically by `scripts/check-test-comment-shape.mjs`, wired as a `PreToolUse` hook.
 - **The same collapse governs a pgTAP file under `supabase/tests/`.** `plan()` and each assertion's
   description string carry what a file-top banner or a `-- ────` section divider would restate — the
   only shape allowed is a single trailing `--` line, same gates as anywhere else.
