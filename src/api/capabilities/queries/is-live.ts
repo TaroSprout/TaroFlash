@@ -4,8 +4,7 @@ import { useCapabilitiesQuery } from './capabilities'
  * The client's read layer for capabilities — every launch-flagged
  * feature asks through this.
  *
- * `isLive(key, fallback)` reads the cached capability rows: an `on` row is live,
- * anything else is not. The caller owns the fallback because only the feature
+ * The caller owns the fallback because only the feature
  * knows which way to fail before the rows load or when the read is unreachable
  * — a launch flag passes `false` to stay dark until proven live.
  * →[K:capability-server-has-no-fallback]
