@@ -135,18 +135,18 @@ const arrowStyle = computed(() => {
 })
 
 // Opacity crossfade on the driver, timed by the caller's `transition_duration`
-// (0 for an instant swap). `power2.inOut` matches the old `ease-in-out`.
+// (0 for an instant swap). `power2.inOut` matches the old `ease-in-out`. No
+// `clearOnComplete`: floating-ui positions the popover with an inline
+// `transform`, so clearing transform on settle would strip that and snap the
+// popover to the origin of its containing block.
 function fade(from: number, to: number) {
-  return motion(
-    (el, ctx) => {
-      ctx.tl.fromTo(
-        el,
-        { opacity: from },
-        { opacity: to, duration: transition_duration / 1000, ease: 'power2.inOut' }
-      )
-    },
-    { clearOnComplete: to === 1 }
-  )
+  return motion((el, ctx) => {
+    ctx.tl.fromTo(
+      el,
+      { opacity: from },
+      { opacity: to, duration: transition_duration / 1000, ease: 'power2.inOut' }
+    )
+  })
 }
 
 function onEnter(el: Element, done: () => void) {
