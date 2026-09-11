@@ -1,5 +1,5 @@
 import { gsap } from 'gsap'
-import { defineMotion } from '@/utils/motion/driver'
+import { defineMotion, motion } from '@/utils/motion/driver'
 
 const ENTER_SETTLE_DELAY = 0.033
 
@@ -119,35 +119,47 @@ const RECEDE_DURATION = 0.4
 const RECEDE_SCALE = 0.9
 const RECEDE_TRANSLATE_Y = '60px'
 
-/**
- * Dials back a modal that a new modal just opened on top of, as if a shadow fell over it.
- * Pinned-to-bottom sheets (tablet/sheet mode) nudge down instead of scaling, since scaling
- * a bottom-anchored modal reads as shrinking off-anchor rather than receding.
- */
-export function recedeModal(el: Element, is_pinned: boolean) {
-  gsap.set(el, { filter: 'brightness(1) blur(0px)' })
-  gsap.to(el, {
-    ...(is_pinned ? { translateY: RECEDE_TRANSLATE_Y } : { scale: RECEDE_SCALE }),
-    filter: 'brightness(0.8) blur(2px)',
-    duration: RECEDE_DURATION,
-    ease: 'expo.out'
-  })
+function recedeVars(is_pinned: boolean): gsap.TweenVars {
+  return is_pinned ? { translateY: RECEDE_TRANSLATE_Y } : { scale: RECEDE_SCALE }
 }
 
 /**
- * Restores a modal to full prominence once the modal above it has closed.
+ * Dials a modal's transform back when a new modal opens on top of it. Pinned-to-bottom
+ * sheets (tablet/sheet mode) nudge down instead of scaling, since scaling a bottom-anchored
+ * modal reads as shrinking off-anchor rather than receding.
  *
- * Clear the filter here as well as the transform — a settled brightness traps
- * popovers exactly like a settled transform does, so an alert opening and
- * closing over this modal would otherwise break its dropdowns for good.
- * →[K:settled-transform-traps-overlays]
+ * The dim/blur is a CSS `filter` transition keyed off `data-receded` on the host, not a
+ * tween here — a GSAP `filter` tween repaints the blur on the main thread every frame.
  */
+export function recedeModal(el: Element, is_pinned: boolean) {
+  const recede = motion(
+    (node, ctx) => {
+      ctx.tl.to(node, {
+        ...recedeVars(is_pinned),
+        duration: RECEDE_DURATION,
+        ease: 'expo.out',
+        overwrite: 'auto'
+      })
+    },
+    { clearOnComplete: false }
+  )
+
+  recede(el as HTMLElement)
+}
+
+/** Restores a modal's transform to full prominence once the modal above it has closed. */
 export function restoreModal(el: Element, is_pinned: boolean) {
-  gsap.to(el, {
-    ...(is_pinned ? { translateY: 0 } : { scale: 1 }),
-    filter: 'brightness(1) blur(0px)',
-    duration: RECEDE_DURATION,
-    ease: 'expo.out',
-    clearProps: 'transform,filter'
-  })
+  const restore = motion(
+    (node, ctx) => {
+      ctx.tl.to(node, {
+        ...(is_pinned ? { translateY: 0 } : { scale: 1 }),
+        duration: RECEDE_DURATION,
+        ease: 'expo.out',
+        overwrite: 'auto'
+      })
+    },
+    { clearOnComplete: true }
+  )
+
+  restore(el as HTMLElement)
 }

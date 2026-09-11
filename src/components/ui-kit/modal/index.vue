@@ -54,6 +54,7 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
       :key="modal.id"
       :ref="(el) => setModalEl(modal.id, el as Element | null)"
       :data-modal-id="modal.id"
+      :data-receded="receded_ids.has(modal.id)"
       data-testid="ui-kit-modal"
       class="absolute inset-0 flex justify-center pointer-events-none"
       :class="MODAL_MODE_CONFIG[modal.mode].containerClass"
@@ -76,3 +77,13 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
     </div>
   </transition-group>
 </template>
+
+<style>
+[data-testid='ui-kit-modal'] {
+  transition: filter 400ms cubic-bezier(0.16, 1, 0.3, 1); /* duration + expo.out curve of recede's driver transform */
+}
+
+[data-testid='ui-kit-modal'][data-receded='true'] {
+  filter: brightness(0.8) blur(2px);
+}
+</style>
