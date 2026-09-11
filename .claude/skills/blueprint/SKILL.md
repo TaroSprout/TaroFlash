@@ -182,6 +182,9 @@ contents with the `Artifact` tool. The plan fills the template's regions:
 Structural rules the template encodes and this run must respect:
 
 - **Hub reads as a verdict**, not a link box: proposed architecture → call + moves → open questions.
+  A proposed-architecture block running past a few sentences splits into short paragraphs or
+  subheads — never one undifferentiated block; a reader skimming the hub needs to land somewhere
+  partway through, not just at the end.
 - **Heavy vs light.** A heavy region gets its own chapter, opened in the dialog (prev/next follows
   document order). A light region gets a move line only — no chapter.
 - **A chapter leads with its forcing constraint;** detail folds beneath by facet — **Contract /
@@ -189,8 +192,11 @@ Structural rules the template encodes and this run must respect:
   the shape gives way to existing code. A recurring house rule binds to its region as a margin
   annotation (`.mrule`), not a full-flow block.
 - **`Today → Change` is an optional tool** — use it on concrete element chapters, drop it on
-  conceptual ones (plain `.prose`). Don't stack frame + box + folds by rote; every region carries
-  real prose.
+  conceptual ones (plain `.prose`).
+- **Chrome illustrates prose, it never replaces it.** A chapter assembled entirely from callouts,
+  a `Today → Change` comparator, and accordion folds, with no authored prose sentence anywhere in
+  it, is not done regardless of how many of those components it carries — prose is what makes a
+  region read as a document; the components back it up, they don't stand in for it.
 - **Boxes are earned and sparing;** keep the editorial register (restrained cards + shadow), not
   austere-flat. Plain framing headers, never clever titles.
 - **Colour = meaning** — one reserved accent for a Conflict, one open-decision mark (hollow→filled).
