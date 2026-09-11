@@ -2,51 +2,11 @@
 // no network, DB, or storage calls, so these run directly against plain data.
 
 import { assertEquals } from '@std/assert'
-import { normalizeTranscript, appendChunk, assignWordsToSegments } from './transcript-shapers.ts'
-import type { Segment, Word } from '../_shared/transcription/transcript.ts'
-
-Deno.test('normalizeTranscript: coerces {} into the full shape', () => {
-  const t = normalizeTranscript({})
-  assertEquals(t.text, '')
-  assertEquals(t.segments, [])
-  assertEquals(t.words, [])
-  assertEquals(t.chapters, undefined)
-})
-
-Deno.test('normalizeTranscript: coerces null into the full shape', () => {
-  const t = normalizeTranscript(null)
-  assertEquals(t.text, '')
-  assertEquals(t.segments, [])
-  assertEquals(t.words, [])
-  assertEquals(t.chapters, undefined)
-})
-
-Deno.test('normalizeTranscript: coerces undefined into the full shape', () => {
-  const t = normalizeTranscript(undefined)
-  assertEquals(t.text, '')
-  assertEquals(t.segments, [])
-  assertEquals(t.words, [])
-  assertEquals(t.chapters, undefined)
-})
-
-Deno.test('normalizeTranscript: preserves provided fields', () => {
-  const segments: Segment[] = [{ start: 0, end: 1, text: 'hi' }]
-  const words: Word[] = [{ word: 'hi', start: 0, end: 1 }]
-  const chapters = [{ title: 'Intro', start: 0 }]
-  const t = normalizeTranscript({ text: 'hi', segments, words, chapters })
-  assertEquals(t.text, 'hi')
-  assertEquals(t.segments, segments)
-  assertEquals(t.words, words)
-  assertEquals(t.chapters, chapters)
-})
-
-Deno.test('normalizeTranscript: leaves chapters undefined rather than defaulting it', () => {
-  const t = normalizeTranscript({ text: 'hi', segments: [], words: [] })
-  assertEquals(t.chapters, undefined)
-})
+import { appendChunk, assignWordsToSegments } from './transcript-shapers.ts'
+import type { Segment, Transcript, Word } from '../_shared/transcription/transcript.ts'
 
 Deno.test('appendChunk: an empty accumulator (boundary -Infinity) keeps everything', () => {
-  const acc = normalizeTranscript(null)
+  const acc: Transcript = { text: '', segments: [], words: [] }
   const incoming = {
     segments: [{ start: 0, end: 1, text: 'hi' }],
     words: [{ word: 'hi', start: 0, end: 1 }]
@@ -58,7 +18,7 @@ Deno.test('appendChunk: an empty accumulator (boundary -Infinity) keeps everythi
 })
 
 Deno.test('appendChunk: drops incoming segments/words before the boundary', () => {
-  const acc: ReturnType<typeof normalizeTranscript> = {
+  const acc: Transcript = {
     text: 'hi',
     segments: [{ start: 0, end: 2, text: 'hi' }],
     words: [{ word: 'hi', start: 0, end: 2 }]
@@ -85,7 +45,7 @@ Deno.test('appendChunk: drops incoming segments/words before the boundary', () =
 })
 
 Deno.test('appendChunk: rebuilds text from kept word tokens, not segment texts', () => {
-  const acc: ReturnType<typeof normalizeTranscript> = {
+  const acc: Transcript = {
     text: 'Hello ',
     segments: [{ start: 0, end: 1, text: 'Hello there' }],
     words: [
@@ -103,7 +63,7 @@ Deno.test('appendChunk: rebuilds text from kept word tokens, not segment texts',
 })
 
 Deno.test('appendChunk: cuts segments and words on the same boundary so they stay aligned', () => {
-  const acc: ReturnType<typeof normalizeTranscript> = {
+  const acc: Transcript = {
     text: 'a',
     segments: [{ start: 0, end: 5, text: 'a' }],
     words: [{ word: 'a', start: 0, end: 5 }]
@@ -132,7 +92,7 @@ Deno.test('appendChunk: cuts segments and words on the same boundary so they sta
 })
 
 Deno.test("appendChunk: spreads the accumulator's other fields through", () => {
-  const acc: ReturnType<typeof normalizeTranscript> = {
+  const acc: Transcript = {
     text: 'a',
     segments: [],
     words: [],
