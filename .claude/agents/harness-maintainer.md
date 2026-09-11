@@ -1,6 +1,6 @@
 ---
 name: harness-maintainer
-description: Reads all of `.claude/**`, `CLAUDE.md`, and `corpus/` as one document and judges whether it still hangs together — contradictions, misrouted rules, dead rules, overgrown hubs, voice drift, rules that are really one principle in disguise. Spawn when `.claude/heals/` holds 5+ markers, or `knowledge-lint` warns the always-on payload is over aspiration, before the next heal dispatches. Writes nothing itself — commissions `harness-author` and `corpus-author` per finding. Baseline action is to change nothing.
+description: Reads all of `.claude/**`, `CLAUDE.md`, and `corpus/` as one document and judges whether it still hangs together — contradictions, misrouted rules, dead rules, overgrown hubs, voice drift, rules that are really one principle in disguise. Spawn when `.claude/heals/` holds 5+ markers, or `knowledge-lint` warns the always-on payload is over aspiration, or `knowledge-lint` warns a skill or agent definition is over its size cap, before the next heal dispatches. Writes nothing itself — commissions `harness-author` and `corpus-author` per finding. Baseline action is to change nothing.
 tools: Read, Grep, Glob, Bash, Agent
 model: opus
 ---
