@@ -168,27 +168,40 @@ scratchpad, then fill it with `Edit`, never `Write`.** The copy's style block an
 the bulk of the file — carry the full design system and self-contained review layer and never
 change between runs; `Edit` can only land a diff against the marked `{{TOKENS}}` and FILL-marked
 spans, so the fixed boilerplate can't get re-authored by construction. Publish the edited copy's
-contents with the `Artifact` tool. Content
-maps onto sections the same way the old chat report did:
+contents with the `Artifact` tool. The plan fills the template's regions:
 
-1. **Target in this codebase** — the region-by-region plan: placement + constraint, contract, delta,
-   house rules bound in place. The bulk of the artifact. Group by region of the target, not
-   file-system order. A trivial region is a line; a load-bearing one gets room.
-2. **Reality conflicts** — where the shape met the ground and lost, and what to do instead. Omit if
-   none.
-3. **Open questions & assumptions** — gaps still undecided, and anything assumed rather than read or
-   confirmed. These become the artifact's per-question answer boxes.
+1. **Hub — the verdict.** A plain proposed-architecture paragraph, then the call and ≤5 ranked moves
+   (each linking its chapter), then the open questions. The hub is the whole plan at a glance — a
+   reader can stop there and know the shape.
+2. **Chapters — one per heavy region.** Each leads with its placement + the constraint that forces
+   it, then folds detail beneath by facet. Group by region of the target, not file-system order.
+3. **Linked topics — say-once.** A rule or constraint that recurs lives once as a topic and is
+   pointed at; never restated per region.
+4. **Decisions.** Open questions + assumptions become the `ch-open` chapter's answer boxes.
 
-Structural guidance the template encodes and this run must respect:
+Structural rules the template encodes and this run must respect:
 
-- **Layered altitude** — plain shape in prose; every path/contract/SQL sits one accordion down
-  (`details.code-drop`), matching the "guideline fidelity, detail one level down" stance.
-- **Auto-wired from structure** — the contents box, the callout accordions, and the per-question
-  answer boxes all generate themselves from the section/`.call`/`.decide li` markup. Author content
-  only; never hand-write the machinery.
-- **Callout palette is load-bearing** — `rule` (green, a hard constraint) / `watch` (amber, a
-  footgun) / `hazard` (red, obvious-assumption-quietly-wrong) / `note` (teal, an aside). Reuse it;
-  don't recolour.
+- **Hub reads as a verdict**, not a link box: proposed architecture → call + moves → open questions.
+- **Heavy vs light.** A heavy region gets its own chapter, opened in the dialog (prev/next follows
+  document order). A light region gets a move line only — no chapter.
+- **A chapter leads with its forcing constraint;** detail folds beneath by facet — **Contract /
+  Delta / Conflict.** Delta names the untouched boundary; add the `clash` Conflict fold only where
+  the shape gives way to existing code. A recurring house rule binds to its region as a margin
+  annotation (`.mrule`), not a full-flow block.
+- **`Today → Change` is an optional tool** — use it on concrete element chapters, drop it on
+  conceptual ones (plain `.prose`). Don't stack frame + box + folds by rote; every region carries
+  real prose.
+- **Boxes are earned and sparing;** keep the editorial register (restrained cards + shadow), not
+  austere-flat. Plain framing headers, never clever titles.
+- **Colour = meaning** — one reserved accent for a Conflict, one open-decision mark (hollow→filled).
+  Reuse it; don't recolour.
+- **Auto-wired from structure** — the moves' marks, the contents and prev/next order, the answer
+  boxes, and the single export all generate from the markup. Author content only; never hand-write
+  the machinery.
+- **One hub, one export** — every view stays in the document (a chapter is moved into the dialog and
+  back, never out), so the one export gathers all of them.
+- **Labels a reader sees are copy** — get sign-off (→[K:user-copy-signoff]); artifact chrome is not
+  app code, so no i18n.
 
 No sequence, no fixes-ordering, no estimates anywhere in the artifact. Improve the template file
 itself as the format gains features, rather than re-deriving a one-off page per run.
