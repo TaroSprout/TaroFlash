@@ -63,13 +63,15 @@ telling the user it landed or that their view is stale.
 
 ### `Status` — a `status`-type field (grouped)
 
-`On Hold` · `Backlog` · `Needs More Info` · `Ready` · `In Progress` · `Blocked` ·
+`On Hold` · `Backlog` · `Ready` · `In Progress` · `Blocked` ·
 `Review` · `Duplicate` · `Won't Do` · `Done`. A plain property write — set it directly.
 
+- **`Needs More Info` is retired** — do not set it, propose it, or query for it; a rule or skill
+  citing it is stale.
 - **`complete` group** = `Done` · `Won't Do` · `Duplicate`. A `Blocked By` blocker is cleared only
   when its status is in this group.
 - **`On Hold` = hands-off** (user-owned), same as `Assignee = Me`.
-- Lane ownership by stage: `/triage` → `Needs More Info`; `/groom` → `Ready`; `/work` claims
+- Lane ownership by stage: `/groom` pulls from `Backlog` and lands `Ready`; `/work` claims
   `Ready` → `In Progress` → `Review`. New tickets are `Backlog`.
 
 ### `Priority` — `select` (a ticket's urgency)
