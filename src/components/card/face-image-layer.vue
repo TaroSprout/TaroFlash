@@ -104,7 +104,7 @@ function onRegionPointerEnter() {
 }
 
 function onAddClick() {
-  if (addIcon.value) playButtonTap(addIcon.value, 0.35, { yoyo: true })
+  if (addIcon.value) playButtonTap(addIcon.value, { yoyo: true, duration: 0.35 })
   openPicker()
 }
 
