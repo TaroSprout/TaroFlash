@@ -1,80 +1,111 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-const { mockFromTo, mockTo } = vi.hoisted(() => ({
-  mockFromTo: vi.fn(),
-  mockTo: vi.fn()
+const { makeTimeline, timelines, mockSet } = vi.hoisted(() => {
+  const timelines = []
+  function makeTimeline() {
+    const state = { onComplete: null, calls: { to: [], fromTo: [] } }
+    const tl = {
+      to: (...args) => {
+        state.calls.to.push(args)
+        return tl
+      },
+      fromTo: (...args) => {
+        state.calls.fromTo.push(args)
+        return tl
+      },
+      call: () => tl,
+      eventCallback: (_name, cb) => {
+        state.onComplete = cb
+        return tl
+      },
+      play: () => {
+        state.onComplete?.()
+        return tl
+      },
+      progress: () => tl,
+      kill: () => tl,
+      state
+    }
+    timelines.push(tl)
+    return tl
+  }
+  const mockSet = vi.fn((target, vars) => {
+    for (const [key, value] of Object.entries(vars)) {
+      target.style[key] = typeof value === 'number' ? `${value}px` : value
+    }
+  })
+  return { makeTimeline, timelines, mockSet }
+})
+
+vi.mock('gsap', () => ({
+  gsap: { timeline: () => makeTimeline(), isTweening: vi.fn(() => false), set: mockSet }
 }))
 
-vi.mock('gsap', () => ({ gsap: { fromTo: mockFromTo, to: mockTo } }))
+const { mockUseMotionStore } = vi.hoisted(() => ({
+  mockUseMotionStore: vi.fn(() => ({ factors: { duration: 1 } }))
+}))
+vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
-import { toolbarEnter, toolbarLeave } from '@/utils/animations/toolbar-swap'
+import { toolbarSwap } from '@/utils/animations/toolbar-swap'
 
-const done = vi.fn()
-
-describe('toolbar-swap animations', () => {
+describe('toolbarSwap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    timelines.length = 0
+    mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
   })
 
-  describe('toolbarEnter', () => {
-    test('tweens opacity from 0 to 1, with no y/transform movement', () => {
+  describe('onEnter', () => {
+    test('crossfades in from opacity 0 to 1', () => {
       const el = document.createElement('div')
-      toolbarEnter(el, done)
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        { opacity: 0 },
-        expect.objectContaining({ opacity: 1 })
-      )
-      expect(mockFromTo.mock.calls[0][1]).not.toHaveProperty('y')
-      expect(mockFromTo.mock.calls[0][2]).not.toHaveProperty('y')
+      toolbarSwap.onEnter(el, vi.fn())
+
+      const [, from, to] = timelines[0].state.calls.fromTo[0]
+      expect(from).toEqual({ opacity: 0 })
+      expect(to).toMatchObject({ opacity: 1 })
     })
 
-    test('clears only the opacity inline style, not transform', () => {
+    test('resolves done once the timeline completes', async () => {
       const el = document.createElement('div')
-      toolbarEnter(el, done)
-      expect(mockFromTo.mock.calls[0][2].clearProps).toBe('opacity')
-    })
+      let resolved = false
+      const done = () => {
+        resolved = true
+      }
 
-    test('forwards done via onComplete', () => {
-      const el = document.createElement('div')
-      toolbarEnter(el, done)
-      expect(mockFromTo.mock.calls[0][2].onComplete).toBe(done)
+      toolbarSwap.onEnter(el, done)
+      expect(resolved).toBe(false)
+
+      timelines[0].play()
+      await Promise.resolve()
+
+      expect(resolved).toBe(true)
     })
   })
 
-  describe('toolbarLeave', () => {
-    test('pins the node absolute mid-leave to prevent layout jump', () => {
+  describe('onLeave', () => {
+    test('pins the leaving node out of flow before the tween runs', () => {
       const el = document.createElement('div')
-      toolbarLeave(el, done)
+      toolbarSwap.onLeave(el, vi.fn())
+
       expect(el.style.position).toBe('absolute')
-      expect(el.style.inset).toBe('0')
+      const [, vars] = timelines[0].state.calls.to[0]
+      expect(vars).toMatchObject({ opacity: 0 })
     })
 
-    test('tweens opacity to 0, with no y/transform movement', () => {
+    test('resolves done once the timeline completes', async () => {
       const el = document.createElement('div')
-      toolbarLeave(el, done)
-      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ opacity: 0 }))
-      expect(mockTo.mock.calls[0][1]).not.toHaveProperty('y')
-    })
+      let resolved = false
+      const done = () => {
+        resolved = true
+      }
 
-    test('forwards done via onComplete', () => {
-      const el = document.createElement('div')
-      toolbarLeave(el, done)
-      expect(mockTo.mock.calls[0][1].onComplete).toBe(done)
-    })
+      toolbarSwap.onLeave(el, done)
+      expect(resolved).toBe(false)
 
-    test('does not call fromTo', () => {
-      const el = document.createElement('div')
-      toolbarLeave(el, done)
-      expect(mockFromTo).not.toHaveBeenCalled()
-    })
-  })
+      timelines[0].play()
+      await Promise.resolve()
 
-  test('both use a positive duration', () => {
-    const el = document.createElement('div')
-    toolbarEnter(el, done)
-    toolbarLeave(el, done)
-    expect(mockFromTo.mock.calls[0][2].duration).toBeGreaterThan(0)
-    expect(mockTo.mock.calls[0][1].duration).toBeGreaterThan(0)
+      expect(resolved).toBe(true)
+    })
   })
 })

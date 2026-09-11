@@ -46,50 +46,40 @@ const { mockUseMotionStore } = vi.hoisted(() => ({
 }))
 vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
-import { sessionPaneEnter, sessionPaneLeave } from '@/utils/animations/session-pane'
+import { cardSlideEnter, cardSlideLeave } from '@/utils/animations/card-slide'
 
-describe('sessionPaneEnter', () => {
+describe('cardSlideEnter', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     timelines.length = 0
     mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
   })
 
-  test('pops in from scale 0.9 + opacity 0 to settled scale 1 + opacity 1', () => {
-    sessionPaneEnter()(document.createElement('div'))
+  test('forward direction primes from xPercent 100 and settles at 0', () => {
+    cardSlideEnter('forward')(document.createElement('div'))
 
     const [, from, to] = timelines[0].state.calls.fromTo[0]
-    expect(from).toEqual({ scale: 0.9, opacity: 0 })
-    expect(to).toMatchObject({ scale: 1, opacity: 1 })
+    expect(from).toEqual({ xPercent: 100 })
+    expect(to).toMatchObject({ xPercent: 0 })
   })
 
-  test('delays the pop unless instant is set', () => {
-    sessionPaneEnter()(document.createElement('div'))
-    const [, , to] = timelines[0].state.calls.fromTo[0]
-    expect(to.delay).toBeGreaterThan(0)
-  })
+  test('back direction primes from xPercent -100 and settles at 0', () => {
+    cardSlideEnter('back')(document.createElement('div'))
 
-  test('instant:true skips the delay', () => {
-    sessionPaneEnter({ instant: true })(document.createElement('div'))
-    const [, , to] = timelines[0].state.calls.fromTo[0]
-    expect(to.delay).toBe(0)
-  })
-
-  test('forwards onStart through to the tween vars', () => {
-    const onStart = vi.fn()
-    sessionPaneEnter({ onStart })(document.createElement('div'))
-    const [, , to] = timelines[0].state.calls.fromTo[0]
-    expect(to.onStart).toBe(onStart)
+    const [, from, to] = timelines[0].state.calls.fromTo[0]
+    expect(from).toEqual({ xPercent: -100 })
+    expect(to).toMatchObject({ xPercent: 0 })
   })
 
   test('resolves done once the timeline completes', async () => {
-    const handle = sessionPaneEnter()(document.createElement('div'))
+    const handle = cardSlideEnter('forward')(document.createElement('div'))
     let resolved = false
     void handle.done.then(() => {
       resolved = true
     })
     expect(resolved).toBe(false)
 
+    timelines[0].progress(1)
     timelines[0].state.onComplete()
     await handle.done
 
@@ -97,27 +87,32 @@ describe('sessionPaneEnter', () => {
   })
 })
 
-describe('sessionPaneLeave', () => {
+describe('cardSlideLeave', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     timelines.length = 0
     mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
   })
 
-  test('pins the leaving pane out of flow, height locked, before the tween runs', () => {
+  test('pins the leaving node out of flow before the tween runs', () => {
     const el = document.createElement('div')
-    Object.defineProperty(el, 'getBoundingClientRect', { value: () => ({ height: 240 }) })
-
-    sessionPaneLeave(el)
+    cardSlideLeave('forward')(el)
 
     expect(el.style.position).toBe('absolute')
-    expect(el.style.height).toBe('240px')
     const [, vars] = timelines[0].state.calls.to[0]
-    expect(vars).toMatchObject({ opacity: 0 })
+    expect(vars).toMatchObject({ xPercent: -100 })
+  })
+
+  test('back direction tweens to xPercent 100', () => {
+    const el = document.createElement('div')
+    cardSlideLeave('back')(el)
+
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars).toMatchObject({ xPercent: 100 })
   })
 
   test('resolves done once the timeline completes', async () => {
-    const handle = sessionPaneLeave(document.createElement('div'))
+    const handle = cardSlideLeave('forward')(document.createElement('div'))
     let resolved = false
     void handle.done.then(() => {
       resolved = true

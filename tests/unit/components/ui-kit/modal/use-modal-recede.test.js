@@ -5,12 +5,36 @@ import { useModalRecede } from '@/components/ui-kit/modal/use-modal-recede'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
+// recedeModal/restoreModal drive the motion driver (gsap.timeline), not gsap.set/to directly.
+const { mockTimelineTo } = vi.hoisted(() => ({ mockTimelineTo: vi.fn() }))
+
 vi.mock('gsap', () => ({
   gsap: {
     set: vi.fn(),
-    to: vi.fn()
+    to: vi.fn(),
+    isTweening: vi.fn(() => false),
+    timeline: () => {
+      const tl = {
+        to: (...args) => {
+          mockTimelineTo(...args)
+          return tl
+        },
+        fromTo: () => tl,
+        call: (fn) => {
+          fn?.()
+          return tl
+        },
+        eventCallback: () => tl,
+        play: () => tl,
+        progress: () => tl,
+        kill: () => tl
+      }
+      return tl
+    }
   }
 }))
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => ({ factors: { duration: 1 } }) }))
 
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ({ value: false })
@@ -111,7 +135,6 @@ describe('useModalRecede', () => {
 
   describe('setModalEl', () => {
     test('registering an element lets recedeModal/restoreModal run against it', async () => {
-      const gsap_module = await import('gsap')
       const { open, modal_stack } = useModal()
       const { setModalEl } = useModalRecede()
 
@@ -120,11 +143,11 @@ describe('useModalRecede', () => {
       const idA = modal_stack.value[0].id
       setModalEl(idA, document.createElement('div'))
 
+      mockTimelineTo.mockClear()
       open({})
       await nextTick()
 
-      expect(gsap_module.gsap.set).toHaveBeenCalled()
-      expect(gsap_module.gsap.to).toHaveBeenCalled()
+      expect(mockTimelineTo).toHaveBeenCalled()
     })
 
     test('setModalEl(id, null) clears the id out of receded_ids (unmount cleanup)', async () => {
