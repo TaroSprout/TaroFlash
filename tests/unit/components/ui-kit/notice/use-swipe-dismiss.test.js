@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
-import { createApp, ref } from 'vue'
+import { createApp, ref, nextTick } from 'vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -47,11 +47,21 @@ function getCallbacks() {
 afterEach(() => {
   app?.unmount()
   app = null
-  mockRegister.mockClear()
+  mockRegister.mockReset()
   gsap.set.mockClear()
   gsap.to.mockClear()
   coarseRef.value = false
 })
+
+function trackUnregisters() {
+  const unregisters = []
+  mockRegister.mockImplementation(() => {
+    const unregister = vi.fn()
+    unregisters.push(unregister)
+    return unregister
+  })
+  return unregisters
+}
 
 describe('useSwipeDismiss', () => {
   test('does not register the drag handler when the pointer is fine', () => {
@@ -148,5 +158,58 @@ describe('useSwipeDismiss', () => {
     callbacks.onEnd({ dy: 61 })
 
     expect(onDismiss).toHaveBeenCalledOnce()
+  })
+
+  test('switching the watched element from A to B unregisters A before registering B', async () => {
+    coarseRef.value = true
+    const unregisters = trackUnregisters()
+    const el_a = document.createElement('div')
+    const el_b = document.createElement('div')
+    const el_ref = ref(el_a)
+    withSetup(() => useSwipeDismiss(el_ref, { directions: ['up'], onDismiss: vi.fn() }))
+
+    expect(mockRegister).toHaveBeenCalledTimes(1)
+    expect(mockRegister.mock.calls[0][0]).toBe(el_a)
+
+    el_ref.value = el_b
+    await nextTick()
+
+    expect(unregisters[0]).toHaveBeenCalledOnce()
+    expect(mockRegister).toHaveBeenCalledTimes(2)
+    expect(mockRegister.mock.calls[1][0]).toBe(el_b)
+  })
+
+  test('switching the watched element to undefined unregisters the previous element and registers nothing new', async () => {
+    coarseRef.value = true
+    const unregisters = trackUnregisters()
+    const el_a = document.createElement('div')
+    const el_ref = ref(el_a)
+    withSetup(() => useSwipeDismiss(el_ref, { directions: ['up'], onDismiss: vi.fn() }))
+
+    el_ref.value = undefined
+    await nextTick()
+
+    expect(unregisters[0]).toHaveBeenCalledOnce()
+    expect(mockRegister).toHaveBeenCalledTimes(1)
+  })
+
+  test('cycling A→B→A registers exactly three times with no refcount accumulation', async () => {
+    coarseRef.value = true
+    const unregisters = trackUnregisters()
+    const el_a = document.createElement('div')
+    const el_b = document.createElement('div')
+    const el_ref = ref(el_a)
+    withSetup(() => useSwipeDismiss(el_ref, { directions: ['up'], onDismiss: vi.fn() }))
+
+    el_ref.value = el_b
+    await nextTick()
+    el_ref.value = el_a
+    await nextTick()
+
+    expect(mockRegister).toHaveBeenCalledTimes(3)
+    expect(unregisters).toHaveLength(3)
+    expect(unregisters[0]).toHaveBeenCalledOnce()
+    expect(unregisters[1]).toHaveBeenCalledOnce()
+    expect(unregisters[2]).not.toHaveBeenCalled()
   })
 })
