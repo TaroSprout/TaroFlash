@@ -26,9 +26,34 @@ vi.mock('gsap', () => ({
   gsap: {
     set: vi.fn(),
     fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
+    to: vi.fn((_el, opts) => opts?.onComplete?.()),
+    isTweening: vi.fn(() => false),
+    timeline: () => {
+      const state = { onComplete: null }
+      const tl = {
+        to: () => tl,
+        fromTo: () => tl,
+        call: (fn) => {
+          fn?.()
+          return tl
+        },
+        eventCallback: (_name, cb) => {
+          state.onComplete = cb
+          return tl
+        },
+        play: () => {
+          state.onComplete?.() // recede/restore drive gsap.timeline, which completes synchronously on play() within the triggering tick
+          return tl
+        },
+        progress: () => tl,
+        kill: () => tl
+      }
+      return tl
+    }
   }
 }))
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => ({ factors: { duration: 1 } }) }))
 
 const mobileBreakpointRef = ref(false)
 const mockUseMobileBreakpoint = vi.fn(() => mobileBreakpointRef)
@@ -571,6 +596,10 @@ describe('recede/restore choreography', () => {
     const entries = wrapper.findAll('[data-testid="modal-stub"]')
     expect(entries[0].element.inert).toBe(true)
     expect(entries[1].element.inert).toBe(false)
+
+    const modals = wrapper.findAll('[data-testid="ui-kit-modal"]')
+    expect(modals[0].attributes('data-receded')).toBe('true')
+    expect(modals[1].attributes('data-receded')).toBe('false')
   })
 
   test('closing the top modal restores the previously-receded one', async () => {
@@ -590,6 +619,7 @@ describe('recede/restore choreography', () => {
     const entries = wrapper.findAll('[data-testid="modal-stub"]')
     expect(entries).toHaveLength(1)
     expect(entries[0].element.inert).toBe(false)
+    expect(wrapper.find('[data-testid="ui-kit-modal"]').attributes('data-receded')).toBe('false')
   })
 
   test('a batch jump in stack size (1 → 3 in one tick) still receded everything except the top', async () => {

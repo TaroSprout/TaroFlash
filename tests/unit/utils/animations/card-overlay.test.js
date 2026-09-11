@@ -176,16 +176,15 @@ describe('card-overlay animations', () => {
     test('drops the leaving grid out of flow with scroll compensation y', () => {
       // from_y=200, settle_y=100 → scrollCompensation = 100-200 = -100
       const vp = makeVp({ from_y: 200, settle_y: 100 })
-      fadeScaleLeave(el, vp, done)
+      fadeScaleLeave(el, vp, done) // pinOutOfFlow issues its own gsap.set before the overflow/y one
 
       expect(mockSet).toHaveBeenCalledWith(el, {
         position: 'absolute',
         top: 0,
         left: 0,
-        width: '100%',
-        overflow: 'hidden',
-        y: -100
+        width: '100%'
       })
+      expect(mockSet).toHaveBeenCalledWith(el, { overflow: 'hidden', y: -100 })
     })
 
     test('fades to 0 and scales down from the top, calling done on complete', () => {
@@ -284,16 +283,15 @@ describe('card-overlay animations', () => {
     test('drops the leaving pane out of flow with scroll compensation y', () => {
       // from_y=200, settle_y=100 → scrollCompensation = -100
       const vp = makeVp({ from_y: 200, settle_y: 100 })
-      slideOverlayDown(el, vp, done)
+      slideOverlayDown(el, vp, done) // pinOutOfFlow issues its own gsap.set before the zIndex/y one
 
       expect(mockSet).toHaveBeenCalledWith(el, {
         position: 'absolute',
         top: 0,
         left: 0,
-        width: '100%',
-        zIndex: 1,
-        y: -100
+        width: '100%'
       })
+      expect(mockSet).toHaveBeenCalledWith(el, { zIndex: 1, y: -100 })
     })
 
     test('tweens y down by one innerHeight from the compensation starting point', () => {

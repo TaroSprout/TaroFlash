@@ -19,9 +19,34 @@ mockCoarse.ref = coarseRef
 vi.mock('gsap', () => ({
   gsap: {
     set: vi.fn(),
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
+    to: vi.fn((_el, opts) => opts?.onComplete?.()), // swipe-dismiss snap-back; the backdrop fade uses gsap.timeline below
+    isTweening: vi.fn(() => false),
+    timeline: () => {
+      const state = { onComplete: null }
+      const tl = {
+        to: () => tl,
+        fromTo: () => tl,
+        call: (fn) => {
+          fn?.()
+          return tl
+        },
+        eventCallback: (_name, cb) => {
+          state.onComplete = cb
+          return tl
+        },
+        play: () => {
+          state.onComplete?.()
+          return tl
+        },
+        progress: () => tl,
+        kill: () => tl
+      }
+      return tl
+    }
   }
 }))
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => ({ factors: { duration: 1 } }) }))
 
 const UiIconStub = defineComponent({
   name: 'UiIcon',
@@ -98,6 +123,15 @@ describe('NoticePanel', () => {
   test('close button is present when notice.closable is true', async () => {
     const wrapper = await mountPanel(makeNotice({ closable: true }))
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
+  })
+
+  test('the backdrop renders with no Vue transition class once its enter fade resolves', async () => {
+    const wrapper = await mountPanel(makeNotice({ backdrop: true }))
+
+    const backdrop = wrapper.find('[data-testid="ui-kit-notice-panel-backdrop"]')
+    expect(backdrop.exists()).toBe(true)
+    const classes = backdrop.classes()
+    expect(classes.some((c) => c.startsWith('v-enter') || c.startsWith('v-leave'))).toBe(false)
   })
 
   test('stamps the constant data-station="float"', async () => {

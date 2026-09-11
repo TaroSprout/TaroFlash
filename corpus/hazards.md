@@ -41,6 +41,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:deck-temp-card-handoff]                     | [[deck-card-editor]]   | `src/views/deck/composables/virtual-list.ts`                                                                             |
 | →[K:deck-editor-focus-claim]                    | [[deck-card-editor]]   | `src/views/deck/composables/list-controller.ts`, `src/views/deck/card-editor/list-item-card.vue`                         |
 | →[K:settled-transform-traps-overlays]           | [[layering]]           | `src/utils/animations/`                                                                                                  |
+| →[K:floating-ui-owns-its-position-transform]    | [[layering]]           | `src/components/ui-kit/popover.vue`                                                                                      |
 | →[K:ios-audio-interruption]                     | [[sound]]              | `src/sfx/`                                                                                                               |
 | →[K:dock-height-single-owner]                   | [[mobile-dock]]        | `src/components/mobile-dock/`, `src/composables/ui/animated-height.ts`, `src/components/layout-kit/crossfade-resize.vue` |
 | →[K:dock-edge-inset-follows-flush]              | [[mobile-dock]]        | `src/components/mobile-dock/mobile-dock-host.vue`                                                                        |

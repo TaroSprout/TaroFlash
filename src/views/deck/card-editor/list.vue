@@ -149,7 +149,7 @@ defineExpose({ scrollToCard })
       >
         <div
           data-testid="card-list__row-inner"
-          class="flex justify-center will-change-transform"
+          class="flex justify-center"
           :class="{
             'transition-transform duration-150 ease-out': reorder.shouldTransition(vrow.index),
             'cursor-grabbing': vrow.index === reorder.dragging_index.value

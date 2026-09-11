@@ -4,8 +4,8 @@ const DURATION = 0.22
 const SLIDE_OFFSET = 16
 const SCALE_OUT = 0.92
 
-/** Default action stack — scale + fade in. Pair with `defaultLeave`. */
-export function defaultEnter(el: Element, done: () => void) {
+/** Scale + fade in. Pair with `scaleFadeLeave`. */
+export function scaleFadeEnter(el: Element, done: () => void) {
   gsap.fromTo(
     el,
     { opacity: 0, scale: SCALE_OUT },
@@ -20,8 +20,8 @@ export function defaultEnter(el: Element, done: () => void) {
   )
 }
 
-/** Default action stack — scale + fade out as bulk slides over it. */
-export function defaultLeave(el: Element, done: () => void) {
+/** Scale + fade out as the incoming stack slides over it. */
+export function scaleFadeLeave(el: Element, done: () => void) {
   gsap.to(el, {
     opacity: 0,
     scale: SCALE_OUT,
@@ -31,8 +31,8 @@ export function defaultLeave(el: Element, done: () => void) {
   })
 }
 
-/** Bulk stack — slide up from below + fade in. Pair with `bulkLeave`. */
-export function bulkEnter(el: Element, done: () => void) {
+/** Rise up from below + fade in. Pair with `riseFadeLeave`. */
+export function riseFadeEnter(el: Element, done: () => void) {
   gsap.fromTo(
     el,
     { opacity: 0, y: SLIDE_OFFSET },
@@ -47,8 +47,8 @@ export function bulkEnter(el: Element, done: () => void) {
   )
 }
 
-/** Bulk stack — slide back down + fade out. */
-export function bulkLeave(el: Element, done: () => void) {
+/** Sink back down + fade out. */
+export function riseFadeLeave(el: Element, done: () => void) {
   gsap.to(el, {
     opacity: 0,
     y: SLIDE_OFFSET,

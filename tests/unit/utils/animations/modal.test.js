@@ -3,7 +3,7 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 const { makeTimeline, timelines, mockIsTweening, mockSet, mockTo } = vi.hoisted(() => {
   const timelines = []
   function makeTimeline() {
-    const state = { calls: { to: [], fromTo: [] } }
+    const state = { onComplete: null, calls: { to: [], fromTo: [] } }
     const tl = {
       to: (...args) => {
         state.calls.to.push(args)
@@ -14,7 +14,10 @@ const { makeTimeline, timelines, mockIsTweening, mockSet, mockTo } = vi.hoisted(
         return tl
       },
       call: () => tl,
-      eventCallback: () => tl,
+      eventCallback: (_name, cb) => {
+        state.onComplete = cb
+        return tl
+      },
       play: () => tl,
       progress: () => tl,
       kill: () => tl,
@@ -263,66 +266,52 @@ describe('modal animations', () => {
   })
 
   describe('recedeModal', () => {
-    test('seeds filter to brightness(1) blur(0px) before tweening', () => {
+    test('applies a scale-down transform (not translateY) via the driver when not pinned', () => {
       recedeModal(el, false)
 
-      expect(mockSet).toHaveBeenCalledWith(el, { filter: 'brightness(1) blur(0px)' })
-    })
-
-    test('seeding happens before the tween is issued', () => {
-      recedeModal(el, false)
-
-      const setOrder = mockSet.mock.invocationCallOrder[0]
-      const toOrder = mockTo.mock.invocationCallOrder[0]
-      expect(setOrder).toBeLessThan(toOrder)
-    })
-
-    test('tweens scale down (not translateY) and dims/blurs via filter when not pinned', () => {
-      recedeModal(el, false)
-
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars).toMatchObject({ scale: 0.9, filter: 'brightness(0.8) blur(2px)' })
+      const [, vars] = timelines[0].state.calls.to[0]
+      expect(vars).toMatchObject({ scale: 0.9 })
       expect(vars).not.toHaveProperty('translateY')
     })
 
-    test('tweens translateY (not scale) and still dims/blurs via filter when pinned', () => {
+    test('applies a translateY transform (not scale) via the driver when pinned', () => {
       recedeModal(el, true)
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars).toMatchObject({ translateY: '60px', filter: 'brightness(0.8) blur(2px)' })
+      const [, vars] = timelines[0].state.calls.to[0]
+      expect(vars).toMatchObject({ translateY: '60px' })
       expect(vars).not.toHaveProperty('scale')
     })
 
-    test('does not clear props — a receded modal stays dimmed/blurred until restored', () => {
+    test('does not clear the transform on completion — a receded modal stays transformed until restored', () => {
       recedeModal(el, false)
+      timelines[0].state.onComplete()
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars.clearProps).toBeUndefined()
+      expect(mockSet).not.toHaveBeenCalledWith(el, { clearProps: 'transform,opacity' })
     })
   })
 
   describe('restoreModal', () => {
-    test('tweens scale (not translateY) back to full prominence when not pinned', () => {
+    test('tweens scale (not translateY) back to full prominence via the driver when not pinned', () => {
       restoreModal(el, false)
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars).toMatchObject({ scale: 1, filter: 'brightness(1) blur(0px)' })
+      const [, vars] = timelines[0].state.calls.to[0]
+      expect(vars).toMatchObject({ scale: 1 })
       expect(vars).not.toHaveProperty('translateY')
     })
 
-    test('tweens translateY (not scale) back to full prominence when pinned', () => {
+    test('tweens translateY (not scale) back to full prominence via the driver when pinned', () => {
       restoreModal(el, true)
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars).toMatchObject({ translateY: 0, filter: 'brightness(1) blur(0px)' })
+      const [, vars] = timelines[0].state.calls.to[0]
+      expect(vars).toMatchObject({ translateY: 0 })
       expect(vars).not.toHaveProperty('scale')
     })
 
-    test('clears both the settled transform and filter, unlike recedeModal', () => {
+    test('clears the transform via the driver on completion, unlike recedeModal', () => {
       restoreModal(el, false)
+      timelines[0].state.onComplete()
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars.clearProps).toBe('transform,filter')
+      expect(mockSet).toHaveBeenCalledWith(el, { clearProps: 'transform,opacity' })
     })
   })
 

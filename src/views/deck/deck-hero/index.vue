@@ -9,7 +9,12 @@ import { computed, inject } from 'vue'
 import { cardEditorKey } from '@/views/deck/composables'
 import { deckViewShellKey } from '@/views/deck/composables/view-shell'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { defaultEnter, defaultLeave, bulkEnter, bulkLeave } from '@/utils/animations/actions-swap'
+import {
+  scaleFadeEnter,
+  scaleFadeLeave,
+  riseFadeEnter,
+  riseFadeLeave
+} from '@/utils/animations/actions-swap'
 
 type DeckHeroProps = {
   deck: Deck
@@ -46,7 +51,7 @@ const panel = computed(() => {
     >
       <deck-details :deck="deck" />
 
-      <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
+      <Transition :css="false" @enter="scaleFadeEnter" @leave="scaleFadeLeave">
         <mode-import v-if="panel === 'import'" class="max-md:hidden" />
       </Transition>
 
@@ -55,7 +60,7 @@ const panel = computed(() => {
         data-testid="deck-hero__actions-wrap"
         class="grid w-full items-start pb-0.5"
       >
-        <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
+        <Transition :css="false" @enter="scaleFadeEnter" @leave="scaleFadeLeave">
           <actions
             v-if="panel === 'actions'"
             class="col-start-1 row-start-1"
@@ -64,11 +69,11 @@ const panel = computed(() => {
           />
         </Transition>
 
-        <Transition :css="false" @enter="bulkEnter" @leave="bulkLeave">
+        <Transition :css="false" @enter="riseFadeEnter" @leave="riseFadeLeave">
           <bulk-actions v-if="panel === 'bulk-actions'" class="col-start-1 row-start-1" />
         </Transition>
 
-        <Transition :css="false" @enter="defaultEnter" @leave="defaultLeave">
+        <Transition :css="false" @enter="scaleFadeEnter" @leave="scaleFadeLeave">
           <import-panel v-if="panel === 'import'" class="col-start-1 row-start-1 max-md:hidden" />
         </Transition>
       </div>

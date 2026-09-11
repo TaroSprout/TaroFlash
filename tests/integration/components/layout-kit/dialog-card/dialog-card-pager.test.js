@@ -4,26 +4,22 @@ import { defineComponent, h } from 'vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
-// Mirrors the real session-pane animation hooks' call shape
-// (el, done, { instant?, onStart? }?)
-// so dialog-card-pager's own onEnter/onLeave wiring is under direct test —
-// the underlying tween math itself is covered in
-// tests/unit/utils/animations/session-pane.test.js.
 
-// onComplete resolves on a microtask, not synchronously — a real GSAP tween
-// never completes within the same call stack as the leave hook, and calling
-// done() synchronously during a real (unstubbed) unmount transition crashes
-// Vue's internal removal bookkeeping (`afterLeave` reads a detached parentNode).
-const { mockSessionPaneEnter, mockSessionPaneLeave } = vi.hoisted(() => ({
-  mockSessionPaneEnter: vi.fn((_el, done, options) => {
-    Promise.resolve().then(() => {
-      options?.onStart?.()
-      done()
-    })
-  }),
-  mockSessionPaneLeave: vi.fn((_el, done) => {
-    Promise.resolve().then(() => done())
+function fakeHandle(onStart) {
+  let resolveDone
+  const done = new Promise((resolve) => {
+    resolveDone = resolve
   })
+  Promise.resolve().then(() => {
+    onStart?.()
+    resolveDone() // resolves done on a microtask — a synchronous done() during unmount crashes Vue's afterLeave
+  })
+  return { done }
+}
+
+const { mockSessionPaneEnter, mockSessionPaneLeave } = vi.hoisted(() => ({
+  mockSessionPaneEnter: vi.fn((options) => vi.fn((_el) => fakeHandle(options?.onStart))),
+  mockSessionPaneLeave: vi.fn((_el) => fakeHandle())
 }))
 
 vi.mock('@/utils/animations/session-pane', () => ({

@@ -118,12 +118,12 @@ function returnToTermCard() {
 
 function onSlideEnter(el: Element, done: () => void) {
   sliding.value = true
-  cardSlideEnter(slide_direction.value)(el, done)
+  void cardSlideEnter(slide_direction.value)(el as HTMLElement).done.then(done)
 }
 
 function onSlideLeave(el: Element, done: () => void) {
   sliding.value = true
-  cardSlideLeave(slide_direction.value)(el, done)
+  void cardSlideLeave(slide_direction.value)(el as HTMLElement).done.then(done)
 }
 
 function onSlideAfterEnter() {

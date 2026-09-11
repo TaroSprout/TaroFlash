@@ -91,7 +91,6 @@ function onCreateDeckClicked() {
         @pointerdown="!deck.pending && reorder.onItemPointerdown(index, $event)"
       >
         <div
-          class="will-change-transform"
           :class="{ 'transition-transform duration-150 ease-out': reorder.shouldTransition(index) }"
           :style="{ transform: reorder.dragTransform(index) }"
         >

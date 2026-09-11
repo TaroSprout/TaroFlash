@@ -55,7 +55,7 @@ function onLeave(el: Element, done: () => void) {
     data-testid="dropdown-button__trigger-wrap"
     @click.stop="!disabled && emit('toggle')"
   >
-    <transition mode="out-in" @enter="onEnter" @leave="onLeave">
+    <transition :css="false" mode="out-in" @enter="onEnter" @leave="onLeave">
       <span
         :key="String(open)"
         role="button"

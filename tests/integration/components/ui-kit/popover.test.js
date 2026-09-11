@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
 import { useFloating } from '@floating-ui/vue'
 import UiPopover from '@/components/ui-kit/popover.vue'
@@ -381,6 +381,39 @@ describe('UiPopover', () => {
       const wrapper = mountPopover({ open: true, teleport: false })
       const panel = wrapper.find('[data-testid="ui-kit-popover"]')
       expect(panel.attributes('data-palette')).toBeUndefined()
+    })
+  })
+
+  describe('driver-based fade transition', () => {
+    test('a transition_duration of 0 completes the enter fade instantly', async () => {
+      const wrapper = mountPopover({ open: false, mode: 'click', transition_duration: 0 })
+      await wrapper.setProps({ open: true })
+      await flushPromises()
+
+      const panel = wrapper.find('[data-testid="ui-kit-popover"]')
+      expect(panel.exists()).toBe(true)
+      expect(getComputedStyle(panel.element).opacity).toBe('1')
+    })
+
+    test('the popover panel never carries a Vue transition class', async () => {
+      const wrapper = mountPopover({ open: false, mode: 'click', transition_duration: 0 })
+      await wrapper.setProps({ open: true })
+      await flushPromises()
+
+      const panel = wrapper.find('[data-testid="ui-kit-popover"]')
+      const classes = panel.classes()
+      expect(classes.some((c) => c.startsWith('v-enter') || c.startsWith('v-leave'))).toBe(false)
+    })
+
+    test('closing resolves the leave fade and removes the panel from the DOM', async () => {
+      const wrapper = mountPopover({ open: true, mode: 'click', transition_duration: 0 })
+      await flushPromises()
+      expect(wrapper.find('[data-testid="ui-kit-popover"]').exists()).toBe(true)
+
+      await wrapper.setProps({ open: false })
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="ui-kit-popover"]').exists()).toBe(false)
     })
   })
 })
