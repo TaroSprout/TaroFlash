@@ -47,13 +47,10 @@ export function appendChunk(
 
 // Which words fall under each segment in [from, to) — a word belongs to segment
 // `i` when its start falls in that segment's span; the first segment also claims
-// words before it, the last claims words after it. The reader groups words under
-// sentences by the same rule (src/utils/transcript.ts's inSegment), but nothing
-// ties the two together today.
-// [K:gap: the worker's word→segment assignment (assignWordsToSegments) and the
-// reader's equivalent (inSegment in src/utils/transcript.ts) implement the same
-// rule with no shared knowledge entry linking them, so editing one doesn't
-// surface the other]
+// words before it, the last claims words after it. The reader (src/utils/transcript.ts's
+// inSegment) applies this same rule independently — change a boundary here and
+// change it there too, or the two disagree on which segment a word belongs to.
+// →[K:segment-assignment-duplicated]
 export function assignWordsToSegments(
   words: Word[],
   segments: Segment[],

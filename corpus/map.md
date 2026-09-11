@@ -28,7 +28,7 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 ## media
 
 - [[media]] — files vs. the notes that keep them alive; lazy hourly cleanup ⚠️
-- [[audio-generation]] — a durable step-chain turns a lesson recording into a transcript ⚠️
+- [[audio-generation]] — a durable step-chain turns a lesson recording into a transcript; the word→segment grouping rule is written twice, worker and reader, with nothing keeping them in step ⚠️
 
 ## members
 

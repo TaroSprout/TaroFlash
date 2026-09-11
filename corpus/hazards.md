@@ -19,6 +19,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:return-destination-open-redirect]           | [[return-destination]] | `src/composables/auth/`                                                                                                  |
 | →[K:oauth-popup-loses-its-opener]               | [[sessions]]           | `src/api/session.ts`                                                                                                     |
 | →[K:stall-reaper-strands-slow-jobs]             | [[audio-generation]]   | `supabase/functions/transcribe-lesson/`                                                                                  |
+| →[K:segment-assignment-duplicated]              | [[audio-generation]]   | `supabase/functions/transcribe-lesson/transcript-shapers.ts`, `src/utils/transcript.ts`                                  |
 | →[K:card-rank-byte-collation]                   | [[cards]]              | `supabase/schemas/40_cards/`                                                                                             |
 | →[K:ownership-stamp-empty-under-service-role]   | [[members]]            | `supabase/schemas/` (`set_member_id`)                                                                                    |
 | →[K:permission-widening-ripples]                | [[permissions]]        | `supabase/schemas/` (the `can_` functions)                                                                               |
