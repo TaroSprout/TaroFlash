@@ -1,11 +1,45 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-const { mockSet, mockTo } = vi.hoisted(() => ({
-  mockSet: vi.fn(),
-  mockTo: vi.fn()
+const { makeTimeline, timelines, mockIsTweening, mockSet, mockTo } = vi.hoisted(() => {
+  const timelines = []
+  function makeTimeline() {
+    const state = { calls: { to: [], fromTo: [] } }
+    const tl = {
+      to: (...args) => {
+        state.calls.to.push(args)
+        return tl
+      },
+      fromTo: (...args) => {
+        state.calls.fromTo.push(args)
+        return tl
+      },
+      call: () => tl,
+      eventCallback: () => tl,
+      play: () => tl,
+      progress: () => tl,
+      kill: () => tl,
+      state
+    }
+    timelines.push(tl)
+    return tl
+  }
+  return {
+    makeTimeline,
+    timelines,
+    mockIsTweening: vi.fn(() => false),
+    mockSet: vi.fn(),
+    mockTo: vi.fn()
+  }
+})
+
+vi.mock('gsap', () => ({
+  gsap: { set: mockSet, to: mockTo, timeline: () => makeTimeline(), isTweening: mockIsTweening }
 }))
 
-vi.mock('gsap', () => ({ gsap: { set: mockSet, to: mockTo } }))
+const { mockUseMotionStore } = vi.hoisted(() => ({
+  mockUseMotionStore: vi.fn(() => ({ factors: { duration: 1 } }))
+}))
+vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
 import {
   slideUpFadeIn,
@@ -15,7 +49,13 @@ import {
   springScaleIn,
   scaleFadeOut,
   recedeModal,
-  restoreModal
+  restoreModal,
+  dialogEnterMotion,
+  dialogLeaveMotion,
+  sheetEnterMotion,
+  sheetLeaveMotion,
+  popupEnterMotion,
+  popupLeaveMotion
 } from '@/utils/animations/modal'
 
 const el = document.createElement('div')
@@ -24,6 +64,9 @@ const done = vi.fn()
 describe('modal animations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    timelines.length = 0
+    mockIsTweening.mockReturnValue(false)
+    mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
   })
 
   describe('slideUpFadeIn', () => {
@@ -280,6 +323,67 @@ describe('modal animations', () => {
 
       const [, vars] = mockTo.mock.calls[0]
       expect(vars.clearProps).toBe('transform,filter')
+    })
+  })
+
+  describe('dialogEnterMotion', () => {
+    test('primes 200px below with opacity 0 and tweens to rest with opacity 1', () => {
+      dialogEnterMotion(el)
+
+      const [, from, to] = timelines[0].state.calls.fromTo[0]
+      expect(from).toEqual({ translateY: '200px', opacity: 0 })
+      expect(to).toMatchObject({ translateY: 0, opacity: 1 })
+    })
+  })
+
+  describe('dialogLeaveMotion', () => {
+    test('tweens down to 200px with opacity 0, without a from placement', () => {
+      dialogLeaveMotion(el)
+
+      expect(timelines[0].state.calls.fromTo).toHaveLength(0)
+      const [, to] = timelines[0].state.calls.to[0]
+      expect(to).toMatchObject({ translateY: '200px', opacity: 0 })
+    })
+  })
+
+  describe('sheetEnterMotion', () => {
+    test('primes 100% translateY and tweens to rest, opacity untouched', () => {
+      sheetEnterMotion(el)
+
+      const [, from, to] = timelines[0].state.calls.fromTo[0]
+      expect(from).toEqual({ translateY: '100%' })
+      expect(to).toMatchObject({ translateY: 0 })
+      expect(to.opacity).toBeUndefined()
+    })
+  })
+
+  describe('sheetLeaveMotion', () => {
+    test('tweens down to 100% translateY, without a from placement', () => {
+      sheetLeaveMotion(el)
+
+      expect(timelines[0].state.calls.fromTo).toHaveLength(0)
+      const [, to] = timelines[0].state.calls.to[0]
+      expect(to).toMatchObject({ translateY: '100%' })
+    })
+  })
+
+  describe('popupEnterMotion', () => {
+    test('primes scale 0.8 with opacity 0 and tweens to scale 1 opacity 1', () => {
+      popupEnterMotion(el)
+
+      const [, from, to] = timelines[0].state.calls.fromTo[0]
+      expect(from).toEqual({ scale: 0.8, opacity: 0 })
+      expect(to).toMatchObject({ scale: 1, opacity: 1 })
+    })
+  })
+
+  describe('popupLeaveMotion', () => {
+    test('tweens down to scale 0.8 with opacity 0, without a from placement', () => {
+      popupLeaveMotion(el)
+
+      expect(timelines[0].state.calls.fromTo).toHaveLength(0)
+      const [, to] = timelines[0].state.calls.to[0]
+      expect(to).toMatchObject({ scale: 0.8, opacity: 0 })
     })
   })
 })

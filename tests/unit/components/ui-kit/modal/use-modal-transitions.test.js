@@ -8,64 +8,123 @@ vi.mock('@/composables/modal', () => ({
   resolveModalAfterEnter: mockResolveModalAfterEnter
 }))
 
-const { mockDialogEnter, mockDialogLeave } = vi.hoisted(() => ({
-  mockDialogEnter: vi.fn((_el, _is_mobile, done) => done()),
-  mockDialogLeave: vi.fn((_el, _is_mobile, done) => done())
-}))
-
-vi.mock('@/components/ui-kit/modal/mode-config', () => ({
-  MODAL_MODE_CONFIG: {
-    dialog: { enter: mockDialogEnter, leave: mockDialogLeave }
-  }
+const { mockIsMobileFor } = vi.hoisted(() => ({
+  mockIsMobileFor: vi.fn(() => false)
 }))
 
 vi.mock('@/components/ui-kit/modal/mobile-below', () => ({
   DEFAULT_MODE: 'dialog',
-  isMobileFor: vi.fn(() => false)
+  isMobileFor: mockIsMobileFor
 }))
 
+// A fake `Motion` factory: `enter`/`leave` are spies returning another spy (the
+// invokable motion) that produces a handle whose `done` only resolves when the
+// test calls `resolve()` — mirrors how the real motion driver settles.
+const { registry, makeConfig } = vi.hoisted(() => {
+  const registry = { handles: [] }
+  function motionFor() {
+    return vi.fn(() =>
+      vi.fn((el) => {
+        let resolve
+        const done = new Promise((r) => {
+          resolve = r
+        })
+        const handle = { done, resolve, el }
+        registry.handles.push(handle)
+        return handle
+      })
+    )
+  }
+  function makeConfig() {
+    return {
+      dialog: { enter: motionFor(), leave: motionFor() },
+      'mobile-sheet': { enter: motionFor(), leave: motionFor() },
+      popup: { enter: motionFor(), leave: motionFor() }
+    }
+  }
+  return { registry, makeConfig }
+})
+
+vi.mock('@/components/ui-kit/modal/mode-config', () => ({ MODAL_MODE_CONFIG: makeConfig() }))
+
 import { useModalTransitions } from '@/components/ui-kit/modal/use-modal-transitions'
+import { MODAL_MODE_CONFIG } from '@/components/ui-kit/modal/mode-config'
+
+function elWithMode(mode) {
+  const el = document.createElement('div')
+  if (mode) el.dataset.modalMode = mode
+  return el
+}
 
 beforeEach(() => {
   mockResolveModalAfterEnter.mockClear()
-  mockDialogEnter.mockClear()
-  mockDialogLeave.mockClear()
+  mockIsMobileFor.mockClear()
+  mockIsMobileFor.mockReturnValue(false)
+  registry.handles.length = 0
+  for (const config of Object.values(MODAL_MODE_CONFIG)) {
+    config.enter.mockClear()
+    config.leave.mockClear()
+  }
 })
 
-describe('useModalTransitions', () => {
-  test('onBeforeEnter sets the will-change hint for transform + opacity', () => {
-    const { onBeforeEnter } = useModalTransitions()
-    const el = document.createElement('div')
-
-    onBeforeEnter(el)
-
-    expect(el.style.willChange).toBe('transform, opacity')
-  })
-
-  test('onEnter dispatches to the mode config resolved from data-modal-mode', () => {
+describe.each([
+  ['dialog', false],
+  ['mobile-sheet', false],
+  ['mobile-sheet', true],
+  ['popup', false]
+])('mode "%s", is_mobile %s', (mode, is_mobile) => {
+  test('onEnter dispatches to the resolved mode config with the current is_mobile flag and resolves done on settle', async () => {
+    mockIsMobileFor.mockReturnValue(is_mobile)
     const { onEnter } = useModalTransitions()
-    const el = document.createElement('div')
-    el.dataset.modalMode = 'dialog'
+    const el = elWithMode(mode)
     const done = vi.fn()
 
     onEnter(el, done)
 
-    expect(mockDialogEnter).toHaveBeenCalledWith(el, false, expect.any(Function))
-  })
+    expect(MODAL_MODE_CONFIG[mode].enter).toHaveBeenCalledWith(is_mobile)
+    const handle = registry.handles.at(-1)
+    expect(handle.el).toBe(el)
+    expect(done).not.toHaveBeenCalled()
 
-  test('onEnter clears the will-change hint and calls done once the mode config settles', () => {
-    const { onEnter } = useModalTransitions()
-    const el = document.createElement('div')
-    el.style.willChange = 'transform, opacity'
-    const done = vi.fn()
+    handle.resolve()
+    await handle.done
 
-    onEnter(el, done)
-
-    expect(el.style.willChange).toBe('')
     expect(done).toHaveBeenCalledOnce()
   })
 
-  test('onAfterEnter resolves the after-enter promise for the element data-modal-id', () => {
+  test('onLeave dispatches to the resolved mode config with the current is_mobile flag and resolves done on settle', async () => {
+    mockIsMobileFor.mockReturnValue(is_mobile)
+    const { onLeave } = useModalTransitions()
+    const el = elWithMode(mode)
+    const done = vi.fn()
+
+    onLeave(el, done)
+
+    expect(MODAL_MODE_CONFIG[mode].leave).toHaveBeenCalledWith(is_mobile)
+    const handle = registry.handles.at(-1)
+    expect(handle.el).toBe(el)
+    expect(done).not.toHaveBeenCalled()
+
+    handle.resolve()
+    await handle.done
+
+    expect(done).toHaveBeenCalledOnce()
+  })
+})
+
+describe('onEnter falling back to the default mode', () => {
+  test('uses the dialog config when data-modal-mode is absent', () => {
+    const { onEnter } = useModalTransitions()
+    const el = elWithMode(undefined)
+
+    onEnter(el, vi.fn())
+
+    expect(MODAL_MODE_CONFIG.dialog.enter).toHaveBeenCalled()
+  })
+})
+
+describe('onAfterEnter', () => {
+  test('resolves the after-enter promise for the element data-modal-id', () => {
     const { onAfterEnter } = useModalTransitions()
     const el = document.createElement('div')
     el.dataset.modalId = 'modal-123'
@@ -75,38 +134,12 @@ describe('useModalTransitions', () => {
     expect(mockResolveModalAfterEnter).toHaveBeenCalledWith('modal-123')
   })
 
-  test('onAfterEnter is a no-op when the element has no data-modal-id', () => {
+  test('is a no-op when the element has no data-modal-id', () => {
     const { onAfterEnter } = useModalTransitions()
     const el = document.createElement('div')
 
     onAfterEnter(el)
 
     expect(mockResolveModalAfterEnter).not.toHaveBeenCalled()
-  })
-
-  test('onLeave sets the will-change hint before dispatching to the mode config', () => {
-    const { onLeave } = useModalTransitions()
-    const el = document.createElement('div')
-    el.dataset.modalMode = 'dialog'
-    const done = vi.fn()
-
-    mockDialogLeave.mockImplementationOnce((leave_el) => {
-      expect(leave_el.style.willChange).toBe('transform, opacity')
-    })
-
-    onLeave(el, done)
-
-    expect(mockDialogLeave).toHaveBeenCalledWith(el, false, expect.any(Function))
-  })
-
-  test('onLeave clears the will-change hint and calls done once the mode config settles', () => {
-    const { onLeave } = useModalTransitions()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    onLeave(el, done)
-
-    expect(el.style.willChange).toBe('')
-    expect(done).toHaveBeenCalledOnce()
   })
 })
