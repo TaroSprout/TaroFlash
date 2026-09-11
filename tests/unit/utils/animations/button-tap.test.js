@@ -1,96 +1,185 @@
-import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 
-const { mockTo, mockTimeline, mockTimelineCall } = vi.hoisted(() => {
-  const mockTimelineCall = vi.fn()
-  return {
-    mockTo: vi.fn((_el, opts) => opts?.onComplete?.()),
-    mockTimelineCall,
-    mockTimeline: vi.fn(() => {
-      const tl = {}
-      tl.to = vi.fn(() => tl)
-      tl.call = vi.fn((fn) => {
-        mockTimelineCall(fn)
-        fn?.()
+const { makeTimeline, timelines, mockIsTweening, mockSet } = vi.hoisted(() => {
+  const timelines = []
+  function makeTimeline() {
+    const state = { onComplete: null, calls: { to: [], call: [] }, killed: false }
+    const tl = {
+      to: (...args) => {
+        state.calls.to.push(args)
         return tl
-      })
-      return tl
-    })
+      },
+      fromTo: (...args) => {
+        state.calls.to.push(args)
+        return tl
+      },
+      call: (fn, params, position) => {
+        state.calls.call.push({ fn, position })
+        return tl
+      },
+      eventCallback: (_name, cb) => {
+        state.onComplete = cb
+        return tl
+      },
+      play: () => tl,
+      progress: (value) => {
+        if (value === 1 && state.onComplete) state.onComplete()
+        return tl
+      },
+      kill: () => {
+        state.killed = true
+        return tl
+      },
+      state
+    }
+    timelines.push(tl)
+    return tl
   }
+  return { makeTimeline, timelines, mockIsTweening: vi.fn(() => false), mockSet: vi.fn() }
 })
 
 vi.mock('gsap', () => ({
   gsap: {
-    to: mockTo,
-    timeline: (opts) => {
-      const tl = mockTimeline(opts)
-      tl.to = vi.fn(() => tl)
-      tl.call = vi.fn((fn) => {
-        fn?.()
-        return tl
-      })
-      // fire timeline-level onComplete
-      queueMicrotask(() => opts?.onComplete?.())
-      return tl
-    }
+    timeline: () => makeTimeline(),
+    isTweening: mockIsTweening,
+    set: mockSet
   }
 }))
 
-import { BUTTON_TAP_DURATION, playButtonTap } from '@/utils/animations/button-tap'
+const { mockUseMotionStore } = vi.hoisted(() => ({
+  mockUseMotionStore: vi.fn(() => ({ factors: { duration: 1 } }))
+}))
+vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
-const el = document.createElement('div')
+import { BUTTON_TAP_DURATION, playButtonTap, playButtonSweep } from '@/utils/animations/button-tap'
 
-describe('playButtonTap', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+function el() {
+  return document.createElement('div')
+}
 
-  describe('non-yoyo (default)', () => {
-    test('tweens scale and rotate on the element', () => {
-      playButtonTap(el)
-      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ scale: 1.2, rotate: 3 }))
-    })
+beforeEach(() => {
+  vi.clearAllMocks()
+  timelines.length = 0
+  mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
+})
 
-    test('defaults duration to BUTTON_TAP_DURATION', () => {
-      playButtonTap(el)
-      expect(mockTo.mock.calls[0][1].duration).toBe(BUTTON_TAP_DURATION)
-    })
-
-    test('forwards the duration argument', () => {
-      playButtonTap(el, 0.5)
-      expect(mockTo.mock.calls[0][1].duration).toBe(0.5)
-    })
-
-    test('uses expo.out easing', () => {
-      playButtonTap(el)
-      expect(mockTo.mock.calls[0][1].ease).toBe('expo.out')
-    })
-
-    test('returns peak and done promises that both resolve on onComplete', async () => {
-      const { peak, done } = playButtonTap(el)
-      await expect(peak).resolves.toBeUndefined()
-      await expect(done).resolves.toBeUndefined()
+describe('playButtonTap — non-yoyo (default)', () => {
+  test('tweens scale and rotate with expo.out easing over BUTTON_TAP_DURATION', () => {
+    playButtonTap(el())
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars).toMatchObject({
+      scale: 1.2,
+      rotate: 3,
+      duration: BUTTON_TAP_DURATION,
+      ease: 'expo.out'
     })
   })
 
-  describe('yoyo', () => {
-    test('uses a timeline with up + return tweens', () => {
-      playButtonTap(el, 0.4, { yoyo: true })
-      expect(mockTimeline).toHaveBeenCalled()
-    })
-
-    test('returns peak and done promises (peak resolves before timeline complete)', async () => {
-      const { peak, done } = playButtonTap(el, 0.4, { yoyo: true })
-      await expect(peak).resolves.toBeUndefined()
-      await expect(done).resolves.toBeUndefined()
-    })
-
-    test('forwards a custom hold option', () => {
-      playButtonTap(el, 0.4, { yoyo: true, hold: 0.5 })
-      expect(mockTimeline).toHaveBeenCalled()
-    })
+  test('forwards a custom duration', () => {
+    playButtonTap(el(), { duration: 0.5 })
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars.duration).toBe(0.5)
   })
 
-  test('BUTTON_TAP_DURATION is a positive number', () => {
-    expect(BUTTON_TAP_DURATION).toBeGreaterThan(0)
+  test('peak and done both resolve once the timeline completes', async () => {
+    const handle = playButtonTap(el())
+    let peak_resolved = false
+    let done_resolved = false
+    void handle.mark('peak').then(() => (peak_resolved = true))
+    void handle.done.then(() => (done_resolved = true))
+
+    expect(peak_resolved).toBe(false)
+    expect(done_resolved).toBe(false)
+
+    timelines[0].progress(1)
+    await handle.mark('peak')
+    await handle.done
+
+    expect(peak_resolved).toBe(true)
+    expect(done_resolved).toBe(true)
   })
+
+  test('peak and done both resolve on cancel() before completion', async () => {
+    const handle = playButtonTap(el())
+
+    handle.cancel()
+
+    await expect(handle.mark('peak')).resolves.toBeUndefined()
+    await expect(handle.done).resolves.toBeUndefined()
+    expect(timelines[0].state.killed).toBe(true)
+  })
+})
+
+describe('playButtonTap — yoyo', () => {
+  test('builds an up tween, a peak mark at step+hold, then a return tween', () => {
+    playButtonTap(el(), { yoyo: true, duration: 0.4, hold: 0.5 })
+
+    expect(timelines[0].state.calls.to).toHaveLength(2)
+    const [, up_vars] = timelines[0].state.calls.to[0]
+    const [, down_vars] = timelines[0].state.calls.to[1]
+    expect(up_vars).toMatchObject({ scale: 1.3, rotate: 3, duration: 0.2 })
+    expect(down_vars).toMatchObject({ scale: 1, rotate: 0, duration: 0.2 })
+    expect(timelines[0].state.calls.call[0].position).toBe(0.7) // step (0.2) + hold (0.5)
+  })
+
+  test('peak resolves before done, both settle on the timeline finishing', async () => {
+    const handle = playButtonTap(el(), { yoyo: true, duration: 0.4, hold: 0.1 })
+    let peak_resolved = false
+    void handle.mark('peak').then(() => (peak_resolved = true))
+
+    timelines[0].state.calls.call[0].fn()
+    await handle.mark('peak')
+    expect(peak_resolved).toBe(true)
+
+    timelines[0].progress(1)
+    await expect(handle.done).resolves.toBeUndefined()
+  })
+
+  test('peak and done both resolve on cancel() mid-flight', async () => {
+    const handle = playButtonTap(el(), { yoyo: true })
+
+    handle.cancel()
+
+    await expect(handle.mark('peak')).resolves.toBeUndefined()
+    await expect(handle.done).resolves.toBeUndefined()
+  })
+})
+
+describe('playButtonSweep', () => {
+  test('runs a plain hold tween for the given duration with no visual change', () => {
+    playButtonSweep(el(), 0.3)
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars.duration).toBe(0.3)
+  })
+
+  test('defaults duration to BUTTON_TAP_DURATION', () => {
+    playButtonSweep(el())
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars.duration).toBe(BUTTON_TAP_DURATION)
+  })
+
+  test('done resolves once the timeline completes', async () => {
+    const handle = playButtonSweep(el())
+    timelines[0].progress(1)
+    await expect(handle.done).resolves.toBeUndefined()
+  })
+
+  test('done resolves and the timeline is killed on cancel()', async () => {
+    const handle = playButtonSweep(el())
+
+    handle.cancel()
+
+    await expect(handle.done).resolves.toBeUndefined()
+    expect(timelines[0].state.killed).toBe(true)
+  })
+
+  test('does not promote will-change (promote: false)', () => {
+    const element = el()
+    playButtonSweep(element)
+    expect(element.style.willChange).toBe('')
+  })
+})
+
+test('BUTTON_TAP_DURATION is a positive number', () => {
+  expect(BUTTON_TAP_DURATION).toBeGreaterThan(0)
 })

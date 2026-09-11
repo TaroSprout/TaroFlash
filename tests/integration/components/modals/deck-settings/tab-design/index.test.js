@@ -4,8 +4,10 @@ import { defineComponent, h, reactive, ref, computed } from 'vue'
 import TabDesign from '@/views/deck/deck-settings/tab-design/index.vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
+import { motionStoreStub } from '@tests/fixtures/motion'
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: vi.fn() }))
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const DeckPreviewStub = defineComponent({
   name: 'DeckDesignPreview',

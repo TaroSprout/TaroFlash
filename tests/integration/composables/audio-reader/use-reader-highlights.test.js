@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import { useReaderHighlights } from '@/composables/audio-reader/reader-highlights'
 
 const { emitSfxMock } = vi.hoisted(() => ({ emitSfxMock: vi.fn() }))
@@ -9,6 +10,8 @@ vi.mock('@/sfx/bus', () => ({
   emitSfx: emitSfxMock,
   emitHoverSfx: vi.fn()
 }))
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { moveMock, hideMock, scrollMock } = vi.hoisted(() => ({
   moveMock: vi.fn(),

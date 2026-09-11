@@ -4,6 +4,9 @@ import { ref } from 'vue'
 import { Rating } from 'ts-fsrs'
 import RatingButtons from '@/views/study-session/session-studying/rating-buttons/index.vue'
 import { PrimedGradeKey } from '@/views/study-session/session-studying/card/primed-grade-context'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // rating-buttons/index.vue no longer takes side/show_all_ratings/loading as

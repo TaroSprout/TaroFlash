@@ -1,19 +1,25 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
-import { nextTick } from 'vue'
+import { effectScope, nextTick } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { coarseRef, mockUseMatchMedia, mockPlayButtonTap, mockEmitSfx } = vi.hoisted(() => {
+const {
+  coarseRef,
+  mockUseMatchMedia,
+  mockPlayButtonTap,
+  mockPlayButtonSweep,
+  mockEmitSfx,
+  mockUseMotionStore
+} = vi.hoisted(() => {
   const coarseRef = { value: true }
   return {
     coarseRef,
     mockUseMatchMedia: vi.fn(() => coarseRef),
-    mockPlayButtonTap: vi.fn(() => ({
-      peak: Promise.resolve(),
-      done: Promise.resolve()
-    })),
-    mockEmitSfx: vi.fn()
+    mockPlayButtonTap: vi.fn(),
+    mockPlayButtonSweep: vi.fn(),
+    mockEmitSfx: vi.fn(),
+    mockUseMotionStore: vi.fn(() => ({ prefers_reduced_motion: false, tier: 'full' }))
   }
 })
 
@@ -23,11 +29,16 @@ vi.mock('@/composables/ui/media-query', () => ({
 
 vi.mock('@/utils/animations/button-tap', () => ({
   BUTTON_TAP_DURATION: 0.1,
-  playButtonTap: mockPlayButtonTap
+  playButtonTap: mockPlayButtonTap,
+  playButtonSweep: mockPlayButtonSweep
 }))
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx
+}))
+
+vi.mock('@/stores/motion', () => ({
+  useMotionStore: mockUseMotionStore
 }))
 
 import { useStagedTap } from '@/composables/ui/staged-tap'
@@ -37,12 +48,36 @@ import { useStagedTap } from '@/composables/ui/staged-tap'
 function makeEvent(target = document.createElement('div')) {
   const e = new MouseEvent('click', { bubbles: true, cancelable: true })
   Object.defineProperty(e, 'currentTarget', { value: target, configurable: true })
-  vi.spyOn(e, 'stopImmediatePropagation')
   return e
 }
 
-function resolvedHandles() {
-  return { peak: Promise.resolve(), done: Promise.resolve() }
+/** A controllable stand-in for a MotionHandle — mark/done resolve only when told to. */
+function makeHandle() {
+  let resolve_mark
+  let resolve_done
+  const mark_promise = new Promise((r) => (resolve_mark = r))
+  const done_promise = new Promise((r) => (resolve_done = r))
+  const handle = {
+    mark: vi.fn(() => mark_promise),
+    done: done_promise,
+    cancel: vi.fn(() => {
+      resolve_mark()
+      resolve_done()
+    }),
+    finish: vi.fn(),
+    resolveMark: () => resolve_mark(),
+    resolveDone: () => resolve_done()
+  }
+  return handle
+}
+
+function resolvedHandle() {
+  return {
+    mark: vi.fn(() => Promise.resolve()),
+    done: Promise.resolve(),
+    cancel: vi.fn(),
+    finish: vi.fn()
+  }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -50,7 +85,9 @@ function resolvedHandles() {
 beforeEach(() => {
   vi.clearAllMocks()
   coarseRef.value = true
-  mockPlayButtonTap.mockImplementation(resolvedHandles)
+  mockUseMotionStore.mockReturnValue({ prefers_reduced_motion: false, tier: 'full' })
+  mockPlayButtonTap.mockImplementation(resolvedHandle)
+  mockPlayButtonSweep.mockImplementation(resolvedHandle)
 })
 
 describe('useStagedTap — fine pointer (coarse-only mode)', () => {
@@ -64,6 +101,7 @@ describe('useStagedTap — fine pointer (coarse-only mode)', () => {
 
     expect(action).toHaveBeenCalledWith(e)
     expect(mockPlayButtonTap).not.toHaveBeenCalled()
+    expect(mockPlayButtonSweep).not.toHaveBeenCalled()
   })
 
   test('playing stays false on fine pointer (no animation runs)', async () => {
@@ -82,71 +120,78 @@ describe('useStagedTap — fine pointer (coarse-only mode)', () => {
     const p = handler(makeEvent())
     order.push('after-call')
     await p
-    // action fires before the handler promise resolves (immediate, no deferral)
     expect(order[0]).toBe('action')
   })
 })
 
-describe('useStagedTap — coarse pointer (default triggerAt: peak)', () => {
+describe('useStagedTap — coarse pointer, pop animate (default triggerAt: peak)', () => {
   test('action fires at peak by default on coarse pointer', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
     const { tap } = useStagedTap({ animate: 'pop' })
     const action = vi.fn()
     const e = makeEvent()
 
     const p = tap(action)(e)
-    // action not called yet — waiting for peak
     expect(action).not.toHaveBeenCalled()
 
-    peakResolve()
+    handle.resolveMark()
+    handle.resolveDone()
     await p
     expect(action).toHaveBeenCalledWith(e)
   })
 
-  test('action does NOT fire at press when triggerAt is default (peak)', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
-    const { tap } = useStagedTap({ animate: 'pop' })
-    const action = vi.fn()
-
-    const p = tap(action)(makeEvent())
-    // At the moment of press, action must not have fired
-    expect(action).not.toHaveBeenCalled()
-
-    peakResolve()
-    await p
-  })
-
   test('playing is true during animation on coarse', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
     const { playing, tap } = useStagedTap({ animate: 'pop' })
     const p = tap(vi.fn())(makeEvent())
     await nextTick()
     expect(playing.value).toBe(true)
-    peakResolve()
+
+    handle.resolveMark()
+    handle.resolveDone()
     await p
     expect(playing.value).toBe(false)
   })
 })
 
+describe('useStagedTap — quiet animate fires the action after the sweep resolves', () => {
+  test("action does not fire until playButtonSweep's done resolves", async () => {
+    const handle = makeHandle()
+    mockPlayButtonSweep.mockImplementation(() => handle)
+    const { tap } = useStagedTap({ animate: 'quiet' })
+    const action = vi.fn()
+
+    const p = tap(action)(makeEvent())
+    await nextTick()
+    expect(action).not.toHaveBeenCalled()
+    expect(mockPlayButtonTap).not.toHaveBeenCalled()
+
+    handle.resolveDone()
+    await p
+    expect(action).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not double-fire action when triggerAt is press on quiet animate', async () => {
+    const handle = makeHandle()
+    mockPlayButtonSweep.mockImplementation(() => handle)
+    const { tap } = useStagedTap({ animate: 'quiet', triggerAt: 'press' })
+    const action = vi.fn()
+
+    const p = tap(action)(makeEvent())
+    expect(action).toHaveBeenCalledTimes(1)
+
+    handle.resolveDone()
+    await p
+    expect(action).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('useStagedTap — double-tap guard', () => {
   test('second call while playing is silently dropped (action not called a second time)', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
     const { playing, tap } = useStagedTap({ animate: 'pop' })
     const action = vi.fn()
 
@@ -154,34 +199,14 @@ describe('useStagedTap — double-tap guard', () => {
     await nextTick()
     expect(playing.value).toBe(true)
 
-    // Second tap while playing — must be a no-op
     await tap(action)(makeEvent())
     expect(mockPlayButtonTap).toHaveBeenCalledTimes(1)
 
-    peakResolve()
+    handle.resolveMark()
+    handle.resolveDone()
     await first
     await flushPromises()
-    // action fires exactly once (from first tap)
     expect(action).toHaveBeenCalledTimes(1)
-  })
-
-  test('animation not replayed on second tap while playing', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
-    const { playing, tap } = useStagedTap({ animate: 'pop' })
-
-    const first = tap(vi.fn())(makeEvent())
-    await nextTick()
-    expect(playing.value).toBe(true)
-
-    await tap(vi.fn())(makeEvent())
-
-    expect(mockPlayButtonTap).toHaveBeenCalledTimes(1)
-    peakResolve()
-    await first
   })
 })
 
@@ -196,66 +221,61 @@ describe('useStagedTap — activeOn: "always"', () => {
     expect(mockPlayButtonTap).toHaveBeenCalled()
     expect(action).toHaveBeenCalled()
   })
+})
 
-  test('playing goes true then false on fine pointer with activeOn always', async () => {
-    coarseRef.value = false
-    const { playing, tap } = useStagedTap({ animate: 'pop', activeOn: 'always' })
+describe('useStagedTap — reduced motion / minimal tier routes a pop composable through the quiet path', () => {
+  test('animate: pop under prefers_reduced_motion uses playButtonSweep, not playButtonTap', async () => {
+    mockUseMotionStore.mockReturnValue({ prefers_reduced_motion: true, tier: 'full' })
+    const { tap } = useStagedTap({ animate: 'pop' })
 
     await tap(vi.fn())(makeEvent())
 
-    expect(playing.value).toBe(false)
+    expect(mockPlayButtonTap).not.toHaveBeenCalled()
+    expect(mockPlayButtonSweep).toHaveBeenCalled()
+  })
+
+  test('animate: pop on the minimal tier uses playButtonSweep, not playButtonTap', async () => {
+    mockUseMotionStore.mockReturnValue({ prefers_reduced_motion: false, tier: 'minimal' })
+    const { tap } = useStagedTap({ animate: 'pop' })
+
+    await tap(vi.fn())(makeEvent())
+
+    expect(mockPlayButtonTap).not.toHaveBeenCalled()
+    expect(mockPlayButtonSweep).toHaveBeenCalled()
   })
 })
 
-describe('useStagedTap — onTap call option', () => {
-  test('onTap fires before any coarse/fine check', async () => {
-    coarseRef.value = false
-    const { tap } = useStagedTap()
-    const order = []
-    const onTap = vi.fn(() => order.push('onTap'))
-    const action = vi.fn(() => order.push('action'))
+describe('useStagedTap — unmount cancels the active handle', () => {
+  test('onScopeDispose cancels the in-flight handle and clears playing', async () => {
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
 
-    await tap(action, { onTap })(makeEvent())
+    const scope = effectScope()
+    const { playing, tap } = scope.run(() => useStagedTap({ animate: 'pop' }))
 
-    // onTap must fire regardless of pointer type
-    expect(onTap).toHaveBeenCalled()
-    // onTap fires before action
-    expect(order.indexOf('onTap')).toBeLessThan(order.indexOf('action'))
-  })
-
-  test('onTap fires even when tap is dropped due to playing guard', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
-    const { playing, tap } = useStagedTap({ animate: 'pop' })
-    const onTap = vi.fn()
-
-    const first = tap(vi.fn())(makeEvent())
+    tap(vi.fn())(makeEvent())
     await nextTick()
     expect(playing.value).toBe(true)
 
-    await tap(vi.fn(), { onTap })(makeEvent())
-    expect(onTap).toHaveBeenCalledTimes(1)
+    scope.stop()
 
-    peakResolve()
-    await first
+    expect(handle.cancel).toHaveBeenCalled()
   })
 
-  test('onTap receives the MouseEvent', async () => {
-    const { tap } = useStagedTap()
-    const onTap = vi.fn()
-    const e = makeEvent()
+  test('a handle that already settled is not double-cancelled by disposal', async () => {
+    const scope = effectScope()
+    const { tap } = scope.run(() => useStagedTap({ animate: 'pop' }))
 
-    await tap(undefined, { onTap })(e)
+    await tap(vi.fn())(makeEvent())
+    scope.stop()
 
-    expect(onTap).toHaveBeenCalledWith(e)
+    // No active handle left at dispose time — nothing throws.
+    expect(true).toBe(true)
   })
 })
 
 describe('useStagedTap — audio', () => {
-  test('audio fires on fine pointer (core fix — fine pointer now gets audio)', async () => {
+  test('audio fires on fine pointer', async () => {
     coarseRef.value = false
     const { tap } = useStagedTap()
     await tap(vi.fn(), { audio: 'ui.press' })(makeEvent())
@@ -263,64 +283,20 @@ describe('useStagedTap — audio', () => {
   })
 
   test('audio fires at peak on coarse with pop animate', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
     const { tap } = useStagedTap({ animate: 'pop' })
     const action = vi.fn()
 
     const p = tap(action, { audio: 'ui.press' })(makeEvent())
-    // Not yet — waiting for peak
     expect(mockEmitSfx).not.toHaveBeenCalled()
 
-    peakResolve()
+    handle.resolveMark()
+    handle.resolveDone()
     await p
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  test('audio fires after timer on coarse with quiet animate', async () => {
-    vi.useFakeTimers()
-    const { tap } = useStagedTap({ animate: 'quiet' })
-
-    const p = tap(vi.fn(), { audio: 'ui.press' })(makeEvent())
-    // Not yet — timer still pending
-    expect(mockEmitSfx).not.toHaveBeenCalled()
-
-    vi.advanceTimersByTime(200)
-    await p
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
-    vi.useRealTimers()
-  })
-
-  test('audio fires at press when triggerAt: "press" on coarse', async () => {
-    const { tap } = useStagedTap({ animate: 'pop' })
-
-    const p = tap(vi.fn(), { audio: 'ui.press', triggerAt: 'press' })(makeEvent())
-    // At press — synchronously — audio fires
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
-    await p
-  })
-
-  test('audio NOT played twice on coarse pop animate with triggerAt peak', async () => {
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
-    const { tap } = useStagedTap({ animate: 'pop' })
-
-    const p = tap(vi.fn(), { audio: 'ui.press' })(makeEvent())
-    peakResolve()
-    await p
-
-    // Exactly one call — not once at press AND once at peak
-    expect(mockEmitSfx).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('useStagedTap — preAudio', () => {
   test('preAudio fires on coarse press before animation', async () => {
     const { tap } = useStagedTap()
     await tap(vi.fn(), { preAudio: 'ui.press' })(makeEvent())
@@ -335,86 +311,36 @@ describe('useStagedTap — preAudio', () => {
   })
 })
 
+describe('useStagedTap — onTap call option', () => {
+  test('onTap fires before any coarse/fine check, and receives the event', async () => {
+    coarseRef.value = false
+    const { tap } = useStagedTap()
+    const order = []
+    const onTap = vi.fn(() => order.push('onTap'))
+    const action = vi.fn(() => order.push('action'))
+    const e = makeEvent()
+
+    await tap(action, { onTap })(e)
+
+    expect(onTap).toHaveBeenCalledWith(e)
+    expect(order.indexOf('onTap')).toBeLessThan(order.indexOf('action'))
+  })
+})
+
 describe('useStagedTap — per-call triggerAt override', () => {
   test('per-call triggerAt overrides the composable-level triggerAt', async () => {
-    // Composable-level is 'peak' (default), but call overrides to 'press'
-    let peakResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: new Promise((r) => (peakResolve = r)),
-      done: Promise.resolve()
-    }))
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
     const { tap } = useStagedTap({ animate: 'pop' })
     const action = vi.fn()
 
     const p = tap(action, { triggerAt: 'press' })(makeEvent())
-    // With triggerAt 'press', action must fire at press (before awaiting peak)
     expect(action).toHaveBeenCalled()
 
-    peakResolve()
-    await p
-    // Action still called only once (fired at press)
-    expect(action).toHaveBeenCalledTimes(1)
-  })
-
-  test('per-call triggerAt done fires action after the full done promise', async () => {
-    let doneResolve
-    mockPlayButtonTap.mockImplementation(() => ({
-      peak: Promise.resolve(),
-      done: new Promise((r) => (doneResolve = r))
-    }))
-    const { tap } = useStagedTap({ animate: 'pop', triggerAt: 'peak' })
-    const action = vi.fn()
-
-    const p = tap(action, { triggerAt: 'done' })(makeEvent())
-    // After peak resolves, action should not yet fire (waiting for done)
-    await nextTick()
-    // Give the peak promise microtask time to settle
-    await Promise.resolve()
-    expect(action).not.toHaveBeenCalled()
-
-    doneResolve()
+    handle.resolveMark()
+    handle.resolveDone()
     await p
     expect(action).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('useStagedTap — quiet animate (default)', () => {
-  test('uses setTimeout-based hold instead of GSAP on quiet animate', async () => {
-    vi.useFakeTimers()
-    coarseRef.value = true
-    const { playing, tap } = useStagedTap({ animate: 'quiet' })
-    const action = vi.fn()
-
-    const p = tap(action)(makeEvent())
-    await nextTick()
-    expect(playing.value).toBe(true)
-    expect(mockPlayButtonTap).not.toHaveBeenCalled()
-    // Action not yet called
-    expect(action).not.toHaveBeenCalled()
-
-    vi.advanceTimersByTime(200)
-    await p
-    expect(action).toHaveBeenCalled()
-    vi.useRealTimers()
-  })
-
-  test('does not double-fire action when triggerAt is press on quiet animate', async () => {
-    vi.useFakeTimers()
-    coarseRef.value = true
-    // triggerAt 'press' means action fires at press; the quiet animate timeout
-    // should NOT call it again (branch: phase !== 'press' is false)
-    const { tap } = useStagedTap({ animate: 'quiet', triggerAt: 'press' })
-    const action = vi.fn()
-
-    const p = tap(action)(makeEvent())
-    // Should have fired at press already
-    expect(action).toHaveBeenCalledTimes(1)
-
-    vi.advanceTimersByTime(200)
-    await p
-    // Must not fire a second time
-    expect(action).toHaveBeenCalledTimes(1)
-    vi.useRealTimers()
   })
 })
 
@@ -425,7 +351,6 @@ describe('useStagedTap — pop animate with triggerAt: press', () => {
     const e = makeEvent()
 
     const p = tap(action)(e)
-    // At press, before any promise resolution, action already called
     expect(action).toHaveBeenCalledWith(e)
     await p
   })

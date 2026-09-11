@@ -1,9 +1,12 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import RoleEditor from '@/views/admin/color-page/role-editor.vue'
 import UiSelectMenu from '@/components/ui-kit/select-menu.vue'
 import { colorTunerKey, useColorTuner } from '@/views/admin/color-page/use-color-tuner'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const wrappers = []
 

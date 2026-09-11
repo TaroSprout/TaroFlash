@@ -4,6 +4,9 @@ import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, nextTick } from 'vue'
 import FeedbackBoard from '@/components/feedback/feedback-board.vue'
 import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 

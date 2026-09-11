@@ -98,7 +98,10 @@ const UiDropdownButtonStub = defineComponent({
 })
 
 import { vSfx } from '@/sfx/directive'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import GridItem from '@/views/deck/card-grid/grid-item.vue'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 import { cardEditorKey } from '@/views/deck/composables/list-controller'
 import { mobileCardEditorKey } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 

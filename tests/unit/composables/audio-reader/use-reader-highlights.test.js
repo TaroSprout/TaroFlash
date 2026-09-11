@@ -35,6 +35,15 @@ vi.mock('@/composables/use-play-on-tap', () => ({
   }
 }))
 
+vi.mock('@/stores/motion', () => ({
+  useMotionStore: () => ({
+    tier: 'full',
+    factors: { duration: 1 },
+    prefers_reduced_motion: false,
+    has_coarse_pointer: false
+  })
+}))
+
 // ResizeObserver is not in jsdom — stub it globally so onMounted can construct one.
 class FakeResizeObserver {
   observe() {}

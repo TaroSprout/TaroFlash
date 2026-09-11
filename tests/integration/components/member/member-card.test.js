@@ -4,6 +4,9 @@ import { defineComponent, h } from 'vue'
 import MemberCard from '@/components/member/member-card.vue'
 import AvatarImageReal from '@/components/member/avatar-image.vue'
 import { MEMBER_CARD_COVER_DEFAULTS } from '@/utils/member/defaults'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { mockLoadAvatarUrl } = vi.hoisted(() => ({ mockLoadAvatarUrl: vi.fn() }))
 

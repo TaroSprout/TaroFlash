@@ -1,10 +1,13 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import SettingsApp from '@/components/taro-phone/apps/settings-app.vue'
 
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ({ value: false })
 }))
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 const { mockOpenApp, mockSettingsModalOpen } = vi.hoisted(() => ({
   mockOpenApp: vi.fn(),

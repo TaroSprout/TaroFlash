@@ -47,7 +47,8 @@ vi.mock('@/api/media', () => ({ cardImageUrl: (p) => `https://cdn/${p}` }))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock, emitHoverSfx: vi.fn() }))
 vi.mock('@/utils/animations/button-tap', () => ({
   BUTTON_TAP_DURATION: 0.1,
-  playButtonTap: playButtonTapMock
+  playButtonTap: playButtonTapMock,
+  playButtonSweep: vi.fn(() => ({ mark: vi.fn(() => Promise.resolve()), done: Promise.resolve() }))
 }))
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn(), to: vi.fn() } }))
 

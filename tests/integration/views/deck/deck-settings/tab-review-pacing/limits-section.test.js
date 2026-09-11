@@ -4,6 +4,9 @@ import { defineComponent, h, ref, useAttrs } from 'vue'
 import { deckEditorKey } from '@/composables/deck/editor'
 import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import LimitsSection from '@/views/deck/deck-settings/tab-review-pacing/limits-section.vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,10 @@
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
+
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 // Real row heights (text-4xl, leading-[2.5]) are needed so the mounted content
 // is taller than the viewport — required for centered_translation's

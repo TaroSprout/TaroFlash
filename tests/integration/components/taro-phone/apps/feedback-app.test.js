@@ -1,6 +1,9 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import FeedbackApp from '@/components/taro-phone/apps/feedback-app.vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => ({ value: false })

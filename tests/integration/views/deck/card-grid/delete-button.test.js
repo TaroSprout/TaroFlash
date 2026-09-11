@@ -4,6 +4,9 @@ import { mount, flushPromises } from '@vue/test-utils'
 import CardGridDeleteButton from '@/views/deck/card-grid/delete-button.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { cardEditorKey } from '@/views/deck/composables'
+import { motionStoreStub } from '@tests/fixtures/motion'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 function makeEditor({ onDeleteCardImmediate = vi.fn() } = {}) {
   return { actions: { onDeleteCardImmediate } }

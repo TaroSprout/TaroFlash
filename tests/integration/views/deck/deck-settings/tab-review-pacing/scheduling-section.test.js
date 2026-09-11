@@ -1,8 +1,11 @@
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
+import { motionStoreStub } from '@tests/fixtures/motion'
 import { pacingFieldsKey } from '@/views/deck/deck-settings/tab-review-pacing/use-pacing-fields'
 import SchedulingSection from '@/views/deck/deck-settings/tab-review-pacing/scheduling-section.vue'
+
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 // AdvancedReveal owns its own reveal chrome (scrim/badge/persistence), covered

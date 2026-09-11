@@ -11,6 +11,9 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: mockEmitHoverSfx
 }))
 
+vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
+
+import { motionStoreStub } from '@tests/fixtures/motion'
 import UiRadio from '@/components/ui-kit/radio.vue'
 import { vSfx } from '@/sfx/directive'
 
