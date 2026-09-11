@@ -210,7 +210,6 @@ watch(
       >
         <div
           data-testid="card-grid__item-inner"
-          class="will-change-transform"
           :class="{
             'transition-transform duration-150 ease-out': reorder.shouldTransition(item.index)
           }"

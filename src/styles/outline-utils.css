@@ -3,7 +3,6 @@
  * via :hover / [data-playing='true'] / their own modifier class.
  */
 .card-outline {
-  will-change: filter, transform;
   --outline-color: var(--color-white);
   --outline-size: 2px;
   --outline-size--inset: calc(var(--outline-size) * -1);
