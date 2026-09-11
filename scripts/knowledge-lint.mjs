@@ -215,6 +215,29 @@ function checkLineCaps(root, files, alwaysOn) {
   }
 }
 
+/**
+ * A SKILL.md or agent definition isn't in the always-on payload, so an overlong
+ * one only warns — the warning is what summons a harness-maintainer sweep to
+ * deflate the file, never a CI failure. Set `warn_only: false` to make a breach
+ * fail instead.
+ */
+function checkHubCaps(root, files, hubCaps) {
+  if (!hubCaps) return { errors: [], warnings: [] }
+
+  const breaches = files
+    .filter((path) => matchesAny(path, hubCaps.scan))
+    .flatMap((path) => {
+      const lines = countLines(readFileSync(join(root, path), 'utf8'))
+      const cap = hubCaps.per_file?.[path] ?? hubCaps.per_file_default
+      return cap && lines > cap ? [`${path} is ${lines} lines, over its ${cap}-line cap`] : []
+    })
+
+  return {
+    errors: hubCaps.warn_only === false ? breaches : [],
+    warnings: hubCaps.warn_only === false ? [] : breaches
+  }
+}
+
 export function lintKnowledge(root) {
   const config = readConfig(root)
   const { slugs, always_on } = config
@@ -248,6 +271,7 @@ export function lintKnowledge(root) {
   const statements = checkStatements(root, config)
   const unfinished = checkUnfinished(root, files, config.unfinished)
   const caps = checkLineCaps(root, files, always_on)
+  const hubCaps = checkHubCaps(root, files, config.hub_caps)
 
   return {
     errors: [
@@ -259,9 +283,10 @@ export function lintKnowledge(root) {
       ...orphans,
       ...statements.errors,
       ...unfinished,
-      ...caps.errors
+      ...caps.errors,
+      ...hubCaps.errors
     ],
-    warnings: [...statements.warnings, ...caps.warnings],
+    warnings: [...statements.warnings, ...caps.warnings, ...hubCaps.warnings],
     stats: {
       declared: declarations.declared.size,
       retired: ledger.retired.size,
