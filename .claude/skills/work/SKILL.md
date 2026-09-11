@@ -137,10 +137,12 @@ that used to pause in between becomes a decision plus a ledger line (§ Run ledg
 
 ### 3. CLAIM ALL
 
-Dispatch `board-agent` with `CLAIM` and the user-approved id list. It re-checks each is still `Ready`
-and unblocked, writes `Status = In Progress`, and reports which were dropped (another run already
-grabbed it). Claim before dispatching so parallel runs don't collide. Freeform work has nothing to
-claim.
+Dispatch `board-agent` with `CLAIM`, the user-approved id list, and `override_blockers` for any id
+whose blocker doctrine (§ Blockers) already cleared it under the merged-PR or stacked-branch
+exception despite `Status` — that judgment is the orchestrator's to make and hand down, never
+`board-agent`'s to re-derive. It re-checks each non-overridden id is still `Ready` and unblocked,
+writes `Status = In Progress`, and reports which were dropped (another run already grabbed it). Claim
+before dispatching so parallel runs don't collide. Freeform work has nothing to claim.
 
 ### 4. FAN OUT — one `ticket-builder` per unit of work
 
