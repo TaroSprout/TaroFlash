@@ -184,7 +184,9 @@ Structural rules the template encodes and this run must respect:
 - **Hub reads as a verdict**, not a link box: proposed architecture → call + moves → open questions.
   A proposed-architecture block running past a few sentences splits into short paragraphs or
   subheads — never one undifferentiated block; a reader skimming the hub needs to land somewhere
-  partway through, not just at the end.
+  partway through, not just at the end. Where the block is a sequence of distinct beats rather than
+  connected prose, use `.archbeats` — a bold lead-in per beat, one idea each — instead of forcing it
+  into paragraphs; the same applies inside a chapter's own dense proposed-architecture prose.
 - **Heavy vs light.** A heavy region gets its own chapter, opened in the dialog (prev/next follows
   document order). A light region gets a move line only — no chapter.
 - **A chapter leads with its forcing constraint;** detail folds beneath by facet — **Contract /
@@ -270,6 +272,18 @@ tickets it cuts; they still ride the normal `/backlog` → `/triage` → `/groom
   dependent ticket's `Blocked By` to the tickets it depends on. It re-fetches and confirms each
   write — tickets and relations alike — landed before reporting (→[K:notion-write-verification]) —
   relay that confirmation, don't re-derive it.
+
+## Self-heal
+
+Run every pushback through [`self-heal.md`](../../rules/self-heal.md). Routing specific to this
+skill: feedback naming **this plan's content** — a wrong placement, a missed conflict, a region that
+needs its own chapter — is a fix to the one artifact and stops there. Feedback on **the template's
+layout, IA, or editorial register** — dialog sizing, a missing style for a documented block, a
+formatting technique the artifact reached for — is never a one-off; it always heals into
+[`assets/blueprint-artifact-template.html`](assets/blueprint-artifact-template.html) (the shared
+asset every run copies) and, where the fix is a technique future runs should reach for again, into
+this file's Phase 4 structural rules. Applying it to only the artifact in front of you and offering
+to propagate it later is the miss this routing exists to close.
 
 ## Guardrails
 
