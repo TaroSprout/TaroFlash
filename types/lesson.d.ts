@@ -12,6 +12,9 @@ type TranscriptSegment = {
   // the sentence row rather than recomputed from timing. Absent on lessons that
   // predate relational storage.
   paragraph_gap?: number
+  // How strongly a paragraph break belongs before this sentence, 0–1, scored by
+  // meaning; null where the paragraphing pass couldn't score it.
+  break_strength?: number | null
 }
 
 type TranscriptWord = {

@@ -17,12 +17,23 @@ export type SentenceWords = {
   // Silent seconds before this sentence, carried from its stored row; absent on
   // a lesson that predates the column, where the timing gap stands in for it.
   paragraph_gap?: number
+  // How strongly a paragraph break belongs before this sentence, 0–1, scored by
+  // meaning; null where the paragraphing pass couldn't score it.
+  break_strength?: number | null
   words: DisplayWord[]
 }
 
-// A silent gap longer than this between two sentences reads as a paragraph
-// break — a topic shift or a breath the speaker takes between thoughts.
-const PARAGRAPH_GAP_SECONDS = 0.8
+/** How finely the reader breaks the transcript into paragraphs. */
+export type ParagraphDensity = 'long' | 'medium' | 'short'
+
+// The break-strength a stored break must exceed to start a new paragraph, per
+// density. Long only splits at the strongest breaks (few large paragraphs);
+// Short splits at almost every scored break (near sentence-by-sentence).
+export const PARAGRAPH_DENSITY_THRESHOLDS: Record<ParagraphDensity, number> = {
+  long: 0.7,
+  medium: 0.45,
+  short: 0.15
+}
 
 // Leading/trailing whitespace + punctuation. \p{P} spans Latin and CJK marks
 // alike, so this strips a trailing 。 or ? the same way. Anchored to both ends
@@ -71,34 +82,63 @@ export function groupWordsBySentence(
     start: segment.start,
     end: segment.end,
     paragraph_gap: segment.paragraph_gap,
+    break_strength: segment.break_strength,
     words: displayed.filter(inSegment(segments, i))
   }))
 }
 
 /**
- * Split sentences into paragraphs at long silent gaps, so the transcript reads
- * as prose instead of one undivided block. Whisper gives no paragraph metadata,
- * so the speaker's pauses stand in for it.
+ * Split sentences into paragraphs wherever a stored break scores above the given
+ * threshold, so the transcript reads as prose instead of one undivided block.
  *
+ * A sentence with no scored break (`break_strength` null/absent) never starts a
+ * paragraph on its own — a lesson with no scored breaks renders as one paragraph,
+ * with no silence-gap fallback. `force_break_starts` holds sentence start times
+ * that always begin a paragraph regardless of score, so a chapter heading still
+ * lands on its own paragraph.
+ *
+ * @param threshold - break-strength cutoff; see PARAGRAPH_DENSITY_THRESHOLDS.
  * @example
- * const paragraphs = groupSentencesIntoParagraphs(groupWordsBySentence(segments, words))
+ * const groups = groupSentencesIntoParagraphs(sentences, 0.45)
  */
 export function groupSentencesIntoParagraphs(
   sentences: SentenceWords[],
-  gap = PARAGRAPH_GAP_SECONDS
+  threshold: number,
+  force_break_starts: ReadonlySet<number> = new Set()
 ): SentenceWords[][] {
   const paragraphs: SentenceWords[][] = []
 
   sentences.forEach((sentence, i) => {
     const prev = sentences[i - 1]
-    // Prefer the stored break strength; fall back to the timing gap for a lesson
-    // that predates the column.
-    const lead_gap = sentence.paragraph_gap ?? (prev ? sentence.start - prev.end : 0)
-    if (!prev || lead_gap > gap) paragraphs.push([])
+    const scored = sentence.break_strength ?? 0
+    const breaks = scored > threshold || force_break_starts.has(sentence.start)
+    if (!prev || breaks) paragraphs.push([])
     paragraphs[paragraphs.length - 1].push(sentence)
   })
 
   return paragraphs
+}
+
+/**
+ * Fold a group of sentences into one paragraph the reader renders as a single
+ * block: the source words flow on as continuous prose, and the sentence
+ * translations join into one combined gloss. Keeps the first sentence's index so
+ * the paragraph stays a stable, unique row identity across regrouping.
+ */
+export function mergeSentencesToParagraph(group: SentenceWords[]): SentenceWords {
+  const first = group[0]
+  const last = group[group.length - 1]
+
+  const translations = group.map((s) => s.translation).filter((t): t is string => !!t)
+
+  return {
+    index: first.index,
+    sentence: group.map((s) => s.sentence).join(' '),
+    translation: translations.length ? translations.join(' ') : undefined,
+    start: first.start,
+    end: last.end,
+    words: group.flatMap((s) => s.words)
+  }
 }
 
 /**

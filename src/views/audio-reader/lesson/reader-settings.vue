@@ -9,6 +9,7 @@ import {
   type ReaderDisplayMode,
   type ReaderTranslationSource
 } from '@/composables/audio-reader/reader-prefs'
+import type { ParagraphDensity } from '@/utils/transcript'
 import type { AudioPlayer } from '@/composables/audio-reader/audio-player'
 
 type ReaderSettingsProps = {
@@ -21,7 +22,22 @@ const emit = defineEmits<{ (e: 'close'): void }>()
 
 const { t } = useI18n()
 
-const { display_mode, translation_source } = useReaderPrefs()
+const { display_mode, translation_source, paragraph_density } = useReaderPrefs()
+
+const density_options = [
+  {
+    value: 'long' as ParagraphDensity,
+    label: t('audio-reader.reader-settings.density-long')
+  },
+  {
+    value: 'medium' as ParagraphDensity,
+    label: t('audio-reader.reader-settings.density-medium')
+  },
+  {
+    value: 'short' as ParagraphDensity,
+    label: t('audio-reader.reader-settings.density-short')
+  }
+]
 
 const layout_options = [
   { value: 'inline' as ReaderDisplayMode, label: t('audio-reader.reader-settings.layout-inline') },
@@ -61,6 +77,10 @@ function setLayout(value: ReaderDisplayMode) {
 
 function setTranslationSource(value: ReaderTranslationSource) {
   translation_source.value = value
+}
+
+function setDensity(value: ParagraphDensity) {
+  paragraph_density.value = value
 }
 </script>
 
@@ -104,6 +124,19 @@ function setTranslationSource(value: ReaderTranslationSource) {
           :options="layout_options"
           :value="display_mode"
           @update:value="setLayout"
+        />
+      </div>
+
+      <div data-testid="reader-settings__paragraph-density" class="flex flex-col gap-2">
+        <span class="text-sm text-ink-muted">
+          {{ t('audio-reader.reader-settings.paragraph-density-label') }}
+        </span>
+        <ui-option-group
+          full_width
+          size="base"
+          :options="density_options"
+          :value="paragraph_density"
+          @update:value="setDensity"
         />
       </div>
 
