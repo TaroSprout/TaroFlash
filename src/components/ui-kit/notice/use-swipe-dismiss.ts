@@ -30,15 +30,18 @@ export function useSwipeDismiss(
 
   watch(
     el_ref,
-    (el) => {
+    (el, _prev, onCleanup) => {
       if (!el || !is_coarse.value) return
 
-      register(el, {
+      const unregister = register(el, {
         onMove: ({ dy }) => gsap.set(el, { y: allowedDelta(dy) }),
         onEnd: ({ dy }) =>
           Math.abs(allowedDelta(dy)) > DISMISS_DISTANCE ? options.onDismiss() : snapBack(el),
         onCancel: () => snapBack(el)
       })
+
+      // Release the old element before the panel reopens onto a new one, or its detached node and listener refcount leak for every open/close cycle.
+      onCleanup(unregister)
     },
     { immediate: true }
   )
