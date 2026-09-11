@@ -227,7 +227,7 @@ tickets it cuts; they still ride the normal `/backlog` → `/triage` → `/groom
   relation itself is wired at cut, not deferred as an instruction for `/groom` to act on.
 - **Fields at cut** — follow [`ticket-authoring.md`](../../rules/ticket-authoring.md)'s cut rule
   exactly: `Status = Backlog`, `Assignee` empty, `Priority` empty, `Target` empty, `Type` set only
-  when the kind is obvious. **Never `Ready`, never `Needs More Info`** — the artifact rounds resolved
+  when the kind is obvious. **Never `Ready`** — the artifact rounds resolved
   the _design_, not the board classification; that's `/backlog` and `/triage`'s pass, not this one.
 - **Body — cut-time only.** `## Product description` (product terms, 1–3 lines) naming what the
   ticket delivers, plus `## Tech details` carrying the resolved placement/contract/constraint/
