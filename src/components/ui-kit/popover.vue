@@ -138,7 +138,7 @@ const arrowStyle = computed(() => {
 // (0 for an instant swap). `power2.inOut` matches the old `ease-in-out`. No
 // `clearOnComplete`: floating-ui positions the popover with an inline
 // `transform`, so clearing transform on settle would strip that and snap the
-// popover to the origin of its containing block.
+// popover to the origin of its containing block. →[K:floating-ui-owns-its-position-transform]
 function fade(from: number, to: number) {
   return motion((el, ctx) => {
     ctx.tl.fromTo(

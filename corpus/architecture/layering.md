@@ -33,6 +33,15 @@ Nothing in the app asks for that. It is a side effect of animating.
 > The cure is to clear the property when the animation lands, handing the
 > resting state back to the stylesheet.
 
+> [!HAZARD] [K:floating-ui-owns-its-position-transform] **A floating-ui element's inline `transform` isn't animation leftover — it's the position itself, so the cure above destroys it.**
+> Floating-ui positions a dropdown, tooltip, or popover by setting `left: 0; top: 0` and putting the
+> whole offset into `transform: translate(x, y)`. That reads exactly like the settled transform the
+> hazard above tells you to clear — but on this element there is no stylesheet position underneath
+> it to hand the resting state back to. Clearing it collapses the element to the origin of whatever
+> element it's absolutely positioned against.
+> The fix is the opposite of the general cure: a driver animation on a floating-ui element never
+> clears transform on settle, however that step is spelled where it runs elsewhere in the app.
+
 ## Clear on the way in, not on the way out
 
 Only the animations that _finish visible_ need clearing. A pane that has
