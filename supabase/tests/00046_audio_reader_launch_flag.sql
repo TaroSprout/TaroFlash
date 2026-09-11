@@ -1,26 +1,12 @@
--- =============================================================================
--- Audio reader launch flag introduced in 20260910174715_audio_reader_launch_flag.sql
---
---   - can_read_lesson_audio() composes capability_is_live('audio_reader') with
---     the existing admin check — an admin only reads true once the capability is live.
---   - The migration seeds the audio_reader row at 'off', so a fresh environment
---     stays dark until an admin flips it.
--- =============================================================================
-
 BEGIN;
 
 SELECT plan(3);
 
--- ── the migration's own seed ──────────────────────────────────────────────────
-
--- Test 1: the audio_reader capability is seeded off.
 SELECT is(
   (SELECT state::text FROM public.capabilities WHERE key = 'audio_reader'),
   'off',
   'the audio_reader capability is seeded off'
 );
-
--- ── can_read_lesson_audio() rides the capability on top of the admin check ────────
 
 SELECT tests.create_user('44444444-4444-4444-4444-444444444444'::uuid, 'ada_audio_admin');
 UPDATE public.members SET role = 'admin'
@@ -29,7 +15,6 @@ UPDATE public.members SET role = 'admin'
 SELECT tests.set_claims('44444444-4444-4444-4444-444444444444'::uuid);
 SET LOCAL role = 'authenticated';
 
--- Test 2: an admin reads false while the capability is off (the seeded baseline).
 SELECT is(
   public.can_read_lesson_audio(),
   false,
@@ -41,7 +26,6 @@ UPDATE public.capabilities SET state = 'on' WHERE key = 'audio_reader';
 SELECT tests.set_claims('44444444-4444-4444-4444-444444444444'::uuid);
 SET LOCAL role = 'authenticated';
 
--- Test 3: the same admin reads true once the capability is flipped on.
 SELECT is(
   public.can_read_lesson_audio(),
   true,
