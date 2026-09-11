@@ -140,13 +140,16 @@ export function _resetGestureState(): void {
 }
 
 export function useGestures() {
+  // register() is often called later from a watch callback with no active scope, so capture the composable's own scope here — that's where auto-cleanup has to hang off to fire.
+  const scope = getCurrentScope()
+
   /**
    * Attach drag tracking to an element. All pointer events are captured at
    * the document level, so callbacks fire even when the pointer leaves the
    * element's bounds mid-drag.
    *
-   * Returns an unregister function. Auto-unregisters when the component
-   * scope is disposed.
+   * Returns an unregister function. Auto-unregisters when the composable's
+   * owning component unmounts, however late register() is called.
    */
   function register(element: Element, callbacks: DragCallbacks): () => void {
     const el = element as HTMLElement
@@ -170,7 +173,8 @@ export function useGestures() {
       if (_listener_count === 0) detachListeners()
     }
 
-    if (getCurrentScope()) onScopeDispose(unregister)
+    scope?.run(() => onScopeDispose(unregister))
+
     return unregister
   }
 
