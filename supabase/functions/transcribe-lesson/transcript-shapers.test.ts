@@ -2,7 +2,12 @@
 // no network, DB, or storage calls, so these run directly against plain data.
 
 import { assertEquals } from '@std/assert'
-import { appendChunk, assignWordsToSegments } from './transcript-shapers.ts'
+import {
+  appendChunk,
+  assignWordsToSegments,
+  sentenceRowsForChunk,
+  type StoredSentence
+} from './transcript-shapers.ts'
 import type { Segment, Transcript, Word } from '../_shared/transcription/transcript.ts'
 
 Deno.test('appendChunk: an empty accumulator (boundary -Infinity) keeps everything', () => {
@@ -154,4 +159,75 @@ Deno.test('assignWordsToSegments: respects the [from, to) window', () => {
   const groups = assignWordsToSegments(words, segments, 1, 2)
   assertEquals(groups.length, 1)
   assertEquals(groups[0], [1])
+})
+
+Deno.test('sentenceRowsForChunk: ordinals continue from the stored count, dropping the overlap lead', () => {
+  const existing: StoredSentence[] = [
+    { start_seconds: 0, end_seconds: 4, text: 'a', words: [{ word: 'a', start: 0, end: 4 }] }
+  ]
+  const incoming = {
+    segments: [
+      { start: 3, end: 4, text: 'dropped' }, // before the boundary (4), dropped
+      { start: 5, end: 8, text: 'b' }, // kept — first new sentence
+      { start: 10, end: 12, text: 'c' } // kept — second new sentence
+    ],
+    words: [
+      { word: 'dropped', start: 3, end: 4 },
+      { word: 'b', start: 5, end: 8 },
+      { word: 'c', start: 10, end: 12 }
+    ]
+  }
+
+  const rows = sentenceRowsForChunk(existing, incoming)
+
+  // Ordinal 0 is the already-stored sentence, so the new rows start at 1 — the
+  // dropped overlap segment mints no ordinal of its own.
+  assertEquals(
+    rows.map((r) => r.ordinal),
+    [1, 2]
+  )
+  assertEquals(
+    rows.map((r) => r.text),
+    ['b', 'c']
+  )
+  // Each new sentence's words are grouped under it, not left flat.
+  assertEquals(rows[0].words, [{ word: 'b', start: 5, end: 8 }])
+  assertEquals(rows[1].words, [{ word: 'c', start: 10, end: 12 }])
+})
+
+Deno.test('sentenceRowsForChunk: paragraph_gap is computed across the chunk seam', () => {
+  const existing: StoredSentence[] = [
+    { start_seconds: 0, end_seconds: 4, text: 'a', words: [{ word: 'a', start: 0, end: 4 }] }
+  ]
+  const incoming = {
+    segments: [
+      { start: 5, end: 8, text: 'b' },
+      { start: 10, end: 12, text: 'c' }
+    ],
+    words: [
+      { word: 'b', start: 5, end: 8 },
+      { word: 'c', start: 10, end: 12 }
+    ]
+  }
+
+  const rows = sentenceRowsForChunk(existing, incoming)
+
+  // The first new sentence's gap is measured against the LAST STORED sentence's
+  // end (4), across the chunk boundary: 5 - 4 = 1.
+  assertEquals(rows[0].paragraph_gap, 1)
+  // The second new sentence's gap is measured against the first new one: 10 - 8 = 2.
+  assertEquals(rows[1].paragraph_gap, 2)
+})
+
+Deno.test('sentenceRowsForChunk: paragraph_gap is 0 at ordinal 0 (no prior end)', () => {
+  const incoming = {
+    segments: [{ start: 50, end: 52, text: 'first' }],
+    words: [{ word: 'first', start: 50, end: 52 }]
+  }
+
+  const rows = sentenceRowsForChunk([], incoming)
+
+  assertEquals(rows[0].ordinal, 0)
+  // No stored sentence precedes it, so the gap is 0 regardless of its own start time.
+  assertEquals(rows[0].paragraph_gap, 0)
 })

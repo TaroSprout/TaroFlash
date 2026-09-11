@@ -280,6 +280,24 @@ describe('groupSentencesIntoParagraphs', () => {
     expect(paragraphs).toHaveLength(2)
   })
 
+  test('prefers a stored paragraph_gap over the timing-gap heuristic', () => {
+    // Timing gap is 0.2 (same-paragraph territory), but the stored gap says 2 —
+    // the stored value wins, so it splits.
+    const first = sentence(0, 0, 1)
+    const second = { ...sentence(1, 1.2, 2), paragraph_gap: 2 }
+    const paragraphs = groupSentencesIntoParagraphs([first, second])
+
+    expect(paragraphs).toHaveLength(2)
+  })
+
+  test('falls back to the timing-gap heuristic when paragraph_gap is absent', () => {
+    // No stored paragraph_gap on either sentence — same as the timing-only cases above.
+    const sentences = [sentence(0, 0, 1), sentence(1, 2.2, 3)]
+    const paragraphs = groupSentencesIntoParagraphs(sentences)
+
+    expect(paragraphs).toHaveLength(2)
+  })
+
   test('preserves all sentences across paragraphs', () => {
     const sentences = [sentence(0, 0, 1), sentence(1, 2, 3), sentence(2, 4, 5), sentence(3, 5.2, 6)]
     const flat = groupSentencesIntoParagraphs(sentences).flat()
