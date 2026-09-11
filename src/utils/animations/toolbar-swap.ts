@@ -1,34 +1,21 @@
-import { gsap } from 'gsap'
+import { defineMotion, motion } from '@/utils/motion/driver'
+import { motionTransition } from '@/utils/motion/transition'
+import { pinOutOfFlow } from './pin-out-of-flow'
 
-const DURATION = 0.2
+const toolbarEnterMotion = defineMotion({
+  from: { opacity: 0 },
+  to: { opacity: 1 },
+  duration: 200,
+  ease: 'out',
+  clearOnComplete: true
+})
 
-/** Toolbar swap — incoming variant crossfades in. */
-export function toolbarEnter(el: Element, done: () => void) {
-  gsap.fromTo(
-    el,
-    { opacity: 0 },
-    {
-      opacity: 1,
-      duration: DURATION,
-      ease: 'power2.out',
-      clearProps: 'opacity',
-      onComplete: done
-    }
-  )
-}
+// Pins the leaving variant out of flow so the incoming one can claim its layout
+// slot without a jump, then crossfades it out.
+const toolbarLeaveMotion = motion((el, ctx) => {
+  pinOutOfFlow(el)
+  ctx.tl.to(el, { opacity: 0, duration: ctx.duration(200), ease: ctx.ease('out') })
+})
 
-/**
- * Toolbar swap — leaving variant crossfades out. Pins the node absolute
- * mid-leave so the entering variant can claim its layout slot without a jump.
- */
-export function toolbarLeave(el: Element, done: () => void) {
-  const node = el as HTMLElement
-  node.style.position = 'absolute'
-  node.style.inset = '0'
-  gsap.to(el, {
-    opacity: 0,
-    duration: DURATION,
-    ease: 'power2.out',
-    onComplete: done
-  })
-}
+/** Crossfades one toolbar variant out as its replacement fades in. */
+export const toolbarSwap = motionTransition(toolbarEnterMotion, toolbarLeaveMotion)

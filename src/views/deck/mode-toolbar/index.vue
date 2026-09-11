@@ -4,7 +4,7 @@ import ModeSelect from './mode-select.vue'
 import { computed, inject } from 'vue'
 import { cardEditorKey } from '@/views/deck/composables'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { toolbarEnter, toolbarLeave } from '@/utils/animations/toolbar-swap'
+import { toolbarSwap } from '@/utils/animations/toolbar-swap'
 
 const { selection } = inject(cardEditorKey)!
 
@@ -19,7 +19,7 @@ const toolbarComponent = computed(() =>
 
 <template>
   <div data-testid="mode-toolbar-container" class="w-full z-10 relative">
-    <Transition :css="false" @enter="toolbarEnter" @leave="toolbarLeave">
+    <Transition :css="false" @enter="toolbarSwap.onEnter" @leave="toolbarSwap.onLeave">
       <component :is="toolbarComponent" :key="toolbarComponent.__name" />
     </Transition>
     <div class="bg-surface p-2 rounded-5 absolute -inset-2 -z-1"></div>

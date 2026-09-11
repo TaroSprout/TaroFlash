@@ -4,7 +4,7 @@ import UiButton from '@/components/ui-kit/button.vue'
 import RatingButtons from './session-studying/rating-buttons/index.vue'
 import StudyFlipDoneFooter from './study-flip-done-footer.vue'
 import SummaryBulkActionsBar from './session-summary/bulk-actions-bar.vue'
-import { toolbarEnter, toolbarLeave } from '@/utils/animations/toolbar-swap'
+import { toolbarSwap } from '@/utils/animations/toolbar-swap'
 
 type SessionToolbarProps = {
   variant:
@@ -33,7 +33,7 @@ const { t } = useI18n()
 
 <template>
   <div class="relative w-full">
-    <Transition :css="false" @enter="toolbarEnter" @leave="toolbarLeave">
+    <Transition :css="false" @enter="toolbarSwap.onEnter" @leave="toolbarSwap.onLeave">
       <rating-buttons
         v-if="variant === 'rating'"
         key="rating"

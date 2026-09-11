@@ -14,11 +14,12 @@ const emit = defineEmits<{
 }>()
 
 function onLeave(el: Element, done: () => void) {
-  sessionPaneLeave(el, done)
+  void sessionPaneLeave(el as HTMLElement).done.then(done)
 }
 
 function onEnter(el: Element, done: () => void) {
-  sessionPaneEnter(el, done, { instant, onStart: () => emit('enter-start') })
+  const enter = sessionPaneEnter({ instant, onStart: () => emit('enter-start') })
+  void enter(el as HTMLElement).done.then(done)
 }
 </script>
 
