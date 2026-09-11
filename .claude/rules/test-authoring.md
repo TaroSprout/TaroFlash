@@ -157,3 +157,8 @@ const Stub = defineComponent({
   produces it. This proves the downstream mechanism works given the precondition, never that the app
   ever puts it there; drive the precondition through the real call and let the effect land on its
   own.
+
+## Spokes
+
+- [`integrity`](./test-authoring/integrity.md) — conflicts, incorrect assertions, and redundant
+  coverage across the changed test files in one batch, reviewed relationally rather than per line.

@@ -1,22 +1,26 @@
 ---
 name: review-work
-description: The harness-conformance gate `/work`'s review swarm runs before opening any PR — one enforcement pass over a diff for a single concern (`--concern <name>`, e.g. `comment-authoring` or `code-style`) held against that concern's rule family with strong prejudice. Report-only: it names every violation with the gate it fails and the exact change, and never edits or commits; the caller routes the fixes. `/work` § 4e fans out one `swarm-reviewer` per concern in the roster below over the integration branch; standalone it runs every concern over the current branch. Trigger on `/review-work`, "review the work", "harness review", "check comment/code-style conformance". Not a bug or correctness review — that's `/code-review`; this one only enforces the harness's authoring rules.
+description: The code-review swarm `/work` runs before opening any PR — one review pass over a diff for a single concern (`--concern <name>`, e.g. `comment-authoring`, `code-style`, `test-authoring`, `test-integrity`) held against that concern's review lens with strong prejudice. A concern is a rule-family lens (every changed line held against a rule file) or a semantic lens (the changed set reasoned about relationally). Report-only: it names every violation with the gate it fails and the exact change, and never edits or commits; the caller routes the fixes. `/work` § 4e fans out one `swarm-reviewer` per concern in the roster below over the integration branch; standalone it runs every concern over the current branch. Trigger on `/review-work`, "review the work", "harness review", "check comment/code-style/test conformance". `/code-review` stays the separate, general correctness/bug-hunt tool — this swarm's lenses stay bounded to the roster below.
 allowed-tools: Read, Grep, Glob, Bash
 arguments:
   - name: --concern <name>
-    description: The single concern to enforce — a row in the Concern roster (`comment-authoring`, `code-style`). Omit to run every roster row in sequence, for standalone human use.
+    description: The single concern to enforce — a row in the Concern roster (`comment-authoring`, `code-style`, `test-authoring`, `test-integrity`). Omit to run every roster row in sequence, for standalone human use.
   - name: --base <ref>
     description: The ref to diff against for scope (default `master`). Everything the tree changed since `<ref>` is in scope.
 argument-hint: '[--concern <name>] [--base <ref>]'
-lastUpdated: 2026-09-10T00:00:00Z
+lastUpdated: 2026-09-11T00:00:00Z
 ---
 
 ## What this skill does
 
-One enforcement pass over a diff for **one concern** — a rule family named by `--concern` and the
-paths it governs — holding every changed line against that family with strong prejudice.
-**Report-only** — each finding names its location, the rule and gate it fails, and the concrete
-change; the skill never edits, never commits, never opens a PR. The caller routes the fixes.
+One review pass over a diff for **one concern** — a review lens named by `--concern` — holding the
+changed set against that lens's rule family with strong prejudice. A **rule-family lens**
+(`comment-authoring`, `code-style`, `test-authoring`) holds every changed line against a rule file,
+per-line. A **semantic lens** (`test-integrity`) reasons about the changed set relationally instead —
+it's how this swarm catches a conflict that only exists once two branches merge, which no per-line
+pass over either branch alone could see. **Report-only** — each finding names its location, the rule
+and gate it fails, and the concrete change; the skill never edits, never commits, never opens a PR.
+The caller routes the fixes.
 
 `/work` § 4e fans out one [`swarm-reviewer`](../../agents/swarm-reviewer.md) per concern in the roster
 below, all over the **integration branch** — one diff carrying every landed branch — after the
@@ -26,18 +30,23 @@ to the branch that owns it and routes the fix (§ 4d). Standalone, with no `--co
 **every** roster row in sequence over the current branch against `master` and prints the same report
 for a human to act on.
 
-**This is not `/code-review`.** That hunts correctness and reuse; this one only enforces the
-harness's authoring rules. A logic bug is out of scope — note it in one line and move on.
+**This swarm stays bounded.** `/code-review` is the separate, general tool for correctness and reuse
+bugs; this swarm only ever runs the lenses in the roster below, one of which (`test-integrity`) now
+reasons semantically rather than line-by-line, but it never grows into a general bug hunt. A finding
+outside every roster lens is still out of scope — note it in one line and move on.
 
 ## Concern roster
 
-Each row is one concern: a rule family and the paths it governs. `--concern <name>` picks one row.
-Adding a concern is one row here pointing at a rule file — no new agent, no change to `/work` § 4e.
+Each row is one concern: a review lens, the rule family it loads, the paths it's in scope for, and
+the model it runs on. `--concern <name>` picks one row. Adding a concern is one row here pointing at
+a rule file — no new agent, no change to `/work` § 4e.
 
-| `--concern`         | Rule family — read in full before judging                                                                                                 | In-scope changed paths                                                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `comment-authoring` | [`comment-authoring`](../../rules/comment-authoring.md) + its [`examples`](../../rules/comment-authoring/examples.md) spoke               | `src/**`, `supabase/**/*.{ts,sql}`, `scripts/**`, `tests/**` — **including** `.css`/`.scss` under `src/**` |
-| `code-style`        | [`code-style`](../../rules/code-style.md) + all six spokes: `phases`, `nesting`, `responsibility`, `variants`, `reactivity`, `signatures` | `src/**/*.{ts,vue}`                                                                                        |
+| `--concern`         | Lens        | Rule family — read in full before judging                                                                                                 | In-scope changed paths                                                                                     | Model  |
+| ------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------ |
+| `comment-authoring` | rule-family | [`comment-authoring`](../../rules/comment-authoring.md) + its [`examples`](../../rules/comment-authoring/examples.md) spoke               | `src/**`, `supabase/**/*.{ts,sql}`, `scripts/**`, `tests/**` — **including** `.css`/`.scss` under `src/**` | sonnet |
+| `code-style`        | rule-family | [`code-style`](../../rules/code-style.md) + all six spokes: `phases`, `nesting`, `responsibility`, `variants`, `reactivity`, `signatures` | `src/**/*.{ts,vue}`                                                                                        | sonnet |
+| `test-authoring`    | rule-family | [`test-authoring`](../../rules/test-authoring.md)                                                                                         | `tests/**`, `supabase/functions/**/*.test.ts`                                                              | sonnet |
+| `test-integrity`    | semantic    | [`test-authoring/integrity`](../../rules/test-authoring/integrity.md)                                                                     | `tests/**`, `supabase/functions/**/*.test.ts`                                                              | opus   |
 
 ## Strong prejudice
 
@@ -62,7 +71,9 @@ Keep only the files in the named concern's **In-scope changed paths** (Concern r
 concern's paths are another reviewer's job this run. Only **added or modified** lines are in scope — a
 pre-existing violation the diff never touched is not this run's job. The one exception: a comment the
 diff made stale (its subject line changed underneath it) is in scope even if the comment line itself
-didn't change.
+didn't change. **`test-integrity`, a relational concern, reads the full changed test files** (not
+just the changed lines) to compare them against each other — still only files the diff touched, never
+the pre-existing suite.
 
 Running every concern (no `--concern`): repeat Steps 1–4 once per roster row, and print one report
 section per concern.
@@ -82,14 +93,22 @@ altitude. Hold every changed line against the concern's rule family:
   list, the regex rule, and the pointer rules (readable sentence mandatory; `→[K:<slug>]` is the
   last token, never a comment on its own).
 - **`code-style`** — each of the six spokes against the shape of every changed function.
+- **`test-authoring`** — the decidable per-line gates: blackbox querying (`data-testid` only, never
+  tag/class/role/text), the awaiting rules, the whole `## Reject` list, and hand-assigning upstream
+  state instead of triggering it. Not the "accuses the source first" procedure — that's a workflow,
+  not a per-line gate.
+- **`test-integrity`** — read the full changed test files together, not line by line: a contradictory
+  expected value for the same behavior/path across two changed tests, an assertion that contradicts
+  the source's actual contract, or overlapping/duplicate coverage the batch introduced across files.
 
 A single line can fail more than one gate in a concern; report each failure, not just the first.
 
 ## Step 4 — Report
 
 Lead with the verdict, then the findings grouped by file. Every finding is self-contained — a builder
-receives it with no other context, and reports stay **branch-agnostic**: name the file and the quoted
-offender, never a branch. The orchestrator maps each finding to its owning branch.
+receives it with no other context, and reports stay **branch-agnostic**: name the file (or, for a
+`test-integrity` cross-test conflict, **both files**, the contradiction, and the required edit) and
+the quoted offender, never a branch. The orchestrator maps each finding to its owning branch.
 
 ```markdown
 ## review-work (comment-authoring) — <N> findings across <M> files
