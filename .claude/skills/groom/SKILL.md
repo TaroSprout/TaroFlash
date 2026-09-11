@@ -1,25 +1,25 @@
 ---
 name: groom
-description: Deep second pass over a single Notion Task Board ticket sitting in `Needs More Info`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Ready`, then waits for the user's review comments. Owns splitting work into the smallest independently-verifiable tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
+description: Deep second pass over a single Notion Task Board ticket sitting in `Backlog`. Resolves every open design decision with the user through conversation — surfacing assumptions as explicit questions, pushing back on the spec, verifying claims against real source rather than recall — then writes the decisions and their rationale into the ticket, assigns a model, and lands it in `Ready`, then waits for the user's review comments. Owns splitting work into the smallest independently-verifiable tickets (wiring the `Blocked By` relation between the siblings), recording external blockers, and keeping the epic's decision log and fog current. Technical and concise. Trigger on `/groom`, "groom this ticket", "resolve the design on X".
 allowed-tools: Read, Grep, Glob, Bash, Agent, WebFetch, WebSearch, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page, mcp__notion__notion-create-pages, mcp__notion__notion-search
 argument-hint: '[<ID>]'
 arguments:
   - name: <ID>
-    description: Numeric ticket ID to groom. Omit to take the top `Needs More Info` ticket by Priority → ID.
+    description: Numeric ticket ID to groom. Omit to take the top `Backlog` ticket by Priority → ID.
 lastUpdated: 2026-08-02T00:00:00Z
 ---
 
 ## What this skill does
 
-Groom is the **second** of two grooming passes. `/triage` located the work and routed it here
-because it carries unresolved design decisions. Groom **resolves them with the user**, records
-what was decided and why, and lands the ticket executable.
+Groom pulls straight from `Backlog` — the `Needs More Info` hold is retired. Groom **resolves every
+open design decision with the user**, records what was decided and why, and lands the ticket
+executable.
 
 ```
-Needs More Info ──/groom──┬──► Ready              (decisions resolved, model assigned)
-                          ├──► split into N tickets
-                          ├──► On Hold            (turned out to need product input, or premature)
-                          └──► stays put          (blocked on an external fact)
+Backlog ──/groom──┬──► Ready              (decisions resolved, model assigned)
+                   ├──► split into N tickets
+                   ├──► On Hold            (turned out to need product input, or premature)
+                   └──► stays put          (blocked on an external fact)
 ```
 
 Landing `Ready` is the finish line, but it opens the user's review first. Expect the user to leave
@@ -90,7 +90,7 @@ The board **schema** — data sources, every field and its option list — lives
 voice** live in [`ticket-authoring.md`](../../rules/ticket-authoring.md). Read both before writing
 anything to the board. This skill declares only its lanes and its own passes.
 
-- Lanes: pulls from `Needs More Info`; lands at `Ready`; may park at `On Hold`. Never sets
+- Lanes: pulls from `Backlog`; lands at `Ready`; may park at `On Hold`. Never sets
   `In Progress` / `Review` / `Done` / `Blocked`.
 - **Retype to `Spike`** when grooming reveals the deliverable is a decision or recommendation rather
   than shipped behaviour — and drop the now-redundant `"Spike:"` title prefix.
@@ -141,13 +141,13 @@ Either way, no walls of text:
 ```sql
 SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", "Assignee", url
 FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
-WHERE "Status" = 'Needs More Info'
+WHERE "Status" = 'Backlog'
 ORDER BY "Priority" ASC, "userDefined:ID" ASC
 ```
 
 Take the given `<ID>`, else the top row. Fetch its page body with `notion-fetch` — the query returns
-properties only, and `/triage` already wrote a body with the open forks recorded; build on it, don't
-restart. Echo which ticket you're grooming in one line.
+properties only, and a `/triage` or `/backlog` pass may already have written context or open forks
+into the body; build on it, don't restart. Echo which ticket you're grooming in one line.
 
 Leave `Status` alone. Grooming doesn't claim.
 
@@ -238,7 +238,7 @@ Only answerable once the design has resolved:
     landed yet.
 - **External blockers** — facts only the user can supply (a dashboard setting, a vendor account
   detail, a product call). Record under `## Blocked on` with what it blocks. If the ticket cannot
-  land without one, it stays in `Needs More Info` and the report says why.
+  land without one, it stays in `Backlog` and the report says why.
 - **Wrong lane** — if it turns out to need product input rather than technical decisions, or is
   premature, propose `On Hold`.
 - **Past the goal** — if resolving the design reveals this ticket (or a sibling) sits beyond its
@@ -291,10 +291,9 @@ the lane `/work` pulls from.
   Fable himself when he wants it. Never leave `Assignee` empty or `Me`. `/work` pins each subagent to
   this model.
 - A ticket still carrying an unmade design or taste call does **not** reach `Ready`, even labelled
-  "decide during pairing" — that is what `Needs More Info` is for, and this pass exists to settle it.
-  The only thing that may ride into `Ready` is a decision genuinely blocked on an external fact
-  (§4), recorded under `## Blocked on`; if the ticket cannot land without that fact, it stays in
-  `Needs More Info`.
+  "decide during pairing" — settling it is exactly what this pass exists to do. The only thing that
+  may ride into `Ready` is a decision genuinely blocked on an external fact (§4), recorded under
+  `## Blocked on`; if the ticket cannot land without that fact, it stays in `Backlog`.
 
 Also sweep for **copy that the change makes false** — existing `src/locales/en-us.json` strings
 asserting the old behaviour ("this cannot be undone"). List them in the body as required edits.

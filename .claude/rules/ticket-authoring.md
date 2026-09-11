@@ -112,8 +112,8 @@ Six gates on every AC, on top of [`authoring`](./authoring.md):
   an AC. And an AC pins the _design_ decision (placement, host, copy, states, behaviour), never the
   _implementation_ (which composable, how it's wired) — that rides a companion line in
   `## Tech details`.
-- **A hedge routes, it never writes.** The ticket goes to `Needs More Info`; the fork never lands in
-  the criterion.
+- **A hedge routes, it never writes.** The ticket stays in `Backlog` for `/groom`; the fork never
+  lands in the criterion.
 
 The delete-test applies **per clause** here, not per line — a clause whose removal leaves no
 criterion ambiguous or unfailable is cut.
@@ -181,7 +181,7 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
   (same wording, its own key — keys aren't shared across features). A ticket with undecided copy does
   not reach `Ready`.
 - **Grooming asks for every string the ticket will need**, one question per line, three varied
-  options each, before the ticket leaves `Needs More Info`. The build that picks the ticket up is
+  options each, before the ticket leaves `Backlog` for `Ready`. The build that picks the ticket up is
   unattended and cannot ask — a string the ticket didn't settle reaches the branch as a `COPY-TBD`
   that fails CI (→[K:build-unfinished-markers]), so the cost of skipping the question is a red PR,
   not a guess.
