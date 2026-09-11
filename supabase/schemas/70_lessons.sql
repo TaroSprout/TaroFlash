@@ -8,7 +8,6 @@ CREATE TABLE public.lessons (
     member_id uuid NOT NULL,
     title text NOT NULL,
     audio_path text NOT NULL,
-    transcript jsonb DEFAULT '{}'::jsonb NOT NULL,
     lang text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -25,6 +24,30 @@ CREATE TABLE public.lessons (
 
 
 ALTER TABLE public.lessons OWNER TO postgres;
+
+
+-- One row per transcript sentence, replacing the single accumulating transcript
+-- blob. Each phase writes only its own columns: transcription seeds ordinal /
+-- timing / text / words / paragraph_gap, chaptering stamps chapter_title on the
+-- sentence a chapter opens on, translating fills translation, transliterating
+-- fills readings (one entry per word, index-aligned to `words`).
+CREATE TABLE public.lesson_sentences (
+    lesson_id bigint NOT NULL,
+    ordinal integer NOT NULL,
+    start_seconds double precision NOT NULL,
+    end_seconds double precision NOT NULL,
+    text text NOT NULL,
+    words jsonb DEFAULT '[]'::jsonb NOT NULL,
+    -- Silent seconds before this sentence — the paragraph-break strength the
+    -- reader thresholds, precomputed here instead of at read time. 0 on the first.
+    paragraph_gap double precision DEFAULT 0 NOT NULL,
+    translation text,
+    readings jsonb,
+    chapter_title text
+);
+
+
+ALTER TABLE public.lesson_sentences OWNER TO postgres;
 
 
 CREATE TABLE public.lesson_collections (
@@ -67,6 +90,14 @@ ALTER TABLE ONLY public.lesson_collections
 
 ALTER TABLE ONLY public.lessons
     ADD CONSTRAINT lessons_pkey PRIMARY KEY (id);
+
+
+ALTER TABLE ONLY public.lesson_sentences
+    ADD CONSTRAINT lesson_sentences_pkey PRIMARY KEY (lesson_id, ordinal);
+
+
+ALTER TABLE ONLY public.lesson_sentences
+    ADD CONSTRAINT lesson_sentences_lesson_id_fkey FOREIGN KEY (lesson_id) REFERENCES public.lessons(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.lesson_collections
@@ -136,10 +167,10 @@ begin
   end if;
 
   insert into public.lessons
-    (collection_id, title, audio_path, transcript,
+    (collection_id, title, audio_path,
      status, phase, script, "position", chunks, chunk_cursor)
   values
-    (p_collection_id, p_title, p_audio_path, '{}'::jsonb,
+    (p_collection_id, p_title, p_audio_path,
      'processing', 'transcribing', p_script, v_position, v_chunks, 0)
   returning * into v_lesson;
 
@@ -157,6 +188,109 @@ ALTER FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text
 GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) TO anon;
 GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) TO service_role;
+
+
+-- Transcription's per-chunk write: seed (or re-seed, on a duplicate delivery) the
+-- sentence rows a chunk produced. Idempotent by (lesson_id, ordinal) — a replayed
+-- chunk overwrites the same rows with the same values rather than duplicating.
+CREATE FUNCTION public.upsert_lesson_sentences(p_lesson_id bigint, p_sentences jsonb) RETURNS void
+    LANGUAGE sql
+    AS $$
+  insert into public.lesson_sentences
+    (lesson_id, ordinal, start_seconds, end_seconds, text, words, paragraph_gap)
+  select
+    p_lesson_id, s.ordinal, s.start_seconds, s.end_seconds, s.text, s.words, s.paragraph_gap
+  from jsonb_to_recordset(p_sentences) as s(
+    ordinal integer, start_seconds double precision, end_seconds double precision,
+    text text, words jsonb, paragraph_gap double precision
+  )
+  on conflict (lesson_id, ordinal) do update set
+    start_seconds = excluded.start_seconds,
+    end_seconds   = excluded.end_seconds,
+    text          = excluded.text,
+    words         = excluded.words,
+    paragraph_gap = excluded.paragraph_gap;
+$$;
+
+
+ALTER FUNCTION public.upsert_lesson_sentences(p_lesson_id bigint, p_sentences jsonb) OWNER TO postgres;
+
+
+-- Only the service-role worker writes sentence rows; a member never calls these
+-- (see 20260807180000_lock-down-lesson-cron-functions for the same lockdown shape).
+REVOKE ALL ON FUNCTION public.upsert_lesson_sentences(p_lesson_id bigint, p_sentences jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.upsert_lesson_sentences(p_lesson_id bigint, p_sentences jsonb) FROM anon;
+REVOKE ALL ON FUNCTION public.upsert_lesson_sentences(p_lesson_id bigint, p_sentences jsonb) FROM authenticated;
+GRANT ALL ON FUNCTION public.upsert_lesson_sentences(p_lesson_id bigint, p_sentences jsonb) TO service_role;
+
+
+-- Chaptering's write: clear every existing chapter mark, then stamp chapter_title
+-- on each sentence a chapter opens on. Idempotent — a re-run reproduces the set.
+CREATE FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+begin
+  update public.lesson_sentences
+     set chapter_title = null
+   where lesson_id = p_lesson_id and chapter_title is not null;
+
+  update public.lesson_sentences ls
+     set chapter_title = c.title
+    from jsonb_to_recordset(p_chapters) as c(ordinal integer, title text)
+   where ls.lesson_id = p_lesson_id and ls.ordinal = c.ordinal;
+end;
+$$;
+
+
+ALTER FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) FROM anon;
+REVOKE ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) FROM authenticated;
+GRANT ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) TO service_role;
+
+
+-- Translating's write: fill translation on a slice of sentences, keyed by ordinal.
+-- Touches only the translation column, leaving every other field intact.
+CREATE FUNCTION public.set_lesson_translations(p_lesson_id bigint, p_translations jsonb) RETURNS void
+    LANGUAGE sql
+    AS $$
+  update public.lesson_sentences ls
+     set translation = t.translation
+    from jsonb_to_recordset(p_translations) as t(ordinal integer, translation text)
+   where ls.lesson_id = p_lesson_id and ls.ordinal = t.ordinal;
+$$;
+
+
+ALTER FUNCTION public.set_lesson_translations(p_lesson_id bigint, p_translations jsonb) OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.set_lesson_translations(p_lesson_id bigint, p_translations jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_lesson_translations(p_lesson_id bigint, p_translations jsonb) FROM anon;
+REVOKE ALL ON FUNCTION public.set_lesson_translations(p_lesson_id bigint, p_translations jsonb) FROM authenticated;
+GRANT ALL ON FUNCTION public.set_lesson_translations(p_lesson_id bigint, p_translations jsonb) TO service_role;
+
+
+-- Transliterating's write: fill readings (one entry per word, index-aligned to the
+-- sentence's `words`) on a slice, keyed by ordinal. Touches only the readings column.
+CREATE FUNCTION public.set_lesson_readings(p_lesson_id bigint, p_readings jsonb) RETURNS void
+    LANGUAGE sql
+    AS $$
+  update public.lesson_sentences ls
+     set readings = r.readings
+    from jsonb_to_recordset(p_readings) as r(ordinal integer, readings jsonb)
+   where ls.lesson_id = p_lesson_id and ls.ordinal = r.ordinal;
+$$;
+
+
+ALTER FUNCTION public.set_lesson_readings(p_lesson_id bigint, p_readings jsonb) OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.set_lesson_readings(p_lesson_id bigint, p_readings jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_lesson_readings(p_lesson_id bigint, p_readings jsonb) FROM anon;
+REVOKE ALL ON FUNCTION public.set_lesson_readings(p_lesson_id bigint, p_readings jsonb) FROM authenticated;
+GRANT ALL ON FUNCTION public.set_lesson_readings(p_lesson_id bigint, p_readings jsonb) TO service_role;
 
 
 CREATE FUNCTION public.invoke_lesson_process(p_lesson_id bigint) RETURNS void
@@ -295,6 +429,16 @@ ALTER TABLE public.lesson_collections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE public.lesson_sentences ENABLE ROW LEVEL SECURITY;
+
+
+-- Read-only for the owning member; the worker writes through service_role, which
+-- bypasses RLS, so there's no write policy for authenticated to hold.
+CREATE POLICY lesson_sentences_owner_select ON public.lesson_sentences FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.lessons l
+  WHERE ((l.id = lesson_sentences.lesson_id) AND (l.member_id = ( SELECT public.active_member_id() AS active_member_id))))));
+
+
 CREATE POLICY lesson_collections_owner_delete ON public.lesson_collections FOR DELETE TO authenticated USING ((( SELECT public.active_member_id() AS active_member_id) = member_id));
 
 
@@ -322,6 +466,11 @@ CREATE POLICY lessons_owner_update ON public.lessons FOR UPDATE TO authenticated
 GRANT ALL ON TABLE public.lessons TO anon;
 GRANT ALL ON TABLE public.lessons TO authenticated;
 GRANT ALL ON TABLE public.lessons TO service_role;
+
+
+GRANT ALL ON TABLE public.lesson_sentences TO anon;
+GRANT ALL ON TABLE public.lesson_sentences TO authenticated;
+GRANT ALL ON TABLE public.lesson_sentences TO service_role;
 
 
 GRANT ALL ON TABLE public.lesson_collections TO anon;
