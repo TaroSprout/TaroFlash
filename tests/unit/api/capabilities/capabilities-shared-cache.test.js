@@ -86,7 +86,7 @@ describe('capabilities shared cache', () => {
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(can.useAudioReader.value).toBe(true) // optimistic flip, before the write resolves
+    expect(can.useAudioReader.value).toBe(true)
 
     await pending
     app.unmount()
@@ -101,9 +101,9 @@ describe('capabilities shared cache', () => {
     await flushPromises()
     expect(first.can.useAudioReader.value).toBe(true)
 
-    first.app.unmount() // closes the panel; the cache lives on Pinia, not this tree
+    first.app.unmount()
 
-    const second = mountHost(pinia) // fresh tree, same Pinia instance
+    const second = mountHost(pinia)
     await flushPromises()
     await flushPromises()
 

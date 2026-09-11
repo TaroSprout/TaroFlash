@@ -5,7 +5,6 @@ import { useSessionStore } from '@/stores/session'
 type QueryCache = ReturnType<typeof useQueryCache>
 type CapabilitiesSnapshot = Capability[] | undefined
 
-/** Updates the capability row in the cache the instant it's toggled, so the control responds under the finger. */
 function setCapabilityInCache(
   queryCache: QueryCache,
   cache_key: string[],
@@ -22,7 +21,6 @@ function setCapabilityInCache(
   return snapshot
 }
 
-/** Updates a capability's state. Refused server-side for anyone but an admin. */
 export function useUpdateCapabilityMutation() {
   const queryCache = useQueryCache()
   const session = useSessionStore()

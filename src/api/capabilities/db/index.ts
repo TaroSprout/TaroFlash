@@ -17,10 +17,7 @@ export type UpdateCapabilityParams = {
   state: CapabilityState
 }
 
-/**
- * Updates a capability's state. RLS refuses the write for anyone but an
- * admin (`can_manage_capabilities()`); this function never re-checks the role.
- */
+/** Write refused for non-admins at the database, never re-checked here. */
 export async function updateCapability(params: UpdateCapabilityParams): Promise<void> {
   const { error } = await supabase
     .from('capabilities')
