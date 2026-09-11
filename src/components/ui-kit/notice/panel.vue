@@ -7,6 +7,8 @@ import { NOTICE_ICON, NOTICE_PALETTE } from './state-config'
 import { useSwipeDismiss } from './use-swipe-dismiss'
 import { usePausableTimer } from './use-pausable-timer'
 import { springScaleIn, scaleFadeOut } from '@/utils/animations/modal'
+import { defineMotion } from '@/utils/motion/driver'
+import { motionTransition } from '@/utils/motion/transition'
 import { emitSfx } from '@/sfx/bus'
 import { type Notice, type NoticeAction } from '@/stores/notice-store'
 
@@ -24,6 +26,11 @@ const { t } = useI18n()
 
 const open = ref(false)
 const panel_ref = ref<HTMLElement | null>(null)
+
+const backdropFade = motionTransition(
+  defineMotion({ from: { opacity: 0 }, to: { opacity: 1 }, duration: 100, clearOnComplete: true }),
+  defineMotion({ to: { opacity: 0 }, duration: 100 })
+)
 
 useSwipeDismiss(panel_ref, { directions: ['up', 'down'], onDismiss: () => closePanel() })
 const { stop: stopAutoClose } = usePausableTimer(panel_ref, closePanel, {
@@ -56,12 +63,7 @@ function onActionClick(action: NoticeAction) {
 </script>
 
 <template>
-  <Transition
-    enter-from-class="opacity-0"
-    enter-active-class="transition-opacity duration-100"
-    leave-to-class="opacity-0"
-    leave-active-class="transition-opacity duration-100"
-  >
+  <Transition :css="false" @enter="backdropFade.onEnter" @leave="backdropFade.onLeave">
     <div
       v-if="open && notice.backdrop"
       data-testid="ui-kit-notice-panel-backdrop"

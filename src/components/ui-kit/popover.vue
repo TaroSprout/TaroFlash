@@ -15,6 +15,7 @@ import {
   type VirtualElement
 } from '@floating-ui/vue'
 import uid from '@/utils/uid'
+import { motion } from '@/utils/motion/driver'
 
 type PopoverProps = {
   mode?: 'click' | 'hover'
@@ -133,6 +134,29 @@ const arrowStyle = computed(() => {
   }
 })
 
+// Opacity crossfade on the driver, timed by the caller's `transition_duration`
+// (0 for an instant swap). `power2.inOut` matches the old `ease-in-out`.
+function fade(from: number, to: number) {
+  return motion(
+    (el, ctx) => {
+      ctx.tl.fromTo(
+        el,
+        { opacity: from },
+        { opacity: to, duration: transition_duration / 1000, ease: 'power2.inOut' }
+      )
+    },
+    { clearOnComplete: to === 1 }
+  )
+}
+
+function onEnter(el: Element, done: () => void) {
+  void fade(0, 1)(el as HTMLElement).done.then(done)
+}
+
+function onLeave(el: Element, done: () => void) {
+  void fade(1, 0)(el as HTMLElement).done.then(done)
+}
+
 // Only the watcher below disarms, on the edge back out of `open`. Disarming here
 // instead would strand a caller that answers `close` by reopening on another
 // anchor in the same tick: the prop never leaves `open`, so no edge ever re-arms
@@ -170,15 +194,7 @@ watch(
     <slot name="trigger"></slot>
 
     <Teleport to="body" :disabled="!teleport">
-      <Transition
-        :duration="transition_duration"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        enter-active-class="transition-opacity duration-100 ease-in-out"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-        leave-active-class="transition-opacity duration-100 ease-in-out"
-      >
+      <Transition :css="false" @enter="onEnter" @leave="onLeave">
         <div
           v-if="open || mode === 'hover'"
           v-show="!middlewareData.hide?.referenceHidden"
