@@ -23,11 +23,9 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => coarseRef
 }))
 
-// button.vue's tap-pop animation runs through useStagedTap → playButtonTap on
-// the motion driver; mock the driver call directly so no real GSAP timeline runs.
 vi.mock('@/utils/animations/button-tap', () => ({
   BUTTON_TAP_DURATION: 0.1,
-  playButtonTap: mockPlayButtonTap,
+  playButtonTap: mockPlayButtonTap, // button.vue's tap-pop runs through useStagedTap → this driver call; mock it so no real GSAP timeline runs
   playButtonSweep: mockPlayButtonSweep
 }))
 
@@ -43,7 +41,6 @@ import { motionStoreStub } from '@tests/fixtures/motion'
 import UiButton from '@/components/ui-kit/button.vue'
 import UiTooltip from '@/components/ui-kit/tooltip.vue'
 
-/** A controllable stand-in for a MotionHandle, so a test can hold the tap open before settling it. */
 function makeHandle() {
   let resolve_mark
   let resolve_done
@@ -503,8 +500,7 @@ describe('UiButton', () => {
       caretInner.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       await wrapper.vm.$nextTick()
 
-      // The tap animation must NOT have been triggered.
-      expect(mockPlayButtonTap).not.toHaveBeenCalled()
+      expect(mockPlayButtonTap).not.toHaveBeenCalled() // the tap animation must NOT have been triggered
       expect(mockPlayButtonSweep).not.toHaveBeenCalled()
     })
   })
@@ -581,9 +577,7 @@ describe('UiButton', () => {
     test('clicking inside .btn-trailing is NOT blocked when primary is disabled', async () => {
       // The guard in onCaptureClick bails early (returns without stopping) when the
       // click originates inside .btn-trailing, even when disabled=true.
-      // Verify this by confirming no tap animation is called (no intercept on trailing
-      // clicks), and the primary consumer @click is also not called (trailing is its own handler).
-      mockPlayButtonTap.mockClear()
+      mockPlayButtonTap.mockClear() // no tap animation on trailing clicks, and the primary consumer @click stays uncalled — trailing is its own handler
       mockPlayButtonSweep.mockClear()
 
       const primaryClick = vi.fn()

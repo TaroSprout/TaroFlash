@@ -9,11 +9,8 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: () => coarseRef
 }))
 
-// app-shell's staged tap uses animate: 'pop' + yoyo, which drives the motion
-// driver's GSAP timeline. Resolve it synchronously so the staged peak/done
-// promises settle without waiting on real animation frames.
 vi.mock('gsap', () => {
-  const m = createGsapTimelineMock()
+  const m = createGsapTimelineMock() // app-shell's staged tap drives this timeline; resolve synchronously so staged peak/done promises settle without real frames
   return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
 })
 

@@ -2,8 +2,6 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { effectScope, nextTick } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
-
 const {
   coarseRef,
   mockUseMatchMedia,
@@ -43,15 +41,12 @@ vi.mock('@/stores/motion', () => ({
 
 import { useStagedTap } from '@/composables/ui/staged-tap'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function makeEvent(target = document.createElement('div')) {
   const e = new MouseEvent('click', { bubbles: true, cancelable: true })
   Object.defineProperty(e, 'currentTarget', { value: target, configurable: true })
   return e
 }
 
-/** A controllable stand-in for a MotionHandle — mark/done resolve only when told to. */
 function makeHandle() {
   let resolve_mark
   let resolve_done
@@ -263,14 +258,20 @@ describe('useStagedTap — unmount cancels the active handle', () => {
   })
 
   test('a handle that already settled is not double-cancelled by disposal', async () => {
+    const handle = makeHandle()
+    mockPlayButtonTap.mockImplementation(() => handle)
+
     const scope = effectScope()
     const { tap } = scope.run(() => useStagedTap({ animate: 'pop' }))
 
-    await tap(vi.fn())(makeEvent())
+    const p = tap(vi.fn())(makeEvent())
+    handle.resolveMark()
+    handle.resolveDone()
+    await p
+
     scope.stop()
 
-    // No active handle left at dispose time — nothing throws.
-    expect(true).toBe(true)
+    expect(handle.cancel).not.toHaveBeenCalled()
   })
 })
 

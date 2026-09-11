@@ -1,4 +1,3 @@
-/** A `gsap.timeline()` stand-in that self-completes on `play()`, for tests exercising the motion driver without a real GSAP tick. */
 export function createGsapTimelineMock() {
   const timelines = []
 
@@ -22,7 +21,7 @@ export function createGsapTimelineMock() {
         return tl
       },
       play: () => {
-        queueMicrotask(() => state.onComplete?.())
+        queueMicrotask(() => state.onComplete?.()) // self-completes so tests drive the motion driver without a real GSAP tick
         return tl
       },
       progress: (value) => {
@@ -42,13 +41,12 @@ export function createGsapTimelineMock() {
   return { timeline, timelines, isTweening: () => false, set: () => {} }
 }
 
-/** Default shape returned by `useMotionStore()`, override per test. */
 export function motionStoreStub(overrides = {}) {
   return {
     tier: 'full',
     factors: { duration: 1 },
     prefers_reduced_motion: false,
     has_coarse_pointer: false,
-    ...overrides
+    ...overrides // callers override the default useMotionStore() shape per test
   }
 }

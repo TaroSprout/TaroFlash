@@ -5,7 +5,6 @@ import { compile } from 'tailwindcss'
 
 const CSS_PATH = resolve(process.cwd(), 'src/styles/custom-variants.css')
 
-/** Resolves `@import`s the same way Vite does: `tailwindcss` to its package entry, everything else relative to the importing file. */
 async function loadStylesheet(id, base) {
   const resolved =
     id === 'tailwindcss'
@@ -18,9 +17,7 @@ let built
 
 beforeAll(async () => {
   const source = readFileSync(CSS_PATH, 'utf-8')
-  // A minimal `bgx-slide` utility standing in for the real one in bg-utils.css — this
-  // test is scoped to what custom-variants.css gates, not the pattern's own contents.
-  const css = `@import 'tailwindcss';\n${source}\n@utility bgx-slide { animation: none; }`
+  const css = `@import 'tailwindcss';\n${source}\n@utility bgx-slide { animation: none; }` // minimal bgx-slide stands in for the real one in bg-utils.css; scoped to what custom-variants.css gates, not the pattern's contents
   const compiled = await compile(css, { base: process.cwd(), loadStylesheet })
   built = compiled.build(['motion-rich:bgx-slide'])
 })

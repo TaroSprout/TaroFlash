@@ -19,11 +19,8 @@ vi.mock('@/composables/ui/media-query', () => ({
   useMatchMedia: vi.fn(() => ({ value: false }))
 }))
 
-// GSAP mock — not used by menu directly, but usePlayOnTap imports button-tap,
-// which runs on the motion driver; mock the timeline it builds so no real
-// audio/animation runs.
 vi.mock('gsap', () => {
-  const m = createGsapTimelineMock()
+  const m = createGsapTimelineMock() // not used by menu directly, but usePlayOnTap imports button-tap, which runs on the motion driver; mock its timeline so no real animation runs
   return { gsap: { timeline: m.timeline, isTweening: m.isTweening, set: m.set } }
 })
 
