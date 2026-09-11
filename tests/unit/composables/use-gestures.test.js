@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
+import { createApp, ref, watch, nextTick } from 'vue'
 import { useGestures, _resetGestureState } from '@/composables/ui/gestures'
 
 // jsdom doesn't implement PointerEvent — extend MouseEvent with the fields we need
@@ -430,6 +431,32 @@ describe('useGestures', () => {
     expect(onClick).toHaveBeenCalledOnce()
     document.removeEventListener('click', onClick)
     vi.useRealTimers()
+  })
+
+  test('register() called from a watch callback still auto-unregisters on unmount', async () => {
+    const onEnd = vi.fn()
+    const target = ref(null)
+    const app = createApp({
+      setup() {
+        const { register } = useGestures()
+        watch(target, (value) => {
+          if (value) register(value, { onEnd })
+        })
+        return () => null
+      }
+    })
+    app.mount(document.createElement('div'))
+
+    target.value = el
+    await nextTick()
+
+    drag(el, 80, 0)
+    expect(onEnd).toHaveBeenCalledOnce()
+
+    app.unmount()
+
+    drag(el, 80, 0)
+    expect(onEnd).toHaveBeenCalledOnce() // unchanged — unmount unregistered it
   })
 
   test('suppression handler self-removes after the synthetic click fires', () => {
