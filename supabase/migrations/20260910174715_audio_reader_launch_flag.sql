@@ -1,4 +1,4 @@
--- knowledge: can_read_lesson_audio, capability_is_live — corpus/authz/capabilities.md
+-- knowledge: can_read_lesson_audio — corpus/authz/capabilities.md
 --
 -- Migrate the audio reader onto the audio_reader capability. The RPC now
 -- composes capability_is_live('audio_reader') with the existing admin check, so
