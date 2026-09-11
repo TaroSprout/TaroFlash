@@ -2,7 +2,7 @@
 lastUpdated: 2026-08-14T00:00:00Z
 paths:
   - 'src/**'
-  - 'supabase/**/*.ts'
+  - 'supabase/**/*.{ts,sql}'
   - 'scripts/**'
 ---
 

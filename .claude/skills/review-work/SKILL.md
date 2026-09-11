@@ -34,10 +34,10 @@ harness's authoring rules. A logic bug is out of scope — note it in one line a
 Each row is one concern: a rule family and the paths it governs. `--concern <name>` picks one row.
 Adding a concern is one row here pointing at a rule file — no new agent, no change to `/work` § 4e.
 
-| `--concern`         | Rule family — read in full before judging                                                                                                 | In-scope changed paths                                                                               |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `comment-authoring` | [`comment-authoring`](../../rules/comment-authoring.md) + its [`examples`](../../rules/comment-authoring/examples.md) spoke               | `src/**`, `supabase/**/*.ts`, `scripts/**`, `tests/**` — **including** `.css`/`.scss` under `src/**` |
-| `code-style`        | [`code-style`](../../rules/code-style.md) + all six spokes: `phases`, `nesting`, `responsibility`, `variants`, `reactivity`, `signatures` | `src/**/*.{ts,vue}`                                                                                  |
+| `--concern`         | Rule family — read in full before judging                                                                                                 | In-scope changed paths                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `comment-authoring` | [`comment-authoring`](../../rules/comment-authoring.md) + its [`examples`](../../rules/comment-authoring/examples.md) spoke               | `src/**`, `supabase/**/*.{ts,sql}`, `scripts/**`, `tests/**` — **including** `.css`/`.scss` under `src/**` |
+| `code-style`        | [`code-style`](../../rules/code-style.md) + all six spokes: `phases`, `nesting`, `responsibility`, `variants`, `reactivity`, `signatures` | `src/**/*.{ts,vue}`                                                                                        |
 
 ## Strong prejudice
 

@@ -2,7 +2,7 @@
 lastUpdated: 2026-09-10T00:00:00Z
 paths:
   - 'src/**'
-  - 'supabase/**/*.ts'
+  - 'supabase/**/*.{ts,sql}'
   - 'scripts/**'
   - 'tests/**'
 ---
@@ -44,6 +44,9 @@ JSDoc-style paragraph, however many properties in the block each want documentin
 - **Inside `tests/`, the position table collapses to one row.** A test's name and its `describe`/`it`
   structure already carry what a JSDoc, a file-top comment, or an above-symbol doc would elsewhere —
   the only shape allowed is a short, single trailing `//` line, same gates as anywhere else.
+- **The same collapse governs a pgTAP file under `supabase/tests/`.** `plan()` and each assertion's
+  description string carry what a file-top banner or a `-- ────` section divider would restate — the
+  only shape allowed is a single trailing `--` line, same gates as anywhere else.
 
 ## Gates
 
