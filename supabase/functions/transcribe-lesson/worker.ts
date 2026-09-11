@@ -281,13 +281,13 @@ async function update(
 }
 
 // Best-effort terminal write. If even this fails there's nothing more to do —
-// the row stays 'processing' and the reaper settles it later.
+// the row stays 'processing' and the reaper settles it later. Phase and
+// chunk_cursor are left as-is so retry can resume from where the phase died.
 async function settleFailed(admin: SupabaseClient, id: number, code: string): Promise<void> {
   const { error } = await admin
     .from('lessons')
     .update({
       status: 'failed',
-      phase: null,
       error_code: code,
       updated_at: new Date().toISOString()
     })

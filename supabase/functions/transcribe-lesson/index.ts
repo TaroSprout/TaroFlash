@@ -113,45 +113,72 @@ async function handleRetry(
   if (!lesson_id) return jsonError('missing_fields', 400)
 
   // Read under the caller's JWT — RLS guarantees they can only retry their own.
+  // phase + chunk_cursor are the position the row died on (both preserved by
+  // settleFailed / the reaper); a null phase is a pre-resume failure.
   const { data: lesson, error } = await userClient
     .from('lessons')
-    .select('id')
+    .select('id, phase, chunk_cursor')
     .eq('id', lesson_id)
-    .single<{ id: number }>()
+    .single<{ id: number; phase: string | null; chunk_cursor: number | null }>()
 
   if (error || !lesson) return jsonError('not_found', 404)
 
-  // The chunk manifest + script stay on the row, but the existing sentences MUST
-  // be cleared before the cursor resets — transcription appends by ordinal, so
-  // resuming over stored sentences would duplicate content.
-  const { error: clearError } = await admin
-    .from('lesson_sentences')
-    .delete()
-    .eq('lesson_id', lesson.id)
+  const reset = lesson.phase
+    ? await resumeRetry(admin, lesson.id)
+    : await restartRetry(admin, lesson.id)
+  if (!reset) return jsonError('retry_failed', 400)
 
-  if (clearError) {
-    console.error('retry sentence clear failed', clearError.message)
-    return jsonError('retry_failed', 400)
-  }
+  return accepted({ id: lesson.id, ...reset })
+}
 
-  // Reset to the very start of the chain; the UPDATE re-fires the chain trigger.
-  const reset = {
-    status: 'processing',
-    phase: 'transcribing',
-    chunk_cursor: 0,
-    error_code: null
-  }
-  const { error: updateError } = await admin
+// Resume the chain in place: keep the stored sentences and the phase/cursor the
+// row died on, and only clear the failure. Re-processing the unit it died on is
+// idempotent — a replayed transcribe chunk drops its own overlap, and every
+// enrichment write is keyed by ordinal — so no sentence doubles up. The status
+// flip back to 'processing' is what re-fires the chain trigger.
+async function resumeRetry(
+  admin: SupabaseClient,
+  id: number
+): Promise<Record<string, unknown> | null> {
+  const reset = { status: 'processing', error_code: null }
+
+  const { error } = await admin
     .from('lessons')
     .update({ ...reset, updated_at: new Date().toISOString() })
-    .eq('id', lesson.id)
+    .eq('id', id)
 
-  if (updateError) {
-    console.error('retry reset failed', updateError.message)
-    return jsonError('retry_failed', 400)
+  if (error) {
+    console.error('retry resume failed', error.message)
+    return null
+  }
+  return reset
+}
+
+// Restart from the top for a pre-resume failure with no recorded phase. The
+// existing sentences MUST be cleared before the cursor resets — transcription
+// appends by ordinal, so resuming over stored sentences would duplicate content.
+async function restartRetry(
+  admin: SupabaseClient,
+  id: number
+): Promise<Record<string, unknown> | null> {
+  const { error: clearError } = await admin.from('lesson_sentences').delete().eq('lesson_id', id)
+  if (clearError) {
+    console.error('retry sentence clear failed', clearError.message)
+    return null
   }
 
-  return accepted({ ...lesson, ...reset })
+  const reset = { status: 'processing', phase: 'transcribing', chunk_cursor: 0, error_code: null }
+
+  const { error } = await admin
+    .from('lessons')
+    .update({ ...reset, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) {
+    console.error('retry reset failed', error.message)
+    return null
+  }
+  return reset
 }
 
 // Internal: run one phase. Authenticated by the service-role key (the chain
