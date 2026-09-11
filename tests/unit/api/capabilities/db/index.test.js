@@ -1,7 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
-// ── Hoisted mocks ──────────────────────────────────────────────────────────────
-
 const { selectMock, fromMock, loggerMock } = vi.hoisted(() => ({
   selectMock: vi.fn(),
   fromMock: vi.fn(),

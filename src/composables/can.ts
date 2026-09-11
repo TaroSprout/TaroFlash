@@ -33,9 +33,8 @@ export function useCan() {
 
   const useCardImages = computed(() => member.plan === 'paid')
 
-  // Rides the audio_reader launch flag on top of the admin check — false until
-  // the capability is proven live. Re-enforced server-side by can_read_lesson_audio()
-  // across the four audio edge functions; this gate is UX.
+  // Re-enforced server-side by can_read_lesson_audio() across the four audio
+  // edge functions; this gate is UX.
   const useAudioReader = computed(() => isLive('audio_reader', false) && member.role === 'admin')
 
   // Open to any signed-in member in a local dev build, so a solo developer can

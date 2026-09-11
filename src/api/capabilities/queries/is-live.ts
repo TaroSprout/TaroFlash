@@ -17,7 +17,7 @@ export function useCapabilities() {
     const capabilities = query.data.value
     if (!capabilities) return fallback
 
-    const row = capabilities.find((s) => s.key === key)
+    const row = capabilities.find((capability) => capability.key === key)
     return row?.state === 'on'
   }
 
