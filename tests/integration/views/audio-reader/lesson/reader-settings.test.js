@@ -3,14 +3,15 @@ import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref, useAttrs } from 'vue'
 
 // Real refs, reset in beforeEach, so the composable state is isolated per test.
-const { display_mode, translation_source, playback_rate } = vi.hoisted(() => {
-  return { display_mode: {}, translation_source: {}, playback_rate: {} }
+const { display_mode, translation_source, playback_rate, paragraph_density } = vi.hoisted(() => {
+  return { display_mode: {}, translation_source: {}, playback_rate: {}, paragraph_density: {} }
 })
 
 vi.mock('@/composables/audio-reader/reader-prefs', () => ({
   useReaderPrefs: () => ({
     display_mode: display_mode.ref,
-    translation_source: translation_source.ref
+    translation_source: translation_source.ref,
+    paragraph_density: paragraph_density.ref
   })
 }))
 
@@ -117,6 +118,37 @@ describe('ReaderSettings', () => {
     display_mode.ref = ref('inline')
     translation_source.ref = ref('playback')
     playback_rate.ref = ref(1)
+    paragraph_density.ref = ref('medium')
+  })
+
+  describe('paragraph-density option group', () => {
+    test('renders the three density options', () => {
+      const wrapper = mountSettings()
+
+      const group = wrapper.find('[data-testid="reader-settings__paragraph-density"]')
+      expect(group.find('[data-testid="option-long"]').exists()).toBe(true)
+      expect(group.find('[data-testid="option-medium"]').exists()).toBe(true)
+      expect(group.find('[data-testid="option-short"]').exists()).toBe(true)
+    })
+
+    test('reflects the current paragraph_density preference', () => {
+      paragraph_density.ref.value = 'short'
+      const wrapper = mountSettings()
+
+      expect(
+        wrapper
+          .find('[data-testid="reader-settings__paragraph-density"] [data-value]')
+          .attributes('data-value')
+      ).toBe('short')
+    })
+
+    test('picking a density option writes paragraph_density', async () => {
+      const wrapper = mountSettings()
+
+      await wrapper.find('[data-testid="option-short"]').trigger('click')
+
+      expect(paragraph_density.ref.value).toBe('short')
+    })
   })
 
   describe('layout option group', () => {

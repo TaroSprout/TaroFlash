@@ -69,6 +69,29 @@ function makeLesson(overrides = {}) {
   }
 }
 
+// Four sentences whose break_strength climbs so each density threshold splits
+// a different number of them: long only breaks at 0.9, medium also breaks at
+// 0.5, short also breaks at 0.2.
+function makeDensityLesson() {
+  return makeLesson({
+    transcript: {
+      text: 'One. Two. Three. Four.',
+      segments: [
+        { start: 0, end: 1, text: 'One.', break_strength: null },
+        { start: 1, end: 2, text: 'Two.', break_strength: 0.2 },
+        { start: 2, end: 3, text: 'Three.', break_strength: 0.5 },
+        { start: 3, end: 4, text: 'Four.', break_strength: 0.9 }
+      ],
+      words: [
+        { word: 'One', start: 0, end: 0.5 },
+        { word: 'Two', start: 1, end: 1.5 },
+        { word: 'Three', start: 2, end: 2.5 },
+        { word: 'Four', start: 3, end: 3.5 }
+      ]
+    }
+  })
+}
+
 // useTemplateRef + watch need a component instance, so drive the composable
 // through a mounted host (see testing-composables rule).
 function withReader(id = () => 1) {
@@ -103,7 +126,7 @@ describe('useLessonReader', () => {
     transcriptSyncMock.mockReturnValue({ active_index: ref(-1) })
     cardIndexQueryMock.mockReturnValue({ data: ref([]) })
     decksQueryMock.mockReturnValue({ data: ref([]) })
-    readerPrefsMock.mockReturnValue({ playback_rate: ref(1) })
+    readerPrefsMock.mockReturnValue({ playback_rate: ref(1), paragraph_density: ref('medium') })
     noticeErrorMock.mockReset()
     mockEmitSfx.mockReset()
   })
@@ -113,14 +136,16 @@ describe('useLessonReader', () => {
   })
 
   describe('transcript shaping', () => {
-    test('shapes the lesson transcript into one block per sentence', () => {
+    test('merges sentences with no scored break into a single paragraph', () => {
+      // Default lesson segments carry no break_strength, so nothing scores
+      // above the density threshold — the whole lesson renders as one block.
       let reader
       ;[reader, app] = withReader()
 
       const blocks = reader.paragraphs.value
-      expect(blocks).toHaveLength(2)
-      expect(blocks[0].sentence).toBe('Hello world.')
-      expect(blocks.flatMap((s) => s.words)).toHaveLength(5)
+      expect(blocks).toHaveLength(1)
+      expect(blocks[0].sentence).toBe('Hello world. How are you?')
+      expect(blocks[0].words).toHaveLength(5)
     })
 
     test('is empty before the lesson resolves', () => {
@@ -172,7 +197,7 @@ describe('useLessonReader', () => {
         seek: vi.fn(),
         playClip: vi.fn()
       })
-      readerPrefsMock.mockReturnValue({ playback_rate: ref(1.5) })
+      readerPrefsMock.mockReturnValue({ playback_rate: ref(1.5), paragraph_density: ref('medium') })
 
       ;[, app] = withReader()
 
@@ -191,13 +216,45 @@ describe('useLessonReader', () => {
         playClip: vi.fn()
       })
       const saved_playback_rate = ref(1)
-      readerPrefsMock.mockReturnValue({ playback_rate: saved_playback_rate })
+      readerPrefsMock.mockReturnValue({
+        playback_rate: saved_playback_rate,
+        paragraph_density: ref('medium')
+      })
 
       ;[, app] = withReader()
       player_rate.value = 2
       await nextTick()
 
       expect(saved_playback_rate.value).toBe(2)
+    })
+  })
+
+  describe('paragraph density preference', () => {
+    test('different densities yield different paragraph counts on the same lesson', () => {
+      lessonQueryMock.mockReturnValue({ data: ref(makeDensityLesson()), error: ref(null) })
+      readerPrefsMock.mockReturnValue({ playback_rate: ref(1), paragraph_density: ref('long') })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      expect(reader.paragraphs.value).toHaveLength(2)
+    })
+
+    test('regroups when paragraph_density changes, with no refetch', async () => {
+      lessonQueryMock.mockReturnValue({ data: ref(makeDensityLesson()), error: ref(null) })
+      const paragraph_density = ref('long')
+      readerPrefsMock.mockReturnValue({ playback_rate: ref(1), paragraph_density })
+
+      let reader
+      ;[reader, app] = withReader()
+      expect(reader.paragraphs.value).toHaveLength(2)
+      const calls_before = lessonQueryMock.mock.calls.length
+
+      paragraph_density.value = 'short'
+      await nextTick()
+
+      expect(reader.paragraphs.value).toHaveLength(4)
+      expect(lessonQueryMock.mock.calls.length).toBe(calls_before)
     })
   })
 
