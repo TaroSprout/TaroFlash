@@ -2,7 +2,7 @@
 // storage calls, so they're colocated here rather than mixed into worker.ts's
 // phase orchestration.
 
-import type { Segment, Word, Transcript } from '../_shared/transcription/transcript.ts'
+import type { Segment, Word, Transcript, SentenceRow } from '../_shared/transcription/transcript.ts'
 
 // A lesson's transcript starts as `{}` (empty jsonb) and grows; coerce whatever
 // is stored into the full shape so the stitch/append logic never guards nulls.
@@ -74,4 +74,45 @@ export function assignWordsToSegments(
   }
 
   return groups
+}
+
+// The stored slice of an already-persisted sentence the transcribe phase needs to
+// know where the running transcript ends: how many sentences precede this chunk
+// (their count is the next sentence's ordinal), where the last one ends (the
+// overlap boundary), and their words (rebuilt into the stitch input).
+export type StoredSentence = Pick<SentenceRow, 'start_seconds' | 'end_seconds' | 'text' | 'words'>
+
+// The sentence rows one transcribed chunk adds, ready to upsert. Stitches the
+// chunk onto the sentences already stored (dropping the overlap re-transcribed
+// from the previous chunk), then splits the newly-kept words under the newly-kept
+// sentences and stamps each with the silent gap that precedes it. Ordinals
+// continue from the stored count, so a replayed chunk overwrites the same rows.
+export function sentenceRowsForChunk(
+  existing: StoredSentence[],
+  incoming: { segments: Segment[]; words: Word[] }
+): SentenceRow[] {
+  const acc: Transcript = {
+    text: '',
+    segments: existing.map((s) => ({ start: s.start_seconds, end: s.end_seconds, text: s.text })),
+    words: existing.flatMap((s) => s.words)
+  }
+  const stitched = appendChunk(acc, incoming)
+
+  const startOrdinal = existing.length
+  const newSegments = stitched.segments.slice(startOrdinal)
+  const newWords = stitched.words.slice(acc.words.length)
+  const groups = assignWordsToSegments(newWords, newSegments, 0, newSegments.length)
+
+  const priorEnd = existing.at(-1)?.end_seconds
+  return newSegments.map((seg, k) => {
+    const prevEnd = k === 0 ? priorEnd : newSegments[k - 1].end
+    return {
+      ordinal: startOrdinal + k,
+      start_seconds: seg.start,
+      end_seconds: seg.end,
+      text: seg.text,
+      words: groups[k].map((index) => newWords[index]),
+      paragraph_gap: prevEnd === undefined ? 0 : Math.max(0, seg.start - prevEnd)
+    }
+  })
 }
