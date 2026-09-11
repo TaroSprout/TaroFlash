@@ -88,11 +88,11 @@ function onClosePhoneSm(el: Element, done: () => void) {
       data-testid="phone-dock"
       class="w-full max-w-[calc(var(--page-width)-var(--page-px)*2)] flex items-center justify-center mx-(--page-px) relative"
     >
-      <transition @enter="onOpenBasePhone" @leave="onCloseBasePhone">
+      <transition :css="false" @enter="onOpenBasePhone" @leave="onCloseBasePhone">
         <taro-phone-base v-if="store.is_open" class="z-10" @close="closePhone" />
       </transition>
 
-      <transition @enter="onOpenPhoneSm" @leave="onClosePhoneSm">
+      <transition :css="false" @enter="onOpenPhoneSm" @leave="onClosePhoneSm">
         <taro-phone-sm v-if="!store.is_open" @open="openPhone" />
       </transition>
     </div>
