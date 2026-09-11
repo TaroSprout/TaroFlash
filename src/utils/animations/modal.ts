@@ -1,4 +1,5 @@
 import { gsap } from 'gsap'
+import { defineMotion } from '@/utils/motion/driver'
 
 const ENTER_SETTLE_DELAY = 0.033
 
@@ -61,6 +62,62 @@ export function springScaleIn(el: Element, done: () => void) {
 export function scaleFadeOut(el: Element, done: () => void) {
   gsap.to(el, { scale: 0.8, opacity: 0, duration: 0.2, ease: 'expo.out', onComplete: done })
 }
+
+const DIALOG_RISE = '200px'
+const SHEET_TRAVEL = '100%'
+const POPUP_SCALE = 0.8
+
+// The driver-authored modal transitions (#405 adopter). The rise, sheet travel and popup scale are
+// structural to the modal, not vocabulary travel steps; duration and easing come from the tokens.
+// expo.out had no vocabulary equivalent, so it maps to the strong ease-out; spring is back.out(1.7).
+
+export const dialogEnterMotion = defineMotion({
+  from: { translateY: DIALOG_RISE, opacity: 0 },
+  to: { translateY: 0, opacity: 1 },
+  duration: 200,
+  ease: 'out-strong',
+  delay: ENTER_SETTLE_DELAY,
+  clearOnComplete: true
+})
+
+export const dialogLeaveMotion = defineMotion({
+  to: { translateY: DIALOG_RISE, opacity: 0 },
+  duration: 200,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
+
+export const sheetEnterMotion = defineMotion({
+  from: { translateY: SHEET_TRAVEL },
+  to: { translateY: 0 },
+  duration: 200,
+  ease: 'out-strong',
+  delay: ENTER_SETTLE_DELAY,
+  clearOnComplete: true
+})
+
+export const sheetLeaveMotion = defineMotion({
+  to: { translateY: SHEET_TRAVEL },
+  duration: 200,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
+
+export const popupEnterMotion = defineMotion({
+  from: { scale: POPUP_SCALE, opacity: 0 },
+  to: { scale: 1, opacity: 1 },
+  duration: 100,
+  ease: 'spring',
+  delay: ENTER_SETTLE_DELAY,
+  clearOnComplete: true
+})
+
+export const popupLeaveMotion = defineMotion({
+  to: { scale: POPUP_SCALE, opacity: 0 },
+  duration: 200,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
 
 const RECEDE_DURATION = 0.4
 const RECEDE_SCALE = 0.9
