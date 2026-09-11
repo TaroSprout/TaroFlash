@@ -6,11 +6,10 @@ const { mockUseMotionStore } = vi.hoisted(() => ({
 
 vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
-// Reservations live in module-level state, so each test gets a fresh module.
 let reserveHeightTween
 
 beforeEach(async () => {
-  vi.resetModules()
+  vi.resetModules() // reservations live in module-level state, so each test gets a fresh module
   mockUseMotionStore.mockReturnValue({ factors: { height_tween_budget: 4 } })
   ;({ reserveHeightTween } = await import('@/components/layout-kit/stage/height-budget'))
 })

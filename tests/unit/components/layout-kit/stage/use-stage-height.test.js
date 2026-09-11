@@ -2,8 +2,6 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { createApp, nextTick, ref } from 'vue'
 import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 
-// ── ResizeObserver stub ───────────────────────────────────────────────────────
-
 class FakeResizeObserver {
   constructor(cb) {
     this.cb = cb
@@ -17,10 +15,7 @@ class FakeResizeObserver {
 FakeResizeObserver.instances = []
 vi.stubGlobal('ResizeObserver', FakeResizeObserver)
 
-// ── motion driver mock ───────────────────────────────────────────────────────
-// Captures each invocation as a controllable handle so a test can resolve
-// `done` on demand and assert what the tween's build function was told.
-
+// captures each invocation as a controllable handle so a test can resolve `done` on demand
 const { mockMotion, motionHandles } = vi.hoisted(() => {
   const motionHandles = []
   const mockMotion = vi.fn((build) => (el) => {
@@ -41,8 +36,6 @@ const { mockMotion, motionHandles } = vi.hoisted(() => {
 
 vi.mock('@/utils/motion/driver', () => ({ motion: mockMotion }))
 
-// ── height-budget mock ───────────────────────────────────────────────────────
-
 const { mockReserveHeightTween } = vi.hoisted(() => ({
   mockReserveHeightTween: vi.fn()
 }))
@@ -51,13 +44,8 @@ vi.mock('@/components/layout-kit/stage/height-budget', () => ({
   reserveHeightTween: mockReserveHeightTween
 }))
 
-// ── Fake elements ─────────────────────────────────────────────────────────────
-// `box` mirrors the CSS-driven coupling between an unconstrained box and its
-// content: reading offsetHeight returns the pinned pixel value while one is
-// set, and the content-driven natural size once it's removed.
-
 function makeBox(initial_height) {
-  const box = { offsetHeight: initial_height, _natural: initial_height }
+  const box = { offsetHeight: initial_height, _natural: initial_height } // offsetHeight returns the pinned value while a height is set, else the natural size
   let height_value = ''
 
   box.style = {
@@ -85,8 +73,6 @@ function makeBox(initial_height) {
 function makeContent(offsetHeight) {
   return { offsetHeight }
 }
-
-// ── Setup helper ──────────────────────────────────────────────────────────────
 
 let app
 
@@ -196,15 +182,13 @@ describe('useStageHeight', () => {
     expect(in_flight_handle.cancel).toHaveBeenCalledOnce()
     expect(box.value.style.overflow).toBe('')
 
-    // Claimed — the box's own resize tween stands down.
-    resize(box.value, content, 120)
+    resize(box.value, content, 120) // claimed — the box's own resize tween stands down
     expect(mockMotion).toHaveBeenCalledTimes(1)
 
     release()
     release()
 
-    // Released — a subsequent resize tweens again.
-    resize(box.value, content, 160)
+    resize(box.value, content, 160) // released — a subsequent resize tweens again
     expect(mockMotion).toHaveBeenCalledTimes(2)
   })
 

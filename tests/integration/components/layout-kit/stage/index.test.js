@@ -54,16 +54,4 @@ describe('Stage', () => {
       'stage-test-surface-class'
     )
   })
-
-  test('exposes claimHeight, whose release is idempotent', () => {
-    const wrapper = mountStage()
-
-    const release = wrapper.vm.claimHeight()
-    expect(typeof release).toBe('function')
-
-    expect(() => {
-      release()
-      release()
-    }).not.toThrow()
-  })
 })

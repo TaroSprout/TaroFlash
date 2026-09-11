@@ -4,8 +4,10 @@ export interface MotionTierFactors {
   duration: number
   stagger: number
   standing_effects: boolean
-  // How many height tweens may run app-wide at once. Height is the one non-compositor
-  // tween the app sanctions, so a weak tier caps it hard; `minimal` bans it at zero.
+  /**
+   * How many height tweens may run app-wide at once. Height is the one non-compositor
+   * tween the app sanctions, so a weak tier caps it hard; `minimal` bans it at zero.
+   */
   height_tween_budget: number
 }
 
