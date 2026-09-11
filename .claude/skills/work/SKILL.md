@@ -35,7 +35,8 @@ everything that would cost it context:
   § PR feedback loop) — the orchestrator receives a verdict, never a diff.
 
 The orchestrator runs from the **home tree** — wherever it was spawned, the main checkout or a
-worktree you made before starting. It never enters, creates, or removes a worktree of its own.
+worktree you made before starting. It never enters, creates, or removes a worktree of its own — the
+one exception is an explicit user cleanup request once the run is fully merged (§ Full cleanup).
 
 ## Board constants
 
@@ -346,6 +347,14 @@ different PRs no longer serialize — only the merge-forward does.
    preference the user stated this round, not only claim/handoff/review mechanics.
 
 Repeat per PR until the user merges. **Never merge and never set `Done` yourself.**
+
+## Full cleanup
+
+"Cleanup" from the user means the run's own home-tree worktree and session branch too, not just the
+builder worktrees § 5f already reclaims — do this only once every PR this run produced is merged.
+A worktree can't remove itself: run it from another checkout — `git status --short` inside the home
+tree first (anything uncommitted stops it and gets reported, same as § 5f), then `git worktree
+remove` it and delete its now-merged branch (local, and `origin` if it was pushed).
 
 ## Self-heal
 
