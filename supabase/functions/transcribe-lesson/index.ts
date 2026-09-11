@@ -2,7 +2,7 @@
 // of it when the DB chain asks.
 //
 // Member-initiated (admin-gated, caller's JWT):
-//   { action: 'start',  collection_id, title, audio_path, script?, lang? }
+//   { action: 'start',  collection_id, title, audio_path, script? }
 //   { action: 'retry',  lesson_id }
 //     → 202 { lesson }. The row is created/reset to `processing`; the DB chain
 //       trigger then drives transcription phase by phase. The FE polls the row.
@@ -92,7 +92,6 @@ async function handleStart(
       p_title: title,
       p_audio_path: audio_path,
       p_script: script,
-      p_lang: body.lang ?? null,
       p_chunks: chunks
     })
     .single<{ id: number }>()
