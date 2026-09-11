@@ -11,7 +11,7 @@ lastUpdated: 2026-08-02T00:00:00Z
 
 ## What this skill does
 
-Groom pulls straight from `Backlog` — the `Needs More Info` hold is retired. Groom **resolves every
+Groom pulls straight from `Backlog`. Groom **resolves every
 open design decision with the user**, records what was decided and why, and lands the ticket
 executable.
 
