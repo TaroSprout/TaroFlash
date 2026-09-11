@@ -116,11 +116,13 @@ GRANT ALL ON FUNCTION public.can_moderate_feedback() TO service_role;
 GRANT ALL ON FUNCTION public.can_moderate_feedback() TO authenticated;
 
 
+-- The audio reader rides a launch flag: live only when the audio_reader capability
+-- is on AND the caller passes the existing role check.
 CREATE FUNCTION public.can_read_lesson_audio() RETURNS boolean
     LANGUAGE sql STABLE
     SET search_path TO 'public'
     AS $$
-  select auth_role() = 'admin'
+  select capability_is_live('audio_reader') and auth_role() = 'admin'
 $$;
 
 
