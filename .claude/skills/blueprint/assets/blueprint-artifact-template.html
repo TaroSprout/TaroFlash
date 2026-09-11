@@ -1,0 +1,1943 @@
+<title>{{TITLE}}</title>
+<!-- ============================================================================
+  BLUEPRINT ARTIFACT TEMPLATE  (companion to the /blueprint skill)
+  ----------------------------------------------------------------------------
+  A target-state blueprint rendered as a review surface: readable shape on top,
+  code-level detail one accordion down, and a built-in review layer (inline
+  comments, text highlights, per-question answer boxes, one-click markdown export).
+
+  TO FILL THIS IN — replace every {{TOKEN}} and the marked content, then delete
+  the FILL comments. Everything interactive (contents box, callout accordions,
+  answer boxes, comments, highlights, export) is auto-wired by the script from
+  the HTML structure — you only author content, never the machinery.
+
+  RULES THAT STILL APPLY (see the skill + repo rules):
+   • Corpus voice: open cold, one idea per beat, no fake numbering.
+   • Callouts use the fixed palette — rule (green) / watch (amber) /
+     hazard (red) / note (teal). One at a time, where it bites.
+   • Any user-facing product copy needs sign-off; a milestone/label string in
+     the *app* is COPY-TBD until settled (this doc's own prose is yours to write).
+============================================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ground: #eef0f4;
+    --surface: #ffffff;
+    --sunken: #f5f6f9;
+    --ink: #1a1f27;
+    --muted: #545c68;
+    --faint: #838b98;
+    --border: #e1e4ea;
+    --border-strong: #cbd0d9;
+    --accent: #37618e;
+    --accent-soft: #e9eef5;
+    --accent-ink: #244463;
+
+    --rule: #3a7a5e;
+    --rule-soft: #e8f2ec;
+    --rule-border: #c2e0d0;
+    --watch: #a9600c;
+    --watch-soft: #fbf0dd;
+    --watch-border: #ecd2a3;
+    --note: #2f6d75;
+    --note-soft: #e5f1f2;
+    --note-border: #bcdde0;
+    --hazard: #b03a2d;
+    --hazard-soft: #fbe8e5;
+    --hazard-border: #eebfb8;
+
+    --shadow: 0 1px 2px rgba(20, 28, 40, 0.05), 0 6px 22px rgba(20, 28, 40, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ground: #13161c;
+      --surface: #1b1f26;
+      --sunken: #171b21;
+      --ink: #e7eaef;
+      --muted: #a6aeba;
+      --faint: #757e8b;
+      --border: #2a303a;
+      --border-strong: #3a414c;
+      --accent: #7ba7d6;
+      --accent-soft: #222f3e;
+      --accent-ink: #accae8;
+      --rule: #74b795;
+      --rule-soft: #182a21;
+      --rule-border: #2d4838;
+      --watch: #d9a253;
+      --watch-soft: #2e2515;
+      --watch-border: #4a3b20;
+      --note: #6cb6be;
+      --note-soft: #142627;
+      --note-border: #26484b;
+      --hazard: #e18a7d;
+      --hazard-soft: #2c1a17;
+      --hazard-border: #4b2b25;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 8px 26px rgba(0, 0, 0, 0.42);
+    }
+  }
+  :root[data-theme='dark'] {
+    --ground: #13161c;
+    --surface: #1b1f26;
+    --sunken: #171b21;
+    --ink: #e7eaef;
+    --muted: #a6aeba;
+    --faint: #757e8b;
+    --border: #2a303a;
+    --border-strong: #3a414c;
+    --accent: #7ba7d6;
+    --accent-soft: #222f3e;
+    --accent-ink: #accae8;
+    --rule: #74b795;
+    --rule-soft: #182a21;
+    --rule-border: #2d4838;
+    --watch: #d9a253;
+    --watch-soft: #2e2515;
+    --watch-border: #4a3b20;
+    --note: #6cb6be;
+    --note-soft: #142627;
+    --note-border: #26484b;
+    --hazard: #e18a7d;
+    --hazard-soft: #2c1a17;
+    --hazard-border: #4b2b25;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 8px 26px rgba(0, 0, 0, 0.42);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    margin: 0;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    line-height: 1.62;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 44px 24px 100px;
+  }
+  .wide {
+    max-width: 940px;
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: 'Archivo', system-ui, sans-serif;
+    text-wrap: balance;
+  }
+  code,
+  .mono {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  code {
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    padding: 0.5px 5px;
+    border-radius: 4px;
+    word-break: break-word;
+  }
+
+  /* masthead */
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 26px;
+    height: 1.5px;
+    background: var(--accent);
+  }
+  h1 {
+    font-size: clamp(32px, 5.4vw, 50px);
+    font-weight: 800;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    margin: 0 0 20px;
+  }
+  .standfirst {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: clamp(19px, 2.5vw, 23px);
+    line-height: 1.5;
+    color: var(--ink);
+    margin: 0;
+  }
+  .standfirst em {
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .lead {
+    margin: 26px 0 0;
+    font-size: 16.5px;
+    color: var(--muted);
+  }
+  .lead p {
+    margin: 0 0 13px;
+  }
+  .lead b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    align-items: center;
+    margin: 30px 0 4px;
+  }
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 6px 13px;
+    cursor: pointer;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
+  }
+  .btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .spacer {
+    flex: 1;
+  }
+
+  /* figure */
+  figure.flow {
+    margin: 30px 0 6px;
+  }
+  figure.flow svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    color: var(--ink);
+  }
+  figcaption {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-top: 15px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  figcaption b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin: 16px auto 0;
+    max-width: 720px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .sw {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex: none;
+  }
+
+  /* sections */
+  section {
+    margin: 0;
+    padding: 42px 0 0;
+  }
+  section > h2 {
+    font-size: clamp(21px, 3vw, 26px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 4px;
+  }
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 12px;
+  }
+  section p {
+    margin: 0 0 14px;
+    font-size: 16px;
+  }
+  section p.sub {
+    color: var(--muted);
+  }
+  section p b,
+  .card-why b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .hr {
+    height: 1px;
+    background: var(--border);
+    margin: 44px 0 0;
+  }
+
+  /* callouts */
+  .call {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 9px;
+    padding: 14px 17px;
+    margin: 16px 0;
+    background: var(--surface);
+  }
+  .call .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 5px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .call p {
+    margin: 0;
+    font-size: 14.6px;
+  }
+  .call p + p {
+    margin-top: 7px;
+  }
+  .call .then {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .call .then b {
+    font-weight: 600;
+  }
+  .call.rule {
+    border-left-color: var(--rule);
+    background: var(--rule-soft);
+  }
+  .call.rule .tag {
+    color: var(--rule);
+  }
+  .call.watch {
+    border-left-color: var(--watch);
+    background: var(--watch-soft);
+  }
+  .call.watch .tag {
+    color: var(--watch);
+  }
+  .call.note {
+    border-left-color: var(--note);
+    background: var(--note-soft);
+  }
+  .call.note .tag {
+    color: var(--note);
+  }
+  .call.hazard {
+    border-left-color: var(--hazard);
+    background: var(--hazard-soft);
+  }
+  .call.hazard .tag {
+    color: var(--hazard);
+  }
+  .call.rule .then b {
+    color: var(--rule);
+  }
+  .call.watch .then b {
+    color: var(--watch);
+  }
+  .call.hazard .then b {
+    color: var(--hazard);
+  }
+  .call code {
+    background: rgba(120, 120, 120, 0.14);
+    color: inherit;
+  }
+
+  /* detail drop (altitude down) */
+  details.code-drop {
+    margin: 14px 0 2px;
+  }
+  details.code-drop > summary {
+    list-style: none;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--faint);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    user-select: none;
+  }
+  details.code-drop > summary::-webkit-details-marker {
+    display: none;
+  }
+  details.code-drop > summary:hover {
+    color: var(--accent);
+  }
+  details.code-drop > summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+  details.code-drop > summary .tw {
+    transition: transform 0.18s;
+  }
+  details.code-drop[open] > summary .tw {
+    transform: rotate(90deg);
+  }
+  .drop-body {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--sunken);
+    padding: 6px 18px 16px;
+    margin-top: 8px;
+  }
+
+  .dl {
+    margin: 0;
+  }
+  .dl .row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 4px 16px;
+    padding: 11px 0;
+    border-top: 1px dashed var(--border-strong);
+  }
+  .dl .row:first-child {
+    border-top: none;
+  }
+  .dl dt {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding-top: 2px;
+  }
+  .dl dd {
+    margin: 0;
+    font-size: 14px;
+  }
+  .dl ul {
+    margin: 3px 0 0;
+    padding-left: 17px;
+  }
+  .dl li {
+    margin: 4px 0;
+    font-size: 13.6px;
+  }
+  .dl b {
+    font-weight: 600;
+  }
+  @media (max-width: 540px) {
+    .dl .row {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+  }
+
+  /* scope + decisions */
+  .scope {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 8px 22px 18px;
+    box-shadow: var(--shadow);
+  }
+  .scope .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 28px;
+  }
+  @media (max-width: 560px) {
+    .scope .row2 {
+      grid-template-columns: 1fr;
+    }
+  }
+  .scope h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 18px 0 8px;
+  }
+  .scope .in h4 {
+    color: var(--rule);
+  }
+  .scope .out h4 {
+    color: var(--faint);
+  }
+  .scope ul {
+    margin: 0;
+    padding-left: 17px;
+  }
+  .scope li {
+    font-size: 14px;
+    margin: 6px 0;
+    color: var(--muted);
+  }
+  .scope li b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .decide {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0;
+  }
+  .decide li {
+    position: relative;
+    padding: 14px 4px 14px 32px;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+  }
+  .decide li:first-child {
+    border-top: none;
+  }
+  .decide li::before {
+    content: '?';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 12px;
+    display: grid;
+    place-items: center;
+  }
+  .decide b {
+    font-weight: 600;
+  }
+  .decide .assumed {
+    display: inline-block;
+    margin-top: 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--rule);
+  }
+  .decide .assumed::before {
+    content: 'assumed · ';
+    color: var(--faint);
+  }
+
+  .foot {
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--faint);
+  }
+  /* --- review layer --- */
+  [data-c] {
+    position: relative;
+  }
+  .c-btn {
+    position: absolute;
+    top: 6px;
+    right: 4px;
+    z-index: 2;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: var(--faint);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3px 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+      opacity 0.14s,
+      color 0.14s,
+      border-color 0.14s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  section[data-c] > .c-btn {
+    top: 46px;
+  }
+  [data-c]:hover > .c-btn,
+  [data-c]:focus-within > .c-btn,
+  .c-btn.has {
+    opacity: 1;
+  }
+  .c-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .c-btn.has {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .c-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
+  .c-note {
+    margin: 13px 0 2px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 9px 13px;
+  }
+  .c-note .cn-lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .c-note .cn-lbl button {
+    background: none;
+    border: none;
+    color: var(--faint);
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+  .c-note .cn-lbl button:hover {
+    color: var(--accent);
+  }
+  .c-note .cn-text {
+    font-size: 14px;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+  .c-editor {
+    margin: 13px 0 2px;
+  }
+  .c-editor textarea {
+    width: 100%;
+    min-height: 72px;
+    resize: vertical;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 9px 11px;
+  }
+  .c-editor textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .c-editor .cr {
+    display: flex;
+    gap: 8px;
+    margin-top: 7px;
+  }
+  .c-editor .cr button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    border-radius: 7px;
+    padding: 5px 12px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .c-editor .cr .save {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  :root[data-theme='dark'] .c-editor .cr .save,
+  :root:not([data-theme='light']) .c-editor .cr .save {
+    color: #10151b;
+  }
+
+  .fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 40;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 24px;
+    padding: 11px 18px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  :root[data-theme='dark'] .fab,
+  :root:not([data-theme='light']) .fab {
+    color: #10151b;
+  }
+  .fab:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .fab .n {
+    background: rgba(255, 255, 255, 0.28);
+    border-radius: 12px;
+    padding: 0 7px;
+    font-size: 12px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .ov {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 16, 22, 0.55);
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+  }
+  .ov[hidden] {
+    display: none;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 640px;
+    max-height: 86vh;
+    overflow: auto;
+    padding: 22px 24px 20px;
+  }
+  .panel h3 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+  .panel .ph {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  .panel textarea {
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--sunken);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 13px;
+  }
+  .panel .pr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 14px;
+    align-items: center;
+  }
+  .panel .pr .spacer {
+    flex: 1;
+  }
+  .panel .pr button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    border-radius: 8px;
+    padding: 8px 15px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .panel .pr .copy {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  :root[data-theme='dark'] .panel .pr .copy,
+  :root:not([data-theme='light']) .panel .pr .copy {
+    color: #10151b;
+  }
+  .panel .pr .clear {
+    color: var(--hazard);
+    border-color: var(--hazard-border);
+  }
+
+  /* text-selection highlights */
+  mark.c-hl {
+    background: var(--watch-soft);
+    border-bottom: 2px solid var(--watch);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 0.5px;
+    cursor: pointer;
+  }
+  mark.c-hl.active {
+    background: var(--accent-soft);
+    border-bottom-color: var(--accent);
+  }
+  .sel-btn {
+    position: absolute;
+    z-index: 60;
+    transform: translate(-50%, -108%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 5px 11px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    white-space: nowrap;
+  }
+  :root[data-theme='dark'] .sel-btn,
+  :root:not([data-theme='light']) .sel-btn {
+    color: #10151b;
+  }
+  .sel-btn[hidden] {
+    display: none;
+  }
+  .hlpop {
+    position: absolute;
+    z-index: 61;
+    width: 300px;
+    max-width: 88vw;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 12px;
+  }
+  .hlpop[hidden] {
+    display: none;
+  }
+  .hlpop .q {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    border-left: 2px solid var(--watch);
+    padding-left: 8px;
+    margin: 0 0 9px;
+    max-height: 54px;
+    overflow: auto;
+  }
+  .hlpop textarea {
+    width: 100%;
+    min-height: 64px;
+    resize: vertical;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--sunken);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 10px;
+  }
+  .hlpop .hr2 {
+    display: flex;
+    gap: 7px;
+    margin-top: 8px;
+  }
+  .hlpop .hr2 button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 5px 11px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .hlpop .hr2 .save {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  :root[data-theme='dark'] .hlpop .hr2 .save,
+  :root:not([data-theme='light']) .hlpop .hr2 .save {
+    color: #10151b;
+  }
+  .hlpop .hr2 .del {
+    margin-left: auto;
+    color: var(--hazard);
+    border-color: var(--hazard-border);
+  }
+  .export-hl {
+    border-left-color: var(--watch) !important;
+  }
+
+  /* overview / contents box */
+  .overview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 18px 22px;
+    margin: 26px 0 4px;
+  }
+  .overview .toc {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 26px;
+  }
+  @media (max-width: 560px) {
+    .overview .toc {
+      grid-template-columns: 1fr;
+    }
+  }
+  .overview .toc li {
+    margin: 0;
+  }
+  .overview .toc a {
+    display: block;
+    text-decoration: none;
+    color: var(--ink);
+    font-size: 14.5px;
+    padding: 5px 0;
+    border-bottom: 1px solid transparent;
+  }
+  .overview .toc a:hover {
+    color: var(--accent);
+  }
+  .overview .toc a .marker {
+    color: var(--accent);
+    margin-right: 8px;
+  }
+  .overview .toc a .what {
+    color: var(--faint);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+  }
+  .overview .scope-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 26px;
+    margin-top: 15px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .overview .scope-line span {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .overview .scope-line b {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .overview .scope-line span:first-child b {
+    color: var(--rule);
+  }
+  .overview .scope-line span:last-child b {
+    color: var(--faint);
+  }
+
+  /* callout accordion */
+  details.call-more {
+    margin-top: 8px;
+  }
+  details.call-more > summary {
+    list-style: none;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    user-select: none;
+  }
+  details.call-more > summary::-webkit-details-marker {
+    display: none;
+  }
+  details.call-more > summary:hover {
+    color: var(--ink);
+  }
+  details.call-more > summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  details.call-more > summary .tw {
+    transition: transform 0.18s;
+    font-size: 9px;
+  }
+  details.call-more[open] > summary .tw {
+    transform: rotate(90deg);
+  }
+  details.call-more .then {
+    margin-top: 8px;
+  }
+  .call.rule details.call-more > summary {
+    color: var(--rule);
+  }
+  .call.watch details.call-more > summary {
+    color: var(--watch);
+  }
+  .call.hazard details.call-more > summary {
+    color: var(--hazard);
+  }
+  .call.note details.call-more > summary {
+    color: var(--note);
+  }
+
+  /* open-question answer box */
+  .decide li {
+    padding-bottom: 8px;
+  }
+  .answer {
+    margin: 10px 0 2px;
+  }
+  .answer textarea {
+    width: 100%;
+    min-height: 46px;
+    resize: vertical;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 8px 11px;
+    transition: border-color 0.14s;
+  }
+  .answer textarea::placeholder {
+    color: var(--faint);
+  }
+  .answer textarea:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .answer textarea.filled {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="page">
+  <p class="eyebrow">{{EYEBROW — e.g. Target-state blueprint · V1}}</p>
+  <h1>{{TITLE}}</h1>
+  <p class="standfirst">{{One plain sentence: what this is. <em>A scoped italic aside if useful.</em>}}</p>
+
+  <div class="lead">
+    <p>{{Lead paragraph 1 — the mental model, plain words.}}</p>
+    <p>{{Lead paragraph 2 — the one architectural idea that matters most.}}</p>
+    <!-- FILL: 1-3 short lead paragraphs. End by telling the reader the detail sits behind "how it lands in the code". -->
+  </div>
+
+  <!-- Contents + scope box. The .toc list is auto-filled from the sections below;
+       just write the two scope lines (or delete .scope-line if not needed). -->
+  <div class="overview">
+    <ul class="toc"></ul>
+    <div class="scope-line">
+      <span><b>In</b> — {{what this version includes, dotted · list}}</span>
+      <span><b>Not yet</b> — {{what is deliberately out · dotted · list}}</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" id="expandAll" type="button">Open all code detail</button>
+    <button class="btn" id="collapseAll" type="button">Close all</button>
+    <span class="spacer"></span>
+    <button class="btn" id="themeBtn" type="button" aria-label="Toggle colour theme">◐ Theme</button>
+  </div>
+
+  <!-- OPTIONAL: one load-bearing diagram. Keep the figure.flow wrapper (it is
+       commentable). Author inline <svg> with viewBox; use var(--accent) for the
+       thing under discussion and currentColor for structure. Delete the whole
+       <figure> if a diagram doesn't earn its place. -->
+  <figure class="flow wide">
+    <svg viewBox="0 0 960 400" role="img" aria-label="{{what the diagram shows}}">
+      <!-- FILL: boxes (rect+text), arrows (path + marker), labels. See skill guidance. -->
+    </svg>
+    <figcaption>{{One sentence stating the single claim of the figure.}}</figcaption>
+  </figure>
+
+  <!-- ===================== ONE SECTION (repeat per region) ===================== -->
+  <section>
+    <p class="kicker">{{What it is · layer}}</p>
+    <h2>{{Region name — a domain-role phrase, not a number}}</h2>
+    <p class="sub">{{Plain-language: what it does and the constraint that forces its placement.}}</p>
+
+    <!-- CALLOUT (optional, where a trap/rule bites). Types: rule | watch | hazard | note.
+         The <p class="then"> detail auto-folds into an accordion — keep the claim in the
+         first <p>, the consequence/fix in <p class="then">. -->
+    <div class="call watch">
+      <p class="tag">● Watch</p>
+      <p>{{The claim, one strong line.}}</p>
+      <p class="then"><b>Do instead:</b> {{the consequence or fix — this collapses into "What to do about it".}}</p>
+    </div>
+
+    <!-- CODE DETAIL — one altitude down; paths, contracts, deltas. -->
+    <details class="code-drop">
+      <summary><span class="tw">▶</span> how it lands in the code</summary>
+      <div class="drop-body">
+        <dl class="dl">
+          <div class="row"><dt>Lives in</dt><dd>{{path + the constraint that forces it}}</dd></div>
+          <div class="row"><dt>Contract</dt><dd>{{what it owes its neighbours}}</dd></div>
+          <div class="row"><dt>Delta</dt><dd>{{created / changed / untouched boundary}}</dd></div>
+        </dl>
+      </div>
+    </details>
+  </section>
+
+  <div class="hr"></div>
+  <!-- ... repeat <section> ... <div class="hr"></div> per region ... -->
+
+  <!-- ===================== OPEN QUESTIONS ===================== -->
+  <!-- Each <li> auto-grows an answer box that feeds the export. Put the default
+       in a <span class="assumed">…</span> and it becomes the box's placeholder. -->
+  <section>
+    <p class="kicker">Open</p>
+    <h2>Still yours to decide</h2>
+    <ul class="decide">
+      <li><b>{{Question title}}</b> — {{the choice}}.<span class="assumed">{{default}}</span></li>
+      <!-- FILL: one <li> per open decision. -->
+    </ul>
+    <p class="foot">Guideline fidelity — placement, contract, and constraint, not signatures or skeletons. Nothing here was built, changed, or committed.</p>
+  </section>
+</div>
+
+<script>
+  ;(function () {
+    // ---------- existing controls ----------
+    var drops = [].slice.call(document.querySelectorAll('details.code-drop'))
+    var eA = document.getElementById('expandAll'),
+      cA = document.getElementById('collapseAll')
+    if (eA)
+      eA.addEventListener('click', function () {
+        drops.forEach(function (d) {
+          d.open = true
+        })
+      })
+    if (cA)
+      cA.addEventListener('click', function () {
+        drops.forEach(function (d) {
+          d.open = false
+        })
+      })
+    var root = document.documentElement,
+      tbtn = document.getElementById('themeBtn')
+    function cur() {
+      var t = root.getAttribute('data-theme')
+      return t ? t : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    if (tbtn)
+      tbtn.addEventListener('click', function () {
+        root.setAttribute('data-theme', cur() === 'dark' ? 'light' : 'dark')
+      })
+
+    // ---------- storage ----------
+    var STORE = 'bp-notes-v1',
+      HSTORE = 'bp-hl-v1'
+    function readJSON(k) {
+      try {
+        return JSON.parse(localStorage.getItem(k)) || {}
+      } catch (e) {
+        return {}
+      }
+    }
+    function writeJSON(k, o) {
+      try {
+        localStorage.setItem(k, JSON.stringify(o))
+      } catch (e) {}
+    }
+    var ASTORE = 'bp-ans-v1'
+    var notes = readJSON(STORE) // blockKey -> text
+    var hls = readJSON(HSTORE) // id -> {containerKey,label,quote,note}
+    var answers = readJSON(ASTORE) // qKey -> {question, text}
+    function saveNotes() {
+      writeJSON(STORE, notes)
+    }
+    function saveHls() {
+      writeJSON(HSTORE, hls)
+    }
+    function saveAnswers() {
+      writeJSON(ASTORE, answers)
+    }
+
+    function slug(s) {
+      return (s || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 48)
+    }
+    function txt(el) {
+      return (el ? el.textContent : '').replace(/\s+/g, ' ').trim()
+    }
+
+    // ---------- block-level anchors ----------
+    var SELECTOR = '.page section, .page .call, .page details.code-drop, .page figure.flow'
+    var blocks = [].slice.call(document.querySelectorAll(SELECTOR))
+    var counts = {}
+    var items = []
+    blocks.forEach(function (el) {
+      var sec = el.closest('section')
+      var sectionTitle = txt(sec ? sec.querySelector('h2') : null)
+      var key, label
+      if (el.classList.contains('call')) {
+        var tag = txt(el.querySelector('.tag'))
+        var first = txt(el.querySelector('p:not(.tag)'))
+        key = 'call:' + slug(sectionTitle) + ':' + slug(tag)
+        label =
+          sectionTitle + ' → ' + tag + ' — ' + first.slice(0, 62) + (first.length > 62 ? '…' : '')
+      } else if (el.matches('details.code-drop')) {
+        key = 'drop:' + slug(sectionTitle)
+        label = sectionTitle + ' → code detail'
+      } else if (el.matches('figure.flow')) {
+        key = 'fig:flow'
+        label = 'Flow diagram'
+      } else if (el.matches('.scope')) {
+        key = 'scope:main'
+        label = 'What this isn’t'
+      } else if (el.matches('.decide li')) {
+        var d = txt(el)
+        key = 'decide:' + slug(d)
+        label = 'Decision — ' + d.slice(0, 54) + (d.length > 54 ? '…' : '')
+      } else {
+        key = 'sec:' + slug(sectionTitle)
+        label = sectionTitle
+      }
+      if (counts[key] != null) {
+        counts[key]++
+        key = key + '~' + counts[key]
+      } else counts[key] = 0
+      el.setAttribute('data-c', key)
+      items.push({ key: key, label: label, el: el })
+    })
+    function labelFor(key) {
+      for (var i = 0; i < items.length; i++) if (items[i].key === key) return items[i].label
+      return null
+    }
+
+    function clearUI(el) {
+      ;[].slice
+        .call(el.querySelectorAll(':scope > .c-note, :scope > .c-editor'))
+        .forEach(function (n) {
+          n.remove()
+        })
+    }
+    function refreshBtn(it) {
+      var has = !!(notes[it.key] && notes[it.key].trim())
+      it.btn.classList.toggle('has', has)
+      it.btn.textContent = has ? '🗨 note' : '🗨 comment'
+    }
+    function renderNote(it) {
+      clearUI(it.el)
+      var v = notes[it.key]
+      if (!v || !v.trim()) {
+        refreshBtn(it)
+        return
+      }
+      var box = document.createElement('div')
+      box.className = 'c-note'
+      var lbl = document.createElement('div')
+      lbl.className = 'cn-lbl'
+      var span = document.createElement('span')
+      span.textContent = 'Your note'
+      var edit = document.createElement('button')
+      edit.type = 'button'
+      edit.textContent = 'edit'
+      edit.addEventListener('click', function (e) {
+        e.stopPropagation()
+        openEditor(it)
+      })
+      lbl.appendChild(span)
+      lbl.appendChild(edit)
+      var t = document.createElement('div')
+      t.className = 'cn-text'
+      t.textContent = v
+      box.appendChild(lbl)
+      box.appendChild(t)
+      it.el.appendChild(box)
+      refreshBtn(it)
+    }
+    function openEditor(it) {
+      clearUI(it.el)
+      var wrap = document.createElement('div')
+      wrap.className = 'c-editor'
+      var ta = document.createElement('textarea')
+      ta.value = notes[it.key] || ''
+      ta.placeholder = 'Your comment…  (⌘/Ctrl+Enter to save, Esc to cancel)'
+      var row = document.createElement('div')
+      row.className = 'cr'
+      var save = document.createElement('button')
+      save.type = 'button'
+      save.className = 'save'
+      save.textContent = 'Save'
+      var cancel = document.createElement('button')
+      cancel.type = 'button'
+      cancel.textContent = 'Cancel'
+      row.appendChild(save)
+      row.appendChild(cancel)
+      if (notes[it.key]) {
+        var del = document.createElement('button')
+        del.type = 'button'
+        del.textContent = 'Delete'
+        del.style.marginLeft = 'auto'
+        del.addEventListener('click', function () {
+          delete notes[it.key]
+          saveNotes()
+          renderNote(it)
+          updateFab()
+        })
+        row.appendChild(del)
+      }
+      wrap.appendChild(ta)
+      wrap.appendChild(row)
+      it.el.appendChild(wrap)
+      ta.focus()
+      function commit() {
+        var val = ta.value.trim()
+        if (val) notes[it.key] = val
+        else delete notes[it.key]
+        saveNotes()
+        renderNote(it)
+        updateFab()
+      }
+      save.addEventListener('click', commit)
+      cancel.addEventListener('click', function () {
+        renderNote(it)
+      })
+      ta.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault()
+          commit()
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          renderNote(it)
+        }
+      })
+    }
+
+    items.forEach(function (it) {
+      var btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'c-btn'
+      btn.setAttribute('aria-label', 'Add a note here')
+      it.btn = btn
+      it.el.insertBefore(btn, it.el.firstChild)
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation()
+        openEditor(it)
+      })
+      renderNote(it)
+    })
+
+    // ---------- contents box (auto from sections) ----------
+    ;(function buildTOC() {
+      var toc = document.querySelector('.overview .toc')
+      if (!toc) return
+      ;[].slice.call(document.querySelectorAll('.page > section')).forEach(function (sec) {
+        var h2 = sec.querySelector('h2')
+        if (!h2) return
+        var id = sec.id || 'sec-' + slug(txt(h2))
+        sec.id = id
+        var kicker = txt(sec.querySelector('.kicker'))
+        var what = kicker ? kicker.split('·')[0].trim() : ''
+        var li = document.createElement('li')
+        var a = document.createElement('a')
+        a.href = '#' + id
+        a.innerHTML =
+          '<span class="marker">◆</span>' +
+          txt(h2) +
+          (what ? ' <span class="what">— ' + what + '</span>' : '')
+        li.appendChild(a)
+        toc.appendChild(li)
+      })
+    })()
+
+    // ---------- fold callout detail into an accordion ----------
+    ;[].slice.call(document.querySelectorAll('.page .call')).forEach(function (call) {
+      var then = call.querySelector(':scope > .then')
+      if (!then) return
+      var kind = call.classList.contains('rule')
+        ? "Why it's a rule"
+        : call.classList.contains('note')
+          ? 'More'
+          : 'What to do about it'
+      var det = document.createElement('details')
+      det.className = 'call-more'
+      var sum = document.createElement('summary')
+      sum.innerHTML = '<span class="tw">▶</span>' + kind
+      det.appendChild(sum)
+      call.insertBefore(det, then)
+      det.appendChild(then)
+    })
+
+    // ---------- answer boxes on the open questions ----------
+    ;[].slice.call(document.querySelectorAll('.page .decide li')).forEach(function (li) {
+      var titleEl = li.querySelector('b')
+      var title = txt(titleEl) || txt(li).slice(0, 40)
+      var assumedEl = li.querySelector('.assumed')
+      var assumed = assumedEl ? txt(assumedEl) : ''
+      var key = 'q:' + slug(title)
+      li.setAttribute('data-a', key)
+      if (!answers[key]) answers[key] = { question: title, text: '' }
+      else answers[key].question = title
+      var box = document.createElement('div')
+      box.className = 'answer'
+      var ta = document.createElement('textarea')
+      ta.rows = 1
+      ta.value = answers[key].text || ''
+      ta.placeholder =
+        'Your call' + (assumed ? ' — default: ' + assumed : '') + '… (fills the review notes)'
+      function grow() {
+        ta.style.height = 'auto'
+        ta.style.height = ta.scrollHeight + 'px'
+      }
+      function persist() {
+        answers[key].text = ta.value.trim()
+        ta.classList.toggle('filled', !!ta.value.trim())
+        saveAnswers()
+        updateFab()
+      }
+      ta.classList.toggle('filled', !!ta.value.trim())
+      ta.addEventListener('input', function () {
+        grow()
+        persist()
+      })
+      ta.addEventListener('focus', grow)
+      box.appendChild(ta)
+      li.appendChild(box)
+      if (ta.value) grow()
+    })
+
+    // ---------- text-selection highlights ----------
+    var UI_SKIP = '.c-note, .c-editor, .c-btn, .hlpop, .sel-btn, .toolbar, .panel'
+    function inUI(node) {
+      var el = node.nodeType === 1 ? node : node.parentNode
+      return !!(el && el.closest && el.closest(UI_SKIP))
+    }
+    function textNodesInRange(range) {
+      var out = []
+      var cac = range.commonAncestorContainer
+      if (cac.nodeType === 3) {
+        var node = cac,
+          s = range.startOffset,
+          e = range.endOffset
+        if (e <= s) return out
+        if (e < node.length) node.splitText(e)
+        var target = s > 0 ? node.splitText(s) : node
+        out.push(target)
+        return out
+      }
+      var walker = document.createTreeWalker(cac, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (nd) {
+          if (!range.intersectsNode(nd)) return NodeFilter.FILTER_REJECT
+          if (!nd.nodeValue || !nd.nodeValue.trim()) return NodeFilter.FILTER_REJECT
+          if (inUI(nd)) return NodeFilter.FILTER_REJECT
+          return NodeFilter.FILTER_ACCEPT
+        }
+      })
+      var list = [],
+        n
+      while ((n = walker.nextNode())) list.push(n)
+      list.forEach(function (node) {
+        var s = node === range.startContainer ? range.startOffset : 0
+        var e = node === range.endContainer ? range.endOffset : node.length
+        if (e <= s) return
+        if (e < node.length) node.splitText(e)
+        var target = s > 0 ? node.splitText(s) : node
+        out.push(target)
+      })
+      return out
+    }
+    function wrapNodes(nodes, id) {
+      nodes.forEach(function (node) {
+        var m = document.createElement('mark')
+        m.className = 'c-hl'
+        m.setAttribute('data-hl', id)
+        node.parentNode.insertBefore(m, node)
+        m.appendChild(node)
+      })
+    }
+    function unwrap(id) {
+      ;[].slice
+        .call(document.querySelectorAll('mark.c-hl[data-hl="' + id + '"]'))
+        .forEach(function (m) {
+          var p = m.parentNode
+          while (m.firstChild) p.insertBefore(m.firstChild, m)
+          p.removeChild(m)
+          p.normalize()
+        })
+    }
+    // re-anchor a stored quote inside a container, whitespace-normalized
+    function findRange(container, quote) {
+      var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (nd) {
+          return nd.nodeValue && !inUI(nd) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+        }
+      })
+      var raw = [],
+        n
+      while ((n = walker.nextNode())) {
+        for (var i = 0; i < n.nodeValue.length; i++)
+          raw.push({ node: n, off: i, ch: n.nodeValue[i] })
+      }
+      var norm = '',
+        map = [],
+        prevSpace = false
+      raw.forEach(function (r, i) {
+        var sp = /\s/.test(r.ch)
+        if (sp) {
+          if (prevSpace) return
+          norm += ' '
+          map.push(i)
+          prevSpace = true
+        } else {
+          norm += r.ch
+          map.push(i)
+          prevSpace = false
+        }
+      })
+      var q = quote.replace(/\s+/g, ' ').trim()
+      if (!q) return null
+      var idx = norm.indexOf(q)
+      if (idx < 0) return null
+      var a = raw[map[idx]],
+        b = raw[map[idx + q.length - 1]]
+      if (!a || !b) return null
+      var rg = document.createRange()
+      rg.setStart(a.node, a.off)
+      rg.setEnd(b.node, b.off + 1)
+      return rg
+    }
+
+    // popover editor for a highlight
+    var pop = document.createElement('div')
+    pop.className = 'hlpop'
+    pop.hidden = true
+    pop.innerHTML =
+      '<p class="q"></p><textarea placeholder="Comment on the highlighted text… (⌘/Ctrl+Enter save, Esc cancel)"></textarea><div class="hr2"><button type="button" class="save">Save</button><button type="button" class="cancel">Cancel</button><button type="button" class="del">Delete</button></div>'
+    document.body.appendChild(pop)
+    var popQ = pop.querySelector('.q'),
+      popTa = pop.querySelector('textarea')
+    var popState = null // {id,isNew}
+    function positionPop(rect) {
+      var top = window.scrollY + rect.bottom + 8
+      var left = window.scrollX + rect.left
+      left = Math.min(left, window.scrollX + document.documentElement.clientWidth - 316)
+      left = Math.max(left, window.scrollX + 8)
+      pop.style.top = top + 'px'
+      pop.style.left = left + 'px'
+    }
+    function markActive(id, on) {
+      ;[].slice
+        .call(document.querySelectorAll('mark.c-hl[data-hl="' + id + '"]'))
+        .forEach(function (m) {
+          m.classList.toggle('active', on)
+        })
+    }
+    function openPop(id, isNew) {
+      var first = document.querySelector('mark.c-hl[data-hl="' + id + '"]')
+      if (!first) return
+      if (popState && popState.id !== id) markActive(popState.id, false)
+      popState = { id: id, isNew: isNew }
+      markActive(id, true)
+      popQ.textContent = '“' + hls[id].quote + '”'
+      popTa.value = hls[id].note || ''
+      pop.hidden = false
+      positionPop(first.getBoundingClientRect())
+      popTa.focus()
+    }
+    function closePop(commit) {
+      if (!popState) {
+        pop.hidden = true
+        return
+      }
+      var id = popState.id,
+        isNew = popState.isNew
+      markActive(id, false)
+      if (commit) {
+        var v = popTa.value.trim()
+        if (v) {
+          hls[id].note = v
+          saveHls()
+        } else {
+          // empty note: drop new, keep existing-emptied as removed
+          unwrap(id)
+          delete hls[id]
+          saveHls()
+        }
+      } else if (isNew) {
+        unwrap(id)
+        delete hls[id]
+        saveHls()
+      }
+      pop.hidden = true
+      popState = null
+      updateFab()
+    }
+    pop.querySelector('.save').addEventListener('click', function () {
+      closePop(true)
+    })
+    pop.querySelector('.cancel').addEventListener('click', function () {
+      closePop(false)
+    })
+    pop.querySelector('.del').addEventListener('click', function () {
+      if (popState) {
+        unwrap(popState.id)
+        delete hls[popState.id]
+        saveHls()
+        pop.hidden = true
+        popState = null
+        updateFab()
+      }
+    })
+    popTa.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault()
+        closePop(true)
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closePop(false)
+      }
+    })
+
+    // floating "comment" button on selection
+    var selBtn = document.createElement('button')
+    selBtn.type = 'button'
+    selBtn.className = 'sel-btn'
+    selBtn.textContent = '🗨 comment'
+    selBtn.hidden = true
+    document.body.appendChild(selBtn)
+    var pendingRange = null
+    function hideSel() {
+      selBtn.hidden = true
+      pendingRange = null
+    }
+    document.addEventListener('selectionchange', function () {
+      var sel = window.getSelection()
+      if (!pop.hidden) return
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+        hideSel()
+        return
+      }
+      var r = sel.getRangeAt(0)
+      var q = sel.toString()
+      if (!q || q.trim().length < 2) {
+        hideSel()
+        return
+      }
+      if (inUI(r.startContainer) || inUI(r.endContainer)) {
+        hideSel()
+        return
+      }
+      var host = (
+        r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentNode
+      ).closest('.page')
+      if (!host) {
+        hideSel()
+        return
+      }
+      pendingRange = r
+      var rect = r.getBoundingClientRect()
+      selBtn.style.top = window.scrollY + rect.top + 'px'
+      selBtn.style.left = window.scrollX + rect.left + rect.width / 2 + 'px'
+      selBtn.hidden = false
+    })
+    selBtn.addEventListener('mousedown', function (e) {
+      e.preventDefault()
+    }) // keep selection
+    selBtn.addEventListener('click', function () {
+      if (!pendingRange) return
+      var range = pendingRange
+      var quote = window.getSelection().toString().replace(/\s+/g, ' ').trim()
+      var container =
+        range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentNode
+      var sec = container.closest('section, figure.flow, .scope')
+      var ckey = sec ? sec.getAttribute('data-c') : null
+      var clabel = ckey ? labelFor(ckey) : 'Document'
+      var id = 'h' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36)
+      var nodes = textNodesInRange(range)
+      if (!nodes.length) {
+        hideSel()
+        return
+      }
+      wrapNodes(nodes, id)
+      hls[id] = { containerKey: ckey, label: clabel, quote: quote, note: '' }
+      saveHls()
+      window.getSelection().removeAllRanges()
+      hideSel()
+      openPop(id, true)
+    })
+
+    // click an existing highlight to edit
+    document.querySelector('.page').addEventListener('click', function (e) {
+      var m = e.target.closest && e.target.closest('mark.c-hl')
+      if (m) {
+        e.stopPropagation()
+        openPop(m.getAttribute('data-hl'), false)
+      }
+    })
+    document.addEventListener('mousedown', function (e) {
+      if (
+        !pop.hidden &&
+        !pop.contains(e.target) &&
+        !(e.target.closest && e.target.closest('mark.c-hl'))
+      )
+        closePop(true)
+    })
+
+    // re-apply stored highlights on load (best-effort)
+    ;(function reapply() {
+      Object.keys(hls).forEach(function (id) {
+        var h = hls[id]
+        var container = h.containerKey
+          ? document.querySelector('[data-c="' + CSS.escape(h.containerKey) + '"]')
+          : document.querySelector('.page')
+        if (!container) container = document.querySelector('.page')
+        var rg = findRange(container, h.quote)
+        if (rg) {
+          try {
+            wrapNodes(textNodesInRange(rg), id)
+          } catch (e) {}
+        }
+      })
+    })()
+
+    // ---------- export + fab ----------
+    var fab = document.createElement('button')
+    fab.type = 'button'
+    fab.className = 'fab'
+    fab.innerHTML = '🗨 Review notes <span class="n">0</span>'
+    document.body.appendChild(fab)
+
+    var ov = document.createElement('div')
+    ov.className = 'ov'
+    ov.hidden = true
+    ov.innerHTML =
+      '<div class="panel" role="dialog" aria-modal="true" aria-label="Review notes export">' +
+      '<h3>Review notes</h3>' +
+      '<p class="ph">Your inline comments, highlights, and question answers, in document order — copy and paste back into the chat.</p>' +
+      '<textarea readonly></textarea>' +
+      '<div class="pr"><button type="button" class="copy">Copy</button><button type="button" class="clear">Clear all</button><span class="spacer"></span><button type="button" class="close">Close</button></div>' +
+      '</div>'
+    document.body.appendChild(ov)
+    var ta2 = ov.querySelector('textarea')
+
+    function count() {
+      var c = 0
+      Object.keys(notes).forEach(function (k) {
+        if (notes[k] && notes[k].trim()) c++
+      })
+      Object.keys(hls).forEach(function (k) {
+        if (hls[k] && hls[k].note && hls[k].note.trim()) c++
+      })
+      Object.keys(answers).forEach(function (k) {
+        if (answers[k] && answers[k].text && answers[k].text.trim()) c++
+      })
+      return c
+    }
+    function updateFab() {
+      fab.querySelector('.n').textContent = count()
+    }
+    function compile() {
+      var lines = ['# ' + (document.title || 'Blueprint') + ' — review notes', '']
+      var any = false
+      // document order: every anchored element + every highlight mark
+      var seq = [].slice.call(document.querySelectorAll('[data-c], [data-a], mark.c-hl'))
+      var doneHl = {}
+      seq.forEach(function (el) {
+        if (el.matches('mark.c-hl')) {
+          var id = el.getAttribute('data-hl')
+          if (doneHl[id]) return
+          doneHl[id] = 1
+          var h = hls[id]
+          if (h && h.note && h.note.trim()) {
+            any = true
+            lines.push('## ' + (h.label || 'Document') + '  ·  “' + h.quote + '”')
+            lines.push(h.note.trim())
+            lines.push('')
+          }
+        } else if (el.hasAttribute('data-a')) {
+          var ak = el.getAttribute('data-a')
+          var ans = answers[ak]
+          if (ans && ans.text && ans.text.trim()) {
+            any = true
+            lines.push('## Answer — ' + (ans.question || ak))
+            lines.push(ans.text.trim())
+            lines.push('')
+          }
+        } else {
+          var k = el.getAttribute('data-c')
+          var v = notes[k]
+          if (v && v.trim()) {
+            any = true
+            lines.push('## ' + (labelFor(k) || k))
+            lines.push(v.trim())
+            lines.push('')
+          }
+        }
+      })
+      // orphaned notes (block text changed) + orphaned highlights (not re-anchored)
+      var liveKeys = items.map(function (i) {
+        return i.key
+      })
+      Object.keys(notes).forEach(function (k) {
+        if (liveKeys.indexOf(k) === -1 && notes[k] && notes[k].trim()) {
+          any = true
+          lines.push('## (' + k + ')')
+          lines.push(notes[k].trim())
+          lines.push('')
+        }
+      })
+      Object.keys(hls).forEach(function (id) {
+        if (!doneHl[id] && hls[id] && hls[id].note && hls[id].note.trim()) {
+          any = true
+          lines.push(
+            '## ' + (hls[id].label || 'Document') + '  ·  “' + hls[id].quote + '” (unanchored)'
+          )
+          lines.push(hls[id].note.trim())
+          lines.push('')
+        }
+      })
+      return any ? lines.join('\n').trim() + '\n' : ''
+    }
+    updateFab()
+
+    fab.addEventListener('click', function () {
+      var c = compile()
+      ta2.value = c || 'No notes yet — hover a block for a comment, or select text to highlight it.'
+      ov.hidden = false
+    })
+    ov.addEventListener('click', function (e) {
+      if (e.target === ov) ov.hidden = true
+    })
+    ov.querySelector('.close').addEventListener('click', function () {
+      ov.hidden = true
+    })
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !ov.hidden) ov.hidden = true
+    })
+    ov.querySelector('.copy').addEventListener('click', function () {
+      var cb = ov.querySelector('.copy')
+      ta2.focus()
+      ta2.select()
+      function ok() {
+        cb.textContent = 'Copied ✓'
+        setTimeout(function () {
+          cb.textContent = 'Copy'
+        }, 1400)
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta2.value).then(ok, function () {
+          try {
+            document.execCommand('copy')
+            ok()
+          } catch (e) {}
+        })
+      } else {
+        try {
+          document.execCommand('copy')
+          ok()
+        } catch (e) {}
+      }
+    })
+    ov.querySelector('.clear').addEventListener('click', function () {
+      if (!window.confirm('Delete all review notes, highlights, and answers?')) return
+      Object.keys(hls).forEach(function (id) {
+        unwrap(id)
+      })
+      notes = {}
+      hls = {}
+      Object.keys(answers).forEach(function (k) {
+        answers[k].text = ''
+      })
+      saveNotes()
+      saveHls()
+      saveAnswers()
+      items.forEach(renderNote)
+      ;[].slice.call(document.querySelectorAll('.answer textarea')).forEach(function (t) {
+        t.value = ''
+        t.classList.remove('filled')
+        t.style.height = 'auto'
+      })
+      updateFab()
+      ta2.value = compile() || 'No notes yet.'
+    })
+
+    // discovery hint
+    var toolbar = document.querySelector('.toolbar')
+    if (toolbar) {
+      var hint = document.createElement('p')
+      hint.style.cssText =
+        'font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);margin:8px 0 0;line-height:1.5;'
+      hint.textContent =
+        'Hover a section, callout, code panel, or the diagram to comment · select any text to highlight it · answer the open questions inline · Review notes compiles everything to paste back.'
+      toolbar.parentNode.insertBefore(hint, toolbar.nextSibling)
+    }
+  })()
+</script>
