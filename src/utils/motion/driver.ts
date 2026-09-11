@@ -42,7 +42,7 @@ function resolveEase(token: EaseToken): string {
   return EASINGS[token].gsap
 }
 
-/** Called outside a Vue scope, the caller must `cancel()` the returned handle itself — auto-cleanup only fires inside an active scope. */
+/** Runs a build function on a paused GSAP timeline against `el`, returning a handle. Called outside a Vue scope, the caller must `cancel()` the returned handle itself — auto-cleanup only fires inside an active scope. */
 function runMotion(
   el: HTMLElement,
   build: (ctx: MotionContext) => void,
@@ -118,7 +118,7 @@ function runMotion(
   }
 }
 
-/** A takeover starts from the element's live values, so a fresh `from` placement is skipped mid-flight. */
+/** Builds the GSAP tween for a spec's from/to pair. A takeover starts from the element's live values, so a fresh `from` placement is skipped mid-flight. */
 function applyTween(ctx: MotionContext, el: HTMLElement, spec: DeclarativeMotionSpec) {
   const to: MotionVars & gsap.TweenVars = {
     ...spec.to,

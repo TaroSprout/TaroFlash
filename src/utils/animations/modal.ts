@@ -63,7 +63,8 @@ export function scaleFadeOut(el: Element, done: () => void) {
   gsap.to(el, { scale: 0.8, opacity: 0, duration: 0.2, ease: 'expo.out', onComplete: done })
 }
 
-const DIALOG_RISE = '200px' // These three are modal-structural geometry, not vocabulary travel tokens.
+// DIALOG_RISE, SHEET_TRAVEL, and POPUP_SCALE are modal-structural geometry, not vocabulary travel tokens.
+const DIALOG_RISE = '200px'
 const SHEET_TRAVEL = '100%'
 const POPUP_SCALE = 0.8
 
