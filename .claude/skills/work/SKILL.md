@@ -104,6 +104,11 @@ branch the home tree already has checked out (or `master`, cutting a feature bra
 [`git-workflow`](../../rules/git-workflow.md)); a multi-PR run checks out its integration branch here
 (§ Integration branch) and never anything else for the rest of the run.
 
+**A long-lived worktree can be running a stale copy of this very skill.** Before SELECT,
+`git fetch origin` and diff `.claude/skills/work/SKILL.md` (and the agents it dispatches) against
+`origin/master`; a home tree whose base predates that ref is following superseded doctrine without
+knowing it. Pull the current files in before proceeding rather than discovering the gap mid-run.
+
 ### 1. SELECT
 
 Dispatch `board-agent` with `SELECT` and the run's mode:
