@@ -162,10 +162,13 @@ papering over them.
 
 ## Phase 4 — Publish the plan as the artifact
 
-The plan's standard output is the artifact, not a chat report. Render it from the cached template at
-[`assets/blueprint-artifact-template.html`](assets/blueprint-artifact-template.html) and publish with
-the `Artifact` tool — never rebuild the page from scratch. The skeleton already carries the full
-design system and a self-contained review layer; a run only fills the marked `{{TOKENS}}`. Content
+The plan's standard output is the artifact, not a chat report. **`cp` the cached template at
+[`assets/blueprint-artifact-template.html`](assets/blueprint-artifact-template.html) into the
+scratchpad, then fill it with `Edit`, never `Write`.** The copy's style block and script — together
+the bulk of the file — carry the full design system and self-contained review layer and never
+change between runs; `Edit` can only land a diff against the marked `{{TOKENS}}` and FILL-marked
+spans, so the fixed boilerplate can't get re-authored by construction. Publish the edited copy's
+contents with the `Artifact` tool. Content
 maps onto sections the same way the old chat report did:
 
 1. **Target in this codebase** — the region-by-region plan: placement + constraint, contract, delta,
