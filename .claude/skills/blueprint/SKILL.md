@@ -171,6 +171,12 @@ spans, so the fixed boilerplate can't get re-authored by construction. Publish t
 contents with the `Artifact` tool. Content
 maps onto sections the same way the old chat report did:
 
+**Exception: when the target under blueprint is the artifact template's own presentation or IA,**
+the cached template is the thing being redesigned, not the container for the plan — filling its
+tokens demonstrates nothing, since the run then renders inside the very shape it proposes to
+replace. Build that demonstration as a standalone mockup in the proposed new shape instead; the
+cached template stays untouched until the redesign itself ships.
+
 1. **Target in this codebase** — the region-by-region plan: placement + constraint, contract, delta,
    house rules bound in place. The bulk of the artifact. Group by region of the target, not
    file-system order. A trivial region is a line; a load-bearing one gets room.
