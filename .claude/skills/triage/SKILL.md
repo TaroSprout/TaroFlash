@@ -1,6 +1,6 @@
 ---
 name: triage
-description: First pass over raw Notion Task Board tickets. Pulls a batch off Backlog, rewrites each title + description so the groomer can pick it up cold, fills Epic and Type when unset (Priority too if missing), and moves each to Needs More Info for /groom to settle. Batched (default 10, --N to change). Does not spec, resolve decisions, or write acceptance criteria — that is /groom. Trigger on `/triage`, "triage the backlog", "triage tickets".
+description: First pass over raw Notion Task Board tickets. Pulls a batch off Backlog, rewrites each title + description so the groomer can pick it up cold, fills Epic and Type when unset (Priority too if missing), and leaves each in Backlog for /groom to settle. Batched (default 10, --N to change). Does not spec, resolve decisions, or write acceptance criteria — that is /groom. Trigger on `/triage`, "triage the backlog", "triage tickets".
 allowed-tools: Read, Grep, Glob, Bash, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
 argument-hint: '[--N]'
 arguments:
@@ -11,7 +11,7 @@ lastUpdated: 2026-08-01T20:00:00Z
 
 Triage is the **first** of two grooming passes. It clarifies and files — it does **not** resolve
 design decisions, write acceptance criteria, or investigate implementation. That is `/groom`'s job.
-Every triaged ticket lands in **`Needs More Info`**.
+Every triaged ticket **stays in `Backlog`** — `/groom` now pulls straight from there.
 
 The Backlog it pulls from is normally already classified and priority-sorted by
 [`/backlog`](../backlog/SKILL.md), the portfolio pass that runs before triage — so the
@@ -79,9 +79,9 @@ The board **schema** (data sources, field option lists) lives in
 5. **Checkpoint.** One summary for the whole batch. Per ticket, in product terms: new title, one-line
    intent, proposed fields. Stop for approval.
 
-6. **Write** approved changes via `notion-update-page` — title, body, any proposed fields, and
-   `Status = Needs More Info`. Sequential; if a write fails, report which and stop rather than
-   half-applying.
+6. **Write** approved changes via `notion-update-page` — title, body, and any proposed fields.
+   **Never `Status`** — the ticket stays in `Backlog` for `/groom`. Sequential; if a write fails,
+   report which and stop rather than half-applying.
 
 ## Self-heal
 
@@ -92,7 +92,7 @@ the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
 ## Guardrails
 
 - Only ever touch the Task Board named in the rule — never a backup or duplicate.
-- Every ticket ends in `Needs More Info`. Never route to `Ready`/`On Hold` or set
+- Every ticket stays in `Backlog`. Never route to `Ready`/`On Hold` or set
   `In Progress`/`Review`/`Done`.
 - Propose `Epic`/`Type`/`Priority`/`Target`, never apply unasked.
 - Don't touch tests. Don't write code — this skill reads Notion (and lightly, code) and writes
