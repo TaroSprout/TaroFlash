@@ -48,9 +48,6 @@ $function$
 ;
 
 -- db diff emits no function grants, so hand-write them (see supabase rule).
--- capability_is_live is SECURITY DEFINER: revoke from PUBLIC so it is not
--- anon-executable (pgTAP 00043 guard); can_manage_capabilities follows the
--- can_ convention of REVOKE-from-PUBLIC then grant the client roles.
 revoke all on function public.can_manage_capabilities() from public;
 grant all on function public.can_manage_capabilities() to authenticated;
 grant all on function public.can_manage_capabilities() to service_role;

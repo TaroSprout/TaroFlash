@@ -151,11 +151,7 @@ GRANT ALL ON FUNCTION public.set_member_id() TO authenticated;
 GRANT ALL ON FUNCTION public.set_member_id() TO service_role;
 
 
--- Reads the capability row bare: on → true, off → false, missing row → false. No
--- caller fallback argument — the server fails closed and never substitutes a
--- default, because if it can't reach the row the action isn't running anyway.
--- The client's code-constant fallback is a separate thing, for its pending
--- window only →[K:capability-server-has-no-fallback]
+-- Reads the capability row bare; no fallback — the server fails closed. →[K:capability-server-has-no-fallback]
 CREATE FUNCTION public.capability_is_live(p_key text) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
@@ -171,9 +167,7 @@ ALTER FUNCTION public.capability_is_live(p_key text) OWNER TO postgres;
 
 
 -- SECURITY DEFINER, so not left executable by anon (guarded by pgTAP
--- 00043_definer_function_anon_grants). v1 has no anon-facing call site; a later
--- ticket that gates an anon-visible resource grants anon here and adds its review
--- entry then.
+-- 00043_definer_function_anon_grants).
 REVOKE ALL ON FUNCTION public.capability_is_live(p_key text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.capability_is_live(p_key text) FROM anon;
 GRANT ALL ON FUNCTION public.capability_is_live(p_key text) TO authenticated;
