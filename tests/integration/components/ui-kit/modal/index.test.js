@@ -22,9 +22,6 @@ vi.mock('@/composables/shortcuts', () => ({
 
 // gsap is imported transitively via modal-mode-config → animations/modal.
 // The mock must call onComplete so transition-group JS hooks finish in browser mode.
-// recedeModal/restoreModal run through the motion driver (gsap.timeline), which
-// completes synchronously on play() so the recede/restore choreography settles
-// within the same tick as the stack mutation that triggered it.
 vi.mock('gsap', () => ({
   gsap: {
     set: vi.fn(),
@@ -45,7 +42,7 @@ vi.mock('gsap', () => ({
           return tl
         },
         play: () => {
-          state.onComplete?.()
+          state.onComplete?.() // recede/restore drive gsap.timeline, which completes synchronously on play() within the triggering tick
           return tl
         },
         progress: () => tl,

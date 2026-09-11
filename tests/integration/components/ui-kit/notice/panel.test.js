@@ -16,12 +16,10 @@ vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => mockCoarse
 const coarseRef = ref(false)
 mockCoarse.ref = coarseRef
 
-// The backdrop fade runs through the motion driver (gsap.timeline), while the
-// swipe-dismiss snap-back still calls gsap.to directly — both need mocking.
 vi.mock('gsap', () => ({
   gsap: {
     set: vi.fn(),
-    to: vi.fn((_el, opts) => opts?.onComplete?.()),
+    to: vi.fn((_el, opts) => opts?.onComplete?.()), // swipe-dismiss snap-back; the backdrop fade uses gsap.timeline below
     isTweening: vi.fn(() => false),
     timeline: () => {
       const state = { onComplete: null }
@@ -126,8 +124,6 @@ describe('NoticePanel', () => {
     const wrapper = await mountPanel(makeNotice({ closable: true }))
     expect(wrapper.find('[data-testid="ui-kit-notice-panel__close"]').exists()).toBe(true)
   })
-
-  // ── backdrop fade — driven by the motion driver, css=false ─────
 
   test('the backdrop renders with no Vue transition class once its enter fade resolves', async () => {
     const wrapper = await mountPanel(makeNotice({ backdrop: true }))

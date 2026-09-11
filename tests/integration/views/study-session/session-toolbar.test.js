@@ -77,8 +77,6 @@ describe('session-toolbar', () => {
     expect(wrapper.find('[data-testid="session-summary__close"]').exists()).toBe(true)
   })
 
-  // ── emits ──────────────────────────────────────────────────────
-
   test('reset button press emits reset', async () => {
     const wrapper = mountToolbar('settings-reset', { prefs_are_default: false })
     await wrapper.find('[data-testid="session-settings__reset"]').trigger('press')

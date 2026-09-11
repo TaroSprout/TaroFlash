@@ -384,10 +384,6 @@ describe('UiPopover', () => {
     })
   })
 
-  // ── driver-based fade transition ──────────────────────────────
-  // The enter/leave hooks run through the motion driver, wired via
-  // `:css="false"` — Vue never applies its own `v-enter-*`/`v-leave-*` classes.
-
   describe('driver-based fade transition', () => {
     test('a transition_duration of 0 completes the enter fade instantly', async () => {
       const wrapper = mountPopover({ open: false, mode: 'click', transition_duration: 0 })

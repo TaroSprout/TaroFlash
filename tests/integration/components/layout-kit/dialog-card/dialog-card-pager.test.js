@@ -4,16 +4,7 @@ import { defineComponent, h } from 'vue'
 import DialogCardPager from '@/components/layout-kit/dialog-card/dialog-card-pager.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
-// Mirrors the real session-pane Motion shape — sessionPaneEnter(options) returns
-// a Motion factory `(el) => handle`, sessionPaneLeave is a Motion `(el) => handle`
-// directly — so dialog-card-pager's own onEnter/onLeave wiring is under direct
-// test. The underlying tween math itself is covered in
-// tests/unit/utils/animations/session-pane.test.js.
 
-// `done` resolves on a microtask, not synchronously — a real GSAP tween never
-// completes within the same call stack as the leave hook, and calling done()
-// synchronously during a real (unstubbed) unmount transition crashes Vue's
-// internal removal bookkeeping (`afterLeave` reads a detached parentNode).
 function fakeHandle(onStart) {
   let resolveDone
   const done = new Promise((resolve) => {
@@ -21,7 +12,7 @@ function fakeHandle(onStart) {
   })
   Promise.resolve().then(() => {
     onStart?.()
-    resolveDone()
+    resolveDone() // resolves done on a microtask — a synchronous done() during unmount crashes Vue's afterLeave
   })
   return { done }
 }

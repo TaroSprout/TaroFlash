@@ -1,13 +1,17 @@
 import { gsap } from 'gsap'
 
 interface PinOptions {
-  // Freeze the node at its current on-screen box instead of stretching it to the
-  // parent's top-left — for a FLIP where the siblings collapse into the gap it
-  // leaves while it animates in place.
+  /**
+   * Freeze the node at its current on-screen box instead of stretching it to the
+   * parent's top-left — for a FLIP where the siblings collapse into the gap it
+   * leaves while it animates in place.
+   */
   freeze?: boolean
-  // Lock the measured height in pixels too, for a pane whose parent resizes under
-  // it mid-leave: a `h-full` class or `inset: 0` re-resolves against the new
-  // layout every frame, this pins the height it had when it started leaving.
+  /**
+   * Lock the measured height in pixels too, for a pane whose parent resizes under
+   * it mid-leave: a `h-full` class or `inset: 0` re-resolves against the new
+   * layout every frame, this pins the height it had when it started leaving.
+   */
   lockHeight?: boolean
 }
 

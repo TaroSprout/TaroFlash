@@ -5,8 +5,7 @@ import { useModalRecede } from '@/components/ui-kit/modal/use-modal-recede'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-// recedeModal/restoreModal drive the motion driver (gsap.timeline), not gsap.set/to directly.
-const { mockTimelineTo } = vi.hoisted(() => ({ mockTimelineTo: vi.fn() }))
+const { mockTimelineTo } = vi.hoisted(() => ({ mockTimelineTo: vi.fn() })) // recede/restore drive gsap.timeline, not gsap.set/to directly
 
 vi.mock('gsap', () => ({
   gsap: {
