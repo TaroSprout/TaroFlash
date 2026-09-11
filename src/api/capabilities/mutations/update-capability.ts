@@ -5,10 +5,7 @@ import { useSessionStore } from '@/stores/session'
 type QueryCache = ReturnType<typeof useQueryCache>
 type CapabilitiesSnapshot = Capability[] | undefined
 
-/**
- * Updates the capability row in the cache the instant it's toggled, so the control
- * responds under the finger. Returns the prior snapshot so the caller can restore it exactly.
- */
+/** Updates the capability row in the cache the instant it's toggled, so the control responds under the finger. */
 function setCapabilityInCache(
   queryCache: QueryCache,
   cache_key: string[],
