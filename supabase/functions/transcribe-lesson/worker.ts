@@ -11,8 +11,14 @@
 //
 // 'transcribing' is itself a LOOP: long audio is split client-side into ordered,
 // overlapping chunks, and each invocation transcribes the chunk at `chunk_cursor`,
-// stitches it onto the running transcript by its time offset, and advances the
-// cursor (which re-fires the chain). Only the LAST chunk advances `phase`.
+// appends its sentences to the lesson_sentences rows by their time offset, and
+// advances the cursor (which re-fires the chain). Only the LAST chunk advances
+// `phase`.
+//
+// Each sentence lives in its own lesson_sentences row rather than one accumulating
+// transcript blob: transcription seeds a row's timing / text / words, and each
+// later phase writes only its own column of that row through a targeted RPC, so a
+// stage never rewrites another's slice and a replayed step is idempotent.
 //
 // Because every call returns after a single chunk/step, no isolate ever carries
 // the whole pipeline's wall-clock (so we need no EdgeRuntime.waitUntil), and a row
@@ -25,32 +31,32 @@ import { translateSentences } from '../_shared/transcription/translate.ts'
 import { readSentences } from '../_shared/transcription/transliterate.ts'
 import { detectChapters } from '../_shared/transcription/chapter.ts'
 import { type TargetScript } from '../_shared/transcription/script.ts'
-import type { Segment, Word, Transcript } from '../_shared/transcription/transcript.ts'
-import { normalizeTranscript, appendChunk, assignWordsToSegments } from './transcript-shapers.ts'
+import type { SentenceRow } from '../_shared/transcription/transcript.ts'
+import { sentenceRowsForChunk, type StoredSentence } from './transcript-shapers.ts'
 
 // Interlinear translations are English-only in admin v1 (matches the term
 // popover's target). A per-member target language can replace this later.
 const TARGET_LANG = 'English'
 const BUCKET = 'audio-lessons'
 
-// Like transcription, the enrichment phases process the transcript a SLICE of
-// segments per invocation (advancing chunk_cursor, which re-fires the chain) so a
+// Like transcription, the enrichment phases process the sentences a SLICE at a
+// time per invocation (advancing chunk_cursor, which re-fires the chain) so a
 // long book's hundreds of Claude calls never pile into one isolate — which would
 // blow the edge wall-clock and the stall reaper's heartbeat. Transliteration is
-// the heavier call per segment (one reading per word), so it takes a smaller bite.
+// the heavier call per sentence (one reading per word), so it takes a smaller bite.
 const TRANSLATE_SEG_BATCH = 80
 const TRANSLITERATE_SEG_BATCH = 30
 
-// Segments either side of a translate slice handed to the translator as read-only
+// Sentences either side of a translate slice handed to the translator as read-only
 // context, so a sentence at the slice boundary isn't translated context-starved.
 const TRANSLATE_CONTEXT_SEG = 5
 
 // One audio slice in the lesson's chunk manifest (see migration 20260627000000).
 type Chunk = { path: string; offset: number }
 
-// The slice of the lesson row a phase needs. `transcript` accumulates across
-// phases: transcribe stitches the skeleton chunk by chunk, chaptering adds
-// chapters, translate fills segment translations, transliterate fills readings.
+// The slice of the lesson row a phase needs. Sentences no longer live on the row —
+// they're in lesson_sentences — so this carries only the state-machine fields plus
+// the audio inputs transcription reads.
 type LessonRow = {
   id: number
   status: string
@@ -58,10 +64,13 @@ type LessonRow = {
   audio_path: string
   script: TargetScript
   lang: string | null
-  transcript: Transcript
   chunks: Chunk[] | null
   chunk_cursor: number | null
 }
+
+// A stored sentence read back for an enrichment phase: its ordinal (the RPC key),
+// its text (translate/chapter context), and its words (transliteration input).
+type SentenceReadback = { ordinal: number; text: string; words: { word: string }[] }
 
 // Service-role client for the internal `process` step. It bypasses RLS because
 // the worker writes rows on behalf of the owner after the DB trigger (not a
@@ -94,7 +103,7 @@ export async function processLessonPhase(admin: SupabaseClient, lessonId: number
 async function loadLesson(admin: SupabaseClient, id: number): Promise<LessonRow | null> {
   const { data, error } = await admin
     .from('lessons')
-    .select('id, status, phase, audio_path, script, lang, transcript, chunks, chunk_cursor')
+    .select('id, status, phase, audio_path, script, lang, chunks, chunk_cursor')
     .eq('id', id)
     .single<LessonRow>()
 
@@ -105,11 +114,28 @@ async function loadLesson(admin: SupabaseClient, id: number): Promise<LessonRow 
   return data
 }
 
+// The lesson's sentences in playback order. Every enrichment phase reloads them
+// fresh — the same whole-transcript read the blob worker did, just relational.
+async function loadSentences<T>(
+  admin: SupabaseClient,
+  lessonId: number,
+  columns: string
+): Promise<T[]> {
+  const { data, error } = await admin
+    .from('lesson_sentences')
+    .select(columns)
+    .eq('lesson_id', lessonId)
+    .order('ordinal', { ascending: true })
+
+  if (error) throw new Error(`lesson ${lessonId} sentences load failed: ${error.message}`)
+  return (data ?? []) as T[]
+}
+
 // Phase 1 — Whisper, ONE chunk per invocation. Transcribes the chunk at
-// `chunk_cursor`, shifts its local timestamps by the chunk's offset, stitches it
-// onto the running transcript (dropping the overlap re-transcribed from the
-// previous chunk), and either advances the cursor (more chunks left, re-firing
-// the chain) or, on the last chunk, advances `phase` to chaptering.
+// `chunk_cursor`, shifts its local timestamps by the chunk's offset, appends its
+// sentences after the ones already stored (dropping the overlap re-transcribed
+// from the previous chunk), and either advances the cursor (more chunks left,
+// re-firing the chain) or, on the last chunk, advances `phase` to chaptering.
 async function runTranscribe(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
   const chunks = lesson.chunks?.length ? lesson.chunks : [{ path: lesson.audio_path, offset: 0 }]
   const cursor = lesson.chunk_cursor ?? 0
@@ -128,89 +154,112 @@ async function runTranscribe(admin: SupabaseClient, lesson: LessonRow): Promise<
     words: result.words.map((w) => ({ word: w.word, start: w.start + offset, end: w.end + offset }))
   }
 
-  const stitched = appendChunk(normalizeTranscript(lesson.transcript), incoming)
+  const existing = await loadSentences<StoredSentence>(
+    admin,
+    lesson.id,
+    'start_seconds, end_seconds, text, words'
+  )
+  const rows = sentenceRowsForChunk(existing, incoming)
+  if (rows.length) await upsertSentences(admin, lesson.id, rows)
+
   const isLast = cursor >= chunks.length - 1
 
   // Keep the FIRST chunk's detected language — it's the most representative and
   // a later chunk could mis-detect on a short or music-only slice.
   await update(admin, lesson.id, {
-    transcript: stitched,
     lang: lesson.lang ?? result.lang ?? null,
     // Last chunk advances the phase and resets the cursor (the enrichment phases
-    // reuse it as a per-phase segment counter); earlier chunks just advance it.
+    // reuse it as a per-phase sentence counter); earlier chunks just advance it.
     // Exactly one field changes per write, so the trigger fires exactly once.
     ...(isLast ? { phase: 'chaptering', chunk_cursor: 0 } : { chunk_cursor: cursor + 1 })
   })
 }
 
-// Phase 2 — split the stitched transcript into titled chapters, then advance to
+// Phase 2 — split the stored sentences into titled chapters, then advance to
 // translating. Best-effort: a failure (or a single-chapter result) just leaves
 // the lesson with no in-reader chapter list rather than failing it.
 async function runChapter(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
-  const t = normalizeTranscript(lesson.transcript)
-  const chapters = await detectChapters(t.segments.map((s) => ({ start: s.start, text: s.text })))
+  const rows = await loadSentences<{ ordinal: number; start_seconds: number; text: string }>(
+    admin,
+    lesson.id,
+    'ordinal, start_seconds, text'
+  )
+  const chapters = await detectChapters(rows.map((r) => ({ start: r.start_seconds, text: r.text })))
 
-  await update(admin, lesson.id, {
-    phase: 'translating',
-    chunk_cursor: 0,
-    transcript: { ...t, chapters: chapters ?? [] }
-  })
+  const marks = chapterMarks(chapters ?? [], rows)
+  await admin.rpc('set_lesson_chapters', { p_lesson_id: lesson.id, p_chapters: marks })
+
+  await update(admin, lesson.id, { phase: 'translating', chunk_cursor: 0 })
 }
 
-// Phase 3 — translate a SLICE of segments per invocation, advancing the cursor
-// until every segment is done, then advance to transliterating. Best-effort: a
+// Phase 3 — translate a SLICE of sentences per invocation, advancing the cursor
+// until every sentence is done, then advance to transliterating. Best-effort: a
 // failed batch leaves that slice untranslated but still advances. The per-slice
 // write is also the reaper heartbeat.
 async function runTranslate(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
-  const t = normalizeTranscript(lesson.transcript)
+  const rows = await loadSentences<{ ordinal: number; text: string }>(
+    admin,
+    lesson.id,
+    'ordinal, text'
+  )
   const cursor = lesson.chunk_cursor ?? 0
-  const end = Math.min(cursor + TRANSLATE_SEG_BATCH, t.segments.length)
+  const end = Math.min(cursor + TRANSLATE_SEG_BATCH, rows.length)
 
-  const slice = t.segments.slice(cursor, end)
-  // Neighbour segments just outside this slice, passed as read-only context so a
+  const slice = rows.slice(cursor, end)
+  // Neighbour sentences just outside this slice, passed as read-only context so a
   // sentence at the slice edge is still translated with its surroundings in view.
-  const lead = t.segments.slice(Math.max(0, cursor - TRANSLATE_CONTEXT_SEG), cursor)
-  const tail = t.segments.slice(end, end + TRANSLATE_CONTEXT_SEG)
+  const lead = rows.slice(Math.max(0, cursor - TRANSLATE_CONTEXT_SEG), cursor)
+  const tail = rows.slice(end, end + TRANSLATE_CONTEXT_SEG)
   const translations = await translateSentences(
     slice.map((s) => s.text),
     TARGET_LANG,
     lead.map((s) => s.text),
     tail.map((s) => s.text)
   )
-  const segments = translations
-    ? t.segments.map((seg, i) =>
-        i >= cursor && i < end ? { ...seg, translation: translations[i - cursor] } : seg
-      )
-    : t.segments
 
-  const done = end >= t.segments.length
-  await update(admin, lesson.id, {
-    transcript: { ...t, segments },
-    ...(done ? { phase: 'transliterating', chunk_cursor: 0 } : { chunk_cursor: end })
-  })
+  if (translations) {
+    const patch = slice.map((s, i) => ({ ordinal: s.ordinal, translation: translations[i] }))
+    await admin.rpc('set_lesson_translations', { p_lesson_id: lesson.id, p_translations: patch })
+  }
+
+  const done = end >= rows.length
+  await update(
+    admin,
+    lesson.id,
+    done ? { phase: 'transliterating', chunk_cursor: 0 } : { chunk_cursor: end }
+  )
 }
 
-// Phase 4 — read the words of a SLICE of segments per invocation, advancing the
-// cursor until every segment is done, then settle the row to 'ready'. Best-effort:
+// Phase 4 — read the words of a SLICE of sentences per invocation, advancing the
+// cursor until every sentence is done, then settle the row to 'ready'. Best-effort:
 // a failed batch leaves that slice unread but still advances.
 async function runTransliterate(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
-  const t = normalizeTranscript(lesson.transcript)
+  const rows = await loadSentences<SentenceReadback>(admin, lesson.id, 'ordinal, text, words')
   const cursor = lesson.chunk_cursor ?? 0
-  const end = Math.min(cursor + TRANSLITERATE_SEG_BATCH, t.segments.length)
+  const end = Math.min(cursor + TRANSLITERATE_SEG_BATCH, rows.length)
 
-  const words = await transliterateSegmentRange(
-    t.words,
-    t.segments,
-    cursor,
-    end,
-    lesson.lang ?? undefined
+  const patch = await readingsForSlice(rows.slice(cursor, end), lesson.lang ?? undefined)
+  if (patch.length)
+    await admin.rpc('set_lesson_readings', { p_lesson_id: lesson.id, p_readings: patch })
+
+  const done = end >= rows.length
+  await update(
+    admin,
+    lesson.id,
+    done ? { status: 'ready', phase: null, error_code: null } : { chunk_cursor: end }
   )
+}
 
-  const done = end >= t.segments.length
-  await update(admin, lesson.id, {
-    transcript: { ...t, words },
-    ...(done ? { status: 'ready', phase: null, error_code: null } : { chunk_cursor: end })
+async function upsertSentences(
+  admin: SupabaseClient,
+  lessonId: number,
+  rows: SentenceRow[]
+): Promise<void> {
+  const { error } = await admin.rpc('upsert_lesson_sentences', {
+    p_lesson_id: lessonId,
+    p_sentences: rows
   })
+  if (error) throw new Error(`lesson ${lessonId} sentence upsert failed: ${error.message}`)
 }
 
 // Every write stamps updated_at — that's the heartbeat the reaper reads to tell
@@ -257,31 +306,47 @@ async function downloadAudio(admin: SupabaseClient, path: string): Promise<File>
   return new File([data], name, { type: data.type })
 }
 
-// Best-effort: enrich the words of segments [from, to) with phonetic readings for
-// the furigana layer. Returns a fresh words array with those readings filled
-// (unread on any failure). Words are grouped under their sentence so the model
-// reads each in context, then the flat send-order readings are scattered back by
-// index.
-async function transliterateSegmentRange(
-  words: Word[],
-  segments: Segment[],
-  from: number,
-  to: number,
+// Map the chapter starts the model chose back to the ordinal of the sentence each
+// opens on. The first chapter always covers from the very start (detectChapters
+// forces its start to 0), so it lands on the first sentence; the rest match the
+// exact start time they were derived from.
+function chapterMarks(
+  chapters: { title: string; start: number }[],
+  rows: { ordinal: number; start_seconds: number }[]
+): { ordinal: number; title: string }[] {
+  const marks: { ordinal: number; title: string }[] = []
+
+  chapters.forEach((chapter, i) => {
+    const row = i === 0 ? rows[0] : rows.find((r) => r.start_seconds === chapter.start)
+    if (row) marks.push({ ordinal: row.ordinal, title: chapter.title })
+  })
+
+  return marks
+}
+
+// Best-effort readings for a slice of sentences: group each sentence's own words
+// under it so the model reads them in context, then split the flat send-order
+// readings back per sentence, index-aligned to that sentence's words. A slice with
+// no words (or no detected language) yields no patch, leaving those rows unread.
+async function readingsForSlice(
+  slice: SentenceReadback[],
   lang: string | undefined
-): Promise<Word[]> {
-  if (words.length === 0 || !lang || from >= to) return words
+): Promise<{ ordinal: number; readings: (string | null)[] }[]> {
+  const sentences = slice
+    .filter((s) => s.words.length > 0)
+    .map((s) => ({ text: s.text, words: s.words.map((w) => w.word) }))
+  if (!lang || sentences.length === 0) return []
 
-  const groups = assignWordsToSegments(words, segments, from, to)
-  const ids = groups.flat()
-  if (ids.length === 0) return words
-
-  const sentences = groups.map((indices, k) => ({
-    text: segments[from + k].text,
-    words: indices.map((index) => words[index].word)
-  }))
   const readings = await readSentences(sentences, lang)
 
-  const read = words.map((word) => ({ ...word }))
-  ids.forEach((id, i) => (read[id].reading = readings[i] || undefined))
-  return read
+  let cursor = 0
+  const patch: { ordinal: number; readings: (string | null)[] }[] = []
+  for (const sentence of slice) {
+    if (sentence.words.length === 0) continue
+    const slot = readings.slice(cursor, cursor + sentence.words.length)
+    cursor += sentence.words.length
+    patch.push({ ordinal: sentence.ordinal, readings: slot.map((r) => r || null) })
+  }
+
+  return patch
 }

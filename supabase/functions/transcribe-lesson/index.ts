@@ -121,15 +121,24 @@ async function handleRetry(
 
   if (error || !lesson) return jsonError('not_found', 404)
 
+  // The chunk manifest + script stay on the row, but the existing sentences MUST
+  // be cleared before the cursor resets — transcription appends by ordinal, so
+  // resuming over stored sentences would duplicate content.
+  const { error: clearError } = await admin
+    .from('lesson_sentences')
+    .delete()
+    .eq('lesson_id', lesson.id)
+
+  if (clearError) {
+    console.error('retry sentence clear failed', clearError.message)
+    return jsonError('retry_failed', 400)
+  }
+
   // Reset to the very start of the chain; the UPDATE re-fires the chain trigger.
-  // The chunk manifest + script stay on the row, but the transcript and cursor
-  // MUST be cleared — transcription stitches by appending, so resuming on a
-  // partial transcript would duplicate content.
   const reset = {
     status: 'processing',
     phase: 'transcribing',
     chunk_cursor: 0,
-    transcript: {},
     error_code: null
   }
   const { error: updateError } = await admin

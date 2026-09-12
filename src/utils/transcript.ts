@@ -14,6 +14,9 @@ export type SentenceWords = {
   translation?: string
   start: number
   end: number
+  // Silent seconds before this sentence, carried from its stored row; absent on
+  // a lesson that predates the column, where the timing gap stands in for it.
+  paragraph_gap?: number
   words: DisplayWord[]
 }
 
@@ -67,6 +70,7 @@ export function groupWordsBySentence(
     translation: segment.translation,
     start: segment.start,
     end: segment.end,
+    paragraph_gap: segment.paragraph_gap,
     words: displayed.filter(inSegment(segments, i))
   }))
 }
@@ -87,7 +91,10 @@ export function groupSentencesIntoParagraphs(
 
   sentences.forEach((sentence, i) => {
     const prev = sentences[i - 1]
-    if (!prev || sentence.start - prev.end > gap) paragraphs.push([])
+    // Prefer the stored break strength; fall back to the timing gap for a lesson
+    // that predates the column.
+    const lead_gap = sentence.paragraph_gap ?? (prev ? sentence.start - prev.end : 0)
+    if (!prev || lead_gap > gap) paragraphs.push([])
     paragraphs[paragraphs.length - 1].push(sentence)
   })
 

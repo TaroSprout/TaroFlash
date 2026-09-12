@@ -1,5 +1,6 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
+import { sentencesToTranscript } from '@/utils/lesson/transcript'
 
 export async function fetchLessonsByCollection(collection_id: number): Promise<Lesson[]> {
   const { data, error } = await supabase
@@ -17,6 +18,13 @@ export async function fetchLessonsByCollection(collection_id: number): Promise<L
 }
 
 export async function fetchLesson(id: number): Promise<Lesson> {
+  const row = await fetchLessonRow(id)
+  const sentences = await fetchLessonSentences(id)
+
+  return { ...row, transcript: sentencesToTranscript(sentences) }
+}
+
+async function fetchLessonRow(id: number): Promise<Lesson> {
   const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single()
 
   if (error) {
@@ -25,6 +33,21 @@ export async function fetchLesson(id: number): Promise<Lesson> {
   }
 
   return data as Lesson
+}
+
+async function fetchLessonSentences(lesson_id: number): Promise<LessonSentenceRow[]> {
+  const { data, error } = await supabase
+    .from('lesson_sentences')
+    .select('*')
+    .eq('lesson_id', lesson_id)
+    .order('ordinal', { ascending: true })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  return (data ?? []) as LessonSentenceRow[]
 }
 
 export async function deleteLesson(id: number): Promise<void> {

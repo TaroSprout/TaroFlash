@@ -7,6 +7,7 @@ import {
   setCollectionProgress,
   deleteLessonCollection
 } from '@/api/lessons/db/collections'
+import { fetchLesson, fetchLessonsByCollection } from '@/api/lessons/db/lessons'
 
 let session
 
@@ -145,6 +146,53 @@ describe('setCollectionProgress (contract)', () => {
     // A non-existent collection id either belongs to another member (blocked by RLS)
     // or does not exist — either way setCollectionProgress must not throw.
     await expect(setCollectionProgress(999999999, 999999999, 50)).resolves.toBeUndefined()
+  })
+})
+
+describe('fetchLessonsByCollection (contract)', () => {
+  test('returns the lessons belonging to the collection', async () => {
+    const collection = await createCollectionDirect(session.client)
+    const lesson = await createLessonDirect(session.client, collection.id, { title: 'Chapter 1' })
+
+    const result = await fetchLessonsByCollection(collection.id)
+
+    expect(result.some((l) => l.id === lesson.id)).toBe(true)
+  })
+})
+
+describe('fetchLesson (contract)', () => {
+  test('assembles the transcript from the lesson_sentences rows the worker stored', async () => {
+    const collection = await createCollectionDirect(session.client)
+    const lesson = await createLessonDirect(session.client, collection.id)
+
+    // Only the service-role worker writes sentence rows (see 20260911214555)
+    const { error } = await adminClient.from('lesson_sentences').insert([
+      {
+        lesson_id: lesson.id,
+        ordinal: 0,
+        start_seconds: 0,
+        end_seconds: 1,
+        text: 'Hello',
+        words: [{ word: 'Hello', start: 0, end: 1 }],
+        paragraph_gap: 0
+      }
+    ])
+    if (error) throw error
+
+    const result = await fetchLesson(lesson.id)
+
+    expect(result.transcript.text).toBe('Hello')
+    expect(result.transcript.segments).toHaveLength(1)
+    expect(result.transcript.words).toHaveLength(1)
+  })
+
+  test('assembles an empty transcript for a lesson with no sentence rows', async () => {
+    const collection = await createCollectionDirect(session.client)
+    const lesson = await createLessonDirect(session.client, collection.id)
+
+    const result = await fetchLesson(lesson.id)
+
+    expect(result.transcript).toEqual({ text: '', segments: [], words: [], chapters: [] })
   })
 })
 

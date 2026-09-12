@@ -131,6 +131,21 @@ describe('useLessonReader', () => {
 
       expect(reader.paragraphs.value).toEqual([])
     })
+
+    test('is empty when the lesson resolves with no transcript', () => {
+      // A lesson row with no sentence rows at all (rather than an empty
+      // transcript object) — the optional chaining must not throw.
+      lessonQueryMock.mockReturnValue({
+        data: ref(makeLesson({ transcript: undefined })),
+        error: ref(null)
+      })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      expect(reader.paragraphs.value).toEqual([])
+      expect(reader.words.value).toEqual([])
+    })
   })
 
   describe('playback wiring', () => {

@@ -53,12 +53,12 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const lesson_id = computed(() => toValue(id))
   const { data: lesson, error } = useLessonQuery(lesson_id)
 
-  const words = computed(() => lesson.value?.transcript.words ?? [])
+  const words = computed(() => lesson.value?.transcript?.words ?? [])
   // Each sentence renders as its own block (one interlinear gloss apiece), evenly
   // spaced — see the reader's transcript view.
   const paragraphs = computed(() => {
-    const segments = lesson.value?.transcript.segments ?? []
-    return groupWordsBySentence(segments, words.value, lesson.value?.transcript.text)
+    const segments = lesson.value?.transcript?.segments ?? []
+    return groupWordsBySentence(segments, words.value, lesson.value?.transcript?.text)
   })
 
   // The member-wide card index, mapped to normalized term → decks. Fetched once
