@@ -15,19 +15,21 @@ export function normalizeTranscript(t: Partial<Transcript> | null | undefined): 
   }
 }
 
-// Append one already-offset chunk onto the running transcript, dropping the lead
-// that overlaps what we already have. Chunks overlap by design (so no word is cut
-// at a window edge), so the new chunk re-transcribes the tail of the previous
-// one; we keep only segments/words that start at or after the last accepted end.
-// A SINGLE boundary (the previous content's last segment end) cuts both segments
-// and words, so they stay mutually aligned at the seam — cutting them on separate
-// boundaries would orphan words from their sentence.
-//
-// `text` is rebuilt by concatenating the kept WORD tokens, not the segment texts:
-// the reader reconstructs each word's display by walking `text` with indexOf, so
-// `text` must be the exact word sequence (Whisper's tokens already carry their own
-// spacing). Joining trimmed segment texts instead desynced that walk at every
-// seam and collapsed the tail into one giant "word".
+/**
+ * Append one already-offset chunk onto the running transcript, dropping the lead
+ * that overlaps what we already have. Chunks overlap by design (so no word is cut
+ * at a window edge), so the new chunk re-transcribes the tail of the previous
+ * one; we keep only segments/words that start at or after the last accepted end.
+ * A SINGLE boundary (the previous content's last segment end) cuts both segments
+ * and words, so they stay mutually aligned at the seam — cutting them on separate
+ * boundaries would orphan words from their sentence.
+ *
+ * `text` is rebuilt by concatenating the kept WORD tokens, not the segment texts:
+ * the reader reconstructs each word's display by walking `text` with indexOf, so
+ * `text` must be the exact word sequence (Whisper's tokens already carry their own
+ * spacing). Joining trimmed segment texts instead desynced that walk at every
+ * seam and collapsed the tail into one giant "word".
+ */
 export function appendChunk(
   acc: Transcript,
   incoming: { segments: Segment[]; words: Word[] }
@@ -45,12 +47,14 @@ export function appendChunk(
   }
 }
 
-// Which words fall under each segment in [from, to) — a word belongs to segment
-// `i` when its start falls in that segment's span; the first segment also claims
-// words before it, the last claims words after it. The reader (src/utils/transcript.ts's
-// inSegment) applies this same rule independently — change a boundary here and
-// change it there too, or the two disagree on which segment a word belongs to.
-// →[K:segment-assignment-duplicated]
+/**
+ * Which words fall under each segment in [from, to) — a word belongs to segment
+ * `i` when its start falls in that segment's span; the first segment also claims
+ * words before it, the last claims words after it. The reader (src/utils/transcript.ts's
+ * inSegment) applies this same rule independently — change a boundary here and
+ * change it there too, or the two disagree on which segment a word belongs to.
+ * →[K:segment-assignment-duplicated]
+ */
 export function assignWordsToSegments(
   words: Word[],
   segments: Segment[],
