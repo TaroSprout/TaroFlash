@@ -4,7 +4,7 @@ domain: media
 status: current
 hazard: true
 related: [media]
-updated: 2026-09-11
+updated: 2026-09-12
 ---
 
 # Audio generation
@@ -81,27 +81,30 @@ unstated promise — **that one slice always finishes well inside the deadline.*
 Size the slices wrong, or hand a step an unusually heavy one, and a perfectly
 healthy job gets reaped mid-breath.
 
-## Restarting means starting from scratch
+## A retry resumes from where the job died
 
-A failed lesson can be retried. The audio is still stored, so a retry doesn't
-re-upload — it resets the lesson to the very first step and lets the chain run
-again.
+A failed lesson can be retried, and the audio is still stored, so a retry never
+re-uploads. Whether it picks up mid-chain or starts over depends on what the
+lesson still remembers about where it stopped.
 
-The reset has to wipe the half-built transcript first, and this is not optional.
-Transcribing **appends** each slice onto what's already there. Point it at a
-lesson that already holds half a transcript and it stitches the new work onto the
-old — silently doubling content instead of resuming cleanly.
+A lesson that failed mid-step — the reaper caught it, or a step gave up
+partway — still carries the step and the slice/sentence position it died on.
+Retrying that lesson flips it straight back to _processing_ at that same
+position: the transcript, sentences, and any chapters/translations/readings
+already written stay put, and the chain simply carries on. Re-doing the unit it
+died on is safe rather than a duplication risk — transcribing a slice again
+drops the overlap it re-covers, and every enrichment write is keyed to the
+sentence it belongs to, so replaying a step never doubles content.
 
-> [!WATCH]
-> There's no "resume from where it died." The only safe restart is a full reset
-> to step one with the transcript cleared. A reaped lesson still carries its
-> half-finished transcript; whatever restarts it owns clearing that first, or the
-> next run builds on garbage.
+Only a lesson that failed **before** it ever reached a step — nothing to resume
+into — restarts from the very first step, and only then does the half-built
+transcript get cleared first; restarting into a lesson still holding transcript
+would stitch new work onto old.
 
-A retry also can't re-slice. Slicing happens on the uploader's device before
-anything is sent, so a lesson that was cut wrong — or never cut at all — carries
-that same slicing into every retry. The only fix is deleting it and uploading
-again.
+A retry still can't re-slice either way. Slicing happens on the uploader's
+device before anything is sent, so a lesson that was cut wrong — or never cut at
+all — carries that same slicing into every retry. The only fix is deleting it
+and uploading again.
 
 ## Enrichment is allowed to come up short
 
