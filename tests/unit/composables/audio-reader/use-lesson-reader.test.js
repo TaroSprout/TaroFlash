@@ -69,9 +69,7 @@ function makeLesson(overrides = {}) {
   }
 }
 
-// Eight sentences with distinct break_strengths, so long/medium/short — target
-// average lengths 4/2/1 — genuinely land on different paragraph counts:
-// round(8/4)=2, round(8/2)=4, round(8/1)=8 (one per sentence).
+// Eight distinct-strength sentences, so long/medium/short land on different paragraph counts.
 function makeDensityLesson() {
   const texts = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight']
   const strengths = [null, 0.1, 0.9, 0.3, 0.8, 0.2, 0.7, 0.4]
@@ -135,8 +133,7 @@ describe('useLessonReader', () => {
 
   describe('transcript shaping', () => {
     test('merges sentences with no scored break into a single paragraph', () => {
-      // Default lesson segments carry no break_strength, so nothing scores
-      // above the density threshold — the whole lesson renders as one block.
+      // Default lesson segments carry no break_strength, so nothing scores above the threshold.
       let reader
       ;[reader, app] = withReader()
 
@@ -156,8 +153,7 @@ describe('useLessonReader', () => {
     })
 
     test('is empty when the lesson resolves with no transcript', () => {
-      // A lesson row with no sentence rows at all (rather than an empty
-      // transcript object) — the optional chaining must not throw.
+      // A lesson row with no sentence rows at all — the optional chaining must not throw.
       lessonQueryMock.mockReturnValue({
         data: ref(makeLesson({ transcript: undefined })),
         error: ref(null)

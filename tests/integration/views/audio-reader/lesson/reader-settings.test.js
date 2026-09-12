@@ -41,18 +41,21 @@ const UiOptionGroupStub = defineComponent({
           'data-testid': attrs['data-testid'] ?? 'ui-option-group-stub',
           'data-value': props.value
         },
-        props.options.map((option) =>
-          h(
-            'button',
-            {
-              key: option.value,
-              'data-testid': `option-${option.value}`,
-              'data-active': String(option.value === props.value),
-              onClick: () => emit('update:value', option.value)
-            },
-            option.label
+        [
+          h('span', { 'data-testid': 'ui-option-group-value' }, props.value),
+          ...props.options.map((option) =>
+            h(
+              'button',
+              {
+                key: option.value,
+                'data-testid': `option-${option.value}`,
+                'data-active': String(option.value === props.value),
+                onClick: () => emit('update:value', option.value)
+              },
+              option.label
+            )
           )
-        )
+        ]
       )
   }
 })
@@ -137,8 +140,10 @@ describe('ReaderSettings', () => {
 
       expect(
         wrapper
-          .find('[data-testid="reader-settings__paragraph-density"] [data-value]')
-          .attributes('data-value')
+          .find(
+            '[data-testid="reader-settings__paragraph-density"] [data-testid="ui-option-group-value"]'
+          )
+          .text()
       ).toBe('short')
     })
 
