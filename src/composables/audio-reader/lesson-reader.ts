@@ -13,7 +13,7 @@ import {
   groupWordsBySentence,
   groupSentencesIntoParagraphs,
   mergeSentencesToParagraph,
-  PARAGRAPH_DENSITY_THRESHOLDS
+  PARAGRAPH_DENSITY_TARGET_LENGTHS
 } from '@/utils/transcript'
 import {
   buildCardTermMap,
@@ -77,8 +77,12 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   // group into one rendered block. Regroups live when the density ref changes,
   // with no refetch — the sentences are already in hand.
   const paragraphs = computed(() => {
-    const threshold = PARAGRAPH_DENSITY_THRESHOLDS[paragraph_density.value]
-    const groups = groupSentencesIntoParagraphs(sentences.value, threshold, chapter_starts.value)
+    const target_length = PARAGRAPH_DENSITY_TARGET_LENGTHS[paragraph_density.value]
+    const groups = groupSentencesIntoParagraphs(
+      sentences.value,
+      target_length,
+      chapter_starts.value
+    )
     return groups.map(mergeSentencesToParagraph)
   })
 

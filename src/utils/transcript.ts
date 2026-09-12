@@ -26,13 +26,16 @@ export type SentenceWords = {
 /** How finely the reader breaks the transcript into paragraphs. */
 export type ParagraphDensity = 'long' | 'medium' | 'short'
 
-// The break-strength a stored break must exceed to start a new paragraph, per
-// density. Long only splits at the strongest breaks (few large paragraphs);
-// Short splits at almost every scored break (near sentence-by-sentence).
-export const PARAGRAPH_DENSITY_THRESHOLDS: Record<ParagraphDensity, number> = {
-  long: 0.7,
-  medium: 0.45,
-  short: 0.15
+// Target average paragraph length, in sentences, per density. The grouper picks
+// how many breaks to make from this, not a raw break-strength cutoff, so a
+// paragraph's size stays predictable even though break_strength isn't uniformly
+// distributed. Medium approximates the pre-refactor silence-gap feel; Long runs
+// a sentence or two longer, Short a sentence or two shorter (floored at 1, i.e.
+// near sentence-by-sentence). Tune these freely — they're the only knob.
+export const PARAGRAPH_DENSITY_TARGET_LENGTHS: Record<ParagraphDensity, number> = {
+  long: 6,
+  medium: 4,
+  short: 2
 }
 
 // Leading/trailing whitespace + punctuation. \p{P} spans Latin and CJK marks
@@ -88,35 +91,69 @@ export function groupWordsBySentence(
 }
 
 /**
- * Split sentences into paragraphs wherever a stored break scores above the given
- * threshold, so the transcript reads as prose instead of one undivided block.
+ * Split sentences into paragraphs sized to a target average length, so the
+ * transcript reads as prose instead of one undivided block and a given density
+ * yields a predictable paragraph size regardless of how break_strength happens
+ * to be distributed in this lesson.
  *
- * A sentence with no scored break (`break_strength` null/absent) never starts a
- * paragraph on its own — a lesson with no scored breaks renders as one paragraph,
- * with no silence-gap fallback. `force_break_starts` holds sentence start times
- * that always begin a paragraph regardless of score, so a chapter heading still
- * lands on its own paragraph.
+ * The target length sets how many breaks to make; those breaks land at the
+ * highest-scored sentence starts, so the strongest semantic shifts win. A
+ * sentence with no scored break (`break_strength` null/absent) is never chosen
+ * as a break point. `force_break_starts` holds sentence start times that always
+ * begin a paragraph regardless of score and count toward the break budget, so a
+ * chapter heading still lands on its own paragraph.
  *
- * @param threshold - break-strength cutoff; see PARAGRAPH_DENSITY_THRESHOLDS.
- * @example
- * const groups = groupSentencesIntoParagraphs(sentences, 0.45)
+ * @param target_avg_length - target sentences per paragraph; see PARAGRAPH_DENSITY_TARGET_LENGTHS.
  */
 export function groupSentencesIntoParagraphs(
   sentences: SentenceWords[],
-  threshold: number,
+  target_avg_length: number,
   force_break_starts: ReadonlySet<number> = new Set()
 ): SentenceWords[][] {
-  const paragraphs: SentenceWords[][] = []
+  if (!sentences.length) return []
 
+  const break_indices = chooseBreakIndices(sentences, target_avg_length, force_break_starts)
+
+  const paragraphs: SentenceWords[][] = []
   sentences.forEach((sentence, i) => {
-    const prev = sentences[i - 1]
-    const scored = sentence.break_strength ?? 0
-    const breaks = scored > threshold || force_break_starts.has(sentence.start)
-    if (!prev || breaks) paragraphs.push([])
+    if (i === 0 || break_indices.has(i)) paragraphs.push([])
     paragraphs[paragraphs.length - 1].push(sentence)
   })
 
   return paragraphs
+}
+
+/**
+ * Pick the sentence indices that start a new paragraph: the forced chapter
+ * starts first, then the strongest remaining scored breaks up to the budget the
+ * target length implies. The first sentence is excluded — it always opens
+ * paragraph 1 — so every returned index is an interior break.
+ */
+function chooseBreakIndices(
+  sentences: SentenceWords[],
+  target_avg_length: number,
+  force_break_starts: ReadonlySet<number>
+): Set<number> {
+  const target_count = Math.max(1, Math.round(sentences.length / target_avg_length))
+
+  const breaks = new Set<number>()
+  sentences.forEach((sentence, i) => {
+    if (i > 0 && force_break_starts.has(sentence.start)) breaks.add(i)
+  })
+
+  const remaining = target_count - 1 - breaks.size
+  if (remaining <= 0) return breaks
+
+  const ranked = sentences
+    .map((sentence, i) => ({ i, strength: sentence.break_strength }))
+    .filter(
+      (c): c is { i: number; strength: number } => c.i > 0 && !breaks.has(c.i) && c.strength != null
+    )
+    .sort((a, b) => b.strength - a.strength || a.i - b.i)
+
+  ranked.slice(0, remaining).forEach(({ i }) => breaks.add(i))
+
+  return breaks
 }
 
 /**
