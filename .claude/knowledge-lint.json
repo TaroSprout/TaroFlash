@@ -10,6 +10,11 @@
       }
     }
   },
+  "hub_caps": {
+    "scan": [".claude/skills/**/SKILL.md", ".claude/agents/*.md"],
+    "warn_only": true,
+    "per_file_default": 450
+  },
   "unfinished": {
     "scan": [
       "src/**/*.{ts,js,vue,json}",

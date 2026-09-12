@@ -182,15 +182,29 @@ contents with the `Artifact` tool. The plan fills the template's regions:
 Structural rules the template encodes and this run must respect:
 
 - **Hub reads as a verdict**, not a link box: proposed architecture → call + moves → open questions.
+  A proposed-architecture block running past a few sentences splits into short paragraphs or
+  subheads — never one undifferentiated block; a reader skimming the hub needs to land somewhere
+  partway through, not just at the end. Where the block is a sequence of distinct beats rather than
+  connected prose, use `.archbeats` — a bold header on its own line per beat, one idea each, no
+  bullet markers (reserve an actual bullet for a genuine sub-list nested under a header) — instead
+  of forcing it into paragraphs; the same applies inside a chapter's own dense proposed-architecture
+  prose.
 - **Heavy vs light.** A heavy region gets its own chapter, opened in the dialog (prev/next follows
   document order). A light region gets a move line only — no chapter.
 - **A chapter leads with its forcing constraint;** detail folds beneath by facet — **Contract /
-  Delta / Conflict.** Delta names the untouched boundary; add the `clash` Conflict fold only where
-  the shape gives way to existing code. A recurring house rule binds to its region as a margin
-  annotation (`.mrule`), not a full-flow block.
+  Delta / Conflict / Specifics.** Delta names the untouched boundary; add the `clash` Conflict fold
+  only where the shape gives way to existing code. A recurring house rule binds to its region as a
+  margin annotation (`.mrule`), not a full-flow block.
+- **Chapter prose stays in plain language; the literal names move to Specifics.** A file path,
+  variable name, signature, or code sample never rides the prose above the fold — describe the piece
+  first, then let its exact name or shape appear in the **Specifics** facet, collapsed by default
+  (`.spec` list, or `pre` for a code/shape block).
 - **`Today → Change` is an optional tool** — use it on concrete element chapters, drop it on
-  conceptual ones (plain `.prose`). Don't stack frame + box + folds by rote; every region carries
-  real prose.
+  conceptual ones (plain `.prose`).
+- **Chrome illustrates prose, it never replaces it.** A chapter assembled entirely from callouts,
+  a `Today → Change` comparator, and accordion folds, with no authored prose sentence anywhere in
+  it, is not done regardless of how many of those components it carries — prose is what makes a
+  region read as a document; the components back it up, they don't stand in for it.
 - **Boxes are earned and sparing;** keep the editorial register (restrained cards + shadow), not
   austere-flat. Plain framing headers, never clever titles.
 - **Colour = meaning** — one reserved accent for a Conflict, one open-decision mark (hollow→filled).
@@ -240,7 +254,7 @@ tickets it cuts; they still ride the normal `/backlog` → `/triage` → `/groom
   relation itself is wired at cut, not deferred as an instruction for `/groom` to act on.
 - **Fields at cut** — follow [`ticket-authoring.md`](../../rules/ticket-authoring.md)'s cut rule
   exactly: `Status = Backlog`, `Assignee` empty, `Priority` empty, `Target` empty, `Type` set only
-  when the kind is obvious. **Never `Ready`, never `Needs More Info`** — the artifact rounds resolved
+  when the kind is obvious. **Never `Ready`** — the artifact rounds resolved
   the _design_, not the board classification; that's `/backlog` and `/triage`'s pass, not this one.
 - **Body — cut-time only.** `## Product description` (product terms, 1–3 lines) naming what the
   ticket delivers, plus `## Tech details` carrying the resolved placement/contract/constraint/
@@ -265,6 +279,18 @@ tickets it cuts; they still ride the normal `/backlog` → `/triage` → `/groom
   write — tickets and relations alike — landed before reporting (→[K:notion-write-verification]) —
   relay that confirmation, don't re-derive it.
 
+## Self-heal
+
+Run every pushback through [`self-heal.md`](../../rules/self-heal.md). Routing specific to this
+skill: feedback naming **this plan's content** — a wrong placement, a missed conflict, a region that
+needs its own chapter — is a fix to the one artifact and stops there. Feedback on **the template's
+layout, IA, or editorial register** — dialog sizing, a missing style for a documented block, a
+formatting technique the artifact reached for — is never a one-off; it always heals into
+[`assets/blueprint-artifact-template.html`](assets/blueprint-artifact-template.html) (the shared
+asset every run copies) and, where the fix is a technique future runs should reach for again, into
+this file's Phase 4 structural rules. Applying it to only the artifact in front of you and offering
+to propagate it later is the miss this routing exists to close.
+
 ## Guardrails
 
 - **Read-only on source, always.** Never edit, format, lint, test, commit, or open a PR against the
@@ -276,8 +302,11 @@ tickets it cuts; they still ride the normal `/backlog` → `/triage` → `/groom
   don't assume.
 - **Never sequence.** No "do this first", no phases, no order of operations, no effort or time
   estimates anywhere — plan or ticket. Sequencing is a deliberately separate concern.
-- **Never emit literal signatures, type definitions, or code skeletons.** Guideline fidelity only:
-  placement, contract, constraint. Implementation stays the builder's.
+- **Never emit literal signatures, type definitions, or code skeletons in a chapter's visible
+  prose.** Guideline fidelity only: placement, contract, constraint; implementation stays the
+  builder's. A contract-level concrete shape the plan already fixed — a table's columns and FKs, a
+  key expression, a function signature — may still appear inside that chapter's collapsed Specifics
+  facet; it just never rides the prose above it.
 - **Never blueprint before Phase-1 sign-off.** A wrong target or footprint wastes the pass.
 - **Never invent a house rule the project doesn't hold**, and never bind a rule to a region it doesn't
   govern. Bind only what you actually read out of the project's own rules.

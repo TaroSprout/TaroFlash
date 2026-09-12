@@ -64,6 +64,9 @@ spoke that inherited its hub's `paths:` is path-triggered like the hub, not alwa
   dispatched to `harness-author` per [`self-heal → Dispatch`](./self-heal.md#dispatch).
 - `line_caps.enforced` is `true` — a breach fails CI. Set it to `false` only to land a deliberate,
   temporary overshoot, and restore it in the change that gets back under.
+- `hub_caps` names the same idea for a `SKILL.md` or an agent definition: neither is always-on, so a
+  breach only warns, never fails CI. Watching for that warning and deflating the file it names is
+  [`harness-maintainer`](../agents/harness-maintainer.md)'s remit, same as the always-on aspiration.
 
 ## Unfinished work is tagged, never narrated [K:build-unfinished-markers]
 

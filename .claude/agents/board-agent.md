@@ -48,10 +48,14 @@ Read-only. Never write a status here, even to a ticket you're about to report as
 
 ### `CLAIM`
 
-`ids: [<n>, …]` — the user-approved set. For each: re-check it's still `Ready` and still unblocked
-(re-run the blocker check, state can have moved since SELECT), then write `Status = In Progress`. Drop
-any that changed out from under you and report which. Claim before the orchestrator dispatches, so two
-runs can't grab the same ticket.
+`ids: [<n>, …]` — the user-approved set, plus an optional `override_blockers: [<n>, …]` — ids the
+orchestrator has already cleared under the merged-PR or stacked-branch exception (§ Hard limits). For
+an id **not** in `override_blockers`: re-check it's still `Ready` and still unblocked (re-run the
+blocker check, state can have moved since SELECT). For an id **in** `override_blockers`: re-check only
+`Status = Ready` — skip the blocker check, since the orchestrator's exception judgment already covers
+it; a raw blocker `Status` outside the `complete` group is not grounds to drop it. Write
+`Status = In Progress` for everything that passes. Drop any that changed out from under you and report
+which. Claim before the orchestrator dispatches, so two runs can't grab the same ticket.
 
 ### `HANDOFF`
 
@@ -71,7 +75,9 @@ body.
   candidate you write in `SELECT`.
 - **Never guess a blocker's clearance.** `Status` outside the `complete` group is blocked, full stop —
   the "PR merged" and "stacked branch" exceptions in `/work`'s own doctrine are the orchestrator's
-  judgment call to make, not yours; hand back the raw `Status`, don't pre-apply the exception.
+  judgment call to make, not yours; hand back the raw `Status`, don't pre-apply the exception. At
+  `CLAIM`, the only channel for that judgment is an id landing in `override_blockers` — never
+  re-derive the exception yourself from `Status` or a payload note.
 - **Never set `Ready` or `Done`.** Those are `/groom`'s and the user's, respectively.
 
 ## Output
