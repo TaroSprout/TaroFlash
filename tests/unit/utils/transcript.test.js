@@ -4,7 +4,8 @@ import {
   groupSentencesIntoParagraphs,
   mergeSentencesToParagraph,
   cleanTerm,
-  markTermInSentence
+  markTermInSentence,
+  PARAGRAPH_DENSITY_TARGET_LENGTHS
 } from '@/utils/transcript'
 
 const seg = (start, end, text) => ({ start, end, text })
@@ -210,6 +211,12 @@ describe('groupWordsBySentence — inter-sentence spacing invariant', () => {
   })
 })
 
+describe('PARAGRAPH_DENSITY_TARGET_LENGTHS', () => {
+  test('long, medium, short map to target average sentences per paragraph of 4, 2, 1', () => {
+    expect(PARAGRAPH_DENSITY_TARGET_LENGTHS).toEqual({ long: 4, medium: 2, short: 1 })
+  })
+})
+
 describe('groupSentencesIntoParagraphs', () => {
   const sentence = (index, start, end, break_strength) => ({
     index,
@@ -220,66 +227,120 @@ describe('groupSentencesIntoParagraphs', () => {
     words: []
   })
 
+  test('returns an empty array for an empty input', () => {
+    expect(groupSentencesIntoParagraphs([], 4)).toEqual([])
+  })
+
   test('the first sentence always starts a new paragraph', () => {
     const sentences = [sentence(0, 0, 1, null)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences, 0.45)
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 4)
 
     expect(paragraphs).toHaveLength(1)
     expect(paragraphs[0]).toHaveLength(1)
   })
 
-  test('returns an empty array for an empty input', () => {
-    expect(groupSentencesIntoParagraphs([], 0.45)).toEqual([])
-  })
-
-  test('splits strictly above the threshold, not at or below it', () => {
-    const at_threshold = [sentence(0, 0, 1, null), sentence(1, 1, 2, 0.45)]
-    const above_threshold = [sentence(0, 0, 1, null), sentence(1, 1, 2, 0.46)]
-
-    expect(groupSentencesIntoParagraphs(at_threshold, 0.45)).toHaveLength(1)
-    expect(groupSentencesIntoParagraphs(above_threshold, 0.45)).toHaveLength(2)
-  })
-
-  test('a null break_strength never splits, even with every other sentence null', () => {
+  test('a lesson with no scored breaks and no forced breaks yields one paragraph', () => {
     const sentences = [sentence(0, 0, 1, null), sentence(1, 1, 2, null), sentence(2, 2, 3, null)]
 
-    const paragraphs = groupSentencesIntoParagraphs(sentences, 0.15)
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1)
 
     expect(paragraphs).toHaveLength(1)
     expect(paragraphs[0]).toHaveLength(3)
   })
 
-  test('an absent break_strength never splits', () => {
+  test('an absent break_strength is treated the same as null — never a scored break', () => {
     const sentences = [
       { index: 0, sentence: 'a', start: 0, end: 1, words: [] },
       { index: 1, sentence: 'b', start: 1, end: 2, words: [] }
     ]
 
-    expect(groupSentencesIntoParagraphs(sentences, 0.15)).toHaveLength(1)
+    expect(groupSentencesIntoParagraphs(sentences, 1)).toHaveLength(1)
   })
 
-  test('splits at the sentence whose scored break exceeds the threshold', () => {
+  test('a target of 1 (short) puts every sentence in its own paragraph', () => {
+    const sentences = [sentence(0, 0, 1, 0.9), sentence(1, 1, 2, 0.8), sentence(2, 2, 3, 0.7)]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1)
+
+    expect(paragraphs.map((p) => p.length)).toEqual([1, 1, 1])
+  })
+
+  test('breaks land at the highest-strength interior sentence starts', () => {
     const sentences = [
       sentence(0, 0, 1, null),
-      sentence(1, 1, 2, 0.2), // below threshold — stays
-      sentence(2, 2, 3, 0.9) // above threshold — splits here
+      sentence(1, 1, 2, 0.3),
+      sentence(2, 2, 3, 0.9), // strongest — wins the single break budget
+      sentence(3, 3, 4, 0.5)
     ]
 
-    const paragraphs = groupSentencesIntoParagraphs(sentences, 0.45)
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 2)
 
     expect(paragraphs).toHaveLength(2)
-    expect(paragraphs[0]).toHaveLength(2)
-    expect(paragraphs[1]).toHaveLength(1)
+    expect(paragraphs[0].map((s) => s.index)).toEqual([0, 1])
+    expect(paragraphs[1].map((s) => s.index)).toEqual([2, 3])
+  })
+
+  test('a null break_strength is never chosen over a lower-but-scored sentence', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, null),
+      sentence(2, 2, 3, 0.1) // the only scored candidate, however low
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1)
+
+    expect(paragraphs).toHaveLength(2)
     expect(paragraphs[1][0].index).toBe(2)
   })
 
-  test('force_break_starts forces a break at a matching sentence start regardless of score', () => {
-    const sentences = [sentence(0, 0, 1, null), sentence(1, 1, 2, 0)]
+  test('ties are broken toward the earlier sentence index', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, 0.5),
+      sentence(2, 2, 3, 0.5),
+      sentence(3, 3, 4, 0.1)
+    ]
 
-    const paragraphs = groupSentencesIntoParagraphs(sentences, 0.45, new Set([1]))
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 2)
 
     expect(paragraphs).toHaveLength(2)
     expect(paragraphs[1][0].index).toBe(1)
+  })
+
+  test('force_break_starts matches a sentence start TIME, not its index', () => {
+    const sentences = [sentence(0, 0, 1, null), sentence(1, 5, 6, null)]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 4, new Set([5]))
+
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1][0].index).toBe(1)
+  })
+
+  test('a forced break counts toward the budget, leaving fewer scored breaks to take', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, 0.9), // strongest scored candidate
+      sentence(2, 2, 3, 0.1)
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1, new Set([2]))
+
+    expect(paragraphs).toHaveLength(3)
+    expect(paragraphs.map((p) => p[0].index)).toEqual([0, 1, 2])
+  })
+
+  test('a forced break can push the paragraph count above the target-derived budget', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, null),
+      sentence(2, 2, 3, null),
+      sentence(3, 3, 4, null)
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 4, new Set([2]))
+
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1][0].index).toBe(2)
   })
 
   test('preserves all sentences across paragraphs', () => {
@@ -289,7 +350,7 @@ describe('groupSentencesIntoParagraphs', () => {
       sentence(2, 2, 3, 0.1),
       sentence(3, 3, 4, 0.9)
     ]
-    const flat = groupSentencesIntoParagraphs(sentences, 0.45).flat()
+    const flat = groupSentencesIntoParagraphs(sentences, 2).flat()
 
     expect(flat).toHaveLength(4)
     expect(flat.map((s) => s.index)).toEqual([0, 1, 2, 3])

@@ -69,25 +69,23 @@ function makeLesson(overrides = {}) {
   }
 }
 
-// Four sentences whose break_strength climbs so each density threshold splits
-// a different number of them: long only breaks at 0.9, medium also breaks at
-// 0.5, short also breaks at 0.2.
+// Eight sentences with distinct break_strengths, so long/medium/short — target
+// average lengths 4/2/1 — genuinely land on different paragraph counts:
+// round(8/4)=2, round(8/2)=4, round(8/1)=8 (one per sentence).
 function makeDensityLesson() {
+  const texts = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight']
+  const strengths = [null, 0.1, 0.9, 0.3, 0.8, 0.2, 0.7, 0.4]
+
   return makeLesson({
     transcript: {
-      text: 'One. Two. Three. Four.',
-      segments: [
-        { start: 0, end: 1, text: 'One.', break_strength: null },
-        { start: 1, end: 2, text: 'Two.', break_strength: 0.2 },
-        { start: 2, end: 3, text: 'Three.', break_strength: 0.5 },
-        { start: 3, end: 4, text: 'Four.', break_strength: 0.9 }
-      ],
-      words: [
-        { word: 'One', start: 0, end: 0.5 },
-        { word: 'Two', start: 1, end: 1.5 },
-        { word: 'Three', start: 2, end: 2.5 },
-        { word: 'Four', start: 3, end: 3.5 }
-      ]
+      text: texts.map((t) => `${t}.`).join(' '),
+      segments: texts.map((t, i) => ({
+        start: i,
+        end: i + 1,
+        text: `${t}.`,
+        break_strength: strengths[i]
+      })),
+      words: texts.map((t, i) => ({ word: t, start: i, end: i + 0.5 }))
     }
   })
 }
@@ -237,6 +235,7 @@ describe('useLessonReader', () => {
       let reader
       ;[reader, app] = withReader()
 
+      // 8 sentences at target length 4 → round(8/4) paragraphs.
       expect(reader.paragraphs.value).toHaveLength(2)
     })
 
@@ -253,7 +252,8 @@ describe('useLessonReader', () => {
       paragraph_density.value = 'short'
       await nextTick()
 
-      expect(reader.paragraphs.value).toHaveLength(4)
+      // Target length 1 (short) puts every sentence in its own paragraph.
+      expect(reader.paragraphs.value).toHaveLength(8)
       expect(lessonQueryMock.mock.calls.length).toBe(calls_before)
     })
   })
