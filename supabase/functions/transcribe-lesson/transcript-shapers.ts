@@ -69,11 +69,15 @@ export function assignWordsToSegments(
 // overlap boundary), and their words (rebuilt into the stitch input).
 export type StoredSentence = Pick<SentenceRow, 'start_seconds' | 'end_seconds' | 'text' | 'words'>
 
-// The sentence rows one transcribed chunk adds, ready to upsert. Stitches the
-// chunk onto the sentences already stored (dropping the overlap re-transcribed
-// from the previous chunk), then splits the newly-kept words under the newly-kept
-// sentences and stamps each with the silent gap that precedes it. Ordinals
-// continue from the stored count, so a replayed chunk overwrites the same rows.
+/**
+ * The sentence rows one transcribed chunk adds, ready to upsert.
+ *
+ * Stitches the chunk onto the sentences already stored (dropping the overlap
+ * re-transcribed from the previous chunk), then splits the newly-kept words
+ * under the newly-kept sentences and stamps each with the silent gap that
+ * precedes it. Ordinals continue from the stored count, so a replayed chunk
+ * overwrites the same rows.
+ */
 export function sentenceRowsForChunk(
   existing: StoredSentence[],
   incoming: { segments: Segment[]; words: Word[] }

@@ -165,8 +165,7 @@ describe('fetchLesson (contract)', () => {
     const collection = await createCollectionDirect(session.client)
     const lesson = await createLessonDirect(session.client, collection.id)
 
-    // Only the service-role worker writes sentence rows (see 20260911214555) —
-    // insert as the admin client rather than the member's own.
+    // Only the service-role worker writes sentence rows (see 20260911214555)
     const { error } = await adminClient.from('lesson_sentences').insert([
       {
         lesson_id: lesson.id,

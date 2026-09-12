@@ -18,6 +18,13 @@ export async function fetchLessonsByCollection(collection_id: number): Promise<L
 }
 
 export async function fetchLesson(id: number): Promise<Lesson> {
+  const row = await fetchLessonRow(id)
+  const sentences = await fetchLessonSentences(id)
+
+  return { ...row, transcript: sentencesToTranscript(sentences) }
+}
+
+async function fetchLessonRow(id: number): Promise<Lesson> {
   const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single()
 
   if (error) {
@@ -25,10 +32,7 @@ export async function fetchLesson(id: number): Promise<Lesson> {
     throw error
   }
 
-  // A lesson created before relational storage has no sentence rows, so its
-  // transcript assembles empty and the reader renders nothing rather than erroring.
-  const sentences = await fetchLessonSentences(id)
-  return { ...(data as Lesson), transcript: sentencesToTranscript(sentences) }
+  return data as Lesson
 }
 
 async function fetchLessonSentences(lesson_id: number): Promise<LessonSentenceRow[]> {

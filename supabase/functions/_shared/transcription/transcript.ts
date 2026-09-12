@@ -8,11 +8,14 @@ export type Word = { word: string; start: number; end: number; reading?: string 
 export type Chapter = { title: string; start: number }
 export type Transcript = { text: string; segments: Segment[]; words: Word[]; chapters?: Chapter[] }
 
-// One persisted transcript sentence — the relational replacement for the blob.
-// Each phase owns a disjoint set of these columns: transcribe seeds ordinal /
-// timing / text / words / paragraph_gap; chaptering stamps chapter_title on the
-// sentence a chapter opens on; translating fills translation; transliterating
-// fills readings (one entry per word, index-aligned to `words`).
+/**
+ * One persisted transcript sentence — the relational replacement for the blob.
+ *
+ * Each phase owns a disjoint set of these columns: transcribe seeds ordinal /
+ * timing / text / words / paragraph_gap; chaptering stamps chapter_title on the
+ * sentence a chapter opens on; translating fills translation; transliterating
+ * fills readings (one entry per word, index-aligned to `words`).
+ */
 export type SentenceRow = {
   ordinal: number
   start_seconds: number
