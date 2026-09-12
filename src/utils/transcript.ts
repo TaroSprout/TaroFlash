@@ -17,12 +17,26 @@ export type SentenceWords = {
   // Silent seconds before this sentence, carried from its stored row; absent on
   // a lesson that predates the column, where the timing gap stands in for it.
   paragraph_gap?: number
+  // How strongly a paragraph break belongs before this sentence, 0–1, scored by
+  // meaning; null where the paragraphing pass couldn't score it.
+  break_strength?: number | null
   words: DisplayWord[]
 }
 
-// A silent gap longer than this between two sentences reads as a paragraph
-// break — a topic shift or a breath the speaker takes between thoughts.
-const PARAGRAPH_GAP_SECONDS = 0.8
+/** How finely the reader breaks the transcript into paragraphs. */
+export type ParagraphDensity = 'long' | 'medium' | 'short'
+
+// Target average paragraph length, in sentences, per density. The grouper picks
+// how many breaks to make from this, not a raw break-strength cutoff, so a
+// paragraph's size stays predictable even though break_strength isn't uniformly
+// distributed. Medium approximates the pre-refactor silence-gap feel; Long runs
+// a sentence or two longer, Short a sentence or two shorter (floored at 1, i.e.
+// near sentence-by-sentence). Tune these freely — they're the only knob.
+export const PARAGRAPH_DENSITY_TARGET_LENGTHS: Record<ParagraphDensity, number> = {
+  long: 4,
+  medium: 2,
+  short: 1
+}
 
 // Leading/trailing whitespace + punctuation. \p{P} spans Latin and CJK marks
 // alike, so this strips a trailing 。 or ? the same way. Anchored to both ends
@@ -71,34 +85,97 @@ export function groupWordsBySentence(
     start: segment.start,
     end: segment.end,
     paragraph_gap: segment.paragraph_gap,
+    break_strength: segment.break_strength,
     words: displayed.filter(inSegment(segments, i))
   }))
 }
 
 /**
- * Split sentences into paragraphs at long silent gaps, so the transcript reads
- * as prose instead of one undivided block. Whisper gives no paragraph metadata,
- * so the speaker's pauses stand in for it.
+ * Split sentences into paragraphs sized to a target average length, so the
+ * transcript reads as prose instead of one undivided block and a given density
+ * yields a predictable paragraph size regardless of how break_strength happens
+ * to be distributed in this lesson.
  *
- * @example
- * const paragraphs = groupSentencesIntoParagraphs(groupWordsBySentence(segments, words))
+ * The target length sets how many breaks to make; those breaks land at the
+ * highest-scored sentence starts, so the strongest semantic shifts win. A
+ * sentence with no scored break (`break_strength` null/absent) is never chosen
+ * as a break point. `force_break_starts` holds sentence start times that always
+ * begin a paragraph regardless of score and count toward the break budget, so a
+ * chapter heading still lands on its own paragraph.
+ *
+ * @param target_avg_length - target sentences per paragraph; see PARAGRAPH_DENSITY_TARGET_LENGTHS.
  */
 export function groupSentencesIntoParagraphs(
   sentences: SentenceWords[],
-  gap = PARAGRAPH_GAP_SECONDS
+  target_avg_length: number,
+  force_break_starts: ReadonlySet<number> = new Set()
 ): SentenceWords[][] {
-  const paragraphs: SentenceWords[][] = []
+  if (!sentences.length) return []
 
+  const break_indices = chooseBreakIndices(sentences, target_avg_length, force_break_starts)
+
+  const paragraphs: SentenceWords[][] = []
   sentences.forEach((sentence, i) => {
-    const prev = sentences[i - 1]
-    // Prefer the stored break strength; fall back to the timing gap for a lesson
-    // that predates the column.
-    const lead_gap = sentence.paragraph_gap ?? (prev ? sentence.start - prev.end : 0)
-    if (!prev || lead_gap > gap) paragraphs.push([])
+    if (i === 0 || break_indices.has(i)) paragraphs.push([])
     paragraphs[paragraphs.length - 1].push(sentence)
   })
 
   return paragraphs
+}
+
+/**
+ * Pick the sentence indices that start a new paragraph: the forced chapter
+ * starts first, then the strongest remaining scored breaks up to the budget the
+ * target length implies. The first sentence is excluded — it always opens
+ * paragraph 1 — so every returned index is an interior break.
+ */
+function chooseBreakIndices(
+  sentences: SentenceWords[],
+  target_avg_length: number,
+  force_break_starts: ReadonlySet<number>
+): Set<number> {
+  const target_count = Math.max(1, Math.round(sentences.length / target_avg_length))
+
+  const breaks = new Set<number>()
+  sentences.forEach((sentence, i) => {
+    if (i > 0 && force_break_starts.has(sentence.start)) breaks.add(i)
+  })
+
+  const remaining = target_count - 1 - breaks.size
+  if (remaining <= 0) return breaks
+
+  const ranked = sentences
+    .map((sentence, i) => ({ i, strength: sentence.break_strength }))
+    .filter(
+      (c): c is { i: number; strength: number } => c.i > 0 && !breaks.has(c.i) && c.strength != null
+    )
+    .sort((a, b) => b.strength - a.strength || a.i - b.i)
+
+  ranked.slice(0, remaining).forEach(({ i }) => breaks.add(i))
+
+  return breaks
+}
+
+/**
+ * Fold a group of sentences into one paragraph the reader renders as a single
+ * block: the source words flow on as continuous prose, and the sentence
+ * translations join into one combined gloss. Keeps the first sentence's index so
+ * the paragraph stays a stable, unique row identity across regrouping.
+ */
+export function mergeSentencesToParagraph(group: SentenceWords[]): SentenceWords {
+  const first = group[0]
+  const last = group[group.length - 1]
+
+  const translations = group.map((s) => s.translation).filter((t): t is string => !!t)
+
+  return {
+    index: first.index,
+    sentence: group.map((s) => s.sentence).join(' '),
+    translation: translations.length ? translations.join(' ') : undefined,
+    start: first.start,
+    end: last.end,
+    words: group.flatMap((s) => s.words)
+  }
 }
 
 /**

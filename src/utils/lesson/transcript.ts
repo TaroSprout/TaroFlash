@@ -16,7 +16,8 @@ export function sentencesToTranscript(rows: LessonSentenceRow[]): LessonTranscri
     end: row.end_seconds,
     text: row.text,
     translation: row.translation ?? undefined,
-    paragraph_gap: row.paragraph_gap
+    paragraph_gap: row.paragraph_gap,
+    break_strength: row.break_strength
   }))
 
   const words: TranscriptWord[] = rows.flatMap((row) =>

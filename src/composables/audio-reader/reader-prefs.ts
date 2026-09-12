@@ -1,4 +1,5 @@
 import { useLocalRef } from '@/composables/storage/local-ref'
+import type { ParagraphDensity } from '@/utils/transcript'
 
 /** How the reader lays out per-sentence translations. */
 export type ReaderDisplayMode = 'inline' | 'fixed'
@@ -16,7 +17,8 @@ const translation_source = useLocalRef<ReaderTranslationSource>(
   'playback'
 )
 const playback_rate = useLocalRef<number>('audio-reader.playbackRate', 1)
+const paragraph_density = useLocalRef<ParagraphDensity>('audio-reader.paragraphDensity', 'medium')
 
 export function useReaderPrefs() {
-  return { display_mode, translation_source, playback_rate }
+  return { display_mode, translation_source, playback_rate, paragraph_density }
 }

@@ -13,26 +13,40 @@ afterEach(() => {
 })
 
 describe('useReaderPrefs', () => {
-  test('defaults display_mode to inline, translation_source to playback, playback_rate to 1', async () => {
+  test('defaults display_mode to inline, translation_source to playback, playback_rate to 1, paragraph_density to medium', async () => {
     const { useReaderPrefs } = await import('@/composables/audio-reader/reader-prefs')
-    const { display_mode, translation_source, playback_rate } = useReaderPrefs()
+    const { display_mode, translation_source, playback_rate, paragraph_density } = useReaderPrefs()
 
     expect(display_mode.value).toBe('inline')
     expect(translation_source.value).toBe('playback')
     expect(playback_rate.value).toBe(1)
+    expect(paragraph_density.value).toBe('medium')
   })
 
   test('rehydrates each key from its own localStorage slot', async () => {
     localStorage.setItem('audio-reader.displayMode', JSON.stringify('fixed'))
     localStorage.setItem('audio-reader.translationSource', JSON.stringify('scroll'))
     localStorage.setItem('audio-reader.playbackRate', JSON.stringify(1.5))
+    localStorage.setItem('audio-reader.paragraphDensity', JSON.stringify('short'))
 
     const { useReaderPrefs } = await import('@/composables/audio-reader/reader-prefs')
-    const { display_mode, translation_source, playback_rate } = useReaderPrefs()
+    const { display_mode, translation_source, playback_rate, paragraph_density } = useReaderPrefs()
 
     expect(display_mode.value).toBe('fixed')
     expect(translation_source.value).toBe('scroll')
     expect(playback_rate.value).toBe(1.5)
+    expect(paragraph_density.value).toBe('short')
+  })
+
+  test('writing paragraph_density persists it under its own key without touching the others', async () => {
+    const { useReaderPrefs } = await import('@/composables/audio-reader/reader-prefs')
+    const { paragraph_density } = useReaderPrefs()
+
+    paragraph_density.value = 'long'
+    await nextTick()
+
+    expect(localStorage.getItem('audio-reader.paragraphDensity')).toBe(JSON.stringify('long'))
+    expect(localStorage.getItem('audio-reader.displayMode')).toBe(null)
   })
 
   test('every call returns the same singleton refs', async () => {

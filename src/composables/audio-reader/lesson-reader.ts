@@ -9,7 +9,12 @@ import { useMemberDecksQuery } from '@/api/decks'
 import { useAudioPlayer } from './audio-player'
 import { useTranscriptSync } from './transcript-sync'
 import { useReaderPrefs } from './reader-prefs'
-import { groupWordsBySentence } from '@/utils/transcript'
+import {
+  groupWordsBySentence,
+  groupSentencesIntoParagraphs,
+  mergeSentencesToParagraph,
+  PARAGRAPH_DENSITY_TARGET_LENGTHS
+} from '@/utils/transcript'
 import {
   buildCardTermMap,
   decksForTerm,
@@ -54,11 +59,31 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const { data: lesson, error } = useLessonQuery(lesson_id)
 
   const words = computed(() => lesson.value?.transcript?.words ?? [])
-  // Each sentence renders as its own block (one interlinear gloss apiece), evenly
-  // spaced — see the reader's transcript view.
-  const paragraphs = computed(() => {
+
+  const sentences = computed(() => {
     const segments = lesson.value?.transcript?.segments ?? []
     return groupWordsBySentence(segments, words.value, lesson.value?.transcript?.text)
+  })
+
+  const { paragraph_density, playback_rate: saved_playback_rate } = useReaderPrefs()
+
+  // A chapter's first sentence always begins a fresh paragraph, so its heading
+  // keeps landing on its own block whatever the density.
+  const chapter_starts = computed(
+    () => new Set((lesson.value?.transcript?.chapters ?? []).map((c) => c.start))
+  )
+
+  // Group sentences into paragraphs at the member's chosen density and fold each
+  // group into one rendered block. Regroups live when the density ref changes,
+  // with no refetch — the sentences are already in hand.
+  const paragraphs = computed(() => {
+    const target_length = PARAGRAPH_DENSITY_TARGET_LENGTHS[paragraph_density.value]
+    const groups = groupSentencesIntoParagraphs(
+      sentences.value,
+      target_length,
+      chapter_starts.value
+    )
+    return groups.map(mergeSentencesToParagraph)
   })
 
   // The member-wide card index, mapped to normalized term → decks. Fetched once
@@ -103,9 +128,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
   const player = useAudioPlayer(audio_el)
   const { active_index: active_word } = useTranscriptSync(words, player.current_time)
 
-  // Speed is a saved preference: seed the player from it, and write any later
-  // change (panel or desktop control) back, so it carries across lessons.
-  const { playback_rate: saved_playback_rate } = useReaderPrefs()
+  // Speed persists across lessons: seed the player from the saved rate, write changes back.
   player.setPlaybackRate(saved_playback_rate.value)
   watch(player.playback_rate, (rate) => (saved_playback_rate.value = rate))
 

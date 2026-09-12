@@ -2,8 +2,10 @@ import { describe, test, expect } from 'vite-plus/test'
 import {
   groupWordsBySentence,
   groupSentencesIntoParagraphs,
+  mergeSentencesToParagraph,
   cleanTerm,
-  markTermInSentence
+  markTermInSentence,
+  PARAGRAPH_DENSITY_TARGET_LENGTHS
 } from '@/utils/transcript'
 
 const seg = (start, end, text) => ({ start, end, text })
@@ -209,101 +211,209 @@ describe('groupWordsBySentence — inter-sentence spacing invariant', () => {
   })
 })
 
+describe('PARAGRAPH_DENSITY_TARGET_LENGTHS', () => {
+  test('long, medium, short map to target average sentences per paragraph of 4, 2, 1', () => {
+    expect(PARAGRAPH_DENSITY_TARGET_LENGTHS).toEqual({ long: 4, medium: 2, short: 1 })
+  })
+})
+
 describe('groupSentencesIntoParagraphs', () => {
-  const sentence = (index, start, end) => ({
+  const sentence = (index, start, end, break_strength) => ({
     index,
     sentence: `sentence ${index}`,
     start,
     end,
+    break_strength,
     words: []
   })
 
-  test('the first sentence always starts a new paragraph', () => {
-    const sentences = [sentence(0, 0, 1)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences)
-
-    expect(paragraphs).toHaveLength(1)
-    expect(paragraphs[0]).toHaveLength(1)
-  })
-
   test('returns an empty array for an empty input', () => {
-    expect(groupSentencesIntoParagraphs([])).toEqual([])
+    expect(groupSentencesIntoParagraphs([], 4)).toEqual([])
   })
 
-  test('keeps sentences with a gap <= threshold in the same paragraph', () => {
-    // gap = 0.5, threshold default = 0.8 → same paragraph
-    const sentences = [sentence(0, 0, 1), sentence(1, 1.5, 2.5), sentence(2, 3, 4)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences)
+  test('the first sentence always starts a new paragraph', () => {
+    const sentences = [sentence(0, 0, 1, null)]
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 4)
 
     expect(paragraphs).toHaveLength(1)
-    expect(paragraphs[0]).toHaveLength(3)
-  })
-
-  test('starts a new paragraph when the gap exceeds the threshold', () => {
-    // gap = 1.2 > 0.8 → new paragraph
-    const sentences = [sentence(0, 0, 1), sentence(1, 2.2, 3)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences)
-
-    expect(paragraphs).toHaveLength(2)
     expect(paragraphs[0]).toHaveLength(1)
-    expect(paragraphs[1]).toHaveLength(1)
   })
 
-  test('does NOT split when gap equals exactly the threshold', () => {
-    // gap = 0.8, threshold = 0.8 — "> gap" is strict, equal stays together
-    const sentences = [sentence(0, 0, 1), sentence(1, 1.8, 2.5)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences)
+  test('a lesson with no scored breaks and no forced breaks yields one paragraph', () => {
+    const sentences = [sentence(0, 0, 1, null), sentence(1, 1, 2, null), sentence(2, 2, 3, null)]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1)
 
     expect(paragraphs).toHaveLength(1)
-  })
-
-  test('splits at the right sentence when only one gap in many exceeds threshold', () => {
-    const sentences = [
-      sentence(0, 0, 1),
-      sentence(1, 1.3, 2.1),
-      sentence(2, 2.3, 3), // gap from s1: 0.2 — same paragraph
-      sentence(3, 4.5, 5.5) // gap from s2: 1.5 > 0.8 — new paragraph
-    ]
-    const paragraphs = groupSentencesIntoParagraphs(sentences)
-
-    expect(paragraphs).toHaveLength(2)
     expect(paragraphs[0]).toHaveLength(3)
-    expect(paragraphs[1]).toHaveLength(1)
-    expect(paragraphs[1][0].index).toBe(3)
   })
 
-  test('respects a custom gap threshold', () => {
-    // gap = 0.5 — below default 0.8 but above custom 0.3
-    const sentences = [sentence(0, 0, 1), sentence(1, 1.5, 2)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences, 0.3)
+  test('an absent break_strength is treated the same as null — never a scored break', () => {
+    const sentences = [
+      { index: 0, sentence: 'a', start: 0, end: 1, words: [] },
+      { index: 1, sentence: 'b', start: 1, end: 2, words: [] }
+    ]
 
-    expect(paragraphs).toHaveLength(2)
+    expect(groupSentencesIntoParagraphs(sentences, 1)).toHaveLength(1)
   })
 
-  test('prefers a stored paragraph_gap over the timing-gap heuristic', () => {
-    // Timing gap is 0.2 (same-paragraph territory), but the stored gap says 2 —
-    // the stored value wins, so it splits.
-    const first = sentence(0, 0, 1)
-    const second = { ...sentence(1, 1.2, 2), paragraph_gap: 2 }
-    const paragraphs = groupSentencesIntoParagraphs([first, second])
+  test('a target of 1 (short) puts every sentence in its own paragraph', () => {
+    const sentences = [sentence(0, 0, 1, 0.9), sentence(1, 1, 2, 0.8), sentence(2, 2, 3, 0.7)]
 
-    expect(paragraphs).toHaveLength(2)
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1)
+
+    expect(paragraphs.map((p) => p.length)).toEqual([1, 1, 1])
   })
 
-  test('falls back to the timing-gap heuristic when paragraph_gap is absent', () => {
-    // No stored paragraph_gap on either sentence — same as the timing-only cases above.
-    const sentences = [sentence(0, 0, 1), sentence(1, 2.2, 3)]
-    const paragraphs = groupSentencesIntoParagraphs(sentences)
+  test('breaks land at the highest-strength interior sentence starts', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, 0.3),
+      sentence(2, 2, 3, 0.9), // strongest — wins the single break budget
+      sentence(3, 3, 4, 0.5)
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 2)
 
     expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[0].map((s) => s.index)).toEqual([0, 1])
+    expect(paragraphs[1].map((s) => s.index)).toEqual([2, 3])
+  })
+
+  test('a null break_strength is never chosen over a lower-but-scored sentence', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, null),
+      sentence(2, 2, 3, 0.1) // the only scored candidate, however low
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1)
+
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1][0].index).toBe(2)
+  })
+
+  test('ties are broken toward the earlier sentence index', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, 0.5),
+      sentence(2, 2, 3, 0.5),
+      sentence(3, 3, 4, 0.1)
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 2)
+
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1][0].index).toBe(1)
+  })
+
+  test('force_break_starts matches a sentence start TIME, not its index', () => {
+    const sentences = [sentence(0, 0, 1, null), sentence(1, 5, 6, null)]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 4, new Set([5]))
+
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1][0].index).toBe(1)
+  })
+
+  test('a forced break counts toward the budget, leaving fewer scored breaks to take', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, 0.9), // strongest scored candidate
+      sentence(2, 2, 3, 0.1)
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 1, new Set([2]))
+
+    expect(paragraphs).toHaveLength(3)
+    expect(paragraphs.map((p) => p[0].index)).toEqual([0, 1, 2])
+  })
+
+  test('a forced break can push the paragraph count above the target-derived budget', () => {
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, null),
+      sentence(2, 2, 3, null),
+      sentence(3, 3, 4, null)
+    ]
+
+    const paragraphs = groupSentencesIntoParagraphs(sentences, 4, new Set([2]))
+
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1][0].index).toBe(2)
   })
 
   test('preserves all sentences across paragraphs', () => {
-    const sentences = [sentence(0, 0, 1), sentence(1, 2, 3), sentence(2, 4, 5), sentence(3, 5.2, 6)]
-    const flat = groupSentencesIntoParagraphs(sentences).flat()
+    const sentences = [
+      sentence(0, 0, 1, null),
+      sentence(1, 1, 2, 0.9),
+      sentence(2, 2, 3, 0.1),
+      sentence(3, 3, 4, 0.9)
+    ]
+    const flat = groupSentencesIntoParagraphs(sentences, 2).flat()
 
     expect(flat).toHaveLength(4)
     expect(flat.map((s) => s.index)).toEqual([0, 1, 2, 3])
+  })
+})
+
+describe('mergeSentencesToParagraph', () => {
+  const sentence = (index, sentence_text, start, end, words, translation) => ({
+    index,
+    sentence: sentence_text,
+    start,
+    end,
+    translation,
+    words
+  })
+
+  test('concatenates source sentences with a space, joined', () => {
+    const group = [sentence(0, 'Hello world.', 0, 1, []), sentence(1, 'How are you?', 1, 2, [])]
+
+    expect(mergeSentencesToParagraph(group).sentence).toBe('Hello world. How are you?')
+  })
+
+  test('joins the sentence translations, skipping sentences with none', () => {
+    const group = [
+      sentence(0, 'a', 0, 1, [], 'こんにちは'),
+      sentence(1, 'b', 1, 2, [], undefined),
+      sentence(2, 'c', 2, 3, [], 'お元気ですか')
+    ]
+
+    expect(mergeSentencesToParagraph(group).translation).toBe('こんにちは お元気ですか')
+  })
+
+  test('leaves translation undefined when no sentence in the group has one', () => {
+    const group = [sentence(0, 'a', 0, 1, []), sentence(1, 'b', 1, 2, [])]
+
+    expect(mergeSentencesToParagraph(group).translation).toBeUndefined()
+  })
+
+  test('keeps the first sentence index as the merged paragraph identity', () => {
+    const group = [sentence(5, 'a', 0, 1, []), sentence(6, 'b', 1, 2, [])]
+
+    expect(mergeSentencesToParagraph(group).index).toBe(5)
+  })
+
+  test('spans from the first sentence start to the last sentence end', () => {
+    const group = [sentence(0, 'a', 1.5, 2.5, []), sentence(1, 'b', 2.5, 4, [])]
+
+    const merged = mergeSentencesToParagraph(group)
+    expect(merged.start).toBe(1.5)
+    expect(merged.end).toBe(4)
+  })
+
+  test('flattens words from every sentence, keeping their global indices', () => {
+    const group = [
+      sentence(0, 'a', 0, 1, [
+        { index: 0, display: 'a' },
+        { index: 1, display: 'b' }
+      ]),
+      sentence(1, 'c', 1, 2, [{ index: 2, display: 'c' }])
+    ]
+
+    const merged = mergeSentencesToParagraph(group)
+    expect(merged.words.map((w) => w.index)).toEqual([0, 1, 2])
   })
 })
 

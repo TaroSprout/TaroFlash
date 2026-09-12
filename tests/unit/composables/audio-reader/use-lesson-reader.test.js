@@ -69,6 +69,25 @@ function makeLesson(overrides = {}) {
   }
 }
 
+// Eight distinct-strength sentences, so long/medium/short land on different paragraph counts.
+function makeDensityLesson() {
+  const texts = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight']
+  const strengths = [null, 0.1, 0.9, 0.3, 0.8, 0.2, 0.7, 0.4]
+
+  return makeLesson({
+    transcript: {
+      text: texts.map((t) => `${t}.`).join(' '),
+      segments: texts.map((t, i) => ({
+        start: i,
+        end: i + 1,
+        text: `${t}.`,
+        break_strength: strengths[i]
+      })),
+      words: texts.map((t, i) => ({ word: t, start: i, end: i + 0.5 }))
+    }
+  })
+}
+
 // useTemplateRef + watch need a component instance, so drive the composable
 // through a mounted host (see testing-composables rule).
 function withReader(id = () => 1) {
@@ -103,7 +122,7 @@ describe('useLessonReader', () => {
     transcriptSyncMock.mockReturnValue({ active_index: ref(-1) })
     cardIndexQueryMock.mockReturnValue({ data: ref([]) })
     decksQueryMock.mockReturnValue({ data: ref([]) })
-    readerPrefsMock.mockReturnValue({ playback_rate: ref(1) })
+    readerPrefsMock.mockReturnValue({ playback_rate: ref(1), paragraph_density: ref('medium') })
     noticeErrorMock.mockReset()
     mockEmitSfx.mockReset()
   })
@@ -113,14 +132,15 @@ describe('useLessonReader', () => {
   })
 
   describe('transcript shaping', () => {
-    test('shapes the lesson transcript into one block per sentence', () => {
+    test('merges sentences with no scored break into a single paragraph', () => {
+      // Default lesson segments carry no break_strength, so nothing scores above the threshold.
       let reader
       ;[reader, app] = withReader()
 
       const blocks = reader.paragraphs.value
-      expect(blocks).toHaveLength(2)
-      expect(blocks[0].sentence).toBe('Hello world.')
-      expect(blocks.flatMap((s) => s.words)).toHaveLength(5)
+      expect(blocks).toHaveLength(1)
+      expect(blocks[0].sentence).toBe('Hello world. How are you?')
+      expect(blocks[0].words).toHaveLength(5)
     })
 
     test('is empty before the lesson resolves', () => {
@@ -133,8 +153,7 @@ describe('useLessonReader', () => {
     })
 
     test('is empty when the lesson resolves with no transcript', () => {
-      // A lesson row with no sentence rows at all (rather than an empty
-      // transcript object) — the optional chaining must not throw.
+      // A lesson row with no sentence rows at all — the optional chaining must not throw.
       lessonQueryMock.mockReturnValue({
         data: ref(makeLesson({ transcript: undefined })),
         error: ref(null)
@@ -172,7 +191,7 @@ describe('useLessonReader', () => {
         seek: vi.fn(),
         playClip: vi.fn()
       })
-      readerPrefsMock.mockReturnValue({ playback_rate: ref(1.5) })
+      readerPrefsMock.mockReturnValue({ playback_rate: ref(1.5), paragraph_density: ref('medium') })
 
       ;[, app] = withReader()
 
@@ -191,13 +210,47 @@ describe('useLessonReader', () => {
         playClip: vi.fn()
       })
       const saved_playback_rate = ref(1)
-      readerPrefsMock.mockReturnValue({ playback_rate: saved_playback_rate })
+      readerPrefsMock.mockReturnValue({
+        playback_rate: saved_playback_rate,
+        paragraph_density: ref('medium')
+      })
 
       ;[, app] = withReader()
       player_rate.value = 2
       await nextTick()
 
       expect(saved_playback_rate.value).toBe(2)
+    })
+  })
+
+  describe('paragraph density preference', () => {
+    test('different densities yield different paragraph counts on the same lesson', () => {
+      lessonQueryMock.mockReturnValue({ data: ref(makeDensityLesson()), error: ref(null) })
+      readerPrefsMock.mockReturnValue({ playback_rate: ref(1), paragraph_density: ref('long') })
+
+      let reader
+      ;[reader, app] = withReader()
+
+      // 8 sentences at target length 4 → round(8/4) paragraphs.
+      expect(reader.paragraphs.value).toHaveLength(2)
+    })
+
+    test('regroups when paragraph_density changes, with no refetch', async () => {
+      lessonQueryMock.mockReturnValue({ data: ref(makeDensityLesson()), error: ref(null) })
+      const paragraph_density = ref('long')
+      readerPrefsMock.mockReturnValue({ playback_rate: ref(1), paragraph_density })
+
+      let reader
+      ;[reader, app] = withReader()
+      expect(reader.paragraphs.value).toHaveLength(2)
+      const calls_before = lessonQueryMock.mock.calls.length
+
+      paragraph_density.value = 'short'
+      await nextTick()
+
+      // Target length 1 (short) puts every sentence in its own paragraph.
+      expect(reader.paragraphs.value).toHaveLength(8)
+      expect(lessonQueryMock.mock.calls.length).toBe(calls_before)
     })
   })
 
