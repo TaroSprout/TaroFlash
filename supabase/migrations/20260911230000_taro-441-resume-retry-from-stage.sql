@@ -1,8 +1,4 @@
 -- knowledge: reap_stalled_lessons, trigger_lesson_processing — corpus/media/audio-generation.md
--- Preserve the failure position (phase + chunk_cursor) so a retry can resume
--- from the stage the job died on, and re-fire the processing chain when a retry
--- flips a failed row back to 'processing' without moving phase or cursor.
-
 CREATE OR REPLACE FUNCTION public.reap_stalled_lessons() RETURNS integer
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
