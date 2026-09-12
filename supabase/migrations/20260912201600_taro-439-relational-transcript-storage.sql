@@ -93,7 +93,7 @@ AS $function$
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text DEFAULT 'original'::text, p_lang text DEFAULT NULL::text, p_chunks jsonb DEFAULT '[]'::jsonb)
+CREATE OR REPLACE FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text DEFAULT 'original'::text, p_chunks jsonb DEFAULT '[]'::jsonb)
  RETURNS public.lessons
  LANGUAGE plpgsql
 AS $function$
@@ -118,10 +118,10 @@ begin
   end if;
 
   insert into public.lessons
-    (collection_id, title, audio_path, lang,
+    (collection_id, title, audio_path,
      status, phase, script, "position", chunks, chunk_cursor)
   values
-    (p_collection_id, p_title, p_audio_path, p_lang,
+    (p_collection_id, p_title, p_audio_path,
      'processing', 'transcribing', p_script, v_position, v_chunks, 0)
   returning * into v_lesson;
 
