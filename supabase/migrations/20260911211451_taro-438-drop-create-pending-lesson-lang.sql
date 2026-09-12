@@ -1,3 +1,5 @@
+-- knowledge: create_pending_lesson — unrecorded
+
 drop function if exists "public"."create_pending_lesson"(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_lang text, p_chunks jsonb);
 
 set check_function_bodies = off;
