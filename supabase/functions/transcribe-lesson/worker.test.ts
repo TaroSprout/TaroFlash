@@ -258,8 +258,106 @@ Deno.test('chapter phase: writes only the chapter column, with ordinals mapped f
     assertEquals(sentences.find((s) => s.ordinal === 5)?.readings, undefined)
 
     assertEquals(updates.length, 1)
+    assertEquals(updates[0].phase, 'paragraphing')
+    assertEquals(updates[0].chunk_cursor, 0)
+  } finally {
+    restore()
+  }
+})
+
+Deno.test('paragraph phase: empty sentences advance straight to translating', async () => {
+  const { admin, updates } = makeAdmin({ load: row({ phase: 'paragraphing' }) })
+  await processLessonPhase(admin, 1)
+  assertEquals(updates.length, 1)
+  assertEquals(updates[0].phase, 'translating')
+  assertEquals(updates[0].chunk_cursor, 0)
+})
+
+Deno.test('paragraph phase: writes only the strengths the model scored, cursor advances to done', async () => {
+  const restore = stubFetch(() => anthropicOk({ strengths: [0.1, 'unscored', 0.8] }))
+  try {
+    const { admin, updates, rpcCalls, sentences } = makeAdmin({
+      load: row({ phase: 'paragraphing', chunk_cursor: 0 }),
+      sentences: [
+        { ordinal: 0, text: 'A', words: [] },
+        { ordinal: 1, text: 'B', words: [] },
+        { ordinal: 2, text: 'C', words: [] }
+      ]
+    })
+    await processLessonPhase(admin, 1)
+
+    // The null-strength middle entry is filtered out of the RPC patch — its
+    // break_strength is left untouched rather than written as null.
+    const strengthsCall = rpcCalls.find((c) => c.name === 'set_lesson_break_strengths')
+    assertEquals(strengthsCall?.args.p_strengths, [
+      { ordinal: 0, strength: 0.1 },
+      { ordinal: 2, strength: 0.8 }
+    ])
+    const patch = strengthsCall?.args.p_strengths as { ordinal: number }[] | undefined
+    assertEquals(
+      patch?.some((p) => p.ordinal === 1),
+      false
+    )
+
+    assertEquals(
+      rpcCalls.some((c) => c.name === 'set_lesson_translations'),
+      false
+    )
+    assertEquals(sentences.find((s) => s.ordinal === 0)?.translation, undefined)
+
+    // All 3 sentences fit in one slice (well under PARAGRAPH_SEG_BATCH), so the
+    // cursor is done and the phase advances.
+    assertEquals(updates.length, 1)
     assertEquals(updates[0].phase, 'translating')
     assertEquals(updates[0].chunk_cursor, 0)
+  } finally {
+    restore()
+  }
+})
+
+Deno.test('paragraph phase: a slice not yet covering every sentence advances the cursor, not the phase', async () => {
+  const restore = stubFetch(() => anthropicOk({ strengths: Array(40).fill(0.5) }))
+  try {
+    const sentences = Array.from({ length: 121 }, (_, i) => ({
+      ordinal: i,
+      text: `s${i}`,
+      words: []
+    }))
+    const { admin, updates } = makeAdmin({
+      load: row({ phase: 'paragraphing', chunk_cursor: 0 }),
+      sentences
+    })
+    await processLessonPhase(admin, 1)
+
+    // Cursor 0 over 121 sentences only reaches PARAGRAPH_SEG_BATCH (120), one
+    // sentence short of the end — the cursor advances but the phase does not.
+    assertEquals(updates.length, 1)
+    assertEquals(updates[0].chunk_cursor, 120)
+    assertEquals(updates[0].phase, undefined)
+  } finally {
+    restore()
+  }
+})
+
+Deno.test('paragraph phase: a failed detection still advances the cursor, never fails the lesson', async () => {
+  const restore = stubFetch(() => new Response('upstream boom', { status: 500 }))
+  try {
+    const { admin, updates, rpcCalls } = makeAdmin({
+      load: row({ phase: 'paragraphing', chunk_cursor: 0 }),
+      sentences: [
+        { ordinal: 0, text: 'A', words: [] },
+        { ordinal: 1, text: 'B', words: [] }
+      ]
+    })
+    await processLessonPhase(admin, 1)
+
+    assertEquals(
+      rpcCalls.some((c) => c.name === 'set_lesson_break_strengths'),
+      false
+    )
+    assertEquals(updates.length, 1)
+    assertEquals(updates[0].status, undefined)
+    assertEquals(updates[0].phase, 'translating')
   } finally {
     restore()
   }
