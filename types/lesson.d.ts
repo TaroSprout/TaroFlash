@@ -44,9 +44,9 @@ type LessonTranscript = {
 
 // One persisted transcript sentence, as stored in lesson_sentences. Assembled
 // back into a LessonTranscript for the reader (src/utils/lesson/transcript.ts).
-// `translation` / `readings` / `chapter_title` are null until the matching
-// enrichment phase fills them; `readings` is one entry per word, index-aligned
-// to `words`.
+// `break_strength` / `translation` / `readings` / `chapter_title` are null until
+// the matching enrichment phase fills them; `readings` is one entry per word,
+// index-aligned to `words`.
 type LessonSentenceRow = {
   ordinal: number
   start_seconds: number
@@ -54,6 +54,9 @@ type LessonSentenceRow = {
   text: string
   words: TranscriptWord[]
   paragraph_gap: number
+  // How strongly a paragraph break belongs before this sentence, 0–1, scored by
+  // meaning in the paragraphing phase; null where that pass couldn't score it.
+  break_strength: number | null
   translation: string | null
   readings: (string | null)[] | null
   chapter_title: string | null
@@ -78,8 +81,14 @@ type LessonStatus = 'processing' | 'ready' | 'failed'
 
 // The worker's current step while processing, surfaced as a progress label.
 // 'transcribing' loops over the audio chunks before advancing; 'chaptering'
-// splits the finished transcript into chapters.
-type LessonPhase = 'transcribing' | 'chaptering' | 'translating' | 'transliterating'
+// splits the finished transcript into chapters; 'paragraphing' scores each
+// sentence's paragraph-break strength.
+type LessonPhase =
+  | 'transcribing'
+  | 'chaptering'
+  | 'paragraphing'
+  | 'translating'
+  | 'transliterating'
 
 type Lesson = {
   id: number

@@ -6,8 +6,11 @@
 // with a machine-readable code.
 //
 // The phase order is:
-//   transcribing (looped over the audio chunks) -> chaptering -> translating
-//   -> transliterating -> ready
+//   transcribing (looped over the audio chunks) -> chaptering -> paragraphing
+//   -> translating -> transliterating -> ready
+// Paragraphing and every phase after it is best-effort enrichment, same as
+// chaptering — a failure or an unscored sentence never fails the lesson.
+// Full chain contract: corpus/media/audio-generation.md
 //
 // 'transcribing' is itself a LOOP: long audio is split client-side into ordered,
 // overlapping chunks, and each invocation transcribes the chunk at `chunk_cursor`,
@@ -30,6 +33,7 @@ import { transcribeAudioFile, TranscribeError } from './transcribe.ts'
 import { translateSentences } from '../_shared/transcription/translate.ts'
 import { readSentences } from '../_shared/transcription/transliterate.ts'
 import { detectChapters } from '../_shared/transcription/chapter.ts'
+import { detectBreakStrengths } from '../_shared/transcription/paragraph.ts'
 import { type TargetScript } from '../_shared/transcription/script.ts'
 import type { SentenceRow } from '../_shared/transcription/transcript.ts'
 import { sentenceRowsForChunk, type StoredSentence } from './transcript-shapers.ts'
@@ -47,9 +51,17 @@ const BUCKET = 'audio-lessons'
 const TRANSLATE_SEG_BATCH = 80
 const TRANSLITERATE_SEG_BATCH = 30
 
+// Paragraph scoring returns just one number per sentence, so a slice can be
+// larger than translation's — it batches internally to stay under max_tokens.
+const PARAGRAPH_SEG_BATCH = 120
+
 // Sentences either side of a translate slice handed to the translator as read-only
 // context, so a sentence at the slice boundary isn't translated context-starved.
 const TRANSLATE_CONTEXT_SEG = 5
+
+// The same read-only neighbour context for a paragraph-scoring slice, so a break
+// at the slice edge is judged against its surroundings.
+const PARAGRAPH_CONTEXT_SEG = 5
 
 // One audio slice in the lesson's chunk manifest (see migration 20260627000000).
 type Chunk = { path: string; offset: number }
@@ -91,6 +103,7 @@ export async function processLessonPhase(admin: SupabaseClient, lessonId: number
   try {
     if (lesson.phase === 'transcribing') return await runTranscribe(admin, lesson)
     if (lesson.phase === 'chaptering') return await runChapter(admin, lesson)
+    if (lesson.phase === 'paragraphing') return await runParagraph(admin, lesson)
     if (lesson.phase === 'translating') return await runTranslate(admin, lesson)
     if (lesson.phase === 'transliterating') return await runTransliterate(admin, lesson)
   } catch (error) {
@@ -176,7 +189,7 @@ async function runTranscribe(admin: SupabaseClient, lesson: LessonRow): Promise<
 }
 
 // Phase 2 — split the stored sentences into titled chapters, then advance to
-// translating. Best-effort: a failure (or a single-chapter result) just leaves
+// paragraphing. Best-effort: a failure (or a single-chapter result) just leaves
 // the lesson with no in-reader chapter list rather than failing it.
 async function runChapter(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
   const rows = await loadSentences<{ ordinal: number; start_seconds: number; text: string }>(
@@ -189,10 +202,52 @@ async function runChapter(admin: SupabaseClient, lesson: LessonRow): Promise<voi
   const marks = chapterMarks(chapters ?? [], rows)
   await admin.rpc('set_lesson_chapters', { p_lesson_id: lesson.id, p_chapters: marks })
 
-  await update(admin, lesson.id, { phase: 'translating', chunk_cursor: 0 })
+  await update(admin, lesson.id, { phase: 'paragraphing', chunk_cursor: 0 })
 }
 
-// Phase 3 — translate a SLICE of sentences per invocation, advancing the cursor
+// Phase 3 — score a SLICE of sentences' paragraph-break strengths per invocation,
+// advancing the cursor until every sentence is scored, then advance to translating.
+// Best-effort: a failed slice leaves those sentences unscored (break_strength stays
+// null) but still advances, so the pass never fails a lesson.
+async function runParagraph(admin: SupabaseClient, lesson: LessonRow): Promise<void> {
+  const rows = await loadSentences<{ ordinal: number; text: string }>(
+    admin,
+    lesson.id,
+    'ordinal, text'
+  )
+  const cursor = lesson.chunk_cursor ?? 0
+  const end = Math.min(cursor + PARAGRAPH_SEG_BATCH, rows.length)
+
+  const slice = rows.slice(cursor, end)
+  // Neighbour sentences just outside this slice, passed as read-only context so a
+  // sentence at the slice edge is scored against its surroundings, not in isolation.
+  const lead = rows.slice(Math.max(0, cursor - PARAGRAPH_CONTEXT_SEG), cursor)
+  const tail = rows.slice(end, end + PARAGRAPH_CONTEXT_SEG)
+  const strengths = await detectBreakStrengths(
+    slice.map((s) => s.text),
+    lead.map((s) => s.text),
+    tail.map((s) => s.text)
+  )
+
+  if (strengths) {
+    // Only sentences the model gave a usable score for are written; a null entry
+    // is left out so its break_strength stays null — "scored later or not at all".
+    const patch = slice
+      .map((s, i) => ({ ordinal: s.ordinal, strength: strengths[i] }))
+      .filter((p) => p.strength !== null)
+    if (patch.length)
+      await admin.rpc('set_lesson_break_strengths', { p_lesson_id: lesson.id, p_strengths: patch })
+  }
+
+  const done = end >= rows.length
+  await update(
+    admin,
+    lesson.id,
+    done ? { phase: 'translating', chunk_cursor: 0 } : { chunk_cursor: end }
+  )
+}
+
+// Phase 4 — translate a SLICE of sentences per invocation, advancing the cursor
 // until every sentence is done, then advance to transliterating. Best-effort: a
 // failed batch leaves that slice untranslated but still advances. The per-slice
 // write is also the reaper heartbeat.
@@ -230,7 +285,7 @@ async function runTranslate(admin: SupabaseClient, lesson: LessonRow): Promise<v
   )
 }
 
-// Phase 4 — read the words of a SLICE of sentences per invocation, advancing the
+// Phase 5 — read the words of a SLICE of sentences per invocation, advancing the
 // cursor until every sentence is done, then settle the row to 'ready'. Best-effort:
 // a failed batch leaves that slice unread but still advances.
 async function runTransliterate(admin: SupabaseClient, lesson: LessonRow): Promise<void> {

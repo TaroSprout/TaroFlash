@@ -29,8 +29,9 @@ ALTER TABLE public.lessons OWNER TO postgres;
 -- One row per transcript sentence, replacing the single accumulating transcript
 -- blob. Each phase writes only its own columns: transcription seeds ordinal /
 -- timing / text / words / paragraph_gap, chaptering stamps chapter_title on the
--- sentence a chapter opens on, translating fills translation, transliterating
--- fills readings (one entry per word, index-aligned to `words`).
+-- sentence a chapter opens on, paragraphing fills break_strength, translating
+-- fills translation, transliterating fills readings (one entry per word,
+-- index-aligned to `words`).
 CREATE TABLE public.lesson_sentences (
     lesson_id bigint NOT NULL,
     ordinal integer NOT NULL,
@@ -38,9 +39,11 @@ CREATE TABLE public.lesson_sentences (
     end_seconds double precision NOT NULL,
     text text NOT NULL,
     words jsonb DEFAULT '[]'::jsonb NOT NULL,
-    -- Silent seconds before this sentence — the paragraph-break strength the
-    -- reader thresholds, precomputed here instead of at read time. 0 on the first.
+    -- Silent seconds before this sentence, from the audio timing. 0 on the first.
     paragraph_gap double precision DEFAULT 0 NOT NULL,
+    -- How strongly a paragraph break belongs before this sentence, 0–1, scored by
+    -- meaning in the paragraphing phase. Null where that pass couldn't score it.
+    break_strength double precision,
     translation text,
     readings jsonb,
     chapter_title text
@@ -249,6 +252,28 @@ REVOKE ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters
 REVOKE ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) FROM anon;
 REVOKE ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) FROM authenticated;
 GRANT ALL ON FUNCTION public.set_lesson_chapters(p_lesson_id bigint, p_chapters jsonb) TO service_role;
+
+
+-- Paragraphing's write: fill break_strength on a slice of sentences, keyed by
+-- ordinal. Touches only the break_strength column, leaving every other field
+-- intact; a sentence the pass couldn't score is simply absent from p_strengths.
+CREATE FUNCTION public.set_lesson_break_strengths(p_lesson_id bigint, p_strengths jsonb) RETURNS void
+    LANGUAGE sql
+    AS $$
+  update public.lesson_sentences ls
+     set break_strength = s.strength
+    from jsonb_to_recordset(p_strengths) as s(ordinal integer, strength double precision)
+   where ls.lesson_id = p_lesson_id and ls.ordinal = s.ordinal;
+$$;
+
+
+ALTER FUNCTION public.set_lesson_break_strengths(p_lesson_id bigint, p_strengths jsonb) OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.set_lesson_break_strengths(p_lesson_id bigint, p_strengths jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_lesson_break_strengths(p_lesson_id bigint, p_strengths jsonb) FROM anon;
+REVOKE ALL ON FUNCTION public.set_lesson_break_strengths(p_lesson_id bigint, p_strengths jsonb) FROM authenticated;
+GRANT ALL ON FUNCTION public.set_lesson_break_strengths(p_lesson_id bigint, p_strengths jsonb) TO service_role;
 
 
 -- Translating's write: fill translation on a slice of sentences, keyed by ordinal.
