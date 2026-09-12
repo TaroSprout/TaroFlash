@@ -33,9 +33,9 @@ export type ParagraphDensity = 'long' | 'medium' | 'short'
 // a sentence or two longer, Short a sentence or two shorter (floored at 1, i.e.
 // near sentence-by-sentence). Tune these freely — they're the only knob.
 export const PARAGRAPH_DENSITY_TARGET_LENGTHS: Record<ParagraphDensity, number> = {
-  long: 6,
-  medium: 4,
-  short: 2
+  long: 4,
+  medium: 2,
+  short: 1
 }
 
 // Leading/trailing whitespace + punctuation. \p{P} spans Latin and CJK marks
