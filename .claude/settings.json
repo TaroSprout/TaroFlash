@@ -33,6 +33,10 @@
           {
             "type": "command",
             "command": "fp=$(jq -r '.tool_input.file_path // empty'); dir=$( [ -n \"$fp\" ] && dirname \"$fp\" || pwd ); branch=$(git -C \"$dir\" branch --show-current 2>/dev/null) || exit 0; [ \"$branch\" = \"master\" ] && echo 'On master \u2014 cut a branch before editing (see .claude/rules/git-workflow.md)' >&2 && exit 2; exit 0"
+          },
+          {
+            "type": "command",
+            "command": "tool=$(jq -r '.tool_name // empty')\nfp=$(jq -r '.tool_input.file_path // empty')\n[ -z \"$fp\" ] && exit 0\ncase \"$fp\" in\n  src/*.ts|src/*.tsx|src/*.vue|scripts/*.ts|scripts/*.mjs|supabase/*.ts) ;;\n  *) exit 0 ;;\nesac\ncase \"$fp\" in\n  *tests/*) exit 0 ;;\nesac\ncase \"$tool\" in\n  Edit) content=$(jq -r '.tool_input.new_string // empty') ;;\n  Write) content=$(jq -r '.tool_input.content // empty') ;;\n  MultiEdit) content=$(jq -r '[.tool_input.edits[]?.new_string] | join(\"\\n\")') ;;\n  *) exit 0 ;;\nesac\n[ -z \"$content\" ] && exit 0\nHOOK_CONTENT=\"$content\" node -e '\nconst lines = (process.env.HOOK_CONTENT || \"\").split(\"\\n\")\nconst declRe = /^\\s*(export\\s+)?(async\\s+)?function\\s+\\w|^\\s*export\\s+type\\s+\\w|^\\s*export\\s+const\\s+\\w+\\s*=/\nconst commentRe = /^\\s*\\/\\/(?!\\/)/\nconst directiveRe = /^\\s*\\/\\/\\s*(eslint-|@ts-|TODO|istanbul ignore|c8 ignore)/i\nfor (let i = 1; i < lines.length; i++) {\n  const prev = lines[i - 1]\n  if (declRe.test(lines[i]) && commentRe.test(prev) && prev.trim() !== \"\" && !directiveRe.test(prev)) {\n    console.error(\"A // line sits directly above a named declaration -- the position table requires JSDoc /** */ there, not a body-line comment. comment-authoring.md -> [K:comment-position-jsdoc]\")\n    process.exit(2)\n  }\n}\n'\n"
           }
         ]
       },
