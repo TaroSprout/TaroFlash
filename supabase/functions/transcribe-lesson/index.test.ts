@@ -32,6 +32,69 @@ Deno.test('retry action: returns the gate response when the capability check is 
   assertEquals(res.status, 401)
 })
 
+Deno.test('retry action: a failed row with a phase resumes in place — no sentence delete, phase/cursor untouched', async () => {
+  const deleted: { table: string; lesson_id: unknown }[] = []
+  const updates: Record<string, unknown>[] = []
+
+  // deno-lint-ignore no-explicit-any
+  const admin: any = {
+    from(table: string) {
+      if (table === 'lesson_sentences') {
+        return {
+          delete: () => ({
+            eq: (_col: string, id: unknown) => {
+              deleted.push({ table, lesson_id: id })
+              return Promise.resolve({ error: null })
+            }
+          })
+        }
+      }
+      return {
+        update: (patch: Record<string, unknown>) => ({
+          eq: () => {
+            updates.push(patch)
+            return Promise.resolve({ error: null })
+          }
+        })
+      }
+    }
+  }
+  // deno-lint-ignore no-explicit-any
+  const userClient: any = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () =>
+            // A row that died mid-translate: phase and cursor recorded, ready to resume.
+            Promise.resolve({
+              data: { id: 7, phase: 'translating', chunk_cursor: 40 },
+              error: null
+            })
+        })
+      })
+    })
+  }
+
+  const req = new Request('http://localhost', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'retry', lesson_id: 7 })
+  })
+
+  const res = await handler(req, {
+    requireCapability: () => Promise.resolve({ user: { id: 'member-1' }, admin, userClient })
+  })
+
+  assertEquals(res.status, 202)
+  // No delete at all — a phased failure never touches stored sentences.
+  assertEquals(deleted, [])
+  assertEquals(updates.length, 1)
+  // Only status/error_code are flipped; phase and chunk_cursor are absent from
+  // the patch, so the row's stage position stays exactly where it died.
+  assertEquals(updates[0].status, 'processing')
+  assertEquals('phase' in updates[0], false)
+  assertEquals('chunk_cursor' in updates[0], false)
+})
+
 Deno.test('retry action: clears stored sentences before resetting the cursor', async () => {
   const deleted: { table: string; lesson_id: unknown }[] = []
   const updates: Record<string, unknown>[] = []

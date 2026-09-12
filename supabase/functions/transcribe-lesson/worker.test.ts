@@ -164,7 +164,18 @@ Deno.test('transcribe phase: a failed audio download settles failed/audio_unavai
   assertEquals(updates.length, 1)
   assertEquals(updates[0].status, 'failed')
   assertEquals(updates[0].error_code, 'audio_unavailable')
-  assertEquals(updates[0].phase, null)
+})
+
+Deno.test('settleFailed leaves phase and chunk_cursor untouched so a retry can resume from them', async () => {
+  const { admin, updates } = makeAdmin({
+    load: row({ phase: 'transcribing', chunk_cursor: 3 }),
+    download: { data: null, error: { message: 'gone' } }
+  })
+  await processLessonPhase(admin, 1)
+  assertEquals(updates.length, 1)
+  assertEquals(updates[0].status, 'failed')
+  assertEquals('phase' in updates[0], false)
+  assertEquals('chunk_cursor' in updates[0], false)
 })
 
 Deno.test('transcribe phase: a replayed chunk upserts by ordinal — no duplicate rows', async () => {
@@ -405,6 +416,35 @@ Deno.test('translate phase: writes only the translation column', async () => {
   }
 })
 
+Deno.test('translate phase: resuming over an already-translated slice overwrites in place, adding no rows', async () => {
+  let call = 0
+  const restore = stubFetch(() =>
+    anthropicOk({ translations: call++ === 0 ? ['Bonjour', 'Monde'] : ['Salut', 'Monde-2'] })
+  )
+  try {
+    const { admin, sentences } = makeAdmin({
+      load: row({ phase: 'translating', chunk_cursor: 0 }),
+      sentences: [
+        { ordinal: 0, text: 'Hello', words: [] },
+        { ordinal: 1, text: 'World', words: [] }
+      ]
+    })
+
+    // First run translates the slice. A resumed retry re-runs the SAME cursor
+    // (the row died before the cursor advanced), which must overwrite the same
+    // two rows rather than appending duplicates.
+    await processLessonPhase(admin, 1)
+    assertEquals(sentences.length, 2)
+    await processLessonPhase(admin, 1)
+
+    assertEquals(sentences.length, 2)
+    assertEquals(sentences.find((s) => s.ordinal === 0)?.translation, 'Salut')
+    assertEquals(sentences.find((s) => s.ordinal === 1)?.translation, 'Monde-2')
+  } finally {
+    restore()
+  }
+})
+
 Deno.test('transliterate phase: empty words settle the row to ready', async () => {
   const { admin, updates } = makeAdmin({ load: row({ phase: 'transliterating' }) })
   await processLessonPhase(admin, 1)
@@ -444,6 +484,30 @@ Deno.test('transliterate phase: writes only the readings column', async () => {
 
     assertEquals(updates.length, 1)
     assertEquals(updates[0].status, 'ready')
+  } finally {
+    restore()
+  }
+})
+
+Deno.test('transliterate phase: resuming over an already-read slice overwrites in place, adding no rows', async () => {
+  let call = 0
+  const restore = stubFetch(() =>
+    anthropicOk({ readings: call++ === 0 ? ['に', 'ほん'] : ['ニ', 'ホン'] })
+  )
+  try {
+    const { admin, sentences } = makeAdmin({
+      load: row({ phase: 'transliterating', chunk_cursor: 0, lang: 'ja' }),
+      sentences: [{ ordinal: 0, text: '日本', words: [{ word: '日' }, { word: '本' }] }]
+    })
+
+    // Same reasoning as the translate resume case: a resumed retry re-runs the
+    // same cursor, so the readings write must replace the row, not duplicate it.
+    await processLessonPhase(admin, 1)
+    assertEquals(sentences.length, 1)
+    await processLessonPhase(admin, 1)
+
+    assertEquals(sentences.length, 1)
+    assertEquals(sentences.find((s) => s.ordinal === 0)?.readings, ['ニ', 'ホン'])
   } finally {
     restore()
   }

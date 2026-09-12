@@ -378,9 +378,11 @@ CREATE FUNCTION public.reap_stalled_lessons() RETURNS integer
 declare
   v_reaped integer;
 begin
+  -- Leave phase (and chunk_cursor) intact so retry can resume from where the
+  -- job died rather than re-transcribing from the start. A pre-resume failure
+  -- has phase null and still restarts.
   update public.lessons
      set status     = 'failed',
-         phase      = null,
          error_code = 'stalled',
          updated_at = now()
    where status = 'processing'
@@ -412,7 +414,10 @@ begin
      and new.phase is not null
      and (tg_op = 'INSERT'
           or new.phase is distinct from old.phase
-          or new.chunk_cursor is distinct from old.chunk_cursor)
+          or new.chunk_cursor is distinct from old.chunk_cursor
+          -- Retry resume flips a failed row back to processing without moving
+          -- phase or cursor, so the status flip is what re-fires the chain here.
+          or old.status is distinct from new.status)
   then
     -- Side effect only: never let a failed kick abort the row write (see the
     -- original chain migration). The reaper settles the row if the kick is lost.
