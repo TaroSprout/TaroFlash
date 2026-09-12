@@ -49,8 +49,9 @@ finished thing.
 > readings than it displays under.
 > [See both implementations ↓](#one-grouping-rule-two-places)
 
-The steps run in a fixed order: transcribe the words, find the chapters,
-translate the sentences, add the readings, done.
+The steps run in a fixed order: transcribe the words, find the chapters, score
+where each sentence starts a new paragraph, translate the sentences, add the
+readings, done.
 
 No single machine holds the whole job. Each step wakes, reads the lesson to see
 which step is due, does exactly that one piece, and writes it back. That write is
@@ -105,10 +106,12 @@ again.
 
 ## Enrichment is allowed to come up short
 
-Only the transcript is load-bearing. Chapters, translations, and readings are
-enrichments — each step tries, and if it can't, it moves on rather than failing
-the whole lesson. A book with no clear chapter breaks simply gets one chapter; a
-sentence the translator chokes on is left untranslated. The reader still opens.
+Only the transcript is load-bearing. Chapters, paragraph breaks, translations,
+and readings are enrichments — each step tries, and if it can't, it moves on
+rather than failing the whole lesson. A book with no clear chapter breaks
+simply gets one chapter; a sentence the translator chokes on is left
+untranslated; a sentence the paragraphing pass can't score simply keeps no
+score. The reader still opens.
 
 The words themselves are the exception. If transcription fails, there's nothing
 to read, and the lesson fails outright.
