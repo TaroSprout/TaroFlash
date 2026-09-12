@@ -72,12 +72,3 @@ export async function getLessonAudioSignedUrl(path: string): Promise<string> {
 
   return data.signedUrl
 }
-
-export async function deleteLessonAudio(path: string): Promise<void> {
-  const { error } = await supabase.storage.from(BUCKET).remove([path])
-
-  if (error) {
-    logger.error(`Error deleting audio: ${error.message}`)
-    throw new Error(error.message)
-  }
-}

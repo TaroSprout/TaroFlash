@@ -112,7 +112,7 @@ CREATE VIEW public.lesson_collections_with_counts WITH (security_invoker='true')
 ALTER TABLE public.lesson_collections_with_counts OWNER TO postgres;
 
 
-CREATE FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text DEFAULT 'original'::text, p_lang text DEFAULT NULL::text, p_chunks jsonb DEFAULT '[]'::jsonb) RETURNS public.lessons
+CREATE FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text DEFAULT 'original'::text, p_chunks jsonb DEFAULT '[]'::jsonb) RETURNS public.lessons
     LANGUAGE plpgsql
     AS $$
 declare
@@ -136,10 +136,10 @@ begin
   end if;
 
   insert into public.lessons
-    (collection_id, title, audio_path, transcript, lang,
+    (collection_id, title, audio_path, transcript,
      status, phase, script, "position", chunks, chunk_cursor)
   values
-    (p_collection_id, p_title, p_audio_path, '{}'::jsonb, p_lang,
+    (p_collection_id, p_title, p_audio_path, '{}'::jsonb,
      'processing', 'transcribing', p_script, v_position, v_chunks, 0)
   returning * into v_lesson;
 
@@ -151,12 +151,12 @@ end;
 $$;
 
 
-ALTER FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_lang text, p_chunks jsonb) OWNER TO postgres;
+ALTER FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_lang text, p_chunks jsonb) TO anon;
-GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_lang text, p_chunks jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_lang text, p_chunks jsonb) TO service_role;
+GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) TO anon;
+GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.create_pending_lesson(p_collection_id bigint, p_title text, p_audio_path text, p_script text, p_chunks jsonb) TO service_role;
 
 
 CREATE FUNCTION public.invoke_lesson_process(p_lesson_id bigint) RETURNS void

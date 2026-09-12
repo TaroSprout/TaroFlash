@@ -126,8 +126,7 @@ SELECT lives_ok(
       20,
       'Bob RPC Lesson',
       '22222222-2222-2222-2222-222222222222/rpc.mp3',
-      'original',
-      'zh'
+      'original'
     )
   $$,
   'create_pending_lesson RPC runs for the owner'
