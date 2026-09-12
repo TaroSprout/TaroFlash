@@ -22,12 +22,12 @@ code needs none — a clear name beats a comment.
 
 ## Position sets the shape
 
-| Where it sits           | Format             | What it carries                                                                     |
-| ----------------------- | ------------------ | ----------------------------------------------------------------------------------- |
-| Above a named symbol    | JSDoc `/** */`     | what the thing is; `@param` only where a parameter's name doesn't carry its meaning |
-| At a line inside a body | a single `//` line | what you'd break                                                                    |
-| Top of a file           | one or two lines   | what lives here — only where the filename and its exports don't already carry it    |
-| Inside `<template>`     | none, ever         | improve the `data-testid`, slot, and component names instead                        |
+| Where it sits                                   | Format             | What it carries                                                                     |
+| ----------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| Above a named symbol [K:comment-position-jsdoc] | JSDoc `/** */`     | what the thing is; `@param` only where a parameter's name doesn't carry its meaning |
+| At a line inside a body                         | a single `//` line | what you'd break                                                                    |
+| Top of a file                                   | one or two lines   | what lives here — only where the filename and its exports don't already carry it    |
+| Inside `<template>`                             | none, ever         | improve the `data-testid`, slot, and component names instead                        |
 
 In `<style>`, a comment above a selector is a symbol doc; **one above a single custom-property or
 property line, inside a rule block, is body position** — same single-line shape as script, not a
@@ -47,6 +47,9 @@ JSDoc-style paragraph, however many properties in the block each want documentin
 - **The same collapse governs a pgTAP file under `supabase/tests/`.** `plan()` and each assertion's
   description string carry what a file-top banner or a `-- ────` section divider would restate — the
   only shape allowed is a single trailing `--` line, same gates as anywhere else.
+- **A `//` line landing directly above a named declaration is blocked at write time**, not left to
+  review — a `PreToolUse` hook in `.claude/settings.json` rejects it outside `tests/`, citing this
+  row (→[K:comment-position-jsdoc]) in its failure message.
 
 ## Gates
 

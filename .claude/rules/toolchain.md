@@ -23,16 +23,6 @@ Node engine minimum your version already satisfies (seen: fails on 22.14, works 
 minimum is wrong, not the toolchain. Switch to a newer Node rather than debugging the config or the
 error message. `vp test` is unaffected.
 
-## Lint
-
-- **Configure lint rules only in `vite.config.ts`'s `lint` block.** `vp lint` silently ignores a root
-  `.oxlintrc.json` — a rule set there never runs, `vp lint` still reports zero errors, and
-  `./node_modules/.bin/oxlint` on the same file with the same config proves the gap
-  (→[K:proxy-pass-not-evidence]).
-- **Oxlint only sees a Vue SFC's `<script>` block.** The template is invisible to its AST — a rule
-  reporting a position outside the script block is rejected outright — and an SFC with no `<script>`
-  at all is never visited.
-
 ## Never `pnpm`
 
 - **`vp install` after any dependency bump.** Never `pnpm up` / `pnpm install` directly — pnpm
@@ -52,12 +42,8 @@ error message. `vp test` is unaffected.
   `node_modules` — Vitest loads two mismatched runner instances, and the failures (collection errors,
   a `vi.mock` deadlock) look like broken test infra rather than a binary-path mistake.
 
-## Imports
-
-- Build/config utilities from `vite-plus`, not `vite`: `import { defineConfig } from 'vite-plus'`
-- Test utilities from `vite-plus/test`, not `vitest`: `import { expect, test, vi } from 'vite-plus/test'`
-- Don't install `vitest`, `oxlint`, `oxfmt`, `tsdown` — bundled in Vite+
-
 ## Spokes
 
 - [`commands`](./toolchain/commands.md) — the full `vp` command list
+- [`imports-and-lint-config`](./toolchain/imports-and-lint-config.md) — import sourcing and lint
+  config placement, scoped to `.ts`/`.vue` edits rather than every command
