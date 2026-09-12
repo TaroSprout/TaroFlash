@@ -127,7 +127,11 @@ export function markTermInSentence(
 /**
  * Predicate: a word belongs to segment `i` when its start falls inside the
  * segment's time span. The first segment also claims any words that start
- * before it; the last segment claims any that start after it.
+ * before it; the last segment claims any that start after it. The worker
+ * (assignWordsToSegments in supabase/functions/transcribe-lesson/transcript-shapers.ts)
+ * applies this same rule independently — change a boundary here and change it
+ * there too, or the two disagree on which segment a word belongs to.
+ * →[K:segment-assignment-duplicated]
  */
 function inSegment(segments: TranscriptSegment[], i: number) {
   const lower = i === 0 ? -Infinity : segments[i].start

@@ -4,7 +4,7 @@ domain: media
 status: current
 hazard: true
 related: [media]
-updated: 2026-08-08
+updated: 2026-09-11
 ---
 
 # Audio generation
@@ -39,6 +39,15 @@ finished thing.
 > [See how the sweep decides ↓](#the-sweep-is-the-backstop)
 
 ## The chain moves one step at a time
+
+> [!HAZARD] [K:segment-assignment-duplicated] **The rule for which words fall under which segment is written twice — once for the worker, once for the reader — and nothing keeps them in step.**
+> Both need the same grouping: a word belongs to the segment whose time span it falls in, with the
+> first segment sweeping up anything earlier and the last sweeping up anything later. The worker
+> uses it to batch words for pronunciation readings; the reader uses it to group words under
+> sentences for display. Change the rule in one place — widen a boundary, handle an edge case — and
+> the other silently keeps the old grouping, so a word can land under a different segment for
+> readings than it displays under.
+> [See both implementations ↓](#one-grouping-rule-two-places)
 
 The steps run in a fixed order: transcribe the words, find the chapters,
 translate the sentences, add the readings, done.
@@ -103,6 +112,20 @@ sentence the translator chokes on is left untranslated. The reader still opens.
 
 The words themselves are the exception. If transcription fails, there's nothing
 to read, and the lesson fails outright.
+
+## One grouping rule, two places
+
+The words and the sentence-timed segments both come out of transcription, but
+nothing stores which word sits under which segment — anything that needs that
+grouping recomputes it from the two timelines. Two call sites do:
+
+- The worker, batching words together before it asks for pronunciation readings.
+- The reader, grouping words under a sentence to display them.
+
+Both apply the identical rule and neither knows the other exists. A fix to one
+side — an off-by-one at a segment boundary, a decision to handle an empty
+segment differently — has to be made in both, by hand, or the two disagree on
+which segment a word belongs to.
 
 ## What this isn't
 

@@ -5,6 +5,7 @@
 // still completes (just without chapters), exactly like the other enrichers.
 
 import { requestStructured } from './anthropic.ts'
+import type { Chapter } from './transcript.ts'
 
 // Chaptering is a long-context reasoning task — hold the whole arc of the book in
 // mind and decide where it turns — so it runs on Sonnet, not the Haiku the
@@ -46,8 +47,6 @@ const SYSTEM_PROMPT =
   'piece with no real chapter breaks, return exactly one chapter covering all of it.'
 
 type RawChapter = { title?: unknown; start_index?: unknown }
-
-export type Chapter = { title: string; start: number }
 
 export async function detectChapters(
   segments: { start: number; text: string }[]
