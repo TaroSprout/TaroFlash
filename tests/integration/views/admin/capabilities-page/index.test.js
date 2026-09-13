@@ -4,10 +4,15 @@ import { defineComponent, h, ref } from 'vue'
 import CapabilitiesPage from '@/views/admin/capabilities-page/index.vue'
 
 const mockCapabilities = ref(undefined)
+const mockGrants = ref(undefined)
+const mockGrantsLoading = ref(false)
 
 vi.mock('@/api/capabilities', () => ({
   useCapabilitiesQuery: () => ({ data: mockCapabilities }),
-  useUpdateCapabilityMutation: () => ({ mutate: vi.fn() })
+  useUpdateCapabilityMutation: () => ({ mutate: vi.fn() }),
+  useCapabilityGrantsQuery: () => ({ data: mockGrants, isLoading: mockGrantsLoading }),
+  useAddCapabilityGrantMutation: () => ({ mutate: vi.fn() }),
+  useRemoveCapabilityGrantMutation: () => ({ mutate: vi.fn() })
 }))
 
 const CapabilityRowStub = defineComponent({
@@ -26,6 +31,8 @@ function mountPage() {
 
 beforeEach(() => {
   mockCapabilities.value = undefined
+  mockGrants.value = undefined
+  mockGrantsLoading.value = false
 })
 
 describe('CapabilitiesPage', () => {
