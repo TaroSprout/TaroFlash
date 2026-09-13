@@ -44,6 +44,7 @@ export function tabSlideEnter(direction: Direction, wrapper: Wrapper): Motion {
         ctx.tl.to(
           box,
           {
+            // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing mobile drill-down panel resize, not yet routed through the stage primitive. Follow-on: migrate onto useStageHeight (post-TARO-412).
             height: el.scrollHeight,
             duration: ctx.duration(ENTER_DURATION),
             ease: ctx.ease('out'),

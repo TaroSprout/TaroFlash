@@ -55,6 +55,7 @@ export function popScrimReveal(
   gsap.set(fields, { overflow: 'hidden' })
   timeline.fromTo(
     fields,
+    // oxlint-disable-next-line compositor-only/no-layout-tween -- TARO-412 landed as a partial migration; this panel's collapse wasn't moved onto the stage primitive. Follow-on: finish the TARO-412 stage migration for scrim-reveal.
     { height: revealed ? 0 : natural_height },
     {
       height: revealed ? natural_height : 0,

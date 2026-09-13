@@ -42,6 +42,7 @@ export function useAnimatedHeight(
     if (animate) {
       el.style.overflow = 'hidden'
       gsap.to(el, {
+        // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing `animate: true` snap follower for a small footer wrapper (audio-lesson term/settings/toolbar swap); not routed through the stage primitive yet. Follow-on: migrate onto useStageHeight (post-TARO-412).
         height: target,
         duration: DURATION,
         ease: 'power2.out',
