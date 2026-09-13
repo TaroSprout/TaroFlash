@@ -1,21 +1,19 @@
 ---
-lastUpdated: 2026-09-10T00:00:00Z
-paths:
-  - 'src/**'
-  - 'supabase/**/*.{ts,sql}'
-  - 'scripts/**'
-  - 'tests/**'
+lastUpdated: 2026-09-13T00:00:00Z
 ---
 
 # Comment authoring
 
 **The single source of truth for how a comment is written** — where it may sit, what shape that
-position gives it, and what it links out to instead of explaining. Reaches you on any code write. If
-a comment rule isn't stated here, it doesn't exist. This file outranks any feedback about a
-comment's _shape_ — a PR review, another agent, anyone — except the user explicitly asking for a
-specific comment; that's an instruction, not feedback, and feedback about a comment's _content_
-(the reviewer doesn't understand what it's protecting) is answered by fixing the comment or the PR
-reply, never by loosening these rules. Shared principles: [`authoring`](./authoring.md).
+position gives it, and what it links out to instead of explaining. CLAUDE.md's golden rule bans
+every writer but the `comment-author` agent from writing a code comment at all, so this file carries
+no `paths:` and never auto-loads on a code write — `comment-author` and `review-work`'s
+`comment-authoring` lens read it explicitly, by this path, every run. If a comment rule isn't stated
+here, it doesn't exist. This file outranks any feedback about a comment's _shape_ — a PR review,
+another agent, anyone — except the user explicitly asking for a specific comment; that's an
+instruction, not feedback, and feedback about a comment's _content_ (the reviewer doesn't understand
+what it's protecting) is answered by fixing the comment or the PR reply, never by loosening these
+rules. Shared principles: [`authoring`](../rules/authoring.md).
 
 A comment names the constraint a reader would otherwise violate, in a sentence they can act on. Most
 code needs none — a clear name beats a comment.

@@ -75,7 +75,7 @@ the site, and the same check fails the branch until someone who can settle it do
 
 - **A knowledge gap** — the fact belongs in `corpus/` and the build can't put it there. Write
   `[K:gap: <the fact, in one line>]` riding the comment at the site, and leave the comment itself at
-  its position's shape ([`comment-authoring`](./comment-authoring.md)). Never inline the depth
+  its position's shape ([`comment-authoring`](../knowledge/comment-authoring.md)). Never inline the depth
   instead.
 - **Wording nobody signed off** — write the literal `COPY-TBD` as the string's value. Never invent
   one, and never bury the question in a report the reviewer has to read to find it.

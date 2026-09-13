@@ -1,15 +1,12 @@
 ---
-lastUpdated: 2026-08-14T00:00:00Z
-paths:
-  - 'src/**'
-  - 'supabase/**/*.{ts,sql}'
-  - 'scripts/**'
+lastUpdated: 2026-09-13T00:00:00Z
 ---
 
 # Comment examples
 
 One or more pairs per gate. The rules they encode live in
-[`comment-authoring`](../comment-authoring.md).
+[`comment-authoring`](../comment-authoring.md). Same explicit-read-only status as the hub — no
+`paths:`, never auto-loaded.
 
 ## Everything past the first idea is load-bearing
 
