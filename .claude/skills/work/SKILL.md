@@ -170,8 +170,8 @@ pass** in wave N-1 — § 4b has committed for that blocker, not merely that its
 but not yet finished § 4b bases it on a tip missing its own parent's test coverage, which a later
 merge-forward can't retroactively fix without a real conflict. **A ticket's `Blocked By` can name more
 than one in-epic blocker** — a wave-N builder's worktree merges every one of that ticket's in-epic
-blocker branches into its base, never just the first, before the builder starts; the PR then stacks
-on all of them (§ 5c). Never base a wave-N worktree on `master` or on a single blocker branch when the
+blocker branches into its base, never just the first, before the builder starts; how its PR reaches
+`master` is § 5c's call, not automatic stacking. Never base a wave-N worktree on `master` or on a single blocker branch when the
 ticket names more. **Cap a wave
 at ~4 concurrent builders** — split a larger wave into batches. The test pass (§ 4b) stays
 sequential across every wave, and gates the next wave's fan-out the same way it gates § 5's PR step.
@@ -188,8 +188,11 @@ for the test pass to finish, CI to go green, or the PR to open before doing this
 ### 4b. TEST PASS — one dispatch per branch, sequential
 
 Builders never touch tests, and the orchestrator never mines a conversation it wasn't part of. Once a
-branch's build is in, dispatch a `general-purpose` agent per branch to run the [`update-tests`
-skill](../../skills/update-tests/SKILL.md) inside that builder's worktree, passing the builder's own
+branch's build is in, dispatch a `general-purpose` agent per branch, with `isolation: worktree`
+([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation] — without it
+the dispatch is hard-blocked from writing inside the builder's worktree at all), to run the
+[`update-tests` skill](../../skills/update-tests/SKILL.md) inside that builder's worktree, passing
+the builder's own
 "what a test should cover" lines as `$ARGUMENTS` — `update-tests` already treats that argument as
 mandatory obligations and needs no conversation to mine. The dispatched agent owns `update-tests`'s
 own review-and-commit step end to end (it has the worktree open; the orchestrator never does) and
@@ -270,7 +273,12 @@ exit code). Then test-merge **every pair** of finished branches against each oth
 c. **RESOLVE** — a branch clean vs `master` and vs its peers gets a PR **based off `master`**. When
 two branches conflict but the overlap is mechanical, **stack** the dependent PR on the other. A
 `Blocked By` relation **decides the stack direction** — the blocker is the base; never invert it, and
-never guess a direction the relation already states. A conflict needing **genuine human judgment**
+never guess a direction the relation already states. **A branch whose worktree base merged more than
+one in-epic blocker (§4) never opens as a stack once those blockers' own PRs have already merged to
+`master`** — rebuild it first as only its own commits, cherry-picked onto current `origin/master`,
+force-pushed, then run the conflict check against that. Its worktree carried every blocker's code so
+the builder could see it; a PR still carrying their merge commits re-applies file changes a merged
+sibling's PR already landed, conflicting across every shared file. A conflict needing **genuine human judgment**
 (semantic overlap, incompatible approaches) is not guessed at: **raise it** in the final report and
 park that ticket `Blocked`.
 d. **OPEN**, dispatched — for each non-blocked branch, a `general-purpose` agent runs the

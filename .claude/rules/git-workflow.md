@@ -43,7 +43,12 @@ on.
    run created — a step that removes it is an obligation of how the run ends, not a line that only
    runs once every earlier step succeeded; a run that fails or is interrupted still checks and
    removes what it made before it stops.
-10. **Verify which tree a write lands in, and never let one land on the shared checkout.**
+10. **A subagent that will write inside a worktree other than the dispatcher's own needs
+    `isolation: worktree` on its `Agent` call.** [K:agent-dispatch-worktree-isolation] Without it, the
+    subagent inherits the dispatcher's own worktree sandbox and is hard-blocked from writing to any
+    other worktree — including one it creates itself with `git worktree add`, or one handed to it by
+    path in its prompt.
+11. **Verify which tree a write lands in, and never let one land on the shared checkout.**
     [K:worktree-write-target] Before the first edit or commit in a worktree you just created, check
     the creating command's own exit status directly — never through a `tail`/`head`/`grep` pipe,
     which swallows a failed `git worktree add` and lets a later command run against whatever tree the
