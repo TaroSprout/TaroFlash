@@ -24,6 +24,9 @@ option list and semantics — lives in [`task-board-schema.md`](./task-board-sch
 data-source URL, field name, or option value. This file owns only how those fields are **filled** when
 authoring: what a cut sets, what each stage owns, and the two-axis Priority/Target doctrine below.
 
+- **Every `notion-create-pages` call for a ticket or an epic passes that table's default
+  `template_id`**, always — never create either without it.
+
 ## Fields when cutting
 
 | Field      | Value when cutting                                                                                                         |
@@ -229,13 +232,9 @@ the line.
 
 ### New epics [K:ticket-new-epic-proposal]
 
-Propose first, never create silently. Give a one-line scope, not a full spec. Set the icon to a
-Notion built-in via its hosted SVG — `https://www.notion.so/icons/<name>_<color>.svg` (colours:
-`gray|brown|orange|yellow|green|blue|purple|pink|red`). Not an emoji. The bare
-`icons/<name>_<color>` path is accepted by the API but **renders blank** — always the full `.svg`
-URL. **Validate the name resolves first** — `curl -s -o /dev/null -w '%{http_code}'
-https://www.notion.so/icons/<name>_<color>.svg` must be `200`; an unknown name is accepted silently
-and renders blank (`gear_gray` ✓, `settings_gray` ✗).
+Propose first, never create silently. Give a one-line scope, not a full spec. Create it from the
+Epic Board's default template (`template_id` in [`task-board-schema.md`](./task-board-schema.md)) —
+the template carries its own default icon, so never set one manually via a hosted Notion SVG URL.
 
 ## Dependencies [K:ticket-dependencies]
 
