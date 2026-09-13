@@ -27,8 +27,10 @@ constants; change a field here once and every consumer follows.
 - **MCP server**: `notion`.
 - **Task Board** data source: `collection://3630953c-224c-8065-8864-000bb9fe7bad`
 - **Epic Board** data source: `collection://2510953c-224c-80b7-9bb0-000b5384a47d`
-- **Default page template** (pass on every `notion-create-pages` so the ticket inherits its default
-  icon + field defaults): `template_id: 3af0953c224c800d984cf0b443d67d20`
+- **Default page templates** — pass the matching one on every `notion-create-pages`, always, so the
+  page inherits that table's default icon + field defaults, never created without it:
+  - Task Board: `template_id: 3af0953c224c800d984cf0b443d67d20`
+  - Epic Board: `template_id: 3670953c224c80979c02dc784f83faec`
 
 **Three hard limits of the Notion MCP.** `status`-type fields are special-cased: `notion-update-data-source`
 **cannot** add, rename, recolor, or delete `Status` options — only the user can, in the Notion UI
