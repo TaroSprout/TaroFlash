@@ -3,7 +3,7 @@ import { updateCapability, type UpdateCapabilityParams } from '../db'
 import { useSessionStore } from '@/stores/session'
 
 type QueryCache = ReturnType<typeof useQueryCache>
-type CapabilitiesSnapshot = Capability[] | undefined
+type CapabilitiesSnapshot = CapabilitiesResult | undefined
 
 function setCapabilityInCache(
   queryCache: QueryCache,
@@ -13,10 +13,10 @@ function setCapabilityInCache(
   const snapshot = queryCache.getQueryData(cache_key) as CapabilitiesSnapshot
   if (!snapshot) return undefined
 
-  const next = snapshot.map((row) =>
+  const capabilities = snapshot.capabilities.map((row) =>
     row.key === params.key ? { ...row, state: params.state } : row
   )
-  queryCache.setQueryData(cache_key, next)
+  queryCache.setQueryData(cache_key, { ...snapshot, capabilities })
 
   return snapshot
 }
