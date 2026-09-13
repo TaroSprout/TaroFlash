@@ -11,11 +11,14 @@ async function flushTransition() {
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockExpandSearchInput, mockCollapseSearchInput } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn(),
-  mockExpandSearchInput: vi.fn((_el, _w, done) => done?.()),
-  mockCollapseSearchInput: vi.fn((_el, done) => done?.())
-}))
+const { mockEmitSfx, mockExpandSearchInput, mockCollapseSearchInput, mockDriveWidth } = vi.hoisted(
+  () => ({
+    mockEmitSfx: vi.fn(),
+    mockExpandSearchInput: vi.fn((_el, _w, _driveWidth, done) => done?.()),
+    mockCollapseSearchInput: vi.fn((_el, _driveWidth, done) => done?.()),
+    mockDriveWidth: vi.fn(() => ({ settled: Promise.resolve(), cancel: vi.fn() }))
+  })
+)
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
@@ -26,6 +29,10 @@ vi.mock('@/sfx/bus', () => ({
 vi.mock('@/utils/animations/deck-view/search-field', () => ({
   expandSearchInput: mockExpandSearchInput,
   collapseSearchInput: mockCollapseSearchInput
+}))
+
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: () => ({ driveWidth: mockDriveWidth })
 }))
 
 // ── Imports ───────────────────────────────────────────────────────────────────
@@ -335,6 +342,32 @@ describe('search-bar', () => {
     expect(mockExpandSearchInput).toHaveBeenCalledWith(
       expect.any(Element),
       expect.any(Number),
+      mockDriveWidth,
+      expect.any(Function)
+    )
+  })
+
+  test('onEnter passes the field element and the stage driveWidth to expandSearchInput', async () => {
+    const search = makeSearch({ is_searching: false })
+    mountSearchBar(search)
+    search.is_searching.value = true
+    await flushTransition()
+    expect(mockExpandSearchInput).toHaveBeenCalledWith(
+      expect.any(Element),
+      expect.any(Number),
+      mockDriveWidth,
+      expect.any(Function)
+    )
+  })
+
+  test('onLeave passes the field element and the stage driveWidth to collapseSearchInput', async () => {
+    const search = makeSearch({ is_searching: true })
+    mountSearchBar(search)
+    search.is_searching.value = false
+    await flushTransition()
+    expect(mockCollapseSearchInput).toHaveBeenCalledWith(
+      expect.any(Element),
+      mockDriveWidth,
       expect.any(Function)
     )
   })

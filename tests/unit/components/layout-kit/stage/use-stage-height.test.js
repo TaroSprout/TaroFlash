@@ -427,4 +427,163 @@ describe('useStageHeight', () => {
       await settled
     })
   })
+
+  describe('driveWidth', () => {
+    // Mirrors makeBox, but pins offsetWidth instead of offsetHeight.
+    function makeWidthBox(initial_width) {
+      const box = { offsetWidth: initial_width }
+      let width_value = ''
+
+      box.style = {
+        overflow: '',
+        get width() {
+          return width_value
+        },
+        set width(v) {
+          width_value = v
+          if (v) box.offsetWidth = parseFloat(v)
+        },
+        removeProperty(prop) {
+          if (prop === 'width') {
+            width_value = ''
+          } else if (prop === 'overflow') {
+            box.style.overflow = ''
+          }
+        }
+      }
+
+      return box
+    }
+
+    test('tweens from the current width to the target with the caller-supplied duration and ease', () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+
+      expect(motionHandles[0].fromTo).toHaveBeenCalledWith(
+        box.value,
+        { width: 40 },
+        expect.objectContaining({ width: 120, duration: 0.3, ease: 'power3.out' })
+      )
+    })
+
+    test('a second driveWidth cancels the first handle and starts exactly one new tween', () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      const first_handle = motionHandles[0]
+
+      driveWidth(200, { duration: 0.3, ease: 'power3.out' })
+
+      expect(first_handle.cancel).toHaveBeenCalledOnce()
+      expect(mockMotion).toHaveBeenCalledTimes(2)
+    })
+
+    test('a driveHeight call also supersedes an in-flight driveWidth handle', () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth, driveHeight } = withSetup(box, content)
+
+      driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      const first_handle = motionHandles[0]
+
+      driveHeight(200, { duration: 0.3, ease: 'linear' })
+
+      expect(first_handle.cancel).toHaveBeenCalledOnce()
+      expect(mockMotion).toHaveBeenCalledTimes(2)
+    })
+
+    test('cancel() cancels the in-flight handle without starting a new tween', () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      const { cancel } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      const handle = motionHandles[0]
+
+      cancel()
+
+      expect(handle.cancel).toHaveBeenCalledOnce()
+      expect(mockMotion).toHaveBeenCalledTimes(1)
+    })
+
+    test('settled resolves once the tween completes', async () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      const { settled } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      const handle = motionHandles[0]
+
+      handle.resolveDone()
+      await settled
+
+      expect(box.value.style.overflow).toBe('')
+    })
+
+    test('settled resolves for a change superseded by a newer driveWidth', async () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      const { settled: first_settled } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      driveWidth(200, { duration: 0.3, ease: 'power3.out' })
+
+      await first_settled
+    })
+
+    test('settled resolves when cancel() is called', async () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      const { settled, cancel } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      cancel()
+
+      await settled
+    })
+
+    test('settled resolves when the component unmounts mid-tween', async () => {
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      const { settled } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+      app.unmount()
+
+      await settled
+    })
+
+    test('snaps by setting style.width directly and resolves settled when the budget has no free slot', async () => {
+      mockReserveHeightTween.mockReturnValue(null)
+      const box = ref(makeWidthBox(40))
+      const content = ref(makeContent(40))
+      const { driveWidth } = withSetup(box, content)
+
+      const { settled } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+
+      expect(mockMotion).not.toHaveBeenCalled()
+      expect(box.value.style.width).toBe('120px')
+      expect(mockReserveHeightTween).toHaveBeenCalledOnce()
+
+      await settled
+    })
+
+    test('resolves settled immediately with no tween or budget reservation when the target equals the current width', async () => {
+      const box = ref(makeWidthBox(120))
+      const content = ref(makeContent(120))
+      const { driveWidth } = withSetup(box, content)
+
+      const { settled } = driveWidth(120, { duration: 0.3, ease: 'power3.out' })
+
+      expect(mockMotion).not.toHaveBeenCalled()
+      expect(mockReserveHeightTween).not.toHaveBeenCalled()
+
+      await settled
+    })
+  })
 })
