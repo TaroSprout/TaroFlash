@@ -17,12 +17,54 @@ export type UpdateCapabilityParams = {
   state: CapabilityState
 }
 
-/** Write refused for non-admins at the database, never re-checked here. */
+/** Flips a capability's on/off state; refused for non-admins at the database, never re-checked here. */
 export async function updateCapability(params: UpdateCapabilityParams): Promise<void> {
   const { error } = await supabase
     .from('capabilities')
     .update({ state: params.state })
     .eq('key', params.key)
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+}
+
+/** A capability's allow list; a non-admin caller gets an empty list, refused at the database. */
+export async function fetchCapabilityGrants(key: CapabilityKey): Promise<CapabilityGrant[]> {
+  const { data, error } = await supabase.rpc('list_capability_grants', { p_key: key })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  return (data ?? []) as CapabilityGrant[]
+}
+
+export type CapabilityGrantParams = {
+  key: CapabilityKey
+  member_id: string
+}
+
+/** Adds a member to a capability's allow list; granted_by/granted_at are stamped by the database, and the write is refused for non-admins there. */
+export async function addCapabilityGrant(params: CapabilityGrantParams): Promise<void> {
+  const { error } = await supabase
+    .from('capability_grants')
+    .insert({ key: params.key, member_id: params.member_id })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+}
+
+export async function removeCapabilityGrant(params: CapabilityGrantParams): Promise<void> {
+  const { error } = await supabase
+    .from('capability_grants')
+    .delete()
+    .eq('key', params.key)
+    .eq('member_id', params.member_id)
 
   if (error) {
     logger.error(error.message)
