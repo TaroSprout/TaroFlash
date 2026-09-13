@@ -188,8 +188,11 @@ for the test pass to finish, CI to go green, or the PR to open before doing this
 ### 4b. TEST PASS — one dispatch per branch, sequential
 
 Builders never touch tests, and the orchestrator never mines a conversation it wasn't part of. Once a
-branch's build is in, dispatch a `general-purpose` agent per branch to run the [`update-tests`
-skill](../../skills/update-tests/SKILL.md) inside that builder's worktree, passing the builder's own
+branch's build is in, dispatch a `general-purpose` agent per branch, with `isolation: worktree`
+([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation] — without it
+the dispatch is hard-blocked from writing inside the builder's worktree at all), to run the
+[`update-tests` skill](../../skills/update-tests/SKILL.md) inside that builder's worktree, passing
+the builder's own
 "what a test should cover" lines as `$ARGUMENTS` — `update-tests` already treats that argument as
 mandatory obligations and needs no conversation to mine. The dispatched agent owns `update-tests`'s
 own review-and-commit step end to end (it has the worktree open; the orchestrator never does) and

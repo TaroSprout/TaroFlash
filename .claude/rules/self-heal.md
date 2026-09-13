@@ -75,8 +75,10 @@ around it.
 **You never edit a knowledge file yourself.** Spawn the persona and carry on with the task that
 surfaced the lesson — healing runs beside your work, never in front of it.
 
-- **Background, always.** One `Agent` call per lesson, `run_in_background`, at the moment the lesson
-  lands. There is no foreground variant and no end-of-session sweep, in any flow.
+- **Background, always.** One `Agent` call per lesson, `run_in_background`, `isolation: worktree`
+  (the persona creates and writes its own worktree per `shipping`, which a non-isolated dispatch
+  can't do — [`git-workflow`](./git-workflow.md), →[K:agent-dispatch-worktree-isolation]), at the
+  moment the lesson lands. There is no foreground variant and no end-of-session sweep, in any flow.
 - **Before dispatching a heal, count the markers in `.claude/heals/`.** At 5 or more, or when
   `knowledge-lint` warns the always-on payload is over aspiration, or warns a skill or agent
   definition is over its size cap, dispatch `harness-maintainer` first — it sweeps the whole
