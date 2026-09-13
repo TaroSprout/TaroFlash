@@ -22,6 +22,14 @@ vi.mock('@/utils/animations/dock-slide', () => ({
   dockSlideOut: mockDockSlideOut
 }))
 
+vi.mock('@/components/layout-kit/stage/height-budget', () => ({
+  reserveHeightTween: () => () => {} // Grant every slot so the height wiring runs without a Pinia motion store.
+}))
+
+vi.mock('@/utils/motion/driver', () => ({
+  motion: () => () => ({ done: Promise.resolve(), cancel() {}, finish() {}, mark() {} })
+}))
+
 // The host reads `w<<breakpoint>` via useMatchMedia — mock it so the claimed
 // breakpoint's match state and the flush breakpoint (`w<sm`) are directly and
 // independently controllable per test.
@@ -68,9 +76,9 @@ function mountHost() {
 
 beforeEach(() => {
   // Reset module-level singleton state between tests.
-  const { el, height_claims } = useMobileDock()
+  const { el, setHeightOwner } = useMobileDock()
   el.value = null
-  height_claims.value = 0
+  setHeightOwner(null)
   setKeyboardOpen(false)
   setChromeCovered(false)
   resetBreakpointMedia()
@@ -365,17 +373,17 @@ describe('MobileDockHost', () => {
       expect(wrapper_el.style.overflow).toBe('')
     })
 
-    test('--mobile-dock-height is republished when the claim count returns to zero', async () => {
+    test('--mobile-dock-height is republished when the held claim releases', async () => {
       setBelowBreakpoint(DEFAULT_BREAKPOINT, true)
       mountHost()
-      const { claimHeight, releaseHeight } = useMobileDock()
+      const { claimHeight } = useMobileDock()
 
-      claimHeight()
+      const release = claimHeight()
       await nextTick()
 
       const setPropertySpy = vi.spyOn(document.documentElement.style, 'setProperty')
 
-      releaseHeight()
+      release()
       await nextTick()
 
       expect(setPropertySpy).toHaveBeenCalledWith('--mobile-dock-height', expect.any(String))

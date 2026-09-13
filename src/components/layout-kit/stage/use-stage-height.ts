@@ -7,6 +7,17 @@ const HEIGHT_DURATION = 200
 
 const NOOP = () => {}
 
+type StageHeightOptions = {
+  /**
+   * Returns false to record content's new size as the baseline without animating
+   * to it — for a box that's off-screen, or whose height an outside effect is
+   * driving this frame. Defaults to always animating.
+   */
+  active?: () => boolean
+  /** Called once each height change settles; not on a silently-recorded baseline. */
+  onSettled?: () => void
+}
+
 /**
  * Grows or shrinks the measured box to follow its content's natural height,
  * tweening through the motion driver and clipping the box only while it moves.
@@ -18,12 +29,19 @@ const NOOP = () => {}
  *
  * @param box - the measured element whose height is animated; must tolerate `overflow: hidden`.
  * @param content - the in-flow element whose natural height drives the target.
+ * @param options - `active` gate and `onSettled` callback; see {@link StageHeightOptions}.
  */
-export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLElement | null>) {
+export function useStageHeight(
+  box: Ref<HTMLElement | null>,
+  content: Ref<HTMLElement | null>,
+  { active = () => true, onSettled }: StageHeightOptions = {}
+) {
   const claims = ref(0)
 
   let observer: ResizeObserver | null = null
   let last = 0
+  // The box's height as it sits at rest — the height to tween from, since a resize fires only after the box has reflowed. →[K:dock-height-single-owner]
+  let rested = 0
   let generation = 0
   let handle: MotionHandle | null = null
   let release: () => void = NOOP
@@ -34,6 +52,7 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
 
     el.style.removeProperty('overflow')
     el.style.removeProperty('height')
+    rested = el.offsetHeight
   }
 
   function stopCurrent() {
@@ -46,8 +65,10 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
     generation++
   }
 
-  // Reads the height the box wants with its current content, without leaving that value
-  // pinned — the caller decides whether to snap or tween toward it from where it is now.
+  /**
+   * Reads the height the box wants with its current content, without leaving that value pinned —
+   * the caller decides whether to snap or tween toward it from where it is now.
+   */
   function measureNatural(el: HTMLElement, restore: string): number {
     el.style.removeProperty('height')
     const natural = el.offsetHeight
@@ -77,6 +98,7 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
 
       handBack()
       handle = null
+      onSettled?.()
     })
   }
 
@@ -86,13 +108,16 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
 
     stopCurrent()
 
-    const from = el.offsetHeight
+    // Tween from the tracked resting height; the box has already reflowed to the new content. →[K:dock-height-single-owner]
+    const from = rested
     const target = measureNatural(el, `${from}px`)
     if (target === from) return handBack()
 
     const reserved = reserveHeightTween()
     if (!reserved) {
+      // No compositor budget left this tier — snap to the target and report it settled.
       handBack()
+      onSettled?.()
       return
     }
 
@@ -104,7 +129,13 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
     const target = content.value?.offsetHeight ?? 0
     if (target === last) return
 
+    // Track the baseline and resting height even while inactive, so a later active change tweens from where the box now sits.
     last = target
+    if (!active()) {
+      rested = box.value?.offsetHeight ?? rested
+      return
+    }
+
     changeHeight()
   }
 
@@ -132,6 +163,7 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
       observer?.disconnect()
       observer = null
       last = el?.offsetHeight ?? 0
+      rested = box.value?.offsetHeight ?? 0
       if (!el) return
 
       observer = new ResizeObserver(onResize)

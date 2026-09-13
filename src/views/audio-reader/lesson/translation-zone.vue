@@ -4,7 +4,7 @@ import {
   translationCrossfadeEnter,
   translationCrossfadeLeave
 } from '@/utils/animations/translation-crossfade'
-import { useAnimatedHeight } from '@/composables/ui/animated-height'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 
 type TranslationZoneProps = {
   // The line's translation to show, or null to show nothing (a line with no
@@ -17,8 +17,8 @@ const { translation = null } = defineProps<TranslationZoneProps>()
 const wrapper = useTemplateRef<HTMLElement>('wrapper')
 const content = useTemplateRef<HTMLElement>('content')
 
-// A cheap, isolated band — safe to tween the height rather than snap it.
-useAnimatedHeight(wrapper, content, undefined, undefined, true)
+// A cheap, isolated band — follows its content's height through the stage.
+useStageHeight(wrapper, content)
 </script>
 
 <template>

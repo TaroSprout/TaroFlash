@@ -57,7 +57,7 @@ const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
 const { display_mode, translation_source } = useReaderPrefs()
 
-const { el: dock_el, claimHeight, releaseHeight } = useMobileDock()
+const { el: dock_el, claimHeight } = useMobileDock()
 const is_desktop = useMatchMedia('w>=xl')
 
 // The reader-settings panel replaces the toolbar in the dock, like the term card
@@ -183,15 +183,19 @@ function reclearSelection() {
 }
 
 // The crossfade owns the footer height while a pane swap is in flight, so the
-// content-driven height animation stands down between swap-start and swap-end. →[K:dock-height-single-owner]
+// content-driven height animation stands down between swap-start and swap-end. The
+// stage claim's release is captured on start and run on end. →[K:dock-height-single-owner]
+let release_swap: (() => void) | null = null
+
 function onSwapStart() {
   swapping = true
-  claimHeight()
+  release_swap = claimHeight()
 }
 
 function onSwapEnd() {
   swapping = false
-  releaseHeight()
+  release_swap?.()
+  release_swap = null
 }
 
 // The dock's display-settings trigger and the panel's Done control funnel through

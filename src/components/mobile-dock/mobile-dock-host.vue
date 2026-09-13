@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
-import { gsap } from 'gsap'
 import { useMobileDock } from './use-mobile-dock'
-import { useAnimatedHeight } from '@/composables/ui/animated-height'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 import { useBottomChromeCover } from '@/composables/ui/safe-area'
 import { dockSlideIn, dockSlideOut } from '@/utils/animations/dock-slide'
 
-const { el, is_visible, is_flush, height_claims } = useMobileDock()
+const { el, is_visible, is_flush, setHeightOwner } = useMobileDock()
 
 const { is_covered: is_bottom_chrome_covering } = useBottomChromeCover()
 
@@ -28,46 +27,39 @@ function publishHeight() {
   document.documentElement.style.setProperty('--mobile-dock-height', `${height}px`)
 }
 
-// Tiny, cheap footer content — a real height tween is safe here, unlike the transcript case.
-// Stands down while content inside claims the height, so only one tween ever runs. →[K:dock-height-single-owner]
-useAnimatedHeight(
-  content_wrapper,
-  content,
-  () => is_visible.value && height_claims.value === 0,
-  publishHeight,
-  true
-)
+// The bar follows its content's height through the stage — clipping and releasing
+// the box itself while it moves, standing down while content inside claims the
+// height so only one tween ever runs. The claim is published for that content to
+// take. →[K:dock-height-single-owner]
+const { claimHeight } = useStageHeight(content_wrapper, content, {
+  active: () => is_visible.value,
+  onSettled: publishHeight
+})
 
-/**
- * Hand the bar's height back to the browser for the length of a claim.
- *
- * The height tween leaves an inline height behind, which would hold the bar at
- * whatever it last measured while the claimed animation resizes the content
- * underneath it. Cleared, the bar sizes to its content and follows along.
- */
-function releaseHeightControl() {
-  const wrapper = content_wrapper.value
-  if (!wrapper) return
+// Wrap the stage claim so releasing it republishes the settled height: the claimed
+// animation drove the content past what `--mobile-dock-height` last saw, and no
+// resize follows to catch it up otherwise. →[K:dock-height-single-owner]
+function claimDockHeight() {
+  const release = claimHeight()
 
-  gsap.killTweensOf(wrapper)
-  wrapper.style.height = ''
-  wrapper.style.overflow = ''
+  return () => {
+    release()
+    publishHeight()
+  }
 }
 
 onMounted(() => {
   el.value = bar.value
+  setHeightOwner(claimDockHeight)
   publishHeight()
 })
 
 onBeforeUnmount(() => {
+  setHeightOwner(null)
   document.documentElement.style.removeProperty('--mobile-dock-height')
 })
 
-watch(height_claims, (claims) => {
-  if (claims > 0) releaseHeightControl()
-})
-
-watch([is_visible, height_claims], publishHeight, { flush: 'post' })
+watch(is_visible, publishHeight, { flush: 'post' })
 </script>
 
 <template>

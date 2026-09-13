@@ -294,7 +294,7 @@ beforeEach(() => {
   translationSourceRef.value = 'playback'
   playerRef.seek.mockClear()
   playerRef.play.mockClear()
-  useMobileDock().height_claims.value = 0
+  useMobileDock().setHeightOwner(null)
   // Fire rAF callbacks synchronously so show_term_in_dock_deferred flips
   // in the same tick as nextTick() — avoids the one-frame lag in tests.
   vi.stubGlobal('requestAnimationFrame', (cb) => cb())
@@ -644,17 +644,20 @@ describe('LessonView', () => {
     })
 
     test('swap-start/swap-end claim and release the mobile dock height alongside the local swapping flag', async () => {
+      const release = vi.fn() // Fake stage owner so the view's claim delegates to something observable.
+      const claim = vi.fn(() => release)
+      useMobileDock().setHeightOwner(claim)
+
       const wrapper = mountView()
       await nextTick()
-      const { height_claims } = useMobileDock()
-      expect(height_claims.value).toBe(0)
 
       const crossfade = wrapper.findComponent({ name: 'CrossfadeResize' })
       await crossfade.vm.$emit('swap-start')
-      expect(height_claims.value).toBe(1)
+      expect(claim).toHaveBeenCalledOnce()
+      expect(release).not.toHaveBeenCalled()
 
       await crossfade.vm.$emit('swap-end')
-      expect(height_claims.value).toBe(0)
+      expect(release).toHaveBeenCalledOnce()
     })
 
     test('follow_direction prop matches transcript follow_direction', async () => {

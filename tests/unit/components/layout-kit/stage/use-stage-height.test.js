@@ -76,11 +76,11 @@ function makeContent(offsetHeight) {
 
 let app
 
-function withSetup(box, content) {
+function withSetup(box, content, options) {
   let result
   app = createApp({
     setup() {
-      result = useStageHeight(box, content)
+      result = useStageHeight(box, content, options)
       return () => {}
     }
   })
@@ -207,5 +207,91 @@ describe('useStageHeight', () => {
 
     expect(handle.cancel).toHaveBeenCalledOnce()
     expect(release_budget).toHaveBeenCalledOnce()
+  })
+
+  describe('active gate', () => {
+    test('an inactive resize records the baseline without tweening; a real active change then tweens', () => {
+      let is_active = false
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { active: () => is_active })
+
+      resize(box.value, content, 80) // inactive — baseline recorded, no tween
+      expect(mockMotion).not.toHaveBeenCalled()
+
+      is_active = true
+      resize(box.value, content, 80) // same size as the recorded baseline — still no tween
+      expect(mockMotion).not.toHaveBeenCalled()
+
+      resize(box.value, content, 120) // a genuine change while active — tweens now
+      expect(mockMotion).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('onSettled', () => {
+    test('fires once after a tween settles', async () => {
+      const onSettled = vi.fn()
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { onSettled })
+
+      resize(box.value, content, 80)
+      expect(onSettled).not.toHaveBeenCalled()
+
+      motionHandles[0].resolveDone()
+      await motionHandles[0].done
+
+      expect(onSettled).toHaveBeenCalledOnce()
+    })
+
+    test('fires once on the budget-null snap path', () => {
+      mockReserveHeightTween.mockReturnValue(null)
+      const onSettled = vi.fn()
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { onSettled })
+
+      resize(box.value, content, 80)
+
+      expect(mockMotion).not.toHaveBeenCalled()
+      expect(onSettled).toHaveBeenCalledOnce()
+    })
+
+    test('does not fire after unmount, even once the cancelled tween resolves', async () => {
+      const onSettled = vi.fn()
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { onSettled })
+
+      resize(box.value, content, 80)
+      const handle = motionHandles[0]
+
+      app.unmount()
+      handle.resolveDone()
+      await handle.done
+
+      expect(onSettled).not.toHaveBeenCalled()
+    })
+
+    test('fires only for the surviving tween when a resize supersedes an in-flight one', async () => {
+      const onSettled = vi.fn()
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { onSettled })
+
+      resize(box.value, content, 80)
+      const first = motionHandles[0]
+
+      resize(box.value, content, 120) // supersedes the first, bumping the generation
+      const second = motionHandles[1]
+
+      first.resolveDone()
+      await first.done
+      expect(onSettled).not.toHaveBeenCalled() // stale generation — no settle
+
+      second.resolveDone()
+      await second.done
+      expect(onSettled).toHaveBeenCalledOnce()
+    })
   })
 })

@@ -2,10 +2,10 @@ import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
-const { mockEnter, mockLeave, useAnimatedHeightMock } = vi.hoisted(() => ({
+const { mockEnter, mockLeave, useStageHeightMock } = vi.hoisted(() => ({
   mockEnter: vi.fn((_el, done) => done()),
   mockLeave: vi.fn((_el, done) => done()),
-  useAnimatedHeightMock: vi.fn()
+  useStageHeightMock: vi.fn(() => ({ claimHeight: vi.fn(() => vi.fn()) }))
 }))
 
 vi.mock('@/utils/animations/translation-crossfade', () => ({
@@ -13,8 +13,8 @@ vi.mock('@/utils/animations/translation-crossfade', () => ({
   translationCrossfadeLeave: mockLeave
 }))
 
-vi.mock('@/composables/ui/animated-height', () => ({
-  useAnimatedHeight: useAnimatedHeightMock
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: useStageHeightMock
 }))
 
 import TranslationZone from '@/views/audio-reader/lesson/translation-zone.vue'
@@ -23,7 +23,7 @@ describe('TranslationZone', () => {
   beforeEach(() => {
     mockEnter.mockClear()
     mockLeave.mockClear()
-    useAnimatedHeightMock.mockClear()
+    useStageHeightMock.mockClear()
   })
 
   describe('empty on null', () => {
@@ -85,16 +85,15 @@ describe('TranslationZone', () => {
     })
   })
 
-  describe('height tween wiring', () => {
-    test('ties the band height to the wrapper and body elements, animated', () => {
+  describe('height wiring', () => {
+    test('follows the band height through the stage, tying the wrapper and body elements', () => {
       const wrapper = mount(TranslationZone, { props: { translation: 'Bonjour.' } })
 
-      expect(useAnimatedHeightMock).toHaveBeenCalledTimes(1)
-      const [wrapperRef, contentRef, , , animate] = useAnimatedHeightMock.mock.calls[0]
+      expect(useStageHeightMock).toHaveBeenCalledTimes(1)
+      const [boxRef, contentRef] = useStageHeightMock.mock.calls[0]
 
-      expect(wrapperRef.value).toBe(wrapper.find('[data-testid="translation-zone"]').element)
+      expect(boxRef.value).toBe(wrapper.find('[data-testid="translation-zone"]').element)
       expect(contentRef.value).toBe(wrapper.find('[data-testid="translation-zone__body"]').element)
-      expect(animate).toBe(true)
     })
   })
 })

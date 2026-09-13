@@ -59,11 +59,13 @@ bar, watches whatever landed inside it, and grows or shrinks the bar to fit.
 
 ## The dock watches, it doesn't get told
 
-`useAnimatedHeight` sits between the dock's wrapper and whatever content is
+`useStageHeight` sits between the dock's wrapper and whatever content is
 teleported in, watching that content with a `ResizeObserver`. The moment the
 content's natural height changes — a panel swaps in, a row gets added — the
-wrapper tweens to match, 0.2s `power2.out`. Cheap, GSAP-driven, and it fires
-on _any_ size change, however that change happened.
+wrapper tweens to match, 0.2s `power2.out`, through the motion driver's own
+compositor budget (`reserveHeightTween`) — a tier with no budget left snaps to
+the target instead of tweening. Fires on _any_ size change, however that
+change happened.
 
 That's the whole mechanism, and it's also the trap: the dock doesn't care
 _why_ its content resized. It only sees the end state and chases it.
@@ -85,23 +87,25 @@ happen through the one tween the dock already runs, not beside it.
 
 Some content genuinely needs its own resize tween inside the dock — a
 crossfade between two panes, for instance, where the swap itself is the
-animation. `useMobileDock()` exposes a `height_claims` counter plus
-`claimHeight()` / `releaseHeight()` for exactly that: call `claimHeight()`
-before your own tween starts and `releaseHeight()` once it settles, and the
-dock's own `useAnimatedHeight` gate stands down for as long as any claim is
-open. It's a counter, not a flag, so overlapping claims from more than one
-source can't release each other early.
+animation. `useMobileDock()`'s `claimHeight()` is for exactly that: it takes
+the dock's height immediately and returns the release to call once your own
+tween settles. It doesn't own the height itself — it delegates to whichever
+host is currently mounted, which registered its own stage's claim via
+`setHeightOwner()` on mount. The stage arbitrates from there: a single
+`claims` counter inside `useStageHeight`, standing its own tween down for as
+long as any claim is open, so overlapping claims from more than one source
+still can't release each other early.
 
-The deck view's mobile footer and the audio-reader lesson view both wire
-their `crossfade-resize`'s `swap-start` / `swap-end` events straight to
-`claimHeight` / `releaseHeight` — the swap owns the height for its own
+The deck view's mobile footer and the audio-reader lesson view both call
+`claimHeight()` on their `crossfade-resize`'s `swap-start` and hold the
+returned release for `swap-end` — the swap owns the height for its own
 duration, the dock catches up to the settled result once the claim releases.
 
 > [!WATCH] A `swap-start` with no matching `swap-end` strands the claim open.
-> The counter never returns to zero, the dock's own tween gate never
-> re-arms, and the bar stops resizing to its content for the rest of the
-> session. Every claim needs a release on every path out, including ones
-> that abort a swap early.
+> The stage's counter never returns to zero, its own tween never re-arms,
+> and the bar stops resizing to its content for the rest of the session.
+> Every claim needs a release on every path out, including ones that abort a
+> swap early.
 
 ## Visible and flush are different questions
 

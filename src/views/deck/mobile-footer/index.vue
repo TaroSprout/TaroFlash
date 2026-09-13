@@ -12,15 +12,28 @@ import { cardEditorKey } from '@/views/deck/composables'
 
 const { is_page_settings_open, mode } = inject(deckViewShellKey)!
 const { is_selecting } = inject(cardEditorKey)!.selection
-const { claimHeight, releaseHeight } = useMobileDock()
+const { claimHeight } = useMobileDock()
+
+// The swap owns the dock's height between start and end; capture the stage claim's
+// release on start and run it once the swap settles. →[K:dock-height-single-owner]
+let release_swap: (() => void) | null = null
+
+function onSwapStart() {
+  release_swap = claimHeight()
+}
+
+function onSwapEnd() {
+  release_swap?.()
+  release_swap = null
+}
 </script>
 
 <template>
   <mobile-dock breakpoint="md">
     <crossfade-resize
       data-testid="deck-mobile-footer"
-      @swap-start="claimHeight"
-      @swap-end="releaseHeight"
+      @swap-start="onSwapStart"
+      @swap-end="onSwapEnd"
     >
       <footer-bulk-actions v-if="is_selecting" key="bulk-actions" />
       <footer-import v-else-if="mode === 'import'" key="import" />
