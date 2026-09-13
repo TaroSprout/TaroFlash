@@ -7,6 +7,7 @@ import { popScrimReveal } from '@/utils/animations/scrim-reveal'
 import { emitSfx } from '@/sfx/bus'
 import { useLocalRef } from '@/composables/storage/local-ref'
 import { useMatchMedia } from '@/composables/ui/media-query'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 
 defineSlots<{
   default(): any
@@ -32,13 +33,16 @@ const scrim = useTemplateRef<HTMLElement>('scrim')
 const badge_content = useTemplateRef<HTMLElement>('badge_content')
 const fields = useTemplateRef<HTMLElement>('fields')
 
+const { driveHeight } = useStageHeight(fields, fields, { active: () => false })
+
 function toggleRevealed() {
   if (!scrim.value || !badge_content.value || !fields.value) return
 
   revealed.value = !revealed.value
   emitSfx('ui.press')
   popScrimReveal(scrim.value, badge_content.value, fields.value, revealed.value, {
-    collapse: is_phone.value
+    collapse: is_phone.value,
+    driveHeight
   })
 }
 </script>
