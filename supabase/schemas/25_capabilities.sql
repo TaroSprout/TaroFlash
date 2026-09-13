@@ -126,9 +126,35 @@ $$;
 ALTER FUNCTION public.resolve_member_capabilities() OWNER TO postgres;
 
 
+-- The admin allow-list read: every granted member's display fields for one
+-- capability. SECURITY DEFINER so it can join members past their own-row RLS —
+-- a plain select embedding members would blank every row but the caller's — and
+-- gated inside the query on can_manage_capabilities() so a non-admin caller
+-- matches zero rows instead.
+CREATE FUNCTION public.list_capability_grants(p_key text) RETURNS TABLE(id uuid, display_name text, avatar_url text, granted_at timestamp with time zone)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select m.id, m.display_name, m.avatar_url, g.granted_at
+  from public.capability_grants g
+  join public.members m on m.id = g.member_id
+  where g.key = p_key
+    and public.can_manage_capabilities()
+  order by g.granted_at asc, m.display_name asc
+$$;
+
+
+ALTER FUNCTION public.list_capability_grants(p_key text) OWNER TO postgres;
+
+
 -- SECURITY DEFINER, so not left executable by anon (guarded by pgTAP
 -- 00043_definer_function_anon_grants).
 REVOKE ALL ON FUNCTION public.resolve_member_capabilities() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.resolve_member_capabilities() FROM anon;
 GRANT ALL ON FUNCTION public.resolve_member_capabilities() TO authenticated;
 GRANT ALL ON FUNCTION public.resolve_member_capabilities() TO service_role;
+
+REVOKE ALL ON FUNCTION public.list_capability_grants(p_key text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.list_capability_grants(p_key text) FROM anon;
+GRANT ALL ON FUNCTION public.list_capability_grants(p_key text) TO authenticated;
+GRANT ALL ON FUNCTION public.list_capability_grants(p_key text) TO service_role;

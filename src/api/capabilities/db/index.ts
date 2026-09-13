@@ -42,3 +42,45 @@ export async function updateCapability(params: UpdateCapabilityParams): Promise<
     throw error
   }
 }
+
+/** Reads through the admin-gated RPC — a non-admin caller gets an empty list, refused at the database. */
+export async function fetchCapabilityGrants(key: CapabilityKey): Promise<CapabilityGrant[]> {
+  const { data, error } = await supabase.rpc('list_capability_grants', { p_key: key })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  return (data ?? []) as CapabilityGrant[]
+}
+
+export type CapabilityGrantParams = {
+  key: CapabilityKey
+  member_id: string
+}
+
+/** granted_by/granted_at are stamped by the database; the write is refused for non-admins there. */
+export async function addCapabilityGrant(params: CapabilityGrantParams): Promise<void> {
+  const { error } = await supabase
+    .from('capability_grants')
+    .insert({ key: params.key, member_id: params.member_id })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+}
+
+export async function removeCapabilityGrant(params: CapabilityGrantParams): Promise<void> {
+  const { error } = await supabase
+    .from('capability_grants')
+    .delete()
+    .eq('key', params.key)
+    .eq('member_id', params.member_id)
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+}
