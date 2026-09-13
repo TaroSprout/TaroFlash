@@ -1,3 +1,5 @@
+-- knowledge: member_search_result, search_members — unrecorded
+
 set check_function_bodies = off;
 
 create type "public"."member_search_result" as ("id" uuid, "display_name" text, "avatar_url" text, "email" text);
