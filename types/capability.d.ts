@@ -12,3 +12,11 @@ type Capability = {
   key: CapabilityKey
   state: CapabilityState
 }
+
+// One cache entry for the whole capabilities read: the rows plus which keys the
+// caller's own capability_grants rows cover, so a `targeted` state resolves
+// without a second query.
+type CapabilitiesResult = {
+  capabilities: Capability[]
+  grantedKeys: Set<CapabilityKey>
+}

@@ -13,11 +13,11 @@ export function useCapabilities() {
   const query = useCapabilitiesQuery()
 
   function isLive(key: CapabilityKey, fallback: boolean): boolean {
-    const capabilities = query.data.value
-    if (!capabilities) return fallback
+    const result = query.data.value
+    if (!result) return fallback
 
-    const row = capabilities.find((capability) => capability.key === key)
-    return row?.state === 'on'
+    const row = result.capabilities.find((capability) => capability.key === key)
+    return row?.state === 'on' || (row?.state === 'targeted' && result.grantedKeys.has(key))
   }
 
   return { isLive }
