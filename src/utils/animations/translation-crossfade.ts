@@ -1,14 +1,12 @@
 import { gsap } from 'gsap'
+import { useMotionStore } from '@/stores/motion'
 
 const DURATION = 0.2
 
-// Mirrors the `motion-safe` CSS variant: motion runs unless the OS asks for
-// reduced motion or the body carries the kill class. A JS/GSAP transition can't
-// hang off the Tailwind variant, so it reads the same two signals directly.
+// A JS/GSAP transition can't hang off a Tailwind variant, so it reads the
+// same live reduced-motion signal the motion store already tracks.
 function motionSafe() {
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const killed = document.body.classList.contains('motion-safe')
-  return !reduced && !killed
+  return !useMotionStore().prefers_reduced_motion
 }
 
 export function translationCrossfadeEnter(el: Element, done: () => void) {

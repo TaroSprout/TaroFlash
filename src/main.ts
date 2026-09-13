@@ -6,10 +6,7 @@ import { createPinia } from 'pinia'
 import { PiniaColada, PiniaColadaQueryHooksPlugin } from '@pinia/colada'
 import { i18n } from '@/i18n'
 import { vSfx } from '@/sfx/directive'
-import { warmupAnimations } from '@/utils/animations/warmup'
 import { useSessionStore } from '@/stores/session'
-
-warmupAnimations()
 
 // The router's own scrollBehavior (savedPosition ?? {top: 0}) only runs on
 // client-side navigations — a hard refresh bypasses it entirely and falls to
