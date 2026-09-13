@@ -2,24 +2,27 @@ import { gsap } from 'gsap'
 
 export type CursorBox = { left: number; top: number; width: number; height: number }
 
-const LEAD = 0.16
-const VERTICAL = 0.2
+const MOVE = 0.2
 const FADE = 0.2
 
-type Edges = { left: number; right: number }
+// The box's real, currently-applied geometry plus a handle on the in-flight transform tween easing it toward that geometry, so an interrupted move can kill the stale one before starting the next.
+type Placed = { box: CursorBox; tween: gsap.core.Tween | null }
+const placedByEl = new WeakMap<HTMLElement, Placed>()
 
-// Keyed per element so a move starts from where that highlight actually is,
-// and so an interrupted tween has something specific to be killed on.
-const edgesByEl = new WeakMap<HTMLElement, Edges>()
-
-function paint(el: HTMLElement, edges: Edges) {
-  el.style.left = `${edges.left}px`
-  el.style.width = `${Math.max(0, edges.right - edges.left)}px`
+/** Paints one frame of the FLIP tween easing `delta` toward identity. */
+function paintDelta(el: HTMLElement, delta: { x: number; y: number; sx: number; sy: number }) {
+  el.style.transform = `translate(${delta.x}px, ${delta.y}px) scale(${delta.sx}, ${delta.sy})`
 }
 
 /**
  * Glides the reading highlight onto a word, both edges moving together. The
  * first call drops it into place instead, with no glide from nowhere.
+ *
+ * `left`/`top`/`width`/`height` snap to the target instantly on every call —
+ * never tweened — so the box's texture overlay always tiles against its true
+ * size. The glide itself is a FLIP: the box is inverted back to where it
+ * visually sat a moment ago via `transform`, then eased to identity, so the
+ * only per-frame write is `transform`.
  *
  * @param box - Where to land, relative to the highlight's offset parent.
  * @param duration - Override the default speed. The pointer-driven pill runs
@@ -30,34 +33,48 @@ export function moveReaderCursor(
   box: CursorBox,
   { duration }: { duration?: number } = {}
 ) {
-  const target_right = box.left + box.width
-  const edges = edgesByEl.get(el)
+  const placed = placedByEl.get(el)
 
-  if (!edges) {
-    const next = { left: box.left, right: target_right }
-    edgesByEl.set(el, next)
-    gsap.set(el, { top: box.top, height: box.height, autoAlpha: 1 })
-    paint(el, next)
+  el.style.left = `${box.left}px`
+  el.style.top = `${box.top}px`
+  el.style.width = `${Math.max(0, box.width)}px`
+  el.style.height = `${Math.max(0, box.height)}px`
+
+  if (!placed) {
+    el.style.transform = 'none'
+    placedByEl.set(el, { box, tween: null })
+    gsap.set(el, { autoAlpha: 1 })
     return
   }
 
+  placed.tween?.kill()
+
   gsap.to(el, {
-    top: box.top,
-    height: box.height,
     autoAlpha: 1,
-    duration: duration ?? VERTICAL,
+    duration: duration ?? MOVE,
     ease: 'power2.out',
     overwrite: 'auto'
   })
-  gsap.killTweensOf(edges)
 
-  gsap.to(edges, {
-    left: box.left,
-    right: target_right,
-    duration: duration ?? LEAD,
+  const delta = {
+    x: placed.box.left - box.left,
+    y: placed.box.top - box.top,
+    sx: box.width > 0 ? placed.box.width / box.width : 1,
+    sy: box.height > 0 ? placed.box.height / box.height : 1
+  }
+  paintDelta(el, delta)
+
+  const tween = gsap.to(delta, {
+    x: 0,
+    y: 0,
+    sx: 1,
+    sy: 1,
+    duration: duration ?? MOVE,
     ease: 'power2.out',
-    onUpdate: () => paint(el, edges)
+    onUpdate: () => paintDelta(el, delta)
   })
+
+  placedByEl.set(el, { box, tween })
 }
 
 /**
@@ -65,8 +82,7 @@ export function moveReaderCursor(
  * next word rather than streaking across the page to reach it.
  */
 export function hideReaderCursor(el: HTMLElement) {
-  const edges = edgesByEl.get(el)
-  if (edges) gsap.killTweensOf(edges)
-  edgesByEl.delete(el)
+  placedByEl.get(el)?.tween?.kill()
+  placedByEl.delete(el)
   gsap.to(el, { autoAlpha: 0, duration: FADE, ease: 'power2.out' })
 }
