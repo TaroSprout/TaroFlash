@@ -1,4 +1,4 @@
--- knowledge: capabilities, capability_grants, capability_is_live, capability_grants_pkey — corpus/authz/capabilities.md
+-- knowledge: capabilities, capability_grants, capability_is_live — corpus/authz/capabilities.md
 
   create table "public"."capability_grants" (
     "key" text not null,
