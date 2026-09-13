@@ -1,9 +1,4 @@
-// The assertions below read a real computed style (backdrop-filter), so the
-// app's stylesheet has to be present — without it the Tailwind utility
-// resolves to nothing and the check passes vacuously. This lives in its own
-// file (isolated from panel.test.js's own browser page) so the stylesheet
-// import doesn't change layout for the rest of that suite.
-import '@/styles/main.css'
+import '@/styles/main.css' // required so the backdrop-filter assertion below reads a real value instead of passing vacuously
 
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -90,13 +85,6 @@ async function mountPanel(notice) {
   return wrapper
 }
 
-// ── tier gating (data-motion) ─────────────────────────────────────────────
-// The full-screen backdrop's blur is a standing effect (never motion),
-// tier-gated in CSS only via `:root[data-motion]` — see custom-variants.css's
-// `tier-full` variant, whose own structural coverage
-// (tests/unit/styles/custom-variants.test.js) proves the gate never folds in
-// prefers-reduced-motion. Nothing in this component tree reads that
-// preference in JS, so there is no JS-level toggle to re-verify at this layer.
 describe('NoticePanel tier gating (data-motion)', () => {
   afterEach(() => {
     document.documentElement.removeAttribute('data-motion')

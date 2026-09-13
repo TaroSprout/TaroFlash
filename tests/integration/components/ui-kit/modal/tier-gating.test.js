@@ -1,10 +1,4 @@
-// The assertions below read real computed styles (backdrop-filter, filter),
-// so the app's stylesheet has to be present — without it every Tailwind
-// utility resolves to nothing and those checks pass vacuously. This lives in
-// its own file (isolated from index.test.js's own browser page) so the
-// stylesheet import doesn't change layout/geometry for the scroll-lock tests
-// over there, which assert against unstyled box heights.
-import '@/styles/main.css'
+import '@/styles/main.css' // required so backdrop-filter/filter assertions below read real values instead of passing vacuously
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
@@ -16,8 +10,6 @@ vi.mock('@/composables/shortcuts', () => ({
   useShortcuts: vi.fn(() => ({ register: vi.fn(), dispose: vi.fn(), clearScope: vi.fn() }))
 }))
 
-// gsap is imported transitively via modal-mode-config → animations/modal.
-// The mock must call onComplete so transition-group JS hooks finish in browser mode.
 vi.mock('gsap', () => ({
   gsap: {
     set: vi.fn(),
@@ -66,13 +58,6 @@ function mountModal() {
   return wrapper
 }
 
-// ── tier gating (data-motion) ─────────────────────────────────────────────
-// The full-screen backdrop's blur and the modal-recede blur are both standing
-// effects (never motion), tier-gated in CSS only via `:root[data-motion]` —
-// see custom-variants.css's `tier-full` variant, whose own structural
-// coverage (tests/unit/styles/custom-variants.test.js) proves the gate never
-// folds in prefers-reduced-motion. Nothing in this component tree reads that
-// preference in JS, so there is no JS-level toggle to re-verify at this layer.
 describe('modal.vue tier gating (data-motion)', () => {
   let transition_override
 
@@ -81,9 +66,7 @@ describe('modal.vue tier gating (data-motion)', () => {
     while (modal_stack.value.length > 0) pop()
     request_close_handlers.clear()
 
-    // The recede filter transitions over 400ms in real CSS; disable it here so
-    // the target value reads synchronously instead of needing a real-time wait.
-    transition_override = document.createElement('style')
+    transition_override = document.createElement('style') // disables the 400ms recede-filter transition so the target value reads synchronously
     transition_override.textContent =
       "[data-testid='ui-kit-modal'] { transition: none !important; }"
     document.head.appendChild(transition_override)
