@@ -2,6 +2,7 @@ import { ref, type ComputedRef, type Ref } from 'vue'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 import { motionTransition } from '@/utils/motion/transition'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 import type { WindowLayout } from './layout'
 
 type PageTransitionOptions = {
@@ -19,15 +20,19 @@ type PageTransitionOptions = {
  */
 export function usePageTransition(
   layout_mode: ComputedRef<WindowLayout>,
-  outlet: Ref<HTMLElement | undefined>,
+  outlet: Ref<HTMLElement | null>,
   { between }: PageTransitionOptions = {}
 ) {
   const nav_direction = ref<'forward' | 'back'>('forward')
 
+  // No content is ever observed here — the slide drives the outlet's height itself,
+  // imperatively, so the stage's own resize-tracking never runs alongside it.
+  const { driveHeight } = useStageHeight(outlet, ref<HTMLElement | null>(null))
+
   // The phone slide runs through the shared driver; the direction and outlet
   // refs are read when each motion is invoked, so one instance covers every swap.
   const slide = motionTransition(
-    tabSlideEnter(nav_direction, outlet),
+    tabSlideEnter(nav_direction, outlet, driveHeight),
     tabSlideLeave(nav_direction, outlet)
   )
 
