@@ -7,7 +7,8 @@ const mocks = vi.hoisted(() => ({
   eqMock: vi.fn(),
   singleMock: vi.fn(),
   updateMock: vi.fn(),
-  updateEqMock: vi.fn()
+  updateEqMock: vi.fn(),
+  rpcMock: vi.fn()
 }))
 
 vi.mock('@/supabase-client', () => ({
@@ -15,13 +16,14 @@ vi.mock('@/supabase-client', () => ({
     from: () => ({
       select: mocks.selectMock,
       update: mocks.updateMock
-    })
+    }),
+    rpc: mocks.rpcMock
   }
 }))
 
 vi.mock('@/utils/logger', () => ({ default: { error: vi.fn() } }))
 
-import { fetchMemberById, upsertMember } from '@/api/members/db'
+import { fetchMemberById, searchMembers, upsertMember } from '@/api/members/db'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +51,7 @@ beforeEach(() => {
   mocks.selectMock.mockReset()
   mocks.updateMock.mockReset()
   mocks.updateEqMock.mockReset()
+  mocks.rpcMock.mockReset()
   mocks.updateMock.mockReturnValue({ eq: mocks.updateEqMock })
 })
 
@@ -93,6 +96,43 @@ describe('fetchMemberById', () => {
     const err = { code: 'PGRST116', message: 'Cannot coerce the result to a single JSON object' }
     makeChain({ data: null, error: err })
     await expect(fetchMemberById('user-1')).resolves.toBeNull()
+  })
+})
+
+// ── searchMembers ─────────────────────────────────────────────────────────────
+
+describe('searchMembers', () => {
+  test('calls the search_members RPC with the term as p_query', async () => {
+    mocks.rpcMock.mockResolvedValue({ data: [], error: null })
+    await searchMembers('ali')
+    expect(mocks.rpcMock).toHaveBeenCalledWith('search_members', { p_query: 'ali' })
+  })
+
+  test('maps the RPC data array through unchanged', async () => {
+    const rows = [
+      { id: 'user-1', display_name: 'Alice', avatar_url: null, email: 'alice@test.com' }
+    ]
+    mocks.rpcMock.mockResolvedValue({ data: rows, error: null })
+    const result = await searchMembers('ali')
+    expect(result).toEqual(rows)
+  })
+
+  test('maps a null RPC data payload to an empty array', async () => {
+    mocks.rpcMock.mockResolvedValue({ data: null, error: null })
+    const result = await searchMembers('ali')
+    expect(result).toEqual([])
+  })
+
+  test('maps an empty RPC data array to an empty array', async () => {
+    mocks.rpcMock.mockResolvedValue({ data: [], error: null })
+    const result = await searchMembers('ali')
+    expect(result).toEqual([])
+  })
+
+  test('throws when the RPC returns an error', async () => {
+    const err = { message: 'permission denied' }
+    mocks.rpcMock.mockResolvedValue({ data: null, error: err })
+    await expect(searchMembers('ali')).rejects.toBe(err)
   })
 })
 
