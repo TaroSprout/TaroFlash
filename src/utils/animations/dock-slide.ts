@@ -1,7 +1,7 @@
 import { gsap } from 'gsap'
 
-// Matches the dock's content-height tween (`useAnimatedHeight`'s `DURATION`), so the bar's
-// slide and its content growing into place read as one movement.
+// Matches the dock's content-height tween (the stage's `HEIGHT_DURATION`, 200ms), so the
+// bar's slide and its content growing into place read as one movement.
 const DURATION = 0.2
 
 /** Mobile dock bar appearing — slides up from the bottom edge instead of popping in. */
