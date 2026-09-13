@@ -22,6 +22,13 @@ vi.mock('@/composables/ui/media-query', () => ({
   })
 }))
 
+const { mockDriveHeight } = vi.hoisted(() => ({
+  mockDriveHeight: vi.fn(() => ({ settled: Promise.resolve(), cancel: vi.fn() }))
+}))
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: () => ({ driveHeight: mockDriveHeight })
+}))
+
 import AdvancedReveal from '@/views/deck/deck-settings/tab-review-pacing/advanced-reveal.vue'
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
@@ -106,7 +113,7 @@ describe('AdvancedReveal — toggling flips persistence', () => {
       expect.anything(),
       expect.anything(),
       true,
-      expect.objectContaining({ collapse: false })
+      expect.objectContaining({ collapse: false, driveHeight: expect.any(Function) })
     )
   })
 })
@@ -125,7 +132,7 @@ describe('AdvancedReveal — collapse option passed only on phone', () => {
       expect.anything(),
       expect.anything(),
       true,
-      { collapse: true }
+      expect.objectContaining({ collapse: true, driveHeight: expect.any(Function) })
     )
   })
 
@@ -140,7 +147,7 @@ describe('AdvancedReveal — collapse option passed only on phone', () => {
       expect.anything(),
       expect.anything(),
       true,
-      { collapse: false }
+      expect.objectContaining({ collapse: false, driveHeight: expect.any(Function) })
     )
   })
 })
