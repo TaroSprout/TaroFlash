@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import {
   crossfadeResizeBeforeLeave,
   crossfadeResizeEnter,
   crossfadeResizeLeave
 } from '@/utils/animations/crossfade-resize'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 
 type CrossfadeResizeProps = {
   /** Snaps the wrapper's height instead of tweening it; set false only for panes with heavy DOM (a long transcript) — see the perf note in `crossfadeResizeEnter`. */
@@ -19,6 +20,11 @@ const emit = defineEmits<{
 }>()
 
 const wrapper = useTemplateRef<HTMLElement>('wrapper')
+const stage_content = ref<HTMLElement | null>(null)
+
+const { driveHeight } = useStageHeight(wrapper, stage_content)
+
+let cancel_enter: (() => void) | null = null
 
 // Stays full-bleed so slotted children's own inset keeps outlines/shadows clear of the overflow clip mid-tween.
 function onBeforeLeave() {
@@ -27,11 +33,18 @@ function onBeforeLeave() {
 }
 
 function onEnter(el: Element, done: () => void) {
-  if (wrapper.value) crossfadeResizeEnter(wrapper.value, animateHeight)(el, done)
+  if (wrapper.value)
+    cancel_enter = crossfadeResizeEnter(wrapper.value, driveHeight, animateHeight)(el, done)
   else done()
 }
 
+function onEnterCancelled() {
+  cancel_enter?.()
+  cancel_enter = null
+}
+
 function onAfterEnter() {
+  cancel_enter = null
   emit('swap-end')
 }
 </script>
@@ -43,6 +56,7 @@ function onAfterEnter() {
       @before-leave="onBeforeLeave"
       @leave="crossfadeResizeLeave"
       @enter="onEnter"
+      @enter-cancelled="onEnterCancelled"
       @after-enter="onAfterEnter"
     >
       <slot />
