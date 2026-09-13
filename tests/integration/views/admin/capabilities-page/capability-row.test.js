@@ -5,8 +5,6 @@ import { motionStoreStub } from '@tests/fixtures/motion'
 import CapabilityRow from '@/views/admin/capabilities-page/capability-row.vue'
 import AvatarImage from '@/components/member/avatar-image.vue'
 
-// ── Hoisted mocks ────────────────────────────────────────────────────────────
-
 const {
   updateCapabilityMutate,
   addGrantMutate,
@@ -41,12 +39,7 @@ vi.mock('@/sfx/bus', () => ({
 
 vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
-// Fine (mouse) pointer throughout — the staged-tap early-return path fires the
-// action immediately with no animation, so the real ui-kit primitives don't
-// need a GSAP/motion-driver stand-in.
 vi.mock('@/composables/ui/media-query', () => ({ useMatchMedia: () => ref(false) }))
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function mountRow(item, overrides = {}) {
   grantsData.ref = ref(overrides.grants ?? [])
@@ -63,7 +56,8 @@ function getStateOptions(wrapper) {
 }
 
 async function setSearchTerm(wrapper, term) {
-  await wrapper.find('input[data-testid="admin-capabilities-row__search-input"]').setValue(term)
+  const matches = wrapper.findAll('[data-testid="admin-capabilities-row__search-input"]')
+  await matches[matches.length - 1].setValue(term) // ui-input forwards the testid to its root label and its inner input alike; the input is always last
 }
 
 const MEMBER_A = {
@@ -84,8 +78,6 @@ beforeEach(() => {
   addGrantMutate.mockClear()
   removeGrantMutate.mockClear()
 })
-
-// ── State switching ────────────────────────────────────────────────────────
 
 describe('CapabilityRow — state switching', () => {
   test('selecting "on" calls the update mutation with state on', async () => {
@@ -109,8 +101,6 @@ describe('CapabilityRow — state switching', () => {
     expect(updateCapabilityMutate).toHaveBeenCalledWith({ key: 'audio_reader', state: 'targeted' })
   })
 })
-
-// ── Member editor visibility ─────────────────────────────────────────────────
 
 describe('CapabilityRow — member editor visibility', () => {
   test('the editor is absent for an off row', () => {
@@ -144,8 +134,6 @@ describe('CapabilityRow — member editor visibility', () => {
     expect(grantsData.ref.value).toHaveLength(1)
   })
 })
-
-// ── Search-floor gating ──────────────────────────────────────────────────────
 
 describe('CapabilityRow — search floor', () => {
   test('a query under two characters shows neither results nor the empty message', async () => {
@@ -208,8 +196,6 @@ describe('CapabilityRow — search floor', () => {
   })
 })
 
-// ── Add / remove grant handlers ──────────────────────────────────────────────
-
 describe('CapabilityRow — grant mutations', () => {
   test('tapping a search result calls the add-grant mutation with the row key and member', async () => {
     const wrapper = mountRow(
@@ -241,8 +227,6 @@ describe('CapabilityRow — grant mutations', () => {
     expect(removeGrantMutate).toHaveBeenCalledWith({ key: 'audio_reader', member_id: 'member-a' })
   })
 })
-
-// ── Granted list loading -> empty -> populated ───────────────────────────────
 
 describe('CapabilityRow — granted list branches', () => {
   test('shows the loading skeleton while grants are loading', () => {
