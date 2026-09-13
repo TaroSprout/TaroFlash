@@ -1114,6 +1114,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      search_members: {
+        Args: { p_query: string }
+        Returns: Database['public']['CompositeTypes']['member_search_result'][]
+        SetofOptions: {
+          from: '*'
+          to: 'member_search_result'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       submit_feedback: {
         Args: {
           p_body: string
@@ -1210,6 +1220,12 @@ export type Database = {
         display_name: string | null
         description: string | null
         cover_config: Json | null
+      }
+      member_search_result: {
+        id: string | null
+        display_name: string | null
+        avatar_url: string | null
+        email: string | null
       }
       resolved_pacing: {
         desired_retention: number | null

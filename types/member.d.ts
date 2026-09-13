@@ -16,6 +16,15 @@ type Member = {
   plans?: Pick<PlanLimits, 'deck_limit' | 'cards_per_deck_limit'> | null
 }
 
+// The safe, admin-facing shape the member search returns — deliberately no
+// role, plan, or billing fields. See public.search_members.
+type MemberSearchResult = {
+  id: string
+  display_name: string
+  avatar_url: string | null
+  email: string | null
+}
+
 type MemberCover = DeckCover & { avatar?: string }
 
 type PlanLimits = {
