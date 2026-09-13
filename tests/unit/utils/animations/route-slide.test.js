@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 
-// ── Hoisted GSAP + motion-store mocks ──────────────────────────────────────────
 // A fake paused timeline captures every to/fromTo; play() fires the driver's
 // onComplete so `handle.done` resolves. Mirrors the card-slide / toolbar-swap
 // driver-motion test rig.
@@ -54,8 +53,6 @@ vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
 import { routeSlide } from '@/utils/animations/route-slide'
 
-// ── Helpers ─────────────────────────────────────────────────────────────────────
-
 function build({ dashboard = false, initial = false } = {}) {
   const going_to_dashboard = ref(dashboard)
   const is_initial = ref(initial)
@@ -71,8 +68,6 @@ beforeEach(() => {
   timelines.length = 0
   mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
 })
-
-// ── leave → enter plays the slide ────────────────────────────────────────────────
 
 describe('routeSlide — a leave followed by an enter plays the slide', () => {
   test('the leave pins its node out of flow and slides it off', () => {
@@ -91,8 +86,7 @@ describe('routeSlide — a leave followed by an enter plays the slide', () => {
     onLeave(el(), vi.fn())
     onEnter(el(), vi.fn())
 
-    // one timeline for the leave, one for the played enter
-    expect(timelines).toHaveLength(2)
+    expect(timelines).toHaveLength(2) // one for the leave, one for the played enter
     expect(timelines[1].state.calls.fromTo).toHaveLength(1)
   })
 
@@ -106,8 +100,6 @@ describe('routeSlide — a leave followed by an enter plays the slide', () => {
     expect(animation_done.value).toBe(true)
   })
 })
-
-// ── enter with no preceding leave (Suspense resolve) skips ───────────────────────
 
 describe('routeSlide — enter with no preceding leave', () => {
   test('skips the animation and calls done immediately', () => {
@@ -129,8 +121,6 @@ describe('routeSlide — enter with no preceding leave', () => {
   })
 })
 
-// ── is_initial skips even when a leave fired ─────────────────────────────────────
-
 describe('routeSlide — is_initial', () => {
   test('skips the enter animation on the first paint', () => {
     const { onEnter, animation_done } = build({ initial: true })
@@ -150,12 +140,9 @@ describe('routeSlide — is_initial', () => {
     const leave_timelines = timelines.length
     onEnter(el(), vi.fn())
 
-    // the enter added no timeline of its own
-    expect(timelines).toHaveLength(leave_timelines)
+    expect(timelines).toHaveLength(leave_timelines) // the enter added no timeline of its own
   })
 })
-
-// ── direction flips on going_to_dashboard ────────────────────────────────────────
 
 describe('routeSlide — direction', () => {
   test('leave slides off to the right (+100) heading to the dashboard', () => {
@@ -197,8 +184,6 @@ describe('routeSlide — direction', () => {
   })
 })
 
-// ── reset — an unpaired leave never suppresses the next real enter ───────────────
-
 describe('routeSlide — per-instance reset', () => {
   test('a second enter with no fresh leave skips', () => {
     const { onLeave, onEnter } = build()
@@ -215,15 +200,12 @@ describe('routeSlide — per-instance reset', () => {
   test('an interrupted leave that never paired still lets the next real enter slide', () => {
     const { onLeave, onEnter } = build()
 
-    // First navigation leaves but is interrupted before its enter runs.
-    onLeave(el(), vi.fn())
-    // Second navigation leaves too, then its enter arrives.
-    onLeave(el(), vi.fn())
+    onLeave(el(), vi.fn()) // first navigation leaves but is interrupted before its enter runs
+    onLeave(el(), vi.fn()) // second navigation leaves too, then its enter arrives
     const before_enter = timelines.length
     onEnter(el(), vi.fn())
 
-    // The enter played its own slide rather than being skipped.
-    expect(timelines.length).toBe(before_enter + 1)
+    expect(timelines.length).toBe(before_enter + 1) // the enter played its own slide rather than being skipped
     expect(timelines.at(-1).state.calls.fromTo).toHaveLength(1)
   })
 })

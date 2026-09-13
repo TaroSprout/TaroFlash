@@ -83,8 +83,6 @@ describe('usePageTransition — nav_direction', () => {
   })
 })
 
-// ── composes the shared slide from the tab motions ──────────────────────────────
-
 describe('usePageTransition — shared slide composition', () => {
   test('builds one motionTransition from the tab enter/leave motions', () => {
     const { layout_mode } = makeLayout('phone')
@@ -96,8 +94,6 @@ describe('usePageTransition — shared slide composition', () => {
     expect(mockMotionTransition).toHaveBeenCalledWith('enter-motion', 'leave-motion')
   })
 })
-
-// ── onPageEnter — routing ────────────────────────────────────────────────────────
 
 describe('usePageTransition — onPageEnter routing', () => {
   test('routes to the shared slide on phone', () => {
@@ -133,8 +129,6 @@ describe('usePageTransition — onPageEnter routing', () => {
   })
 })
 
-// ── onPageLeave — routing ─────────────────────────────────────────────────────
-
 describe('usePageTransition — onPageLeave routing', () => {
   test('routes to the shared slide on phone', () => {
     const { layout_mode } = makeLayout('phone')
@@ -166,8 +160,6 @@ describe('usePageTransition — onPageLeave routing', () => {
     expect(mockSlideLeave).not.toHaveBeenCalled()
   })
 })
-
-// ── between hook ──────────────────────────────────────────────────────────────
 
 describe('usePageTransition — between hook', () => {
   test('awaits `between` in the gap after the leave, before calling done', async () => {

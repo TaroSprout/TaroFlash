@@ -1,8 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 
-// ── Hoisted GSAP + motion-store mocks ──────────────────────────────────────────
-
 const { makeTimeline, timelines, mockSet } = vi.hoisted(() => {
   const timelines = []
   function makeTimeline() {
@@ -51,8 +49,6 @@ vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 
-// ── Helpers ─────────────────────────────────────────────────────────────────────
-
 function makeEl(scrollHeight = 200) {
   const el = document.createElement('div')
   Object.defineProperty(el, 'scrollHeight', { value: scrollHeight, configurable: true })
@@ -72,8 +68,6 @@ beforeEach(() => {
   timelines.length = 0
   mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
 })
-
-// ── tabSlideEnter ─────────────────────────────────────────────────────────────
 
 describe('tabSlideEnter — forward', () => {
   test('slides in on the x-axis while fading up', () => {
@@ -97,8 +91,6 @@ describe('tabSlideEnter — back', () => {
   })
 })
 
-// ── tabSlideLeave ─────────────────────────────────────────────────────────────
-
 describe('tabSlideLeave — forward', () => {
   test('fades out with no x slide', () => {
     tabSlideLeave(ref('forward'), noWrapper())(makeEl())
@@ -118,8 +110,6 @@ describe('tabSlideLeave — back', () => {
     expect(vars.opacity).toBe(0)
   })
 })
-
-// ── wrapper height ────────────────────────────────────────────────────────────
 
 describe('tab-slide — wrapper height', () => {
   test('freezes the wrapper to its current offsetHeight on leave', () => {
