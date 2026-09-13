@@ -67,6 +67,9 @@ a rule file — no new agent, no change to `/work` § 4e.
   builder can apply it cold without re-deriving the rule.
 - **Prior sign-off doesn't launder a violation.** `comment-authoring` already outranks any earlier
   feedback about a comment's shape; don't spare a finding because an earlier round touched that line.
+  Across sweeps this is the spec's own no-grandfathering gate
+  ([`comment-authoring → Gates`](../../knowledge/comment-authoring.md#gates)) — re-judge every
+  comment in a touched file fresh, not only the ones this sweep added.
 
 ## Step 1 — Scope the diff to the concern
 
@@ -83,7 +86,10 @@ didn't change. **`test-integrity`, a relational concern, reads the full changed 
 just the changed lines) to compare them against each other — still only files the diff touched, never
 the pre-existing suite. **`comment-placement` reads every in-scope changed file whole**, not just the
 diff hunks — a site earns a comment by what the surrounding code already does or doesn't say, which a
-line-by-line pass over the diff can't judge.
+line-by-line pass over the diff can't judge. **`comment-authoring`, reviewing a sweep, judges every
+comment in a file the sweep touched, not only the lines the sweep's own commits added** — the spec's
+no-grandfathering gate (linked above) means an unchanged neighboring comment is back in scope the
+moment its file is.
 
 Running every concern (no `--concern`): repeat Steps 1–4 once per roster row, and print one report
 section per concern.
