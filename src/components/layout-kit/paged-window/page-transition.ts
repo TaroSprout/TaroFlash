@@ -1,6 +1,7 @@
 import { ref, type ComputedRef, type Ref } from 'vue'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
+import { motionTransition } from '@/utils/motion/transition'
 import type { WindowLayout } from './layout'
 
 type PageTransitionOptions = {
@@ -23,6 +24,13 @@ export function usePageTransition(
 ) {
   const nav_direction = ref<'forward' | 'back'>('forward')
 
+  // The phone slide runs through the shared driver; the direction and outlet
+  // refs are read when each motion is invoked, so one instance covers every swap.
+  const slide = motionTransition(
+    tabSlideEnter(nav_direction, outlet),
+    tabSlideLeave(nav_direction, outlet)
+  )
+
   async function onPageLeave(el: Element, done: () => void) {
     await runLeave(el)
 
@@ -37,7 +45,7 @@ export function usePageTransition(
   function runLeave(el: Element) {
     return new Promise<void>((resolve) => {
       if (layout_mode.value === 'phone') {
-        tabSlideLeave(nav_direction, outlet.value)(el, resolve)
+        slide.onLeave(el, resolve)
         return
       }
       fadeLeave(el, resolve)
@@ -46,7 +54,7 @@ export function usePageTransition(
 
   function runEnter(el: Element, done: () => void) {
     if (layout_mode.value === 'phone') {
-      tabSlideEnter(nav_direction, outlet.value)(el, done)
+      slide.onEnter(el, done)
       return
     }
     fadeEnter(el, done)

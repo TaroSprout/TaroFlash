@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { routeSlideEnter, routeSlideLeave } from '@/utils/animations/route-slide'
+import { routeSlide } from '@/utils/animations/route-slide'
 
 export function useRouteTransition() {
   const router = useRouter()
@@ -33,8 +33,7 @@ export function useRouteTransition() {
     suspense_resolved.value = true
   }
 
-  const onLeave = routeSlideLeave(going_to_dashboard)
-  const onEnter = routeSlideEnter(going_to_dashboard, is_initial, animation_done)
+  const { onLeave, onEnter } = routeSlide({ going_to_dashboard, is_initial, animation_done })
 
   return { show_skeleton_overlay, onSuspensePending, onSuspenseResolve, onLeave, onEnter }
 }
