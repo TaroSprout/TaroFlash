@@ -13,10 +13,16 @@ type Capability = {
   state: CapabilityState
 }
 
-// One cache entry for the whole capabilities read: the rows plus which keys the
-// caller's own capability_grants rows cover, so a `targeted` state resolves
-// without a second query.
+// The raw capability rows the admin editor renders — key and state only, no
+// resolution. Feature-gating reads ResolvedCapability instead.
 type CapabilitiesResult = {
   capabilities: Capability[]
-  grantedKeys: Set<CapabilityKey>
+}
+
+// One capability's live state as the server resolved it for the calling member.
+// The allow-list stays server-side — the client reads this boolean rather than
+// comparing the caller's own grants locally.
+type ResolvedCapability = {
+  key: CapabilityKey
+  live: boolean
 }

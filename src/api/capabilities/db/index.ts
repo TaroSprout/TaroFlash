@@ -1,26 +1,28 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
+/** The raw capability rows for the admin editor — key and state, no resolution. */
 export async function fetchCapabilities(): Promise<CapabilitiesResult> {
-  const [capabilitiesResult, grantsResult] = await Promise.all([
-    supabase.from('capabilities').select('key, state'),
-    supabase.from('capability_grants').select('key')
-  ])
+  const { data, error } = await supabase.from('capabilities').select('key, state')
 
-  if (capabilitiesResult.error) {
-    logger.error(capabilitiesResult.error.message)
-    throw capabilitiesResult.error
+  if (error) {
+    logger.error(error.message)
+    throw error
   }
 
-  if (grantsResult.error) {
-    logger.error(grantsResult.error.message)
-    throw grantsResult.error
+  return { capabilities: (data ?? []) as Capability[] }
+}
+
+/** Each capability's live state, resolved server-side for the calling member. */
+export async function fetchResolvedCapabilities(): Promise<ResolvedCapability[]> {
+  const { data, error } = await supabase.rpc('resolve_member_capabilities')
+
+  if (error) {
+    logger.error(error.message)
+    throw error
   }
 
-  const capabilities = (capabilitiesResult.data ?? []) as Capability[]
-  const grantedKeys = new Set((grantsResult.data ?? []).map((row) => row.key as CapabilityKey))
-
-  return { capabilities, grantedKeys }
+  return (data ?? []) as ResolvedCapability[]
 }
 
 export type UpdateCapabilityParams = {
