@@ -49,8 +49,8 @@ describe('useMemberSearchQuery', () => {
 
   test('query calls searchMembers with the untrimmed term', async () => {
     searchMembersMock.mockResolvedValue([])
-    const { query } = configFrom(ref('alice'))
+    const { query } = configFrom(ref('  alice  '))
     await query()
-    expect(searchMembersMock).toHaveBeenCalledWith('alice')
+    expect(searchMembersMock).toHaveBeenCalledWith('  alice  ')
   })
 })

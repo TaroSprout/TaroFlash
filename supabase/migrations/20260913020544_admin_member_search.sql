@@ -15,8 +15,7 @@ AS $function$
     AND length(trim(p_query)) >= 2
     -- A pending-deletion account is hidden from everyone, admins included.
     AND m.delete_at IS NULL
-    -- strpos on lowered text is a case-insensitive substring test that treats
-    -- the query as literal, so `%` or `_` in it can't act as a wildcard.
+    -- strpos on lowered text is a case-insensitive substring test that treats the query as literal, so `%` or `_` in it can't act as a wildcard.
     AND (
       strpos(lower(m.display_name), lower(trim(p_query))) > 0
       OR strpos(lower(coalesce(m.email, '')), lower(trim(p_query))) > 0
@@ -26,9 +25,7 @@ AS $function$
 $function$
 ;
 
--- Hand-written: `db diff` emits no function grants, so a SECURITY DEFINER
--- function otherwise lands executable by anon. Lock it to authenticated; the
--- can_manage_members() gate inside then refuses non-admins.
+-- Hand-written: `db diff` emits no function grants, so a SECURITY DEFINER function otherwise lands executable by anon; lock it to authenticated.
 REVOKE ALL ON FUNCTION public.search_members(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.search_members(text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.search_members(text) TO authenticated;

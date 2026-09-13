@@ -99,8 +99,6 @@ describe('fetchMemberById', () => {
   })
 })
 
-// ── searchMembers ─────────────────────────────────────────────────────────────
-
 describe('searchMembers', () => {
   test('calls the search_members RPC with the term as p_query', async () => {
     mocks.rpcMock.mockResolvedValue({ data: [], error: null })

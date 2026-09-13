@@ -26,9 +26,11 @@ export async function fetchMemberById(id: string): Promise<Member | null> {
   return data as unknown as Member
 }
 
-// Fewer than two characters returns nothing — the floor lives server-side in
-// search_members, so the client never has to know it; the RPC is safe to call
-// with any input.
+/**
+ * Fewer than two characters returns nothing — the floor lives server-side in
+ * search_members, so the client never has to know it; the RPC is safe to call
+ * with any input.
+ */
 export async function searchMembers(term: string): Promise<MemberSearchResult[]> {
   const { data, error } = await supabase.rpc('search_members', { p_query: term })
 
