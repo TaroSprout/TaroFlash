@@ -15,6 +15,15 @@
   }
 }
 
+/* Gates an expensive *standing* effect (a backdrop blur that isn't motion at all) to the
+   full hardware tier only — `lean` and `minimal` both drop it. Never mixes in
+   `prefers-reduced-motion`: a static blur isn't motion, so that preference doesn't touch it. */
+@custom-variant tier-full {
+  :root[data-motion='full'] & {
+    @slot;
+  }
+}
+
 @custom-variant tap {
   &:where(:focus-visible, [data-active='true']) {
     @slot;

@@ -17,9 +17,9 @@ let built
 
 beforeAll(async () => {
   const source = readFileSync(CSS_PATH, 'utf-8')
-  const css = `@import 'tailwindcss';\n${source}\n@utility bgx-slide { animation: none; }` // minimal bgx-slide stands in for the real one in bg-utils.css; scoped to what custom-variants.css gates, not the pattern's contents
+  const css = `@import 'tailwindcss';\n${source}\n@utility bgx-slide { animation: none; }\n@utility fake-blur { backdrop-filter: blur(4px); }` // minimal stand-ins for the real utilities (bg-utils.css, the theme's --blur-4 token), scoped to what custom-variants.css gates
   const compiled = await compile(css, { base: process.cwd(), loadStylesheet })
-  built = compiled.build(['motion-rich:bgx-slide'])
+  built = compiled.build(['motion-rich:bgx-slide', 'tier-full:fake-blur'])
 })
 
 describe('custom-variants.css — motion-rich', () => {
@@ -27,5 +27,12 @@ describe('custom-variants.css — motion-rich', () => {
     expect(built).toMatch(
       /\.motion-rich\\:bgx-slide\s*{\s*@media \(prefers-reduced-motion: no-preference\) {\s*:root:not\(\[data-motion='minimal'\]\) & {\s*animation: none;/
     )
+  })
+})
+
+describe('custom-variants.css — tier-full', () => {
+  test('gates fake-blur behind data-motion === full only, with no reduced-motion media query', () => {
+    expect(built).toMatch(/\.tier-full\\:fake-blur\s*{\s*:root\[data-motion='full'\] & {/)
+    expect(built).not.toMatch(/\.tier-full\\:fake-blur[\s\S]*prefers-reduced-motion/) // the gate must never fold in prefers-reduced-motion the way motion-rich does above
   })
 })
