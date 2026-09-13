@@ -36,9 +36,21 @@ const { claimHeight } = useStageHeight(content_wrapper, content, {
   onSettled: publishHeight
 })
 
+// Wrap the stage claim so releasing it republishes the settled height: the claimed
+// animation drove the content past what `--mobile-dock-height` last saw, and no
+// resize follows to catch it up otherwise. →[K:dock-height-single-owner]
+function claimDockHeight() {
+  const release = claimHeight()
+
+  return () => {
+    release()
+    publishHeight()
+  }
+}
+
 onMounted(() => {
   el.value = bar.value
-  setHeightOwner(claimHeight)
+  setHeightOwner(claimDockHeight)
   publishHeight()
 })
 
