@@ -1,9 +1,12 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 
-// Listed out rather than everything: the row also holds billing identifiers that
-// have no business reaching the browser. `delete_at` must stay — it is the only
-// thing telling the app an account is pending deletion.
+/**
+ * The columns fetched for a member row — a subset, not `select *`: the row
+ * also holds billing identifiers that have no business reaching the browser.
+ * `delete_at` must stay; it's the only thing telling the app an account is
+ * pending deletion.
+ */
 const MEMBER_COLUMNS =
   'id, display_name, description, created_at, email, avatar_url, role, plan, preferences, cover_config, delete_at, plans(deck_limit, cards_per_deck_limit)' as const
 
@@ -15,15 +18,29 @@ export async function fetchMemberById(id: string): Promise<Member | null> {
     .single()
 
   if (error) {
-    // No rows means this account isn't visible to the caller, not that the read failed.
-    if (error.code === 'PGRST116') return null
+    if (error.code === 'PGRST116') return null // no rows means this account isn't visible to the caller, not that the read failed
 
     logger.error(error.message)
     throw error
   }
 
-  // The plan comes back as one object; the client library can only guess a list.
-  return data as unknown as Member
+  return data as unknown as Member // the plan comes back as one object; the client library can only guess a list
+}
+
+/**
+ * Searches members by name or email, admin-only. Fewer than two characters
+ * returns nothing — the floor lives server-side in search_members, so the
+ * client never has to know it; the RPC is safe to call with any input.
+ */
+export async function searchMembers(term: string): Promise<MemberSearchResult[]> {
+  const { data, error } = await supabase.rpc('search_members', { p_query: term })
+
+  if (error) {
+    logger.error(error.message)
+    throw error
+  }
+
+  return (data ?? []) as MemberSearchResult[]
 }
 
 /**

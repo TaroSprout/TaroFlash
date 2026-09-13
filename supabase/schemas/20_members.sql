@@ -157,6 +157,51 @@ GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO authenticated;
 
 
+CREATE TYPE public.member_search_result AS (
+    id uuid,
+    display_name text,
+    avatar_url text,
+    email text
+);
+
+
+ALTER TYPE public.member_search_result OWNER TO postgres;
+
+
+-- Admin-only member lookup for the allow-list editor. SELECT on `members` is
+-- restricted to your own row, and there is deliberately no admin read policy —
+-- so this SECURITY DEFINER helper runs as the owner to reach other rows, and
+-- gates itself on can_manage_members() internally. A non-admin caller matches
+-- the gate to false and gets zero rows: the refusal is in the database, not the
+-- UI. It projects only the safe shape — id, display_name, avatar_url, email —
+-- never role, plan, or stripe ids, mirroring member_public_profile.
+CREATE FUNCTION public.search_members(p_query text) RETURNS SETOF public.member_search_result
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  SELECT m.id, m.display_name, m.avatar_url, m.email
+  FROM public.members m
+  WHERE public.can_manage_members()
+    AND length(trim(p_query)) >= 2 -- below two characters the match is too broad to be useful.
+    AND m.delete_at IS NULL -- a pending-deletion account is hidden from everyone, admins included.
+    -- strpos on lowered text is a case-insensitive substring test that treats the query as literal, so `%` or `_` in it can't act as a wildcard.
+    AND (
+      strpos(lower(m.display_name), lower(trim(p_query))) > 0
+      OR strpos(lower(coalesce(m.email, '')), lower(trim(p_query))) > 0
+    )
+  ORDER BY m.display_name
+  LIMIT 20;
+$$;
+
+
+ALTER FUNCTION public.search_members(text) OWNER TO postgres;
+
+
+REVOKE ALL ON FUNCTION public.search_members(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.search_members(text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.search_members(text) TO authenticated;
+
+
 -- --- account deletion lifecycle -------------------------------------------
 -- Two halves of one reversible operation. Both are single transactions, so the
 -- marker and the deck visibility change can never land apart from each other.
