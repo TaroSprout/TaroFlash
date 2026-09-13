@@ -173,9 +173,17 @@ jobs:
       - name: Setup Doppler CLI
         uses: dopplerhq/cli-action@v3
 
+      - name: Resolve project ref
+        run: |
+          REF="$(doppler secrets get SUPABASE_PROJECT_REF --plain)"
+          : "${REF:?SUPABASE_PROJECT_REF is missing or empty in the Doppler config for this environment — the deploy cannot target a project}"
+          echo "SUPABASE_PROJECT_REF=$REF" >> "$GITHUB_ENV"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
       - name: Run migrations
         run: |
-          doppler run -- supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
+          doppler run -- supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
           doppler run -- supabase migration up --linked
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
@@ -205,8 +213,16 @@ jobs:
       - name: Setup Doppler CLI
         uses: dopplerhq/cli-action@v3
 
+      - name: Resolve project ref
+        run: |
+          REF="$(doppler secrets get SUPABASE_PROJECT_REF --plain)"
+          : "${REF:?SUPABASE_PROJECT_REF is missing or empty in the Doppler config for this environment — the deploy cannot target a project}"
+          echo "SUPABASE_PROJECT_REF=$REF" >> "$GITHUB_ENV"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
       - name: Link project
-        run: doppler run -- supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
+        run: doppler run -- supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
@@ -215,12 +231,12 @@ jobs:
           doppler run -- supabase secrets set \
             STRIPE_SECRET_KEY="$(doppler secrets get STRIPE_SECRET_KEY --plain)" \
             STRIPE_WEBHOOK_SECRET="$(doppler secrets get STRIPE_WEBHOOK_SECRET --plain)" \
-            --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
+            --project-ref "$SUPABASE_PROJECT_REF"
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Deploy functions
-        run: doppler run -- supabase functions deploy --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
+        run: doppler run -- supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
@@ -245,8 +261,16 @@ jobs:
       - name: Setup Doppler CLI
         uses: dopplerhq/cli-action@v3
 
+      - name: Resolve project ref
+        run: |
+          REF="$(doppler secrets get SUPABASE_PROJECT_REF --plain)"
+          : "${REF:?SUPABASE_PROJECT_REF is missing or empty in the Doppler config for this environment — the deploy cannot target a project}"
+          echo "SUPABASE_PROJECT_REF=$REF" >> "$GITHUB_ENV"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
       - name: Link project
-        run: doppler run -- supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
+        run: doppler run -- supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$(doppler secrets get SUPABASE_DB_PASSWORD --plain)"
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
