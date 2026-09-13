@@ -15,10 +15,9 @@ vi.mock('vue-router', () => ({
   })
 }))
 
-// Stub animation functions — their internal behaviour is tested in route-slide.test.js
+// Stub the slide factory — its internal behaviour is tested in route-slide.test.js
 vi.mock('@/utils/animations/route-slide', () => ({
-  routeSlideLeave: vi.fn(() => vi.fn()),
-  routeSlideEnter: vi.fn(() => vi.fn())
+  routeSlide: vi.fn(() => ({ onLeave: vi.fn(), onEnter: vi.fn() }))
 }))
 
 import { useRouteTransition } from '@/composables/ui/route-transition'
@@ -195,7 +194,7 @@ describe('router.afterEach — clears is_initial', () => {
 
 describe('going_to_dashboard tracking', () => {
   test('navigate to dashboard route sets flag (accessible via returned callbacks)', () => {
-    // The composable passes going_to_dashboard to routeSlideLeave/routeSlideEnter.
+    // The composable passes going_to_dashboard into routeSlide.
     // We verify beforeEach fires without error and returns the composable in a
     // consistent state (show_skeleton_overlay still false after navigate only).
     const { show_skeleton_overlay, navigate } = setup()

@@ -3,13 +3,31 @@ import { ref, computed } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
+// The phone slide is driven through a single shared motionTransition instance;
+// tablet/desktop route to the raw fade helpers. Mock all three so routing can be
+// asserted without the real driver.
 
-const { mockFadeEnter, mockFadeLeave, mockTabSlideEnter, mockTabSlideLeave } = vi.hoisted(() => ({
-  mockFadeEnter: vi.fn((_el, done) => done?.()),
-  mockFadeLeave: vi.fn((_el, done) => done?.()),
-  mockTabSlideEnter: vi.fn(() => vi.fn((_el, done) => done?.())),
-  mockTabSlideLeave: vi.fn(() => vi.fn((_el, done) => done?.()))
-}))
+const {
+  mockFadeEnter,
+  mockFadeLeave,
+  mockTabSlideEnter,
+  mockTabSlideLeave,
+  mockSlideEnter,
+  mockSlideLeave,
+  mockMotionTransition
+} = vi.hoisted(() => {
+  const mockSlideEnter = vi.fn((_el, done) => done?.())
+  const mockSlideLeave = vi.fn((_el, done) => done?.())
+  return {
+    mockFadeEnter: vi.fn((_el, done) => done?.()),
+    mockFadeLeave: vi.fn((_el, done) => done?.()),
+    mockTabSlideEnter: vi.fn(() => 'enter-motion'),
+    mockTabSlideLeave: vi.fn(() => 'leave-motion'),
+    mockSlideEnter,
+    mockSlideLeave,
+    mockMotionTransition: vi.fn(() => ({ onEnter: mockSlideEnter, onLeave: mockSlideLeave }))
+  }
+})
 
 vi.mock('@/utils/animations/fade', () => ({
   fadeEnter: mockFadeEnter,
@@ -19,6 +37,10 @@ vi.mock('@/utils/animations/fade', () => ({
 vi.mock('@/utils/animations/tab-slide', () => ({
   tabSlideEnter: mockTabSlideEnter,
   tabSlideLeave: mockTabSlideLeave
+}))
+
+vi.mock('@/utils/motion/transition', () => ({
+  motionTransition: mockMotionTransition
 }))
 
 import { usePageTransition } from '@/components/layout-kit/paged-window/page-transition'
@@ -39,8 +61,7 @@ function makeLayout(mode = 'tablet') {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockTabSlideEnter.mockImplementation(() => vi.fn((_el, done) => done?.()))
-  mockTabSlideLeave.mockImplementation(() => vi.fn((_el, done) => done?.()))
+  mockMotionTransition.mockReturnValue({ onEnter: mockSlideEnter, onLeave: mockSlideLeave })
 })
 
 // ── nav_direction ─────────────────────────────────────────────────────────────
@@ -48,126 +69,109 @@ beforeEach(() => {
 describe('usePageTransition — nav_direction', () => {
   test('returns nav_direction ref initialised to "forward"', () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(undefined)
-    const { nav_direction } = usePageTransition(layout_mode, outlet)
+    const { nav_direction } = usePageTransition(layout_mode, ref(undefined))
     expect(nav_direction.value).toBe('forward')
   })
 
-  test('callers can flip nav_direction to "back"', () => {
+  test('callers can flip nav_direction to "back" and back to "forward"', () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(undefined)
-    const { nav_direction } = usePageTransition(layout_mode, outlet)
+    const { nav_direction } = usePageTransition(layout_mode, ref(undefined))
     nav_direction.value = 'back'
     expect(nav_direction.value).toBe('back')
-  })
-
-  test('callers can flip nav_direction to "forward"', () => {
-    const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(undefined)
-    const { nav_direction } = usePageTransition(layout_mode, outlet)
     nav_direction.value = 'forward'
     expect(nav_direction.value).toBe('forward')
   })
 })
 
-// ── onPageEnter — routing ──────────────────────────────────────────────────────
+// ── composes the shared slide from the tab motions ──────────────────────────────
 
-describe('usePageTransition — onPageEnter routing', () => {
-  test('routes to tabSlideEnter on phone mode', () => {
+describe('usePageTransition — shared slide composition', () => {
+  test('builds one motionTransition from the tab enter/leave motions', () => {
     const { layout_mode } = makeLayout('phone')
     const outlet = ref(document.createElement('div'))
-    const { onPageEnter } = usePageTransition(layout_mode, outlet)
+    const { nav_direction } = usePageTransition(layout_mode, outlet)
+
+    expect(mockTabSlideEnter).toHaveBeenCalledWith(nav_direction, outlet)
+    expect(mockTabSlideLeave).toHaveBeenCalledWith(nav_direction, outlet)
+    expect(mockMotionTransition).toHaveBeenCalledWith('enter-motion', 'leave-motion')
+  })
+})
+
+// ── onPageEnter — routing ────────────────────────────────────────────────────────
+
+describe('usePageTransition — onPageEnter routing', () => {
+  test('routes to the shared slide on phone', () => {
+    const { layout_mode } = makeLayout('phone')
+    const { onPageEnter } = usePageTransition(layout_mode, ref(document.createElement('div')))
 
     const done = vi.fn()
     onPageEnter(makeEl(), done)
 
-    expect(mockTabSlideEnter).toHaveBeenCalledOnce()
+    expect(mockSlideEnter).toHaveBeenCalledOnce()
     expect(mockFadeEnter).not.toHaveBeenCalled()
     expect(done).toHaveBeenCalledOnce()
   })
 
-  test('routes to fadeEnter on tablet mode', () => {
+  test('routes to fadeEnter on tablet', () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(document.createElement('div'))
-    const { onPageEnter } = usePageTransition(layout_mode, outlet)
+    const { onPageEnter } = usePageTransition(layout_mode, ref(document.createElement('div')))
 
-    const done = vi.fn()
-    onPageEnter(makeEl(), done)
+    onPageEnter(makeEl(), vi.fn())
 
     expect(mockFadeEnter).toHaveBeenCalledOnce()
-    expect(mockTabSlideEnter).not.toHaveBeenCalled()
+    expect(mockSlideEnter).not.toHaveBeenCalled()
   })
 
-  test('routes to fadeEnter on desktop mode', () => {
+  test('routes to fadeEnter on desktop', () => {
     const { layout_mode } = makeLayout('desktop')
-    const outlet = ref(document.createElement('div'))
-    const { onPageEnter } = usePageTransition(layout_mode, outlet)
+    const { onPageEnter } = usePageTransition(layout_mode, ref(document.createElement('div')))
 
-    const done = vi.fn()
-    onPageEnter(makeEl(), done)
+    onPageEnter(makeEl(), vi.fn())
 
     expect(mockFadeEnter).toHaveBeenCalledOnce()
-    expect(mockTabSlideEnter).not.toHaveBeenCalled()
+    expect(mockSlideEnter).not.toHaveBeenCalled()
   })
 })
 
-// ── onPageLeave — routing + between hook ─────────────────────────
+// ── onPageLeave — routing ─────────────────────────────────────────────────────
 
 describe('usePageTransition — onPageLeave routing', () => {
-  test('routes to tabSlideLeave on phone mode', () => {
+  test('routes to the shared slide on phone', () => {
     const { layout_mode } = makeLayout('phone')
-    const outlet = ref(document.createElement('div'))
-    const { onPageLeave } = usePageTransition(layout_mode, outlet)
+    const { onPageLeave } = usePageTransition(layout_mode, ref(document.createElement('div')))
 
-    const done = vi.fn()
-    onPageLeave(makeEl(), done)
+    onPageLeave(makeEl(), vi.fn())
 
-    expect(mockTabSlideLeave).toHaveBeenCalledOnce()
+    expect(mockSlideLeave).toHaveBeenCalledOnce()
     expect(mockFadeLeave).not.toHaveBeenCalled()
   })
 
-  test('routes to fadeLeave on tablet mode', () => {
+  test('routes to fadeLeave on tablet', () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(document.createElement('div'))
-    const { onPageLeave } = usePageTransition(layout_mode, outlet)
-
-    const done = vi.fn()
-    onPageLeave(makeEl(), done)
-
-    expect(mockFadeLeave).toHaveBeenCalledOnce()
-    expect(mockTabSlideLeave).not.toHaveBeenCalled()
-  })
-
-  test('routes to fadeLeave on desktop mode', () => {
-    const { layout_mode } = makeLayout('desktop')
-    const outlet = ref(document.createElement('div'))
-    const { onPageLeave } = usePageTransition(layout_mode, outlet)
-
-    const done = vi.fn()
-    onPageLeave(makeEl(), done)
-
-    expect(mockFadeLeave).toHaveBeenCalledOnce()
-    expect(mockTabSlideLeave).not.toHaveBeenCalled()
-  })
-
-  test('passes nav_direction and outlet to tabSlideLeave/tabSlideEnter', () => {
-    const { layout_mode } = makeLayout('phone')
-    const outlet_el = document.createElement('div')
-    const outlet = ref(outlet_el)
-    const { onPageLeave, onPageEnter, nav_direction } = usePageTransition(layout_mode, outlet)
+    const { onPageLeave } = usePageTransition(layout_mode, ref(document.createElement('div')))
 
     onPageLeave(makeEl(), vi.fn())
-    expect(mockTabSlideLeave).toHaveBeenCalledWith(nav_direction, outlet_el)
 
-    onPageEnter(makeEl(), vi.fn())
-    expect(mockTabSlideEnter).toHaveBeenCalledWith(nav_direction, outlet_el)
+    expect(mockFadeLeave).toHaveBeenCalledOnce()
+    expect(mockSlideLeave).not.toHaveBeenCalled()
+  })
+
+  test('routes to fadeLeave on desktop', () => {
+    const { layout_mode } = makeLayout('desktop')
+    const { onPageLeave } = usePageTransition(layout_mode, ref(document.createElement('div')))
+
+    onPageLeave(makeEl(), vi.fn())
+
+    expect(mockFadeLeave).toHaveBeenCalledOnce()
+    expect(mockSlideLeave).not.toHaveBeenCalled()
   })
 })
 
+// ── between hook ──────────────────────────────────────────────────────────────
+
 describe('usePageTransition — between hook', () => {
-  test('awaits `between` in the gap after the leave animation, before calling done, on every page change', async () => {
+  test('awaits `between` in the gap after the leave, before calling done', async () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(document.createElement('div'))
     let resolveBetween
     const between = vi.fn(
       () =>
@@ -175,7 +179,7 @@ describe('usePageTransition — between hook', () => {
           resolveBetween = resolve
         })
     )
-    const { onPageLeave } = usePageTransition(layout_mode, outlet, { between })
+    const { onPageLeave } = usePageTransition(layout_mode, ref(undefined), { between })
 
     const done = vi.fn()
     onPageLeave(makeEl(), done)
@@ -190,23 +194,9 @@ describe('usePageTransition — between hook', () => {
     expect(done).toHaveBeenCalledOnce()
   })
 
-  test('is safe to call when `between` is a no-op-guarded function that resolves immediately with nothing changed', async () => {
+  test('without a `between` option, onPageLeave still resolves and calls done', async () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(document.createElement('div'))
-    const between = vi.fn(() => Promise.resolve())
-    const { onPageLeave } = usePageTransition(layout_mode, outlet, { between })
-
-    const done = vi.fn()
-    await onPageLeave(makeEl(), done)
-
-    expect(between).toHaveBeenCalledOnce()
-    expect(done).toHaveBeenCalledOnce()
-  })
-
-  test('without a `between` option configured, onPageLeave still resolves and calls done', async () => {
-    const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(document.createElement('div'))
-    const { onPageLeave } = usePageTransition(layout_mode, outlet)
+    const { onPageLeave } = usePageTransition(layout_mode, ref(undefined))
 
     const done = vi.fn()
     await onPageLeave(makeEl(), done)
@@ -216,9 +206,8 @@ describe('usePageTransition — between hook', () => {
 
   test('runs on every page change, not just the first', async () => {
     const { layout_mode } = makeLayout('tablet')
-    const outlet = ref(document.createElement('div'))
     const between = vi.fn(() => Promise.resolve())
-    const { onPageLeave } = usePageTransition(layout_mode, outlet, { between })
+    const { onPageLeave } = usePageTransition(layout_mode, ref(undefined), { between })
 
     await onPageLeave(makeEl(), vi.fn())
     await onPageLeave(makeEl(), vi.fn())

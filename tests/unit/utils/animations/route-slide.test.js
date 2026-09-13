@@ -1,238 +1,229 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 
-// ── Hoisted GSAP mock ──────────────────────────────────────────────────────────
-// Stable fn refs are captured in the factory closure so they survive
-// vi.resetModules() — the factory re-runs but returns the same instances.
+// ── Hoisted GSAP + motion-store mocks ──────────────────────────────────────────
+// A fake paused timeline captures every to/fromTo; play() fires the driver's
+// onComplete so `handle.done` resolves. Mirrors the card-slide / toolbar-swap
+// driver-motion test rig.
 
-const { mockFromTo, mockTo } = vi.hoisted(() => ({
-  mockFromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-  mockTo: vi.fn((_el, opts) => opts?.onComplete?.())
-}))
+const { makeTimeline, timelines, mockSet } = vi.hoisted(() => {
+  const timelines = []
+  function makeTimeline() {
+    const state = { onComplete: null, calls: { to: [], fromTo: [] } }
+    const tl = {
+      to: (...args) => {
+        state.calls.to.push(args)
+        return tl
+      },
+      fromTo: (...args) => {
+        state.calls.fromTo.push(args)
+        return tl
+      },
+      call: () => tl,
+      eventCallback: (_name, cb) => {
+        state.onComplete = cb
+        return tl
+      },
+      play: () => {
+        state.onComplete?.()
+        return tl
+      },
+      progress: () => tl,
+      kill: () => tl,
+      state
+    }
+    timelines.push(tl)
+    return tl
+  }
+  const mockSet = vi.fn((target, vars) => {
+    for (const [key, value] of Object.entries(vars)) {
+      target.style[key] = typeof value === 'number' ? `${value}px` : value
+    }
+  })
+  return { makeTimeline, timelines, mockSet }
+})
 
 vi.mock('gsap', () => ({
-  gsap: { fromTo: mockFromTo, to: mockTo }
+  gsap: { timeline: () => makeTimeline(), isTweening: vi.fn(() => false), set: mockSet }
 }))
 
-// route-slide.ts carries module-level `leave_pending` state. Reset the module
-// before every test so each test starts with leave_pending = false.
-beforeEach(async () => {
-  vi.resetModules()
-  mockFromTo.mockClear()
-  mockFromTo.mockImplementation((_el, _from, to) => to?.onComplete?.())
-  mockTo.mockClear()
-  mockTo.mockImplementation((_el, opts) => opts?.onComplete?.())
-})
+const { mockUseMotionStore } = vi.hoisted(() => ({
+  mockUseMotionStore: vi.fn(() => ({ factors: { duration: 1 } }))
+}))
+vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
-async function fresh() {
-  return import('@/utils/animations/route-slide')
+import { routeSlide } from '@/utils/animations/route-slide'
+
+// ── Helpers ─────────────────────────────────────────────────────────────────────
+
+function build({ dashboard = false, initial = false } = {}) {
+  const going_to_dashboard = ref(dashboard)
+  const is_initial = ref(initial)
+  const animation_done = ref(false)
+  const slide = routeSlide({ going_to_dashboard, is_initial, animation_done })
+  return { ...slide, going_to_dashboard, is_initial, animation_done }
 }
 
-// ── routeSlideLeave ────────────────────────────────────────────────────────────
+const el = () => document.createElement('div')
 
-describe('routeSlideLeave', () => {
-  test('positions element absolutely to overlay during leave', async () => {
-    const { routeSlideLeave } = await fresh()
-    const el = document.createElement('div')
-
-    routeSlideLeave(ref(false))(el, vi.fn())
-
-    expect(el.style.position).toBe('absolute')
-    expect(el.style.width).toBe('100%')
-  })
-
-  test('calls done via GSAP onComplete', async () => {
-    const { routeSlideLeave } = await fresh()
-    const el = document.createElement('div')
-    const done = vi.fn()
-
-    routeSlideLeave(ref(false))(el, done)
-
-    expect(done).toHaveBeenCalledOnce()
-  })
-
-  test('slides element right (+100%) when going_to_dashboard is true', async () => {
-    const { routeSlideLeave } = await fresh()
-    const el = document.createElement('div')
-
-    routeSlideLeave(ref(true))(el, vi.fn())
-
-    expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ x: '100%' }))
-  })
-
-  test('slides element left (-100%) when going_to_dashboard is false', async () => {
-    const { routeSlideLeave } = await fresh()
-    const el = document.createElement('div')
-
-    routeSlideLeave(ref(false))(el, vi.fn())
-
-    expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ x: '-100%' }))
-  })
-
-  test('sets parent minHeight to lock the layout height during animation', async () => {
-    const { routeSlideLeave } = await fresh()
-    const parent = document.createElement('div')
-    const el = document.createElement('div')
-    parent.appendChild(el)
-
-    // Don't call onComplete here — we want to observe the mid-animation state
-    mockTo.mockImplementationOnce(() => {})
-
-    routeSlideLeave(ref(false))(el, vi.fn())
-
-    // jsdom always returns 0 for offsetHeight; the '0px' value is still forwarded
-    expect(parent.style.minHeight).toBe('0px')
-  })
-
-  test('clears parent minHeight in onComplete callback', async () => {
-    const { routeSlideLeave } = await fresh()
-    const parent = document.createElement('div')
-    const el = document.createElement('div')
-    parent.appendChild(el)
-
-    routeSlideLeave(ref(false))(el, vi.fn())
-
-    // mockTo calls onComplete synchronously, so cleanup already ran
-    expect(parent.style.minHeight).toBe('')
-  })
+beforeEach(() => {
+  vi.clearAllMocks()
+  timelines.length = 0
+  mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
 })
 
-// ── routeSlideEnter — leave_pending = false (obligation 1) ────────────────────
+// ── leave → enter plays the slide ────────────────────────────────────────────────
 
-describe('routeSlideEnter — leave_pending is false (no preceding leave)', () => {
-  test('calls done immediately without running GSAP animation', async () => {
-    const { routeSlideEnter } = await fresh()
-    const animation_done = ref(false)
-    const done = vi.fn()
+describe('routeSlide — a leave followed by an enter plays the slide', () => {
+  test('the leave pins its node out of flow and slides it off', () => {
+    const { onLeave } = build()
+    const node = el()
 
-    routeSlideEnter(ref(false), ref(false), animation_done)(document.createElement('div'), done)
+    onLeave(node, vi.fn())
 
-    expect(done).toHaveBeenCalledOnce()
-    expect(mockFromTo).not.toHaveBeenCalled()
+    expect(node.style.position).toBe('absolute')
+    expect(timelines[0].state.calls.to).toHaveLength(1)
   })
 
-  test('sets animation_done to true immediately when skipping', async () => {
-    const { routeSlideEnter } = await fresh()
-    const animation_done = ref(false)
+  test('the paired enter runs a fromTo slide', () => {
+    const { onLeave, onEnter } = build()
 
-    routeSlideEnter(ref(false), ref(false), animation_done)(document.createElement('div'), vi.fn())
+    onLeave(el(), vi.fn())
+    onEnter(el(), vi.fn())
+
+    // one timeline for the leave, one for the played enter
+    expect(timelines).toHaveLength(2)
+    expect(timelines[1].state.calls.fromTo).toHaveLength(1)
+  })
+
+  test('the enter sets animation_done true once the timeline completes', async () => {
+    const { onLeave, onEnter, animation_done } = build()
+
+    onLeave(el(), vi.fn())
+    onEnter(el(), vi.fn())
+    await Promise.resolve()
 
     expect(animation_done.value).toBe(true)
   })
 })
 
-// ── routeSlideEnter — is_initial = true gate (obligation 2) ───────────────────
+// ── enter with no preceding leave (Suspense resolve) skips ───────────────────────
 
-describe('routeSlideEnter — is_initial is true (first page load)', () => {
-  test('calls done immediately on initial render', async () => {
-    const { routeSlideEnter } = await fresh()
+describe('routeSlide — enter with no preceding leave', () => {
+  test('skips the animation and calls done immediately', () => {
+    const { onEnter } = build()
     const done = vi.fn()
 
-    routeSlideEnter(ref(false), ref(true), ref(false))(document.createElement('div'), done)
+    onEnter(el(), done)
 
     expect(done).toHaveBeenCalledOnce()
-    expect(mockFromTo).not.toHaveBeenCalled()
+    expect(timelines).toHaveLength(0)
   })
 
-  test('sets animation_done to true immediately on initial render', async () => {
-    const { routeSlideEnter } = await fresh()
-    const animation_done = ref(false)
+  test('sets animation_done true synchronously when skipping', () => {
+    const { onEnter, animation_done } = build()
 
-    routeSlideEnter(ref(false), ref(true), animation_done)(document.createElement('div'), vi.fn())
+    onEnter(el(), vi.fn())
 
     expect(animation_done.value).toBe(true)
-  })
-
-  test('skips animation even when a leave happened to fire before', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
-    // Trigger a leave to set leave_pending = true
-    routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
-    mockFromTo.mockClear()
-
-    // Now enter with is_initial = true — should still skip the animation
-    const done = vi.fn()
-    routeSlideEnter(ref(false), ref(true), ref(false))(document.createElement('div'), done)
-
-    expect(done).toHaveBeenCalledOnce()
-    expect(mockFromTo).not.toHaveBeenCalled()
   })
 })
 
-// ── routeSlideEnter — full animation path (obligation 5) ──────────────────────
+// ── is_initial skips even when a leave fired ─────────────────────────────────────
 
-describe('routeSlideEnter — preceded by a leave (animation path)', () => {
-  test('runs GSAP fromTo animation when leave_pending and not initial', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
-    const el = document.createElement('div')
+describe('routeSlide — is_initial', () => {
+  test('skips the enter animation on the first paint', () => {
+    const { onEnter, animation_done } = build({ initial: true })
+    const done = vi.fn()
 
-    routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
-    mockFromTo.mockClear()
+    onEnter(el(), done)
 
-    routeSlideEnter(ref(false), ref(false), ref(false))(el, vi.fn())
-
-    expect(mockFromTo).toHaveBeenCalledOnce()
-  })
-
-  test('sets animation_done to true inside onComplete', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
-    const animation_done = ref(false)
-
-    routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
-    routeSlideEnter(ref(false), ref(false), animation_done)(document.createElement('div'), vi.fn())
-
+    expect(done).toHaveBeenCalledOnce()
+    expect(timelines).toHaveLength(0)
     expect(animation_done.value).toBe(true)
   })
 
-  test('calls done inside onComplete', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
-    const done = vi.fn()
+  test('skips even when a leave happened to fire first', () => {
+    const { onLeave, onEnter } = build({ initial: true })
 
-    routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
-    routeSlideEnter(ref(false), ref(false), ref(false))(document.createElement('div'), done)
+    onLeave(el(), vi.fn())
+    const leave_timelines = timelines.length
+    onEnter(el(), vi.fn())
 
-    expect(done).toHaveBeenCalledOnce()
+    // the enter added no timeline of its own
+    expect(timelines).toHaveLength(leave_timelines)
+  })
+})
+
+// ── direction flips on going_to_dashboard ────────────────────────────────────────
+
+describe('routeSlide — direction', () => {
+  test('leave slides off to the right (+100) heading to the dashboard', () => {
+    const { onLeave } = build({ dashboard: true })
+
+    onLeave(el(), vi.fn())
+
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars).toMatchObject({ xPercent: 100 })
   })
 
-  test('slides in from left (-100%) when going_to_dashboard is false', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
+  test('leave slides off to the left (-100) heading away from the dashboard', () => {
+    const { onLeave } = build({ dashboard: false })
 
-    routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
-    mockFromTo.mockClear()
-    routeSlideEnter(ref(false), ref(false), ref(false))(document.createElement('div'), vi.fn())
+    onLeave(el(), vi.fn())
 
-    expect(mockFromTo).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ x: '100%' }),
-      expect.anything()
-    )
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars).toMatchObject({ xPercent: -100 })
   })
 
-  test('slides in from right (+100%) when going_to_dashboard is true', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
+  test('enter slides in from the left (-100) heading to the dashboard', () => {
+    const { onLeave, onEnter } = build({ dashboard: true })
 
-    routeSlideLeave(ref(true))(document.createElement('div'), vi.fn())
-    mockFromTo.mockClear()
-    routeSlideEnter(ref(true), ref(false), ref(false))(document.createElement('div'), vi.fn())
+    onLeave(el(), vi.fn())
+    onEnter(el(), vi.fn())
 
-    expect(mockFromTo).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ x: '-100%' }),
-      expect.anything()
-    )
+    const [, from] = timelines[1].state.calls.fromTo[0]
+    expect(from).toEqual({ xPercent: -100 })
   })
 
-  test('does not run animation a second time without a new leave', async () => {
-    const { routeSlideLeave, routeSlideEnter } = await fresh()
+  test('enter slides in from the right (+100) heading away from the dashboard', () => {
+    const { onLeave, onEnter } = build({ dashboard: false })
 
-    routeSlideLeave(ref(false))(document.createElement('div'), vi.fn())
-    routeSlideEnter(ref(false), ref(false), ref(false))(document.createElement('div'), vi.fn())
-    mockFromTo.mockClear()
+    onLeave(el(), vi.fn())
+    onEnter(el(), vi.fn())
 
-    // Second enter with no preceding leave — should skip
-    const done = vi.fn()
-    routeSlideEnter(ref(false), ref(false), ref(false))(document.createElement('div'), done)
+    const [, from] = timelines[1].state.calls.fromTo[0]
+    expect(from).toEqual({ xPercent: 100 })
+  })
+})
 
-    expect(mockFromTo).not.toHaveBeenCalled()
-    expect(done).toHaveBeenCalledOnce()
+// ── reset — an unpaired leave never suppresses the next real enter ───────────────
+
+describe('routeSlide — per-instance reset', () => {
+  test('a second enter with no fresh leave skips', () => {
+    const { onLeave, onEnter } = build()
+
+    onLeave(el(), vi.fn())
+    onEnter(el(), vi.fn())
+    const after_first = timelines.length
+
+    onEnter(el(), vi.fn())
+
+    expect(timelines).toHaveLength(after_first)
+  })
+
+  test('an interrupted leave that never paired still lets the next real enter slide', () => {
+    const { onLeave, onEnter } = build()
+
+    // First navigation leaves but is interrupted before its enter runs.
+    onLeave(el(), vi.fn())
+    // Second navigation leaves too, then its enter arrives.
+    onLeave(el(), vi.fn())
+    const before_enter = timelines.length
+    onEnter(el(), vi.fn())
+
+    // The enter played its own slide rather than being skipped.
+    expect(timelines.length).toBe(before_enter + 1)
+    expect(timelines.at(-1).state.calls.fromTo).toHaveLength(1)
   })
 })
