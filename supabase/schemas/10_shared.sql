@@ -151,13 +151,26 @@ GRANT ALL ON FUNCTION public.set_member_id() TO authenticated;
 GRANT ALL ON FUNCTION public.set_member_id() TO service_role;
 
 
+-- `on` reads live for everyone; `targeted` reads live only for a member holding
+-- a grant; `off`, a missing row, and an empty allow-list all read not-live.
 -- Reads the capability row bare; no fallback — the server fails closed. →[K:capability-server-has-no-fallback]
 CREATE FUNCTION public.capability_is_live(p_key text) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
   select coalesce(
-    (select state = 'on' from public.capabilities where key = p_key),
+    (
+      select case state
+        when 'on' then true
+        when 'targeted' then exists (
+          select 1 from public.capability_grants
+          where key = p_key
+            and member_id = ( select public.active_member_id() )
+        )
+        else false
+      end
+      from public.capabilities where key = p_key
+    ),
     false
   )
 $$;

@@ -4,7 +4,7 @@ domain: authz
 status: current
 hazard: true
 related: [permissions]
-updated: 2026-09-10
+updated: 2026-09-12
 ---
 
 # Capabilities
@@ -35,11 +35,12 @@ until an admin changes it.
 
 Reading a capability comes down to its row:
 
-| The capability's row… | reads as… |
-| --------------------- | --------- |
-| `state = 'on'`        | live      |
-| `state = 'off'`       | not live  |
-| no row at all         | not live  |
+| The capability's row… | reads as…                                |
+| --------------------- | ---------------------------------------- |
+| `state = 'on'`        | live for everyone                        |
+| `state = 'off'`       | not live                                 |
+| `state = 'targeted'`  | live only for a member on its allow-list |
+| no row at all         | not live                                 |
 
 The last row is the one that catches people. A capability with no row is not
 "unconfigured, so allow it" — it's off. Failing closed is deliberate: a
@@ -56,13 +57,21 @@ Reading a capability and changing a capability are two different permissions.
   screen — the same server-is-the-boundary rule as every other permission
   ([[permissions]]).
 
-## The reserved seam
+## Targeting a feature at some people
 
-Each capability is either off or on for everyone — v1 has no notion of turning a
-feature on for _some_ people. The table still leaves room for that later: a
-third `targeted` state and an unused targeting slot sit reserved, written by
-nothing today. They exist so cohort or percentage rollouts can be added without
-reshaping the table, not because anything reaches them yet.
+A capability doesn't have to be all-or-nothing. Set to `targeted`, it reads live
+only for members on an explicit allow-list — everyone else sees it as not live,
+exactly as if it were off.
+
+The allow-list is a separate table: one row per granted member, recording who
+granted the entry and when. An admin adds and removes entries; a member can see
+only their own, never the rest of the list — the membership stays private. An
+empty allow-list means a `targeted` feature is live for nobody, admins included,
+until someone is granted.
+
+Deleting a granted member's account clears their entries. Deleting the admin who
+granted an entry keeps the entry and blanks who granted it, so a grant outlives
+the admin who made it.
 
 ## What this isn't
 
