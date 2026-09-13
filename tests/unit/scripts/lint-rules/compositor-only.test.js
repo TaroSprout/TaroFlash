@@ -16,9 +16,8 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
 })
 
-/** Runs the rule against `source` written to a real file (it reads from disk), returning reports. */
 function lint(source, { filename = join(dir, 'motion.ts') } = {}) {
-  mkdirSync(dirname(filename), { recursive: true })
+  mkdirSync(dirname(filename), { recursive: true }) // Runs the rule against source written to a real file — it reads from disk.
   writeFileSync(filename, source)
   const reports = []
   const listeners = rule.create({ filename, report: (r) => reports.push(r) })

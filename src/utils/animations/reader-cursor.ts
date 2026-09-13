@@ -5,7 +5,11 @@ export type CursorBox = { left: number; top: number; width: number; height: numb
 const MOVE = 0.2
 const FADE = 0.2
 
-// The box's real, currently-applied geometry plus a handle on the in-flight transform tween easing it toward that geometry, so an interrupted move can kill the stale one before starting the next.
+/**
+ * The box's real, currently-applied geometry plus a handle on the in-flight
+ * transform tween easing it toward that geometry, so an interrupted move can
+ * kill the stale one before starting the next.
+ */
 type Placed = { box: CursorBox; tween: gsap.core.Tween | null }
 const placedByEl = new WeakMap<HTMLElement, Placed>()
 

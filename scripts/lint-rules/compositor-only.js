@@ -1,18 +1,6 @@
 /**
- * Enforces the motion driver's own contract (`src/utils/motion/types.ts`'s
- * `MotionVars`): a GSAP tween animates only transform-family properties and
- * `opacity`, so it runs on the compositor thread. A tween that names a layout
- * property (`width`, `height`, `top`, `left`, `right`, `bottom`, a `margin`/
- * `padding` longhand) or `filter` forces a synchronous layout or paint on the
- * main thread every frame instead — that motion belongs behind the stage
- * primitive (`src/components/layout-kit/stage/`), which reserves a tracked
- * budget for exactly this cost, or it needs a deliberate, reasoned exemption.
- *
- * Scans the raw source rather than the parsed AST, matching this repo's other
- * jsPlugin (`comment-authoring.js`) — a tween's arguments are found by
- * balanced-bracket scanning instead of a full traversal.
- *
- * Wired up in vite.config.ts's `lint` block; runs on `vp lint` and `vp check`.
+ * Oxlint `no-layout-tween` rule: flags a GSAP tween naming a layout property
+ * or `filter` instead of transform/opacity. Wired up in vite.config.ts's `lint` block.
  */
 import { readFileSync } from 'node:fs'
 

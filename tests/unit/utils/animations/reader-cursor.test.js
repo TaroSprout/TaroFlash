@@ -46,23 +46,20 @@ describe('moveReaderCursor', () => {
 
     moveReaderCursor(el, BOX_B, { duration: 0.05 })
 
-    // The real box is the new target the instant the move is requested, never tweened.
-    expect(el.style.left).toBe('30px')
+    expect(el.style.left).toBe('30px') // The real box is the new target instantly, never tweened.
     expect(el.style.top).toBe('45px')
     expect(el.style.width).toBe('60px')
     expect(el.style.height).toBe('20px')
     expect(mockSet).not.toHaveBeenCalled()
 
-    // Painted synchronously, before either tween ticks: the box is inverted back to where it
-    // visually sat a moment ago, purely via `transform`.
     const dx = BOX_A.left - BOX_B.left
     const dy = BOX_A.top - BOX_B.top
     const sx = BOX_A.width / BOX_B.width
     const sy = BOX_A.height / BOX_B.height
+    // Painted synchronously, before either tween ticks, purely via `transform`.
     expect(el.style.transform).toBe(`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`)
 
-    // Two tweens: the element's own autoAlpha, and a plain delta object eased to identity.
-    expect(mockTo).toHaveBeenCalledTimes(2)
+    expect(mockTo).toHaveBeenCalledTimes(2) // Two tweens: the element's autoAlpha, and the delta.
     const elCall = mockTo.mock.calls.find((call) => call[0] === el)
     expect(elCall[1]).toMatchObject({ autoAlpha: 1, duration: 0.05 })
 
@@ -70,14 +67,13 @@ describe('moveReaderCursor', () => {
     expect(deltaCall[0]).toMatchObject({ x: dx, y: dy, sx, sy })
     expect(deltaCall[1]).toMatchObject({ x: 0, y: 0, sx: 1, sy: 1, duration: 0.05 })
 
-    // The delta tween's onUpdate paints only `transform` — never left/top/width/height.
     const leftBeforeUpdate = el.style.left
     deltaCall[0].x = 0
     deltaCall[0].y = 0
     deltaCall[0].sx = 1
     deltaCall[0].sy = 1
     deltaCall[1].onUpdate()
-    expect(el.style.transform).toBe('translate(0px, 0px) scale(1, 1)')
+    expect(el.style.transform).toBe('translate(0px, 0px) scale(1, 1)') // onUpdate paints only `transform`.
     expect(el.style.left).toBe(leftBeforeUpdate)
   })
 
