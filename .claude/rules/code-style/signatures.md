@@ -14,7 +14,7 @@ A parameter, a shared primitive's prop, or anything else more than one caller re
 the role it plays **inside** the thing it's part of, never for the caller, UI event, or vendor that
 happens to supply it today — it starts lying the moment a different source uses the same surface.
 [`architecture/ui-kit`](../architecture/ui-kit.md) and
-[`comment-authoring`](../comment-authoring.md) apply this to a primitive's props and a comment's
+[`comment-authoring`](../../knowledge/comment-authoring.md) apply this to a primitive's props and a comment's
 opening subject.
 
 A parameter is named for the role it plays **inside** the function, never for the UI event or call site that supplied it. `clicked_row_id` couples a low-level helper to one UI source and starts lying the moment a keyboard shortcut, context menu, or programmatic flow calls it.

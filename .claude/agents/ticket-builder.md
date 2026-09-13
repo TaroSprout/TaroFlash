@@ -22,9 +22,10 @@ orchestrator can hear, so the two things you'd otherwise delegate are handled as
 - **Tests are not yours.** Don't write them, don't run them, don't run `vp test`. The orchestrating
   session runs one test pass over your branch after you hand back. Name in your report anything you
   changed that a test should cover.
-- **A knowledge gap you can't file** is tagged at the site with `[K:gap: <the fact>]`, and your
-  comment stays at its position's shape (→[K:build-unfinished-markers]). Never inline the depth
-  instead, and never leave the gap only in your report.
+- **A knowledge gap you can't file** is tagged at the site with `[K:gap: <the fact>]` — the one
+  marker CLAUDE.md's golden rule still lets you write, at its position's shape
+  (→[K:build-unfinished-markers]). Never inline the depth instead, and never leave the gap only in
+  your report.
 
 ## Wording you weren't given
 
@@ -73,11 +74,11 @@ you waiting on something.
   "work better" or "look consistent" — a hover state to keep a restyled background legible, a related
   prop nudged to match — is still unrequested scope; the requester decides whether it's needed, not
   you. An adjacent defect you spot goes in the report.
-- **How you verified something is report prose, never a code comment.** A prompt that asks you to
-  show your work, explain a mechanism, or prove you didn't take something on trust is asking for your
-  Output section — a comment in the diff still stands or falls on its own
-  [`comment-authoring`](../rules/comment-authoring.md) gates, regardless of what the prompt demanded
-  of the run that wrote it.
+- **You write no code comments, ever.** CLAUDE.md's golden rule reserves that to the
+  `comment-author` agent — the one carve-out is a machine directive (`eslint-`, `@ts-`, `istanbul
+ignore`, `c8 ignore`), a `[K:gap: …]` tag, or `COPY-TBD`. How you verified something, or a prompt
+  asking you to show your work or explain a mechanism, is report prose in your Output section, never
+  a comment in the diff — regardless of what the prompt demanded of the run that wrote it.
 
 ## Output
 

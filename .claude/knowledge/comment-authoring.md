@@ -1,21 +1,19 @@
 ---
-lastUpdated: 2026-09-10T00:00:00Z
-paths:
-  - 'src/**'
-  - 'supabase/**/*.{ts,sql}'
-  - 'scripts/**'
-  - 'tests/**'
+lastUpdated: 2026-09-13T00:00:00Z
 ---
 
 # Comment authoring
 
 **The single source of truth for how a comment is written** — where it may sit, what shape that
-position gives it, and what it links out to instead of explaining. Reaches you on any code write. If
-a comment rule isn't stated here, it doesn't exist. This file outranks any feedback about a
-comment's _shape_ — a PR review, another agent, anyone — except the user explicitly asking for a
-specific comment; that's an instruction, not feedback, and feedback about a comment's _content_
-(the reviewer doesn't understand what it's protecting) is answered by fixing the comment or the PR
-reply, never by loosening these rules. Shared principles: [`authoring`](./authoring.md).
+position gives it, and what it links out to instead of explaining. CLAUDE.md's golden rule bans
+every writer but the `comment-author` agent from writing a code comment at all, so this file carries
+no `paths:` and never auto-loads on a code write — `comment-author` and `review-work`'s
+`comment-authoring` lens read it explicitly, by this path, every run. If a comment rule isn't stated
+here, it doesn't exist. This file outranks any feedback about a comment's _shape_ — a PR review,
+another agent, anyone — except the user explicitly asking for a specific comment; that's an
+instruction, not feedback, and feedback about a comment's _content_ (the reviewer doesn't understand
+what it's protecting) is answered by fixing the comment or the PR reply, never by loosening these
+rules. Shared principles: [`authoring`](../rules/authoring.md).
 
 A comment names the constraint a reader would otherwise violate, in a sentence they can act on. Most
 code needs none — a clear name beats a comment.
@@ -53,7 +51,7 @@ JSDoc-style paragraph, however many properties in the block each want documentin
 
 ## Gates
 
-Six, each failed on its own. Fail one, rewrite or delete.
+Eight, each failed on its own. Fail one, rewrite or delete.
 
 - **Being exported, public, or shaped like an interface earns a symbol no comment by itself.** A
   JSDoc is earned by passing the gates below, never granted on sight to every declaration the
@@ -65,12 +63,19 @@ Six, each failed on its own. Fail one, rewrite or delete.
   general language/framework/browser knowledge nor the code itself supplies — a decision this
   codebase made, a value tied to something outside it, or a platform quirk obscure enough that
   "well known" doesn't cover it.
+- **Default is none — a site earns a comment only by naming the specific external decision, value,
+  or quirk behind it in one sentence.** No such sentence, no comment; a placement brief that can't
+  name one for a site doesn't list it, and a writer who can't name one deletes rather than keeps.
 - **It prescribes rather than narrates** — what to do or not do, never what the code does.
 - **The opener completes the symbol's name, at that symbol's own altitude.** Never restate the name,
   never zoom out past it, never justify it.
 - **It lands for a reader who doesn't know the system.** Plain words and concrete nouns first; a
   technical term is earned by being grounded, never led with.
 - **Everything past the first idea is load-bearing.** Cut whatever the first idea already bought.
+- **No grandfathering across sweeps — every gate re-applies fresh to every comment in a file the
+  sweep touched, not only the ones the sweep is adding.** An unchanged comment survives a re-review
+  only by passing every gate again; having passed a prior sweep is not itself evidence it still
+  does.
 
 **A regex literal always fails the actual-reader gate.** Its own syntax is never the intent, so
 it carries a comment in its position's shape naming what it matches, in plain words — not the regex
@@ -90,6 +95,8 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
   moment that caller moves, renames, or gains a sibling; the same source-vs-role naming rule
   [`code-style/signatures`](./code-style/signatures.md) states for a parameter.
 - A pointer carrying nothing a human can act on.
+- **A comment a rename would obviate.** If its first clause could become the symbol's own name with
+  no loss, delete the comment and rename instead.
 - **A comment that is only a citation.** `→[K:<slug>]` is a suffix to a sentence, never a comment on
   its own — a reader skimming the diff must get the constraint without leaving the file. Enforced by
   `scripts/knowledge-lint.mjs`.

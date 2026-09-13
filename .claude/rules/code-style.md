@@ -7,7 +7,8 @@ paths:
 # Code Style
 
 **Owns how a function is shaped.** Six rules, one spoke each; apply every edit. Comments are
-[`comment-authoring`](./comment-authoring.md)'s.
+[`comment-authoring`](../knowledge/comment-authoring.md)'s — and, per CLAUDE.md's golden rule, only
+the `comment-author` agent writes one.
 
 ## Spokes
 
