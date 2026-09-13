@@ -20,8 +20,7 @@ type Wrapper = Ref<HTMLElement | undefined>
 export function tabSlideLeave(direction: Direction, wrapper: Wrapper): Motion {
   return motion((el, ctx) => {
     const box = wrapper.value
-    // Freeze the panel at its current height so it can't collapse before the
-    // entering page animates to the new one.
+    // Freeze the panel's height so it can't collapse before the entering page resizes.
     if (box) box.style.height = `${box.offsetHeight}px`
 
     if (direction.value === 'back') {
