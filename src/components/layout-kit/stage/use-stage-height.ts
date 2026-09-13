@@ -7,6 +7,17 @@ const HEIGHT_DURATION = 200
 
 const NOOP = () => {}
 
+type StageHeightOptions = {
+  /**
+   * Returns false to record content's new size as the baseline without animating
+   * to it — for a box that's off-screen, or whose height an outside effect is
+   * driving this frame. Defaults to always animating.
+   */
+  active?: () => boolean
+  /** Called once each height change settles; not on a silently-recorded baseline. */
+  onSettled?: () => void
+}
+
 /**
  * Grows or shrinks the measured box to follow its content's natural height,
  * tweening through the motion driver and clipping the box only while it moves.
@@ -18,8 +29,13 @@ const NOOP = () => {}
  *
  * @param box - the measured element whose height is animated; must tolerate `overflow: hidden`.
  * @param content - the in-flow element whose natural height drives the target.
+ * @param options - `active` gate and `onSettled` callback; see {@link StageHeightOptions}.
  */
-export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLElement | null>) {
+export function useStageHeight(
+  box: Ref<HTMLElement | null>,
+  content: Ref<HTMLElement | null>,
+  { active = () => true, onSettled }: StageHeightOptions = {}
+) {
   const claims = ref(0)
 
   let observer: ResizeObserver | null = null
@@ -77,6 +93,7 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
 
       handBack()
       handle = null
+      onSettled?.()
     })
   }
 
@@ -92,7 +109,9 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
 
     const reserved = reserveHeightTween()
     if (!reserved) {
+      // No compositor budget left this tier — snap to the target and report it settled.
       handBack()
+      onSettled?.()
       return
     }
 
@@ -104,7 +123,10 @@ export function useStageHeight(box: Ref<HTMLElement | null>, content: Ref<HTMLEl
     const target = content.value?.offsetHeight ?? 0
     if (target === last) return
 
+    // Record the new baseline even while inactive, so the next active change starts fresh.
     last = target
+    if (!active()) return
+
     changeHeight()
   }
 
