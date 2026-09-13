@@ -100,11 +100,9 @@ function onClosePhoneSm(el: Element, done: () => void) {
 </template>
 
 <style>
-[data-testid='phone-stage'] {
-  --phone-duration: 100ms;
-}
-
 :root[data-motion='full'] [data-phone-blur] {
+  --phone-duration: 100ms;
+
   transition: filter var(--phone-duration) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
