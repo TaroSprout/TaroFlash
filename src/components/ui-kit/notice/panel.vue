@@ -67,7 +67,7 @@ function onActionClick(action: NoticeAction) {
     <div
       v-if="open && notice.backdrop"
       data-testid="ui-kit-notice-panel-backdrop"
-      class="pointer-events-auto fixed inset-0 backdrop-blur-4 bg-black/10"
+      class="pointer-events-auto fixed inset-0 bg-black/10 tier-full:backdrop-blur-4"
     />
   </Transition>
 

@@ -31,7 +31,7 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
       v-if="modal_stack.length > 0"
       data-testid="ui-kit-modal-backdrop"
       class="pointer-events-auto fixed inset-0 flex items-center justify-center px-4 py-7"
-      :class="{ 'backdrop-blur-4 bg-black/10': show_backdrop }"
+      :class="{ 'bg-black/10 tier-full:backdrop-blur-4': show_backdrop }"
       @click="requestClose"
     >
       <slot></slot>
@@ -84,6 +84,12 @@ const show_backdrop = computed(() => modal_stack.value.some((m) => m.backdrop))
 }
 
 [data-testid='ui-kit-modal'][data-receded='true'] {
+  filter: brightness(0.8);
+}
+
+/* Full tier only — the blur layer on top of the dim is a standing effect, not motion,
+   so it's gated by hardware tier (`data-motion`) and never by prefers-reduced-motion. */
+:root[data-motion='full'] [data-testid='ui-kit-modal'][data-receded='true'] {
   filter: brightness(0.8) blur(2px);
 }
 </style>
