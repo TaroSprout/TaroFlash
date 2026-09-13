@@ -12,3 +12,12 @@ type Capability = {
   key: CapabilityKey
   state: CapabilityState
 }
+
+// One member on a `targeted` capability's allow-list, in the safe shape the admin
+// read projects — display fields plus when the grant was made, never granted_by.
+type CapabilityGrant = {
+  id: string
+  display_name: string
+  avatar_url: string | null
+  granted_at: string
+}
