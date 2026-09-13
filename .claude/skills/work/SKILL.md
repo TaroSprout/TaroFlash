@@ -1,6 +1,6 @@
 ---
 name: work
-description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A pre-PR review swarm (`swarm-reviewer` running `review-work`, one agent per concern, each on the model its roster row names) then reviews the integration branch — rule-family lenses (comment, code-style, test-authoring) plus the semantic `test-integrity` lens — before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
+description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A pre-PR review pipeline (`swarm-reviewer` running `review-work`, one agent per concern, each on the model its roster row names) then reviews the integration branch — rule-family lenses (code-style, test-authoring) and the semantic `test-integrity` lens run first, then the placement lens (`comment-placement`) briefs a `comment-author` sweep, then `comment-authoring` reviews that sweep's own commits — before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
 allowed-tools: Read, Write, Bash, Agent
 argument-hint: '[<ID> <ID> …] [--count N] [--epic <name|url>] ["<instruction>"]'
 arguments:
@@ -225,32 +225,57 @@ then run **one** consolidated `update-tests` pass, dispatched the same way as §
 the round changed. Dispatch self-heal for this round (§ Self-heal) before continuing. Repeat until the
 user says the live-review round is done — that close is what starts § 4e.
 
-### 4e. REVIEW SWARM — the pre-PR review pass
+### 4e. REVIEW PIPELINE — the pre-PR review pass
 
-Once the live-review round (§ 4d) is closed, run the review swarm over the **integration
+Once the live-review round (§ 4d) is closed, run the review pipeline over the **integration
 branch** — the single diff `git diff master...HEAD` on the home tree already carries every landed
-branch (§ 4a merged each one forward). Dispatch one [`swarm-reviewer`](../../agents/swarm-reviewer.md)
-per concern in [`review-work`](../../skills/review-work/SKILL.md)'s roster, in a single message so they
-run concurrently, **each `Agent` call's `model:` set from that concern's roster row** (sonnet for the
-rule-family lenses, opus for `test-integrity`) — each runs `review-work --concern <name>` over that
-diff and reports findings for its one lens. **The count is the roster's, not the branch count**: a
-nine-branch run is still one `swarm-reviewer` per concern. They are **read-only** and never edit.
+branch (§ 4a merged each one forward). Builders write no code comments at all (CLAUDE.md's golden
+rule), so `comment-authoring` can't review this diff yet — there is nothing on it for that lens to
+hold a comment against. The pipeline runs the non-comment concerns and the placement lens first,
+sweeps in the comments a dedicated agent writes, then closes with `comment-authoring` reviewing that
+sweep.
 
-Each finding comes back branch-agnostic — `file + quoted offender + exact edit`, or for
-`test-integrity`, **two files** naming both sides of a cross-test conflict plus the required edit. A
-**rule-family finding** (`comment-authoring`, `code-style`, `test-authoring`) still routes
-automatically: the run ledger's _files touched_ column (§ Run ledger) maps the file to its branch;
-when two branches touched that file, `git blame` the integration line to the commit, then the branch
-that carries it. Route the fix through **§ 4d's dispatch-and-merge-forward mechanic**, on the owning
-branch — never applied by the orchestrator. This adds no interactive pause.
+**Round 1 — every concern but `comment-authoring`.** Dispatch one
+[`swarm-reviewer`](../../agents/swarm-reviewer.md) per remaining roster row in
+[`review-work`](../../skills/review-work/SKILL.md) — `comment-placement`, `code-style`,
+`test-authoring`, `test-integrity` — in a single message so they run concurrently, **each `Agent`
+call's `model:` set from that concern's roster row** (opus for `comment-placement` and
+`test-integrity`, sonnet for the others) — each runs `review-work --concern <name>` over that diff.
+**The count is the roster's, not the branch count**: a nine-branch run is still one `swarm-reviewer`
+per concern. They are **read-only** and never edit.
 
-A **`test-integrity` finding** spanning two branches is the orchestrator's routing call, not
-automatic: attribute the fix to whichever owning branch it fits more naturally, or split it across
-both branches' fix dispatches when the contradiction genuinely needs both files touched. **When the
-required fix belongs to no branch already in flight**, the orchestrator is authorized to open a new
-PR for it directly rather than forcing it onto an unrelated branch — still dispatched, never applied
-inline. **§ 5 does not begin until every concern comes back `clean`.** A run with no landed branches
-(all stuck) skips this step.
+A **rule-family finding** (`code-style`, `test-authoring`) and a **`test-integrity` finding**
+route exactly as before this change: the run ledger's _files touched_ column (§ Run ledger) maps the
+file to its branch (`git blame` the integration line to break a tie between two branches), and the
+fix is dispatched through **§ 4d's dispatch-and-merge-forward mechanic** on the owning branch — a
+`test-integrity` finding spanning two branches is the orchestrator's routing call, attributed to
+whichever branch fits more naturally or split across both. **When the required fix belongs to no
+branch already in flight, the orchestrator is authorized to open a new PR for it directly** rather
+than forcing it onto an unrelated branch — still dispatched, never applied inline. Repeat until
+`code-style`, `test-authoring`, and `test-integrity` all come back `clean`.
+
+`comment-placement`'s report is not a violation to fix — it's a **brief**: every site the diff earns
+a comment at, plus the constraint that comment must carry (see `review-work`'s report shape). A
+`clean` brief (no sites) skips straight to Round 3.
+
+**Round 2 — the `comment-author` sweep.** Route each briefed site to its owning branch the same way a
+rule-family finding routes (files-touched map, `git blame` tie-break) and dispatch through § 4d's
+mechanic — the dispatch target is [`comment-author`](../../agents/comment-author.md) in place of a
+`ticket-builder`, handed that branch's briefed sites verbatim, and its branch is merged forward on
+report exactly as § 4d already does. **A briefed site whose file touches no branch already in
+flight** opens its own new branch/PR, the same escape hatch `test-integrity` uses above. One sweep
+dispatch per owning branch, not per site.
+
+**Round 3 — `comment-authoring` reviews the sweep.** Dispatch `swarm-reviewer` for `comment-authoring`
+with `--base` set to the integration branch's tip **before** Round 2's sweep commits landed, so the
+diff it reviews is exactly the sweep's own commits. A gate finding routes to the owning branch and is
+fixed by dispatching `comment-author` again (never a `ticket-builder` — a comment is never its edit
+to make) through § 4d's mechanic, merged forward, and this round repeats until `comment-authoring`
+comes back `clean`.
+
+**§ 5 does not begin until every concern — `comment-placement` (consumed into Round 2),
+`comment-authoring`, `code-style`, `test-authoring`, `test-integrity` — is clean.** A run with no
+landed branches (all stuck) skips this step entirely.
 
 A single-ticket or freeform run has no integration branch — the one home-tree branch is the diff, and
 attribution is trivial (one branch owns every finding). The swarm and routing are otherwise
