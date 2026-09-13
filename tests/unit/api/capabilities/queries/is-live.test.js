@@ -12,48 +12,68 @@ vi.mock('@/api/capabilities/queries/capabilities', async () => {
 
 const { useCapabilities } = await import('@/api/capabilities/queries/is-live')
 
+function result(capabilities, grantedKeys = new Set()) {
+  return { capabilities, grantedKeys }
+}
+
 beforeEach(() => {
   capabilitiesData.value = undefined
 })
 
 describe('useCapabilities().isLive', () => {
-  test('returns the fallback while the capabilities query is pending', () => {
+  test('returns the fallback unchanged while the capabilities query is unloaded', () => {
     capabilitiesData.value = undefined
     const { isLive } = useCapabilities()
     expect(isLive('audio_reader', false)).toBe(false)
     expect(isLive('audio_reader', true)).toBe(true)
   })
 
-  test('returns the fallback when the capabilities read is unreachable (no rows loaded)', () => {
+  test('returns the fallback unchanged when the capabilities read is offline (null data)', () => {
     capabilitiesData.value = null
     const { isLive } = useCapabilities()
     expect(isLive('audio_reader', true)).toBe(true)
+    expect(isLive('audio_reader', false)).toBe(false)
   })
 
-  test('returns true once the loaded row is on', () => {
-    capabilitiesData.value = [{ key: 'audio_reader', state: 'on' }]
+  test('state on is live for everyone, regardless of grantedKeys', () => {
+    capabilitiesData.value = result([{ key: 'audio_reader', state: 'on' }])
     const { isLive } = useCapabilities()
     expect(isLive('audio_reader', false)).toBe(true)
   })
 
-  test('returns false once the loaded row is off, ignoring the fallback', () => {
-    capabilitiesData.value = [{ key: 'audio_reader', state: 'off' }]
+  test('state off is not live, ignoring the fallback', () => {
+    capabilitiesData.value = result([{ key: 'audio_reader', state: 'off' }])
     const { isLive } = useCapabilities()
     expect(isLive('audio_reader', true)).toBe(false)
   })
 
-  test('returns false when no row matches the key, ignoring the fallback', () => {
-    capabilitiesData.value = []
+  test('a missing row is not live, ignoring the fallback', () => {
+    capabilitiesData.value = result([])
+    const { isLive } = useCapabilities()
+    expect(isLive('audio_reader', true)).toBe(false)
+  })
+
+  test('state targeted with the key in grantedKeys is live', () => {
+    capabilitiesData.value = result(
+      [{ key: 'audio_reader', state: 'targeted' }],
+      new Set(['audio_reader'])
+    )
+    const { isLive } = useCapabilities()
+    expect(isLive('audio_reader', false)).toBe(true)
+  })
+
+  test('state targeted with the key absent from grantedKeys is not live', () => {
+    capabilitiesData.value = result([{ key: 'audio_reader', state: 'targeted' }], new Set())
     const { isLive } = useCapabilities()
     expect(isLive('audio_reader', true)).toBe(false)
   })
 
   test('re-derives after a refetch flips the row from off to on', () => {
-    capabilitiesData.value = [{ key: 'audio_reader', state: 'off' }]
+    capabilitiesData.value = result([{ key: 'audio_reader', state: 'off' }])
     const { isLive } = useCapabilities()
     expect(isLive('audio_reader', false)).toBe(false)
 
-    capabilitiesData.value = [{ key: 'audio_reader', state: 'on' }]
+    capabilitiesData.value = result([{ key: 'audio_reader', state: 'on' }])
     expect(isLive('audio_reader', false)).toBe(true)
   })
 })

@@ -66,9 +66,10 @@ beforeEach(() => {
     const row = serverRows.find((r) => r.key === params.key)
     if (row) row.state = params.state
   })
-  fetchCapabilitiesMock
-    .mockReset()
-    .mockImplementation(async () => serverRows.map((r) => ({ ...r })))
+  fetchCapabilitiesMock.mockReset().mockImplementation(async () => ({
+    capabilities: serverRows.map((r) => ({ ...r })),
+    grantedKeys: new Set()
+  }))
 
   roleRef.value = 'admin'
   deckCountRef.value = 0

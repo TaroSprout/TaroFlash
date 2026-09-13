@@ -21,8 +21,26 @@ describe('fetchCapabilities (contract)', () => {
     const { error } = await adminClient.from('capabilities').insert({ key: testKey, state: 'on' })
     expect(error).toBeNull()
 
-    const capabilities = await fetchCapabilities()
+    const result = await fetchCapabilities()
 
-    expect(capabilities).toContainEqual({ key: testKey, state: 'on' })
+    expect(result.capabilities).toContainEqual({ key: testKey, state: 'on' })
+  })
+
+  test('grantedKeys reflects only the RLS-scoped capability_grants rows for the caller', async () => {
+    const { error: capError } = await adminClient
+      .from('capabilities')
+      .insert({ key: testKey, state: 'targeted' })
+    expect(capError).toBeNull()
+
+    const { error: grantError } = await adminClient
+      .from('capability_grants')
+      .insert({ key: testKey, member_id: session.userId })
+    expect(grantError).toBeNull()
+
+    const result = await fetchCapabilities()
+
+    expect(result.grantedKeys.has(testKey)).toBe(true)
+
+    await adminClient.from('capability_grants').delete().eq('key', testKey)
   })
 })
