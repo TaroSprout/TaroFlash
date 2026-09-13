@@ -2,13 +2,14 @@ import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, ref } from 'vue'
 
-const { claimHeightMock, releaseHeightMock } = vi.hoisted(() => ({
-  claimHeightMock: vi.fn(),
-  releaseHeightMock: vi.fn()
+const { claimHeightMock, releaseSwapMock } = vi.hoisted(() => ({
+  releaseSwapMock: vi.fn(),
+  // The stage claim returns the release to run on swap-end.
+  claimHeightMock: vi.fn(() => releaseSwapMock)
 }))
 vi.mock('@/components/mobile-dock/use-mobile-dock', () => ({
   DEFAULT_BREAKPOINT: 'xl',
-  useMobileDock: () => ({ claimHeight: claimHeightMock, releaseHeight: releaseHeightMock })
+  useMobileDock: () => ({ claimHeight: claimHeightMock })
 }))
 
 const MobileDockStub = defineComponent({
@@ -92,16 +93,17 @@ function mount({
 }
 
 describe('mobile-footer/index', () => {
-  test('wires crossfade-resize swap-start/swap-end to claimHeight/releaseHeight', async () => {
+  test('swap-start claims the dock height through the stage and swap-end runs its release', async () => {
     claimHeightMock.mockClear()
-    releaseHeightMock.mockClear()
+    releaseSwapMock.mockClear()
     const wrapper = mount()
 
     await wrapper.find('[data-testid="crossfade-resize-stub__swap-start"]').trigger('click')
     expect(claimHeightMock).toHaveBeenCalledOnce()
+    expect(releaseSwapMock).not.toHaveBeenCalled()
 
     await wrapper.find('[data-testid="crossfade-resize-stub__swap-end"]').trigger('click')
-    expect(releaseHeightMock).toHaveBeenCalledOnce()
+    expect(releaseSwapMock).toHaveBeenCalledOnce()
   })
 
   test('renders footer-import under a stable key — the same node persists across an is_expanded flip', async () => {

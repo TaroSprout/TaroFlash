@@ -18,8 +18,8 @@ vi.mock('@/composables/ui/media-query', async () => {
   return m.breakpointMediaMockModule
 })
 
-// Module-level singleton — el, breakpoint claims and height_claims persist
-// across tests. Every claim made in a test is released in afterEach so the
+// Module-level singleton — el, breakpoint claims and the registered height owner
+// persist across tests. Every claim made in a test is released in afterEach so the
 // claim stack never leaks into the next test.
 const releasers = []
 
@@ -37,9 +37,9 @@ async function openKeyboard(open) {
 }
 
 beforeEach(() => {
-  const { el, height_claims } = useMobileDock()
+  const { el, setHeightOwner } = useMobileDock()
   el.value = null
-  height_claims.value = 0
+  setHeightOwner(null)
   setKeyboardOpen(false)
   resetBreakpointMedia()
 })
@@ -76,11 +76,6 @@ describe('useMobileDock', () => {
     test('el starts as null', () => {
       const { el } = useMobileDock()
       expect(el.value).toBeNull()
-    })
-
-    test('height_claims defaults to 0', () => {
-      const { height_claims } = useMobileDock()
-      expect(height_claims.value).toBe(0)
     })
 
     test('DEFAULT_BREAKPOINT is xl', () => {
@@ -188,27 +183,40 @@ describe('useMobileDock', () => {
     })
   })
 
-  describe('claimHeight / releaseHeight — a counter, not a flag', () => {
-    test('two overlapping claims require two releases before the count returns to 0', () => {
-      const { height_claims, claimHeight, releaseHeight } = useMobileDock()
+  describe('claimHeight delegates to the mounted host stage', () => {
+    test('claimHeight is a no-op before any host registers its stage, returning a safe release', () => {
+      const { claimHeight } = useMobileDock()
 
-      claimHeight()
-      claimHeight()
-      expect(height_claims.value).toBe(2)
+      const release = claimHeight()
 
-      releaseHeight()
-      expect(height_claims.value).toBe(1)
-
-      releaseHeight()
-      expect(height_claims.value).toBe(0)
+      // No owner registered, so nothing is claimed; the release must still be callable.
+      expect(() => release()).not.toThrow()
     })
 
-    test('releaseHeight never drops the count below 0', () => {
-      const { height_claims, releaseHeight } = useMobileDock()
+    test('claimHeight forwards to the registered owner and returns its release', () => {
+      const { claimHeight, setHeightOwner } = useMobileDock()
+      const ownerRelease = vi.fn()
+      const ownerClaim = vi.fn(() => ownerRelease)
+      setHeightOwner(ownerClaim)
 
-      releaseHeight()
+      const release = claimHeight()
+      expect(ownerClaim).toHaveBeenCalledOnce()
+      expect(ownerRelease).not.toHaveBeenCalled()
 
-      expect(height_claims.value).toBe(0)
+      release()
+      expect(ownerRelease).toHaveBeenCalledOnce()
+    })
+
+    test('clearing the owner with null makes claimHeight a no-op again', () => {
+      const { claimHeight, setHeightOwner } = useMobileDock()
+      const ownerClaim = vi.fn(() => vi.fn())
+      setHeightOwner(ownerClaim)
+      setHeightOwner(null)
+
+      const release = claimHeight()
+
+      expect(ownerClaim).not.toHaveBeenCalled()
+      expect(() => release()).not.toThrow()
     })
   })
 })
