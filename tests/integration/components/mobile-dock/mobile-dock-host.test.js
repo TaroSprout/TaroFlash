@@ -22,12 +22,8 @@ vi.mock('@/utils/animations/dock-slide', () => ({
   dockSlideOut: mockDockSlideOut
 }))
 
-// The host now follows its content height through useStageHeight → the motion
-// driver + the compositor budget, both of which read the motion store. Mock the
-// budget to always grant a slot and the driver to return an inert handle, so the
-// wiring under test runs without standing up a Pinia motion store.
 vi.mock('@/components/layout-kit/stage/height-budget', () => ({
-  reserveHeightTween: () => () => {}
+  reserveHeightTween: () => () => {} // Grant every slot so the height wiring runs without a Pinia motion store.
 }))
 
 vi.mock('@/utils/motion/driver', () => ({

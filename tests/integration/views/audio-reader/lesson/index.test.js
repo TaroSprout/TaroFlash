@@ -644,8 +644,7 @@ describe('LessonView', () => {
     })
 
     test('swap-start/swap-end claim and release the mobile dock height alongside the local swapping flag', async () => {
-      // Register a fake stage owner so the view's claim delegates to something observable.
-      const release = vi.fn()
+      const release = vi.fn() // Fake stage owner so the view's claim delegates to something observable.
       const claim = vi.fn(() => release)
       useMobileDock().setHeightOwner(claim)
 

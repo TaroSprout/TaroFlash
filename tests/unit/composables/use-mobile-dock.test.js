@@ -18,10 +18,7 @@ vi.mock('@/composables/ui/media-query', async () => {
   return m.breakpointMediaMockModule
 })
 
-// Module-level singleton — el, breakpoint claims and the registered height owner
-// persist across tests. Every claim made in a test is released in afterEach so the
-// claim stack never leaks into the next test.
-const releasers = []
+const releasers = [] // Module-level singleton persists across tests; afterEach releases every claim so the stack never leaks.
 
 // is_below_breakpoint is written from a watchEffect, which flushes on the next
 // tick rather than synchronously — every mock mutation needs a tick before the
@@ -187,9 +184,8 @@ describe('useMobileDock', () => {
     test('claimHeight is a no-op before any host registers its stage, returning a safe release', () => {
       const { claimHeight } = useMobileDock()
 
-      const release = claimHeight()
+      const release = claimHeight() // No owner registered, so nothing is claimed; the release must still be callable.
 
-      // No owner registered, so nothing is claimed; the release must still be callable.
       expect(() => release()).not.toThrow()
     })
 

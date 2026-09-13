@@ -4,8 +4,7 @@ import { defineComponent, h, nextTick, ref } from 'vue'
 
 const { claimHeightMock, releaseSwapMock } = vi.hoisted(() => ({
   releaseSwapMock: vi.fn(),
-  // The stage claim returns the release to run on swap-end.
-  claimHeightMock: vi.fn(() => releaseSwapMock)
+  claimHeightMock: vi.fn(() => releaseSwapMock) // Returns the release to run on swap-end.
 }))
 vi.mock('@/components/mobile-dock/use-mobile-dock', () => ({
   DEFAULT_BREAKPOINT: 'xl',

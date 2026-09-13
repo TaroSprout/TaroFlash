@@ -65,8 +65,10 @@ export function useStageHeight(
     generation++
   }
 
-  // Reads the height the box wants with its current content, without leaving that value
-  // pinned — the caller decides whether to snap or tween toward it from where it is now.
+  /**
+   * Reads the height the box wants with its current content, without leaving that value pinned —
+   * the caller decides whether to snap or tween toward it from where it is now.
+   */
   function measureNatural(el: HTMLElement, restore: string): number {
     el.style.removeProperty('height')
     const natural = el.offsetHeight
