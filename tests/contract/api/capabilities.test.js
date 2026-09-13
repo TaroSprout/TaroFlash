@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { signInAsTestUser, adminClient } from '../setup.js'
 import {
   fetchCapabilities,
+  fetchResolvedCapabilities,
   fetchCapabilityGrants,
   addCapabilityGrant,
   removeCapabilityGrant
@@ -26,9 +27,20 @@ describe('fetchCapabilities (contract)', () => {
     const { error } = await adminClient.from('capabilities').insert({ key: testKey, state: 'on' })
     expect(error).toBeNull()
 
-    const capabilities = await fetchCapabilities()
+    const result = await fetchCapabilities()
 
-    expect(capabilities).toContainEqual({ key: testKey, state: 'on' })
+    expect(result.capabilities).toContainEqual({ key: testKey, state: 'on' })
+  })
+})
+
+describe('fetchResolvedCapabilities (contract)', () => {
+  test('resolves a state-on capability as live for the signed-in caller', async () => {
+    const { error } = await adminClient.from('capabilities').insert({ key: testKey, state: 'on' })
+    expect(error).toBeNull()
+
+    const rows = await fetchResolvedCapabilities()
+
+    expect(rows).toContainEqual({ key: testKey, live: true })
   })
 })
 

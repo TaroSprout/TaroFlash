@@ -13,6 +13,20 @@ type Capability = {
   state: CapabilityState
 }
 
+// The raw capability rows the admin editor renders — key and state only, no
+// resolution. Feature-gating reads ResolvedCapability instead.
+type CapabilitiesResult = {
+  capabilities: Capability[]
+}
+
+// One capability's live state as the server resolved it for the calling member.
+// The allow-list stays server-side — the client reads this boolean rather than
+// comparing the caller's own grants locally.
+type ResolvedCapability = {
+  key: CapabilityKey
+  live: boolean
+}
+
 // One member on a `targeted` capability's allow-list, in the safe shape the admin
 // read projects — display fields plus when the grant was made, never granted_by.
 type CapabilityGrant = {

@@ -108,6 +108,24 @@ GRANT ALL ON TABLE public.capability_grants TO authenticated;
 GRANT ALL ON TABLE public.capability_grants TO service_role;
 
 
+-- One row per capability, each carrying the state resolved for the calling
+-- member, so the client reads an already-resolved boolean and never receives
+-- the raw allow-list to compare locally — an admin's own read access to every
+-- member's grants would otherwise leak a targeted grant to every admin.
+-- Delegates per key to capability_is_live rather than re-deriving the
+-- allow-list rule. →[K:capability-resolution-stays-server-side]
+CREATE FUNCTION public.resolve_member_capabilities() RETURNS TABLE(key text, live boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select c.key, public.capability_is_live(c.key) as live
+  from public.capabilities c
+$$;
+
+
+ALTER FUNCTION public.resolve_member_capabilities() OWNER TO postgres;
+
+
 -- The admin allow-list read: every granted member's display fields for one
 -- capability. SECURITY DEFINER so it can join members past their own-row RLS —
 -- a plain select embedding members would blank every row but the caller's — and
@@ -129,6 +147,13 @@ $$;
 
 ALTER FUNCTION public.list_capability_grants(p_key text) OWNER TO postgres;
 
+
+-- SECURITY DEFINER, so not left executable by anon (guarded by pgTAP
+-- 00043_definer_function_anon_grants).
+REVOKE ALL ON FUNCTION public.resolve_member_capabilities() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.resolve_member_capabilities() FROM anon;
+GRANT ALL ON FUNCTION public.resolve_member_capabilities() TO authenticated;
+GRANT ALL ON FUNCTION public.resolve_member_capabilities() TO service_role;
 
 REVOKE ALL ON FUNCTION public.list_capability_grants(p_key text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.list_capability_grants(p_key text) FROM anon;

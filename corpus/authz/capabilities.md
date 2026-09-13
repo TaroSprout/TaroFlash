@@ -4,7 +4,7 @@ domain: authz
 status: current
 hazard: true
 related: [permissions]
-updated: 2026-09-12
+updated: 2026-09-13
 ---
 
 # Capabilities
@@ -30,6 +30,16 @@ until an admin changes it.
 > point — the client _does_ carry a code-constant fallback, but only to cover
 > the brief window before its row has loaded, and only on the screen. The
 > server's answer is the lock, and it fails closed.
+
+> [!HAZARD] [K:capability-resolution-stays-server-side] **A `targeted` capability is resolved server-side, member-scoped — the client never reads the allow-list rows to work out its own answer.**
+> The trap looks harmless: an admin can already read every row in the allow-list
+> table, because the same admin RLS policy that lets them manage capabilities
+> also lets them read every member's grants, not just their own. A client that
+> fetched those raw rows and compared locally would see a grant meant for
+> anyone as a grant for every admin — a `targeted` capability turned on for one
+> account reading live for all of them. The fix isn't a tighter client-side
+> filter; it's never handing the client anything to compare — it asks a
+> server function for its own resolved `key, live` pairs and reads the answer.
 
 ## Off means off, missing means off
 

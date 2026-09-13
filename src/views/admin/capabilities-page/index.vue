@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import CapabilityRow from './capability-row.vue'
 import { useCapabilitiesQuery } from '@/api/capabilities'
 
-const { data: capabilities } = useCapabilitiesQuery()
+const { data } = useCapabilitiesQuery()
+const capabilities = computed(() => data.value?.capabilities ?? [])
 </script>
 
 <template>

@@ -35,6 +35,10 @@ function mountHost() {
 
 const cacheKey = ['capabilities', 'member-123']
 
+function snapshot(capabilities) {
+  return { capabilities }
+}
+
 beforeEach(() => {
   updateCapabilityMock.mockReset()
 })
@@ -48,18 +52,23 @@ describe('useUpdateCapabilityMutation', () => {
       })
     )
     const { app, mutation, query_cache } = mountHost()
-    query_cache.setQueryData(cacheKey, [
-      { key: 'audio_reader', state: 'off' },
-      { key: 'other_capability', state: 'on' }
-    ])
+    query_cache.setQueryData(
+      cacheKey,
+      snapshot([
+        { key: 'audio_reader', state: 'off' },
+        { key: 'other_capability', state: 'on' }
+      ])
+    )
 
     const pending = mutation.mutateAsync({ key: 'audio_reader', state: 'on' })
     await flushPromises()
 
-    expect(query_cache.getQueryData(cacheKey)).toEqual([
-      { key: 'audio_reader', state: 'on' },
-      { key: 'other_capability', state: 'on' }
-    ])
+    expect(query_cache.getQueryData(cacheKey)).toEqual(
+      snapshot([
+        { key: 'audio_reader', state: 'on' },
+        { key: 'other_capability', state: 'on' }
+      ])
+    )
 
     resolveWrite()
     await pending
@@ -69,10 +78,10 @@ describe('useUpdateCapabilityMutation', () => {
   test('onError rolls back to the exact prior snapshot', async () => {
     updateCapabilityMock.mockRejectedValue(new Error('write refused'))
     const { app, mutation, query_cache } = mountHost()
-    const original = [
+    const original = snapshot([
       { key: 'audio_reader', state: 'off' },
       { key: 'other_capability', state: 'on' }
-    ]
+    ])
     query_cache.setQueryData(cacheKey, original)
 
     await expect(mutation.mutateAsync({ key: 'audio_reader', state: 'on' })).rejects.toThrow(
@@ -86,7 +95,7 @@ describe('useUpdateCapabilityMutation', () => {
   test('onSettled invalidates every query keyed under the capabilities prefix', async () => {
     updateCapabilityMock.mockResolvedValue(undefined)
     const { app, mutation, query_cache } = mountHost()
-    query_cache.setQueryData(cacheKey, [{ key: 'audio_reader', state: 'off' }])
+    query_cache.setQueryData(cacheKey, snapshot([{ key: 'audio_reader', state: 'off' }]))
     const invalidateSpy = vi.spyOn(query_cache, 'invalidateQueries')
 
     await mutation.mutateAsync({ key: 'audio_reader', state: 'on' })

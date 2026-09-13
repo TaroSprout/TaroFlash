@@ -1,24 +1,24 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 
 const {
-  selectMock,
+  capabilitiesSelectMock,
   updateMock,
   eqMock,
+  grantsInsertMock,
+  grantsDeleteMock,
+  grantsDeleteEqMock,
   fromMock,
   rpcMock,
-  insertMock,
-  deleteMock,
-  deleteEqMock,
   loggerMock
 } = vi.hoisted(() => ({
-  selectMock: vi.fn(),
+  capabilitiesSelectMock: vi.fn(),
   updateMock: vi.fn(),
   eqMock: vi.fn(),
+  grantsInsertMock: vi.fn(),
+  grantsDeleteMock: vi.fn(),
+  grantsDeleteEqMock: vi.fn(),
   fromMock: vi.fn(),
   rpcMock: vi.fn(),
-  insertMock: vi.fn(),
-  deleteMock: vi.fn(),
-  deleteEqMock: vi.fn(),
   loggerMock: { error: vi.fn(), warn: vi.fn(), info: vi.fn() }
 }))
 
@@ -30,6 +30,7 @@ vi.mock('@/utils/logger', () => ({ default: loggerMock }))
 
 import {
   fetchCapabilities,
+  fetchResolvedCapabilities,
   updateCapability,
   fetchCapabilityGrants,
   addCapabilityGrant,
@@ -38,57 +39,97 @@ import {
 
 beforeEach(() => {
   fromMock.mockReset()
-  selectMock.mockReset()
+  rpcMock.mockReset()
+  capabilitiesSelectMock.mockReset()
   updateMock.mockReset()
   eqMock.mockReset()
-  rpcMock.mockReset()
-  insertMock.mockReset()
-  deleteMock.mockReset()
-  deleteEqMock.mockReset()
+  grantsInsertMock.mockReset()
+  grantsDeleteMock.mockReset()
+  grantsDeleteEqMock.mockReset()
   loggerMock.error.mockClear()
-  fromMock.mockReturnValue({
-    select: selectMock,
-    update: updateMock,
-    insert: insertMock,
-    delete: deleteMock
+  fromMock.mockImplementation((table) => {
+    if (table === 'capabilities') return { select: capabilitiesSelectMock, update: updateMock }
+    if (table === 'capability_grants') return { insert: grantsInsertMock, delete: grantsDeleteMock }
+    throw new Error(`unexpected table: ${table}`)
   })
   updateMock.mockReturnValue({ eq: eqMock })
-  deleteMock.mockReturnValue({ eq: () => ({ eq: deleteEqMock }) })
+  grantsDeleteMock.mockReturnValue({ eq: grantsDeleteEqMock })
+  grantsDeleteEqMock.mockReturnValue({ eq: vi.fn() })
 })
 
 describe('fetchCapabilities', () => {
-  test('selects key, state from capabilities', async () => {
-    selectMock.mockResolvedValueOnce({ data: [], error: null })
+  test('selects only key, state from capabilities, never capability_grants', async () => {
+    capabilitiesSelectMock.mockResolvedValueOnce({ data: [], error: null })
 
     await fetchCapabilities()
 
     expect(fromMock).toHaveBeenCalledWith('capabilities')
-    expect(selectMock).toHaveBeenCalledWith('key, state')
+    expect(fromMock).not.toHaveBeenCalledWith('capability_grants')
+    expect(capabilitiesSelectMock).toHaveBeenCalledWith('key, state')
   })
 
-  test('returns the capability rows', async () => {
-    const rows = [{ key: 'audio_reader', state: 'on' }]
-    selectMock.mockResolvedValueOnce({ data: rows, error: null })
+  test('returns the rows as capabilities, with no grantedKeys field', async () => {
+    const rows = [
+      { key: 'audio_reader', state: 'targeted' },
+      { key: 'other_capability', state: 'off' }
+    ]
+    capabilitiesSelectMock.mockResolvedValueOnce({ data: rows, error: null })
 
     const result = await fetchCapabilities()
 
-    expect(result).toEqual(rows)
+    expect(result).toEqual({ capabilities: rows })
+    expect(result).not.toHaveProperty('grantedKeys')
   })
 
-  test('returns an empty array when data is null', async () => {
-    selectMock.mockResolvedValueOnce({ data: null, error: null })
+  test('returns empty capabilities when the read is null', async () => {
+    capabilitiesSelectMock.mockResolvedValueOnce({ data: null, error: null })
 
     const result = await fetchCapabilities()
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ capabilities: [] })
   })
 
   test('logs and throws on a read error', async () => {
     const error = new Error('boom')
-    selectMock.mockResolvedValueOnce({ data: null, error })
+    capabilitiesSelectMock.mockResolvedValueOnce({ data: null, error })
 
     await expect(fetchCapabilities()).rejects.toThrow('boom')
     expect(loggerMock.error).toHaveBeenCalledWith('boom')
+  })
+})
+
+describe('fetchResolvedCapabilities', () => {
+  test('calls resolve_member_capabilities', async () => {
+    rpcMock.mockResolvedValueOnce({ data: [], error: null })
+
+    await fetchResolvedCapabilities()
+
+    expect(rpcMock).toHaveBeenCalledWith('resolve_member_capabilities')
+  })
+
+  test('returns the rpc rows as-is', async () => {
+    const rows = [{ key: 'audio_reader', live: true }]
+    rpcMock.mockResolvedValueOnce({ data: rows, error: null })
+
+    const result = await fetchResolvedCapabilities()
+
+    expect(result).toEqual(rows)
+  })
+
+  test('returns an empty list when the rpc data is null', async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null })
+
+    const result = await fetchResolvedCapabilities()
+
+    expect(result).toEqual([])
+  })
+
+  test('logs and throws on an rpc error', async () => {
+    const error = new Error('resolve refused')
+    rpcMock.mockResolvedValueOnce({ data: null, error })
+
+    await expect(fetchResolvedCapabilities()).rejects.toThrow('resolve refused')
+    expect(loggerMock.error).toHaveBeenCalledWith('resolve refused')
   })
 })
 
@@ -113,7 +154,7 @@ describe('updateCapability', () => {
 })
 
 describe('fetchCapabilityGrants', () => {
-  test('reads through the list_capability_grants rpc', async () => {
+  test('calls list_capability_grants with the key', async () => {
     rpcMock.mockResolvedValueOnce({ data: [], error: null })
 
     await fetchCapabilityGrants('audio_reader')
@@ -121,18 +162,7 @@ describe('fetchCapabilityGrants', () => {
     expect(rpcMock).toHaveBeenCalledWith('list_capability_grants', { p_key: 'audio_reader' })
   })
 
-  test('returns the granted rows', async () => {
-    const rows = [
-      { id: 'member-1', display_name: 'Gina', avatar_url: null, granted_at: '2026-01-01' }
-    ]
-    rpcMock.mockResolvedValueOnce({ data: rows, error: null })
-
-    const result = await fetchCapabilityGrants('audio_reader')
-
-    expect(result).toEqual(rows)
-  })
-
-  test('returns an empty array when data is null', async () => {
+  test('returns an empty list when the rpc data is null', async () => {
     rpcMock.mockResolvedValueOnce({ data: null, error: null })
 
     const result = await fetchCapabilityGrants('audio_reader')
@@ -140,53 +170,59 @@ describe('fetchCapabilityGrants', () => {
     expect(result).toEqual([])
   })
 
-  test('logs and throws on a read error', async () => {
-    const error = new Error('refused')
+  test('logs and throws on an rpc error', async () => {
+    const error = new Error('grants refused')
     rpcMock.mockResolvedValueOnce({ data: null, error })
 
-    await expect(fetchCapabilityGrants('audio_reader')).rejects.toThrow('refused')
-    expect(loggerMock.error).toHaveBeenCalledWith('refused')
+    await expect(fetchCapabilityGrants('audio_reader')).rejects.toThrow('grants refused')
+    expect(loggerMock.error).toHaveBeenCalledWith('grants refused')
   })
 })
 
 describe('addCapabilityGrant', () => {
-  test('inserts the key and member_id', async () => {
-    insertMock.mockResolvedValueOnce({ error: null })
+  test('inserts key and member_id into capability_grants', async () => {
+    grantsInsertMock.mockResolvedValueOnce({ error: null })
 
-    await addCapabilityGrant({ key: 'audio_reader', member_id: 'member-1' })
+    await addCapabilityGrant({ key: 'audio_reader', member_id: 'member-123' })
 
     expect(fromMock).toHaveBeenCalledWith('capability_grants')
-    expect(insertMock).toHaveBeenCalledWith({ key: 'audio_reader', member_id: 'member-1' })
+    expect(grantsInsertMock).toHaveBeenCalledWith({
+      key: 'audio_reader',
+      member_id: 'member-123'
+    })
   })
 
   test('logs and throws on a write error', async () => {
-    const error = new Error('refused')
-    insertMock.mockResolvedValueOnce({ error })
+    const error = new Error('insert refused')
+    grantsInsertMock.mockResolvedValueOnce({ error })
 
     await expect(
-      addCapabilityGrant({ key: 'audio_reader', member_id: 'member-1' })
-    ).rejects.toThrow('refused')
-    expect(loggerMock.error).toHaveBeenCalledWith('refused')
+      addCapabilityGrant({ key: 'audio_reader', member_id: 'member-123' })
+    ).rejects.toThrow('insert refused')
+    expect(loggerMock.error).toHaveBeenCalledWith('insert refused')
   })
 })
 
 describe('removeCapabilityGrant', () => {
-  test('deletes by key and member_id', async () => {
-    deleteEqMock.mockResolvedValueOnce({ error: null })
+  test('deletes the row matching key and member_id', async () => {
+    const secondEqMock = vi.fn().mockResolvedValueOnce({ error: null })
+    grantsDeleteEqMock.mockReturnValueOnce({ eq: secondEqMock })
 
-    await removeCapabilityGrant({ key: 'audio_reader', member_id: 'member-1' })
+    await removeCapabilityGrant({ key: 'audio_reader', member_id: 'member-123' })
 
     expect(fromMock).toHaveBeenCalledWith('capability_grants')
-    expect(deleteMock).toHaveBeenCalled()
+    expect(grantsDeleteEqMock).toHaveBeenCalledWith('key', 'audio_reader')
+    expect(secondEqMock).toHaveBeenCalledWith('member_id', 'member-123')
   })
 
   test('logs and throws on a write error', async () => {
-    const error = new Error('refused')
-    deleteEqMock.mockResolvedValueOnce({ error })
+    const error = new Error('delete refused')
+    const secondEqMock = vi.fn().mockResolvedValueOnce({ error })
+    grantsDeleteEqMock.mockReturnValueOnce({ eq: secondEqMock })
 
     await expect(
-      removeCapabilityGrant({ key: 'audio_reader', member_id: 'member-1' })
-    ).rejects.toThrow('refused')
-    expect(loggerMock.error).toHaveBeenCalledWith('refused')
+      removeCapabilityGrant({ key: 'audio_reader', member_id: 'member-123' })
+    ).rejects.toThrow('delete refused')
+    expect(loggerMock.error).toHaveBeenCalledWith('delete refused')
   })
 })
