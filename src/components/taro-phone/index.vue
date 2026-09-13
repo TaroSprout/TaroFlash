@@ -103,4 +103,12 @@ function onClosePhoneSm(el: Element, done: () => void) {
 [data-testid='phone-stage'] {
   --phone-duration: 100ms;
 }
+
+:root[data-motion='full'] [data-phone-blur] {
+  transition: filter var(--phone-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-motion='full'] [data-phone-blur='true'] {
+  filter: blur(12px);
+}
 </style>
