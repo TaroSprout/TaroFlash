@@ -40,6 +40,8 @@ export function useStageHeight(
 
   let observer: ResizeObserver | null = null
   let last = 0
+  // The box's height as it sits at rest — the height to tween from, since a resize fires only after the box has reflowed. →[K:dock-height-single-owner]
+  let rested = 0
   let generation = 0
   let handle: MotionHandle | null = null
   let release: () => void = NOOP
@@ -50,6 +52,7 @@ export function useStageHeight(
 
     el.style.removeProperty('overflow')
     el.style.removeProperty('height')
+    rested = el.offsetHeight
   }
 
   function stopCurrent() {
@@ -103,7 +106,8 @@ export function useStageHeight(
 
     stopCurrent()
 
-    const from = el.offsetHeight
+    // Tween from the tracked resting height; the box has already reflowed to the new content. →[K:dock-height-single-owner]
+    const from = rested
     const target = measureNatural(el, `${from}px`)
     if (target === from) return handBack()
 
@@ -123,9 +127,12 @@ export function useStageHeight(
     const target = content.value?.offsetHeight ?? 0
     if (target === last) return
 
-    // Record the new baseline even while inactive, so the next active change starts fresh.
+    // Track the baseline and resting height even while inactive, so a later active change tweens from where the box now sits.
     last = target
-    if (!active()) return
+    if (!active()) {
+      rested = box.value?.offsetHeight ?? rested
+      return
+    }
 
     changeHeight()
   }
@@ -154,6 +161,7 @@ export function useStageHeight(
       observer?.disconnect()
       observer = null
       last = el?.offsetHeight ?? 0
+      rested = box.value?.offsetHeight ?? 0
       if (!el) return
 
       observer = new ResizeObserver(onResize)
