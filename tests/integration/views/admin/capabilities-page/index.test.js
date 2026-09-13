@@ -39,8 +39,7 @@ describe('CapabilitiesPage', () => {
       capabilities: [
         { key: 'audio_reader', state: 'on' },
         { key: 'other_capability', state: 'off' }
-      ],
-      grantedKeys: new Set()
+      ]
     }
     const wrapper = mountPage()
     expect(wrapper.findAllComponents(CapabilityRowStub)).toHaveLength(2)
@@ -48,8 +47,7 @@ describe('CapabilitiesPage', () => {
 
   test('passes each row through to its capability-row', () => {
     mockCapabilities.value = {
-      capabilities: [{ key: 'audio_reader', state: 'on' }],
-      grantedKeys: new Set()
+      capabilities: [{ key: 'audio_reader', state: 'on' }]
     }
     const wrapper = mountPage()
     expect(wrapper.findComponent(CapabilityRowStub).props('item')).toEqual({
@@ -59,7 +57,7 @@ describe('CapabilitiesPage', () => {
   })
 
   test('renders no rows when the capabilities list is empty', () => {
-    mockCapabilities.value = { capabilities: [], grantedKeys: new Set() }
+    mockCapabilities.value = { capabilities: [] }
     const wrapper = mountPage()
     expect(wrapper.findAllComponents(CapabilityRowStub)).toHaveLength(0)
   })

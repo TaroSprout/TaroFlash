@@ -35,8 +35,8 @@ function mountHost() {
 
 const cacheKey = ['capabilities', 'member-123']
 
-function snapshot(capabilities, grantedKeys = new Set()) {
-  return { capabilities, grantedKeys }
+function snapshot(capabilities) {
+  return { capabilities }
 }
 
 beforeEach(() => {
@@ -72,22 +72,6 @@ describe('useUpdateCapabilityMutation', () => {
 
     resolveWrite()
     await pending
-    app.unmount()
-  })
-
-  test('onMutate preserves grantedKeys from the snapshot untouched', async () => {
-    updateCapabilityMock.mockResolvedValue(undefined)
-    const { app, mutation, query_cache } = mountHost()
-    query_cache.setQueryData(
-      cacheKey,
-      snapshot([{ key: 'audio_reader', state: 'targeted' }], new Set(['audio_reader']))
-    )
-
-    await mutation.mutateAsync({ key: 'audio_reader', state: 'on' })
-
-    expect(query_cache.getQueryData(cacheKey)).toEqual(
-      snapshot([{ key: 'audio_reader', state: 'on' }], new Set(['audio_reader']))
-    )
     app.unmount()
   })
 
