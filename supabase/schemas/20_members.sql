@@ -182,10 +182,8 @@ CREATE FUNCTION public.search_members(p_query text) RETURNS SETOF public.member_
   SELECT m.id, m.display_name, m.avatar_url, m.email
   FROM public.members m
   WHERE public.can_manage_members()
-    -- Below two characters the match is too broad to be useful; return nothing.
-    AND length(trim(p_query)) >= 2
-    -- A pending-deletion account is hidden from everyone, admins included.
-    AND m.delete_at IS NULL
+    AND length(trim(p_query)) >= 2 -- below two characters the match is too broad to be useful; return nothing.
+    AND m.delete_at IS NULL -- a pending-deletion account is hidden from everyone, admins included.
     -- strpos on lowered text is a case-insensitive substring test that treats the query as literal, so `%` or `_` in it can't act as a wildcard.
     AND (
       strpos(lower(m.display_name), lower(trim(p_query))) > 0

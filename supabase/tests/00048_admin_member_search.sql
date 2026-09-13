@@ -2,7 +2,6 @@ BEGIN;
 
 SELECT plan(10);
 
--- public.member_search_result exposes only the four safe columns — never role/plan/billing.
 SELECT bag_eq(
   $$ SELECT attname
      FROM pg_attribute
@@ -10,7 +9,7 @@ SELECT bag_eq(
        AND attnum > 0
        AND NOT attisdropped $$,
   $$ VALUES ('id'), ('display_name'), ('avatar_url'), ('email') $$,
-  'member_search_result exposes only id, display_name, avatar_url, email'
+  'member_search_result exposes only the four safe columns — never role/plan/billing'
 );
 
 SELECT is(
@@ -77,8 +76,7 @@ SELECT is(
 SET LOCAL role = 'postgres';
 SELECT tests.set_claims(NULL);
 
--- Cap + ordering: 25 members share a distinct substring, sorted by display_name.
-DO $$
+DO $$ -- seeds 25 members sharing a distinct substring, for the cap + ordering assertions below
 DECLARE
   i int;
 BEGIN
