@@ -1,18 +1,53 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
 
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+const { makeTimeline, timelines, mockSet } = vi.hoisted(() => {
+  const timelines = []
+  function makeTimeline() {
+    const state = { onComplete: null, calls: { to: [], fromTo: [] } }
+    const tl = {
+      to: (...args) => {
+        state.calls.to.push(args)
+        return tl
+      },
+      fromTo: (...args) => {
+        state.calls.fromTo.push(args)
+        return tl
+      },
+      call: () => tl,
+      eventCallback: (_name, cb) => {
+        state.onComplete = cb
+        return tl
+      },
+      play: () => {
+        state.onComplete?.()
+        return tl
+      },
+      progress: () => tl,
+      kill: () => tl,
+      state
+    }
+    timelines.push(tl)
+    return tl
+  }
+  const mockSet = vi.fn((target, vars) => {
+    for (const [key, value] of Object.entries(vars)) {
+      target.style[key] = typeof value === 'number' ? `${value}px` : value
+    }
+  })
+  return { makeTimeline, timelines, mockSet }
+})
 
-const { mockTo, mockFromTo } = vi.hoisted(() => ({
-  mockTo: vi.fn(),
-  mockFromTo: vi.fn()
+vi.mock('gsap', () => ({
+  gsap: { timeline: () => makeTimeline(), isTweening: vi.fn(() => false), set: mockSet }
 }))
 
-vi.mock('gsap', () => ({ gsap: { to: mockTo, fromTo: mockFromTo } }))
+const { mockUseMotionStore } = vi.hoisted(() => ({
+  mockUseMotionStore: vi.fn(() => ({ factors: { duration: 1 } }))
+}))
+vi.mock('@/stores/motion', () => ({ useMotionStore: mockUseMotionStore }))
 
-import { tabSlideLeave, tabSlideEnter } from '@/utils/animations/tab-slide'
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
+import { tabSlideEnter, tabSlideLeave } from '@/utils/animations/tab-slide'
 
 function makeEl(scrollHeight = 200) {
   const el = document.createElement('div')
@@ -26,226 +61,76 @@ function makeWrapper(offsetHeight = 400) {
   return el
 }
 
-// ── tabSlideLeave ─────────────────────────────────────────────────────────────
+const noWrapper = () => ref(undefined)
 
-describe('tabSlideLeave — forward direction', () => {
-  beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  timelines.length = 0
+  mockUseMotionStore.mockReturnValue({ factors: { duration: 1 } })
+})
 
-  test('fades leaving element to opacity 0 via gsap.to', () => {
-    const direction = ref('forward')
-    const el = makeEl()
-    const done = vi.fn()
+describe('tabSlideEnter — forward', () => {
+  test('slides in on the x-axis while fading up', () => {
+    tabSlideEnter(ref('forward'), noWrapper())(makeEl())
 
-    tabSlideLeave(direction)(el, done)
-
-    expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ opacity: 0 }))
-  })
-
-  test('does NOT slide on x-axis when direction is forward', () => {
-    const direction = ref('forward')
-    tabSlideLeave(direction)(makeEl(), vi.fn())
-
-    const opts = mockTo.mock.calls[0][1]
-    expect(opts.x).toBeUndefined()
-  })
-
-  test('calls done via onComplete', () => {
-    const direction = ref('forward')
-    const done = vi.fn()
-
-    tabSlideLeave(direction)(makeEl(), done)
-
-    expect(done).not.toHaveBeenCalled()
-    const opts = mockTo.mock.calls[0][1]
-    opts.onComplete()
-    expect(done).toHaveBeenCalledTimes(1)
-  })
-
-  test('uses a positive LEAVE_DURATION', () => {
-    const direction = ref('forward')
-    tabSlideLeave(direction)(makeEl(), vi.fn())
-    expect(mockTo.mock.calls[0][1].duration).toBeGreaterThan(0)
+    const [, from, to] = timelines[0].state.calls.fromTo[0]
+    expect(from.x).toBeGreaterThan(0)
+    expect(from.opacity).toBe(0)
+    expect(to).toMatchObject({ x: 0, opacity: 1 })
   })
 })
 
-describe('tabSlideLeave — back direction', () => {
-  beforeEach(() => vi.clearAllMocks())
+describe('tabSlideEnter — back', () => {
+  test('fades in without any x slide', () => {
+    tabSlideEnter(ref('back'), noWrapper())(makeEl())
 
-  test('slides leaving element to the right (positive x) on back direction', () => {
-    const direction = ref('back')
-    tabSlideLeave(direction)(makeEl(), vi.fn())
-
-    const opts = mockTo.mock.calls[0][1]
-    expect(opts.x).toBeGreaterThan(0)
-  })
-
-  test('fades opacity to 0 on back direction', () => {
-    const direction = ref('back')
-    tabSlideLeave(direction)(makeEl(), vi.fn())
-
-    const opts = mockTo.mock.calls[0][1]
-    expect(opts.opacity).toBe(0)
-  })
-
-  test('calls done via onComplete on back direction', () => {
-    const direction = ref('back')
-    const done = vi.fn()
-
-    tabSlideLeave(direction)(makeEl(), done)
-
-    const opts = mockTo.mock.calls[0][1]
-    opts.onComplete()
-    expect(done).toHaveBeenCalledTimes(1)
+    const [, from, to] = timelines[0].state.calls.fromTo[0]
+    expect(from).toEqual({ opacity: 0 })
+    expect(to).toMatchObject({ opacity: 1 })
+    expect(from.x).toBeUndefined()
   })
 })
 
-describe('tabSlideLeave — with wrapper', () => {
-  beforeEach(() => vi.clearAllMocks())
+describe('tabSlideLeave — forward', () => {
+  test('fades out with no x slide', () => {
+    tabSlideLeave(ref('forward'), noWrapper())(makeEl())
 
-  test('freezes wrapper height to its current offsetHeight in px', () => {
-    const direction = ref('forward')
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars.opacity).toBe(0)
+    expect(vars.x).toBeUndefined()
+  })
+})
+
+describe('tabSlideLeave — back', () => {
+  test('slides to the right while fading out', () => {
+    tabSlideLeave(ref('back'), noWrapper())(makeEl())
+
+    const [, vars] = timelines[0].state.calls.to[0]
+    expect(vars.x).toBeGreaterThan(0)
+    expect(vars.opacity).toBe(0)
+  })
+})
+
+describe('tab-slide — wrapper height', () => {
+  test('freezes the wrapper to its current offsetHeight on leave', () => {
     const wrapper = makeWrapper(350)
 
-    tabSlideLeave(direction, wrapper)(makeEl(), vi.fn())
+    tabSlideLeave(ref('forward'), ref(wrapper))(makeEl())
 
     expect(wrapper.style.height).toBe('350px')
   })
 
-  test('still calls done via onComplete when wrapper is provided', () => {
-    const direction = ref('forward')
-    const wrapper = makeWrapper()
-    const done = vi.fn()
-
-    tabSlideLeave(direction, wrapper)(makeEl(), done)
-
-    const opts = mockTo.mock.calls[0][1]
-    opts.onComplete()
-    expect(done).toHaveBeenCalledTimes(1)
-  })
-})
-
-// ── tabSlideEnter ─────────────────────────────────────────────────────────────
-
-describe('tabSlideEnter — forward direction', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  test('slides entering element in from the right (x=SLIDE_X → x=0) on forward', () => {
-    const direction = ref('forward')
-    const el = makeEl()
-
-    tabSlideEnter(direction)(el, vi.fn())
-
-    expect(mockFromTo).toHaveBeenCalledWith(
-      el,
-      expect.objectContaining({ x: expect.any(Number), opacity: 0 }),
-      expect.objectContaining({ x: 0, opacity: 1 })
-    )
-    const [, from] = mockFromTo.mock.calls[0]
-    expect(from.x).toBeGreaterThan(0)
-  })
-
-  test('calls done via onComplete on forward direction', () => {
-    const direction = ref('forward')
-    const done = vi.fn()
-
-    tabSlideEnter(direction)(makeEl(), done)
-
-    const [, , to] = mockFromTo.mock.calls[0]
-    to.onComplete()
-    expect(done).toHaveBeenCalledTimes(1)
-  })
-
-  test('uses a positive ENTER_DURATION on forward', () => {
-    const direction = ref('forward')
-    tabSlideEnter(direction)(makeEl(), vi.fn())
-    const [, , to] = mockFromTo.mock.calls[0]
-    expect(to.duration).toBeGreaterThan(0)
-  })
-})
-
-describe('tabSlideEnter — back direction', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  test('fades entering element from opacity 0 to 1 on back', () => {
-    const direction = ref('back')
-    const el = makeEl()
-
-    tabSlideEnter(direction)(el, vi.fn())
-
-    expect(mockFromTo).toHaveBeenCalledWith(
-      el,
-      expect.objectContaining({ opacity: 0 }),
-      expect.objectContaining({ opacity: 1 })
-    )
-  })
-
-  test('does NOT include x slide on back direction', () => {
-    const direction = ref('back')
-    tabSlideEnter(direction)(makeEl(), vi.fn())
-
-    const [, from] = mockFromTo.mock.calls[0]
-    expect(from.x).toBeUndefined()
-  })
-
-  test('calls done via onComplete on back direction', () => {
-    const direction = ref('back')
-    const done = vi.fn()
-
-    tabSlideEnter(direction)(makeEl(), done)
-
-    const [, , to] = mockFromTo.mock.calls[0]
-    to.onComplete()
-    expect(done).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('tabSlideEnter — with wrapper', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  test('tweens wrapper height to entering element scrollHeight', () => {
-    const direction = ref('forward')
-    const wrapper = makeWrapper(400)
-    const el = makeEl(220)
-
-    tabSlideEnter(direction, wrapper)(el, vi.fn())
-
-    const wrapperCall = mockTo.mock.calls.find(([target]) => target === wrapper)
-    expect(wrapperCall).toBeTruthy()
-    expect(wrapperCall[1]).toMatchObject({ height: 220 })
-  })
-
-  test('clears wrapper inline height after its tween completes', () => {
-    const direction = ref('forward')
+  test('animates the wrapper to the entering page scrollHeight then clears it', () => {
     const wrapper = makeWrapper(400)
     wrapper.style.height = '400px'
 
-    tabSlideEnter(direction, wrapper)(makeEl(180), vi.fn())
+    tabSlideEnter(ref('forward'), ref(wrapper))(makeEl(220))
 
-    const wrapperCall = mockTo.mock.calls.find(([target]) => target === wrapper)
+    const wrapperCall = timelines[0].state.calls.to.find(([target]) => target === wrapper)
+    expect(wrapperCall).toBeTruthy()
+    expect(wrapperCall[1]).toMatchObject({ height: 220 })
+
     wrapperCall[1].onComplete()
     expect(wrapper.style.height).toBe('')
-  })
-})
-
-// ── tab_initial_render fast-path (obligation) ─────────────────────────────────
-// This is tested via the deck-settings integration test where the onTabEnter
-// hook calls done() immediately without invoking tabSlideEnter.
-// The unit test below confirms tabSlideEnter is NOT a no-op itself — verifying
-// that the fast-path must live in the caller, not in this util.
-describe('tabSlideEnter — no built-in initial-render fast-path', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  test('always runs a GSAP tween — no done-only shortcut inside the util', () => {
-    const direction = ref('forward')
-    const done = vi.fn()
-
-    tabSlideEnter(direction)(makeEl(), done)
-
-    // The tween is scheduled (done is not called immediately)
-    expect(done).not.toHaveBeenCalled()
-    // Simulate GSAP completing
-    const [, , to] = mockFromTo.mock.calls[0]
-    to.onComplete()
-    expect(done).toHaveBeenCalledTimes(1)
   })
 })
