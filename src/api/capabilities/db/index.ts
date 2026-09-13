@@ -60,7 +60,7 @@ export type CapabilityGrantParams = {
   member_id: string
 }
 
-/** granted_by/granted_at are stamped by the database; the write is refused for non-admins there. */
+/** Adds a member to a capability's allow list; granted_by/granted_at are stamped by the database, and the write is refused for non-admins there. */
 export async function addCapabilityGrant(params: CapabilityGrantParams): Promise<void> {
   const { error } = await supabase
     .from('capability_grants')
