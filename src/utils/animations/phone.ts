@@ -6,6 +6,7 @@ const TRANSLATE_AMOUNT = 100
 export function slideDownBlurIn(el: Element, done: () => void) {
   gsap.fromTo(
     el,
+    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
     { translateY: `-${TRANSLATE_AMOUNT}px`, opacity: 0, filter: `blur(${BLUR_AMOUNT}px)` },
     {
       translateY: 0,
@@ -24,6 +25,7 @@ export function slideUpBlurOut(el: Element, done: () => void) {
   gsap.to(el, {
     translateY: `-${TRANSLATE_AMOUNT}px`,
     opacity: 0,
+    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
     filter: `blur(${BLUR_AMOUNT}px)`,
     duration: 0.1,
     ease: 'expo.out',
@@ -34,6 +36,7 @@ export function slideUpBlurOut(el: Element, done: () => void) {
 export function slideUpBlurIn(el: Element, done: () => void) {
   gsap.fromTo(
     el,
+    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
     { translateY: `${TRANSLATE_AMOUNT}px`, opacity: 0, filter: `blur(${BLUR_AMOUNT}px)` },
     {
       translateY: 0,
@@ -52,6 +55,7 @@ export function slideDownBlurOut(el: Element, done: () => void) {
   gsap.to(el, {
     translateY: `${TRANSLATE_AMOUNT}px`,
     opacity: 0,
+    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
     filter: `blur(${BLUR_AMOUNT}px)`,
     duration: 0.1,
     ease: 'expo.out',

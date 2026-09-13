@@ -76,6 +76,7 @@ export function crossfadeResizeEnter(wrapper: HTMLElement, animate_height = fals
     // One timeline, so the release waits for whichever tween runs longer.
     gsap
       .timeline({ onComplete: cleanup })
+      // oxlint-disable-next-line compositor-only/no-layout-tween -- TARO-412 landed as a partial migration; this pane's resize wasn't moved onto the stage primitive. Follow-on: finish the TARO-412 stage migration for crossfade-resize.
       .to(wrapper, { height: target, duration: HEIGHT_DURATION, ease: 'power2.out' }, 0)
       .to(node, { opacity: 1, duration: FADE_DURATION, ease: 'power1.out' }, 0)
   }
