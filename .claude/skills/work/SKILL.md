@@ -168,8 +168,11 @@ blocker, branching off `master`. Wave N is the tickets whose blockers each **fin
 pass** in wave N-1 — § 4b has committed for that blocker, not merely that its build **landed**
 (§ 4a) into the integration branch. Cutting a wave-N worktree off a blocker branch that has landed
 but not yet finished § 4b bases it on a tip missing its own parent's test coverage, which a later
-merge-forward can't retroactively fix without a real conflict. Each wave-N builder's worktree is
-based on its blocker's branch, not `master` — its PR will stack on that branch (§ 5c). **Cap a wave
+merge-forward can't retroactively fix without a real conflict. **A ticket's `Blocked By` can name more
+than one in-epic blocker** — a wave-N builder's worktree merges every one of that ticket's in-epic
+blocker branches into its base, never just the first, before the builder starts; the PR then stacks
+on all of them (§ 5c). Never base a wave-N worktree on `master` or on a single blocker branch when the
+ticket names more. **Cap a wave
 at ~4 concurrent builders** — split a larger wave into batches. The test pass (§ 4b) stays
 sequential across every wave, and gates the next wave's fan-out the same way it gates § 5's PR step.
 
