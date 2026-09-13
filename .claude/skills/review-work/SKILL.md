@@ -1,12 +1,12 @@
 ---
 name: review-work
-description: The code-review swarm `/work` runs before opening any PR — one review pass over a diff for a single concern (`--concern <name>`, e.g. `comment-authoring`, `code-style`, `test-authoring`, `test-integrity`) held against that concern's review lens with strong prejudice. A concern is a rule-family lens (every changed line held against a rule file) or a semantic lens (the changed set reasoned about relationally). Report-only: it names every violation with the gate it fails and the exact change, and never edits or commits; the caller routes the fixes. `/work` § 4e fans out one `swarm-reviewer` per concern in the roster below over the integration branch; standalone it runs every concern over the current branch. Trigger on `/review-work`, "review the work", "harness review", "check comment/code-style/test conformance". `/code-review` stays the separate, general correctness/bug-hunt tool — this swarm's lenses stay bounded to the roster below.
+description: The code-review swarm `/work` runs before opening any PR — one review pass over a diff for a single concern (`--concern <name>`, e.g. `comment-placement`, `comment-authoring`, `code-style`, `test-authoring`, `test-integrity`) held against that concern's review lens with strong prejudice. A concern is a rule-family lens (every changed line held against a rule file), a semantic lens reasoning relationally (`test-integrity`), or a placement lens producing a brief for another agent to act on (`comment-placement`). Report-only: it never edits or commits; the caller routes the fixes or, for `comment-placement`, dispatches `comment-author` from its brief. `/work` § 4e fans out one `swarm-reviewer` per concern in the roster below over the integration branch; standalone it runs every concern over the current branch. Trigger on `/review-work`, "review the work", "harness review", "check comment/code-style/test conformance". `/code-review` stays the separate, general correctness/bug-hunt tool — this swarm's lenses stay bounded to the roster below.
 allowed-tools: Read, Grep, Glob, Bash
 arguments:
   - name: --concern <name>
-    description: The single concern to enforce — a row in the Concern roster (`comment-authoring`, `code-style`, `test-authoring`, `test-integrity`). Omit to run every roster row in sequence, for standalone human use.
+    description: The single concern to enforce — a row in the Concern roster (`comment-placement`, `comment-authoring`, `code-style`, `test-authoring`, `test-integrity`). Omit to run every roster row in sequence, for standalone human use.
   - name: --base <ref>
-    description: The ref to diff against for scope (default `master`). Everything the tree changed since `<ref>` is in scope.
+    description: The ref to diff against for scope (default `master`). Everything the tree changed since `<ref>` is in scope. For `comment-authoring` in the § 4e pipeline, the caller passes the tip just before the `comment-author` sweep landed, so the diff is exactly the sweep's own commits, never the builders' diff.
 argument-hint: '[--concern <name>] [--base <ref>]'
 lastUpdated: 2026-09-11T00:00:00Z
 ---
@@ -18,9 +18,16 @@ changed set against that lens's rule family with strong prejudice. A **rule-fami
 (`comment-authoring`, `code-style`, `test-authoring`) holds every changed line against a rule file,
 per-line. A **semantic lens** (`test-integrity`) reasons about the changed set relationally instead —
 it's how this swarm catches a conflict that only exists once two branches merge, which no per-line
-pass over either branch alone could see. **Report-only** — each finding names its location, the rule
-and gate it fails, and the concrete change; the skill never edits, never commits, never opens a PR.
-The caller routes the fixes.
+pass over either branch alone could see. A **placement lens** (`comment-placement`) also reasons
+relationally, but its output is a **brief for `comment-author`**, not a findings list — see its
+roster row. **Report-only** — each finding names its location, the rule and gate it fails, and the
+concrete change; the skill never edits, never commits, never opens a PR. The caller routes the fixes,
+or — for `comment-placement` — dispatches `comment-author` from the brief.
+
+`comment-authoring` reviews **`comment-author`'s sweep output**, never a builder's diff — builders
+write no comments at all (CLAUDE.md's golden rule), so a builder diff has nothing for this lens to
+hold a comment against until the sweep lands. There is no absence lens: the golden rule is the ban
+itself, and a stray builder comment is exactly what this lens's post-sweep pass catches.
 
 `/work` § 4e fans out one [`swarm-reviewer`](../../agents/swarm-reviewer.md) per concern in the roster
 below, all over the **integration branch** — one diff carrying every landed branch — after the
@@ -31,9 +38,9 @@ to the branch that owns it and routes the fix (§ 4d). Standalone, with no `--co
 for a human to act on.
 
 **This swarm stays bounded.** `/code-review` is the separate, general tool for correctness and reuse
-bugs; this swarm only ever runs the lenses in the roster below, one of which (`test-integrity`) now
-reasons semantically rather than line-by-line, but it never grows into a general bug hunt. A finding
-outside every roster lens is still out of scope — note it in one line and move on.
+bugs; this swarm only ever runs the lenses in the roster below — `test-integrity` and
+`comment-placement` reason relationally rather than line-by-line, but neither grows into a general
+bug hunt. A finding outside every roster lens is still out of scope — note it in one line and move on.
 
 ## Concern roster
 
@@ -43,7 +50,8 @@ a rule file — no new agent, no change to `/work` § 4e.
 
 | `--concern`         | Lens        | Rule family — read in full before judging                                                                                                 | In-scope changed paths                                                                                     | Model  |
 | ------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------ |
-| `comment-authoring` | rule-family | [`comment-authoring`](../../rules/comment-authoring.md) + its [`examples`](../../rules/comment-authoring/examples.md) spoke               | `src/**`, `supabase/**/*.{ts,sql}`, `scripts/**`, `tests/**` — **including** `.css`/`.scss` under `src/**` | sonnet |
+| `comment-placement` | placement   | [`comment-authoring`](../../knowledge/comment-authoring.md) + its [`examples`](../../knowledge/comment-authoring/examples.md) spoke       | `src/**`, `supabase/**/*.{ts,sql}`, `scripts/**`, `tests/**` — **including** `.css`/`.scss` under `src/**` | opus   |
+| `comment-authoring` | rule-family | [`comment-authoring`](../../knowledge/comment-authoring.md) + its [`examples`](../../knowledge/comment-authoring/examples.md) spoke       | the `comment-author` sweep's own commits, scoped via `--base` — see `--base`'s own description above       | sonnet |
 | `code-style`        | rule-family | [`code-style`](../../rules/code-style.md) + all six spokes: `phases`, `nesting`, `responsibility`, `variants`, `reactivity`, `signatures` | `src/**/*.{ts,vue}`                                                                                        | sonnet |
 | `test-authoring`    | rule-family | [`test-authoring`](../../rules/test-authoring.md)                                                                                         | `tests/**`, `supabase/functions/**/*.test.ts`                                                              | sonnet |
 | `test-integrity`    | semantic    | [`test-authoring/integrity`](../../rules/test-authoring/integrity.md)                                                                     | `tests/**`, `supabase/functions/**/*.test.ts`                                                              | opus   |
@@ -73,7 +81,9 @@ pre-existing violation the diff never touched is not this run's job. The one exc
 diff made stale (its subject line changed underneath it) is in scope even if the comment line itself
 didn't change. **`test-integrity`, a relational concern, reads the full changed test files** (not
 just the changed lines) to compare them against each other — still only files the diff touched, never
-the pre-existing suite.
+the pre-existing suite. **`comment-placement` reads every in-scope changed file whole**, not just the
+diff hunks — a site earns a comment by what the surrounding code already does or doesn't say, which a
+line-by-line pass over the diff can't judge.
 
 Running every concern (no `--concern`): repeat Steps 1–4 once per roster row, and print one report
 section per concern.
@@ -88,6 +98,11 @@ changes. The roster names exactly what to read: the rule and every spoke listed 
 For each in-scope file, read the diff plus enough surrounding code to judge each line at its own
 altitude. Hold every changed line against the concern's rule family:
 
+- **`comment-placement`** — not a gate pass; find every site the spec's own gates would let a comment
+  survive at: a codebase decision, a value tied to something external, a platform quirk obscure
+  enough general knowledge doesn't cover it, **every regex literal** (the spec's own always-fails
+  rule, read as always-earns for placement purposes), and every open `[K:gap:]` site. For each, name
+  the constraint the comment must carry — not draft the comment itself, that's `comment-author`'s.
 - **`comment-authoring`** — the position→shape table (including `<template>` = no comment ever, and
   the `tests/` single-row collapse), the six gates each failed on its own, the whole `## Never`
   list, the regex rule, and the pointer rules (readable sentence mandatory; `→[K:<slug>]` is the
@@ -109,6 +124,27 @@ Lead with the verdict, then the findings grouped by file. Every finding is self-
 receives it with no other context, and reports stay **branch-agnostic**: name the file (or, for a
 `test-integrity` cross-test conflict, **both files**, the contradiction, and the required edit) and
 the quoted offender, never a branch. The orchestrator maps each finding to its owning branch.
+
+**`comment-placement`'s report is a brief, not a findings list** — it feeds `comment-author`, never a
+builder:
+
+```markdown
+## review-work (comment-placement) — <N> sites across <M> files
+
+<!-- or: ## review-work (comment-placement) — clean -->
+
+### src/composables/deck/selection.ts
+
+- **L58** — the exclusion-list inversion is a codebase decision an actual reader wouldn't derive from
+  the code alone. Constraint the comment must carry: select-all is stored as its exceptions, not its
+  members, so a 10k-card deck never materializes a full id array.
+- **L71** — regex literal. Constraint: matches a deck slug — lowercase letters, digits, and hyphens
+  only, 3–40 characters.
+```
+
+Each entry is a **site plus a constraint**, never a drafted comment — `comment-author` re-derives
+whether it survives the gates and writes the wording. `clean` is an explicit verdict here too: no
+briefed site means no sweep dispatch this round.
 
 ```markdown
 ## review-work (comment-authoring) — <N> findings across <M> files
