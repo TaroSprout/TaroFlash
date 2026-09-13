@@ -112,7 +112,8 @@ GRANT ALL ON TABLE public.capability_grants TO service_role;
 -- capability. SECURITY DEFINER so it can join members past their own-row RLS —
 -- a plain select embedding members would blank every row but the caller's — and
 -- gated inside the query on can_manage_capabilities() so a non-admin caller
--- matches zero rows instead.
+-- matches zero rows instead. Being SECURITY DEFINER, it's also revoked from
+-- anon below, guarded by pgTAP 00043_definer_function_anon_grants.
 CREATE FUNCTION public.list_capability_grants(p_key text) RETURNS TABLE(id uuid, display_name text, avatar_url text, granted_at timestamp with time zone)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
@@ -129,8 +130,6 @@ $$;
 ALTER FUNCTION public.list_capability_grants(p_key text) OWNER TO postgres;
 
 
--- SECURITY DEFINER, so not left executable by anon (guarded by pgTAP
--- 00043_definer_function_anon_grants).
 REVOKE ALL ON FUNCTION public.list_capability_grants(p_key text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.list_capability_grants(p_key text) FROM anon;
 GRANT ALL ON FUNCTION public.list_capability_grants(p_key text) TO authenticated;
