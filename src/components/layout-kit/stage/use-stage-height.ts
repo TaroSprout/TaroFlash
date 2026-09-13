@@ -28,6 +28,18 @@ export type DrivenHeightChange = {
   cancel: () => void
 }
 
+export type DriveWidthOptions = {
+  duration: number
+  ease: string
+}
+
+export type DrivenWidthChange = {
+  settled: Promise<void>
+  cancel: () => void
+}
+
+export type DriveWidth = (target: number, options: DriveWidthOptions) => DrivenWidthChange
+
 type TweenTiming = {
   duration: (ctx: MotionContext) => number
   ease: (ctx: MotionContext) => string
@@ -105,8 +117,9 @@ export function useStageHeight(
     return natural
   }
 
-  function runHeightTween(
+  function runAxisTween(
     el: HTMLElement,
+    axis: 'height' | 'width',
     from: number,
     target: number,
     timing: TweenTiming,
@@ -119,8 +132,8 @@ export function useStageHeight(
       (node, ctx) => {
         ctx.tl.fromTo(
           node,
-          { height: from },
-          { height: target, duration: timing.duration(ctx), ease: timing.ease(ctx) }
+          { [axis]: from },
+          { [axis]: target, duration: timing.duration(ctx), ease: timing.ease(ctx) }
         )
       },
       { promote: false }
@@ -155,7 +168,7 @@ export function useStageHeight(
     }
 
     release = reserved
-    runHeightTween(el, from, target, AUTO_TIMING, () => {
+    runAxisTween(el, 'height', from, target, AUTO_TIMING, () => {
       handBack()
       onSettled?.()
     })
@@ -189,9 +202,50 @@ export function useStageHeight(
     const gen = generation
     const timing: TweenTiming = { duration: () => duration, ease: () => ease }
 
-    runHeightTween(el, from, target, timing, () => {
+    runAxisTween(el, 'height', from, target, timing, () => {
       el.style.removeProperty('overflow')
       rested = el.offsetHeight
+      settleDriven()
+    })
+
+    return {
+      settled,
+      cancel: () => {
+        if (gen !== generation) return
+        stopCurrent()
+      }
+    }
+  }
+
+  function driveWidth(target: number, { duration, ease }: DriveWidthOptions): DrivenWidthChange {
+    const el = box.value
+    if (!el) return { settled: Promise.resolve(), cancel: NOOP }
+
+    stopCurrent()
+
+    const settled = new Promise<void>((resolve) => {
+      drivenSettle = resolve
+    })
+
+    const from = el.offsetWidth
+    if (from === target) {
+      settleDriven()
+      return { settled, cancel: NOOP }
+    }
+
+    const reserved = reserveHeightTween()
+    if (!reserved) {
+      el.style.width = `${target}px`
+      settleDriven()
+      return { settled, cancel: NOOP }
+    }
+
+    release = reserved
+    const gen = generation
+    const timing: TweenTiming = { duration: () => duration, ease: () => ease }
+
+    runAxisTween(el, 'width', from, target, timing, () => {
+      el.style.removeProperty('overflow')
       settleDriven()
     })
 
@@ -259,5 +313,5 @@ export function useStageHeight(
     handBack()
   })
 
-  return { claimHeight, driveHeight }
+  return { claimHeight, driveHeight, driveWidth }
 }
