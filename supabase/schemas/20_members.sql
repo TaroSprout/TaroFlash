@@ -157,13 +157,6 @@ GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.member_public_profile(uuid) TO authenticated;
 
 
--- Admin-only member lookup for the allow-list editor. SELECT on `members` is
--- restricted to your own row, and there is deliberately no admin read policy —
--- so this SECURITY DEFINER helper runs as the owner to reach other rows, and
--- gates itself on can_manage_members() internally. A non-admin caller matches
--- the gate to false and gets zero rows: the refusal is in the database, not the
--- UI. It projects only the safe shape — id, display_name, avatar_url, email —
--- never role, plan, or stripe ids, mirroring member_public_profile.
 CREATE TYPE public.member_search_result AS (
     id uuid,
     display_name text,
@@ -175,6 +168,13 @@ CREATE TYPE public.member_search_result AS (
 ALTER TYPE public.member_search_result OWNER TO postgres;
 
 
+-- Admin-only member lookup for the allow-list editor. SELECT on `members` is
+-- restricted to your own row, and there is deliberately no admin read policy —
+-- so this SECURITY DEFINER helper runs as the owner to reach other rows, and
+-- gates itself on can_manage_members() internally. A non-admin caller matches
+-- the gate to false and gets zero rows: the refusal is in the database, not the
+-- UI. It projects only the safe shape — id, display_name, avatar_url, email —
+-- never role, plan, or stripe ids, mirroring member_public_profile.
 CREATE FUNCTION public.search_members(p_query text) RETURNS SETOF public.member_search_result
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
@@ -186,8 +186,7 @@ CREATE FUNCTION public.search_members(p_query text) RETURNS SETOF public.member_
     AND length(trim(p_query)) >= 2
     -- A pending-deletion account is hidden from everyone, admins included.
     AND m.delete_at IS NULL
-    -- strpos on lowered text is a case-insensitive substring test that treats
-    -- the query as literal, so `%` or `_` in it can't act as a wildcard.
+    -- strpos on lowered text is a case-insensitive substring test that treats the query as literal, so `%` or `_` in it can't act as a wildcard.
     AND (
       strpos(lower(m.display_name), lower(trim(p_query))) > 0
       OR strpos(lower(coalesce(m.email, '')), lower(trim(p_query))) > 0
