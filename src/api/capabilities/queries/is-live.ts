@@ -6,8 +6,7 @@ import { useCapabilitiesQuery } from './capabilities'
  *
  * The caller owns the fallback because only the feature
  * knows which way to fail before the rows load or when the read is unreachable
- * — a launch flag passes `false` to stay dark until proven live.
- * →[K:capability-server-has-no-fallback]
+ * — a launch flag passes `false` to stay dark until proven live. →[K:capability-server-has-no-fallback]
  */
 export function useCapabilities() {
   const query = useCapabilitiesQuery()

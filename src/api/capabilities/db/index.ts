@@ -17,7 +17,7 @@ export type UpdateCapabilityParams = {
   state: CapabilityState
 }
 
-/** Write refused for non-admins at the database, never re-checked here. */
+/** Flips a capability's on/off state; refused for non-admins at the database, never re-checked here. */
 export async function updateCapability(params: UpdateCapabilityParams): Promise<void> {
   const { error } = await supabase
     .from('capabilities')
@@ -30,7 +30,7 @@ export async function updateCapability(params: UpdateCapabilityParams): Promise<
   }
 }
 
-/** Reads through the admin-gated RPC — a non-admin caller gets an empty list, refused at the database. */
+/** A capability's allow list; a non-admin caller gets an empty list, refused at the database. */
 export async function fetchCapabilityGrants(key: CapabilityKey): Promise<CapabilityGrant[]> {
   const { data, error } = await supabase.rpc('list_capability_grants', { p_key: key })
 
