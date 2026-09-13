@@ -17,6 +17,7 @@ type PopScrimRevealOptions = {
   // steady height is worth.
   collapse?: boolean
   driveHeight?: DriveHeight
+  content?: HTMLElement
 }
 
 const live_height_changes = new WeakMap<HTMLElement, DrivenHeightChange>()
@@ -33,7 +34,7 @@ export function popScrimReveal(
   badge_content: HTMLElement,
   fields: HTMLElement,
   revealed: boolean,
-  { collapse = false, driveHeight }: PopScrimRevealOptions = {}
+  { collapse = false, driveHeight, content }: PopScrimRevealOptions = {}
 ) {
   const incoming = revealed ? [badge_content, fields] : [scrim]
   const outgoing = revealed ? [scrim] : [badge_content, fields]
@@ -61,7 +62,7 @@ export function popScrimReveal(
 
   if (!collapse || !driveHeight) return timeline
 
-  const target = revealed ? fields.scrollHeight : 0
+  const target = revealed ? (content ?? fields).scrollHeight : 0
   const change = driveHeight(target, HEIGHT_TIMING)
   live_height_changes.set(fields, change)
 

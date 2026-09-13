@@ -32,17 +32,19 @@ const is_phone = useMatchMedia('w<md')
 const scrim = useTemplateRef<HTMLElement>('scrim')
 const badge_content = useTemplateRef<HTMLElement>('badge_content')
 const fields = useTemplateRef<HTMLElement>('fields')
+const fields_content = useTemplateRef<HTMLElement>('fields_content')
 
-const { driveHeight } = useStageHeight(fields, fields, { active: () => false })
+const { driveHeight } = useStageHeight(fields, fields_content, { active: () => false })
 
 function toggleRevealed() {
-  if (!scrim.value || !badge_content.value || !fields.value) return
+  if (!scrim.value || !badge_content.value || !fields.value || !fields_content.value) return
 
   revealed.value = !revealed.value
   emitSfx('ui.press')
   popScrimReveal(scrim.value, badge_content.value, fields.value, revealed.value, {
     collapse: is_phone.value,
-    driveHeight
+    driveHeight,
+    content: fields_content.value
   })
 }
 </script>
@@ -84,10 +86,16 @@ function toggleRevealed() {
     <div
       ref="fields"
       data-testid="advanced-reveal__fields"
-      class="col-start-1 row-start-1 flex flex-col gap-4"
+      class="col-start-1 row-start-1"
       :class="!revealed && 'pointer-events-none opacity-0 max-md:h-0 max-md:overflow-hidden'"
     >
-      <slot></slot>
+      <div
+        ref="fields_content"
+        data-testid="advanced-reveal__fields-content"
+        class="flex flex-col gap-4"
+      >
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>
