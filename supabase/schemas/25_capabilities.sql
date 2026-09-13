@@ -110,8 +110,10 @@ GRANT ALL ON TABLE public.capability_grants TO service_role;
 
 -- One row per capability, each carrying the state resolved for the calling
 -- member, so the client reads an already-resolved boolean and never receives
--- the raw allow-list to compare locally. Delegates per key to capability_is_live
--- rather than re-deriving the allow-list rule. →[K:capability-server-has-no-fallback]
+-- the raw allow-list to compare locally — an admin's own read access to every
+-- member's grants would otherwise leak a targeted grant to every admin.
+-- Delegates per key to capability_is_live rather than re-deriving the
+-- allow-list rule. →[K:capability-resolution-stays-server-side]
 CREATE FUNCTION public.resolve_member_capabilities() RETURNS TABLE(key text, live boolean)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'

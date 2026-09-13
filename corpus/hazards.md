@@ -24,6 +24,7 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:ownership-stamp-empty-under-service-role]   | [[members]]            | `supabase/schemas/` (`set_member_id`)                                                                                    |
 | →[K:permission-widening-ripples]                | [[permissions]]        | `supabase/schemas/` (the `can_` functions)                                                                               |
 | →[K:capability-server-has-no-fallback]          | [[capabilities]]       | `supabase/schemas/10_shared.sql` (`capability_is_live`)                                                                  |
+| →[K:capability-resolution-stays-server-side]    | [[capabilities]]       | `src/api/capabilities/queries/is-live.ts`, `supabase/schemas/25_capabilities.sql` (`resolve_member_capabilities`)        |
 | →[K:media-lifetime-follows-notes]               | [[media]]              | `src/api/media/`                                                                                                         |
 | →[K:client-owns-the-schedule]                   | [[scheduling]]         | `src/views/study-session/`                                                                                               |
 | →[K:reward-tally-survives-reset]                | [[rewards]]            | `supabase/schemas/85_rewards/`                                                                                           |

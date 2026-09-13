@@ -9,6 +9,11 @@ import { useResolvedCapabilitiesQuery } from './resolved'
  * unreachable — a launch flag passes `false` to stay dark until proven live. A
  * loaded row that resolves not-live, or a key the server never returned, reads
  * false, not the fallback. →[K:capability-server-has-no-fallback]
+ *
+ * The rows this reads are already resolved per key for the calling member —
+ * never raw allow-list grants to compare locally, which an admin's own read
+ * access to every member's grants would silently widen.
+ * →[K:capability-resolution-stays-server-side]
  */
 export function useCapabilities() {
   const query = useResolvedCapabilitiesQuery()
