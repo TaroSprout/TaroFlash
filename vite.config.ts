@@ -31,7 +31,10 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: ['dist/**', 'supabase/**'],
-    jsPlugins: ['./scripts/lint-rules/comment-authoring.js'],
+    jsPlugins: [
+      './scripts/lint-rules/comment-authoring.js',
+      './scripts/lint-rules/compositor-only.js'
+    ],
     options: {
       typeAware: true,
       typeCheck: false
@@ -49,6 +52,13 @@ export default defineConfig({
         files: ['tests/**'],
         rules: {
           'comment-authoring/no-obligation-vocabulary': 'error'
+        }
+      },
+      {
+        // Where GSAP motion lives; scripts/supabase never animate anything.
+        files: ['src/**'],
+        rules: {
+          'compositor-only/no-layout-tween': 'error'
         }
       }
     ],
