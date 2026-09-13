@@ -34,8 +34,11 @@ const slideDownOut = defineMotion({
 
 function blurIn(el: HTMLElement) {
   el.dataset.phoneBlur = 'true'
+
   requestAnimationFrame(() => {
-    el.dataset.phoneBlur = 'false'
+    requestAnimationFrame(() => {
+      el.dataset.phoneBlur = 'false'
+    })
   })
 }
 
