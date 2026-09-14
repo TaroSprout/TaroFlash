@@ -22,12 +22,14 @@ import PagedTermSheet from '@/views/audio-reader/lesson/paged/term-sheet.vue'
 import ReaderSettings from '@/views/audio-reader/lesson/reader-settings.vue'
 import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
 
-// Gutter between the two pages of a wide spread, in px.
-const SPREAD_GAP = 64
-// Editorial page margins — generous, bookish. The measure frame and the real
-// pages share this one string so the text box they lay out against is identical;
-// drift here mis-sizes pagination.
-const PAGE_PADDING = 'px-8 pt-10 pb-3 sm:px-12 lg:px-16'
+// The single gutter between the two pages of a wide spread, in px. The pages carry
+// no inner (gutter-facing) padding, so this is the whole separation between the
+// two text columns — not stacked on top of page padding.
+const SPREAD_GAP = 40
+// Vertical page margins, shared by both pages and the measure frame.
+const PAGE_PADDING_Y = 'pt-10 pb-3'
+// The right page of a spread: no gutter-facing (left) margin, generous outer (right) one.
+const PAGE_PADDING_RIGHT = 'pt-10 pb-3 pl-0 pr-8 sm:pr-12 lg:pr-16'
 // A drag past this fraction of a page width (or a flick) turns the page.
 const TURN_RATIO = 0.22
 // Movement under this (px) on release counts as a tap, not a swipe.
@@ -86,6 +88,14 @@ const pages_per_spread = computed(() => (two_page.value ? 2 : 1))
 
 const page_width = computed(() =>
   two_page.value ? Math.max(0, (viewport_w.value - SPREAD_GAP) / 2) : viewport_w.value
+)
+
+// The left (or only) page's margins — the one the measure frame mirrors, so
+// pagination sizes against the same text box the pages render into.
+const primary_padding = computed(() =>
+  two_page.value
+    ? `${PAGE_PADDING_Y} pl-8 pr-0 sm:pl-12 lg:pl-16`
+    : `${PAGE_PADDING_Y} px-8 sm:px-12 lg:px-16`
 )
 
 const { pages, pageIndexOfWord } = usePagination(
@@ -350,7 +360,7 @@ watch(
         aria-hidden="true"
         data-testid="paged-reader__frame-sizer"
         class="pointer-events-none invisible absolute inset-y-0 left-0 flex flex-col"
-        :class="PAGE_PADDING"
+        :class="primary_padding"
         :style="{ width: `${page_width}px` }"
       >
         <div ref="frame_text" class="min-h-0 flex-1"></div>
@@ -388,7 +398,7 @@ watch(
           <paged-page
             v-for="(unit, i) in pagesForSpread(spread)"
             :key="i"
-            :class="PAGE_PADDING"
+            :class="unit.primary ? primary_padding : PAGE_PADDING_RIGHT"
             :style="{ width: `${page_width}px` }"
             :slices="unit.slice"
             :player="player"
