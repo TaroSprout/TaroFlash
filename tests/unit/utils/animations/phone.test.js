@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -112,8 +113,7 @@ describe('phone animations', () => {
       slideDownBlurIn(el(), done)
 
       lastMotionCall().resolveDone()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
 
       expect(done).toHaveBeenCalled()
     })
@@ -123,8 +123,7 @@ describe('phone animations', () => {
       slideUpBlurOut(el(), done)
 
       lastMotionCall().resolveDone()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
 
       expect(done).toHaveBeenCalled()
     })
@@ -134,8 +133,7 @@ describe('phone animations', () => {
       slideUpBlurIn(el(), done)
 
       lastMotionCall().resolveDone()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
 
       expect(done).toHaveBeenCalled()
     })
@@ -145,8 +143,7 @@ describe('phone animations', () => {
       slideDownBlurOut(el(), done)
 
       lastMotionCall().resolveDone()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
 
       expect(done).toHaveBeenCalled()
     })
