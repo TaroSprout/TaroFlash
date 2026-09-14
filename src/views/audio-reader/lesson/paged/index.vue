@@ -63,10 +63,12 @@ const current_index = ref(0)
 const following = ref(true)
 const settings_open = ref(false)
 
-// Live drag bookkeeping — plain state, never drives a reactive transform (Vue
-// class/style patches on the swiped element stutter iOS momentum).
+// Live drag bookkeeping — plain state, never drives a reactive transform (Vue class/style patches on the swiped element stutter iOS momentum).
 let start_x = 0
 let start_y = 0
+let pointer_down = false
+let pointer_id = -1
+let captured = false
 let dragging = false
 let decided: 'swipe' | 'scroll' | null = null
 
@@ -199,15 +201,27 @@ async function slideTo(target: number) {
   selectionApi.paintActiveWord()
 }
 
+// Presses that start on the controls (or any control inside them) are theirs — the
+// page gesture stays out so a play/skip/scrub/settings tap lands on the button.
+function onControl(target: EventTarget | null): boolean {
+  return !!(target as HTMLElement | null)?.closest('[data-no-swipe]')
+}
+
 function onPointerDown(event: PointerEvent) {
+  if (onControl(event.target)) return
+
   start_x = event.clientX
   start_y = event.clientY
+  pointer_down = true
+  pointer_id = event.pointerId
+  captured = false
   dragging = false
   decided = null
-  viewport.value?.setPointerCapture?.(event.pointerId)
 }
 
 function onPointerMove(event: PointerEvent) {
+  if (!pointer_down || event.pointerId !== pointer_id) return
+
   const dx = event.clientX - start_x
   const dy = event.clientY - start_y
 
@@ -217,6 +231,12 @@ function onPointerMove(event: PointerEvent) {
   }
 
   if (decided !== 'swipe' || !track.value) return
+
+  // Capture only once the swipe is real (not on pointerdown, which would swallow the controls' clicks) so moves keep coming if the finger leaves the viewport.
+  if (!captured) {
+    viewport.value?.setPointerCapture?.(event.pointerId)
+    captured = true
+  }
 
   dragging = true
   const resisted = resistEdge(dx)
@@ -232,6 +252,8 @@ function resistEdge(dx: number): number {
 }
 
 function onPointerUp(event: PointerEvent) {
+  if (!pointer_down || event.pointerId !== pointer_id) return
+
   const dx = event.clientX - start_x
   const dy = event.clientY - start_y
 
@@ -256,12 +278,16 @@ function turnPage(target: number) {
   slideTo(target)
 }
 
-function onPointerCancel() {
+function onPointerCancel(event: PointerEvent) {
+  if (event.pointerId !== pointer_id) return
   if (dragging && track.value) settlePageTrack(track.value, -viewport_w.value)
   reset()
 }
 
 function reset() {
+  pointer_down = false
+  pointer_id = -1
+  captured = false
   dragging = false
   decided = null
 }

@@ -29,6 +29,7 @@ const {
         :key="word.index"
         data-testid="paged-word"
         :data-word-index="word.index"
+        :data-paragraph-index="paragraphIndex"
         :data-word-text="word.display"
         :data-last-in-paragraph="endsParagraph && i === words.length - 1 ? '' : undefined"
         class="group/word cursor-pointer transition-colors duration-700 ease-out data-[playing=true]:duration-100 data-[active=true]:duration-100 data-[active=true]:text-(--color-on-accent) not-data-[active=true]:data-[playing=true]:text-(--color-accent-text)"

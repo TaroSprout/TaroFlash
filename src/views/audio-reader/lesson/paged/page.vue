@@ -55,6 +55,7 @@ const emit = defineEmits<{ (e: 'open-settings'): void }>()
       </div>
 
       <div
+        data-no-swipe
         data-testid="paged-page__controls"
         class="flex h-(--paged-controls-h) shrink-0 items-center"
       >
