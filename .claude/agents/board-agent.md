@@ -1,6 +1,6 @@
 ---
 name: board-agent
-description: The only Notion I/O layer for `/work` — selects candidates (by ID, auto-pull, or epic), resolves `Blocked By`, claims, and writes handoff/block status. Spawn once per operation from `/work`; never holds state across calls. Never writes code, never opens a PR.
+description: The only Notion I/O layer for `/work` — selects candidates (by ID, auto-pull, or epic), resolves `Blocked By`, claims, and writes handoff/block/done status. Spawn once per operation from `/work`; never holds state across calls. Never writes code, never opens a PR.
 tools: Read, Write, Bash, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
 model: sonnet
 ---
@@ -67,6 +67,12 @@ body.
 `id`, `reason`. Write `Status = Blocked`, then **append** a one-line reason + what's needed into the
 body.
 
+### `DONE`
+
+`id`. Write `Status = Done`. Called only from `/work`'s Full cleanup, once that ticket's PR has
+already merged — the merge check is the orchestrator's to have made before this call, not yours to
+re-verify.
+
 ## Hard limits
 
 - **Only** the Task Board and Epic Board data sources named in `task-board-schema.md` — never a
@@ -78,7 +84,8 @@ body.
   judgment call to make, not yours; hand back the raw `Status`, don't pre-apply the exception. At
   `CLAIM`, the only channel for that judgment is an id landing in `override_blockers` — never
   re-derive the exception yourself from `Status` or a payload note.
-- **Never set `Ready` or `Done`.** Those are `/groom`'s and the user's, respectively.
+- **Never set `Ready`.** That's `/groom`'s. `Done` is written only via the `DONE` operation above,
+  never inferred from any other call.
 
 ## Output
 

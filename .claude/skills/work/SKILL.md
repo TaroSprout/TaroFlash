@@ -1,6 +1,9 @@
 ---
 name: work
-description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A pre-PR review pipeline (`swarm-reviewer` running `review-work`, one agent per concern, each on the model its roster row names) then reviews the integration branch — rule-family lenses (code-style, test-authoring) and the semantic `test-integrity` lens run first, then the placement lens (`comment-placement`) briefs a `comment-author` sweep, then `comment-authoring` reviews that sweep's own commits — before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges, never sets `Done`. Trigger on `/work`, "work the board", "work this epic", "work several tickets".
+description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A pre-PR review pipeline (`swarm-reviewer` running `review-work`, one agent per concern, each on the model its roster row names) then reviews the integration branch — rule-family lenses (code-style, test-authoring) and the semantic `test-integrity` lens run first, then the placement lens (`comment-placement`) briefs a `comment-author` sweep, then `comment-authoring` reviews that sweep's own commits — before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges. It sets `Done` only at Full
+cleanup (§ Full cleanup), gated on every PR the run produced already being merged — everywhere else
+in the run, closing the loop is yours. Trigger on `/work`, "work the board", "work this epic", "work
+several tickets".
 allowed-tools: Read, Write, Bash, Agent
 argument-hint: '[<ID> <ID> …] [--count N] [--epic <name|url>] ["<instruction>"]'
 arguments:
@@ -20,7 +23,9 @@ lastUpdated: 2026-08-15T00:00:00Z
 Pulls work — named tickets, an auto-pulled batch, a whole epic, or a freeform instruction — lands and
 tests every unit on a branch you can run live, **checkpoints with you for a live-review round on that
 branch**, dispatches your fixes, and only once you close the round does it open a **PR** per unit for
-a lighter post-PR round. It never merges and never marks a ticket `Done` — you close the loop.
+a lighter post-PR round. It never merges. It moves each of the run's own tickets to `Done` at Full
+cleanup (§ Full cleanup) — once every PR the run produced has merged — and nowhere earlier; until
+then, you close the loop.
 
 **One session, always orchestrated, one invariant above everything else: the orchestrator never opens
 a source file and never reads Notion JSON.** It holds one row per ticket in a run ledger and delegates
@@ -46,7 +51,8 @@ skill. What the orchestrator itself needs to judge a plan:
 
 - **Only the Task Board named in `task-board-schema.md`** — never a backup or duplicate board.
 - `Status` lanes this skill uses: pulls from `Ready`; claims to `In Progress`; lands at `Review`;
-  parks stuck work at `Blocked`. Never sets `Done` / `Duplicate`.
+  parks stuck work at `Blocked`. Never sets `Duplicate`. Sets `Done` only at Full cleanup (§ Full
+  cleanup), never earlier in the run.
 - `Assignee`: `Fable` · `Opus` · `Sonnet` — the model each builder is pinned to. **`Assignee = Me`
   and `Status = On Hold` are both hands-off** (user-owned) and never eligible.
 - Freeform and mid-run out-of-scope work carries no ticket, so no `Status`/`Assignee` write ever
@@ -62,8 +68,9 @@ blocked state; the doctrine for reading that state is the orchestrator's:
 `Status` outside the `complete` group (`Done` / `Won't Do` / `Duplicate`) makes the ticket blocked —
 unless one of two things is already true, and neither is overridden by `Status` alone:
 
-- **The blocker's PR is merged**, while its ticket still reads `Review` — this skill never sets
-  `Done`, so the board lags every merge by design. Judge on whether the blocker's PR is actually
+- **The blocker's PR is merged**, while its ticket still reads `Review` — a ticket's `Status` only
+  reaches `Done` at its own run's Full cleanup (§ Full cleanup), so the board lags every merge by
+  design. Judge on whether the blocker's PR is actually
   merged, not on its `Status` field (a stronger bar than "landed" in § 4's wave-gating sense, which
   only requires the test pass to have committed).
 - **The dependent branch is stacked on the blocker's branch** (§ Fan out) — the blocker's code is
@@ -416,6 +423,12 @@ Repeat per PR until the user merges (§ What this skill does).
 
 "Cleanup" from the user means the run's own home-tree worktree and session branch too, not just the
 builder worktrees § 5f already reclaims — do this only once every PR this run produced is merged.
+
+**Every merged-PR ticket the run worked moves to `Done` here, and nowhere earlier** — dispatch
+`board-agent` with `DONE` (`id`) for each; freeform work carries no ticket, so nothing to set. A
+ticket the run parked `Blocked` stays `Blocked`; only a ticket whose PR actually merged reaches
+`Done`.
+
 A worktree can't remove itself: run it from another checkout — `git status --short` inside the home
 tree first (anything uncommitted stops it and gets reported, same as § 5f), then `git worktree
 remove` it and delete its now-merged branch (local, and `origin` if it was pushed).
