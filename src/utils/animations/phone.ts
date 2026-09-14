@@ -35,8 +35,7 @@ const slideDownOut = defineMotion({
 function blurIn(el: HTMLElement) {
   el.dataset.phoneBlur = 'true'
 
-  // Two frames, not one: the first just paints the blurred state, so the browser
-  // has something to transition away from — a single rAF drops the hold entirely.
+  // Don't collapse to one frame — it only paints the hold, leaving no state to transition away from.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       el.dataset.phoneBlur = 'false'
