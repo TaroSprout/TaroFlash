@@ -18,6 +18,7 @@ import {
   cors,
   requireCapability as defaultRequireCapability
 } from '../_shared/require-capability.ts'
+import { assertServiceRole } from '../_shared/assert-service-role.ts'
 import { isTargetScript } from '../_shared/transcription/script.ts'
 import { processLessonPhase, serviceClient } from './worker.ts'
 import { type SupabaseClient } from '@supabase/supabase-js'
@@ -181,16 +182,13 @@ async function restartRetry(
   return reset
 }
 
-// Internal: run one phase. Authenticated by the service-role key (the chain
-// trigger sends it; verify_jwt at the gateway only proves it's a valid project
-// token, so we also check it IS the service key — a member token must not reach
-// here). Always 200 once authorized: processLessonPhase settles the row itself,
-// so the chain never retries on our response.
+/**
+ * Always 200 once authorized — `processLessonPhase` settles the row itself,
+ * so the chain never retries on our response.
+ */
 async function handleProcess(req: Request, body: Record<string, unknown>): Promise<Response> {
-  const expected = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  if (!expected || req.headers.get('Authorization') !== `Bearer ${expected}`) {
-    return new Response('Forbidden', { status: 403, headers: cors })
-  }
+  const denied = assertServiceRole(req)
+  if (denied) return denied
 
   const lessonId = Number(body.lesson_id)
   if (!Number.isFinite(lessonId)) return jsonError('missing_fields', 400)
