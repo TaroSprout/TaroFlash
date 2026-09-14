@@ -1,5 +1,5 @@
 import { computed, ref, shallowRef, toValue, useTemplateRef, watch } from 'vue'
-import type { MaybeRefOrGetter } from 'vue'
+import type { InjectionKey, MaybeRefOrGetter } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -221,3 +221,10 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     player
   }
 }
+
+export type LessonReader = ReturnType<typeof useLessonReader>
+
+// The lesson view calls useLessonReader once and provides the bundle so the paged
+// layout and its deep children (page, controls, term sheet) read one source of
+// truth instead of drilling a dozen props.
+export const lessonReaderKey = Symbol('lessonReader') as InjectionKey<LessonReader>

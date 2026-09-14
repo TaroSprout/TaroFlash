@@ -1,0 +1,408 @@
+<script setup lang="ts">
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  useTemplateRef,
+  watch
+} from 'vue'
+import { lessonReaderKey } from '@/composables/audio-reader/lesson-reader'
+import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
+import { usePagination } from '@/composables/audio-reader/pagination'
+import { usePagedSelection, type WordRange } from '@/composables/audio-reader/paged-selection'
+import { useMatchMedia } from '@/composables/ui/media-query'
+import { setPageTrack, settlePageTrack } from '@/utils/animations/paged-reader'
+import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
+import PagedPage from '@/views/audio-reader/lesson/paged/page.vue'
+import PagedSegment from '@/views/audio-reader/lesson/paged/segment.vue'
+import PagedTermSheet from '@/views/audio-reader/lesson/paged/term-sheet.vue'
+import ReaderSettings from '@/views/audio-reader/lesson/reader-settings.vue'
+import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
+
+// Gutter between the two pages of a wide spread, in px.
+const SPREAD_GAP = 48
+// A drag past this fraction of a page width (or a flick) turns the page.
+const TURN_RATIO = 0.22
+// Movement under this (px) on release counts as a tap, not a swipe.
+const TAP_SLOP = 8
+// Direction isn't decided until the drag clears this (px).
+const DECIDE_SLOP = 10
+
+const reader = inject(lessonReaderKey)!
+const {
+  paragraphs,
+  matches,
+  active_word,
+  selection,
+  popover_open,
+  target_lang,
+  selected_term_decks,
+  openTerm,
+  closeTerm,
+  playFromHere,
+  playClip,
+  player
+} = reader
+
+const { display_mode } = useReaderPrefs()
+
+const viewport = useTemplateRef<HTMLElement>('viewport')
+const track = useTemplateRef<HTMLElement>('track')
+const measure_host = useTemplateRef<HTMLElement>('measure')
+const frame_text = useTemplateRef<HTMLElement>('frame_text')
+
+const viewport_w = ref(0)
+const viewport_h = ref(0)
+const available_height = ref(0)
+const measure_width = ref(0)
+
+const current_index = ref(0)
+const following = ref(true)
+const settings_open = ref(false)
+
+// Live drag bookkeeping — plain state, never drives a reactive transform (Vue
+// class/style patches on the swiped element stutter iOS momentum).
+let start_x = 0
+let start_y = 0
+let dragging = false
+let decided: 'swipe' | 'scroll' | null = null
+
+let viewport_ro: ResizeObserver | undefined
+let frame_ro: ResizeObserver | undefined
+
+const gloss_mode = computed(() => display_mode.value === 'inline')
+const split_mode = computed(() => display_mode.value === 'fixed')
+const two_page = useMatchMedia('w>=xl')
+const pages_per_spread = computed(() => (two_page.value ? 2 : 1))
+
+const page_width = computed(() =>
+  two_page.value ? Math.max(0, (viewport_w.value - SPREAD_GAP) / 2) : viewport_w.value
+)
+
+const { pages, pageIndexOfWord } = usePagination(
+  measure_host,
+  available_height,
+  () => paragraphs.value,
+  () => gloss_mode.value
+)
+
+const selectionApi = usePagedSelection(
+  viewport,
+  () => active_word.value,
+  () => paragraphs.value,
+  matchRangeAt,
+  openTerm,
+  closeTerm,
+  () => popover_open.value
+)
+
+const spread_count = computed(() =>
+  Math.max(1, Math.ceil(pages.value.length / pages_per_spread.value))
+)
+
+// The three spreads kept mounted around the current one: previous, current, next.
+// The track sits at -viewport_w so the middle slot is centred; a swipe slides one
+// slot either way, then re-centres after committing the new index.
+const slots = computed(() => [
+  current_index.value - 1,
+  current_index.value,
+  current_index.value + 1
+])
+
+// The translation of the line the audio is on — what the split band shows.
+const active_translation = computed(() => {
+  if (active_word.value < 0) return null
+  const paragraph = paragraphs.value.find((p) => p.words.some((w) => w.index === active_word.value))
+  return paragraph?.translation ?? null
+})
+
+// Which way the playing line lies from the current spread, for the resume arrow.
+const resume_direction = computed<'up' | 'down'>(() =>
+  spreadOfWord(active_word.value) < current_index.value ? 'up' : 'down'
+)
+
+onMounted(() => {
+  viewport_ro = new ResizeObserver(measureViewport)
+  if (viewport.value) viewport_ro.observe(viewport.value)
+
+  frame_ro = new ResizeObserver(measureFrame)
+  if (frame_text.value) frame_ro.observe(frame_text.value)
+
+  recenter()
+})
+
+onBeforeUnmount(() => {
+  viewport_ro?.disconnect()
+  frame_ro?.disconnect()
+})
+
+function measureViewport() {
+  if (!viewport.value) return
+  viewport_w.value = viewport.value.clientWidth
+  viewport_h.value = viewport.value.clientHeight
+  if (!dragging) recenter()
+}
+
+function measureFrame() {
+  if (!frame_text.value) return
+  available_height.value = frame_text.value.clientHeight
+  measure_width.value = frame_text.value.clientWidth
+}
+
+function recenter() {
+  if (track.value) setPageTrack(track.value, -viewport_w.value)
+}
+
+function matchRangeAt(index: number): WordRange | null {
+  const match = matches.value.get(index)
+  return match ? { lo: match.lo, hi: match.hi } : null
+}
+
+function spreadOfWord(word_index: number): number {
+  if (word_index < 0) return current_index.value
+  return Math.floor(pageIndexOfWord(word_index) / pages_per_spread.value)
+}
+
+// The one or two pages shown in the spread at `index`; out-of-range slots render
+// nothing so the track always has its three slots.
+function pagesForSpread(index: number) {
+  if (index < 0 || index >= spread_count.value) return []
+  if (!two_page.value) return [{ slice: pages.value[index] ?? [], primary: true }]
+  return [
+    { slice: pages.value[index * 2] ?? [], primary: true },
+    { slice: pages.value[index * 2 + 1] ?? [], primary: false }
+  ]
+}
+
+async function slideTo(target: number) {
+  const clamped = Math.min(Math.max(target, 0), spread_count.value - 1)
+  if (!track.value) return
+
+  if (clamped === current_index.value) {
+    settlePageTrack(track.value, -viewport_w.value)
+    return
+  }
+
+  // Only animate a neighbour turn; a far jump (a seek) snaps straight there.
+  const adjacent = Math.abs(clamped - current_index.value) === 1
+  if (adjacent) {
+    const to = clamped > current_index.value ? -viewport_w.value * 2 : 0
+    await settlePageTrack(track.value, to)
+  }
+
+  current_index.value = clamped
+  await nextTick()
+  recenter()
+  selectionApi.paintActiveWord()
+}
+
+function onPointerDown(event: PointerEvent) {
+  start_x = event.clientX
+  start_y = event.clientY
+  dragging = false
+  decided = null
+  viewport.value?.setPointerCapture?.(event.pointerId)
+}
+
+function onPointerMove(event: PointerEvent) {
+  const dx = event.clientX - start_x
+  const dy = event.clientY - start_y
+
+  if (decided === null) {
+    if (Math.abs(dx) > DECIDE_SLOP && Math.abs(dx) >= Math.abs(dy)) decided = 'swipe'
+    else if (Math.abs(dy) > DECIDE_SLOP) decided = 'scroll'
+  }
+
+  if (decided !== 'swipe' || !track.value) return
+
+  dragging = true
+  const resisted = resistEdge(dx)
+  setPageTrack(track.value, -viewport_w.value + resisted)
+}
+
+// Rubber-band the drag at the first/last spread so a pull past the end reads as a
+// soft edge rather than a dead stop.
+function resistEdge(dx: number): number {
+  const at_start = current_index.value === 0 && dx > 0
+  const at_end = current_index.value === spread_count.value - 1 && dx < 0
+  return at_start || at_end ? dx * 0.35 : dx
+}
+
+function onPointerUp(event: PointerEvent) {
+  const dx = event.clientX - start_x
+  const dy = event.clientY - start_y
+
+  if (!dragging) {
+    if (Math.hypot(dx, dy) < TAP_SLOP) selectionApi.selectAtPoint(event.clientX, event.clientY)
+    reset()
+    return
+  }
+
+  const threshold = viewport_w.value * TURN_RATIO
+  if (dx <= -threshold && current_index.value < spread_count.value - 1)
+    turnPage(current_index.value + 1)
+  else if (dx >= threshold && current_index.value > 0) turnPage(current_index.value - 1)
+  else if (track.value) settlePageTrack(track.value, -viewport_w.value)
+
+  reset()
+}
+
+// A hand-driven turn takes over from the playhead until it catches back up.
+function turnPage(target: number) {
+  following.value = false
+  slideTo(target)
+}
+
+function onPointerCancel() {
+  if (dragging && track.value) settlePageTrack(track.value, -viewport_w.value)
+  reset()
+}
+
+function reset() {
+  dragging = false
+  decided = null
+}
+
+function resumeFollow() {
+  following.value = true
+  slideTo(spreadOfWord(active_word.value))
+}
+
+function onSelectPlayFromHere() {
+  playFromHere()
+}
+
+// Keep the current spread valid as pagination reshapes it (density, width, mode).
+watch(spread_count, (count) => {
+  if (current_index.value > count - 1) current_index.value = count - 1
+  nextTick(recenter)
+})
+
+// Follow the playhead: advance to its spread while following; rejoin follow once
+// a hand-turned reader lands back on the playing spread.
+watch(
+  () => active_word.value,
+  () => {
+    if (active_word.value < 0) return
+    const target = spreadOfWord(active_word.value)
+
+    if (!following.value) {
+      if (target === current_index.value) following.value = true
+      return
+    }
+
+    if (target !== current_index.value) slideTo(target)
+  },
+  { flush: 'post' }
+)
+</script>
+
+<template>
+  <div
+    data-testid="paged-reader"
+    class="relative flex h-[calc(100dvh-var(--nav-height))] w-full flex-col overflow-hidden px-(--page-px) pb-4"
+    style="--paged-controls-h: 3.5rem; --paged-split-h: 7rem"
+  >
+    <div
+      ref="viewport"
+      data-testid="paged-reader__viewport"
+      class="relative min-h-0 flex-1 touch-none overflow-hidden"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="onPointerUp"
+      @pointercancel="onPointerCancel"
+    >
+      <div
+        ref="frame"
+        aria-hidden="true"
+        data-testid="paged-reader__frame-sizer"
+        class="pointer-events-none invisible absolute inset-y-0 left-0 flex flex-col"
+        :style="{ width: `${page_width}px` }"
+      >
+        <div ref="frame_text" class="min-h-0 flex-1"></div>
+        <div v-if="split_mode" class="h-(--paged-split-h) shrink-0 border-t border-line"></div>
+        <div class="h-(--paged-controls-h) shrink-0"></div>
+      </div>
+
+      <div
+        ref="measure"
+        aria-hidden="true"
+        data-testid="paged-reader__measure-layer"
+        class="invisible fixed top-0 left-0 -z-10 select-none text-4xl leading-[2.5] text-ink"
+        :style="{ width: `${measure_width}px` }"
+      >
+        <paged-segment
+          v-for="paragraph in paragraphs"
+          :key="paragraph.index"
+          class="mt-6 first:mt-0"
+          :words="paragraph.words"
+          :paragraph-index="paragraph.index"
+          :translation="paragraph.translation"
+          :show-gloss="gloss_mode"
+          ends-paragraph
+        />
+      </div>
+
+      <div ref="track" data-testid="paged-reader__track" class="absolute inset-y-0 left-0 flex">
+        <div
+          v-for="spread in slots"
+          :key="spread"
+          data-testid="paged-reader__slot"
+          class="flex h-full shrink-0"
+          :style="{ width: `${viewport_w}px`, gap: `${SPREAD_GAP}px` }"
+        >
+          <paged-page
+            v-for="(unit, i) in pagesForSpread(spread)"
+            :key="i"
+            :style="{ width: `${page_width}px` }"
+            :slices="unit.slice"
+            :player="player"
+            :is-primary="unit.primary"
+            :split-mode="split_mode"
+            :split-translation="active_translation"
+            @open-settings="settings_open = true"
+          />
+        </div>
+      </div>
+    </div>
+
+    <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+      <div
+        v-if="!following"
+        data-testid="paged-reader__resume"
+        class="absolute right-6 bottom-24 z-30"
+      >
+        <resume-follow-button :direction="resume_direction" @resume="resumeFollow" />
+      </div>
+    </transition>
+
+    <paged-term-sheet
+      :selection="selection"
+      :open="popover_open"
+      :target-lang="target_lang"
+      :existing-decks="selected_term_decks"
+      @close="closeTerm"
+      @play-from-here="onSelectPlayFromHere"
+      @play-word="playClip"
+    />
+
+    <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+      <div
+        v-if="settings_open"
+        data-testid="paged-reader__settings"
+        class="fixed inset-0 z-40 flex items-end justify-center sm:items-center"
+      >
+        <div class="absolute inset-0 bg-ink/20" @pointerdown.self="settings_open = false" />
+        <div
+          data-station="float"
+          class="relative max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-t-7 bg-surface px-(--dock-px) pt-(--dock-pt) shadow-lg ring-1 ring-line sm:rounded-7"
+        >
+          <reader-settings :player="player" @close="settings_open = false" />
+        </div>
+      </div>
+    </transition>
+  </div>
+</template>

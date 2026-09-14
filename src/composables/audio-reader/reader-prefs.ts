@@ -19,6 +19,12 @@ const translation_source = useLocalRef<ReaderTranslationSource>(
 const playback_rate = useLocalRef<number>('audio-reader.playbackRate', 1)
 const paragraph_density = useLocalRef<ParagraphDensity>('audio-reader.paragraphDensity', 'medium')
 
+// Opt into the prototype paged layout (static, non-overflowing pages with inline
+// controls) instead of the scroll+dock reader. A no-chrome dev flag for now —
+// `?paged=1` / `?paged=0` in the URL flips it (see the lesson view), otherwise it
+// sticks per browser.
+const paged = useLocalRef<boolean>('audio-reader.paged', false)
+
 export function useReaderPrefs() {
-  return { display_mode, translation_source, playback_rate, paragraph_density }
+  return { display_mode, translation_source, playback_rate, paragraph_density, paged }
 }
