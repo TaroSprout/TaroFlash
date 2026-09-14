@@ -1,13 +1,32 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockFromTo, mockTo } = vi.hoisted(() => ({
-  mockFromTo: vi.fn(),
-  mockTo: vi.fn()
-}))
+const { mockDefineMotion, motionCalls, rafCallbacks } = vi.hoisted(() => {
+  const motionCalls = []
+  const rafCallbacks = []
 
-vi.mock('gsap', () => ({ gsap: { fromTo: mockFromTo, to: mockTo } }))
+  function mockDefineMotion(spec) {
+    return (el) => {
+      let resolveDone
+      const done = new Promise((resolve) => {
+        resolveDone = resolve
+      })
+      motionCalls.push({ spec, el, resolveDone })
+      return { done }
+    }
+  }
+
+  return { mockDefineMotion, motionCalls, rafCallbacks }
+})
+
+vi.mock('@/utils/motion/driver', () => ({ defineMotion: mockDefineMotion }))
+
+vi.stubGlobal('requestAnimationFrame', (cb) => {
+  rafCallbacks.push(cb)
+  return rafCallbacks.length
+})
 
 import {
   slideDownBlurIn,
@@ -18,115 +37,147 @@ import {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const el = document.createElement('div')
-const done = vi.fn()
+function el() {
+  return document.createElement('div')
+}
+
+// Models nested rAF scheduling: a flushed callback that itself calls
+// requestAnimationFrame enqueues onto the same queue rather than running inline,
+// so a double-rAF chain needs two flushes to fully resolve.
+function flushRaf() {
+  const pending = rafCallbacks.splice(0, rafCallbacks.length)
+  pending.forEach((cb) => cb())
+}
+
+function lastMotionCall() {
+  return motionCalls[motionCalls.length - 1]
+}
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('phone animations', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    motionCalls.length = 0
+    rafCallbacks.length = 0
   })
 
-  describe('slideDownBlurIn', () => {
-    test('enters from above with blur (negative translateY → 0)', () => {
-      slideDownBlurIn(el, done)
+  describe('blur-in (enter)', () => {
+    test('slideDownBlurIn holds data-phone-blur true through the first frame, then clears on the second', () => {
+      const element = el()
 
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        expect.objectContaining({ opacity: 0 }),
-        expect.objectContaining({ translateY: 0, opacity: 1, filter: 'blur(0)' })
-      )
+      slideDownBlurIn(element, vi.fn())
+      expect(element.dataset.phoneBlur).toBe('true')
 
-      const [, from] = mockFromTo.mock.calls[0]
-      expect(from.translateY).toMatch(/^-/)
+      flushRaf()
+      expect(element.dataset.phoneBlur).toBe('true')
+
+      flushRaf()
+      expect(element.dataset.phoneBlur).toBe('false')
     })
 
-    test('calls done via onComplete', () => {
-      slideDownBlurIn(el, done)
+    test('slideUpBlurIn holds data-phone-blur true through the first frame, then clears on the second', () => {
+      const element = el()
 
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        expect.anything(),
-        expect.objectContaining({ onComplete: done })
-      )
-    })
+      slideUpBlurIn(element, vi.fn())
+      expect(element.dataset.phoneBlur).toBe('true')
 
-    test('clears the inline transform on completion, so the resting rotate/scale classes survive', () => {
-      slideDownBlurIn(el, done)
+      flushRaf()
+      expect(element.dataset.phoneBlur).toBe('true')
 
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        expect.anything(),
-        expect.objectContaining({ clearProps: 'transform' })
-      )
+      flushRaf()
+      expect(element.dataset.phoneBlur).toBe('false')
     })
   })
 
-  describe('slideUpBlurOut', () => {
-    test('exits upward with blur (negative translateY)', () => {
-      slideUpBlurOut(el, done)
+  describe('blur-out (leave)', () => {
+    test('slideUpBlurOut sets data-phone-blur true and leaves it blurred', () => {
+      const element = el()
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(vars.translateY).toMatch(/^-/)
-      expect(vars.opacity).toBe(0)
+      slideUpBlurOut(element, vi.fn())
+
+      expect(element.dataset.phoneBlur).toBe('true')
     })
 
-    test('calls done via onComplete', () => {
-      slideUpBlurOut(el, done)
+    test('slideDownBlurOut sets data-phone-blur true and leaves it blurred', () => {
+      const element = el()
 
-      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ onComplete: done }))
-    })
-  })
+      slideDownBlurOut(element, vi.fn())
 
-  describe('slideUpBlurIn', () => {
-    test('enters from below with blur (positive translateY → 0)', () => {
-      slideUpBlurIn(el, done)
-
-      const [, from] = mockFromTo.mock.calls[0]
-      expect(parseInt(from.translateY)).toBeGreaterThan(0)
-
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        expect.anything(),
-        expect.objectContaining({ translateY: 0, opacity: 1, filter: 'blur(0)' })
-      )
-    })
-
-    test('calls done via onComplete', () => {
-      slideUpBlurIn(el, done)
-
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        expect.anything(),
-        expect.objectContaining({ onComplete: done })
-      )
-    })
-
-    test('clears the inline transform on completion, so the resting rotate/scale classes survive', () => {
-      slideUpBlurIn(el, done)
-
-      expect(mockFromTo).toHaveBeenCalledWith(
-        el,
-        expect.anything(),
-        expect.objectContaining({ clearProps: 'transform' })
-      )
+      expect(element.dataset.phoneBlur).toBe('true')
     })
   })
 
-  describe('slideDownBlurOut', () => {
-    test('exits downward with blur (positive translateY)', () => {
-      slideDownBlurOut(el, done)
+  describe('done resolution', () => {
+    test('slideDownBlurIn resolves done once the underlying motion completes', async () => {
+      const done = vi.fn()
+      slideDownBlurIn(el(), done)
 
-      const [, vars] = mockTo.mock.calls[0]
-      expect(parseInt(vars.translateY)).toBeGreaterThan(0)
-      expect(vars.opacity).toBe(0)
+      lastMotionCall().resolveDone()
+      await flushPromises()
+
+      expect(done).toHaveBeenCalled()
     })
 
-    test('calls done via onComplete', () => {
-      slideDownBlurOut(el, done)
+    test('slideUpBlurOut resolves done once the underlying motion completes', async () => {
+      const done = vi.fn()
+      slideUpBlurOut(el(), done)
 
-      expect(mockTo).toHaveBeenCalledWith(el, expect.objectContaining({ onComplete: done }))
+      lastMotionCall().resolveDone()
+      await flushPromises()
+
+      expect(done).toHaveBeenCalled()
+    })
+
+    test('slideUpBlurIn resolves done once the underlying motion completes', async () => {
+      const done = vi.fn()
+      slideUpBlurIn(el(), done)
+
+      lastMotionCall().resolveDone()
+      await flushPromises()
+
+      expect(done).toHaveBeenCalled()
+    })
+
+    test('slideDownBlurOut resolves done once the underlying motion completes', async () => {
+      const done = vi.fn()
+      slideDownBlurOut(el(), done)
+
+      lastMotionCall().resolveDone()
+      await flushPromises()
+
+      expect(done).toHaveBeenCalled()
+    })
+  })
+
+  describe('travel direction', () => {
+    test('slideDownBlurIn travels from above (negative translateY) to rest', () => {
+      slideDownBlurIn(el(), vi.fn())
+
+      const { spec } = lastMotionCall()
+      expect(spec.from.translateY).toBeLessThan(0)
+      expect(spec.to.translateY).toBe(0)
+    })
+
+    test('slideUpBlurOut travels upward (negative translateY)', () => {
+      slideUpBlurOut(el(), vi.fn())
+
+      const { spec } = lastMotionCall()
+      expect(spec.to.translateY).toBeLessThan(0)
+    })
+
+    test('slideUpBlurIn travels from below (positive translateY) to rest', () => {
+      slideUpBlurIn(el(), vi.fn())
+
+      const { spec } = lastMotionCall()
+      expect(spec.from.translateY).toBeGreaterThan(0)
+      expect(spec.to.translateY).toBe(0)
+    })
+
+    test('slideDownBlurOut travels downward (positive translateY)', () => {
+      slideDownBlurOut(el(), vi.fn())
+
+      const { spec } = lastMotionCall()
+      expect(spec.to.translateY).toBeGreaterThan(0)
     })
   })
 })

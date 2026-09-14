@@ -5,8 +5,9 @@ import { createTestingPinia } from '@pinia/testing'
 import TaroPhoneIndex from '@/components/taro-phone/index.vue'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
 
+const { mockPointerCoarse } = vi.hoisted(() => ({ mockPointerCoarse: { value: false } }))
 vi.mock('@/composables/ui/media-query', () => ({
-  useMatchMedia: () => ({ value: false })
+  useMatchMedia: () => mockPointerCoarse
 }))
 
 const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
@@ -31,6 +32,9 @@ vi.mock('@/utils/animations/phone', () => ({
   slideUpBlurIn: vi.fn((_el, done) => done?.()),
   slideDownBlurOut: vi.fn((_el, done) => done?.())
 }))
+
+const { slideDownBlurIn, slideUpBlurOut, slideUpBlurIn, slideDownBlurOut } =
+  await import('@/utils/animations/phone')
 
 const AppLauncherStub = defineComponent({
   name: 'AppLauncher',
@@ -63,6 +67,7 @@ function findBaseCloseButton(wrapper) {
 let wrapper
 
 beforeEach(async () => {
+  mockPointerCoarse.value = false
   wrapper = makeWrapper()
   await wrapper.find('[data-testid="phone"]').trigger('click')
   await flushPromises()
@@ -142,5 +147,57 @@ describe('TaroPhoneIndex — togglePhone via esc shortcut', () => {
     escHandlerRef.current()
     await flushPromises()
     expect(findBaseCloseButton(wrapper).exists()).toBe(true)
+  })
+})
+
+describe('TaroPhoneIndex — coarse-pointer direction split', () => {
+  test('fine pointer opens with slideUpBlurIn and closes with slideDownBlurOut', async () => {
+    slideDownBlurIn.mockClear()
+    slideUpBlurOut.mockClear()
+    slideUpBlurIn.mockClear()
+    slideDownBlurOut.mockClear()
+    mockPointerCoarse.value = false
+
+    const local = makeWrapper()
+    await local.find('[data-testid="phone"]').trigger('click')
+    await flushPromises()
+
+    expect(slideUpBlurIn).toHaveBeenCalled()
+    expect(slideDownBlurIn).not.toHaveBeenCalled()
+
+    slideUpBlurOut.mockClear()
+    slideDownBlurOut.mockClear()
+    escHandlerRef.current()
+    await flushPromises()
+
+    expect(slideDownBlurOut).toHaveBeenCalled()
+    expect(slideUpBlurOut).not.toHaveBeenCalled()
+
+    local.unmount()
+  })
+
+  test('coarse pointer opens with slideDownBlurIn and closes with slideUpBlurOut', async () => {
+    slideDownBlurIn.mockClear()
+    slideUpBlurOut.mockClear()
+    slideUpBlurIn.mockClear()
+    slideDownBlurOut.mockClear()
+    mockPointerCoarse.value = true
+
+    const local = makeWrapper()
+    await local.find('[data-testid="phone"]').trigger('click')
+    await flushPromises()
+
+    expect(slideDownBlurIn).toHaveBeenCalled()
+    expect(slideUpBlurIn).not.toHaveBeenCalled()
+
+    slideUpBlurOut.mockClear()
+    slideDownBlurOut.mockClear()
+    escHandlerRef.current()
+    await flushPromises()
+
+    expect(slideUpBlurOut).toHaveBeenCalled()
+    expect(slideDownBlurOut).not.toHaveBeenCalled()
+
+    local.unmount()
   })
 })

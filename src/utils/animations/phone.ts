@@ -1,64 +1,68 @@
-import { gsap } from 'gsap'
+import { defineMotion } from '@/utils/motion/driver'
 
-const BLUR_AMOUNT = 12
 const TRANSLATE_AMOUNT = 100
 
+const slideDownIn = defineMotion({
+  from: { translateY: -TRANSLATE_AMOUNT, opacity: 0 },
+  to: { translateY: 0, opacity: 1 },
+  duration: 100,
+  ease: 'out-strong',
+  clearOnComplete: true
+})
+
+const slideUpIn = defineMotion({
+  from: { translateY: TRANSLATE_AMOUNT, opacity: 0 },
+  to: { translateY: 0, opacity: 1 },
+  duration: 100,
+  ease: 'out-strong',
+  clearOnComplete: true
+})
+
+const slideUpOut = defineMotion({
+  to: { translateY: -TRANSLATE_AMOUNT, opacity: 0 },
+  duration: 100,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
+
+const slideDownOut = defineMotion({
+  to: { translateY: TRANSLATE_AMOUNT, opacity: 0 },
+  duration: 100,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
+
+function blurIn(el: HTMLElement) {
+  el.dataset.phoneBlur = 'true'
+
+  // Don't collapse to one frame — it only paints the hold, leaving no state to transition away from.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.dataset.phoneBlur = 'false'
+    })
+  })
+}
+
+function blurOut(el: HTMLElement) {
+  el.dataset.phoneBlur = 'true'
+}
+
 export function slideDownBlurIn(el: Element, done: () => void) {
-  gsap.fromTo(
-    el,
-    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
-    { translateY: `-${TRANSLATE_AMOUNT}px`, opacity: 0, filter: `blur(${BLUR_AMOUNT}px)` },
-    {
-      translateY: 0,
-      opacity: 1,
-      filter: 'blur(0)',
-      duration: 0.1,
-      ease: 'expo.out',
-      // Clear the inline transform, or it permanently outranks the element's resting transform class.
-      clearProps: 'transform',
-      onComplete: done
-    }
-  )
+  blurIn(el as HTMLElement)
+  void slideDownIn(el as HTMLElement).done.then(done)
 }
 
 export function slideUpBlurOut(el: Element, done: () => void) {
-  gsap.to(el, {
-    translateY: `-${TRANSLATE_AMOUNT}px`,
-    opacity: 0,
-    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
-    filter: `blur(${BLUR_AMOUNT}px)`,
-    duration: 0.1,
-    ease: 'expo.out',
-    onComplete: done
-  })
+  blurOut(el as HTMLElement)
+  void slideUpOut(el as HTMLElement).done.then(done)
 }
 
 export function slideUpBlurIn(el: Element, done: () => void) {
-  gsap.fromTo(
-    el,
-    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
-    { translateY: `${TRANSLATE_AMOUNT}px`, opacity: 0, filter: `blur(${BLUR_AMOUNT}px)` },
-    {
-      translateY: 0,
-      opacity: 1,
-      filter: 'blur(0)',
-      duration: 0.1,
-      ease: 'expo.out',
-      // Clear the inline transform, or it permanently outranks the element's resting transform class.
-      clearProps: 'transform',
-      onComplete: done
-    }
-  )
+  blurIn(el as HTMLElement)
+  void slideUpIn(el as HTMLElement).done.then(done)
 }
 
 export function slideDownBlurOut(el: Element, done: () => void) {
-  gsap.to(el, {
-    translateY: `${TRANSLATE_AMOUNT}px`,
-    opacity: 0,
-    // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing phone enter/exit blur, not yet migrated off `filter`. Follow-on: TARO-408 (enter/exit compositor migration).
-    filter: `blur(${BLUR_AMOUNT}px)`,
-    duration: 0.1,
-    ease: 'expo.out',
-    onComplete: done
-  })
+  blurOut(el as HTMLElement)
+  void slideDownOut(el as HTMLElement).done.then(done)
 }

@@ -100,7 +100,20 @@ function onClosePhoneSm(el: Element, done: () => void) {
 </template>
 
 <style>
-[data-testid='phone-stage'] {
+:root[data-motion='full'] [data-phone-blur] {
   --phone-duration: 100ms;
+}
+
+/* Ramps to blurred on its own curve, not the fade's — sharing one would resolve
+   the blur in lockstep with opacity and hide it behind the motion. */
+:root[data-motion='full'] [data-phone-blur='true'] {
+  filter: blur(12px);
+
+  transition: filter var(--phone-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Clears the blur on its own curve too, decoupled from `true`'s and the fade's. */
+:root[data-motion='full'] [data-phone-blur='false'] {
+  transition: filter var(--phone-duration) cubic-bezier(0.4, 0, 1, 1);
 }
 </style>
