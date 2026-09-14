@@ -23,7 +23,11 @@ import ReaderSettings from '@/views/audio-reader/lesson/reader-settings.vue'
 import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
 
 // Gutter between the two pages of a wide spread, in px.
-const SPREAD_GAP = 48
+const SPREAD_GAP = 64
+// Editorial page margins — generous, bookish. The measure frame and the real
+// pages share this one string so the text box they lay out against is identical;
+// drift here mis-sizes pagination.
+const PAGE_PADDING = 'px-8 pt-10 pb-3 sm:px-12 lg:px-16'
 // A drag past this fraction of a page width (or a flick) turns the page.
 const TURN_RATIO = 0.22
 // Movement under this (px) on release counts as a tap, not a swipe.
@@ -346,6 +350,7 @@ watch(
         aria-hidden="true"
         data-testid="paged-reader__frame-sizer"
         class="pointer-events-none invisible absolute inset-y-0 left-0 flex flex-col"
+        :class="PAGE_PADDING"
         :style="{ width: `${page_width}px` }"
       >
         <div ref="frame_text" class="min-h-0 flex-1"></div>
@@ -383,6 +388,7 @@ watch(
           <paged-page
             v-for="(unit, i) in pagesForSpread(spread)"
             :key="i"
+            :class="PAGE_PADDING"
             :style="{ width: `${page_width}px` }"
             :slices="unit.slice"
             :player="player"
