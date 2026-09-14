@@ -30,6 +30,9 @@ const SPREAD_GAP = 40
 // The bottom margin a page keeps clear when it carries the fixed controls/gloss overlay below its text.
 const RESERVE_SPLIT = 'pb-[calc(var(--paged-controls-h)+var(--paged-split-h))]'
 const RESERVE_CONTROLS = 'pb-(--paged-controls-h)'
+// Generous, bookish vertical margins, shared by the pages and the measure frames.
+const PAGE_TOP = 'pt-16 sm:pt-20'
+const PAGE_BOTTOM = 'pb-16 sm:pb-20'
 // A drag past this fraction of a page width (or a flick) turns the page.
 const TURN_RATIO = 0.22
 // Movement under this (px) on release counts as a tap, not a swipe.
@@ -97,16 +100,16 @@ const page_width = computed(() =>
 // Horizontal margins. In a spread the gutter-facing edge carries none; the outer
 // edge keeps the generous one. Single pages are symmetric.
 const primary_x = computed(() =>
-  two_page.value ? 'pl-8 pr-0 sm:pl-12 lg:pl-16' : 'px-8 sm:px-12 lg:px-16'
+  two_page.value ? 'pl-10 pr-0 sm:pl-14 lg:pl-20' : 'px-10 sm:px-14 lg:px-20'
 )
 const reserve = computed(() => (split_mode.value ? RESERVE_SPLIT : RESERVE_CONTROLS))
 
 // The left/only page keeps clear space for the fixed overlay; the right page runs
 // full height. The measure frames mirror each so pagination sizes against the same
 // text boxes.
-const primary_page_class = computed(() => `pt-10 ${primary_x.value} ${reserve.value}`)
-const right_page_class = 'pt-10 pb-3 pl-0 pr-8 sm:pr-12 lg:pr-16'
-const frame_full_class = computed(() => `pt-10 pb-3 ${primary_x.value}`)
+const primary_page_class = computed(() => `${PAGE_TOP} ${primary_x.value} ${reserve.value}`)
+const right_page_class = `${PAGE_TOP} ${PAGE_BOTTOM} pl-0 pr-10 sm:pr-14 lg:pr-20`
+const frame_full_class = computed(() => `${PAGE_TOP} ${PAGE_BOTTOM} ${primary_x.value}`)
 
 const { pages, pageIndexOfWord } = usePagination(
   measure_host,
@@ -362,7 +365,7 @@ watch(
   <div
     data-testid="paged-reader"
     class="relative flex h-[calc(100dvh-var(--nav-height))] w-full flex-col overflow-hidden px-(--page-px) pb-4"
-    style="--paged-controls-h: 3.5rem; --paged-split-h: 7rem"
+    style="--paged-controls-h: 3.5rem; --paged-split-h: 7rem; --paged-feather: 2rem"
   >
     <div
       ref="viewport"
@@ -433,10 +436,12 @@ watch(
       <div
         data-no-swipe
         data-testid="paged-reader__dock"
-        class="absolute bottom-0 left-0 z-20 flex flex-col bg-surface"
+        class="absolute bottom-0 left-0 z-20 flex flex-col"
         :class="primary_x"
         :style="{ width: `${page_width}px` }"
       >
+        <div aria-hidden="true" class="paged-dock-surface absolute inset-0 -z-10 bg-surface" />
+
         <div
           v-if="split_mode"
           data-testid="paged-reader__split"
@@ -488,3 +493,20 @@ watch(
     </transition>
   </div>
 </template>
+
+<style scoped>
+/* Feather the dock's surface fill at its top and right edges so swiped text
+   dissolves into it instead of meeting a hard rectangle. Two gradient masks
+   (fade top, fade right) intersected so only the fill fades — the controls and
+   gloss sit above it, unmasked and fully opaque. */
+.paged-dock-surface {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent, #000 var(--paged-feather)),
+    linear-gradient(to left, transparent, #000 var(--paged-feather));
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 var(--paged-feather)),
+    linear-gradient(to left, transparent, #000 var(--paged-feather));
+  mask-composite: intersect;
+}
+</style>
