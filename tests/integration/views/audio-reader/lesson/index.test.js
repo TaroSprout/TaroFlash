@@ -92,8 +92,8 @@ vi.mock('@/composables/audio-reader/reader-progress', () => ({
   useReaderProgress: useReaderProgressMock
 }))
 
-vi.mock('@/composables/ui/animated-height', () => ({
-  useAnimatedHeight: vi.fn()
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: vi.fn()
 }))
 
 vi.mock('@/composables/ui/media-query', () => ({
@@ -238,7 +238,7 @@ const CrossfadeResizeStub = defineComponent({
 
 import LessonView from '@/views/audio-reader/lesson/index.vue'
 import AudioToolbar from '@/views/audio-reader/lesson/audio-toolbar.vue'
-import { useAnimatedHeight } from '@/composables/ui/animated-height'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 import { useMobileDock } from '@/components/mobile-dock/use-mobile-dock'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -578,12 +578,12 @@ describe('LessonView', () => {
   })
 
   describe('dock layout', () => {
-    test('useAnimatedHeight is wired during setup', () => {
+    test('useStageHeight is wired during setup', () => {
       vi.clearAllMocks()
       mountView()
 
       // Wired once each for the dock term, settings, and toolbar panes
-      expect(useAnimatedHeight).toHaveBeenCalledTimes(3)
+      expect(useStageHeight).toHaveBeenCalledTimes(3)
     })
   })
 
@@ -626,21 +626,23 @@ describe('LessonView', () => {
       expect(wrapper.find('[data-testid="lesson-view__resume-follow"]').exists()).toBe(false)
     })
 
-    test('swap-start/swap-end from the dock crossfade toggle the "not swapping" flag read by useAnimatedHeight', async () => {
+    test('swap-start/swap-end from the dock crossfade toggle the "not swapping" flag read by useStageHeight', async () => {
       vi.clearAllMocks()
       const wrapper = mountView()
       await nextTick()
 
-      // useAnimatedHeight(footer_swap_el, footer_term, () => !swapping, reclearSelection)
-      const not_swapping = useAnimatedHeight.mock.calls[0][2]
-      expect(not_swapping()).toBe(true)
+      // useStageHeight(footer_swap_el, footer_term, { active: () => !swapping, onSettled: reclearSelection, snap: true })
+      const options = useStageHeight.mock.calls[0][2]
+      expect(options).toMatchObject({ snap: true })
+      expect(options.onSettled).toBeInstanceOf(Function)
+      expect(options.active()).toBe(true)
 
       const crossfade = wrapper.findComponent({ name: 'CrossfadeResize' })
       await crossfade.vm.$emit('swap-start')
-      expect(not_swapping()).toBe(false)
+      expect(options.active()).toBe(false)
 
       await crossfade.vm.$emit('swap-end')
-      expect(not_swapping()).toBe(true)
+      expect(options.active()).toBe(true)
     })
 
     test('swap-start/swap-end claim and release the mobile dock height alongside the local swapping flag', async () => {

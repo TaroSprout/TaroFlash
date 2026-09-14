@@ -228,6 +228,51 @@ describe('useStageHeight', () => {
     })
   })
 
+  describe('snap mode', () => {
+    test('sets the box height to the target in one frame, without reserving a tween budget', () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { snap: true })
+
+      resize(box.value, content, 80)
+
+      expect(box.value.style.height).toBe('80px')
+      expect(mockMotion).not.toHaveBeenCalled()
+      expect(mockReserveHeightTween).not.toHaveBeenCalled()
+    })
+
+    test('clears the height on the next frame and fires onSettled once', async () => {
+      const onSettled = vi.fn()
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { snap: true, onSettled })
+
+      resize(box.value, content, 80)
+      expect(onSettled).not.toHaveBeenCalled()
+
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+
+      expect(box.value.style.height).toBe('')
+      expect(onSettled).toHaveBeenCalledOnce()
+    })
+
+    test('skips handBack and onSettled when a later resize supersedes the pending frame', async () => {
+      const onSettled = vi.fn()
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      withSetup(box, content, { snap: true, onSettled })
+
+      resize(box.value, content, 80)
+      resize(box.value, content, 120)
+
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      expect(onSettled).toHaveBeenCalledOnce()
+
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      expect(onSettled).toHaveBeenCalledOnce()
+    })
+  })
+
   describe('onSettled', () => {
     test('fires once after a tween settles', async () => {
       const onSettled = vi.fn()

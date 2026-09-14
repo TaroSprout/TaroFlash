@@ -16,6 +16,8 @@ type StageHeightOptions = {
   active?: () => boolean
   /** Called once each height change settles; not on a silently-recorded baseline. */
   onSettled?: () => void
+  /** Sets the height in one frame with no tween, skipping the reserve-tween budget. */
+  snap?: boolean
 }
 
 export type DriveHeightOptions = {
@@ -54,7 +56,7 @@ const AUTO_TIMING: TweenTiming = {
 export function useStageHeight(
   box: Ref<HTMLElement | null>,
   content: Ref<HTMLElement | null>,
-  { active = () => true, onSettled }: StageHeightOptions = {}
+  { active = () => true, onSettled, snap = false }: StageHeightOptions = {}
 ) {
   const claims = ref(0)
 
@@ -135,6 +137,18 @@ export function useStageHeight(
     })
   }
 
+  function snapTo(el: HTMLElement, target: number) {
+    const gen = generation
+
+    el.style.height = `${target}px`
+    requestAnimationFrame(() => {
+      if (gen !== generation) return
+
+      handBack()
+      onSettled?.()
+    })
+  }
+
   function changeHeight() {
     const el = box.value
     if (!el || claims.value > 0) return
@@ -145,6 +159,8 @@ export function useStageHeight(
     const from = rested
     const target = measureNatural(el, `${from}px`)
     if (target === from) return handBack()
+
+    if (snap) return snapTo(el, target)
 
     const reserved = reserveHeightTween()
     if (!reserved) {

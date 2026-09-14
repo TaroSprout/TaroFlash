@@ -8,7 +8,7 @@ import { useLessonReader } from '@/composables/audio-reader/lesson-reader'
 import { useReaderProgress } from '@/composables/audio-reader/reader-progress'
 import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
 import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
-import { useAnimatedHeight } from '@/composables/ui/animated-height'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { scrollClearOf } from '@/utils/animations/transcript-scroll'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
@@ -213,9 +213,13 @@ function closeReaderSettings() {
 // Track whichever pane is mounted: the term card swelling as its definition loads,
 // and the toolbar growing/shrinking between its mini and expanded modes. The
 // crossfade between the two panes owns the height while `swapping`.
-useAnimatedHeight(footer_swap_el, footer_term, () => !swapping, reclearSelection)
-useAnimatedHeight(footer_swap_el, footer_settings, () => !swapping)
-useAnimatedHeight(footer_swap_el, footer_toolbar, () => !swapping)
+useStageHeight(footer_swap_el, footer_term, {
+  active: () => !swapping,
+  onSettled: reclearSelection,
+  snap: true
+})
+useStageHeight(footer_swap_el, footer_settings, { active: () => !swapping, snap: true })
+useStageHeight(footer_swap_el, footer_toolbar, { active: () => !swapping, snap: true })
 
 watch(show_term_in_dock, (v) => {
   if (v) {
