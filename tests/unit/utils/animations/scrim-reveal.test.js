@@ -149,6 +149,42 @@ describe('popScrimReveal — driveHeight wiring', () => {
   })
 })
 
+// ── reveal target measured off content, not the clamped fields box ─
+// The outer `fields` box carries the max-md:h-0 collapse clamp; a flex column
+// clamped to height:0 shrinks its children, so `fields.scrollHeight`
+// under-reports. The unclamped `content` element is measured instead.
+
+describe('popScrimReveal — reveal target measured off content', () => {
+  test('drives to the content element scrollHeight when content is passed, not the fields scrollHeight', () => {
+    const fields = el(100)
+    const content = el(300)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
+
+    expect(driveHeight).toHaveBeenCalledWith(300, { duration: 0.32, ease: 'power2.inOut' })
+  })
+
+  test('regression guard: content keeps its natural height while fields is clamped to the max-md:h-0 shrink', () => {
+    const fields = el(0)
+    const content = el(350)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
+
+    expect(driveHeight).toHaveBeenCalledWith(350, { duration: 0.32, ease: 'power2.inOut' })
+  })
+
+  test('falls back to fields.scrollHeight when no content option is passed', () => {
+    const fields = el(240)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight })
+
+    expect(driveHeight).toHaveBeenCalledWith(240, { duration: 0.32, ease: 'power2.inOut' })
+  })
+})
+
 // ── settled cleanup, live vs superseded ───────────────────────────
 // A change's settled promise clears the inline height it left behind — but
 // only when it's still the live change for that element. A change superseded
@@ -161,6 +197,20 @@ describe('popScrimReveal — settled cleanup clears the live change only', () =>
     const { driveHeight, resolve } = deferredDriveHeight()
 
     popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight })
+    resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(fields.style.height).toBe('')
+  })
+
+  test('the live change clears fields.style.height once settled, even when a content option was passed', async () => {
+    const fields = el(0)
+    const content = el(350)
+    fields.style.height = '120px'
+    const { driveHeight, resolve } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
     resolve()
     await Promise.resolve()
     await Promise.resolve()
