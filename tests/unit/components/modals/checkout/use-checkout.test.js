@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/tes
 import { createApp } from 'vue'
 import { createI18n } from 'vue-i18n'
 import messages from '@intlify/unplugin-vue-i18n/messages'
-import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
@@ -53,9 +53,11 @@ import { useCheckout } from '@/components/billing/checkout-modal/use-checkout'
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
 let app = null
+let captured_veto = null
 
-function withSetup(composable, modalId = 'checkout-1') {
+function withSetup(composable) {
   let result
+  captured_veto = null
   app = createApp({
     setup() {
       result = composable()
@@ -64,7 +66,14 @@ function withSetup(composable, modalId = 'checkout-1') {
   })
   const i18n = createI18n({ locale: 'en-us', legacy: false, messages })
   app.use(i18n)
-  app.provide(MODAL_ID_KEY, modalId)
+  app.provide(OVERLAY_CONTEXT_KEY, {
+    close: vi.fn(),
+    dismiss: vi.fn(),
+    onCloseRequest: (fn) => {
+      captured_veto = fn
+    },
+    entered: Promise.resolve()
+  })
   app.mount(document.createElement('div'))
   return result
 }
@@ -85,7 +94,7 @@ beforeEach(() => {
   elementsState.is_submitting.value = false
   elementsState.is_ready.value = true
   elementsState.load_error.value = false
-  request_close_handlers.clear()
+  captured_veto = null
 })
 
 // ── status precedence ──────────────────────────────────────────────────────────
@@ -233,42 +242,32 @@ describe('useCheckout — mount/unmount chimes', () => {
   })
 })
 
-// ── useModalRequestClose wiring ──────────────────────────────────────────────────
+// ── overlay onCloseRequest veto wiring ────────────────────────────────────────
 
-describe('useCheckout — request-close handler', () => {
-  test('is a no-op while status is confirming', () => {
+describe('useCheckout — request-close veto', () => {
+  test('vetoes (blocks) the close request while status is confirming', () => {
     elementsState.is_submitting.value = true
-    const close = vi.fn()
-    withSetup(() => useCheckout(close), 'modal-a')
+    withSetup(() => useCheckout(vi.fn()))
 
-    request_close_handlers.get('modal-a')?.()
-
-    expect(close).not.toHaveBeenCalled()
+    expect(captured_veto()).toBe(false)
   })
 
-  test('calls close() with no payload in every other status', () => {
-    const close = vi.fn()
-    withSetup(() => useCheckout(close), 'modal-b')
+  test('allows the close request in every other status', () => {
+    withSetup(() => useCheckout(vi.fn()))
 
-    request_close_handlers.get('modal-b')?.()
-
-    expect(close).toHaveBeenCalledWith()
+    expect(captured_veto()).toBe(true)
   })
 
-  test('still allows manual close during the success status', async () => {
+  test('still allows the close request during the success status', async () => {
     vi.useFakeTimers()
     mockConfirm.mockResolvedValue({ status: 'success' })
     mockRefetch.mockResolvedValue({ data: { plan: 'paid' } })
-    const close = vi.fn()
-    const { onSubmit } = withSetup(() => useCheckout(close), 'modal-c')
+    const { onSubmit } = withSetup(() => useCheckout(vi.fn()))
 
     const submitPromise = onSubmit()
     await vi.runAllTimersAsync()
     await submitPromise
-    close.mockClear()
 
-    request_close_handlers.get('modal-c')?.()
-
-    expect(close).toHaveBeenCalledWith()
+    expect(captured_veto()).toBe(true)
   })
 })

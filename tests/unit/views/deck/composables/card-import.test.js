@@ -21,7 +21,9 @@ const { parseCardImportMock, parseCardTextMock, isImportableCardFileMock } = vi.
 }))
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: mockT }) }))
-vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock, closeAll: vi.fn() })
+}))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('@/views/deck/card-import/skipped-lines-dialog.vue', () => ({ default: {} }))

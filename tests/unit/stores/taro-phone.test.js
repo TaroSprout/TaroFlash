@@ -5,13 +5,13 @@ import { useTaroPhoneStore } from '@/stores/taro-phone'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Mimics OpenModalResult — a promise the caller controls from outside. */
+/** Mimics OpenOverlayResult<unknown> — a promise the caller controls from outside. */
 function makeDeferredResult() {
   let resolve
-  const response = new Promise((res) => {
+  const result = new Promise((res) => {
     resolve = res
   })
-  return { response, resolve }
+  return { result, resolve }
 }
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ describe('useTaroPhoneStore — openApp hide/reopen contract', () => {
     expect(store.is_open).toBe(false)
   })
 
-  test('reopens the phone once result.response resolves', async () => {
+  test('reopens the phone once result.result resolves', async () => {
     const store = useTaroPhoneStore()
     store.open()
     const deferred = makeDeferredResult()

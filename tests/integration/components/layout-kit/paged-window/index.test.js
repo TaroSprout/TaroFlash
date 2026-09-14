@@ -41,6 +41,7 @@ vi.mock('@/utils/animations/tab-slide', () => ({
 
 import PagedWindow from '@/components/layout-kit/paged-window/index.vue'
 import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 const pages = [
   { value: 'design', label: 'Design', icon: 'paint-brush' },
@@ -94,13 +95,18 @@ const AppWindowStub = defineComponent({
 })
 
 const mounted_wrappers = []
+const mockDismiss = vi.fn()
 
 function mountWindow(props = {}, slots = {}, options = {}) {
   const wrapper = mount(PagedWindow, {
     props: { pages, groups, ...props },
     slots,
     attachTo: document.body,
-    global: { stubs: { AppWindow: AppWindowStub, transition: false }, ...options.global },
+    global: {
+      stubs: { AppWindow: AppWindowStub, transition: false },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ dismiss: mockDismiss }) },
+      ...options.global
+    },
     ...options
   })
   mounted_wrappers.push(wrapper)
@@ -113,6 +119,7 @@ describe('PagedWindow', () => {
     setDesktop(true)
     setPhone(false)
     mockEmitSfx.mockClear()
+    mockDismiss.mockClear()
   })
 
   afterEach(() => {
@@ -287,6 +294,21 @@ describe('PagedWindow', () => {
     })
   })
 
+  // ── Frame close routes through dismiss ──────────────────────────
+  // Not in back mode (no active page, or desktop with a sidebar): the
+  // app-window frame's close affordance never closes directly — it routes
+  // through the overlay context's dismiss().
+
+  describe('frame close outside back mode', () => {
+    test('clicking the frame close affordance calls dismiss, not back', async () => {
+      setDesktop(false)
+      const wrapper = mountWindow({ active: null })
+      await wrapper.find('[data-testid="app-window-stub"]').trigger('click')
+      expect(mockDismiss).toHaveBeenCalled()
+      expect(wrapper.emitted('back')).toBeFalsy()
+    })
+  })
+
   // ── Back mode ─────────────────────────────────────────────────
 
   describe('back mode', () => {
@@ -298,19 +320,19 @@ describe('PagedWindow', () => {
       expect(stub.attributes('data-close-label')).toBe('Back')
     })
 
-    test('clicking close in back mode emits back, not close', async () => {
+    test('clicking close in back mode emits back, not dismiss', async () => {
       setDesktop(false)
       const wrapper = mountWindow({ active: 'design' })
       await wrapper.find('[data-testid="app-window-stub"]').trigger('click')
       expect(wrapper.emitted('back')).toBeTruthy()
-      expect(wrapper.emitted('close')).toBeFalsy()
+      expect(mockDismiss).not.toHaveBeenCalled()
     })
 
-    test('desktop sidebar close button always emits close, never back', async () => {
+    test('desktop sidebar close button routes through the overlay context dismiss, never back', async () => {
       setDesktop(true)
       const wrapper = mountWindow({ active: 'design' })
       await wrapper.find('[data-testid="paged-window__close-button"]').trigger('click')
-      expect(wrapper.emitted('close')).toBeTruthy()
+      expect(mockDismiss).toHaveBeenCalled()
       expect(wrapper.emitted('back')).toBeFalsy()
     })
 
@@ -336,7 +358,8 @@ describe('PagedWindow', () => {
       })
       const wrapper = mount(PagedWindow, {
         props: { pages, groups, active: 'design' },
-        slots: { default: () => h(InjectingPage) }
+        slots: { default: () => h(InjectingPage) },
+        global: { provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() } }
       })
       expect(wrapper.find('[data-testid="injected-layout"]').text()).toBe('desktop')
     })
