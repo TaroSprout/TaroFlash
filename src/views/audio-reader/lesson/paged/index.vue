@@ -26,10 +26,9 @@ import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button
 // no inner (gutter-facing) padding, so this is the whole separation between the
 // two text columns — not stacked on top of page padding.
 const SPREAD_GAP = 40
-// Vertical page margins, shared by both pages and the measure frame.
-const PAGE_PADDING_Y = 'pt-10 pb-3'
-// The right page of a spread: no gutter-facing (left) margin, generous outer (right) one.
-const PAGE_PADDING_RIGHT = 'pt-10 pb-3 pl-0 pr-8 sm:pr-12 lg:pr-16'
+// The bottom margin a page keeps clear when it carries the fixed controls/gloss overlay below its text.
+const RESERVE_SPLIT = 'pb-[calc(var(--paged-controls-h)+var(--paged-split-h))]'
+const RESERVE_CONTROLS = 'pb-(--paged-controls-h)'
 // A drag past this fraction of a page width (or a flick) turns the page.
 const TURN_RATIO = 0.22
 // Movement under this (px) on release counts as a tap, not a swipe.
@@ -58,11 +57,15 @@ const { display_mode } = useReaderPrefs()
 const viewport = useTemplateRef<HTMLElement>('viewport')
 const track = useTemplateRef<HTMLElement>('track')
 const measure_host = useTemplateRef<HTMLElement>('measure')
-const frame_text = useTemplateRef<HTMLElement>('frame_text')
+const frame_reduced = useTemplateRef<HTMLElement>('frame_reduced')
+const frame_full = useTemplateRef<HTMLElement>('frame_full')
 
 const viewport_w = ref(0)
 const viewport_h = ref(0)
-const available_height = ref(0)
+// The left/only page reserves room for the controls + gloss band below it; the
+// right page runs full height. Both measured from hidden frames.
+const reduced_height = ref(0)
+const full_height = ref(0)
 const measure_width = ref(0)
 
 const current_index = ref(0)
@@ -90,17 +93,24 @@ const page_width = computed(() =>
   two_page.value ? Math.max(0, (viewport_w.value - SPREAD_GAP) / 2) : viewport_w.value
 )
 
-// The left (or only) page's margins — the one the measure frame mirrors, so
-// pagination sizes against the same text box the pages render into.
-const primary_padding = computed(() =>
-  two_page.value
-    ? `${PAGE_PADDING_Y} pl-8 pr-0 sm:pl-12 lg:pl-16`
-    : `${PAGE_PADDING_Y} px-8 sm:px-12 lg:px-16`
+// Horizontal margins. In a spread the gutter-facing edge carries none; the outer
+// edge keeps the generous one. Single pages are symmetric.
+const primary_x = computed(() =>
+  two_page.value ? 'pl-8 pr-0 sm:pl-12 lg:pl-16' : 'px-8 sm:px-12 lg:px-16'
 )
+const reserve = computed(() => (split_mode.value ? RESERVE_SPLIT : RESERVE_CONTROLS))
+
+// The left/only page keeps clear space for the fixed overlay; the right page runs
+// full height. The measure frames mirror each so pagination sizes against the same
+// text boxes.
+const primary_page_class = computed(() => `pt-10 ${primary_x.value} ${reserve.value}`)
+const right_page_class = 'pt-10 pb-3 pl-0 pr-8 sm:pr-12 lg:pr-16'
+const frame_full_class = computed(() => `pt-10 pb-3 ${primary_x.value}`)
 
 const { pages, pageIndexOfWord } = usePagination(
   measure_host,
-  available_height,
+  (index) => pageHeightAt(index),
+  () => [reduced_height.value, full_height.value, two_page.value],
   () => paragraphs.value,
   () => gloss_mode.value
 )
@@ -144,8 +154,9 @@ onMounted(() => {
   viewport_ro = new ResizeObserver(measureViewport)
   if (viewport.value) viewport_ro.observe(viewport.value)
 
-  frame_ro = new ResizeObserver(measureFrame)
-  if (frame_text.value) frame_ro.observe(frame_text.value)
+  frame_ro = new ResizeObserver(measureFrames)
+  if (frame_reduced.value) frame_ro.observe(frame_reduced.value)
+  if (frame_full.value) frame_ro.observe(frame_full.value)
 
   recenter()
 })
@@ -162,10 +173,16 @@ function measureViewport() {
   if (!dragging) recenter()
 }
 
-function measureFrame() {
-  if (!frame_text.value) return
-  available_height.value = frame_text.value.clientHeight
-  measure_width.value = frame_text.value.clientWidth
+function measureFrames() {
+  if (frame_reduced.value) reduced_height.value = frame_reduced.value.clientHeight
+  if (!frame_full.value) return
+  full_height.value = frame_full.value.clientHeight
+  measure_width.value = frame_full.value.clientWidth
+}
+
+function pageHeightAt(index: number): number {
+  if (!two_page.value) return reduced_height.value
+  return index % 2 === 0 ? reduced_height.value : full_height.value
 }
 
 function recenter() {
@@ -356,16 +373,23 @@ watch(
       @pointercancel="onPointerCancel"
     >
       <div
-        ref="frame"
         aria-hidden="true"
-        data-testid="paged-reader__frame-sizer"
+        data-testid="paged-reader__frame-reduced"
         class="pointer-events-none invisible absolute inset-y-0 left-0 flex flex-col"
-        :class="primary_padding"
+        :class="primary_page_class"
         :style="{ width: `${page_width}px` }"
       >
-        <div ref="frame_text" class="min-h-0 flex-1"></div>
-        <div v-if="split_mode" class="h-(--paged-split-h) shrink-0 border-t border-line"></div>
-        <div class="h-(--paged-controls-h) shrink-0"></div>
+        <div ref="frame_reduced" class="min-h-0 flex-1"></div>
+      </div>
+
+      <div
+        aria-hidden="true"
+        data-testid="paged-reader__frame-full"
+        class="pointer-events-none invisible absolute inset-y-0 left-0 flex flex-col"
+        :class="frame_full_class"
+        :style="{ width: `${page_width}px` }"
+      >
+        <div ref="frame_full" class="min-h-0 flex-1"></div>
       </div>
 
       <div
@@ -398,15 +422,30 @@ watch(
           <paged-page
             v-for="(unit, i) in pagesForSpread(spread)"
             :key="i"
-            :class="unit.primary ? primary_padding : PAGE_PADDING_RIGHT"
+            :class="unit.primary ? primary_page_class : right_page_class"
             :style="{ width: `${page_width}px` }"
             :slices="unit.slice"
-            :player="player"
-            :is-primary="unit.primary"
-            :split-mode="split_mode"
-            :split-translation="active_translation"
-            @open-settings="settings_open = true"
           />
+        </div>
+      </div>
+
+      <div
+        data-no-swipe
+        data-testid="paged-reader__dock"
+        class="absolute bottom-0 left-0 z-20 flex flex-col"
+        :class="primary_x"
+        :style="{ width: `${page_width}px` }"
+      >
+        <div
+          v-if="split_mode"
+          data-testid="paged-reader__split"
+          class="flex h-(--paged-split-h) items-start overflow-hidden border-t border-line pt-3 text-lg text-ink-muted leading-[1.5]"
+        >
+          {{ active_translation }}
+        </div>
+
+        <div data-testid="paged-reader__controls" class="flex h-(--paged-controls-h) items-center">
+          <paged-controls :player="player" @open-settings="settings_open = true" />
         </div>
       </div>
     </div>

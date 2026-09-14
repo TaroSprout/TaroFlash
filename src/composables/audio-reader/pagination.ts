@@ -35,14 +35,20 @@ export type Page = PageSlice[]
  * `[data-paragraph-index]` block, and — in gloss mode — the paragraph's gloss as
  * `[data-gloss]`, so the tail atom's true height is measured.
  *
+ * Page heights aren't uniform: the left page of a spread reserves room for the
+ * controls and gloss band while the right page runs full height, so the budget is
+ * asked per page index rather than given once.
+ *
  * @param measure_host - the hidden full-transcript render, sized to page width.
- * @param available_height - the page text box height in px (0 until laid out).
+ * @param pageHeight - the text-box height in px for the page at that index (0 until laid out).
+ * @param revalidate - a value that changes whenever a height or the layout mode does, to re-run.
  * @param paragraphs - the shaped transcript paragraphs.
  * @param gloss_mode - whether inline glosses render (and so consume page height).
  */
 export function usePagination(
   measure_host: Readonly<ShallowRef<HTMLElement | null>>,
-  available_height: MaybeRefOrGetter<number>,
+  pageHeight: (index: number) => number,
+  revalidate: MaybeRefOrGetter<unknown>,
   paragraphs: MaybeRefOrGetter<SentenceWords[]>,
   gloss_mode: MaybeRefOrGetter<boolean>
 ): { pages: Ref<Page[]>; pageIndexOfWord: (word_index: number) => number } {
@@ -81,16 +87,20 @@ export function usePagination(
     return block?.querySelector<HTMLElement>('[data-gloss]') ?? null
   }
 
-  function computeCuts(word_els: HTMLElement[], base: number, avail: number): number[] {
+  function computeCuts(word_els: HTMLElement[], base: number): number[] {
     const cuts: number[] = []
     let page_top = 0
+    let page_index = 0
+    let budget = pageHeight(0)
 
     word_els.forEach((el, i) => {
       const top = el.getBoundingClientRect().top - base
       const bottom = atomBottom(el, base)
-      if (i > 0 && bottom - page_top > avail) {
+      if (i > 0 && bottom - page_top > budget) {
         cuts.push(i)
         page_top = top
+        page_index++
+        budget = pageHeight(page_index)
       }
     })
 
@@ -140,8 +150,7 @@ export function usePagination(
 
   function paginate() {
     const host = measure_host.value
-    const avail = toValue(available_height)
-    if (!host || avail <= 0) return
+    if (!host || pageHeight(0) <= 0) return
 
     const base = host.getBoundingClientRect().top
     const word_els = [...host.querySelectorAll<HTMLElement>('[data-word-index]')]
@@ -150,7 +159,7 @@ export function usePagination(
       return
     }
 
-    const cuts = computeCuts(word_els, base, avail)
+    const cuts = computeCuts(word_els, base)
     const para_map = paragraphMap()
     const gloss = toValue(gloss_mode)
 
@@ -174,12 +183,7 @@ export function usePagination(
 
   // Re-paginate on any layout-shifting input; flush 'post' so the measure host has re-rendered before we read rects.
   watch(
-    [
-      () => toValue(available_height),
-      () => toValue(paragraphs),
-      () => toValue(gloss_mode),
-      measure_host
-    ],
+    [() => toValue(revalidate), () => toValue(paragraphs), () => toValue(gloss_mode), measure_host],
     paginate,
     { flush: 'post' }
   )
