@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted gsap mock ──────────────────────────────────────────────────────────
 // Each `gsap.timeline()` call gets its own fake timeline so tests can inspect
@@ -198,8 +199,7 @@ describe('popScrimReveal — settled cleanup clears the live change only', () =>
 
     popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight })
     resolve()
-    await Promise.resolve()
-    await Promise.resolve()
+    await flushPromises()
 
     expect(fields.style.height).toBe('')
   })
@@ -212,8 +212,7 @@ describe('popScrimReveal — settled cleanup clears the live change only', () =>
 
     popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
     resolve()
-    await Promise.resolve()
-    await Promise.resolve()
+    await flushPromises()
 
     expect(fields.style.height).toBe('')
   })
@@ -228,14 +227,12 @@ describe('popScrimReveal — settled cleanup clears the live change only', () =>
 
     fields.style.height = '77px'
     first.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
+    await flushPromises()
 
     expect(fields.style.height).toBe('77px')
 
     second.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
+    await flushPromises()
 
     expect(fields.style.height).toBe('')
   })
