@@ -440,7 +440,14 @@ watch(
         :class="primary_x"
         :style="{ width: `${page_width}px` }"
       >
-        <div aria-hidden="true" class="paged-dock-surface absolute inset-0 -z-10 bg-surface" />
+        <div
+          aria-hidden="true"
+          class="paged-dock-surface absolute bottom-0 left-0 -z-10 bg-surface"
+          :style="{
+            top: 'calc(var(--paged-feather) * -1)',
+            right: 'calc(var(--paged-feather) * -1)'
+          }"
+        />
 
         <div
           v-if="split_mode"
