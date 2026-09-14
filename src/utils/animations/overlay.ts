@@ -1,18 +1,11 @@
-import { gsap } from 'gsap'
+import { defineMotion } from '@/utils/motion/driver'
+import type { MotionHandle } from '@/utils/motion/types'
 
 const ENTER_SETTLE_DELAY = 0.033
-const ENTER_DURATION = 0.2
-const POPUP_ENTER_DURATION = 0.1
-const LEAVE_DURATION = 0.2
 
-/**
- * Enter tweens settle on an identity transform, which gsap leaves inline as
- * `transform: translate(0px, 0px)`. Visually a no-op, but any non-none
- * transform makes the element a containing block for `position: fixed`
- * descendants — so a settled overlay captures the popovers inside it and its
- * own `overflow` clips them. Hand the resting state back to CSS instead.
- */
-const CLEAR_TRANSFORM = { clearProps: 'transform' } as const
+const DIALOG_RISE = '200px' // structural geometry, not a vocabulary travel token
+const SHEET_TRAVEL = '100%' // structural geometry, not a vocabulary travel token
+const POPUP_SCALE = 0.8 // structural geometry, not a vocabulary travel token
 
 type OverlayMode = 'dialog' | 'popup'
 
@@ -30,86 +23,71 @@ function isDowngraded(el: HTMLElement): boolean {
   return getComputedStyle(el).getPropertyValue('--overlay-downgraded').trim() === '1'
 }
 
-function slideUpFadeIn(el: HTMLElement, done: () => void) {
-  gsap.set(el, { translateY: '200px', opacity: 0 })
-  gsap.to(el, {
-    translateY: 0,
-    opacity: 1,
-    duration: ENTER_DURATION,
-    delay: ENTER_SETTLE_DELAY,
-    ease: 'expo.out',
-    ...CLEAR_TRANSFORM,
-    onComplete: done
-  })
-}
+const dialogEnterMotion = defineMotion({
+  from: { translateY: DIALOG_RISE, opacity: 0 },
+  to: { translateY: 0, opacity: 1 },
+  duration: 200,
+  ease: 'out-strong',
+  delay: ENTER_SETTLE_DELAY,
+  clearOnComplete: true
+})
 
-function slideDownFadeOut(el: HTMLElement, done: () => void) {
-  gsap.to(el, {
-    translateY: '200px',
-    opacity: 0,
-    duration: LEAVE_DURATION,
-    ease: 'expo.out',
-    onComplete: done
-  })
-}
+const dialogLeaveMotion = defineMotion({
+  to: { translateY: DIALOG_RISE, opacity: 0 },
+  duration: 200,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
 
-function slideUpFromEdge(el: HTMLElement, done: () => void) {
-  gsap.set(el, { translateY: '100%' })
-  gsap.to(el, {
-    translateY: 0,
-    duration: ENTER_DURATION,
-    delay: ENTER_SETTLE_DELAY,
-    ease: 'expo.out',
-    ...CLEAR_TRANSFORM,
-    onComplete: done
-  })
-}
+const sheetEnterMotion = defineMotion({
+  from: { translateY: SHEET_TRAVEL },
+  to: { translateY: 0 },
+  duration: 200,
+  ease: 'out-strong',
+  delay: ENTER_SETTLE_DELAY,
+  clearOnComplete: true
+})
 
-function slideDownToEdge(el: HTMLElement, done: () => void) {
-  gsap.to(el, { translateY: '100%', duration: LEAVE_DURATION, ease: 'expo.out', onComplete: done })
-}
+const sheetLeaveMotion = defineMotion({
+  to: { translateY: SHEET_TRAVEL },
+  duration: 200,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
 
-function springScaleIn(el: HTMLElement, done: () => void) {
-  gsap.set(el, { scale: 0.8, opacity: 0 })
-  gsap.to(el, {
-    scale: 1,
-    opacity: 1,
-    duration: POPUP_ENTER_DURATION,
-    delay: ENTER_SETTLE_DELAY,
-    ease: 'back.out(1.7)',
-    ...CLEAR_TRANSFORM,
-    onComplete: done
-  })
-}
+const popupEnterMotion = defineMotion({
+  from: { scale: POPUP_SCALE, opacity: 0 },
+  to: { scale: 1, opacity: 1 },
+  duration: 100,
+  ease: 'spring',
+  delay: ENTER_SETTLE_DELAY,
+  clearOnComplete: true
+})
 
-function scaleFadeOut(el: HTMLElement, done: () => void) {
-  gsap.to(el, {
-    scale: 0.8,
-    opacity: 0,
-    duration: LEAVE_DURATION,
-    ease: 'expo.out',
-    onComplete: done
-  })
-}
+const popupLeaveMotion = defineMotion({
+  to: { scale: POPUP_SCALE, opacity: 0 },
+  duration: 200,
+  ease: 'out-strong',
+  interrupt: 'snap-complete'
+})
 
 /**
  * Play an overlay's enter animation, dispatching on `data-overlay-mode`.
  * Dialogs slide-and-fade, or rise from the bottom edge when the downgrade
- * marker is set (sheet layout); popups spring-scale in. Resolves `done` from
- * gsap's `onComplete`.
+ * marker is set (sheet layout); popups spring-scale in.
  */
-export function playEnter(el: HTMLElement, done: () => void) {
-  if (readMode(el) === 'popup') return springScaleIn(el, done)
-  if (isDowngraded(el)) return slideUpFromEdge(el, done)
-  return slideUpFadeIn(el, done)
+export function playEnter(el: HTMLElement): MotionHandle {
+  if (readMode(el) === 'popup') return popupEnterMotion(el)
+  if (isDowngraded(el)) return sheetEnterMotion(el)
+  return dialogEnterMotion(el)
 }
 
 /**
  * Play an overlay's leave animation — the inverse of `playEnter`, dispatched
- * the same way. Resolves `done` from gsap's `onComplete`.
+ * the same way.
  */
-export function playLeave(el: HTMLElement, done: () => void) {
-  if (readMode(el) === 'popup') return scaleFadeOut(el, done)
-  if (isDowngraded(el)) return slideDownToEdge(el, done)
-  return slideDownFadeOut(el, done)
+export function playLeave(el: HTMLElement): MotionHandle {
+  if (readMode(el) === 'popup') return popupLeaveMotion(el)
+  if (isDowngraded(el)) return sheetLeaveMotion(el)
+  return dialogLeaveMotion(el)
 }
