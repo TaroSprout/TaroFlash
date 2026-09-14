@@ -28,7 +28,7 @@ function onClick() {
     <div
       v-if="store.entries.length > 0"
       data-testid="overlay-backdrop"
-      class="pointer-events-auto fixed inset-0 bg-black/10 backdrop-blur-4"
+      class="pointer-events-auto fixed inset-0 bg-black/10 tier-full:backdrop-blur-4"
       @click="onClick"
     ></div>
   </transition>
