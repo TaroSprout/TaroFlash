@@ -14,10 +14,13 @@ const {
   mockTabSlideLeave,
   mockSlideEnter,
   mockSlideLeave,
-  mockMotionTransition
+  mockMotionTransition,
+  mockUseStageHeight,
+  mockDriveHeight
 } = vi.hoisted(() => {
   const mockSlideEnter = vi.fn((_el, done) => done?.())
   const mockSlideLeave = vi.fn((_el, done) => done?.())
+  const mockDriveHeight = vi.fn()
   return {
     mockFadeEnter: vi.fn((_el, done) => done?.()),
     mockFadeLeave: vi.fn((_el, done) => done?.()),
@@ -25,7 +28,9 @@ const {
     mockTabSlideLeave: vi.fn(() => 'leave-motion'),
     mockSlideEnter,
     mockSlideLeave,
-    mockMotionTransition: vi.fn(() => ({ onEnter: mockSlideEnter, onLeave: mockSlideLeave }))
+    mockMotionTransition: vi.fn(() => ({ onEnter: mockSlideEnter, onLeave: mockSlideLeave })),
+    mockUseStageHeight: vi.fn(() => ({ driveHeight: mockDriveHeight })),
+    mockDriveHeight
   }
 })
 
@@ -41,6 +46,10 @@ vi.mock('@/utils/animations/tab-slide', () => ({
 
 vi.mock('@/utils/motion/transition', () => ({
   motionTransition: mockMotionTransition
+}))
+
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: mockUseStageHeight
 }))
 
 import { usePageTransition } from '@/components/layout-kit/paged-window/page-transition'
@@ -62,6 +71,7 @@ function makeLayout(mode = 'tablet') {
 beforeEach(() => {
   vi.clearAllMocks()
   mockMotionTransition.mockReturnValue({ onEnter: mockSlideEnter, onLeave: mockSlideLeave })
+  mockUseStageHeight.mockReturnValue({ driveHeight: mockDriveHeight })
 })
 
 // ── nav_direction ─────────────────────────────────────────────────────────────
@@ -89,9 +99,30 @@ describe('usePageTransition — shared slide composition', () => {
     const outlet = ref(document.createElement('div'))
     const { nav_direction } = usePageTransition(layout_mode, outlet)
 
-    expect(mockTabSlideEnter).toHaveBeenCalledWith(nav_direction, outlet)
+    expect(mockTabSlideEnter).toHaveBeenCalledWith(nav_direction, outlet, mockDriveHeight)
     expect(mockTabSlideLeave).toHaveBeenCalledWith(nav_direction, outlet)
     expect(mockMotionTransition).toHaveBeenCalledWith('enter-motion', 'leave-motion')
+  })
+})
+
+describe('usePageTransition — stage height wiring', () => {
+  test('wires driveHeight from useStageHeight, called with the outlet and a null content ref', () => {
+    const { layout_mode } = makeLayout('phone')
+    const outlet = ref(document.createElement('div'))
+    usePageTransition(layout_mode, outlet)
+
+    expect(mockUseStageHeight).toHaveBeenCalledOnce()
+    const [box_arg, content_arg] = mockUseStageHeight.mock.calls[0]
+    expect(box_arg).toBe(outlet)
+    expect(content_arg.value).toBeNull()
+  })
+
+  test('the injected driveHeight passed to tabSlideEnter is the one useStageHeight returned', () => {
+    const { layout_mode } = makeLayout('phone')
+    usePageTransition(layout_mode, ref(document.createElement('div')))
+
+    const [, , driveHeight] = mockTabSlideEnter.mock.calls[0]
+    expect(driveHeight).toBe(mockDriveHeight)
   })
 })
 

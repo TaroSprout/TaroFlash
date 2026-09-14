@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 
 const { makeTimeline, timelines, mockSet } = vi.hoisted(() => {
   const timelines = []
@@ -63,6 +64,15 @@ function makeWrapper(offsetHeight = 400) {
 
 const noWrapper = () => ref(undefined)
 
+function makeDriveHeight() {
+  let resolveSettled
+  const settled = new Promise((resolve) => {
+    resolveSettled = resolve
+  })
+  const driveHeight = vi.fn(() => ({ settled, cancel: vi.fn() }))
+  return { driveHeight, resolveSettled }
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   timelines.length = 0
@@ -71,7 +81,8 @@ beforeEach(() => {
 
 describe('tabSlideEnter — forward', () => {
   test('slides in on the x-axis while fading up', () => {
-    tabSlideEnter(ref('forward'), noWrapper())(makeEl())
+    const { driveHeight } = makeDriveHeight()
+    tabSlideEnter(ref('forward'), noWrapper(), driveHeight)(makeEl())
 
     const [, from, to] = timelines[0].state.calls.fromTo[0]
     expect(from.x).toBeGreaterThan(0)
@@ -82,7 +93,8 @@ describe('tabSlideEnter — forward', () => {
 
 describe('tabSlideEnter — back', () => {
   test('fades in without any x slide', () => {
-    tabSlideEnter(ref('back'), noWrapper())(makeEl())
+    const { driveHeight } = makeDriveHeight()
+    tabSlideEnter(ref('back'), noWrapper(), driveHeight)(makeEl())
 
     const [, from, to] = timelines[0].state.calls.fromTo[0]
     expect(from).toEqual({ opacity: 0 })
@@ -120,17 +132,27 @@ describe('tab-slide — wrapper height', () => {
     expect(wrapper.style.height).toBe('350px')
   })
 
-  test('animates the wrapper to the entering page scrollHeight then clears it', () => {
+  test('drives the wrapper height via the injected driveHeight with the entering scrollHeight and resolved timing', () => {
     const wrapper = makeWrapper(400)
     wrapper.style.height = '400px'
+    const { driveHeight } = makeDriveHeight()
 
-    tabSlideEnter(ref('forward'), ref(wrapper))(makeEl(220))
+    tabSlideEnter(ref('forward'), ref(wrapper), driveHeight)(makeEl(220))
 
-    const wrapperCall = timelines[0].state.calls.to.find(([target]) => target === wrapper)
-    expect(wrapperCall).toBeTruthy()
-    expect(wrapperCall[1]).toMatchObject({ height: 220 })
+    expect(driveHeight).toHaveBeenCalledWith(220, { duration: 0.2, ease: 'power2.out' })
+  })
 
-    wrapperCall[1].onComplete()
+  test('clears the wrapper inline height once the driven change settles', async () => {
+    const wrapper = makeWrapper(400)
+    wrapper.style.height = '400px'
+    const { driveHeight, resolveSettled } = makeDriveHeight()
+
+    tabSlideEnter(ref('forward'), ref(wrapper), driveHeight)(makeEl(220))
+    expect(wrapper.style.height).toBe('400px')
+
+    resolveSettled()
+    await flushPromises()
+
     expect(wrapper.style.height).toBe('')
   })
 })

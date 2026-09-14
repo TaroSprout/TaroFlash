@@ -1,13 +1,18 @@
 import { motion } from '@/utils/motion/driver'
 import type { Ref } from 'vue'
 import type { Motion } from '@/utils/motion/types'
+import type {
+  DriveHeightOptions,
+  DrivenHeightChange
+} from '@/components/layout-kit/stage/use-stage-height'
 
 const ENTER_DURATION = 200
 const LEAVE_DURATION = 150
 const SLIDE = 48
 
 type Direction = Ref<'forward' | 'back'>
-type Wrapper = Ref<HTMLElement | undefined>
+type Wrapper = Ref<HTMLElement | null>
+type DriveHeight = (target: number, options: DriveHeightOptions) => DrivenHeightChange
 
 /**
  * Slides a tab in or out, the way drilling into a menu and backing out of it
@@ -36,24 +41,22 @@ export function tabSlideLeave(direction: Direction, wrapper: Wrapper): Motion {
   })
 }
 
-export function tabSlideEnter(direction: Direction, wrapper: Wrapper): Motion {
+export function tabSlideEnter(
+  direction: Direction,
+  wrapper: Wrapper,
+  driveHeight: DriveHeight
+): Motion {
   return motion(
     (el, ctx) => {
       const box = wrapper.value
       if (box) {
-        ctx.tl.to(
-          box,
-          {
-            // oxlint-disable-next-line compositor-only/no-layout-tween -- pre-existing mobile drill-down panel resize, not yet routed through the stage primitive. Follow-on: migrate onto useStageHeight (post-TARO-412).
-            height: el.scrollHeight,
-            duration: ctx.duration(ENTER_DURATION),
-            ease: ctx.ease('out'),
-            onComplete: () => {
-              box.style.height = ''
-            }
-          },
-          0
-        )
+        const { settled } = driveHeight(el.scrollHeight, {
+          duration: ctx.duration(ENTER_DURATION),
+          ease: ctx.ease('out')
+        })
+        void settled.then(() => {
+          box.style.height = ''
+        })
       }
 
       if (direction.value === 'forward') {

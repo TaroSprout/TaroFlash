@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue'
+import { computed, provide, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppWindow, { type AppWindowProps } from '@/components/layout-kit/app-window/index.vue'
 import DirectoryPage, { type DirectoryPageGroup } from './directory-page.vue'
@@ -83,7 +83,7 @@ const active = defineModel<string | null>('active', { default: null })
 const { layout_mode, window_px } = useWindowLayout({ phone_query, desktop_query })
 provide(windowLayoutKey, layout_mode)
 
-const outlet = ref<HTMLElement>()
+const outlet = useTemplateRef<HTMLElement>('outlet')
 const { nav_direction, onPageEnter, onPageLeave } = usePageTransition(layout_mode, outlet, {
   between: () => between?.()
 })
