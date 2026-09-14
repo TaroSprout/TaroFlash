@@ -21,6 +21,13 @@ await new Promise((resolve) => {
 
 If a duration is referenced in more than one place, extract it as a named constant rather than repeating the magic number.
 
+## Co-animated properties
+
+A property whose visibility is gated by a second, concurrently-animated property (blur gated by
+opacity, a shadow gated by scale, …) gets an easing curve that diverges from that second property's —
+sharing a curve makes the gated property peak exactly when the gate suppresses it, so it renders
+without ever being seen.
+
 ## Transform cleanup
 
 A GSAP tween writes into the element's whole inline `transform` style, not just the property you

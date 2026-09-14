@@ -142,7 +142,14 @@ Either way, no walls of text:
 SELECT "userDefined:ID" AS id, "Name", "Type", "Priority", "Epic", "Assignee", url
 FROM "collection://3630953c-224c-8065-8864-000bb9fe7bad"
 WHERE "Status" = 'Backlog'
-ORDER BY "Priority" ASC, "userDefined:ID" ASC
+ORDER BY CASE "Priority"                            -- rank, NOT the raw glyph string
+            WHEN '⇞P0' THEN 0
+            WHEN '↑P1' THEN 1
+            WHEN '↓P2' THEN 2
+            WHEN '⇟P3' THEN 3
+            ELSE 4                                   -- unset Priority sorts last → propose one
+          END ASC,
+          "userDefined:ID" ASC
 ```
 
 Take the given `<ID>`, else the top row. Fetch its page body with `notion-fetch` — the query returns

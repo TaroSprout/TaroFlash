@@ -187,17 +187,31 @@ for the test pass to finish, CI to go green, or the PR to open before doing this
 
 ### 4b. TEST PASS — one dispatch per branch, sequential
 
-Builders never touch tests, and the orchestrator never mines a conversation it wasn't part of. Once a
-branch's build is in, dispatch a `general-purpose` agent per branch, with `isolation: worktree`
-([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation] — without it
-the dispatch is hard-blocked from writing inside the builder's worktree at all), to run the
-[`update-tests` skill](../../skills/update-tests/SKILL.md) inside that builder's worktree, passing
-the builder's own
-"what a test should cover" lines as `$ARGUMENTS` — `update-tests` already treats that argument as
-mandatory obligations and needs no conversation to mine. The dispatched agent owns `update-tests`'s
-own review-and-commit step end to end (it has the worktree open; the orchestrator never does) and
-reports back pass/fail. **Sequential, not parallel** — several coverage runs at once swamp the
-machine.
+Builders never touch tests, and the orchestrator never mines a conversation it wasn't part of.
+`isolation: worktree` sandboxes a dispatch to a worktree **of its own** — it cannot `cd`, `git`, or
+commit inside a worktree handed to it by path, including the builder's, even though it can read and
+write files there. Running `update-tests` "inside the builder's worktree" is therefore not something
+a worktree-isolated dispatch can do; free the branch instead and let the dispatch claim it in its own
+sandbox:
+
+1. Once a branch's build is in and merged forward (§ 4a), remove the builder's worktree right here —
+   `git status --short` inside it first, per [`git-workflow`](../../rules/git-workflow.md)
+   (→[K:worktree-removal-survives-failure]) — which frees the branch ref for checkout elsewhere. This
+   preempts § 5f's teardown for this ticket; § 5f skips a worktree that's already gone.
+2. Dispatch a `general-purpose` agent, `isolation: worktree`
+   ([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation]), instructed
+   to `git checkout <branch>` inside its own fresh worktree (now free to take it), then run the
+   [`update-tests` skill](../../skills/update-tests/SKILL.md) there, passing the builder's own "what a
+   test should cover" lines as `$ARGUMENTS` — `update-tests` already treats that argument as mandatory
+   obligations and needs no conversation to mine. The dispatched agent owns `update-tests`'s own
+   review-and-commit step end to end on that checkout and reports back pass/fail.
+3. On report-back, merge that branch forward into the integration branch on the home tree again —
+   the same merge-forward half of the dispatch-and-merge-forward mechanic § 4a and § 4d use.
+
+**Sequential, not parallel** — several coverage runs at once swamp the machine. A wave-N builder
+basing its own worktree on a blocker branch (§ 4) is unaffected by freeing the blocker's worktree
+after its test pass — the wave-N worktree already merged the blocker's commits into its own base
+before the blocker's worktree was ever removed.
 
 The full `vp test` suite is never run locally; **CI is the gate**, watched in step 5.
 
@@ -320,13 +334,14 @@ builder's worktree first (`git status --short` inside it, per
 [`git-workflow`](../../rules/git-workflow.md); anything uncommitted stops the removal and gets
 reported, never forced away with `--force`), then `git worktree remove <path>` from the home tree,
 once you've confirmed via `pwd`/`git worktree list` you're not removing the one you're standing in.
-The branch lives on origin and its local ref survives removal. Only tear down **successful** tickets
-here; a stuck one keeps its worktree (§ Stuck / blocked). The home tree itself was already updated at
-step 4a, right after the build landed — teardown just reclaims the worktree, it doesn't gate what the
-user sees. **This isn't gated on handoff succeeding** — removal is an obligation of how the run ends,
-not a line that only runs once every earlier step succeeds, so a run that fails or is interrupted
-before handoff still checks and removes every worktree it made (a stuck ticket's excepted, per
-above) before it stops.
+**Skip this for a ticket whose builder worktree § 4b already removed** to free the branch for the
+test-pass dispatch — there's nothing left here to reclaim. The branch lives on origin and its local
+ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its worktree
+(§ Stuck / blocked). The home tree itself was already updated at step 4a, right after the build
+landed — teardown just reclaims the worktree, it doesn't gate what the user sees. **This isn't gated
+on handoff succeeding** — removal is an obligation of how the run ends, not a line that only runs
+once every earlier step succeeds, so a run that fails or is interrupted before handoff still checks
+and removes every worktree it made (a stuck ticket's excepted, per above) before it stops.
 
 **Copy never blocks the build.** A PR whose only red check is the knowledge check's `COPY-TBD` marker
 still opens, still counts as this run's output — it is not stuck, and the run does not wait on it.
