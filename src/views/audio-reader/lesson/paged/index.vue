@@ -433,7 +433,7 @@ watch(
       <div
         data-no-swipe
         data-testid="paged-reader__dock"
-        class="absolute bottom-0 left-0 z-20 flex flex-col"
+        class="absolute bottom-0 left-0 z-20 flex flex-col bg-surface"
         :class="primary_x"
         :style="{ width: `${page_width}px` }"
       >
