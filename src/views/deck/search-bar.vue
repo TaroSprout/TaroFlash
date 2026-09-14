@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui-kit/button.vue'
-import { computed, inject, ref, useTemplateRef } from 'vue'
+import { computed, inject, ref, shallowRef, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { debounce } from '@/utils/debounce'
 import { emitSfx } from '@/sfx/bus'
 import { cardSearchKey } from '@/views/deck/composables'
 import { expandSearchInput, collapseSearchInput } from '@/utils/animations/deck-view/search-field'
 import { usePinScrollWhileTyping } from '@/composables/ui/pin-scroll-while-typing'
+import { useStageHeight } from '@/components/layout-kit/stage/use-stage-height'
 
 type SearchBarProps = {
   size?: 'sm' | 'base' | 'lg' | 'xl'
@@ -31,8 +32,11 @@ const { is_searching, is_loading, query, open, close } = inject(cardSearchKey)!
 
 const container = useTemplateRef<HTMLElement>('container')
 const input = useTemplateRef<HTMLInputElement>('input')
+const field = shallowRef<HTMLElement | null>(null)
 
 usePinScrollWhileTyping(container)
+
+const { driveWidth } = useStageHeight(field, input, { active: () => false }) // only driveWidth's manual calls resize this box
 
 const draft = ref('')
 
@@ -95,12 +99,14 @@ function fillTarget(): number {
 }
 
 function onEnter(el: Element, done: () => void) {
-  expandSearchInput(el as HTMLElement, fill ? fillTarget() : expandedWidth, done)
+  field.value = el as HTMLElement
+  expandSearchInput(el as HTMLElement, fill ? fillTarget() : expandedWidth, driveWidth, done)
   el.querySelector('input')?.focus()
 }
 
 function onLeave(el: Element, done: () => void) {
-  collapseSearchInput(el as HTMLElement, done)
+  field.value = el as HTMLElement
+  collapseSearchInput(el as HTMLElement, driveWidth, done)
 }
 </script>
 
@@ -174,6 +180,7 @@ function onLeave(el: Element, done: () => void) {
 .search-bar__field {
   display: flex;
   align-items: center;
+  width: 0;
   min-width: 0;
   overflow: hidden;
 }

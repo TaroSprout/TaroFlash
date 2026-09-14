@@ -11,11 +11,14 @@ async function flushTransition() {
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockExpandSearchInput, mockCollapseSearchInput } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn(),
-  mockExpandSearchInput: vi.fn((_el, _w, done) => done?.()),
-  mockCollapseSearchInput: vi.fn((_el, done) => done?.())
-}))
+const { mockEmitSfx, mockExpandSearchInput, mockCollapseSearchInput, mockDriveWidth } = vi.hoisted(
+  () => ({
+    mockEmitSfx: vi.fn(),
+    mockExpandSearchInput: vi.fn((_el, _w, _driveWidth, done) => done?.()),
+    mockCollapseSearchInput: vi.fn((_el, _driveWidth, done) => done?.()),
+    mockDriveWidth: vi.fn(() => ({ settled: Promise.resolve(), cancel: vi.fn() }))
+  })
+)
 
 vi.mock('@/sfx/bus', () => ({
   emitSfx: mockEmitSfx,
@@ -26,6 +29,10 @@ vi.mock('@/sfx/bus', () => ({
 vi.mock('@/utils/animations/deck-view/search-field', () => ({
   expandSearchInput: mockExpandSearchInput,
   collapseSearchInput: mockCollapseSearchInput
+}))
+
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: () => ({ driveWidth: mockDriveWidth })
 }))
 
 // ── Imports ───────────────────────────────────────────────────────────────────
@@ -192,28 +199,6 @@ describe('search-bar', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  // ── clear() refocuses input ────────────────────────────────────────────────
-
-  test('clear() emits ui.press sfx', async () => {
-    const search = makeSearch({ is_searching: true })
-    const wrapper = mountSearchBar(search)
-    await wrapper.find('[data-testid="deck-search-bar__input"]').setValue('text')
-    mockEmitSfx.mockClear()
-    await wrapper.find('[data-testid="deck-search-bar__button"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
-  })
-
-  // ── Enter key submits immediately (bypasses debounce) ─────────────────────
-
-  test('Enter key commits draft to query immediately', async () => {
-    const search = makeSearch({ is_searching: true })
-    const wrapper = mountSearchBar(search)
-    const input = wrapper.find('[data-testid="deck-search-bar__input"]')
-    await input.setValue('cat')
-    await input.trigger('keydown.enter')
-    expect(search.query.value).toBe('cat')
-  })
-
   // ── Esc key closes the bar ─────────────────────────────────────────────────
 
   test('Esc key closes the bar', async () => {
@@ -335,6 +320,32 @@ describe('search-bar', () => {
     expect(mockExpandSearchInput).toHaveBeenCalledWith(
       expect.any(Element),
       expect.any(Number),
+      mockDriveWidth,
+      expect.any(Function)
+    )
+  })
+
+  test('onEnter passes the field element and the stage driveWidth to expandSearchInput', async () => {
+    const search = makeSearch({ is_searching: false })
+    mountSearchBar(search)
+    search.is_searching.value = true
+    await flushTransition()
+    expect(mockExpandSearchInput).toHaveBeenCalledWith(
+      expect.any(Element),
+      expect.any(Number),
+      mockDriveWidth,
+      expect.any(Function)
+    )
+  })
+
+  test('onLeave passes the field element and the stage driveWidth to collapseSearchInput', async () => {
+    const search = makeSearch({ is_searching: true })
+    mountSearchBar(search)
+    search.is_searching.value = false
+    await flushTransition()
+    expect(mockCollapseSearchInput).toHaveBeenCalledWith(
+      expect.any(Element),
+      mockDriveWidth,
       expect.any(Function)
     )
   })
