@@ -27,9 +27,9 @@ const { inset = '0px', surface_class = '', escape_anchor = 'top' } = defineProps
 const box = useTemplateRef<HTMLElement>('box')
 const content = useTemplateRef<HTMLElement>('content')
 
-const { claimHeight } = useStageHeight(box, content)
+const { claimHeight, driveHeight } = useStageHeight(box, content)
 
-defineExpose({ claimHeight })
+defineExpose({ claimHeight, driveHeight })
 </script>
 
 <template>

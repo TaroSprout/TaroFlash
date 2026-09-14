@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { motion } from '@/utils/motion/driver'
-import type { MotionHandle } from '@/utils/motion/types'
+import type { MotionContext, MotionHandle } from '@/utils/motion/types'
 import { reserveHeightTween } from './height-budget'
 
 const HEIGHT_DURATION = 200
@@ -16,6 +16,26 @@ type StageHeightOptions = {
   active?: () => boolean
   /** Called once each height change settles; not on a silently-recorded baseline. */
   onSettled?: () => void
+}
+
+export type DriveHeightOptions = {
+  duration: number
+  ease: string
+}
+
+export type DrivenHeightChange = {
+  settled: Promise<void>
+  cancel: () => void
+}
+
+type TweenTiming = {
+  duration: (ctx: MotionContext) => number
+  ease: (ctx: MotionContext) => string
+}
+
+const AUTO_TIMING: TweenTiming = {
+  duration: (ctx) => ctx.duration(HEIGHT_DURATION),
+  ease: (ctx) => ctx.ease('out')
 }
 
 /**
@@ -45,6 +65,7 @@ export function useStageHeight(
   let generation = 0
   let handle: MotionHandle | null = null
   let release: () => void = NOOP
+  let drivenSettle: (() => void) | null = null
 
   function handBack() {
     const el = box.value
@@ -55,12 +76,19 @@ export function useStageHeight(
     rested = el.offsetHeight
   }
 
+  function settleDriven() {
+    drivenSettle?.()
+    drivenSettle = null
+  }
+
   function stopCurrent() {
     release()
     release = NOOP
 
     handle?.cancel()
     handle = null
+
+    settleDriven()
 
     generation++
   }
@@ -77,7 +105,13 @@ export function useStageHeight(
     return natural
   }
 
-  function tweenTo(el: HTMLElement, from: number, target: number) {
+  function runHeightTween(
+    el: HTMLElement,
+    from: number,
+    target: number,
+    timing: TweenTiming,
+    done: () => void
+  ) {
     const gen = generation
 
     el.style.overflow = 'hidden'
@@ -86,7 +120,7 @@ export function useStageHeight(
         ctx.tl.fromTo(
           node,
           { height: from },
-          { height: target, duration: ctx.duration(HEIGHT_DURATION), ease: ctx.ease('out') }
+          { height: target, duration: timing.duration(ctx), ease: timing.ease(ctx) }
         )
       },
       { promote: false }
@@ -96,9 +130,8 @@ export function useStageHeight(
       release()
       if (gen !== generation) return
 
-      handBack()
       handle = null
-      onSettled?.()
+      done()
     })
   }
 
@@ -122,7 +155,53 @@ export function useStageHeight(
     }
 
     release = reserved
-    tweenTo(el, from, target)
+    runHeightTween(el, from, target, AUTO_TIMING, () => {
+      handBack()
+      onSettled?.()
+    })
+  }
+
+  function driveHeight(target: number, { duration, ease }: DriveHeightOptions): DrivenHeightChange {
+    const el = box.value
+    if (!el) return { settled: Promise.resolve(), cancel: NOOP }
+
+    stopCurrent()
+
+    const settled = new Promise<void>((resolve) => {
+      drivenSettle = resolve
+    })
+
+    const from = el.offsetHeight
+    if (from === target) {
+      settleDriven()
+      return { settled, cancel: NOOP }
+    }
+
+    const reserved = reserveHeightTween()
+    if (!reserved) {
+      el.style.height = `${target}px`
+      rested = target
+      settleDriven()
+      return { settled, cancel: NOOP }
+    }
+
+    release = reserved
+    const gen = generation
+    const timing: TweenTiming = { duration: () => duration, ease: () => ease }
+
+    runHeightTween(el, from, target, timing, () => {
+      el.style.removeProperty('overflow')
+      rested = el.offsetHeight
+      settleDriven()
+    })
+
+    return {
+      settled,
+      cancel: () => {
+        if (gen !== generation) return
+        stopCurrent()
+      }
+    }
   }
 
   function onResize() {
@@ -180,5 +259,5 @@ export function useStageHeight(
     handBack()
   })
 
-  return { claimHeight }
+  return { claimHeight, driveHeight }
 }

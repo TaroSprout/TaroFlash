@@ -294,4 +294,137 @@ describe('useStageHeight', () => {
       expect(onSettled).toHaveBeenCalledOnce()
     })
   })
+
+  describe('driveHeight', () => {
+    test('tweens from the current height to the target with the caller-supplied duration and ease', () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      driveHeight(120, { duration: 0.42, ease: 'power2.out' })
+
+      expect(motionHandles[0].fromTo).toHaveBeenCalledWith(
+        box.value,
+        { height: 40 },
+        expect.objectContaining({ height: 120, duration: 0.42, ease: 'power2.out' })
+      )
+    })
+
+    test('a second driveHeight cancels the first handle and starts exactly one new tween', () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      driveHeight(120, { duration: 0.3, ease: 'linear' })
+      const first_handle = motionHandles[0]
+
+      driveHeight(200, { duration: 0.3, ease: 'linear' })
+
+      expect(first_handle.cancel).toHaveBeenCalledOnce()
+      expect(mockMotion).toHaveBeenCalledTimes(2)
+    })
+
+    test('cancel() cancels the in-flight handle without starting a new tween', () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { cancel } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+      const handle = motionHandles[0]
+
+      cancel()
+
+      expect(handle.cancel).toHaveBeenCalledOnce()
+      expect(mockMotion).toHaveBeenCalledTimes(1)
+    })
+
+    test('settled resolves once the tween completes', async () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { settled } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+      const handle = motionHandles[0]
+
+      handle.resolveDone()
+      await settled
+
+      expect(box.value.style.overflow).toBe('')
+    })
+
+    test('settled resolves for a change superseded by a newer driveHeight', async () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { settled: first_settled } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+      driveHeight(200, { duration: 0.3, ease: 'linear' })
+
+      await first_settled
+    })
+
+    test('settled resolves when cancel() is called', async () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { settled, cancel } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+      cancel()
+
+      await settled
+    })
+
+    test('settled resolves when the component unmounts mid-tween', async () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { settled } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+      app.unmount()
+
+      await settled
+    })
+
+    test('pins the height to the target immediately and resolves settled when the budget has no free slot', async () => {
+      mockReserveHeightTween.mockReturnValue(null)
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { settled } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+
+      expect(mockMotion).not.toHaveBeenCalled()
+      expect(box.value.offsetHeight).toBe(120)
+
+      await settled
+    })
+
+    test("a superseded change's cancel() is a no-op that leaves the live change untouched", () => {
+      const box = ref(makeBox(40))
+      const content = ref(makeContent(40))
+      const { driveHeight } = withSetup(box, content)
+
+      const { cancel: cancel_first } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+      driveHeight(200, { duration: 0.3, ease: 'linear' })
+      const second_handle = motionHandles[1]
+
+      cancel_first()
+
+      expect(second_handle.cancel).not.toHaveBeenCalled()
+      expect(mockMotion).toHaveBeenCalledTimes(2)
+    })
+
+    test('resolves settled immediately with no tween or budget reservation when the target equals the current height', async () => {
+      const box = ref(makeBox(120))
+      const content = ref(makeContent(120))
+      const { driveHeight } = withSetup(box, content)
+
+      const { settled } = driveHeight(120, { duration: 0.3, ease: 'linear' })
+
+      expect(mockMotion).not.toHaveBeenCalled()
+      expect(mockReserveHeightTween).not.toHaveBeenCalled()
+
+      await settled
+    })
+  })
 })
