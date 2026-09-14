@@ -199,9 +199,16 @@ Builders never touch tests, and the orchestrator never mines a conversation it w
 commit inside a worktree handed to it by path, including the builder's, even though it can read and
 write files there. Running `update-tests` "inside the builder's worktree" is therefore not something
 a worktree-isolated dispatch can do; free the branch instead and let the dispatch claim it in its own
-sandbox:
+sandbox.
 
-1. Once a branch's build is in and merged forward (§ 4a), remove the builder's worktree right here —
+**Only a wave-gating branch dispatches its test pass immediately.** A wave-N+1 builder needs wave-N's
+blocker branch tested before basing its worktree on it, so that branch's test pass still fires the
+moment its build lands (§ 4a). A branch that gates nothing later — the single branch of a non-epic
+run, or any branch in an epic's final wave — holds its test pass instead: go straight to § 4c's
+checkpoint once its build lands, and run this dispatch only once the live-review round (§ 4d) closes.
+
+1. Once a branch's test pass is due — immediately for a wave-gating branch, otherwise once the
+   live-review round closes (§ 4d) — remove the builder's worktree right here —
    `git status --short` inside it first, per [`git-workflow`](../../rules/git-workflow.md)
    (→[K:worktree-removal-survives-failure]) — which frees the branch ref for checkout elsewhere. This
    preempts § 5f's teardown for this ticket; § 5f skips a worktree that's already gone.
@@ -230,9 +237,11 @@ fails the knowledge check until the topic lands and the site cites it. A `COPY-T
 
 ### 4c. ALL-WORK-DONE CHECKPOINT — the second interactive pause
 
-Once every branch's build and test pass are in (§ 4a, § 4b), stop. Report progress: the
-integration branch's state, or the single home-tree branch's state for a single-ticket/freeform run —
-which tickets/instructions are through, and any `[K:gap: …]`/`COPY-TBD` markers still open. No PR exists yet.
+Once every branch's build is in (§ 4a) — every wave-gating branch's test pass too, since that already
+ran per § 4b, but a non-gating branch's test pass hasn't started yet, and that's expected — stop.
+Report progress: the integration branch's state, or the single home-tree branch's state for a
+single-ticket/freeform run — which tickets/instructions are through, and any
+`[K:gap: …]`/`COPY-TBD` markers still open. No PR exists yet.
 The user reviews the live branch through their own dev server and gives feedback from actually using
 it. The run does not proceed to § 5 until the user says the round is closed.
 
@@ -244,10 +253,12 @@ While the checkpoint is open, every piece of feedback is dispatched, never edite
 into the integration branch on the home tree (single-ticket or freeform run: the one branch already
 checked out there). **This is the dispatch-and-merge-forward mechanic** — dispatch the fix to a
 `ticket-builder`, merge its branch forward on report-back — reused verbatim by § 4e, § PR feedback
-loop, and the initial merge at § 4a. Tests stay untouched until the user asks;
-then run **one** consolidated `update-tests` pass, dispatched the same way as § 4b, over everything
-the round changed. Dispatch self-heal for this round (§ Self-heal) before continuing. Repeat until the
-user says the live-review round is done — that close is what starts § 4e.
+loop, and the initial merge at § 4a. Tests stay untouched for the whole round — no per-fix
+`update-tests`, and no mid-round ask either. Repeat fixes until the user says the round is done; **that
+close, not an ask mid-round, is what fires the test pass** — run § 4b's held dispatch now, one
+consolidated `update-tests` pass per branch that deferred it, covering the original build plus
+everything the round changed. Dispatch self-heal for this round (§ Self-heal) before continuing. Only
+once that pass reports back does § 4e start.
 
 ### 4e. REVIEW PIPELINE — the pre-PR review pass
 
