@@ -16,6 +16,7 @@ type StageHeightOptions = {
   active?: () => boolean
   /** Called once each height change settles; not on a silently-recorded baseline. */
   onSettled?: () => void
+  /** Sets the height in one frame with no tween, skipping the reserve-tween budget — for a caller that wants an instant resize. */
   snap?: boolean
 }
 
