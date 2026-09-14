@@ -62,6 +62,7 @@ export function popScrimReveal(
 
   if (!collapse || !driveHeight) return timeline
 
+  // Measure content, not fields — fields carries the collapse clamp itself, and a clamped box under-reports its own scrollHeight.
   const target = revealed ? (content ?? fields).scrollHeight : 0
   const change = driveHeight(target, HEIGHT_TIMING)
   live_height_changes.set(fields, change)
