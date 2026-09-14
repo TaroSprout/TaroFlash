@@ -1,36 +1,18 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted GSAP mock ─────────────────────────────────────────────────────────
 
-const { mockGsapTo, mockGsapSet, mockGsapTimeline, makeTimelineStub } = vi.hoisted(() => {
+const { mockGsapTo, mockGsapSet } = vi.hoisted(() => {
   const mockGsapTo = vi.fn()
   const mockGsapSet = vi.fn()
-
-  // Timeline stub records .to() calls and fires the given onComplete once
-  // both are queued — tests trigger it manually via `timeline._complete()`.
-  function makeTimelineStub(opts) {
-    const calls = []
-    const timeline = {
-      calls,
-      to(target, tweenOpts, position) {
-        calls.push([target, tweenOpts, position])
-        return timeline
-      },
-      _complete: () => opts?.onComplete?.()
-    }
-    return timeline
-  }
-
-  const mockGsapTimeline = vi.fn(makeTimelineStub)
-
-  return { mockGsapTo, mockGsapSet, mockGsapTimeline, makeTimelineStub }
+  return { mockGsapTo, mockGsapSet }
 })
 
 vi.mock('gsap', () => ({
   gsap: {
     to: mockGsapTo,
-    set: mockGsapSet,
-    timeline: mockGsapTimeline
+    set: mockGsapSet
   }
 }))
 
@@ -53,13 +35,24 @@ function makeEl(overrides = {}) {
   }
 }
 
+// Controllable driveHeight stub — a test resolves `resolveSettled()` to simulate
+// the stage-height driver settling, and can inspect the recorded call args / cancel spy.
+function makeDriveHeight() {
+  let resolveSettled
+  const settled = new Promise((resolve) => {
+    resolveSettled = resolve
+  })
+  const cancel = vi.fn()
+  const driveHeight = vi.fn(() => ({ settled, cancel }))
+
+  return { driveHeight, cancel, resolveSettled }
+}
+
 beforeEach(() => {
   mockGsapTo.mockReset()
   mockGsapSet.mockReset()
-  mockGsapTimeline.mockReset()
   // Default: gsap.to immediately calls onComplete
   mockGsapTo.mockImplementation((_el, opts) => opts?.onComplete?.())
-  mockGsapTimeline.mockImplementation(makeTimelineStub)
 })
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -111,7 +104,8 @@ describe('crossfadeResizeLeave', () => {
 describe('crossfadeResizeEnter', () => {
   test('returns a function (factory pattern)', () => {
     const wrapper = makeEl()
-    const fn = crossfadeResizeEnter(wrapper)
+    const { driveHeight } = makeDriveHeight()
+    const fn = crossfadeResizeEnter(wrapper, driveHeight)
     expect(typeof fn).toBe('function')
   })
 
@@ -122,7 +116,8 @@ describe('crossfadeResizeEnter', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 80 })
     const done = vi.fn()
-    crossfadeResizeEnter(wrapper)(el, done)
+    const { driveHeight } = makeDriveHeight()
+    crossfadeResizeEnter(wrapper, driveHeight)(el, done)
     expect(el.style.position).toBe('absolute')
   })
 
@@ -130,147 +125,183 @@ describe('crossfadeResizeEnter', () => {
     const wrapper = makeEl()
     const el = makeEl({ scrollHeight: 80 })
     const done = vi.fn()
-    crossfadeResizeEnter(wrapper)(el, done)
+    const { driveHeight } = makeDriveHeight()
+    crossfadeResizeEnter(wrapper, driveHeight)(el, done)
     expect(mockGsapSet).toHaveBeenCalledWith(el, { opacity: 0 })
   })
 
-  test('snaps wrapper height to the incoming el scrollHeight via gsap.set', () => {
-    const wrapper = makeEl()
-    const el = makeEl({ scrollHeight: 200 })
-    const done = vi.fn()
-    crossfadeResizeEnter(wrapper)(el, done)
+  // ── animate_height=false (snap) branch — unchanged behaviour ─────────────
 
-    expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
-  })
+  describe('animate_height=false (snap branch)', () => {
+    test('snaps wrapper height to the incoming el scrollHeight via gsap.set', () => {
+      const wrapper = makeEl()
+      const el = makeEl({ scrollHeight: 200 })
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
 
-  test('tweens el opacity to 1 separately', () => {
-    const wrapper = makeEl()
-    const el = makeEl()
-    const done = vi.fn()
-    crossfadeResizeEnter(wrapper)(el, done)
-
-    const fadeInCall = mockGsapTo.mock.calls.find(
-      ([target, opts]) => target === el && opts?.opacity === 1
-    )
-    expect(fadeInCall).toBeDefined()
-  })
-
-  test('onComplete of opacity tween clears wrapper height and overflow', () => {
-    // onComplete now lives on the gsap.to(node, { opacity: 1 }) call, not the wrapper
-    const wrapper = makeEl()
-    const el = makeEl()
-    const done = vi.fn()
-
-    mockGsapTo.mockImplementation((target, opts) => {
-      if (target === el) opts?.onComplete?.()
+      expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
     })
 
-    crossfadeResizeEnter(wrapper)(el, done)
+    test('tweens el opacity to 1 separately', () => {
+      const wrapper = makeEl()
+      const el = makeEl()
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
 
-    expect(wrapper.style.height).toBe('')
-    expect(wrapper.style.overflow).toBe('')
-  })
-
-  test('onComplete unpins the entering element', () => {
-    const wrapper = makeEl()
-    const el = makeEl()
-    const done = vi.fn()
-
-    mockGsapTo.mockImplementation((target, opts) => {
-      if (target === el) opts?.onComplete?.()
+      const fadeInCall = mockGsapTo.mock.calls.find(
+        ([target, opts]) => target === el && opts?.opacity === 1
+      )
+      expect(fadeInCall).toBeDefined()
     })
 
-    crossfadeResizeEnter(wrapper)(el, done)
+    test('onComplete of opacity tween clears wrapper height and overflow', () => {
+      const wrapper = makeEl()
+      const el = makeEl()
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
 
-    expect(el.style.position).toBe('')
-  })
+      mockGsapTo.mockImplementation((target, opts) => {
+        if (target === el) opts?.onComplete?.()
+      })
 
-  test('onComplete calls done', () => {
-    const wrapper = makeEl()
-    const el = makeEl()
-    const done = vi.fn()
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
 
-    mockGsapTo.mockImplementation((target, opts) => {
-      if (target === el) opts?.onComplete?.()
+      expect(wrapper.style.height).toBe('')
+      expect(wrapper.style.overflow).toBe('')
     })
 
-    crossfadeResizeEnter(wrapper)(el, done)
+    test('onComplete unpins the entering element', () => {
+      const wrapper = makeEl()
+      const el = makeEl()
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
 
-    expect(done).toHaveBeenCalledTimes(1)
-  })
+      mockGsapTo.mockImplementation((target, opts) => {
+        if (target === el) opts?.onComplete?.()
+      })
 
-  test('clips overflow only during tween — wrapper.overflow is empty at rest', () => {
-    // After onComplete, overflow must be cleared (not remain hidden)
-    const wrapper = makeEl()
-    const el = makeEl()
-    const done = vi.fn()
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
 
-    // Simulate onComplete running (lives on the node opacity tween)
-    mockGsapTo.mockImplementation((target, opts) => {
-      if (target === el) opts?.onComplete?.()
+      expect(el.style.position).toBe('')
     })
 
-    crossfadeResizeEnter(wrapper)(el, done)
+    test('onComplete calls done', () => {
+      const wrapper = makeEl()
+      const el = makeEl()
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
 
-    expect(wrapper.style.overflow).toBe('')
+      mockGsapTo.mockImplementation((target, opts) => {
+        if (target === el) opts?.onComplete?.()
+      })
+
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
+
+      expect(done).toHaveBeenCalledTimes(1)
+    })
+
+    test('clips overflow only during tween — wrapper.overflow is empty at rest', () => {
+      const wrapper = makeEl()
+      const el = makeEl()
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
+
+      mockGsapTo.mockImplementation((target, opts) => {
+        if (target === el) opts?.onComplete?.()
+      })
+
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
+
+      expect(wrapper.style.overflow).toBe('')
+    })
+
+    test('defaults animate_height to false — snaps via gsap.set and never calls driveHeight', () => {
+      const wrapper = makeEl()
+      const el = makeEl({ scrollHeight: 200 })
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
+
+      crossfadeResizeEnter(wrapper, driveHeight)(el, done)
+
+      expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
+      expect(driveHeight).not.toHaveBeenCalled()
+    })
+
+    test('returns null, not a cancel function', () => {
+      const wrapper = makeEl()
+      const el = makeEl()
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
+
+      const cancel = crossfadeResizeEnter(wrapper, driveHeight)(el, done)
+
+      expect(cancel).toBeNull()
+    })
   })
 
   // ── animate_height=true branch ────────────────────────────────
 
-  test('defaults animate_height to false — uses gsap.set snap, not a timeline', () => {
-    const wrapper = makeEl()
-    const el = makeEl({ scrollHeight: 200 })
-    const done = vi.fn()
+  describe('animate_height=true', () => {
+    test('drives the height through driveHeight with the scrollHeight target and the fixed timing, never gsap.set for height', () => {
+      const wrapper = makeEl()
+      const el = makeEl({ scrollHeight: 200 })
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
 
-    crossfadeResizeEnter(wrapper)(el, done)
+      crossfadeResizeEnter(wrapper, driveHeight, true)(el, done)
 
-    expect(mockGsapSet).toHaveBeenCalledWith(wrapper, { height: 200 })
-    expect(mockGsapTimeline).not.toHaveBeenCalled()
-  })
+      expect(driveHeight).toHaveBeenCalledWith(200, { duration: 0.2, ease: 'power2.out' })
+      expect(mockGsapSet).not.toHaveBeenCalledWith(
+        wrapper,
+        expect.objectContaining({ height: 200 })
+      )
+    })
 
-  test('animate_height=true uses a single gsap.timeline instead of gsap.set for height', () => {
-    const wrapper = makeEl()
-    const el = makeEl({ scrollHeight: 200 })
-    const done = vi.fn()
+    test('fades the entering element in via gsap.to independently of the height drive', () => {
+      const wrapper = makeEl()
+      const el = makeEl({ scrollHeight: 200 })
+      const done = vi.fn()
+      const { driveHeight } = makeDriveHeight()
 
-    crossfadeResizeEnter(wrapper, true)(el, done)
+      crossfadeResizeEnter(wrapper, driveHeight, true)(el, done)
 
-    expect(mockGsapTimeline).toHaveBeenCalledOnce()
-    expect(mockGsapSet).not.toHaveBeenCalledWith(wrapper, { height: 200 })
-  })
+      const fadeInCall = mockGsapTo.mock.calls.find(
+        ([target, opts]) => target === el && opts?.opacity === 1
+      )
+      expect(fadeInCall).toBeDefined()
+    })
 
-  test('animate_height=true tweens both wrapper height and el opacity on the same timeline at position 0', () => {
-    const wrapper = makeEl()
-    const el = makeEl({ scrollHeight: 200 })
-    const done = vi.fn()
+    test('cleanup runs — clearing wrapper height/overflow, unpinning the element, and calling done — only when the returned settled promise resolves', async () => {
+      const wrapper = makeEl()
+      const el = makeEl({ scrollHeight: 200 })
+      const done = vi.fn()
+      const { driveHeight, resolveSettled } = makeDriveHeight()
 
-    crossfadeResizeEnter(wrapper, true)(el, done)
+      crossfadeResizeEnter(wrapper, driveHeight, true)(el, done)
 
-    const timeline = mockGsapTimeline.mock.results[0].value
-    const heightCall = timeline.calls.find(([target]) => target === wrapper)
-    const opacityCall = timeline.calls.find(([target]) => target === el)
+      expect(done).not.toHaveBeenCalled()
+      expect(wrapper.style.height).toBeUndefined()
 
-    expect(heightCall).toEqual([wrapper, expect.objectContaining({ height: 200 }), 0])
-    expect(opacityCall).toEqual([el, expect.objectContaining({ opacity: 1 }), 0])
-  })
+      resolveSettled()
+      await flushPromises()
 
-  test('animate_height=true releases the wrapper and calls done only when the timeline completes', () => {
-    const wrapper = makeEl()
-    const el = makeEl({ scrollHeight: 200 })
-    const done = vi.fn()
+      expect(wrapper.style.height).toBe('')
+      expect(wrapper.style.overflow).toBe('')
+      expect(el.style.position).toBe('')
+      expect(done).toHaveBeenCalledTimes(1)
+    })
 
-    crossfadeResizeEnter(wrapper, true)(el, done)
-    const timeline = mockGsapTimeline.mock.results[0].value
+    test('returns the driveHeight change`s own cancel function', () => {
+      const wrapper = makeEl()
+      const el = makeEl({ scrollHeight: 200 })
+      const done = vi.fn()
+      const { driveHeight, cancel } = makeDriveHeight()
 
-    // Before the timeline completes, cleanup must not have run yet.
-    expect(done).not.toHaveBeenCalled()
-    expect(wrapper.style.height).not.toBe('')
+      const returned = crossfadeResizeEnter(wrapper, driveHeight, true)(el, done)
 
-    timeline._complete()
-
-    expect(wrapper.style.height).toBe('')
-    expect(wrapper.style.overflow).toBe('')
-    expect(el.style.position).toBe('')
-    expect(done).toHaveBeenCalledTimes(1)
+      expect(returned).toBe(cancel)
+    })
   })
 })
