@@ -1,14 +1,26 @@
 import { gsap } from 'gsap'
+import type {
+  DriveHeightOptions,
+  DrivenHeightChange
+} from '@/components/layout-kit/stage/use-stage-height'
 
 const DURATION = 0.32
 const HIDDEN_SCALE = 0.94
+
+const HEIGHT_TIMING: DriveHeightOptions = { duration: DURATION, ease: 'power2.inOut' }
+
+type DriveHeight = (target: number, options: DriveHeightOptions) => DrivenHeightChange
 
 type PopScrimRevealOptions = {
   // Collapse the panel down to the cover instead of holding the fields' full
   // height. For narrow layouts, where the reserved space costs more than the
   // steady height is worth.
   collapse?: boolean
+  driveHeight?: DriveHeight
+  content?: HTMLElement
 }
+
+const live_height_changes = new WeakMap<HTMLElement, DrivenHeightChange>()
 
 /**
  * Swaps a panel's cover for the fields beneath it with a bubble pop.
@@ -22,7 +34,7 @@ export function popScrimReveal(
   badge_content: HTMLElement,
   fields: HTMLElement,
   revealed: boolean,
-  { collapse = false }: PopScrimRevealOptions = {}
+  { collapse = false, driveHeight, content }: PopScrimRevealOptions = {}
 ) {
   const incoming = revealed ? [badge_content, fields] : [scrim]
   const outgoing = revealed ? [scrim] : [badge_content, fields]
@@ -48,26 +60,19 @@ export function popScrimReveal(
     DURATION * 0.35
   )
 
-  if (!collapse) return timeline
+  if (!collapse || !driveHeight) return timeline
 
-  const natural_height = fields.scrollHeight
+  // Measure content, not fields — fields carries the collapse clamp itself, and a clamped box under-reports its own scrollHeight.
+  const target = revealed ? (content ?? fields).scrollHeight : 0
+  const change = driveHeight(target, HEIGHT_TIMING)
+  live_height_changes.set(fields, change)
 
-  gsap.set(fields, { overflow: 'hidden' })
-  timeline.fromTo(
-    fields,
-    // oxlint-disable-next-line compositor-only/no-layout-tween -- TARO-412 landed as a partial migration; this panel's collapse wasn't moved onto the stage primitive. Follow-on: finish the TARO-412 stage migration for scrim-reveal.
-    { height: revealed ? 0 : natural_height },
-    {
-      height: revealed ? natural_height : 0,
-      duration: DURATION,
-      ease: 'power2.inOut',
-      onComplete: () => {
-        fields.style.height = ''
-        fields.style.overflow = ''
-      }
-    },
-    0
-  )
+  void change.settled.then(() => {
+    if (live_height_changes.get(fields) !== change) return
+
+    live_height_changes.delete(fields)
+    fields.style.height = ''
+  })
 
   return timeline
 }

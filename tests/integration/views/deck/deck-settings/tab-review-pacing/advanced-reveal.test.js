@@ -22,6 +22,13 @@ vi.mock('@/composables/ui/media-query', () => ({
   })
 }))
 
+const { mockDriveHeight } = vi.hoisted(() => ({
+  mockDriveHeight: vi.fn(() => ({ settled: Promise.resolve(), cancel: vi.fn() }))
+}))
+vi.mock('@/components/layout-kit/stage/use-stage-height', () => ({
+  useStageHeight: () => ({ driveHeight: mockDriveHeight })
+}))
+
 import AdvancedReveal from '@/views/deck/deck-settings/tab-review-pacing/advanced-reveal.vue'
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
@@ -106,7 +113,41 @@ describe('AdvancedReveal — toggling flips persistence', () => {
       expect.anything(),
       expect.anything(),
       true,
-      expect.objectContaining({ collapse: false })
+      expect.objectContaining({
+        collapse: false,
+        driveHeight: expect.any(Function),
+        content: expect.anything()
+      })
+    )
+  })
+})
+
+// ── fields-content wraps the slot for an unclamped measurement ────
+
+describe('AdvancedReveal — fields-content wraps the slot for an unclamped measurement', () => {
+  test('renders the advanced-reveal__fields-content element inside fields, holding the slotted content', () => {
+    const { wrapper } = makeWrapper()
+
+    const fields = wrapper.find('[data-testid="advanced-reveal__fields"]')
+    const fields_content = fields.find('[data-testid="advanced-reveal__fields-content"]')
+
+    expect(fields_content.exists()).toBe(true)
+    expect(fields_content.find('[data-testid="advanced-reveal-content"]').exists()).toBe(true)
+  })
+
+  test('passes the fields-content element as the content option to popScrimReveal', async () => {
+    const { wrapper } = makeWrapper()
+
+    await wrapper.find('[data-testid="advanced-reveal__scrim"]').trigger('click')
+
+    const fields_content = wrapper.find('[data-testid="advanced-reveal__fields-content"]').element
+
+    expect(mockPopScrimReveal).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      true,
+      expect.objectContaining({ content: fields_content })
     )
   })
 })
@@ -125,7 +166,7 @@ describe('AdvancedReveal — collapse option passed only on phone', () => {
       expect.anything(),
       expect.anything(),
       true,
-      { collapse: true }
+      expect.objectContaining({ collapse: true, driveHeight: expect.any(Function) })
     )
   })
 
@@ -140,7 +181,7 @@ describe('AdvancedReveal — collapse option passed only on phone', () => {
       expect.anything(),
       expect.anything(),
       true,
-      { collapse: false }
+      expect.objectContaining({ collapse: false, driveHeight: expect.any(Function) })
     )
   })
 })
@@ -148,12 +189,13 @@ describe('AdvancedReveal — collapse option passed only on phone', () => {
 // ── structure ─────────────────────────────────────────────────────────────────
 
 describe('AdvancedReveal — structure', () => {
-  test('renders the badge, scrim and fields testids', () => {
+  test('renders the badge, scrim, fields and fields-content testids', () => {
     const { wrapper } = makeWrapper()
     expect(wrapper.find('[data-testid="advanced-reveal__badge"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="advanced-reveal__badge-content"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="advanced-reveal__scrim"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="advanced-reveal__fields"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="advanced-reveal__fields-content"]').exists()).toBe(true)
   })
 })
 

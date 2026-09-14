@@ -1,11 +1,11 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted gsap mock ──────────────────────────────────────────────────────────
 // Each `gsap.timeline()` call gets its own fake timeline so tests can inspect
-// exactly which elements/opts each `.to`/`.fromTo` call carries, and fire
-// `onComplete` manually for the height tween instead of auto-resolving.
+// exactly which elements/opts each `.to`/`.fromTo` call carries.
 
-const { mockGsapSet, makeTimeline, timelines } = vi.hoisted(() => {
+const { makeTimeline, timelines } = vi.hoisted(() => {
   const timelines = []
   function makeTimeline() {
     const calls = { to: [], fromTo: [] }
@@ -23,20 +23,18 @@ const { mockGsapSet, makeTimeline, timelines } = vi.hoisted(() => {
     timelines.push(tl)
     return tl
   }
-  return { mockGsapSet: vi.fn(), makeTimeline, timelines }
+  return { makeTimeline, timelines }
 })
 
 vi.mock('gsap', () => ({
   gsap: {
-    timeline: () => makeTimeline(),
-    set: mockGsapSet
+    timeline: () => makeTimeline()
   }
 }))
 
 import { popScrimReveal } from '@/utils/animations/scrim-reveal'
 
 beforeEach(() => {
-  vi.clearAllMocks()
   timelines.length = 0
 })
 
@@ -44,6 +42,14 @@ function el(scrollHeight = 200) {
   const node = document.createElement('div')
   Object.defineProperty(node, 'scrollHeight', { value: scrollHeight, configurable: true })
   return node
+}
+
+function deferredDriveHeight() {
+  let resolve
+  const settled = new Promise((r) => (resolve = r))
+  const change = { settled, cancel: vi.fn() }
+  const driveHeight = vi.fn(() => change)
+  return { driveHeight, change, resolve }
 }
 
 // ── incoming / outgoing layer selection ──────────────────────────
@@ -69,85 +75,6 @@ describe('popScrimReveal — incoming/outgoing layer selection', () => {
     const tl = timelines[0]
     expect(tl.calls.to[0][0]).toEqual([badge_content, fields])
     expect(tl.calls.fromTo[0][0]).toEqual([scrim])
-  })
-})
-
-// ── collapse option ───────────────────────────────────────────────
-// The height tween only runs when collapse: true (phones) — wider layouts hold
-// a stable height driven by the fields layer, opacity/scale only.
-
-describe('popScrimReveal — collapse option', () => {
-  test('without collapse, no height tween runs and overflow is never touched', () => {
-    popScrimReveal(el(), el(), el(150), true)
-
-    expect(mockGsapSet).not.toHaveBeenCalled()
-    // Only the shared badge-content+fields pop tween runs — no dedicated
-    // fields-only height tween is appended.
-    expect(timelines[0].calls.fromTo).toHaveLength(1)
-  })
-
-  test('collapse: true sets fields to overflow hidden before tweening height', () => {
-    const fields = el(150)
-    popScrimReveal(el(), el(), fields, true, { collapse: true })
-
-    expect(mockGsapSet).toHaveBeenCalledWith(fields, { overflow: 'hidden' })
-  })
-
-  test('collapse + revealed=true tweens height from 0 to the natural scrollHeight', () => {
-    const fields = el(240)
-    popScrimReveal(el(), el(), fields, true, { collapse: true })
-
-    const tl = timelines[0]
-    const [target, from, to] = tl.calls.fromTo.at(-1)
-    expect(target).toBe(fields)
-    expect(from).toMatchObject({ height: 0 })
-    expect(to).toMatchObject({ height: 240 })
-  })
-
-  test('collapse + revealed=false tweens height from the natural scrollHeight down to 0', () => {
-    const fields = el(240)
-    popScrimReveal(el(), el(), fields, false, { collapse: true })
-
-    const tl = timelines[0]
-    const [target, from, to] = tl.calls.fromTo.at(-1)
-    expect(target).toBe(fields)
-    expect(from).toMatchObject({ height: 240 })
-    expect(to).toMatchObject({ height: 0 })
-  })
-})
-
-// ── inline height/overflow cleanup ────────────────────────────────
-// Deliberate bug fix: leaving height: 0 inline after a phone collapse would
-// survive a resize to desktop and strand the panel collapsed. Cleared on
-// complete for BOTH directions.
-
-describe('popScrimReveal — clears inline height/overflow on complete, both directions', () => {
-  test('reveal (revealed=true): onComplete resets fields.style.height and .overflow', () => {
-    const fields = el(240)
-    fields.style.height = '999px'
-    fields.style.overflow = 'hidden'
-    popScrimReveal(el(), el(), fields, true, { collapse: true })
-
-    const tl = timelines[0]
-    const [, , to] = tl.calls.fromTo.at(-1)
-    to.onComplete()
-
-    expect(fields.style.height).toBe('')
-    expect(fields.style.overflow).toBe('')
-  })
-
-  test('hide (revealed=false): onComplete resets fields.style.height and .overflow', () => {
-    const fields = el(240)
-    fields.style.height = '999px'
-    fields.style.overflow = 'hidden'
-    popScrimReveal(el(), el(), fields, false, { collapse: true })
-
-    const tl = timelines[0]
-    const [, , to] = tl.calls.fromTo.at(-1)
-    to.onComplete()
-
-    expect(fields.style.height).toBe('')
-    expect(fields.style.overflow).toBe('')
   })
 })
 
@@ -178,5 +105,135 @@ describe('popScrimReveal — return value', () => {
   test('returns the gsap timeline instance it built', () => {
     const tl_returned = popScrimReveal(el(), el(), el(), true)
     expect(tl_returned).toBe(timelines[0])
+  })
+})
+
+// ── driveHeight wiring ────────────────────────────────────────────
+// The height tween is now delegated to the stage's own driver — popScrimReveal
+// only computes the target and hands it off, never touching overflow or
+// building its own height tween.
+
+describe('popScrimReveal — driveHeight wiring', () => {
+  test('collapse + driveHeight + revealed=true drives to the fields natural scrollHeight', () => {
+    const fields = el(240)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight })
+
+    expect(driveHeight).toHaveBeenCalledWith(240, { duration: 0.32, ease: 'power2.inOut' })
+  })
+
+  test('collapse + driveHeight + revealed=false drives down to 0', () => {
+    const fields = el(240)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, false, { collapse: true, driveHeight })
+
+    expect(driveHeight).toHaveBeenCalledWith(0, { duration: 0.32, ease: 'power2.inOut' })
+  })
+
+  test('collapse: true but no driveHeight returns the timeline early without driving height', () => {
+    const fields = el(240)
+    const tl_returned = popScrimReveal(el(), el(), fields, true, { collapse: true })
+
+    expect(tl_returned).toBe(timelines[0])
+    expect(timelines[0].calls.fromTo).toHaveLength(1)
+  })
+
+  test('collapse: false with driveHeight present never calls driveHeight', () => {
+    const fields = el(240)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: false, driveHeight })
+
+    expect(driveHeight).not.toHaveBeenCalled()
+  })
+})
+
+// ── reveal target measured off content, not the clamped fields box ─
+// The outer `fields` box carries the max-md:h-0 collapse clamp; a flex column
+// clamped to height:0 shrinks its children, so `fields.scrollHeight`
+// under-reports. The unclamped `content` element is measured instead.
+
+describe('popScrimReveal — reveal target measured off content', () => {
+  test('drives to the content element scrollHeight when content is passed, not the fields scrollHeight', () => {
+    const fields = el(100)
+    const content = el(300)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
+
+    expect(driveHeight).toHaveBeenCalledWith(300, { duration: 0.32, ease: 'power2.inOut' })
+  })
+
+  test('regression guard: content keeps its natural height while fields is clamped to the max-md:h-0 shrink', () => {
+    const fields = el(0)
+    const content = el(350)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
+
+    expect(driveHeight).toHaveBeenCalledWith(350, { duration: 0.32, ease: 'power2.inOut' })
+  })
+
+  test('falls back to fields.scrollHeight when no content option is passed', () => {
+    const fields = el(240)
+    const { driveHeight } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight })
+
+    expect(driveHeight).toHaveBeenCalledWith(240, { duration: 0.32, ease: 'power2.inOut' })
+  })
+})
+
+// ── settled cleanup, live vs superseded ───────────────────────────
+// A change's settled promise clears the inline height it left behind — but
+// only when it's still the live change for that element. A change superseded
+// by a later call must not stomp the newer tween's inline height.
+
+describe('popScrimReveal — settled cleanup clears the live change only', () => {
+  test('the live change clears fields.style.height once settled resolves', async () => {
+    const fields = el(240)
+    fields.style.height = '120px'
+    const { driveHeight, resolve } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight })
+    resolve()
+    await flushPromises()
+
+    expect(fields.style.height).toBe('')
+  })
+
+  test('the live change clears fields.style.height once settled, even when a content option was passed', async () => {
+    const fields = el(0)
+    const content = el(350)
+    fields.style.height = '120px'
+    const { driveHeight, resolve } = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight, content })
+    resolve()
+    await flushPromises()
+
+    expect(fields.style.height).toBe('')
+  })
+
+  test('a superseded change settling does not clear the live tween height, but the live one does once it settles', async () => {
+    const fields = el(240)
+    const first = deferredDriveHeight()
+    const second = deferredDriveHeight()
+
+    popScrimReveal(el(), el(), fields, true, { collapse: true, driveHeight: first.driveHeight })
+    popScrimReveal(el(), el(), fields, false, { collapse: true, driveHeight: second.driveHeight })
+
+    fields.style.height = '77px'
+    first.resolve()
+    await flushPromises()
+
+    expect(fields.style.height).toBe('77px')
+
+    second.resolve()
+    await flushPromises()
+
+    expect(fields.style.height).toBe('')
   })
 })
