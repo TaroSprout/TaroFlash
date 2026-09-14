@@ -19,13 +19,12 @@ out-of-scope work is found mid-task.
 
 ## Board constants
 
-The board **schema** — data sources, the MCP server + default template, and every field with its
-option list and semantics — lives in [`task-board-schema.md`](./task-board-schema.md). Read it for any
-data-source URL, field name, or option value. This file owns only how those fields are **filled** when
-authoring: what a cut sets, what each stage owns, and the two-axis Priority/Target doctrine below.
-
-- **Every `notion-create-pages` call for a ticket or an epic passes that table's default
-  `template_id`**, always — never create either without it.
+The board **schema** — data sources, the MCP server + default template (including the `template_id`
+every `notion-create-pages` call passes, [`task-board-schema.md § Data sources`](./task-board-schema.md#data-sources)),
+and every field with its option list and semantics — lives in
+[`task-board-schema.md`](./task-board-schema.md). Read it for any data-source URL, field name, or
+option value. This file owns only how those fields are **filled** when authoring: what a cut sets,
+what each stage owns, and the two-axis Priority/Target doctrine below.
 
 ## Fields when cutting
 
