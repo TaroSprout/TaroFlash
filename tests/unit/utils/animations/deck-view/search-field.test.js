@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import { flushPromises } from '@vue/test-utils'
 
 const { mockFromTo, mockTo } = vi.hoisted(() => ({
   mockFromTo: vi.fn(),
@@ -51,8 +52,7 @@ describe('search-field animations', () => {
       expect(done).not.toHaveBeenCalled()
 
       resolveSettled()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
 
       expect(done).toHaveBeenCalledOnce()
     })
@@ -91,8 +91,7 @@ describe('search-field animations', () => {
       expect(done).not.toHaveBeenCalled()
 
       resolveSettled()
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
 
       expect(done).toHaveBeenCalledOnce()
     })

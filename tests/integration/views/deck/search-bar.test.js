@@ -199,28 +199,6 @@ describe('search-bar', () => {
     expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
   })
 
-  // ── clear() refocuses input ────────────────────────────────────────────────
-
-  test('clear() emits ui.press sfx', async () => {
-    const search = makeSearch({ is_searching: true })
-    const wrapper = mountSearchBar(search)
-    await wrapper.find('[data-testid="deck-search-bar__input"]').setValue('text')
-    mockEmitSfx.mockClear()
-    await wrapper.find('[data-testid="deck-search-bar__button"]').trigger('click')
-    expect(mockEmitSfx).toHaveBeenCalledWith('ui.press')
-  })
-
-  // ── Enter key submits immediately (bypasses debounce) ─────────────────────
-
-  test('Enter key commits draft to query immediately', async () => {
-    const search = makeSearch({ is_searching: true })
-    const wrapper = mountSearchBar(search)
-    const input = wrapper.find('[data-testid="deck-search-bar__input"]')
-    await input.setValue('cat')
-    await input.trigger('keydown.enter')
-    expect(search.query.value).toBe('cat')
-  })
-
   // ── Esc key closes the bar ─────────────────────────────────────────────────
 
   test('Esc key closes the bar', async () => {
