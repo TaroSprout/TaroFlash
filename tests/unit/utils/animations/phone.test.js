@@ -40,9 +40,12 @@ function el() {
   return document.createElement('div')
 }
 
+// Models nested rAF scheduling: a flushed callback that itself calls
+// requestAnimationFrame enqueues onto the same queue rather than running inline,
+// so a double-rAF chain needs two flushes to fully resolve.
 function flushRaf() {
-  const cb = rafCallbacks.shift()
-  cb?.()
+  const pending = rafCallbacks.splice(0, rafCallbacks.length)
+  pending.forEach((cb) => cb())
 }
 
 function lastMotionCall() {
@@ -58,20 +61,26 @@ describe('phone animations', () => {
   })
 
   describe('blur-in (enter)', () => {
-    test('slideDownBlurIn sets data-phone-blur true immediately, then false after the next frame', () => {
+    test('slideDownBlurIn holds data-phone-blur true through the first frame, then clears on the second', () => {
       const element = el()
 
       slideDownBlurIn(element, vi.fn())
       expect(element.dataset.phoneBlur).toBe('true')
 
       flushRaf()
+      expect(element.dataset.phoneBlur).toBe('true')
+
+      flushRaf()
       expect(element.dataset.phoneBlur).toBe('false')
     })
 
-    test('slideUpBlurIn sets data-phone-blur true immediately, then false after the next frame', () => {
+    test('slideUpBlurIn holds data-phone-blur true through the first frame, then clears on the second', () => {
       const element = el()
 
       slideUpBlurIn(element, vi.fn())
+      expect(element.dataset.phoneBlur).toBe('true')
+
+      flushRaf()
       expect(element.dataset.phoneBlur).toBe('true')
 
       flushRaf()
