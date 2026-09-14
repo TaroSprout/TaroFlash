@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, reactive } from 'vue'
+import { computed, markRaw, reactive } from 'vue'
 import type { Component, ComputedRef } from 'vue'
 
 export type OverlayPresentation = 'dialog' | 'popup'
@@ -37,6 +37,7 @@ export const useOverlayStore = defineStore('overlay', (): OverlayStore => {
   const top = computed(() => entries.at(-1))
 
   function push(entry: OverlayEntry) {
+    entry.props = markRaw(entry.props)
     entries.push(entry)
   }
 
