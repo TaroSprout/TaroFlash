@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { ref } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 
 const { makeTimeline, timelines, mockSet } = vi.hoisted(() => {
   const timelines = []
@@ -150,7 +151,7 @@ describe('tab-slide — wrapper height', () => {
     expect(wrapper.style.height).toBe('400px')
 
     resolveSettled()
-    await Promise.resolve()
+    await flushPromises()
 
     expect(wrapper.style.height).toBe('')
   })
