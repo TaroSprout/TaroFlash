@@ -109,7 +109,7 @@ const root_style = computed(() => ({
       <div
         data-testid="app-window-container"
         data-station="window"
-        class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 overlay-downgrade:rounded-b-none bevel-lg overlay-downgrade:bevel-sheet"
+        class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 overlay-downgrade:rounded-b-none bevel-lg overlay-downgrade-flush:bevel-sheet"
       >
         <slot name="sidebar"></slot>
 
