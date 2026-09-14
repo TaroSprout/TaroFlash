@@ -149,7 +149,16 @@ Deno.test('retry action: clears stored sentences before resetting the cursor', a
   assertEquals(updates[0].chunk_cursor, 0)
 })
 
-Deno.test('process action bypasses the capability gate entirely (internal service-role call)', async () => {
+// A fake JWT good enough for assertServiceRole: it only reads the base64url
+// payload segment, never verifies the signature.
+function fakeJwt(payload: Record<string, unknown>): string {
+  const b64url = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  const header = b64url(JSON.stringify({ alg: 'none', typ: 'JWT' }))
+  const body = b64url(JSON.stringify(payload))
+  return `${header}.${body}.signature`
+}
+
+Deno.test('process action bypasses the capability gate entirely (no Authorization header -> 401)', async () => {
   const req = new Request('http://localhost', {
     method: 'POST',
     body: JSON.stringify({ action: 'process', lesson_id: 1 })
@@ -161,7 +170,31 @@ Deno.test('process action bypasses the capability gate entirely (internal servic
     }
   })
 
-  // No service-role Authorization header supplied, so it's rejected on that
-  // check instead — proves the gate itself was never reached.
+  // No Authorization header at all, so assertServiceRole rejects on the
+  // missing-role branch before the capability gate is ever reached.
+  assertEquals(res.status, 401)
+})
+
+Deno.test('process action bypasses the capability gate entirely (non-service-role JWT -> 403)', async () => {
+  const req = new Request('http://localhost', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${fakeJwt({ role: 'authenticated' })}` },
+    body: JSON.stringify({ action: 'process', lesson_id: 1 })
+  })
+
+  const res = await handler(req, {
+    requireCapability: () => {
+      throw new Error('requireCapability must not be called for the process action')
+    }
+  })
+
+  // A real member token clears the JWT check at the gateway but fails the
+  // role check, still without ever reaching the capability gate.
   assertEquals(res.status, 403)
 })
+
+// A valid service_role token falls through assertServiceRole and into
+// processLessonPhase(serviceClient(), ...), which builds a real Supabase
+// client and hits the network. Deps only injects requireCapability, not the
+// worker, so there's no seam to reach that branch without live I/O — left
+// uncovered here rather than faked.
