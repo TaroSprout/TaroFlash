@@ -17,14 +17,14 @@ import { emitSfx } from '@/sfx/bus'
 import { clearPersistedSession } from './composables/session-persistence'
 import { provideStudySessionController } from './composables/session-controller'
 import { providePrimedGrade } from './session-studying/card/primed-grade-context'
-import { useModalRequestClose } from '@/composables/modal'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
-const { deck_ids, close } = defineProps<{
+const { deck_ids } = defineProps<{
   deck_ids: number[]
-  close: () => void
 }>()
 
 const { t } = useI18n()
+const { close, onCloseRequest } = useOverlayContext()
 
 const {
   state,
@@ -123,7 +123,10 @@ const toolbar_variant = computed<
   return editing.value ? 'edit' : 'rating'
 })
 
-useModalRequestClose(onRequestClose)
+onCloseRequest(() => {
+  onRequestClose()
+  return false
+})
 
 /** Early close (close button / backdrop / esc before any review). */
 function onClosed() {

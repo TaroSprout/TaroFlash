@@ -3,11 +3,12 @@ import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SfxRole } from '@/sfx/roles'
 import { emitSfx } from '@/sfx/bus'
-import { type ModalCloseFn, useModalRequestClose } from '@/composables/modal'
+import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type AlertType = 'warn' | 'info'
 
-const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio, type } = defineProps<{
+const { cancelLabel, confirmLabel, cancelAudio, confirmAudio, type } = defineProps<{
   cancelLabel?: string
   confirmLabel?: string
   message?: string
@@ -15,10 +16,10 @@ const { cancelLabel, confirmLabel, close, cancelAudio, confirmAudio, type } = de
   type?: AlertType
   cancelAudio?: SfxRole
   confirmAudio?: SfxRole
-  close: ModalCloseFn<boolean>
 }>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 const cancel_btn = useTemplateRef('cancel_btn')
 const confirm_btn = useTemplateRef('confirm_btn')
@@ -26,8 +27,6 @@ const confirm_btn = useTemplateRef('confirm_btn')
 const cancelText = computed(() => cancelLabel ?? t('ui-kit.alert.cancel'))
 const confirmText = computed(() => confirmLabel ?? t('ui-kit.alert.continue'))
 const palette = computed(() => ((type ?? 'warn') === 'warn' ? 'danger' : 'info'))
-
-useModalRequestClose(onCancel)
 
 function onCancel() {
   if (cancelAudio) emitSfx(cancelAudio)
@@ -48,50 +47,52 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div
-    data-testid="ui-kit-alert"
-    data-station="float"
-    class="rounded-2 shadow-lg max-xs:mx-4 max-xs:w-auto max-xs:max-w-full flex w-115 max-w-115 flex-col bg-surface"
-  >
-    <div data-testid="ui-kit-alert__body" class="flex flex-col gap-2 p-10">
-      <h1 class="text-ink text-3xl">{{ title ?? t('ui-kit.alert.title-default') }}</h1>
-      <p class="text-ink-muted">{{ message ?? t('ui-kit.alert.message-default') }}</p>
-    </div>
-
+  <overlay-surface mode="popup">
     <div
-      data-testid="ui-kit-alert__actions"
-      class="border-line divide-line max-xs:flex-col max-xs:divide-x-0 max-xs:divide-y flex w-full divide-x border-t"
-      @keydown="onKeydown"
+      data-testid="ui-kit-alert"
+      data-station="float"
+      class="pointer-events-auto rounded-2 shadow-lg max-xs:mx-4 max-xs:w-auto max-xs:max-w-full flex w-115 max-w-115 flex-col bg-surface"
     >
-      <button
-        ref="cancel_btn"
-        data-testid="ui-kit-alert__cancel"
-        class="ui-kit-alert__cancel group"
-        @click="onCancel"
-        v-sfx="{ hover: 'ui.hover' }"
-      >
-        {{ cancelText }}
-        <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
-          <span>{{ cancelText }}</span>
-        </div>
-      </button>
+      <div data-testid="ui-kit-alert__body" class="flex flex-col gap-2 p-10">
+        <h1 class="text-ink text-3xl">{{ title ?? t('ui-kit.alert.title-default') }}</h1>
+        <p class="text-ink-muted">{{ message ?? t('ui-kit.alert.message-default') }}</p>
+      </div>
 
-      <button
-        v-if="confirmLabel"
-        ref="confirm_btn"
-        data-testid="ui-kit-alert__confirm"
-        :data-palette="palette"
-        class="ui-kit-alert__confirm group"
-        @click="onConfirm"
-        v-sfx="{ hover: 'ui.hover' }"
+      <div
+        data-testid="ui-kit-alert__actions"
+        class="border-line divide-line max-xs:flex-col max-xs:divide-x-0 max-xs:divide-y flex w-full divide-x border-t"
+        @keydown="onKeydown"
       >
-        {{ confirmText }}
-        <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
-          <span>{{ confirmText }}</span>
-        </div>
-      </button>
+        <button
+          ref="cancel_btn"
+          data-testid="ui-kit-alert__cancel"
+          class="ui-kit-alert__cancel group"
+          @click="onCancel"
+          v-sfx="{ hover: 'ui.hover' }"
+        >
+          {{ cancelText }}
+          <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
+            <span>{{ cancelText }}</span>
+          </div>
+        </button>
+
+        <button
+          v-if="confirmLabel"
+          ref="confirm_btn"
+          data-testid="ui-kit-alert__confirm"
+          :data-palette="palette"
+          class="ui-kit-alert__confirm group"
+          @click="onConfirm"
+          v-sfx="{ hover: 'ui.hover' }"
+        >
+          {{ confirmText }}
+          <div class="ui-kit-alert__hover-effect group-hover:opacity-100! group-focus:opacity-100!">
+            <span>{{ confirmText }}</span>
+          </div>
+        </button>
+      </div>
     </div>
-  </div>
+  </overlay-surface>
 </template>
 
 <style>

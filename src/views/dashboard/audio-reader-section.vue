@@ -27,8 +27,9 @@ function onEdit(collection: LessonCollectionWithCount) {
 }
 
 async function onCreate() {
-  // A fresh collection has no chapters yet — drop straight into its edit modal.
-  const collection = await create_modal.open().response
+  // A fresh collection has no chapters yet, so drop straight into its edit modal
+  // to upload the first lesson.
+  const collection = await create_modal.open().result
   if (collection) edit_modal.open(collection.id)
 }
 

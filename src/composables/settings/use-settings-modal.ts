@@ -1,19 +1,13 @@
-import { useModal } from '@/composables/modal'
-import { SETTINGS_SHEET_BREAKPOINTS } from '@/views/settings/layout'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import SettingsComponent from '@/views/settings/index.vue'
 
 /** Opens the settings modal. Shared by the phone launcher and any other settings entry point. */
 export function useSettingsModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open() {
-    return modal.open(SettingsComponent, {
-      backdrop: true,
-      mode: 'mobile-sheet',
-      mobile_below_width: SETTINGS_SHEET_BREAKPOINTS.width,
-      mobile_below_height: SETTINGS_SHEET_BREAKPOINTS.height
-    })
+  function open_settings() {
+    return open(SettingsComponent, { presentation: 'dialog' })
   }
 
-  return { open }
+  return { open: open_settings }
 }

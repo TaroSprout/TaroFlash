@@ -7,20 +7,20 @@ import FeedbackCard from './feedback-card.vue'
 import FeedbackSkeleton from './skeleton.vue'
 import FeedbackSubmitDialog from './feedback-submit-dialog.vue'
 import { useFeedbackItemsQuery } from '@/api/feedback'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { emitSfx } from '@/sfx/bus'
 import { shake } from '@/utils/animations/shake'
 
-const { close } = defineProps<{ close: () => void }>()
-
 const { t } = useI18n()
-const modal = useModal()
+const { open } = useOverlay()
+const { dismiss } = useOverlayContext()
 const { data: items, status, refetch } = useFeedbackItemsQuery()
 const error_message = useTemplateRef<HTMLElement>('error_message')
 
 function onSubmitPress() {
   emitSfx('dialog.open-chime')
-  modal.open(FeedbackSubmitDialog, { backdrop: true, mode: 'popup' })
+  open(FeedbackSubmitDialog, { presentation: 'popup' })
 }
 
 // A repeat failure holds `status` at 'error' on both sides, so check it after the refetch
@@ -46,9 +46,10 @@ watch(status, (current) => {
     data-testid="feedback-board"
     data-palette="green"
     class="msm:h-196 msm:w-170 [--scroll-content-inset:1.25rem] msm:[--scroll-content-inset:5rem]"
+    sheet_at="w<msm | h<md"
     :title="t('feedback-board.title')"
     scroll_body
-    @close="close"
+    @close="dismiss"
   >
     <div
       data-testid="feedback-board__body"

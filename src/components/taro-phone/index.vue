@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useShortcuts } from '@/composables/shortcuts'
-import { useModal } from '@/composables/modal'
+import { useOverlayStore } from '@/stores/overlay-stack'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
 import { emitSfx } from '@/sfx/bus'
@@ -14,7 +14,7 @@ import {
 } from '@/utils/animations/phone'
 
 const shortcuts = useShortcuts('taro-phone', { priority: 'background' })
-const { modal_stack } = useModal()
+const overlay = useOverlayStore()
 const is_pointer_coarse = useMatchMedia('coarse')
 const store = useTaroPhoneStore()
 
@@ -43,14 +43,14 @@ function closePhone() {
   document.removeEventListener('pointerdown', onPageClick)
 }
 
-/**
- * Closes the phone on an outside click. Listens on pointerdown, not click, so this runs
- * before an in-flight click handler (e.g. a modal's own close button) can race it.
- */
+// Listens on pointerdown (not click) so outside-detection runs before any
+// click handler in the interaction — e.g. an overlay's own close button — has a
+// chance to mutate the overlay stack/is_open first, which would otherwise race
+// against this check.
 function onPageClick(e: Event) {
   if (!store.is_open) return
 
-  if (!isInsidePhone(e) && modal_stack.value.length === 0) {
+  if (!isInsidePhone(e) && overlay.entries.length === 0) {
     closePhone()
   }
 }

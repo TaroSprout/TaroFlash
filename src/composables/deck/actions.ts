@@ -6,7 +6,7 @@ import { useUpsertDeckMutation } from '@/api/decks'
 // uninitialised when the view loads.
 import { DeckLimitError } from '@/api/decks/mutations/upsert'
 import { useAlert } from '@/composables/alert'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { useCan } from '@/composables/can'
 import { useNoticeStore } from '@/stores/notice-store'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
@@ -14,7 +14,7 @@ import Checkout from '@/components/billing/checkout-modal/index.vue'
 export function useDeckActions() {
   const { t } = useI18n()
   const alert = useAlert()
-  const modal = useModal()
+  const { open } = useOverlay()
   const can = useCan()
   const notice = useNoticeStore()
   const upsert_mutation = useUpsertDeckMutation()
@@ -30,7 +30,7 @@ export function useDeckActions() {
       confirmLabel: t('errors.deck-limit-reached.upgrade-cta')
     }).response
     if (confirmed) {
-      modal.open(Checkout, { mode: 'mobile-sheet', backdrop: true })
+      open(Checkout, { presentation: 'dialog' })
     }
   }
 

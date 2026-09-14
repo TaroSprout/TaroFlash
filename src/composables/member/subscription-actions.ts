@@ -3,7 +3,7 @@ import { useCancelSubscriptionMutation, useResumeSubscriptionMutation } from '@/
 import { useMemberDeckCountQuery } from '@/api/decks'
 import { useAlert } from '@/composables/alert'
 import { useNoticeStore } from '@/stores/notice-store'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import Checkout from '@/components/billing/checkout-modal/index.vue'
 import { FREE_DECK_LIMIT } from '@/config/plans'
 
@@ -18,14 +18,14 @@ export function useSubscriptionActions() {
   const { t } = useI18n()
   const alert = useAlert()
   const notice = useNoticeStore()
-  const modal = useModal()
+  const { open } = useOverlay()
   const cancelMutation = useCancelSubscriptionMutation()
   const resumeMutation = useResumeSubscriptionMutation()
   const { data: deckCount } = useMemberDeckCountQuery()
 
   async function onUpgrade() {
-    const { response } = modal.open(Checkout, { mode: 'popup', backdrop: true })
-    await response
+    const { result } = open(Checkout, { presentation: 'popup' })
+    await result
   }
 
   async function onCancel() {

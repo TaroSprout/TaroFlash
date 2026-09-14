@@ -11,6 +11,7 @@ import {
 } from '@/api/lessons'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useAlert } from '@/composables/alert'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { useUploadLessonModal } from '@/composables/audio-reader/upload-lesson-modal'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import UiButton from '@/components/ui-kit/button.vue'
@@ -21,14 +22,14 @@ export type CollectionEditResponse = void
 // How often to re-fetch the list while a lesson is still transcribing.
 const POLL_INTERVAL_MS = 5000
 
-const { collection_id, close } = defineProps<{
+const { collection_id } = defineProps<{
   collection_id: number
-  close: (response?: CollectionEditResponse) => void
 }>()
 
 const { t } = useI18n()
 const router = useRouter()
 const notice = useNoticeStore()
+const { close, dismiss } = useOverlayContext()
 const alert = useAlert()
 const upload_modal = useUploadLessonModal()
 const delete_lesson = useDeleteLessonMutation()
@@ -129,8 +130,9 @@ watch(
     data-testid="collection-edit-container"
     data-palette="blue"
     class="max-h-[90dvh] sm:w-180"
+    sheet_at="w<sm | h<sm"
     :title="collection?.title"
-    @close="close()"
+    @close="dismiss"
   >
     <div
       data-testid="collection-edit__body"

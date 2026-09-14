@@ -5,17 +5,18 @@ import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
 import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useChangeCard, type ChangeCardResponse } from './use-change-cc'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type { ChangeCardResponse }
 
 type ChangeCardModalProps = {
   has_existing_card?: boolean
-  close: (response?: ChangeCardResponse) => void
 }
 
-const { has_existing_card = false, close } = defineProps<ChangeCardModalProps>()
+const { has_existing_card = false } = defineProps<ChangeCardModalProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 const { is_loading, is_submitting, is_ready, load_error, onSubmit } = useChangeCard(close)
 
 const title = computed(() =>
@@ -36,7 +37,6 @@ const submit_label = computed(() =>
     size="lg"
     :title="title"
     :close_disabled="is_submitting"
-    @close="close()"
   >
     <dialog-card-body data-testid="change-card-modal__scroll-area">
       <div data-testid="change-card-modal__body" class="flex flex-col gap-4 pt-4">

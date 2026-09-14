@@ -1,25 +1,17 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import AdminComponent from '@/views/admin/index.vue'
 
 /** Opens the Admin Tools modal. Shared by the phone launcher and any other entry point. */
 export function useAdminModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open() {
-    emitSfx('dialog.open')
-
-    const result = modal.open(AdminComponent, {
-      backdrop: true,
-      mode: 'mobile-sheet',
-      mobile_below_width: 'mlg',
-      mobile_below_height: 'md'
+  function open_admin() {
+    return open(AdminComponent, {
+      presentation: 'dialog',
+      open_sfx: 'dialog.open',
+      close_sfx: 'dialog.close'
     })
-
-    result.response.then(() => emitSfx('dialog.close'))
-
-    return result
   }
 
-  return { open }
+  return { open: open_admin }
 }

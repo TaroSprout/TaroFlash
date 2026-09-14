@@ -6,7 +6,6 @@ import type { SkippedImportLine } from '@/utils/card/csv'
 
 defineProps<{
   lines: SkippedImportLine[]
-  close: () => void
 }>()
 
 const { t } = useI18n()
@@ -17,7 +16,6 @@ const { t } = useI18n()
     data-testid="skipped-lines-dialog"
     size="sm"
     :title="t('deck-view.card-import.skipped-dialog.title')"
-    @close="close"
   >
     <scroll-region
       data-testid="skipped-lines-dialog__list"

@@ -13,6 +13,7 @@ import { useNoticeStore } from '@/stores/notice-store'
 import { emitSfx } from '@/sfx/bus'
 import { SKELETON_COVER } from '@/utils/cover'
 import { shake } from '@/utils/animations/shake'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type MoveCardsModalResponse = {
   deck_id: number
@@ -24,12 +25,12 @@ type MoveCardsModalProps = {
   current_deck_id?: number
   count?: number
   move: (deck_id: number) => Promise<void>
-  close: (response?: MoveCardsModalResponse | boolean) => void
 }
 
-const { cards, current_deck_id, count, move, close } = defineProps<MoveCardsModalProps>()
+const { cards, current_deck_id, count, move } = defineProps<MoveCardsModalProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 const SKELETON_ROW_COUNT = 4
 
@@ -92,11 +93,6 @@ function onSelect(value: string) {
   selected_deck_id.value = deck_id === selected_deck_id.value ? undefined : deck_id
 }
 
-function onClose() {
-  emitSfx('dialog.close')
-  close(false)
-}
-
 // @pinia/colada's `status` never moves off 'error' on a repeat failure — only
 // `asyncStatus` does — so `watch(status, …)` below can't observe an
 // error->error transition. Snapshot it before calling `refetch()` and compare
@@ -120,7 +116,7 @@ watch(status, (current) => {
 </script>
 
 <template>
-  <dialog-card data-testid="move-cards" size="md" :title="title" @close="onClose">
+  <dialog-card data-testid="move-cards" size="md" :title="title">
     <div
       v-if="status === 'pending'"
       data-testid="move-cards__deck-list-skeleton"
