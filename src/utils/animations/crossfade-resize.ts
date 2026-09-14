@@ -3,6 +3,10 @@ import { gsap } from 'gsap'
 const HEIGHT_DURATION = 0.2
 const FADE_DURATION = 0.15
 
+type DriveHeightOptions = { duration: number; ease: string }
+type DrivenHeightChange = { settled: Promise<void>; cancel: () => void }
+type DriveHeight = (target: number, options: DriveHeightOptions) => DrivenHeightChange
+
 // Stacks a pane on its sibling so the two can crossfade in one slot without
 // either one dictating the wrapper's height.
 function pin(node: HTMLElement) {
@@ -47,8 +51,12 @@ export function crossfadeResizeLeave(el: Element, done: () => void) {
  *   small panes: a long transcript cost 12+ forced layouts over 200ms, which
  *   the default snap avoids and the fade hides.
  */
-export function crossfadeResizeEnter(wrapper: HTMLElement, animate_height = false) {
-  return (el: Element, done: () => void) => {
+export function crossfadeResizeEnter(
+  wrapper: HTMLElement,
+  driveHeight: DriveHeight,
+  animate_height = false
+) {
+  return (el: Element, done: () => void): (() => void) | null => {
     const node = el as HTMLElement
     pin(node)
     const target = node.scrollHeight
@@ -70,14 +78,14 @@ export function crossfadeResizeEnter(wrapper: HTMLElement, animate_height = fals
         ease: 'power1.out',
         onComplete: cleanup
       })
-      return
+      return null
     }
 
-    // One timeline, so the release waits for whichever tween runs longer.
-    gsap
-      .timeline({ onComplete: cleanup })
-      // oxlint-disable-next-line compositor-only/no-layout-tween -- TARO-412 landed as a partial migration; this pane's resize wasn't moved onto the stage primitive. Follow-on: finish the TARO-412 stage migration for crossfade-resize.
-      .to(wrapper, { height: target, duration: HEIGHT_DURATION, ease: 'power2.out' }, 0)
-      .to(node, { opacity: 1, duration: FADE_DURATION, ease: 'power1.out' }, 0)
+    const change = driveHeight(target, { duration: HEIGHT_DURATION, ease: 'power2.out' })
+    gsap.to(node, { opacity: 1, duration: FADE_DURATION, ease: 'power1.out' })
+
+    void change.settled.then(cleanup)
+
+    return change.cancel
   }
 }
