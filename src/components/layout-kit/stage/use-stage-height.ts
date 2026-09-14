@@ -217,6 +217,11 @@ export function useStageHeight(
     }
   }
 
+  /**
+   * Tweens the box's measured width to `target`, sharing `driveHeight`'s
+   * compositor-budget reservation and single-tween ownership — starting one
+   * cancels an in-flight change on the other axis.
+   */
   function driveWidth(target: number, { duration, ease }: DriveWidthOptions): DrivenWidthChange {
     const el = box.value
     if (!el) return { settled: Promise.resolve(), cancel: NOOP }

@@ -36,7 +36,7 @@ const field = shallowRef<HTMLElement | null>(null)
 
 usePinScrollWhileTyping(container)
 
-const { driveWidth } = useStageHeight(field, input, { active: () => false })
+const { driveWidth } = useStageHeight(field, input, { active: () => false }) // active off — only driveWidth's manual calls resize this box
 
 const draft = ref('')
 
