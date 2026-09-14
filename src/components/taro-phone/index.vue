@@ -102,11 +102,15 @@ function onClosePhoneSm(el: Element, done: () => void) {
 <style>
 :root[data-motion='full'] [data-phone-blur] {
   --phone-duration: 100ms;
-
-  transition: filter var(--phone-duration) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root[data-motion='full'] [data-phone-blur='true'] {
   filter: blur(12px);
+
+  transition: filter var(--phone-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-motion='full'] [data-phone-blur='false'] {
+  transition: filter var(--phone-duration) cubic-bezier(0.4, 0, 1, 1);
 }
 </style>
