@@ -365,7 +365,7 @@ watch(
   <div
     data-testid="paged-reader"
     class="relative flex h-[calc(100dvh-var(--nav-height))] w-full flex-col overflow-hidden px-(--page-px) pb-4"
-    style="--paged-controls-h: 3.5rem; --paged-split-h: 7rem; --paged-feather: 2rem"
+    style="--paged-controls-h: 3.5rem; --paged-split-h: 7rem; --paged-feather: 3.5rem"
   >
     <div
       ref="viewport"
