@@ -1,0 +1,11 @@
+[data-overlay-id] {
+  transition: filter 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-overlay-id][data-receded='true'] {
+  filter: brightness(0.8);
+}
+
+:root[data-motion='full'] [data-overlay-id][data-receded='true'] {
+  filter: brightness(0.8) blur(2px);
+}

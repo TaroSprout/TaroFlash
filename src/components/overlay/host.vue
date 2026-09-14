@@ -69,6 +69,7 @@ function onAfterLeave(el: Element) {
       :key="entry.id"
       :entry="entry"
       :inert="receded_ids.has(entry.id)"
+      :receded="receded_ids.has(entry.id)"
       :request-close="requestClose"
     />
   </transition-group>
