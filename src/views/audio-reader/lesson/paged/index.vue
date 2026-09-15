@@ -30,6 +30,8 @@ const SPLIT_CAP_RATIO = 0.4
 const TURN_RATIO = 0.22
 const TAP_SLOP = 8
 const DECIDE_SLOP = 10
+const WHEEL_THRESHOLD = 60
+const WHEEL_IDLE_MS = 140
 
 const reader = inject(lessonReaderKey)!
 const {
@@ -78,6 +80,9 @@ let dragging = false
 let decided: 'swipe' | 'scroll' | null = null
 let band_primed = false
 let turning = false
+let wheel_accum = 0
+let wheel_locked = false
+let wheel_idle_timer: ReturnType<typeof setTimeout> | undefined
 
 let viewport_ro: ResizeObserver | undefined
 let frame_ro: ResizeObserver | undefined
@@ -173,12 +178,17 @@ onMounted(() => {
 
   measureBands()
   recenter()
+
+  viewport.value?.addEventListener('wheel', onWheel, { passive: false })
+  window.addEventListener('keydown', onKeydown)
 })
 
 onBeforeUnmount(() => {
   viewport_ro?.disconnect()
   frame_ro?.disconnect()
   band_ro?.disconnect()
+  viewport.value?.removeEventListener('wheel', onWheel)
+  window.removeEventListener('keydown', onKeydown)
 })
 
 function measureViewport() {
@@ -330,6 +340,57 @@ function seekToSpread(spread: number) {
   const page_index = two_page.value ? spread * 2 : spread
   const first = pages.value[page_index]?.[0]?.words[0]?.index
   if (first !== undefined) seekToWord(first)
+}
+
+function pageBy(step: number) {
+  const target = current_index.value + step
+  if (target < 0 || target > spread_count.value - 1) return
+  turnPage(target)
+}
+
+function onWheel(event: WheelEvent) {
+  const delta = event.deltaX !== 0 ? event.deltaX : event.shiftKey ? event.deltaY : 0
+  if (delta === 0) return
+
+  event.preventDefault()
+  resetWheelIdle()
+  if (wheel_locked) return
+
+  wheel_accum += delta
+  if (Math.abs(wheel_accum) < WHEEL_THRESHOLD) return
+
+  const step = wheel_accum > 0 ? 1 : -1
+  wheel_accum = 0
+  wheel_locked = true
+  pageBy(step)
+}
+
+function resetWheelIdle() {
+  clearTimeout(wheel_idle_timer)
+  wheel_idle_timer = setTimeout(() => {
+    wheel_accum = 0
+    wheel_locked = false
+  }, WHEEL_IDLE_MS)
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (settings_open.value || popover_open.value) return
+  if (event.metaKey || event.ctrlKey || event.altKey) return
+  if (isTypingTarget(event.target)) return
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    pageBy(1)
+  } else if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    pageBy(-1)
+  }
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
 }
 
 function onPointerCancel(event: PointerEvent) {
