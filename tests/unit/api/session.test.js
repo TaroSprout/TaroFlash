@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/supabase-client', () => ({
+  AUTH_STORAGE_KEY: 'sb-test-auth-token',
   supabase: {
     auth: {
       getSession: mocks.getSession,
@@ -72,8 +73,11 @@ import {
   isAuthError,
   onSignedOut,
   consumeOAuthPopupFlag,
-  isNewAccountSession
+  isNewAccountSession,
+  refreshSession
 } from '@/api/session'
+import { AUTH_STORAGE_KEY } from '@/supabase-client'
+import { AuthRetryableFetchError } from '@supabase/supabase-js'
 import logger from '@/utils/logger'
 
 beforeEach(() => {
@@ -111,16 +115,107 @@ describe('getSession', () => {
     vi.useRealTimers()
   })
 
-  test('rejects once the 2s timeout elapses when supabase.auth.getSession() never resolves', async () => {
-    vi.useFakeTimers()
-    mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+  describe('once the 2s timeout elapses', () => {
+    afterEach(() => {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
+      vi.useRealTimers()
+    })
 
-    const promise = getSession()
-    promise.catch(() => {})
-    await vi.advanceTimersByTimeAsync(2000)
+    test('falls back to the persisted top-level session when it has a refresh_token', async () => {
+      vi.useFakeTimers()
+      mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+      const persisted = { refresh_token: 'rt-1', user: { id: 'u1' } }
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(persisted))
 
-    await expect(promise).rejects.toThrow('getSession timed out')
-    vi.useRealTimers()
+      const promise = getSession()
+      await vi.advanceTimersByTimeAsync(2000)
+
+      await expect(promise).resolves.toEqual(persisted)
+    })
+
+    test('falls back to a session wrapped under currentSession', async () => {
+      vi.useFakeTimers()
+      mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+      const session = { refresh_token: 'rt-1', user: { id: 'u1' } }
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ currentSession: session }))
+
+      const promise = getSession()
+      await vi.advanceTimersByTimeAsync(2000)
+
+      await expect(promise).resolves.toEqual(session)
+    })
+
+    test('returns null when nothing is persisted', async () => {
+      vi.useFakeTimers()
+      mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+
+      const promise = getSession()
+      await vi.advanceTimersByTimeAsync(2000)
+
+      await expect(promise).resolves.toBeNull()
+    })
+
+    test('returns null when the persisted value is blank', async () => {
+      vi.useFakeTimers()
+      mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+      window.localStorage.setItem(AUTH_STORAGE_KEY, '')
+
+      const promise = getSession()
+      await vi.advanceTimersByTimeAsync(2000)
+
+      await expect(promise).resolves.toBeNull()
+    })
+
+    test('returns null when the persisted value is garbage JSON', async () => {
+      vi.useFakeTimers()
+      mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+      window.localStorage.setItem(AUTH_STORAGE_KEY, 'not-json{{{')
+
+      const promise = getSession()
+      await vi.advanceTimersByTimeAsync(2000)
+
+      await expect(promise).resolves.toBeNull()
+    })
+
+    test('returns null when the persisted session has no refresh_token', async () => {
+      vi.useFakeTimers()
+      mocks.getSession.mockImplementationOnce(() => new Promise(() => {}))
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user: { id: 'u1' } }))
+
+      const promise = getSession()
+      await vi.advanceTimersByTimeAsync(2000)
+
+      await expect(promise).resolves.toBeNull()
+    })
+  })
+})
+
+describe('refreshSession', () => {
+  test('returns "refreshed" when supabase.auth.refreshSession() resolves with a session', async () => {
+    mocks.refreshSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u1' } } },
+      error: null
+    })
+    await expect(refreshSession()).resolves.toBe('refreshed')
+  })
+
+  test('returns "unreachable" for a retryable (network) auth error', async () => {
+    const error = new AuthRetryableFetchError('network down', 0)
+    mocks.refreshSession.mockResolvedValueOnce({ data: { session: null }, error })
+    await expect(refreshSession()).resolves.toBe('unreachable')
+  })
+
+  test('returns "rejected" for a non-retryable error — e.g. an invalid refresh token', async () => {
+    mocks.refreshSession.mockResolvedValueOnce({
+      data: { session: null },
+      error: { message: 'Invalid Refresh Token', status: 400 }
+    })
+    await expect(refreshSession()).resolves.toBe('rejected')
+  })
+
+  test('returns "rejected" when there is no session and no error at all', async () => {
+    mocks.refreshSession.mockResolvedValueOnce({ data: { session: null }, error: null })
+    await expect(refreshSession()).resolves.toBe('rejected')
   })
 })
 
