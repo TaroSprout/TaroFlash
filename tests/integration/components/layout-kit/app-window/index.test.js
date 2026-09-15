@@ -1,4 +1,4 @@
-import '@/styles/main.css' // required so the overlay-downgrade height-cap assertions below read real computed values instead of passing vacuously
+import '@/styles/main.css' // required so the overlay-downgrade computed-style assertions below read real computed values instead of passing vacuously
 
 import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
@@ -70,11 +70,12 @@ const UiButtonSlotStub = defineComponent({
   }
 })
 
-function mountWindow(props = {}, slots = {}, attrs = {}) {
+function mountWindow(props = {}, slots = {}, attrs = {}, { attach = false } = {}) {
   return shallowMount(AppWindow, {
     props,
     slots,
     attrs,
+    ...(attach ? { attachTo: document.body } : {}),
     global: {
       stubs: { UiButton: UiButtonStub, OverlaySurface: false },
       provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
@@ -159,15 +160,17 @@ describe('AppWindow', () => {
   // attrs (data-overlay-id, inert, …), never the caller's class/style.
 
   test('routes a caller class to app-window-root, not the overlay-surface', () => {
-    const wrapper = mountWindow({}, {}, { class: 'w-248! h-187' })
+    const wrapper = mountWindow({}, {}, { class: 'w-248! h-187' }, { attach: true })
 
-    const root_classes = wrapper.find('[data-testid="app-window-root"]').classes()
-    expect(root_classes).toContain('w-248!')
-    expect(root_classes).toContain('h-187')
+    const root_style = getComputedStyle(wrapper.find('[data-testid="app-window-root"]').element)
+    expect(root_style.width).toBe('992px')
+    expect(root_style.height).toBe('748px')
 
-    const surface_classes = wrapper.find('[data-testid="overlay-surface"]').classes()
-    expect(surface_classes).not.toContain('w-248!')
-    expect(surface_classes).not.toContain('h-187')
+    const surface_style = getComputedStyle(wrapper.find('[data-testid="overlay-surface"]').element)
+    expect(surface_style.width).not.toBe('992px')
+    expect(surface_style.height).not.toBe('748px')
+
+    wrapper.unmount()
   })
 
   test('routes a caller inline style to app-window-root, not the overlay-surface', () => {
@@ -185,14 +188,20 @@ describe('AppWindow', () => {
     const wrapper = mountWindow(
       {},
       {},
-      { 'data-overlay-id': 'e1', inert: '', 'data-received': 'true' }
+      { 'data-overlay-id': 'e1', inert: '', 'data-received': 'true' },
+      { attach: true }
     )
 
     const surface = wrapper.find('[data-testid="overlay-surface"]')
     expect(surface.attributes('data-overlay-id')).toBe('e1')
     expect(surface.attributes('inert')).toBe('')
     expect(surface.attributes('data-received')).toBe('true')
-    expect(surface.classes()).toContain('inset-0')
+
+    const surface_style = getComputedStyle(surface.element)
+    expect(surface_style.top).toBe('0px')
+    expect(surface_style.left).toBe('0px')
+
+    wrapper.unmount()
   })
 
   // ── showHeader logic ───────────────────────────────────────────────────────
@@ -310,12 +319,25 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="sidebar-content"]').exists()).toBe(true)
   })
 
-  test('inner container clips with overflow-hidden + rounded corners', () => {
+  test('inner container clips with overflow-hidden + rounded corners, dropped once the surface downgrades', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-container"]').classes()
     expect(classes).toContain('overflow-hidden')
     expect(classes).toContain('rounded-b-8')
-    expect(classes).toContain('overlay-downgrade:rounded-b-none')
+
+    const not_downgraded = mountWindow({}, {}, {}, { attach: true })
+    expect(
+      getComputedStyle(not_downgraded.find('[data-testid="app-window-container"]').element)
+        .borderBottomLeftRadius
+    ).toBe('32px')
+    not_downgraded.unmount()
+
+    const downgraded = mountWindow({ sheet_at: 'w<2xl' }, {}, {}, { attach: true })
+    expect(
+      getComputedStyle(downgraded.find('[data-testid="app-window-container"]').element)
+        .borderBottomLeftRadius
+    ).toBe('0px')
+    downgraded.unmount()
   })
 
   // The side shadow persists whenever only height docks — only a width dock
@@ -330,11 +352,23 @@ describe('AppWindow', () => {
     expect(classes).not.toContain('overlay-downgrade:bevel-sheet')
   })
 
-  test('root wrapper carries the overlay-downgrade mt-auto layout flip class', () => {
+  test('root wrapper carries relative position and flips to bottom-aligned once the surface downgrades', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-root"]').classes()
-    expect(classes).toContain('overlay-downgrade:mt-auto')
     expect(classes).toContain('relative')
+
+    const not_downgraded = mountWindow({}, {}, {}, { attach: true })
+    expect(
+      getComputedStyle(not_downgraded.find('[data-testid="app-window-root"]').element).marginTop
+    ).toBe('0px')
+    not_downgraded.unmount()
+
+    const downgraded = mountWindow({ sheet_at: 'w<2xl' }, {}, {}, { attach: true })
+    const downgraded_margin_top = getComputedStyle(
+      downgraded.find('[data-testid="app-window-root"]').element
+    ).marginTop
+    expect(Number.parseFloat(downgraded_margin_top)).toBeGreaterThan(0)
+    downgraded.unmount()
   })
 
   // Collapses to content height on either dock axis — the browser-verified
