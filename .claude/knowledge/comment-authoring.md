@@ -32,9 +32,8 @@ property line, inside a rule block, is body position** — same single-line shap
 JSDoc-style paragraph, however many properties in the block each want documenting.
 
 - **A body comment sits trailing on the line it annotates, wrapping above only when it doesn't fit
-  there.** Above-the-line is the fallback shape, not the default.
-- **There is no line cap.** Length follows position — a comment that outgrows its position's shape is
-  a missing knowledge entry, not a longer comment.
+  there.**
+- **There is no line cap.** Length follows position.
 - **A symbol keeps every position that earns its place.** An above-symbol comment and a trailing
   comment on the same line answer different questions, so a request for one is never grounds to
   delete the other — add the one asked for and leave the rest, unless the request specifically
@@ -98,8 +97,7 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
 - **A comment a rename would obviate.** If its first clause could become the symbol's own name with
   no loss, delete the comment and rename instead.
 - **A comment that is only a citation.** `→[K:<slug>]` is a suffix to a sentence, never a comment on
-  its own — a reader skimming the diff must get the constraint without leaving the file. Enforced by
-  `scripts/knowledge-lint.mjs`.
+  its own. Enforced by `scripts/knowledge-lint.mjs`.
 
 ## Pointers
 
@@ -117,4 +115,4 @@ selected".`) — it reads as a lookup instead of naming what the function does, 
 
 ## Spokes
 
-- [`examples`](./comment-authoring/examples.md) — the five bad/good pairs the gates were cut from
+- [`examples`](./comment-authoring/examples.md) — the bad/good pairs the gates were cut from

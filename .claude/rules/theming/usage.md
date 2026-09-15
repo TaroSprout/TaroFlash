@@ -10,9 +10,9 @@ paths:
 
 ## At a call site
 
-Set the switch as a plain attribute on the element that should carry it — a palette name (`blue`,
-`green`, `pink`) or one of its meaning aliases (`brand`, `info`, `danger`, `error`, `success`,
-`warning`):
+- **Set the switch as a plain attribute** on the element that should carry it — a palette name
+  (`blue`, `green`, `pink`) or one of its meaning aliases (`brand`, `info`, `danger`, `error`,
+  `success`, `warning`).
 
 ```vue
 <template>
@@ -48,12 +48,14 @@ Set the switch as a plain attribute on the element that should carry it — a pa
 
 ## Teleported content
 
-**Teleporting to `<body>` severs the attribute chain — restate the switch on the teleported node.**
-Read the trigger's resolved palette (`trigger.closest('[data-palette]')`) and bind it onto the
-floating element; floating chrome also declares its own `data-station="float"`, since the station it
-was mounted under no longer reaches it.
+- **Restate the switch on the teleported node** — teleporting to `<body>` severs the attribute chain.
+  Read the trigger's resolved palette (`trigger.closest('[data-palette]')`) and bind it onto the
+  floating element; floating chrome also declares its own `data-station="float"`, since the station
+  it was mounted under no longer reaches it.
 
 ## In CSS
+
+- **Consume a role through `var()` on the property it fills**, never a raw colour.
 
 ```css
 .my-component {

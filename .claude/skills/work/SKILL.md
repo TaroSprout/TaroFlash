@@ -339,9 +339,10 @@ removing the one you're standing in. **Skip this for a ticket whose builder work
 to free the branch for the test-pass dispatch — there's nothing left here to reclaim. The branch lives on
 origin and its local ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its
 worktree (§ Stuck / blocked); teardown never gates what the user sees, since the home tree updated at § 4a
-already. **This isn't gated on handoff succeeding** — removal is an obligation of how the run ends, not a
-line that only runs once every earlier step succeeds, so a run that fails or is interrupted before handoff
-still checks and removes every worktree it made (a stuck ticket's excepted) before it stops.
+already. **This isn't gated on handoff succeeding** (→[K:worktree-removal-survives-failure]) — removal is an
+obligation of how the run ends, not a line that only runs once every earlier step succeeds, so a run that
+fails or is interrupted before handoff still checks and removes every worktree it made (a stuck ticket's
+excepted) before it stops.
 
 **Copy never blocks the build.** A PR whose only red check is the knowledge check's `COPY-TBD` marker still
 opens, still counts as this run's output — it is not stuck, and the run does not wait on it. List it in the

@@ -8,11 +8,9 @@ paths:
 
 **Owns nesting depth inside a function body.**
 
-**`max-depth` in `vite.config.ts`'s `lint.rules` enforces this** — `vp lint` fails the build past
-depth 2.
-
-When a path forks, invert the condition and return early instead of pushing the main path inside an
-`if`.
+- **When a path forks, invert the condition and return early instead of pushing the main path inside
+  an `if`.** `max-depth` in `vite.config.ts`'s `lint.rules` enforces this — `vp lint` fails the build
+  past depth 2.
 
 ```ts
 // Good — orchestrator routes; each branch is its own one-job function

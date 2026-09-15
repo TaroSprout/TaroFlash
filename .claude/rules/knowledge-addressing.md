@@ -25,15 +25,15 @@ both, so renaming or splitting a knowledge file breaks no citation.
 
 ## Where a slug may be declared [K:knowledge-declaration-sites]
 
-Only in the knowledge files listed under `slugs.declare_in` in
-[`.claude/knowledge-lint.json`](../knowledge-lint.json) — `CLAUDE.md`, `AGENTS.md`, `.claude/**`,
-`corpus/**`. A bare token anywhere else is a stray citation missing its arrow, and fails the check.
+- **Declare only in the knowledge files listed under `slugs.declare_in`** in
+  [`.claude/knowledge-lint.json`](../knowledge-lint.json) — `CLAUDE.md`, `AGENTS.md`, `.claude/**`,
+  `corpus/**`. A bare token anywhere else is a stray citation missing its arrow, and fails the check.
 
 ## Retirement [K:knowledge-slug-retirement]
 
-A slug is **never reused**. When the fact goes, move the slug to
-[`retired-slugs.md`](../knowledge/retired-slugs.md) as `- [K:<slug>] — <one-line epitaph>` and
-delete every citation. Re-declaring or citing a retired slug fails the check.
+- **A slug is never reused.** When the fact goes, move the slug to
+  [`retired-slugs.md`](../knowledge/retired-slugs.md) as `- [K:<slug>] — <one-line epitaph>` and
+  delete every citation. Re-declaring or citing a retired slug fails the check.
 
 ## The check [K:knowledge-lint]
 
@@ -126,14 +126,13 @@ reachable only by being linked, `[[id]]`-referenced, or cited from a file that i
 
 ## A declaration states its fact on its line [K:knowledge-declaration-statement]
 
-The digest quotes that line and nothing else, so the line has to carry the fact alone. Two shapes
-yield one: a heading, `## <the fact> [K:<slug>]`, or a callout whose lead sentence states it,
-`> [!HAZARD] [K:<slug>] **<the fact>**`. A callout is read to the end of its block and cut to whole
-sentences; a slug buried mid-paragraph yields nothing at all.
-
-Write the fact, not the section it lives in — `Nothing is derived` names a topic's argument, and
-reaches the reviewer as a line that says nothing. `slugs.statement` in the config sets the floor;
-`enforced` is `true` — a thin declaration fails CI the moment it lands.
+- **State the fact on the declaration's line itself** — the digest quotes that line and nothing
+  else. Two shapes yield one: a heading, `## <the fact> [K:<slug>]`, or a callout whose lead sentence
+  states it, `> [!HAZARD] [K:<slug>] **<the fact>**`. A callout is read to the end of its block and
+  cut to whole sentences; a slug buried mid-paragraph yields nothing at all.
+- **Write the fact, not the section it lives in** — `Nothing is derived` names a topic's argument,
+  and reaches the reviewer as a line that says nothing. `slugs.statement` in the config sets the
+  floor; `enforced` is `true` — a thin declaration fails CI the moment it lands.
 
 ## Mechanising a prose rule [K:knowledge-mechanisation]
 

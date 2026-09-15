@@ -74,9 +74,6 @@ Three traps this closes:
   fake decisions and buries the real design under them. If a stated mechanism seems to leave a gap,
   surface the gap as a question against their design; don't paper over it with a design of your own.
 
-Gist is the first question, never the last — but a mechanism the user already named is an answer, not
-an invitation to redesign.
-
 ### Copy is signed off, not settled silently
 
 For every new or changed user-facing string, **pause** and present **at least 3 reasonably-varied
@@ -359,8 +356,8 @@ the single source, [`ticket-authoring.md`](../../rules/ticket-authoring.md).
 ## Guardrails
 
 - Only ever touch the Task Board and Epic Board named in the rule — never a backup or duplicate.
-- Never write code, never touch tests, and never open a PR **for the ticket** — this pass ends at a
-  ticket. (A lesson about this skill is dispatched, not written here; see § Self-heal.)
+- Never open a PR **for the ticket**, on top of the no-code/no-tests scope above — this pass ends at
+  a ticket. (A lesson about this skill is dispatched, not written here; see § Self-heal.)
 - Never set `In Progress` / `Review` / `Done`.
 - Never resolve a decision the user should make — product calls, pricing, policy, and anything
   affecting users' money or data go to them as questions.

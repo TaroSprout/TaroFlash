@@ -19,9 +19,9 @@ otherwise finds by getting burned.
 
 ## The altitude gate
 
-Edit only when a change crosses the domain line — a new invariant, a changed behaviour, a retired
-concept, or a newly-exposed hazard. The altitude _is_ the churn control; there is no line budget.
-
+- **Edit only when a change crosses the domain line** — a new invariant, a changed behaviour, a
+  retired concept, or a newly-exposed hazard. The altitude _is_ the churn control; there is no line
+  budget.
 - A refactor, bugfix, rename, or component tweak earns **zero** corpus edits. That is the expected
   outcome, not a failure.
 - A changed invariant or a new hazard earns **one** focused edit.
@@ -38,11 +38,11 @@ concept, or a newly-exposed hazard. The altitude _is_ the churn control; there i
 - **Never** — reword correct prose for taste, restructure for its own sake, add examples, or
   document implementation detail.
 
-**A corpus edit that cites or is cited by code lands in the same commit as that code.** A hazard's
-declaration in `corpus/` and its echo in `src/` (see Hazards below) are two halves of one atomic
-change — `knowledge-lint` fails either half alone, so splitting them across commits produces a
-commit that cannot pass CI on its own. Only a corpus edit with **no** accompanying code change —
-correcting a stale topic, splitting a topic on its own — lands as its own commit.
+- **A corpus edit that cites or is cited by code lands in the same commit as that code.** A hazard's
+  declaration in `corpus/` and its echo in `src/` (see Hazards below) are two halves of one atomic
+  change — `knowledge-lint` fails either half alone, so splitting them across commits produces a
+  commit that cannot pass CI on its own. Only a corpus edit with **no** accompanying code change —
+  correcting a stale topic, splitting a topic on its own — lands as its own commit.
 
 ## Shape
 

@@ -181,14 +181,13 @@ contents with the `Artifact` tool. The plan fills the template's regions:
 
 Structural rules the template encodes and this run must respect:
 
-- **Hub reads as a verdict**, not a link box: proposed architecture → call + moves → open questions.
-  A proposed-architecture block running past a few sentences splits into short paragraphs or
-  subheads — never one undifferentiated block; a reader skimming the hub needs to land somewhere
-  partway through, not just at the end. Where the block is a sequence of distinct beats rather than
-  connected prose, use `.archbeats` — a bold header on its own line per beat, one idea each, no
-  bullet markers (reserve an actual bullet for a genuine sub-list nested under a header) — instead
-  of forcing it into paragraphs; the same applies inside a chapter's own dense proposed-architecture
-  prose.
+- **The hub's proposed-architecture block never reads as one undifferentiated slab.** Past a few
+  sentences, split it into short paragraphs or subheads — a reader skimming the hub needs to land
+  somewhere partway through, not just at the end. Where the block is a sequence of distinct beats
+  rather than connected prose, use `.archbeats` — a bold header on its own line per beat, one idea
+  each, no bullet markers (reserve an actual bullet for a genuine sub-list nested under a header) —
+  instead of forcing it into paragraphs; the same applies inside a chapter's own dense
+  proposed-architecture prose.
 - **Heavy vs light.** A heavy region gets its own chapter, opened in the dialog (prev/next follows
   document order). A light region gets a move line only — no chapter.
 - **A chapter leads with its forcing constraint;** detail folds beneath by facet — **Contract /

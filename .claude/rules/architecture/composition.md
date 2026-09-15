@@ -8,7 +8,8 @@ paths:
 
 **Owns composing components vs. inlining another component's code.**
 
-When consolidating or moving functionality between components, import and use the child component rather than inlining its template or script code.
+- Import and use the child component rather than inlining its template or script code when
+  consolidating or moving functionality between components.
 
 ```vue
 <!-- Bad: copying markup and logic from <rating-buttons> into parent -->
@@ -22,10 +23,11 @@ import RatingButtons from '@/components/rating-buttons.vue'
 </template>
 ```
 
-Adjust props/emits to wire components together. Don't copy template markup or script logic across files.
+- Adjust props/emits to wire components together.
 
 ## Slot content gets its own component
 
-When a parent fills a child's named slot (`#header-start`, `#header-end`) with more than a trivial one-liner, extract that content into its own component and drop a single tag into the slot. Don't inline buttons, menus, or local computeds into the slot-filler template.
-
-Applies whenever the slotted UI has its own props, emits, or local state.
+- When a parent fills a child's named slot (`#header-start`, `#header-end`) with more than a
+  trivial one-liner — a button, a menu, a local computed — extract that content into its own
+  component and drop a single tag into the slot.
+- Applies whenever the slotted UI has its own props, emits, or local state.

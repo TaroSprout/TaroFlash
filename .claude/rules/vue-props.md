@@ -9,7 +9,7 @@ paths:
 **Owns how a component declares its props and slots.** Reaches you editing any `.vue` file's
 `<script setup>` block.
 
-Define props with a named type alias and destructure defaults inline — never use `withDefaults`.
+- **Define props with a named type alias and destructure defaults inline — never `withDefaults`.**
 
 ```ts
 // Correct
@@ -34,4 +34,8 @@ const props = withDefaults(defineProps<MyComponentProps>(), {
 
 ## Slots
 
-Declare slots with the `defineSlots<{ … }>()` macro — never `useSlots()` from `vue`. It's the compiler-macro counterpart to `defineProps`/`defineEmits`: typed, no extra import, and consistent with the rest of `<script setup>`. Read presence off the returned object (`v-if="slots.header"`). For dynamic slot names, intersect with `Record<string, () => any>`.
+- **Declare slots with the `defineSlots<{ … }>()` macro — never `useSlots()` from `vue`.** It's the
+  compiler-macro counterpart to `defineProps`/`defineEmits`: typed, no extra import, consistent with
+  the rest of `<script setup>`.
+- Read slot presence off the returned object (`v-if="slots.header"`). For dynamic slot names,
+  intersect with `Record<string, () => any>`.

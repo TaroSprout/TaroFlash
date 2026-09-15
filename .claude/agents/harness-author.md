@@ -52,7 +52,9 @@ that landed in the file only because the brief said it is a paraphrase, not a fi
      bare for a row the reader already knows, load-bearing for one that's new.
 3. Write the smallest change that lands the reframed lesson: one bullet where a bullet does it, a new
    section only when no cluster fits, a new rule file only when the lesson is off-topic in every
-   existing one.
+   existing one. Default the bullet to bare — an inline Bad/Good pair earns its place per
+   [`rule-authoring → Examples earn their place`](../rules/rule-authoring.md#examples-earn-their-place),
+   it isn't stapled on because every other bullet nearby has one.
 4. Check the always-on budget with `node scripts/knowledge-lint.mjs` before you finish. A file with
    no `paths:` frontmatter counts against the cap, and the cap is enforced in CI.
 

@@ -92,7 +92,7 @@ When you find yourself reaching for a reason to skip, push past it. Reasons that
 - "Would need a new fixture / harness" — build it. Reusable fixtures are cheap long-term, fragile manual repros are not.
 - "Orchestration is glue code" — glue code is exactly where invalidation contracts, emit wiring, and feature-flag branches silently break. Glue code gets tested.
 
-Valid grounds to skip are narrow and listed in Step 8: barrel re-exports with no logic, files in `coverage.exclude`, and pure config / static-asset changes. Anything else, write the test.
+Valid grounds to skip are narrow — see Step 8. Anything else, write the test.
 
 ## Step 2b — Backend changes (`supabase/`)
 

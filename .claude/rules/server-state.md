@@ -11,7 +11,9 @@ paths:
 **Owns the split between server state and client state, and the `src/api/` topology.** Reaches you
 touching `src/api/`, a composable, or a `.vue` file that reads server data.
 
-Server state (fetched rows — decks, cards, reviews, members) lives in the **Pinia Colada** query cache. Client state (auth session, theme, modal stack, shortcut registry) stays in **Pinia**. The two never overlap.
+- **Server state (fetched rows — decks, cards, reviews, members) lives in the Pinia Colada query
+  cache; client state (auth session, theme, modal stack, shortcut registry) stays in Pinia.** The two
+  never overlap.
 
 ## `src/api/` topology
 
@@ -23,7 +25,8 @@ src/api/<domain>/
 └── index.ts         # public barrel re-exporting queries + mutations
 ```
 
-Exception: `src/api/session.ts` stays flat; auth identity lives in `useSessionStore`.
+- **`src/api/session.ts` is the one exception — it stays flat.** Auth identity lives in
+  `useSessionStore`.
 
 ## Rules
 

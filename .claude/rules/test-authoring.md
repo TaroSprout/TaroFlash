@@ -17,9 +17,8 @@ on every PR.
 
 ## A failing test accuses the source first
 
-Assume the code regressed before assuming the test is wrong. Read the assertion and the code under
-test, run the test in isolation, and confirm the failure is meaningful.
-
+- **Assume the code regressed before assuming the test is wrong.** Read the assertion and the code
+  under test, run the test in isolation, and confirm the failure is meaningful.
 - If the test may be catching a real bug, **stop** — name the test, the assertion, and the suspected
   bug, and wait for confirmation. Only edit the test once the source is verified correct.
 - This holds for **brand-new tests**. When a test you just wrote refuses to pass after one or two
@@ -50,8 +49,7 @@ test, run the test in isolation, and confirm the failure is meaningful.
 
 ## Blackbox
 
-Drive components through user interactions; assert on rendered output and emitted events.
-
+- **Drive components through user interactions; assert on rendered output and emitted events.**
 - Never read `wrapper.vm.*` or call an internal method.
 - **Query only by `data-testid`** — every type, Unit through E2E. Never by tag, class, role + visible
   text, or a generated stub name: visible text breaks under i18n, roles are noisy, and tag and name
@@ -104,8 +102,8 @@ Drive components through user interactions; assert on rendered output and emitte
 
 ## Browser mode
 
-Vite ships runtime-only Vue, so a stub defined with a `template` string silently renders nothing in
-Chromium. Stubs need render functions:
+**Stubs need render functions** — Vite ships runtime-only Vue, so a stub defined with a `template`
+string silently renders nothing in Chromium:
 
 ```js
 const Stub = defineComponent({

@@ -15,13 +15,14 @@ live one directory per function under `supabase/functions/`, alongside the share
 
 Local Supabase: API on 54321, PostgreSQL on 54322. Start with `supabase start`.
 
-**Explain the SQL when asked.** Name the keywords the answer leans on (`using` vs `with check`,
-`security definer`, `stable`, `$$` quoting, `::` casting) rather than assuming the idiom is
-self-evident. Don't volunteer a lesson unprompted.
+- **Explain the SQL when asked** — name the keywords the answer leans on (`using` vs `with check`,
+  `security definer`, `stable`, `$$` quoting, `::` casting) rather than assuming the idiom is
+  self-evident; don't volunteer a lesson unprompted.
 
 ## Buckets in migrations, not config.toml
 
-Provision storage buckets via SQL migrations. `[storage.buckets.X]` in `config.toml` requires `supabase seed buckets` which doesn't run on deploy — stage/prod will diverge.
+- Provision storage buckets via SQL migrations — `[storage.buckets.X]` in `config.toml` requires
+  `supabase seed buckets`, which doesn't run on deploy, so stage/prod would diverge.
 
 ```sql
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -34,16 +35,22 @@ ON CONFLICT (id) DO UPDATE SET
 
 ## storage.objects RLS — always add SELECT
 
-Gate on `auth.uid()::text = (storage.foldername(name))[1]` when paths start with `<member_id>/...`. **Always include a SELECT policy** when the client uploads: `supabase-js` upsert-upload emits `INSERT ... ON CONFLICT DO UPDATE`, which needs SELECT for the conflict check. Without it, every upload fails with "new row violates row-level security policy."
-
-`auth.uid()` **does** resolve inside storage-api's SQL session, so gate per-member isolation on it. Avoid `NEW.owner::text = foldername[1]`: that's a _consistency_ check — the row's owner matches its own path, true regardless of caller — not isolation.
-
-`storage.protect_delete` blocks direct `DELETE FROM storage.objects` regardless of RLS, so DELETE policies aren't pgTAP-testable. Verify DELETE behaviour through a real upload-replacement flow instead.
+- Gate on `auth.uid()::text = (storage.foldername(name))[1]` when paths start with `<member_id>/...`.
+- Always include a SELECT policy when the client uploads — `supabase-js` upsert-upload emits
+  `INSERT ... ON CONFLICT DO UPDATE`, which needs SELECT for the conflict check; without it, every
+  upload fails with "new row violates row-level security policy."
+- `auth.uid()` does resolve inside storage-api's SQL session, so gate per-member isolation on it.
+- Avoid `NEW.owner::text = foldername[1]` — that's a _consistency_ check (the row's owner matches its
+  own path, true regardless of caller), not isolation.
+- `storage.protect_delete` blocks direct `DELETE FROM storage.objects` regardless of RLS, so DELETE
+  policies aren't pgTAP-testable — verify DELETE behaviour through a real upload-replacement flow
+  instead.
 
 ## Capability functions for authorization
 
-Gate role/plan-based access through named capability functions, not inline `auth_role()`/`auth_plan()` checks. Mirrors `src/composables/can.ts`'s naming rule: name for the grant, not the role — `can_manage_members()`, never `is_admin()`.
-
+- Gate role/plan-based access through named capability functions, not inline
+  `auth_role()`/`auth_plan()` checks — name for the grant, not the role (`can_manage_members()`,
+  never `is_admin()`), mirroring `src/composables/can.ts`'s naming rule.
 - One SQL function per capability, `stable`, returns `boolean`, body combines `auth_role()`/`auth_plan()`.
 - Colocate a new capability function in the migration of the feature that first needs it — don't pre-create capabilities for hypothetical future features.
 - Every capability function needs `grant execute on function public.can_x() to authenticated` — required for edge functions to reach it via `rpc()`.
@@ -51,10 +58,9 @@ Gate role/plan-based access through named capability functions, not inline `auth
 
 ## Table naming matches the existing convention
 
-A new domain doesn't invent its own naming scheme; it follows the one already in the schema. Mirrors
-the capability-function rule above: name for what the row is, not for the scheme a new domain feels
-like starting.
-
+- A new domain doesn't invent its own naming scheme — it follows the one already in the schema,
+  mirroring the capability-function rule above (name for what the row is, not the scheme a new
+  domain feels like starting).
 - Name a new table bare-plural for a global entity (`cards`, `decks`), or `<domain>_<thing>` for a
   feature-scoped catalogue or definition (`feedback_items`, `shop_items`) — never a new prefix scheme
   invented for one domain.
@@ -65,13 +71,16 @@ like starting.
 
 ## Declarative schemas — the default workflow
 
-`supabase/schemas/` is the source of truth for all DDL (tables, views, functions, triggers, policies, grants). **Never hand-write DDL migrations.** To change schema:
+- `supabase/schemas/` is the source of truth for all DDL (tables, views, functions, triggers,
+  policies, grants); never hand-write DDL migrations. To change schema:
 
 1. Edit the object's file in `supabase/schemas/` — files are hand-organized by domain (single files like `20_members.sql`, or domain dirs like `30_decks/` whose `00_tables.sql` holds tables/policies/grants and each big RPC gets its own file, e.g. `30_decks/save_deck.sql`).
 2. `supabase db diff -f <migration-name>` — generates the migration by diffing declared state against migration history.
 3. Review the generated file, then `supabase migration up --local`.
 
-Apply order is `schema_paths` in `config.toml` — new files must be added there. `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/`.
+- Apply order is `schema_paths` in `config.toml` — new files must be added there.
+- `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored
+  `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/`.
 
 ### `db diff` returning empty is necessary, not sufficient (→[K:proxy-pass-not-evidence])
 
@@ -79,12 +88,16 @@ It compares a subset of the catalog. Two blind spots have already shipped bugs:
 
 - **Function grants** — emits none, so a new `SECURITY DEFINER` function lands executable by `anon`. Hand-write the `REVOKE`s.
 - **View reloptions** — emits none. Any change forcing a view to be dropped and recreated resets `security_invoker`, and the generated `create or replace view` omits it; the view then runs as its owner and RLS stops applying per-caller.
+- **Also untracked, so still hand-written** — DML (storage bucket inserts, `cron.schedule`, vault secrets, seed rows), default privileges, comment changes.
 
-Also untracked, so still hand-written: DML (storage bucket inserts, `cron.schedule`, vault secrets, seed rows), default privileges, comment changes.
-
-**After any migration that recreates an object, diff the object itself** — `\d+`, `pg_class.reloptions`, `has_function_privilege` — rather than trusting the tool's summary. Both blind spots above are now guarded by pgTAP (`00042_view_security_invoker_guard`, `00043_definer_function_anon_grants`), which is where a new one belongs: a class-wide catalog assertion covers the object nobody has written yet.
-
-**CREATE OR REPLACE FUNCTION only replaces an identical argument list** — a changed signature silently creates a second overload. The declarative flow generates the DROP for you; the pgTAP overload guard (`tests/00029`) fails CI if a duplicate slips through.
+- **After any migration that recreates an object, diff the object itself** — `\d+`,
+  `pg_class.reloptions`, `has_function_privilege` — rather than trusting the tool's summary.
+- Both blind spots above are now guarded by pgTAP (`00042_view_security_invoker_guard`,
+  `00043_definer_function_anon_grants`), which is where a new one belongs — a class-wide catalog
+  assertion covers the object nobody has written yet.
+- **`CREATE OR REPLACE FUNCTION` only replaces an identical argument list** — a changed signature
+  silently creates a second overload; the declarative flow generates the DROP for you, and the
+  pgTAP overload guard (`tests/00029`) fails CI if a duplicate slips through.
 
 ## Migration workflow
 
@@ -108,21 +121,32 @@ Also untracked, so still hand-written: DML (storage bucket inserts, `cron.schedu
 
 ## pgTAP
 
-`BEGIN; SELECT plan(N); ... SELECT * FROM finish(); ROLLBACK;`. Use `tests.create_user()` + `tests.set_claims()` from `00000_helpers.sql`. Switch roles with `SET LOCAL role = 'authenticated' | 'postgres'` — re-set claims before each role switch.
-
-"Bad plan. You planned N but ran M" means an earlier statement threw — scroll up for the actual error.
+- `BEGIN; SELECT plan(N); ... SELECT * FROM finish(); ROLLBACK;` is the pgTAP test shape.
+- Use `tests.create_user()` + `tests.set_claims()` from `00000_helpers.sql`.
+- Switch roles with `SET LOCAL role = 'authenticated' | 'postgres'` — re-set claims before each role switch.
+- `"Bad plan. You planned N but ran M"` means an earlier statement threw — scroll up for the actual error.
 
 ## Error codes crossing PostgREST
 
-PostgREST reserves the **`PT` SQLSTATE class**: raising `PTxyz` makes it respond with **HTTP status `xyz`**. `PT001` therefore becomes status `001` — an invalid status that hangs the request and returns a garbled body rather than a clean error the client can branch on.
-
-Raising a code the client matches on? Either pick a non-`PT` SQLSTATE, or use `PTxyz` with a **valid three-digit HTTP status**. The deck card-limit gate uses `PT402` (Payment Required, "upgrade your plan"), matched client-side in `useCardLimitGate`.
+- PostgREST reserves the `PT` SQLSTATE class — raising `PTxyz` makes it respond with HTTP status
+  `xyz`; `PT001` therefore becomes status `001`, an invalid status that hangs the request and returns
+  a garbled body instead of a clean error the client can branch on.
+- When raising a code the client matches on, pick a non-`PT` SQLSTATE, or use `PTxyz` with a valid
+  three-digit HTTP status.
+- The deck card-limit gate uses `PT402` (Payment Required, "upgrade your plan"), matched client-side
+  in `useCardLimitGate`.
 
 ## `INSERT … RETURNING` re-checks the SELECT policy
 
-`RETURNING` doesn't just check the INSERT policy's `WITH CHECK` — to hand the row back it also re-checks the table's **SELECT** policy against that new row, and fails with the _same_ generic message (`new row violates row-level security policy`), so the error can't tell you which policy broke.
-
-This bites whenever a default puts the new row into a state its own SELECT policy hides — a `visibility` defaulting to `internal`, a pending/hidden status. Encode "you can always read the row you just created" explicitly (`OR member_id = auth.uid()`) rather than relying on the general visibility condition. If a `RETURNING` RPC starts throwing a bare RLS violation right after a default changed, check the SELECT policy first.
+- `RETURNING` doesn't just check the INSERT policy's `WITH CHECK` — to hand the row back it also
+  re-checks the table's SELECT policy against that new row, and fails with the same generic message
+  (`new row violates row-level security policy`), so the error can't tell you which policy broke.
+- This bites whenever a default puts the new row into a state its own SELECT policy hides — a
+  `visibility` defaulting to `internal`, a pending/hidden status.
+- Encode "you can always read the row you just created" explicitly (`OR member_id = auth.uid()`)
+  rather than relying on the general visibility condition.
+- If a `RETURNING` RPC starts throwing a bare RLS violation right after a default changed, check the
+  SELECT policy first.
 
 ## Local dev
 

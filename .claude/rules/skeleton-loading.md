@@ -11,14 +11,18 @@ paths:
 
 ## Structure
 
-Every view with a loading state gets a colocated `skeleton.vue`. Two tiers:
-
-- **Page skeleton** (`views/deck/skeleton.vue`) — public face. Composed entirely from sub-skeletons; zero hand-rolled placeholder divs. This is the only file `authenticated.vue` ever imports.
-- **Sub-skeletons** (`deck-hero/skeleton.vue`, `card-grid/skeleton.vue`, etc.) — private building blocks. Used by the page skeleton and by the view itself for data-level loading. Nothing outside the view's directory imports these directly.
+- **Every view with a loading state gets a colocated `skeleton.vue`**, split into two tiers:
+  - **Page skeleton** (`views/deck/skeleton.vue`) — public face. Composed entirely from
+    sub-skeletons; zero hand-rolled placeholder divs. This is the only file `authenticated.vue` ever
+    imports.
+  - **Sub-skeletons** (`deck-hero/skeleton.vue`, `card-grid/skeleton.vue`, etc.) — private building
+    blocks. Used by the page skeleton and by the view itself for data-level loading. Nothing outside
+    the view's directory imports these directly.
 
 ## Switching
 
-Views do a **top-level `v-if` between `<x-skeleton />` and the real content** — the skeleton fully replaces the UI, never instruments through it:
+- **A view does a top-level `v-if` between `<x-skeleton />` and the real content** — the skeleton
+  fully replaces the UI, never instruments through it.
 
 ```html
 <deck-skeleton v-if="show_skeleton" />
@@ -27,7 +31,8 @@ Views do a **top-level `v-if` between `<x-skeleton />` and the real content** �
 </section>
 ```
 
-The same `show_skeleton` computed drives every skeleton state in the view — no per-element guards scattered through the real layout.
+- **The same `show_skeleton` computed drives every skeleton state in the view** — no per-element
+  guards scattered through the real layout.
 
 ## Drift prevention
 
@@ -37,7 +42,7 @@ The same `show_skeleton` computed drives every skeleton state in the view — no
 
 ## Side effects
 
-The page skeleton owns any loading-window side effects via `onMounted`/`onUnmounted`:
+- **The page skeleton owns any loading-window side effects via `onMounted`/`onUnmounted`.**
 
 ```ts
 onMounted(() => (document.documentElement.style.overflow = 'hidden'))
