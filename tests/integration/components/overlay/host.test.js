@@ -211,7 +211,9 @@ describe('OverlayHost', () => {
   // ── Receded wiring: inert and data-receded track the same signal ───────
 
   function surfaceFor(wrapper, id) {
-    return wrapper.find(`[data-overlay-id="${id}"]`)
+    return wrapper
+      .findAll('[data-testid="entry-content"]')
+      .find((surface) => surface.attributes('data-overlay-id') === id)
   }
 
   test('two-deep stack: the top entry is neither inert nor receded, the one below is both', async () => {
