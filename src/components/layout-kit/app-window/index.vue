@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
-// Docked because the viewport ran out of width, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls. Running out of height alone docks it to the bottom and leaves both alone, so a fixed-height window never collapses to its content on a short, wide viewport. →[K:docked-app-window-drops-body-scroll]
+// Docking fires on either axis — running out of width or height, no distinction between them. A docked window drops whatever height its caller set and its body stops scrolling; the `overlay-surface` sheet it sits in is then the only scroller, and the body collapses to its content instead. →[K:docked-app-window-drops-body-scroll]
 import { computed, useAttrs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
@@ -104,7 +104,7 @@ const surface_attrs = computed(() => {
   <overlay-surface mode="dialog" :sheet_at="sheet_at" v-bind="surface_attrs">
     <div
       data-testid="app-window-root"
-      class="pointer-events-auto relative w-full shrink-0 overlay-downgrade:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
+      class="pointer-events-auto relative w-full shrink-0 overlay-downgrade:mt-auto overlay-downgrade:h-auto! pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
       :class="attrs.class"
       :style="[root_style, attrs.style]"
     >
@@ -118,7 +118,7 @@ const surface_attrs = computed(() => {
       <div
         data-testid="app-window-container"
         data-station="window"
-        class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 overlay-downgrade:rounded-b-none bevel-lg overlay-downgrade:bevel-sheet"
+        class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 overlay-downgrade:rounded-b-none bevel-lg overlay-downgrade-flush:bevel-sheet"
       >
         <slot name="sidebar"></slot>
 

@@ -1,11 +1,42 @@
-import '@/styles/main.css'
+import '@/styles/main.css' // required so the overlay-downgrade computed-style assertions below read real computed values instead of passing vacuously
 
-import { describe, test, expect, vi } from 'vite-plus/test'
+import { describe, test, expect, vi, afterEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
+import { page } from 'vite-plus/test/browser/context'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
 import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
+
+// Real Chromium viewport resize genuinely re-evaluates the `overlay-downgrade`
+// media-query gate, unlike jsdom — matches the pattern in
+// tests/integration/components/layout-kit/scroll-region/index.test.js.
+const DEFAULT_VIEWPORT = [414, 896]
+
+let _heightCapWrappers = []
+
+afterEach(async () => {
+  for (const w of _heightCapWrappers) w.unmount()
+  _heightCapWrappers = []
+  await page.viewport(...DEFAULT_VIEWPORT)
+})
+
+// Mounts with a real ancestor `data-below-w`/`data-below-h` stamp (via `sheet_at`)
+// and a non-important caller height, attached to the document so the root's
+// `overlay-downgrade:h-auto!` cascade actually lays out and can be measured.
+function mountWindowWithHeightCap(sheet_at) {
+  const wrapper = shallowMount(AppWindow, {
+    props: { sheet_at },
+    attrs: { style: 'height: 300px' },
+    attachTo: document.body,
+    global: {
+      stubs: { UiButton: UiButtonStub, OverlaySurface: false },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+    }
+  })
+  _heightCapWrappers.push(wrapper)
+  return wrapper
+}
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -309,6 +340,27 @@ describe('AppWindow', () => {
     downgraded.unmount()
   })
 
+  // The side shadow persists whenever only height docks — only a width dock
+  // flushes it to a sheet edge, so the flush swap is gated to the width-only
+  // variant, never the width-or-height one.
+
+  test('keeps the persistent side shadow and flushes it only on the width-axis variant', () => {
+    const height_only = mountWindow({ sheet_at: 'h<2xl' }, {}, {}, { attach: true })
+    const persistent_shadow = getComputedStyle(
+      height_only.find('[data-testid="app-window-container"]').element
+    ).boxShadow
+    expect(persistent_shadow).toContain('6px 6px')
+    height_only.unmount()
+
+    const width_axis = mountWindow({ sheet_at: 'w<2xl' }, {}, {}, { attach: true })
+    const flushed_shadow = getComputedStyle(
+      width_axis.find('[data-testid="app-window-container"]').element
+    ).boxShadow
+    expect(flushed_shadow).not.toContain('6px 6px')
+    expect(flushed_shadow).toContain('1px 0px 0px 0px')
+    width_axis.unmount()
+  })
+
   test('root wrapper carries relative position and flips to bottom-aligned once the surface downgrades', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-root"]').classes()
@@ -326,6 +378,37 @@ describe('AppWindow', () => {
     ).marginTop
     expect(Number.parseFloat(downgraded_margin_top)).toBeGreaterThan(0)
     downgraded.unmount()
+  })
+
+  // Collapses to content height on either dock axis — the browser-verified
+  // double-scroll fix. A real Chromium viewport resize genuinely re-evaluates
+  // the `overlay-downgrade` media-query gate, so this drives the actual cap
+  // release rather than reading the stylesheet text.
+
+  describe('root wrapper drops the height cap once downgraded, on either dock axis', () => {
+    test('keeps the caller-set height cap while not downgraded', async () => {
+      await page.viewport(1200, 1200)
+      const wrapper = mountWindowWithHeightCap('w<sm | h<sm')
+      expect(getComputedStyle(wrapper.find('[data-testid="app-window-root"]').element).height).toBe(
+        '300px'
+      )
+    })
+
+    test('drops the height cap once the width axis alone downgrades', async () => {
+      await page.viewport(300, 1200)
+      const wrapper = mountWindowWithHeightCap('w<sm | h<sm')
+      expect(
+        getComputedStyle(wrapper.find('[data-testid="app-window-root"]').element).height
+      ).not.toBe('300px')
+    })
+
+    test('drops the height cap once the height axis alone downgrades', async () => {
+      await page.viewport(1200, 300)
+      const wrapper = mountWindowWithHeightCap('w<sm | h<sm')
+      expect(
+        getComputedStyle(wrapper.find('[data-testid="app-window-root"]').element).height
+      ).not.toBe('300px')
+    })
   })
 
   // A window stamps a constant station, never varying with the surface it is mounted inside.

@@ -231,3 +231,116 @@
     }
   }
 }
+
+/*
+ * `overlay-downgrade-flush`: the width half of `overlay-downgrade` on its own — the
+ * surface has run out of horizontal room, so its left and right edges meet the
+ * viewport. A surface that only ran out of *height* docks to the bottom but keeps
+ * its side margins, so anything that assumes edge-to-edge (a cast shadow that
+ * would fall off-screen) belongs here rather than on `overlay-downgrade`.
+ *
+ * The tiers below are the width tiers of `overlay-downgrade` verbatim; keep the
+ * two in sync.
+ */
+@custom-variant overlay-downgrade-flush {
+  @media (width < theme(--breakpoint-sm)) {
+    &:where([data-below-w], [data-below-w] *) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-msm)) {
+    &:where(
+      [data-below-w='msm'],
+      [data-below-w='msm'] *,
+      [data-below-w='md'],
+      [data-below-w='md'] *,
+      [data-below-w='mlg'],
+      [data-below-w='mlg'] *,
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-md)) {
+    &:where(
+      [data-below-w='md'],
+      [data-below-w='md'] *,
+      [data-below-w='mlg'],
+      [data-below-w='mlg'] *,
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-mlg)) {
+    &:where(
+      [data-below-w='mlg'],
+      [data-below-w='mlg'] *,
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-lg)) {
+    &:where(
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-mxl)) {
+    &:where(
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-xl)) {
+    &:where(
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (width < theme(--breakpoint-2xl)) {
+    &:where([data-below-w='2xl'], [data-below-w='2xl'] *) {
+      @slot;
+    }
+  }
+}
