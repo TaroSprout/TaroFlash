@@ -207,4 +207,91 @@ describe('OverlayHost', () => {
     expect(wrapper.find('[data-testid="entry-content"]').exists()).toBe(false)
     wrapper.unmount()
   })
+
+  // ── Receded wiring: inert and data-receded track the same signal ───────
+
+  function surfaceFor(wrapper, id) {
+    return wrapper
+      .findAll('[data-testid="entry-content"]')
+      .find((surface) => surface.attributes('data-overlay-id') === id)
+  }
+
+  test('two-deep stack: the top entry is neither inert nor receded, the one below is both', async () => {
+    const store = useOverlayStore()
+    pushEntry(store, { id: 'a' })
+
+    const wrapper = mount(OverlayHost, {
+      attachTo: document.body,
+      global: { stubs: { transition: false, 'transition-group': false } }
+    })
+    await flushPromises()
+
+    pushEntry(store, { id: 'b' })
+    await flushPromises()
+
+    const top = surfaceFor(wrapper, 'b')
+    const below = surfaceFor(wrapper, 'a')
+
+    expect(top.attributes('data-receded')).toBe('false')
+    expect(top.attributes('inert')).toBeUndefined()
+    expect(below.attributes('data-receded')).toBe('true')
+    expect(below.attributes('inert')).toBeDefined()
+
+    wrapper.unmount()
+  })
+
+  test('three-deep stack: every non-top entry is both inert and receded, only the top is neither', async () => {
+    const store = useOverlayStore()
+    pushEntry(store, { id: 'a' })
+
+    const wrapper = mount(OverlayHost, {
+      attachTo: document.body,
+      global: { stubs: { transition: false, 'transition-group': false } }
+    })
+    await flushPromises()
+
+    pushEntry(store, { id: 'b' })
+    await flushPromises()
+    pushEntry(store, { id: 'c' })
+    await flushPromises()
+
+    const top = surfaceFor(wrapper, 'c')
+    const middle = surfaceFor(wrapper, 'b')
+    const bottom = surfaceFor(wrapper, 'a')
+
+    expect(top.attributes('data-receded')).toBe('false')
+    expect(top.attributes('inert')).toBeUndefined()
+
+    for (const entry of [middle, bottom]) {
+      expect(entry.attributes('data-receded')).toBe('true')
+      expect(entry.attributes('inert')).toBeDefined()
+    }
+
+    wrapper.unmount()
+  })
+
+  test('a receded entry clears data-receded and any inline filter once it returns to the top', async () => {
+    const store = useOverlayStore()
+    pushEntry(store, { id: 'a' })
+
+    const wrapper = mount(OverlayHost, {
+      attachTo: document.body,
+      global: { stubs: { transition: false, 'transition-group': false } }
+    })
+    await flushPromises()
+
+    pushEntry(store, { id: 'b' })
+    await flushPromises()
+
+    expect(surfaceFor(wrapper, 'a').attributes('data-receded')).toBe('true')
+
+    store.remove('b')
+    await flushPromises()
+
+    const restored = surfaceFor(wrapper, 'a')
+    expect(restored.attributes('data-receded')).toBe('false')
+    expect(restored.element.style.filter).toBe('')
+
+    wrapper.unmount()
+  })
 })
