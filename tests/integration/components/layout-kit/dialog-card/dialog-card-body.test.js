@@ -60,4 +60,12 @@ describe('DialogCardBody', () => {
     const wrapper = mountBody()
     expect(scroller(wrapper).find('[data-testid="body-content"]').exists()).toBe(true)
   })
+
+  // Regression guard: scroll must stay internal to the body on downgrade —
+  // never handed off to the overlay-surface via a visible scroll-overflow override.
+
+  test('never overrides scroll-overflow to visible on downgrade', () => {
+    const wrapper = mountBody()
+    expect(root(wrapper).classes()).not.toContain('overlay-downgrade:[--scroll-overflow:visible]')
+  })
 })

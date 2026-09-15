@@ -285,11 +285,32 @@ describe('AppWindow', () => {
     expect(classes).toContain('overlay-downgrade:rounded-b-none')
   })
 
+  // The side shadow persists whenever only height docks — only a width dock
+  // flushes it to a sheet edge, so the flush swap is gated to the width-only
+  // variant, never the width-or-height one.
+
+  test('keeps the persistent side shadow and flushes it only on the width-axis variant', () => {
+    const wrapper = mountWindow()
+    const classes = wrapper.find('[data-testid="app-window-container"]').classes()
+    expect(classes).toContain('bevel-lg')
+    expect(classes).toContain('overlay-downgrade-flush:bevel-sheet')
+    expect(classes).not.toContain('overlay-downgrade:bevel-sheet')
+  })
+
   test('root wrapper carries the overlay-downgrade mt-auto layout flip class', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-root"]').classes()
     expect(classes).toContain('overlay-downgrade:mt-auto')
     expect(classes).toContain('relative')
+  })
+
+  // Collapses to content height on either dock axis — the browser-verified
+  // double-scroll fix.
+
+  test('root wrapper drops the height cap on either dock axis', () => {
+    const wrapper = mountWindow()
+    const classes = wrapper.find('[data-testid="app-window-root"]').classes()
+    expect(classes).toContain('overlay-downgrade:h-auto!')
   })
 
   // A window stamps a constant station, never varying with the surface it is mounted inside.
