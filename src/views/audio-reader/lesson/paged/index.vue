@@ -74,6 +74,8 @@ let pointer_id = -1
 let band_primed = false
 let internal = false
 let user_active = false
+let settle_target: number | null = null
+let settle_timer: ReturnType<typeof setTimeout> | undefined
 let scroll_pending = false
 let idle_timer: ReturnType<typeof setTimeout> | undefined
 
@@ -211,6 +213,12 @@ function bandHeightOf(paragraph_index: number): number {
   return band_heights.value.get(paragraph_index) ?? 0
 }
 
+function beginSettle(target: number) {
+  settle_target = target
+  clearTimeout(settle_timer)
+  settle_timer = setTimeout(() => (settle_target = null), 1000)
+}
+
 function clampSpread(index: number): number {
   return Math.min(Math.max(index, 0), spread_count.value - 1)
 }
@@ -273,6 +281,7 @@ function commitDelta(delta: number) {
   if (target !== current_index.value) {
     current_index.value = target
     seekToSpread(target)
+    beginSettle(target)
   }
 
   nextTick(recenter)
@@ -283,7 +292,10 @@ function goTo(target: number, seek: boolean) {
   if (clamped === current_index.value) return
 
   current_index.value = clamped
-  if (seek) seekToSpread(clamped)
+  if (seek) {
+    seekToSpread(clamped)
+    beginSettle(clamped)
+  }
   nextTick(recenter)
 }
 
@@ -373,7 +385,13 @@ watch(
   () => active_word.value,
   () => {
     if (active_word.value < 0 || user_active || scroll_pending) return
+
     const target = spreadOfWord(active_word.value)
+    if (settle_target !== null) {
+      if (target !== settle_target) return
+      settle_target = null
+    }
+
     if (target !== current_index.value) goTo(target, false)
   },
   { flush: 'post' }
