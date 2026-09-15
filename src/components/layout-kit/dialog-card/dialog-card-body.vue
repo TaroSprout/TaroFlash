@@ -22,7 +22,7 @@ const scroller_class = computed(() =>
   <scroll-region
     data-testid="dialog-card-body"
     :data-overflow-bleed="overflow_bleed || undefined"
-    class="relative flex min-h-0 flex-col"
+    class="relative flex min-h-0 flex-col overlay-downgrade:[--scroll-overflow:visible]"
     :style="{ '--scroll-track-inset-end': 'var(--dialog-body-pb, var(--dialog-px))' }"
     :scroller_class="scroller_class"
   >
