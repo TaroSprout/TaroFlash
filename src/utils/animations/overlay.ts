@@ -1,7 +1,7 @@
 import { defineMotion } from '@/utils/motion/driver'
 import type { MotionHandle } from '@/utils/motion/types'
 
-const ENTER_SETTLE_DELAY = 0.033
+const ENTER_SETTLE_DELAY = 0.033 // two-frame hold at 60fps so the surface mounts and lays out before the enter tween starts
 
 const DIALOG_RISE = '200px' // structural geometry, not a vocabulary travel token
 const SHEET_TRAVEL = '100%' // structural geometry, not a vocabulary travel token

@@ -1,11 +1,14 @@
+import '@/styles/main.css'
+
 import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
 import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
-function mountSurface(props = {}) {
+function mountSurface(props = {}, { attach = false } = {}) {
   return shallowMount(OverlaySurface, {
     props,
+    ...(attach ? { attachTo: document.body } : {}),
     global: {
       provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
     }
@@ -19,19 +22,22 @@ describe('OverlaySurface', () => {
   // viewport's top edge once downgraded.
 
   describe('full_bleed', () => {
-    test('defaults to false — keeps the overlay-downgrade top-gutter class', () => {
-      const wrapper = mountSurface()
-      expect(wrapper.classes()).toContain('overlay-downgrade:pt-4')
+    test('defaults to false — keeps the overlay-downgrade top-gutter padding once downgraded', () => {
+      const wrapper = mountSurface({ sheet_at: 'w<2xl' }, { attach: true })
+      expect(getComputedStyle(wrapper.element).paddingTop).toBe('16px')
+      wrapper.unmount()
     })
 
-    test('true drops the overlay-downgrade top-gutter class', () => {
-      const wrapper = mountSurface({ full_bleed: true })
-      expect(wrapper.classes()).not.toContain('overlay-downgrade:pt-4')
+    test('true drops the overlay-downgrade top-gutter padding once downgraded', () => {
+      const wrapper = mountSurface({ full_bleed: true, sheet_at: 'w<2xl' }, { attach: true })
+      expect(getComputedStyle(wrapper.element).paddingTop).toBe('0px')
+      wrapper.unmount()
     })
 
-    test('false explicitly keeps the top-gutter class, same as the default', () => {
-      const wrapper = mountSurface({ full_bleed: false })
-      expect(wrapper.classes()).toContain('overlay-downgrade:pt-4')
+    test('false explicitly keeps the top-gutter padding, same as the default', () => {
+      const wrapper = mountSurface({ full_bleed: false, sheet_at: 'w<2xl' }, { attach: true })
+      expect(getComputedStyle(wrapper.element).paddingTop).toBe('16px')
+      wrapper.unmount()
     })
   })
 

@@ -15,6 +15,7 @@ type MobileEditorProps = {
 const { api } = defineProps<MobileEditorProps>()
 
 const { t } = useI18n()
+
 provide(mobileCardEditorKey, api)
 
 const { index, cards, onClosed } = api
