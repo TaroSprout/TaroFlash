@@ -105,6 +105,8 @@ const LessonCardStub = defineComponent({
 // ── Component import (after mocks) ────────────────────────────────────────────
 
 import CollectionEditModal from '@/views/audio-reader/collection-edit-modal.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -116,9 +118,10 @@ const LESSONS = [
 function mountModal(props = {}) {
   const closeMock = vi.fn()
   const wrapper = shallowMount(CollectionEditModal, {
-    props: { collection_id: 1, close: closeMock, ...props },
+    props: { collection_id: 1, ...props },
     global: {
-      stubs: { UiButton: UiButtonStub, AppWindow: AppWindowStub, LessonCard: LessonCardStub }
+      stubs: { UiButton: UiButtonStub, AppWindow: AppWindowStub, LessonCard: LessonCardStub },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close: closeMock }) }
     }
   })
   return { wrapper, closeMock }

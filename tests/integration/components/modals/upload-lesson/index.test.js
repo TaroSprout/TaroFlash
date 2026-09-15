@@ -61,21 +61,28 @@ const ScriptSelectStub = defineComponent({
 })
 
 import UploadLesson from '@/views/audio-reader/upload-lesson-modal/index.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountModal(close = vi.fn()) {
+function mountModal(overrides = {}) {
+  const close = vi.fn()
+  const dismiss = vi.fn()
   return {
     close,
+    dismiss,
     wrapper: shallowMount(UploadLesson, {
-      props: { collection_id: 1, close },
+      props: { collection_id: 1 },
       global: {
         stubs: {
           UiInput: UiInputStub,
           UiButton: UiButtonStub,
           ScriptSelect: ScriptSelectStub,
-          AppWindow: false
-        }
+          AppWindow: false,
+          OverlaySurface: false
+        },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss, ...overrides }) }
       }
     })
   }
@@ -149,10 +156,10 @@ describe('UploadLesson (index.vue)', () => {
     expect(actionButtons(wrapper)[1].props('disabled')).toBe(false)
   })
 
-  test('cancel button calls close(undefined)', async () => {
-    const { wrapper, close } = mountModal()
+  test('cancel button calls dismiss', async () => {
+    const { wrapper, dismiss } = mountModal()
     await actionButtons(wrapper)[0].vm.$emit('press')
-    expect(close).toHaveBeenCalledWith(undefined)
+    expect(dismiss).toHaveBeenCalled()
   })
 
   test('submitting calls the mutation with the trimmed title, file, and script, and closes with the lesson', async () => {
@@ -229,10 +236,10 @@ describe('UploadLesson (index.vue)', () => {
     expect(wrapper.find('[data-testid="upload-lesson__error"]').exists()).toBe(true)
   })
 
-  test('app-window close event calls close(undefined)', async () => {
-    const { wrapper, close } = mountModal()
+  test('app-window close event calls dismiss', async () => {
+    const { wrapper, dismiss } = mountModal()
     await wrapper.findComponent(AppWindow).vm.$emit('close')
-    expect(close).toHaveBeenCalledWith(undefined)
+    expect(dismiss).toHaveBeenCalled()
   })
 
   test('script-select v-model updates the script sent to the mutation', async () => {

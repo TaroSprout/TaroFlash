@@ -31,15 +31,22 @@ vi.mock('@/views/settings/tab-subscription/use-change-cc', () => ({
 }))
 
 import ChangeCardModal from '@/views/settings/tab-subscription/change-cc-modal.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
-function mountChangeCardModal({ has_existing_card = false, close = vi.fn() } = {}) {
+function mountChangeCardModal({
+  has_existing_card = false,
+  close = vi.fn(),
+  dismiss = vi.fn()
+} = {}) {
   return shallowMount(ChangeCardModal, {
-    props: { has_existing_card, close },
+    props: { has_existing_card },
     global: {
       stubs: { DialogCard: false, DialogCardHeader: false },
-      renderStubDefaultSlot: true
+      renderStubDefaultSlot: true,
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss }) }
     }
   })
 }
@@ -134,12 +141,12 @@ describe('ChangeCardModal — close', () => {
     expect(findButton(wrapper, 'dialog-card__close').props('disabled')).toBe(true)
   })
 
-  test('calls close() with no argument when the close button is pressed', () => {
-    const close = vi.fn()
-    const wrapper = mountChangeCardModal({ close })
+  test('calls dismiss when the close button is pressed', () => {
+    const dismiss = vi.fn()
+    const wrapper = mountChangeCardModal({ dismiss })
 
     findButton(wrapper, 'dialog-card__close').vm.$emit('press')
 
-    expect(close).toHaveBeenCalledWith()
+    expect(dismiss).toHaveBeenCalled()
   })
 })

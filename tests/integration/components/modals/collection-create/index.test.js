@@ -47,16 +47,26 @@ const UiButtonStub = defineComponent({
 })
 
 import CollectionCreate from '@/views/audio-reader/collection-create-modal.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountModal(close = vi.fn()) {
+function mountModal(overrides = {}) {
+  const close = vi.fn()
+  const dismiss = vi.fn()
   return {
     close,
+    dismiss,
     wrapper: shallowMount(CollectionCreate, {
-      props: { close },
       global: {
-        stubs: { UiInput: UiInputStub, UiButton: UiButtonStub, AppWindow: false }
+        stubs: {
+          UiInput: UiInputStub,
+          UiButton: UiButtonStub,
+          AppWindow: false,
+          OverlaySurface: false
+        },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss, ...overrides }) }
       }
     })
   }
@@ -94,10 +104,10 @@ describe('CollectionCreate (index.vue)', () => {
     expect(actionButtons(wrapper)[1].props('disabled')).toBe(false)
   })
 
-  test('cancel button calls close(undefined)', async () => {
-    const { wrapper, close } = mountModal()
+  test('cancel button calls dismiss', async () => {
+    const { wrapper, dismiss } = mountModal()
     await actionButtons(wrapper)[0].vm.$emit('press')
-    expect(close).toHaveBeenCalledWith(undefined)
+    expect(dismiss).toHaveBeenCalled()
   })
 
   test('submitting calls the mutation with the trimmed title and closes with the result', async () => {
