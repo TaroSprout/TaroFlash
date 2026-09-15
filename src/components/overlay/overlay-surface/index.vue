@@ -3,7 +3,7 @@ import type { OverlaySurfaceProps } from './props'
 import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { useOverlayDowngrade } from './downgrade'
 
-const { mode = 'dialog', sheet_at } = defineProps<OverlaySurfaceProps>()
+const { mode = 'dialog', sheet_at, full_bleed = false } = defineProps<OverlaySurfaceProps>()
 
 // The context is provided by overlay-entry (a true ancestor); the surface only
 // consumes `dismiss` for outside-clicks and exposes `is_downgraded` to its slot.
@@ -17,7 +17,8 @@ const { data_below_w, data_below_h, is_downgraded } = useOverlayDowngrade(sheet_
     :data-overlay-mode="mode"
     :data-below-w="data_below_w"
     :data-below-h="data_below_h"
-    class="pointer-events-none absolute inset-0 flex items-center justify-center overlay-downgrade:pointer-events-auto overlay-downgrade:flex-col overlay-downgrade:justify-start overlay-downgrade:overflow-y-auto overlay-downgrade:overscroll-y-contain overlay-downgrade:pt-4 overlay-downgrade:[--overlay-downgraded:1]"
+    class="pointer-events-none absolute inset-0 flex items-center justify-center overlay-downgrade:pointer-events-auto overlay-downgrade:flex-col overlay-downgrade:justify-start overlay-downgrade:overflow-y-auto overlay-downgrade:overscroll-y-contain overlay-downgrade:[--overlay-downgraded:1]"
+    :class="full_bleed ? '' : 'overlay-downgrade:pt-4'"
     @click.self="dismiss"
   >
     <slot :is_downgraded="is_downgraded"></slot>
