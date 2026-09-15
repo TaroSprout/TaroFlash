@@ -1,5 +1,5 @@
-import { supabase } from '@/supabase-client'
-import type { Session, User } from '@supabase/supabase-js'
+import { AUTH_STORAGE_KEY, supabase } from '@/supabase-client'
+import { isAuthRetryableFetchError, type Session, type User } from '@supabase/supabase-js'
 import logger from '@/utils/logger'
 
 export type SignupEmailOptions = {
@@ -44,22 +44,64 @@ const GET_SESSION_TIMEOUT_MS = 2000
  * The session this browser is holding, or `null`.
  *
  * Raced against a 2s timeout: a dead connection makes the silent token renewal
- * retry for far longer than anything waiting on identity can sit still for.
+ * retry for far longer than anything waiting on identity can sit still for. A
+ * timeout falls back to the locally-persisted session instead of treating the
+ * member as logged out — a slow cold-boot token refresh (a post-deploy blip,
+ * say) must not read as a sign-out; the next query repairs the token.
  * →[K:session-restore-retry-storm]
  */
 export async function getSession(): Promise<Session | null> {
-  const { data, error } = await Promise.race([
-    supabase.auth.getSession(),
-    new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error('getSession timed out')), GET_SESSION_TIMEOUT_MS)
+  const outcome = await Promise.race([
+    supabase.auth.getSession().then((result) => ({ kind: 'live' as const, result })),
+    new Promise<{ kind: 'timeout' }>((resolve) => {
+      window.setTimeout(() => resolve({ kind: 'timeout' }), GET_SESSION_TIMEOUT_MS)
     })
   ])
 
-  if (error) {
-    throw new Error(error.message)
-  }
+  if (outcome.kind === 'timeout') return readPersistedSession()
 
-  return data?.session
+  const { data, error } = outcome.result
+  if (error) throw new Error(error.message)
+
+  return data.session
+}
+
+/**
+ * Reads the session straight from localStorage, bypassing supabase's own
+ * async `getSession` — used only when that call is too slow to wait on, so a
+ * possibly-expired session beats treating the member as logged out.
+ */
+function readPersistedSession(): Session | null {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw)
+    const session = parsed?.currentSession ?? parsed
+
+    return session?.refresh_token ? (session as Session) : null
+  } catch {
+    return null
+  }
+}
+
+export type SessionRefreshOutcome = 'refreshed' | 'rejected' | 'unreachable'
+
+/**
+ * Attempts to renew the session, classifying a failure so a caller can decide
+ * whether to give up.
+ *
+ * `'unreachable'` means the request itself failed to complete — the refresh
+ * token may still be good — so it must never be treated as grounds to end the
+ * session; only `'rejected'` means the server actually refused the token.
+ */
+export async function refreshSession(): Promise<SessionRefreshOutcome> {
+  const { data, error } = await supabase.auth.refreshSession()
+
+  if (data.session) return 'refreshed'
+  if (error && isAuthRetryableFetchError(error)) return 'unreachable'
+
+  return 'rejected'
 }
 
 /**

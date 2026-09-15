@@ -22,6 +22,7 @@ const {
   mockUnlinkGoogleIdentity,
   mockIsPasswordRecoveryUrl,
   mockWaitForPasswordRecovery,
+  mockRefreshSession,
   mockPush
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
@@ -42,6 +43,7 @@ const {
   mockUnlinkGoogleIdentity: vi.fn(),
   mockIsPasswordRecoveryUrl: vi.fn(),
   mockWaitForPasswordRecovery: vi.fn(),
+  mockRefreshSession: vi.fn(),
   mockPush: vi.fn()
 }))
 
@@ -56,7 +58,7 @@ const { mockOnSignedOut, mockIsAuthError } = vi.hoisted(() => ({
 
 const { mockQueryCache, mockCloseAllModals, mockTaroPhoneReset, mockClearPersistedSession } =
   vi.hoisted(() => ({
-    mockQueryCache: { getEntries: vi.fn(() => []), remove: vi.fn() },
+    mockQueryCache: { getEntries: vi.fn(() => []), remove: vi.fn(), invalidateQueries: vi.fn() },
     mockCloseAllModals: vi.fn(),
     mockTaroPhoneReset: vi.fn(),
     mockClearPersistedSession: vi.fn()
@@ -108,6 +110,7 @@ vi.mock('@/api/session', () => ({
   unlinkGoogleIdentity: mockUnlinkGoogleIdentity,
   isPasswordRecoveryUrl: mockIsPasswordRecoveryUrl,
   waitForPasswordRecovery: mockWaitForPasswordRecovery,
+  refreshSession: mockRefreshSession,
   onSignedOut: mockOnSignedOut,
   isAuthError: mockIsAuthError,
   isNewAccountSession: mockIsNewAccountSession
@@ -142,6 +145,7 @@ beforeEach(() => {
   mockUnlinkGoogleIdentity.mockReset()
   mockIsPasswordRecoveryUrl.mockReset()
   mockWaitForPasswordRecovery.mockReset()
+  mockRefreshSession.mockReset()
   mockPush.mockReset()
   mockNotice.error.mockReset()
   mockNotice.warn.mockReset()
@@ -152,6 +156,7 @@ beforeEach(() => {
   mockQueryCache.getEntries.mockReset()
   mockQueryCache.getEntries.mockReturnValue([])
   mockQueryCache.remove.mockReset()
+  mockQueryCache.invalidateQueries.mockReset()
   mockCloseAllModals.mockReset()
   mockTaroPhoneReset.mockReset()
   mockClearPersistedSession.mockReset()
@@ -850,33 +855,90 @@ describe('useSessionStore', () => {
   // ── handleAuthError / forceLogout ────────────────────────────
 
   describe('handleAuthError', () => {
-    test('forces a logout when isAuthError returns true', async () => {
-      const user = { id: 'u1', aud: 'authenticated' }
-      mockGetSession.mockResolvedValueOnce({ user })
-      mockIsAuthError.mockReturnValueOnce(true)
-      mockLogout.mockResolvedValueOnce(undefined)
-      const store = useSessionStore()
-      await store.restoreSession()
-
-      store.handleAuthError({ status: 401 })
-      await Promise.resolve()
-
-      expect(store.user).toBeUndefined()
-      expect(mockNotice.warn).toHaveBeenCalledOnce()
-    })
-
-    test('does NOT force a logout when isAuthError returns false', async () => {
+    test('ignores a non-auth error — no refreshSession call, no side effects', async () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(false)
       const store = useSessionStore()
       await store.restoreSession()
 
-      store.handleAuthError({ status: 500 })
+      const result = store.handleAuthError({ status: 500 })
       await Promise.resolve()
 
+      expect(result).toBeUndefined()
+      expect(mockRefreshSession).not.toHaveBeenCalled()
       expect(store.user).toEqual(user)
       expect(mockNotice.warn).not.toHaveBeenCalled()
+    })
+
+    test('"refreshed" outcome invalidates the query cache and does not force a logout', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(true)
+      mockRefreshSession.mockResolvedValueOnce('refreshed')
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.handleAuthError({ status: 401 })
+
+      expect(mockQueryCache.invalidateQueries).toHaveBeenCalledOnce()
+      expect(mockLogout).not.toHaveBeenCalled()
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+      expect(store.user).toEqual(user)
+    })
+
+    test('"unreachable" outcome preserves the session — no invalidation, no forced logout', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(true)
+      mockRefreshSession.mockResolvedValueOnce('unreachable')
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.handleAuthError({ status: 401 })
+
+      expect(mockQueryCache.invalidateQueries).not.toHaveBeenCalled()
+      expect(mockLogout).not.toHaveBeenCalled()
+      expect(mockNotice.warn).not.toHaveBeenCalled()
+      expect(store.user).toEqual(user)
+    })
+
+    test('"rejected" outcome forces a logout — the session-expired path', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValueOnce(true)
+      mockRefreshSession.mockResolvedValueOnce('rejected')
+      mockLogout.mockResolvedValueOnce(undefined)
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      await store.handleAuthError({ status: 401 })
+
+      expect(store.user).toBeUndefined()
+      expect(mockNotice.warn).toHaveBeenCalledOnce()
+      expect(mockQueryCache.invalidateQueries).not.toHaveBeenCalled()
+    })
+
+    test('concurrent auth errors share one in-flight refresh — refreshSession runs only once', async () => {
+      const user = { id: 'u1', aud: 'authenticated' }
+      mockGetSession.mockResolvedValueOnce({ user })
+      mockIsAuthError.mockReturnValue(true)
+      let resolveRefresh
+      mockRefreshSession.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRefresh = resolve
+        })
+      )
+      const store = useSessionStore()
+      await store.restoreSession()
+
+      const first = store.handleAuthError({ status: 401 })
+      const second = store.handleAuthError({ status: 401 })
+
+      resolveRefresh('refreshed')
+      await Promise.all([first, second])
+
+      expect(mockRefreshSession).toHaveBeenCalledOnce()
     })
   })
 
@@ -937,10 +999,10 @@ describe('useSessionStore', () => {
     test('is a no-op when already logged out, preventing its own supaLogout from re-triggering it', async () => {
       // Store is never authenticated in this test (no restoreSession call).
       mockIsAuthError.mockReturnValueOnce(true)
+      mockRefreshSession.mockResolvedValueOnce('rejected')
       const store = useSessionStore()
 
-      store.handleAuthError({ status: 401 })
-      await Promise.resolve()
+      await store.handleAuthError({ status: 401 })
 
       expect(mockLogout).not.toHaveBeenCalled()
       expect(mockNotice.warn).not.toHaveBeenCalled()
@@ -950,12 +1012,12 @@ describe('useSessionStore', () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(true)
+      mockRefreshSession.mockResolvedValueOnce('rejected')
       mockLogout.mockResolvedValueOnce(undefined)
       const store = useSessionStore()
       await store.restoreSession()
 
-      store.handleAuthError({ status: 401 })
-      await Promise.resolve()
+      await store.handleAuthError({ status: 401 })
 
       expect(mockNotice.warn).toHaveBeenCalledWith(
         'session.expired-error',
@@ -973,13 +1035,13 @@ describe('useSessionStore', () => {
       const user = { id: 'u1', aud: 'authenticated' }
       mockGetSession.mockResolvedValueOnce({ user })
       mockIsAuthError.mockReturnValueOnce(true)
+      mockRefreshSession.mockResolvedValueOnce('rejected')
       mockLogout.mockResolvedValueOnce(undefined)
       mockQueryCache.getEntries.mockReturnValueOnce(['entry-a'])
       const store = useSessionStore()
       await store.restoreSession()
 
-      store.handleAuthError({ status: 401 })
-      await Promise.resolve()
+      await store.handleAuthError({ status: 401 })
 
       expect(mockCloseAllModals).toHaveBeenCalledOnce()
       expect(mockQueryCache.remove).toHaveBeenCalledWith('entry-a')
