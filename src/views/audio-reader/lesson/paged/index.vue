@@ -45,6 +45,7 @@ const {
   closeTerm,
   playFromHere,
   playClip,
+  seekToWord,
   player
 } = reader
 
@@ -78,6 +79,7 @@ let captured = false
 let dragging = false
 let decided: 'swipe' | 'scroll' | null = null
 let band_primed = false
+let turning = false
 
 let viewport_ro: ResizeObserver | undefined
 let frame_ro: ResizeObserver | undefined
@@ -325,8 +327,15 @@ function onPointerUp(event: PointerEvent) {
 }
 
 function turnPage(target: number) {
-  following.value = false
-  slideTo(target)
+  turning = true
+  seekToSpread(target)
+  slideTo(target).then(() => (turning = false))
+}
+
+function seekToSpread(spread: number) {
+  const page_index = two_page.value ? spread * 2 : spread
+  const first = pages.value[page_index]?.[0]?.words[0]?.index
+  if (first !== undefined) seekToWord(first)
 }
 
 function onPointerCancel(event: PointerEvent) {
@@ -384,7 +393,7 @@ watch(
 watch(
   () => active_word.value,
   () => {
-    if (active_word.value < 0) return
+    if (active_word.value < 0 || turning) return
     const target = spreadOfWord(active_word.value)
 
     if (!following.value) {

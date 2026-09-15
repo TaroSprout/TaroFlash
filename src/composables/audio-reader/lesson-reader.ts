@@ -193,6 +193,20 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     closeTerm()
   }
 
+  function seekToWord(word_index: number) {
+    const start = firstStartFrom(word_index)
+    if (start === undefined) return
+    player.seek(start)
+  }
+
+  function firstStartFrom(word_index: number): number | undefined {
+    for (let i = word_index; i < words.value.length; i++) {
+      const start = words.value[i]?.start
+      if (start !== undefined) return start
+    }
+    return undefined
+  }
+
   // Play only the selected phrase — its first word's start to its last word's end
   // — then stop. Leaves the term surface open so its translation stays readable.
   function playWordRange(first_index: number, last_index: number) {
@@ -218,6 +232,7 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     closeTerm,
     playFromHere,
     playClip,
+    seekToWord,
     player
   }
 }
