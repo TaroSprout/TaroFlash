@@ -247,8 +247,15 @@ target § 4b and § 5d already use), worktree-isolated the same way, and it capt
 before it fixes and commits. The orchestrator merges that branch forward into the integration branch on the
 home tree (single-ticket or freeform run: the one branch already checked out there). **This is the
 dispatch-and-merge-forward mechanic** — dispatch the fix to a `ticket-builder` (or `general-purpose` per
-above), merge its branch forward on report-back — reused verbatim by § 4e, § PR feedback loop, and the
-initial merge at § 4a. Tests stay untouched for the whole round — no per-fix `update-tests`, no mid-round
+above), merge its branch forward on report-back, **then tear down that dispatch's own worktree and the
+branch it ran on** — `isolation: worktree` hands each dispatch a fresh worktree on a harness-created
+branch of its own, distinct from the ticket's branch it checked out or merged; once its commits are
+merged forward, both are dead weight. Remove the worktree (`git status --short` inside it first, per
+[`git-workflow`](../../rules/git-workflow.md), →[K:worktree-removal-survives-failure]), then delete the
+harness branch (`git branch -d`) so it doesn't outlive the dispatch that made it. This is in addition to,
+never instead of, the ticket-builder's own original worktree/branch, which § 4b step 1, § 5f, and § Full
+cleanup already account for — reused verbatim by § 4e, § PR feedback loop, and the initial merge at § 4a.
+Tests stay untouched for the whole round — no per-fix `update-tests`, no mid-round
 ask. Repeat fixes until the user says the round is done; **that close, not an ask mid-round, is what fires
 the test pass** — run § 4b's held dispatch now, one consolidated `update-tests` pass per branch that
 deferred it, covering the original build plus everything the round changed. Dispatch self-heal for this
