@@ -1,15 +1,24 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
 import DialogCardBody from '@/components/layout-kit/dialog-card/dialog-card-body.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const mounted = []
+
+afterEach(() => {
+  while (mounted.length > 0) mounted.pop().unmount()
+})
+
 function mountBody(props = {}) {
-  return mount(DialogCardBody, {
+  const wrapper = mount(DialogCardBody, {
     props,
+    attachTo: document.body,
     slots: { default: () => h('div', { 'data-testid': 'body-content' }, 'content') }
   })
+  mounted.push(wrapper)
+  return wrapper
 }
 
 function root(wrapper) {
@@ -61,11 +70,13 @@ describe('DialogCardBody', () => {
     expect(scroller(wrapper).find('[data-testid="body-content"]').exists()).toBe(true)
   })
 
-  // Regression guard: scroll must stay internal to the body on downgrade —
-  // never handed off to the overlay-surface via a visible scroll-overflow override.
+  // Regression guard: scroll must stay internal to the body — never handed off
+  // to the overlay-surface via a `--scroll-overflow` override. Asserts the
+  // scroller's real computed overflow, not the reverted class string, so any
+  // future spelling of the same hand-off is caught too.
 
-  test('never overrides scroll-overflow to visible on downgrade', () => {
+  test('the scroller keeps its own overflow-y: auto — never handed off via --scroll-overflow', () => {
     const wrapper = mountBody()
-    expect(root(wrapper).classes()).not.toContain('overlay-downgrade:[--scroll-overflow:visible]')
+    expect(getComputedStyle(scroller(wrapper).element).overflowY).toBe('auto')
   })
 })

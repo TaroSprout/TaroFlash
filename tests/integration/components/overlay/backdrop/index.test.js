@@ -1,4 +1,6 @@
-import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
+import '@/styles/main.css' // required so the tier-full blur-gate assertion below reads a real computed value instead of passing vacuously
+
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { markRaw } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
@@ -18,12 +20,19 @@ function pushEntry(store, overrides = {}) {
 }
 
 function mountBackdrop(request_close = vi.fn()) {
-  return mount(OverlayBackdrop, { props: { requestClose: request_close } })
+  return mount(OverlayBackdrop, {
+    props: { requestClose: request_close },
+    attachTo: document.body
+  })
 }
 
 describe('OverlayBackdrop', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-motion')
   })
 
   test('does not render when the overlay stack is empty', () => {
@@ -42,14 +51,24 @@ describe('OverlayBackdrop', () => {
   // Dims unconditionally but blurs only at tier-full — the blur gate must
   // never fold into a bare, ungated class regardless of reduced motion.
 
-  test('dims unconditionally and gates blur behind tier-full, never bare', () => {
+  test.each(['lean', 'minimal'])('data-motion="%s": dims without blurring', (tier) => {
+    document.documentElement.setAttribute('data-motion', tier)
     const store = useOverlayStore()
     pushEntry(store)
 
-    const classes = mountBackdrop().find('[data-testid="overlay-backdrop"]').classes()
-    expect(classes).toContain('bg-black/10')
-    expect(classes).toContain('tier-full:backdrop-blur-4')
-    expect(classes).not.toContain('backdrop-blur-4')
+    const style = getComputedStyle(mountBackdrop().find('[data-testid="overlay-backdrop"]').element)
+    expect(style.backgroundColor).toBe('oklab(0 0 0 / 0.1)')
+    expect(style.backdropFilter).toBe('none')
+  })
+
+  test('data-motion="full": dims and blurs', () => {
+    document.documentElement.setAttribute('data-motion', 'full')
+    const store = useOverlayStore()
+    pushEntry(store)
+
+    const style = getComputedStyle(mountBackdrop().find('[data-testid="overlay-backdrop"]').element)
+    expect(style.backgroundColor).toBe('oklab(0 0 0 / 0.1)')
+    expect(style.backdropFilter).toBe('blur(4px)')
   })
 
   test('a click requests close on the topmost entry', async () => {
