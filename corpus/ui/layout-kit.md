@@ -4,7 +4,7 @@ domain: ui
 status: current
 hazard: true
 related: [dialog-card]
-updated: 2026-08-30
+updated: 2026-09-15
 ---
 
 # The window family
@@ -39,38 +39,31 @@ needing to know:
 
 ## Docking drops the body scroller
 
-A viewport too short or too narrow to hold the window docks it to the bottom
-edge. Only running out of _width_ also makes `app-window` drop whatever height
-its caller set and grow to fit its content; running out of _height_ alone
-leaves the cap alone. Docking is the `mobile-modal` variant in
-`src/styles/mobile-modal-variant.css`, whose width half is the sibling
-`mobile-modal-flush`: pure media queries plus attribute selectors, no JS flag,
-so every part of this state is expressible as a CSS variant
+A viewport too short or too narrow to hold the window docks it into the
+overlay's own sheet. Every window is wrapped in `overlay-surface`, and the
+`overlay-downgrade` CSS variant that mounting applies fires on either axis —
+running out of width or running out of height both trip it, with no
+distinction between the two. Docking carries no JS flag: `overlay-downgrade`
+is pure media queries plus attribute selectors
 →[K:mid-gesture-mutation-kills-momentum-scroll].
 
-> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A window docked on width has exactly one scroller, the sheet it sits in — its own body must stop scrolling or the two fight.**
-> Two things get in the way of switching the body off. A caller's height cap
-> (feedback-board's `msm:h-196`, admin's `h-205`) is a same-property variant
-> utility whose cascade order against `mobile-modal-flush:` isn't guaranteed, so
-> the window root drops the cap with an important `mobile-modal-flush:h-auto!`
-> instead of a plain utility. The body's `overflow-y` can't be switched off by
-> a utility either — `scroll-region` owns it in a scoped stylesheet at a specificity a
-> `:where`-wrapped variant utility loses to — so the window sets
-> `--scroll-overflow: visible` for the region to read. That variable
-> inherits, so a scroll region mounted deeper inside a docked window's body
-> would stop scrolling too; there are none today, and "nothing inside a
-> docked window scrolls" is arguably the rule anyway, but the reach is wider
-> than the body scroller alone.
+> [!HAZARD] [K:docked-app-window-drops-body-scroll] **A docked window has exactly one scroller, the `overlay-surface` sheet it sits in — its own body collapses to content instead of fighting it for scroll.**
+> A caller's height cap (feedback-board's `msm:h-196`, admin's `h-205`, settings'
+> `h-187`) is a same-property variant utility whose cascade order against
+> `overlay-downgrade:` isn't guaranteed, so the window root drops the cap with
+> an important `overlay-downgrade:h-auto!` instead of a plain utility. With the
+> cap gone, the window grows to fit whatever the current tab holds and changes
+> height as the tab changes — the body's `ScrollRegion` never overflows, so it
+> never needs to scroll. `overlay-surface` itself is what switches on:
+> `overlay-downgrade:overflow-y-auto` there is the one scroller a docked
+> window's content runs inside.
 >
-> Both utilities ride `mobile-modal-flush:`, not `mobile-modal:`, so neither
-> fires on a short-but-wide viewport — which is the point. A fixed-height
-> window (settings' `h-187`, deck settings' `h-181.5`) docks to the bottom
-> edge there but keeps its cap and keeps running its own body scroller inside
-> the sheet, rather than collapsing to whatever the current tab happens to
-> hold and changing height as the tab changes. Every window behaves this way;
-> it is not something a caller opts into.
+> Every window behaves this way on **either** dock axis; it is not something a
+> caller opts into, and there is no longer a fixed-height window that docks
+> while keeping its own cap and its own body scroller — that shape retired
+> with the migration to `overlay-surface`.
 
-With the cap gone on width, the scroller's `scrollHeight` equals its
+With the cap gone, the body scroller's `scrollHeight` equals its
 `clientHeight`, `use-scroll-metrics` reports not-overflowing, and the scroll handle needs no
 hiding branch of its own — it's simply never rendered.
 
