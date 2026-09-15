@@ -46,16 +46,36 @@ A bullet that fails any gate is not a rule. Cut it or rewrite it.
   - Bad: `paths: ['src/**/*.{ts,vue}']` on a rule about migration ordering.
   - Good: `paths: ['supabase/migrations/**']`.
 - **One clause.** The bold lead is a label, not budget — the rule is the single sentence after it.
-  A second sentence is either a second rule (split it) or rationale (cut it); a trailing Bad/Good
-  pair illustrates and doesn't count toward the sentence.
+  A second sentence, or a second load-bearing clause stitched onto the first with a dash or
+  semicolon, is a second rule: split it into its own bullet, never absorb it. Rationale is cut, not
+  smuggled in as a clause; a trailing Bad/Good pair illustrates and doesn't count toward the
+  sentence.
   - Bad: `**Extract the fetch.** Components that both fetch and render are hard to test and reuse,
 so pull data access into a composable once the component grows past a couple of props.`
   - Good: `A component that both renders and fetches gets split — the fetch moves to a composable.`
-- **Lossless.** The cut is the rationale, never the clause a reviewer holds against the diff — a
-  rule that won't compress without losing that clause stays longer; length is never the gate, the
-  clause surviving it is.
+- **Lossless.** A cut clause is rationale — restating what the reviewer already knows — never the
+  discriminator that decides pass or fail. Losing the discriminator on compression isn't licence to
+  lengthen the sentence to keep it; it's the signal to promote that clause to its own bullet, per
+  One clause above. The sentence stays one clause either way — the discriminator survives as a rule,
+  not as a longer rule.
   - Bad: `Never write a comment.` — short, but the discriminator (derivable from the code) is gone.
   - Good: `A comment survives only if you could not derive it from the code.`
+- **Collapses back.** The dual of One clause: after splitting, check whether the resulting bullets
+  are really one rule at two zoom levels. If an adjacent bullet's whole content could move onto
+  another bullet as its example without losing a pass/fail clause of its own, it isn't a standing
+  rule — fold it into the bullet it illustrates.
+  - Bad: `Never let a component's root declare a property a caller overrides.` next to a separate
+    bullet: `This holds whether the component declares it as a template utility or a
+same-specificity style-block rule.`
+  - Good: one bullet — `Never let a component's root declare a property a caller overrides — this
+catches a template utility and a same-specificity style-block rule alike.`
+
+## Examples earn their place
+
+A bare bullet is the default — an inline Bad/Good pair is the actual bulk of a rule file, so it isn't
+stapled on by habit. Add one only when the sentence alone leaves the failure mode ambiguous: a reader
+could satisfy the words and still miss what the rule is really ruling out. A bullet whose violation
+is obvious from the sentence ships bare.
 
 ## Forbidden constructs
 
