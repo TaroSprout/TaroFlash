@@ -9,7 +9,7 @@ const { collectionsDataRef, openCollectionMock, editModalOpenMock, createModalOp
     collectionsDataRef: { value: [] },
     openCollectionMock: vi.fn(),
     editModalOpenMock: vi.fn(),
-    createModalOpenMock: vi.fn().mockReturnValue({ response: Promise.resolve(undefined) })
+    createModalOpenMock: vi.fn().mockReturnValue({ result: Promise.resolve(undefined) })
   }))
 
 vi.mock('@/api/lessons', () => ({
@@ -102,7 +102,7 @@ beforeEach(() => {
   collectionsDataRef.value = []
   openCollectionMock.mockClear()
   editModalOpenMock.mockClear()
-  createModalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+  createModalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
 })
 
 describe('AudioReaderSection', () => {
@@ -167,7 +167,7 @@ describe('AudioReaderSection', () => {
 
     test('opens edit modal for the new collection when the create modal resolves with one', async () => {
       const newCollection = { id: 99, title: 'New', lesson_count: 0, created_at: '' }
-      createModalOpenMock.mockReturnValue({ response: Promise.resolve(newCollection) })
+      createModalOpenMock.mockReturnValue({ result: Promise.resolve(newCollection) })
       const wrapper = mountSection()
       await wrapper.find('[data-testid="audio-reader-section__new"]').trigger('click')
       await flushPromises()
@@ -175,7 +175,7 @@ describe('AudioReaderSection', () => {
     })
 
     test('does not open edit modal when the create modal is cancelled', async () => {
-      createModalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+      createModalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
       const wrapper = mountSection()
       await wrapper.find('[data-testid="audio-reader-section__new"]').trigger('click')
       await flushPromises()

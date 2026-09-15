@@ -63,6 +63,35 @@ vi.mock('@/views/deck/composables/card-import', () => ({
     has_cards: hasCardsRef
   })
 }))
+// deck-view now provides useMobileCardEditor too — it pulls the overlay store
+// via useOverlay(), which needs an active Pinia this shallow-mount test never
+// wires up, so stub the whole submodule.
+vi.mock('@/views/deck/mobile-editor/use-mobile-card-editor', () => ({
+  mobileCardEditorKey: Symbol('mobileCardEditor'),
+  useMobileCardEditor: () => ({
+    side: ref('front'),
+    cards: ref([]),
+    current: computed(() => undefined),
+    index: computed(() => -1),
+    is_open: ref(false),
+    has_prev: ref(false),
+    has_next: ref(false),
+    has_image: ref(false),
+    image_controls: ref(null),
+    card_attributes: computed(() => ({})),
+    saving: ref(false),
+    open_at: vi.fn(),
+    openNewCard: vi.fn(),
+    close: vi.fn(),
+    onClosed: vi.fn(),
+    flip: vi.fn(),
+    prev: vi.fn(),
+    next: vi.fn(),
+    update: vi.fn(),
+    moveCard: vi.fn(),
+    deleteCard: vi.fn()
+  })
+}))
 
 import DeckView from '@/views/deck/deck-view.vue'
 

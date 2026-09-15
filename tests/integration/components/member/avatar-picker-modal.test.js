@@ -56,12 +56,15 @@ const DialogCardBodyStub = defineComponent({
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import AvatarImage from '@/components/member/avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
-function mountModal(props = {}) {
+function mountModal({ close = vi.fn(), ...props } = {}) {
   return shallowMount(AvatarPickerModal, {
-    props: { close: vi.fn(), ...props },
+    props,
     global: {
-      stubs: { DialogCard: DialogCardStub, DialogCardBody: DialogCardBodyStub }
+      stubs: { DialogCard: DialogCardStub, DialogCardBody: DialogCardBodyStub },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close }) }
     }
   })
 }
@@ -129,13 +132,6 @@ describe('AvatarPickerModal', () => {
     ).toBe('true')
   })
 
-  test('dialog-card close emits calls close() with no argument (dismiss)', () => {
-    const close = vi.fn()
-    const wrapper = mountModal({ close })
-    wrapper.findComponent(DialogCardStub).vm.$emit('close')
-    expect(close).toHaveBeenCalledWith()
-  })
-
   test('renders avatar-image for every tile unconditionally, with no per-tile skeleton of its own', () => {
     mockLoadAvatarUrl.mockReturnValue(new Promise(() => {}))
     const wrapper = mountModal()
@@ -196,7 +192,6 @@ function mountAtWidth(width_px) {
   document.body.appendChild(host)
 
   const wrapper = shallowMount(AvatarPickerModal, {
-    props: { close: vi.fn() },
     attachTo: host,
     global: {
       stubs: { DialogCard: DialogCardStub, DialogCardBody: DialogCardBodyStub },

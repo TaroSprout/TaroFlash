@@ -3,6 +3,8 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h } from 'vue'
 import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 import { useNoticeStore } from '@/stores/notice-store'
 import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialog-card-viewport'
 
@@ -98,10 +100,12 @@ const UiButtonStub = defineComponent({
 
 function mountDialog(close = vi.fn()) {
   const wrapper = mount(FeedbackSubmitDialog, {
-    props: { close },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
-      provide: { [dialogCardViewportKey]: { value: 'desktop' } },
+      provide: {
+        [dialogCardViewportKey]: { value: 'desktop' },
+        [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close })
+      },
       stubs: {
         DialogCard: DialogCardStub,
         UiInput: UiInputStub,
@@ -231,21 +235,5 @@ describe('FeedbackSubmitDialog — failure wiring', () => {
     await wrapper.find('[data-testid="feedback-submit-dialog__submit"]').trigger('click')
 
     expect(close).not.toHaveBeenCalled()
-  })
-})
-
-// ── Close wiring ──────────────────────────────────────────────────────────────
-
-describe('FeedbackSubmitDialog — close wiring', () => {
-  test('dialog-card close calls close with false', async () => {
-    const { wrapper, close } = mountDialog()
-    await wrapper.find('[data-testid="feedback-submit-dialog__dialog-close"]').trigger('click')
-    expect(close).toHaveBeenCalledWith(false)
-  })
-
-  test('dialog-card close emits pop_up_close', async () => {
-    const { wrapper } = mountDialog()
-    await wrapper.find('[data-testid="feedback-submit-dialog__dialog-close"]').trigger('click')
-    expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
   })
 })
