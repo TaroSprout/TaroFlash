@@ -1,7 +1,7 @@
 import { computed, ref, type InjectionKey } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBulkInsertCardsInDeckMutation } from '@/api/cards'
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import { useNoticeStore } from '@/stores/notice-store'
 import SkippedLinesDialog from '@/views/deck/card-import/skipped-lines-dialog.vue'
 import { emitSfx } from '@/sfx/bus'
@@ -52,7 +52,7 @@ type Options = {
 export function useCardImport({ editor, shell }: Options) {
   const { t } = useI18n()
   const notice = useNoticeStore()
-  const modal = useModal()
+  const { open } = useOverlay()
   const bulk_insert = useBulkInsertCardsInDeckMutation()
 
   const source = ref<CardImportSource>('file')
@@ -151,7 +151,7 @@ export function useCardImport({ editor, shell }: Options) {
 
   /** Show the lines the file held that couldn't become cards. Read-only — it changes nothing. */
   function openSkippedLines() {
-    modal.open(SkippedLinesDialog, { props: { lines: skipped.value } })
+    open(SkippedLinesDialog, { props: { lines: skipped.value }, presentation: 'dialog' })
   }
 
   function discardDraft() {

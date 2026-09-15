@@ -10,8 +10,6 @@ import FeedbackPage from './feedback-page/index.vue'
 import CapabilitiesPage from './capabilities-page/index.vue'
 import { useCan } from '@/composables/can'
 
-const { close } = defineProps<{ close: () => void }>()
-
 const { t } = useI18n()
 const { manageCapabilities } = useCan()
 
@@ -51,7 +49,6 @@ const layout_mode = computed<WindowLayout>(() => pager.value?.layout_mode ?? 'ph
     :pages="pages"
     scroll_body
     v-model:active="active_page"
-    @close="close"
   >
     <template #default="{ displayed_page }">
       <palette-page v-if="displayed_page === 'palette'" />

@@ -1,13 +1,13 @@
-import { useModal } from '@/composables/modal'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import AccountAccessModal from '@/views/settings/account-access/index.vue'
 
 /** Opens the email/password/Google account-access modal from the settings aside. */
 export function useAccountAccessModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
-  function open() {
-    return modal.open(AccountAccessModal, { backdrop: true, mode: 'popup' })
+  function open_account_access() {
+    return open(AccountAccessModal, { presentation: 'popup' })
   }
 
-  return { open }
+  return { open: open_account_access }
 }

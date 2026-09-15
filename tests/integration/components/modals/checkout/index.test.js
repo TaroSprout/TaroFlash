@@ -43,20 +43,23 @@ vi.mock('@/composables/ui/media-query', () => ({
 
 import Checkout from '@/components/billing/checkout-modal/index.vue'
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
-function mountCheckout(close = vi.fn()) {
+function mountCheckout(overrides = {}) {
   return shallowMount(Checkout, {
-    props: { close },
     global: {
       stubs: {
         DialogCard: false,
         DialogCardHeader: false,
         DialogCardPager: false,
         DialogCardBody: false,
-        ScrollRegion: false
-      }
+        ScrollRegion: false,
+        OverlaySurface: false
+      },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext(overrides) }
     }
   })
 }
@@ -105,13 +108,13 @@ describe('Checkout — header', () => {
     expect(closeButton.props('disabled')).toBe(false)
   })
 
-  test('calls close() with no argument when the close button is pressed', () => {
-    const close = vi.fn()
-    const wrapper = mountCheckout(close)
+  test('pressing the close button routes through the overlay context dismiss, not a direct close', () => {
+    const dismiss = vi.fn()
+    const wrapper = mountCheckout({ dismiss })
 
     wrapper.findComponent({ name: 'UiButton' }).vm.$emit('press')
 
-    expect(close).toHaveBeenCalledWith()
+    expect(dismiss).toHaveBeenCalledTimes(1)
   })
 
   test('renders the title', () => {
@@ -123,9 +126,14 @@ describe('Checkout — header', () => {
 
   test('renders the close-label slot text', () => {
     const wrapper = shallowMount(Checkout, {
-      props: { close: vi.fn() },
       global: {
-        stubs: { DialogCard: false, DialogCardHeader: false, DialogCardPager: false },
+        stubs: {
+          DialogCard: false,
+          DialogCardHeader: false,
+          DialogCardPager: false,
+          OverlaySurface: false
+        },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() },
         renderStubDefaultSlot: true
       }
     })
@@ -145,16 +153,21 @@ describe('Checkout — header', () => {
     })
   })
 
-  // ── dialog-card's own @close forwards through (backdrop/esc) ───────────────
+  // ── the overlay-surface backdrop routes through the same dismiss ───────────
 
-  test('dialog-card emitting close (e.g. backdrop/esc) calls close() with no argument', async () => {
+  test('a backdrop click on the dialog-card surface routes through the overlay context dismiss', async () => {
     // DialogCard's SFC filename is index.vue, so its inferred component name
     // isn't usable for findComponent({ name }) — resolve it by the imported
     // component reference instead.
-    const close = vi.fn()
-    const wrapper = mountCheckout(close)
-    await wrapper.findComponent(DialogCard).vm.$emit('close')
-    expect(close).toHaveBeenCalledWith()
+    const dismiss = vi.fn()
+    const wrapper = mountCheckout({ dismiss })
+    expect(wrapper.findComponent(DialogCard).exists()).toBe(true)
+
+    // Checkout forwards data-testid="checkout" onto dialog-card, which lands
+    // on the overlay-surface root via fallthrough attrs.
+    await wrapper.find('[data-testid="checkout"]').trigger('click')
+
+    expect(dismiss).toHaveBeenCalledTimes(1)
   })
 })
 

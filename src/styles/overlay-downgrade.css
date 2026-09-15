@@ -1,0 +1,233 @@
+/*
+ * `overlay-downgrade`: activates inside an opened overlay when the viewport
+ * drops below the surface's declared threshold (width OR height).
+ *
+ * The overlay surface stamps `data-below-w` / `data-below-h` on its outer
+ * element with the consumer's threshold key (a `BreakpointKey`), once at mount.
+ * This variant matches the threshold-bearing element itself OR any descendant,
+ * so the same utility (`overlay-downgrade:flex-col`, etc.) works on the wrapper,
+ * on the surface root, or on nested content.
+ *
+ * The surface also carries `overlay-downgrade:[--overlay-downgraded:1]`, which
+ * exposes the boolean marker `utils/animations/overlay.ts` reads via
+ * `getComputedStyle` to pick the sheet vs dialog timeline. Because both the
+ * marker and every layout utility flow through this one variant — and the
+ * thresholds resolve the same `--breakpoint-*` tokens `useMatchMedia` reads —
+ * the CSS marker and the JS `is_downgraded` ref can never diverge.
+ *
+ * Driven entirely by CSS @media + attribute selectors so Vue does no work on
+ * viewport changes — important for iOS Safari, where any setAttribute on the
+ * scrolling container during a touch gesture kills momentum scroll.
+ */
+@custom-variant overlay-downgrade {
+  /* width < sm: every threshold downgrades (sm is the smallest tier) */
+  @media (width < theme(--breakpoint-sm)) {
+    &:where([data-below-w], [data-below-w] *) {
+      @slot;
+    }
+  }
+  /* width < msm: thresholds msm/md/mlg/lg/mxl/xl/2xl */
+  @media (width < theme(--breakpoint-msm)) {
+    &:where(
+      [data-below-w='msm'],
+      [data-below-w='msm'] *,
+      [data-below-w='md'],
+      [data-below-w='md'] *,
+      [data-below-w='mlg'],
+      [data-below-w='mlg'] *,
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < md: thresholds md/mlg/lg/mxl/xl/2xl */
+  @media (width < theme(--breakpoint-md)) {
+    &:where(
+      [data-below-w='md'],
+      [data-below-w='md'] *,
+      [data-below-w='mlg'],
+      [data-below-w='mlg'] *,
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < mlg: thresholds mlg/lg/mxl/xl/2xl */
+  @media (width < theme(--breakpoint-mlg)) {
+    &:where(
+      [data-below-w='mlg'],
+      [data-below-w='mlg'] *,
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < lg: thresholds lg/mxl/xl/2xl */
+  @media (width < theme(--breakpoint-lg)) {
+    &:where(
+      [data-below-w='lg'],
+      [data-below-w='lg'] *,
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < mxl: thresholds mxl/xl/2xl */
+  @media (width < theme(--breakpoint-mxl)) {
+    &:where(
+      [data-below-w='mxl'],
+      [data-below-w='mxl'] *,
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < xl: thresholds xl/2xl */
+  @media (width < theme(--breakpoint-xl)) {
+    &:where(
+      [data-below-w='xl'],
+      [data-below-w='xl'] *,
+      [data-below-w='2xl'],
+      [data-below-w='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  /* width < 2xl: only the 2xl threshold */
+  @media (width < theme(--breakpoint-2xl)) {
+    &:where([data-below-w='2xl'], [data-below-w='2xl'] *) {
+      @slot;
+    }
+  }
+
+  /* Same tiers, on the height axis. */
+  @media (height < theme(--breakpoint-sm)) {
+    &:where([data-below-h], [data-below-h] *) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-msm)) {
+    &:where(
+      [data-below-h='msm'],
+      [data-below-h='msm'] *,
+      [data-below-h='md'],
+      [data-below-h='md'] *,
+      [data-below-h='mlg'],
+      [data-below-h='mlg'] *,
+      [data-below-h='lg'],
+      [data-below-h='lg'] *,
+      [data-below-h='mxl'],
+      [data-below-h='mxl'] *,
+      [data-below-h='xl'],
+      [data-below-h='xl'] *,
+      [data-below-h='2xl'],
+      [data-below-h='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-md)) {
+    &:where(
+      [data-below-h='md'],
+      [data-below-h='md'] *,
+      [data-below-h='mlg'],
+      [data-below-h='mlg'] *,
+      [data-below-h='lg'],
+      [data-below-h='lg'] *,
+      [data-below-h='mxl'],
+      [data-below-h='mxl'] *,
+      [data-below-h='xl'],
+      [data-below-h='xl'] *,
+      [data-below-h='2xl'],
+      [data-below-h='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-mlg)) {
+    &:where(
+      [data-below-h='mlg'],
+      [data-below-h='mlg'] *,
+      [data-below-h='lg'],
+      [data-below-h='lg'] *,
+      [data-below-h='mxl'],
+      [data-below-h='mxl'] *,
+      [data-below-h='xl'],
+      [data-below-h='xl'] *,
+      [data-below-h='2xl'],
+      [data-below-h='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-lg)) {
+    &:where(
+      [data-below-h='lg'],
+      [data-below-h='lg'] *,
+      [data-below-h='mxl'],
+      [data-below-h='mxl'] *,
+      [data-below-h='xl'],
+      [data-below-h='xl'] *,
+      [data-below-h='2xl'],
+      [data-below-h='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-mxl)) {
+    &:where(
+      [data-below-h='mxl'],
+      [data-below-h='mxl'] *,
+      [data-below-h='xl'],
+      [data-below-h='xl'] *,
+      [data-below-h='2xl'],
+      [data-below-h='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-xl)) {
+    &:where(
+      [data-below-h='xl'],
+      [data-below-h='xl'] *,
+      [data-below-h='2xl'],
+      [data-below-h='2xl'] *
+    ) {
+      @slot;
+    }
+  }
+  @media (height < theme(--breakpoint-2xl)) {
+    &:where([data-below-h='2xl'], [data-below-h='2xl'] *) {
+      @slot;
+    }
+  }
+}

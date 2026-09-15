@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
 import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
 import UiButton from '@/components/ui-kit/button.vue'
+import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import type { SfxOptions } from '@/sfx/roles'
 
 export type DialogCardSize = 'sm' | 'md' | 'lg'
@@ -66,10 +68,6 @@ const {
   bg_class = 'bg-surface'
 } = defineProps<DialogCardProps>()
 
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
-
 const slots = defineSlots<{
   header(): any
   'header-start'(): any
@@ -81,9 +79,17 @@ const slots = defineSlots<{
   toolbar?(): any
 }>()
 
+defineOptions({ inheritAttrs: false })
+
 const { t } = useI18n()
 
-const viewport = provideDialogCardViewport(full_bleed_at ?? SIZE_FULL_BLEED_AT[size])
+const { dismiss } = useOverlayContext()
+
+const attrs = useAttrs()
+
+const resolved_full_bleed_at = full_bleed_at ?? SIZE_FULL_BLEED_AT[size]
+const viewport = provideDialogCardViewport(resolved_full_bleed_at)
+
 /** Called from the template, not a `computed` — `slots.toolbar` isn't reactive. →[K:dialog-card-toolbar-slot-reactivity] */
 function gridRowsClass() {
   if (float_header) {
@@ -110,61 +116,74 @@ const card_style = computed(() => ({
     content_breakout_max_width ?? SIZE_CONTENT_BREAKOUT_MAX_WIDTH[size]
 }))
 
+const surface_attrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  return rest
+})
+
 defineExpose({ viewport })
 </script>
 
 <template>
-  <div
-    data-testid="dialog-card"
-    data-station="window"
-    class="content-grid relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
-    :class="[
-      SIZE_CLASSES[size],
-      bg_class,
-      gridRowsClass(),
-      viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg'
-    ]"
-    :style="[card_style, bodyPaddingStyle()]"
+  <overlay-surface
+    mode="dialog"
+    :sheet_at="resolved_full_bleed_at"
+    full_bleed
+    v-bind="surface_attrs"
   >
-    <slot name="header">
-      <dialog-card-header
-        v-if="show_header && (title || show_close_button || slots['header-start'])"
-        :title="title"
-        class="full-width"
-        :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
-      >
-        <template #start>
-          <slot name="header-start">
-            <ui-button
-              neutral
-              v-if="show_close_button"
-              data-testid="dialog-card__close"
-              icon-left="close"
-              icon-only
-              rounded-full
-              :sfx="{ press: sfx.close ?? 'dialog.close' }"
-              :disabled="close_disabled"
-              @press="emit('close')"
-            >
-              {{ close_label ?? t('dialog-card.close-label') }}
-            </ui-button>
-          </slot>
-        </template>
+    <div
+      data-testid="dialog-card"
+      data-station="window"
+      class="pointer-events-auto content-grid relative gap-y-4 overflow-hidden [--dialog-px:1.5rem] sm:[--dialog-px:2rem]"
+      :class="[
+        SIZE_CLASSES[size],
+        bg_class,
+        gridRowsClass(),
+        viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg',
+        attrs.class
+      ]"
+      :style="[card_style, bodyPaddingStyle(), attrs.style]"
+    >
+      <slot name="header">
+        <dialog-card-header
+          v-if="show_header && (title || show_close_button || slots['header-start'])"
+          :title="title"
+          class="full-width"
+          :class="float_header ? 'absolute inset-x-0 top-0 z-10' : ''"
+        >
+          <template #start>
+            <slot name="header-start">
+              <ui-button
+                neutral
+                v-if="show_close_button"
+                data-testid="dialog-card__close"
+                icon-left="close"
+                icon-only
+                rounded-full
+                :sfx="{ press: sfx.close ?? 'dialog.close' }"
+                :disabled="close_disabled"
+                @press="dismiss"
+              >
+                {{ close_label ?? t('dialog-card.close-label') }}
+              </ui-button>
+            </slot>
+          </template>
 
-        <template v-if="slots['header-end']" #end>
-          <slot name="header-end"></slot>
-        </template>
+          <template v-if="slots['header-end']" #end>
+            <slot name="header-end"></slot>
+          </template>
 
-        <template v-if="slots['header-after']" #after>
-          <slot name="header-after"></slot>
-        </template>
-      </dialog-card-header>
-    </slot>
+          <template v-if="slots['header-after']" #after>
+            <slot name="header-after"></slot>
+          </template>
+        </dialog-card-header>
+      </slot>
 
-    <slot :viewport="viewport"></slot>
+      <slot :viewport="viewport"></slot>
 
-    <div v-if="slots.toolbar" data-testid="dialog-card__toolbar" class="pb-(--dialog-px)">
-      <slot name="toolbar"></slot>
+      <div v-if="slots.toolbar" data-testid="dialog-card__toolbar" class="pb-(--dialog-px)">
+        <slot name="toolbar"></slot>
+      </div>
     </div>
-  </div>
+  </overlay-surface>
 </template>

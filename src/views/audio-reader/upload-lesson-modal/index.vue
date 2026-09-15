@@ -9,6 +9,7 @@ import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import ScriptSelect from './script-select.vue'
 import { useStartLessonMutation, EdgeFunctionError } from '@/api/lessons'
 import type { LessonUploadProgress } from '@/api/lessons'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type UploadLessonResponse = Lesson | undefined
 
@@ -17,12 +18,12 @@ export type UploadLessonResponse = Lesson | undefined
 // tab. This is NOT Whisper's old 25 MiB cap — the client compresses + slices.
 const MAX_BYTES = 629145600
 
-const { collection_id, close } = defineProps<{
+const { collection_id } = defineProps<{
   collection_id: number
-  close: (response?: UploadLessonResponse) => void
 }>()
 
 const { t } = useI18n()
+const { close, dismiss } = useOverlayContext()
 const start = useStartLessonMutation()
 
 const title = ref('')
@@ -106,8 +107,9 @@ function errorKeyFor(error: unknown): string {
     data-testid="upload-lesson-container"
     data-palette="blue"
     class="sm:w-150"
+    sheet_at="w<sm | h<sm"
     :title="t('audio-reader.upload.title')"
-    @close="close(undefined)"
+    @close="dismiss"
   >
     <div data-testid="upload-lesson__body" class="flex flex-col gap-5 p-6">
       <ui-input
@@ -153,7 +155,7 @@ function errorKeyFor(error: unknown): string {
           size="lg"
           full-width
           :disabled="is_submitting"
-          @press="close(undefined)"
+          @press="dismiss()"
         >
           {{ t('audio-reader.upload.cancel-button') }}
         </ui-button>

@@ -55,12 +55,16 @@ vi.mock('@/composables/auth/use-forgot-password-actions', () => ({
 }))
 
 import ForgotPasswordModal from '@/views/welcome/forgot-password/index.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Mount helper ─────────────────────────────────────────────────────────────
 
 function makeWrapper(close = vi.fn()) {
   return mount(ForgotPasswordModal, {
-    props: { close }
+    global: {
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close }) }
+    }
   })
 }
 
@@ -118,13 +122,6 @@ describe('ForgotPasswordModal (forgot-password/index.vue)', () => {
   })
 
   // ── close wiring ──────────────────────────────────────────────────────────
-
-  test('the dialog-card close event calls the close prop', async () => {
-    const close = vi.fn()
-    const wrapper = makeWrapper(close)
-    await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
-    expect(close).toHaveBeenCalledOnce()
-  })
 
   test('the success panel close button calls the close prop', async () => {
     mockForgotPasswordRefs.success.value = true

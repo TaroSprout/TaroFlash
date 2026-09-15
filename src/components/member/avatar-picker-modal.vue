@@ -7,15 +7,16 @@ import AvatarImage from './avatar-image.vue'
 import UiIcon from '@/components/ui-kit/icon.vue'
 import { AVATAR_KEYS } from './avatars'
 import { emitSfx } from '@/sfx/bus'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 type AvatarPickerModalProps = {
   selected?: string
-  close: (avatar?: string) => void
 }
 
-const { selected, close } = defineProps<AvatarPickerModalProps>()
+const { selected } = defineProps<AvatarPickerModalProps>()
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 onMounted(() => {
   emitSfx('dialog.open-chime')
@@ -38,7 +39,6 @@ function onAvatarSelect(avatar: string) {
     size="lg"
     data-palette="blue"
     :title="t('avatar-picker-modal.title')"
-    @close="close()"
   >
     <dialog-card-body data-testid="avatar-picker-modal__scroll-area">
       <div

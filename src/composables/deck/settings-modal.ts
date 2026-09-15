@@ -1,5 +1,4 @@
-import { useModal } from '@/composables/modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import DeckSettings, {
   type ActivePage,
   type DeckSettingsResponse
@@ -12,24 +11,20 @@ type OpenOptions = {
 
 /** Opens the deck-settings modal. */
 export function useDeckSettingsModal() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
   /**
    * @param options - jump straight to a page and/or preselect a card face
    *   (e.g. `{ tab: 'design', side: 'front' }`); both override any persisted state.
    */
-  function open(deck: Deck, options: OpenOptions = {}) {
-    emitSfx('dialog.open')
-    const result = modal.open<DeckSettingsResponse>(DeckSettings, {
-      backdrop: true,
-      mode: 'mobile-sheet',
-      mobile_below_width: 'md',
-      mobile_below_height: 'md',
-      props: { deck, initial_page: options.tab, initial_side: options.side }
+  function open_deck_settings(deck: Deck, options: OpenOptions = {}) {
+    return open<DeckSettingsResponse>(DeckSettings, {
+      props: { deck, initial_page: options.tab, initial_side: options.side },
+      presentation: 'dialog',
+      open_sfx: 'dialog.open',
+      close_sfx: 'dialog.close'
     })
-    result.response.then(() => emitSfx('dialog.close'))
-    return result
   }
 
-  return { open }
+  return { open: open_deck_settings }
 }

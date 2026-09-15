@@ -1,8 +1,11 @@
-import { describe, test, expect } from 'vite-plus/test'
+import '@/styles/main.css'
+
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import AppWindow from '@/components/layout-kit/app-window/index.vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 // Default stub: emits press on click so @press="emit('close')" fires through the
 // auto-stub layer without needing real button internals.
@@ -36,12 +39,16 @@ const UiButtonSlotStub = defineComponent({
   }
 })
 
-function mountWindow(props = {}, slots = {}, attrs = {}) {
+function mountWindow(props = {}, slots = {}, attrs = {}, { attach = false } = {}) {
   return shallowMount(AppWindow, {
     props,
     slots,
     attrs,
-    global: { stubs: { UiButton: UiButtonStub } }
+    ...(attach ? { attachTo: document.body } : {}),
+    global: {
+      stubs: { UiButton: UiButtonStub, OverlaySurface: false },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+    }
   })
 }
 
@@ -56,7 +63,12 @@ function mountWindowInsideStation(ambient_station, props = {}) {
       return () => h('div', { 'data-station': ambient_station }, h(AppWindow, props))
     }
   })
-  return mount(Parent, { global: { stubs: { UiButton: UiButtonStub } } })
+  return mount(Parent, {
+    global: {
+      stubs: { UiButton: UiButtonStub, OverlaySurface: false },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+    }
+  })
 }
 
 describe('AppWindow', () => {
@@ -71,6 +83,21 @@ describe('AppWindow', () => {
   test('always renders the overlay target outside the overflow-hidden inner', () => {
     const wrapper = mountWindow()
     expect(wrapper.find('[data-testid="app-window__overlay"]').exists()).toBe(true)
+  })
+
+  // Backdrop clicks never close the window directly — they route through the
+  // overlay-surface into the veto pipeline via the provided dismiss().
+
+  test('a backdrop click routes through the overlay context dismiss, not a direct close', async () => {
+    const dismiss = vi.fn()
+    const wrapper = shallowMount(AppWindow, {
+      global: {
+        stubs: { UiButton: UiButtonStub, OverlaySurface: false },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ dismiss }) }
+      }
+    })
+    await wrapper.find('[data-testid="overlay-surface"]').trigger('click')
+    expect(dismiss).toHaveBeenCalledTimes(1)
   })
 
   test('always renders body slot area', () => {
@@ -89,11 +116,61 @@ describe('AppWindow', () => {
 
   // ── data-theme passes through via inheritAttrs ─────────────────────────────
 
-  test('forwards data-theme attribute to the root via inheritAttrs', () => {
+  test('forwards data-theme attribute to the overlay-surface root via inheritAttrs', () => {
     const wrapper = mountWindow({}, {}, { 'data-theme': 'blue-500' })
-    expect(wrapper.find('[data-testid="app-window-root"]').attributes('data-theme')).toBe(
+    expect(wrapper.find('[data-testid="overlay-surface"]').attributes('data-theme')).toBe(
       'blue-500'
     )
+  })
+
+  // ── caller class/style route to the window root, not the surface ─────────
+  // inheritAttrs is off — a size/class override from the caller lands on
+  // app-window-root, and the overlay-surface only receives the mechanism
+  // attrs (data-overlay-id, inert, …), never the caller's class/style.
+
+  test('routes a caller class to app-window-root, not the overlay-surface', () => {
+    const wrapper = mountWindow({}, {}, { class: 'w-248! h-187' }, { attach: true })
+
+    const root_style = getComputedStyle(wrapper.find('[data-testid="app-window-root"]').element)
+    expect(root_style.width).toBe('992px')
+    expect(root_style.height).toBe('748px')
+
+    const surface_style = getComputedStyle(wrapper.find('[data-testid="overlay-surface"]').element)
+    expect(surface_style.width).not.toBe('992px')
+    expect(surface_style.height).not.toBe('748px')
+
+    wrapper.unmount()
+  })
+
+  test('routes a caller inline style to app-window-root, not the overlay-surface', () => {
+    const wrapper = mountWindow({}, {}, { style: { maxWidth: '40rem' } })
+
+    expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
+      'max-width: 40rem'
+    )
+    expect(wrapper.find('[data-testid="overlay-surface"]').attributes('style') ?? '').not.toContain(
+      'max-width'
+    )
+  })
+
+  test('the overlay-surface still receives non-class/style attrs and keeps its own full-viewport class', () => {
+    const wrapper = mountWindow(
+      {},
+      {},
+      { 'data-overlay-id': 'e1', inert: '', 'data-received': 'true' },
+      { attach: true }
+    )
+
+    const surface = wrapper.find('[data-testid="overlay-surface"]')
+    expect(surface.attributes('data-overlay-id')).toBe('e1')
+    expect(surface.attributes('inert')).toBe('')
+    expect(surface.attributes('data-received')).toBe('true')
+
+    const surface_style = getComputedStyle(surface.element)
+    expect(surface_style.top).toBe('0px')
+    expect(surface_style.left).toBe('0px')
+
+    wrapper.unmount()
   })
 
   // ── showHeader logic ───────────────────────────────────────────────────────
@@ -180,13 +257,19 @@ describe('AppWindow', () => {
   test('close button label defaults to "Close" and accepts a close_label override', () => {
     const def = shallowMount(AppWindow, {
       props: { title: 'x' },
-      global: { stubs: { UiButton: UiButtonSlotStub } }
+      global: {
+        stubs: { UiButton: UiButtonSlotStub, OverlaySurface: false },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+      }
     })
     expect(def.findComponent({ name: 'UiButton' }).text()).toContain('Close')
 
     const override = shallowMount(AppWindow, {
       props: { title: 'x', close_label: 'Cancel' },
-      global: { stubs: { UiButton: UiButtonSlotStub } }
+      global: {
+        stubs: { UiButton: UiButtonSlotStub, OverlaySurface: false },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+      }
     })
     expect(override.findComponent({ name: 'UiButton' }).text()).toContain('Cancel')
   })
@@ -205,27 +288,44 @@ describe('AppWindow', () => {
     expect(wrapper.find('[data-testid="sidebar-content"]').exists()).toBe(true)
   })
 
-  test('inner container clips with overflow-hidden + rounded corners', () => {
+  test('inner container clips with overflow-hidden + rounded corners, dropped once the surface downgrades', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-container"]').classes()
     expect(classes).toContain('overflow-hidden')
     expect(classes).toContain('rounded-b-8')
-    expect(classes).toContain('mobile-modal:rounded-b-none')
+
+    const not_downgraded = mountWindow({}, {}, {}, { attach: true })
+    expect(
+      getComputedStyle(not_downgraded.find('[data-testid="app-window-container"]').element)
+        .borderBottomLeftRadius
+    ).toBe('32px')
+    not_downgraded.unmount()
+
+    const downgraded = mountWindow({ sheet_at: 'w<2xl' }, {}, {}, { attach: true })
+    expect(
+      getComputedStyle(downgraded.find('[data-testid="app-window-container"]').element)
+        .borderBottomLeftRadius
+    ).toBe('0px')
+    downgraded.unmount()
   })
 
-  test('root wrapper carries the mobile-modal mt-auto layout flip class', () => {
+  test('root wrapper carries relative position and flips to bottom-aligned once the surface downgrades', () => {
     const wrapper = mountWindow()
     const classes = wrapper.find('[data-testid="app-window-root"]').classes()
-    expect(classes).toContain('mobile-modal:mt-auto')
     expect(classes).toContain('relative')
-  })
 
-  test('releases the height cap and the body scroller on width alone, for every window', () => {
-    const classes = mountWindow().find('[data-testid="app-window-root"]').classes()
-    expect(classes).toContain('mobile-modal-flush:h-auto!')
-    expect(classes).toContain('mobile-modal-flush:[--scroll-overflow:visible]')
-    expect(classes).not.toContain('mobile-modal:h-auto!')
-    expect(classes).not.toContain('mobile-modal:[--scroll-overflow:visible]')
+    const not_downgraded = mountWindow({}, {}, {}, { attach: true })
+    expect(
+      getComputedStyle(not_downgraded.find('[data-testid="app-window-root"]').element).marginTop
+    ).toBe('0px')
+    not_downgraded.unmount()
+
+    const downgraded = mountWindow({ sheet_at: 'w<2xl' }, {}, {}, { attach: true })
+    const downgraded_margin_top = getComputedStyle(
+      downgraded.find('[data-testid="app-window-root"]').element
+    ).marginTop
+    expect(Number.parseFloat(downgraded_margin_top)).toBeGreaterThan(0)
+    downgraded.unmount()
   })
 
   // A window stamps a constant station, never varying with the surface it is mounted inside.

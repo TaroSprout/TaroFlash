@@ -1,3 +1,5 @@
+import '@/styles/main.css'
+
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
@@ -46,14 +48,19 @@ const UiButtonStub = defineComponent({
 })
 
 import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountCard(props = {}, slots = {}) {
+function mountCard(props = {}, slots = {}, { dismiss, attach = false } = {}) {
   return shallowMount(DialogCard, {
     props,
     slots,
-    global: { stubs: { UiButton: UiButtonStub, DialogCardHeader: false } }
+    ...(attach ? { attachTo: document.body } : {}),
+    global: {
+      stubs: { UiButton: UiButtonStub, DialogCardHeader: false, OverlaySurface: false },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext(dismiss ? { dismiss } : {}) }
+    }
   })
 }
 
@@ -70,7 +77,10 @@ function mountCardInsideStation(ambient_station, props = {}) {
   // shallowMount auto-stubs direct children, which would stub out the very
   // component under test.
   return mount(Parent, {
-    global: { stubs: { UiButton: UiButtonStub, DialogCardHeader: false } }
+    global: {
+      stubs: { UiButton: UiButtonStub, DialogCardHeader: false, OverlaySurface: false },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+    }
   })
 }
 
@@ -124,6 +134,19 @@ describe('DialogCard', () => {
         { default: (props) => h('div', { 'data-testid': 'slot-viewport' }, props.viewport) }
       )
       expect(wrapper.find('[data-testid="slot-viewport"]').text()).toBe('mobile')
+    })
+  })
+
+  // ── backdrop dismiss ───────────────────────────────────────────
+  // A backdrop click never closes the card directly — it routes through the
+  // overlay-surface into the veto pipeline via the provided dismiss().
+
+  describe('backdrop dismiss', () => {
+    test('a backdrop click routes through the overlay context dismiss', async () => {
+      const dismiss = vi.fn()
+      const wrapper = mountCard({}, {}, { dismiss })
+      await wrapper.find('[data-testid="overlay-surface"]').trigger('click')
+      expect(dismiss).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -255,6 +278,45 @@ describe('DialogCard', () => {
     })
   })
 
+  // ── caller class routes to the card, not the overlay-surface ──
+  // inheritAttrs is off — a caller class (e.g. the study-session dot-grid
+  // pattern) lands on the dialog-card element itself, never on the
+  // overlay-surface/backdrop it opens over.
+
+  describe('caller class routes to dialog-card, not the overlay-surface', () => {
+    test('a caller class never lands on the overlay-surface', () => {
+      const wrapper = mountCard({ class: 'bgx-dot-grid bgx-size-15' }, {}, { attach: true })
+
+      const card_style = getComputedStyle(wrapper.find('[data-testid="dialog-card"]').element)
+      expect(card_style.getPropertyValue('--bgx-image')).not.toBe('')
+      expect(card_style.getPropertyValue('--bgx-size')).not.toBe('')
+
+      const surface_style = getComputedStyle(
+        wrapper.find('[data-testid="overlay-surface"]').element
+      )
+      expect(surface_style.getPropertyValue('--bgx-image')).toBe('')
+      expect(surface_style.getPropertyValue('--bgx-size')).toBe('')
+
+      wrapper.unmount()
+    })
+  })
+
+  // ── full_bleed is always forwarded to the overlay-surface ─────
+  // dialog-card content should reach the viewport's top edge once downgraded
+  // — unlike app-window, which keeps the top gutter.
+
+  describe('full_bleed forwarded to the overlay-surface', () => {
+    test('the overlay-surface never carries the top-gutter class dialog-card opts out of', () => {
+      const wrapper = mountCard({ full_bleed_at: 'w<2xl' }, {}, { attach: true })
+      const surface_style = getComputedStyle(
+        wrapper.find('[data-testid="overlay-surface"]').element
+      )
+
+      expect(surface_style.paddingTop).toBe('0px')
+      wrapper.unmount()
+    })
+  })
+
   // ── show_close_button ────────────────────────────────────────────────────────
 
   describe('show_close_button', () => {
@@ -278,10 +340,11 @@ describe('DialogCard', () => {
       expect(wrapper.findComponent({ name: 'DialogCardHeader' }).exists()).toBe(false)
     })
 
-    test('clicking the close button emits close', async () => {
-      const wrapper = mountCard({ title: 'x' })
+    test('clicking the close button routes through the overlay context dismiss, never closes directly', async () => {
+      const dismiss = vi.fn()
+      const wrapper = mountCard({ title: 'x' }, {}, { dismiss })
       await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
-      expect(wrapper.emitted('close')).toHaveLength(1)
+      expect(dismiss).toHaveBeenCalledTimes(1)
     })
 
     test('close_label overrides the default i18n close label', () => {
@@ -608,7 +671,10 @@ describe('DialogCard', () => {
       })
 
       const wrapper = mount(Parent, {
-        global: { stubs: { UiButton: UiButtonStub, DialogCardHeader: false } }
+        global: {
+          stubs: { UiButton: UiButtonStub, DialogCardHeader: false, OverlaySurface: false },
+          provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext() }
+        }
       })
       const card = wrapper.find('[data-testid="dialog-card"]')
 

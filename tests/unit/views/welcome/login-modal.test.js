@@ -1,20 +1,11 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { flushPromises } from '@vue/test-utils'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockEmitSfx, mockOpen } = vi.hoisted(() => ({
-  mockEmitSfx: vi.fn(),
-  mockOpen: vi.fn()
-}))
+const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({
-  emitSfx: mockEmitSfx,
-  emitHoverSfx: vi.fn()
-}))
-
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
 import { useLoginModal } from '@/views/welcome/login/login-modal'
@@ -22,93 +13,43 @@ import LoginSheet from '@/views/welcome/login/sheet.vue'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function makeModalResult() {
-  let resolve
-  const response = new Promise((res) => {
-    resolve = res
-  })
-  return { result: { response }, resolve }
+function makeOverlayResult() {
+  return { result: Promise.resolve(undefined) }
 }
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  mockEmitSfx.mockReset()
   mockOpen.mockReset()
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('useLoginModal', () => {
-  test('emits snappy_button_3 immediately on open', () => {
-    const { result } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useLoginModal().open()
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
-  })
-
-  test('emits pop_up_close when the modal response resolves', async () => {
-    const { result, resolve } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useLoginModal().open()
-    mockEmitSfx.mockClear()
-
-    resolve(undefined)
-    await flushPromises()
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
-  })
-
-  test('emits snappy_button_3 before pop_up_close (ordering)', async () => {
-    const { result, resolve } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useLoginModal().open()
-    resolve(undefined)
-    await flushPromises()
-
-    const calls = mockEmitSfx.mock.calls.map((c) => c[0])
-    expect(calls.indexOf('dialog.open')).toBeLessThan(calls.indexOf('dialog.close'))
-  })
-
-  test('opens modal with mode mobile-sheet', () => {
-    const { result } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
+  test('opens with dialog presentation', () => {
+    mockOpen.mockReturnValueOnce(makeOverlayResult())
 
     useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
       LoginSheet,
-      expect.objectContaining({ mode: 'mobile-sheet' })
+      expect.objectContaining({ presentation: 'dialog' })
     )
   })
 
-  test('opens modal with mobile_below_width md', () => {
-    const { result } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
+  test('opens with the open/close sfx roles', () => {
+    mockOpen.mockReturnValueOnce(makeOverlayResult())
 
     useLoginModal().open()
 
     expect(mockOpen).toHaveBeenCalledWith(
       LoginSheet,
-      expect.objectContaining({ mobile_below_width: 'md' })
+      expect.objectContaining({ open_sfx: 'dialog.open', close_sfx: 'dialog.close' })
     )
   })
 
-  test('opens modal with backdrop', () => {
-    const { result } = makeModalResult()
-    mockOpen.mockReturnValueOnce(result)
-
-    useLoginModal().open()
-
-    expect(mockOpen).toHaveBeenCalledWith(LoginSheet, expect.objectContaining({ backdrop: true }))
-  })
-
-  test('returns the modal result from open', () => {
-    const { result } = makeModalResult()
+  test('returns the overlay result from open', () => {
+    const result = makeOverlayResult()
     mockOpen.mockReturnValueOnce(result)
 
     const returned = useLoginModal().open()

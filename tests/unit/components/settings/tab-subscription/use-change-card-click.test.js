@@ -27,8 +27,8 @@ vi.mock('@/api/billing', () => ({
   useDetachPaymentMethodMutation: () => ({ mutateAsync: detachMutateMock })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('@/stores/notice-store', () => ({
@@ -102,7 +102,7 @@ describe('useChangeCcClick — mutation flow', () => {
     setDefaultMutateMock.mockResolvedValue({})
     detachMutateMock.mockResolvedValue({})
     modalOpenMock.mockReturnValue({
-      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+      result: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
@@ -123,7 +123,7 @@ describe('useChangeCcClick — mutation flow', () => {
     setDefaultMutateMock.mockResolvedValue({})
     detachMutateMock.mockResolvedValue({})
     modalOpenMock.mockReturnValue({
-      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+      result: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
@@ -140,7 +140,7 @@ describe('useChangeCcClick — mutation flow', () => {
     }
     setDefaultMutateMock.mockRejectedValue(new Error('network error'))
     modalOpenMock.mockReturnValue({
-      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+      result: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
@@ -160,7 +160,7 @@ describe('useChangeCcClick — mutation flow', () => {
       id === 'pm_old_2' ? Promise.reject(new Error('detach failed')) : Promise.resolve({})
     )
     modalOpenMock.mockReturnValue({
-      response: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
+      result: Promise.resolve({ added: true, paymentMethodId: 'pm_new' })
     })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
@@ -175,7 +175,7 @@ describe('useChangeCcClick — mutation flow', () => {
   test('does not call any mutation when the modal resolves with added:false', async () => {
     queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
     modalOpenMock.mockReturnValue({
-      response: Promise.resolve({ added: false, paymentMethodId: null })
+      result: Promise.resolve({ added: false, paymentMethodId: null })
     })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
@@ -187,7 +187,7 @@ describe('useChangeCcClick — mutation flow', () => {
 
   test('does not call any mutation when the modal resolves with no response (closed)', async () => {
     queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
-    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 
     await onChangeCardClick()
@@ -199,7 +199,7 @@ describe('useChangeCcClick — mutation flow', () => {
   test('does not call any mutation when added is true but paymentMethodId is missing', async () => {
     queryState.data = { paymentMethods: [card('pm_1')], defaultPaymentMethodId: 'pm_1' }
     modalOpenMock.mockReturnValue({
-      response: Promise.resolve({ added: true, paymentMethodId: null })
+      result: Promise.resolve({ added: true, paymentMethodId: null })
     })
     const { onChangeCardClick } = withSetup(() => useChangeCcClick())
 

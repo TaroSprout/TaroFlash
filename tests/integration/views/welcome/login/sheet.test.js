@@ -16,15 +16,22 @@ const LoginDialogStub = defineComponent({
 })
 
 import LoginSheet from '@/views/welcome/login/sheet.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountSheet(close = vi.fn()) {
+function mountSheet(overrides = {}) {
+  const close = vi.fn()
+  const dismiss = vi.fn()
   return {
     close,
+    dismiss,
     wrapper: shallowMount(LoginSheet, {
-      props: { close },
-      global: { stubs: { LoginDialog: LoginDialogStub, AppWindow: false } }
+      global: {
+        stubs: { LoginDialog: LoginDialogStub, AppWindow: false, OverlaySurface: false },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss, ...overrides }) }
+      }
     })
   }
 }
@@ -48,9 +55,9 @@ describe('LoginSheet (welcome/login/sheet.vue)', () => {
     expect(wrapper.findComponent({ name: 'LoginDialog' }).props('close')).toBe(close)
   })
 
-  test('app-window close event calls close()', async () => {
-    const { wrapper, close } = mountSheet()
+  test('app-window close event calls dismiss', async () => {
+    const { wrapper, dismiss } = mountSheet()
     await wrapper.findComponent(AppWindow).vm.$emit('close')
-    expect(close).toHaveBeenCalledWith()
+    expect(dismiss).toHaveBeenCalled()
   })
 })

@@ -34,10 +34,8 @@ vi.mock('@/sfx/bus', () => ({
   emitHoverSfx: vi.fn()
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: mocks.modalOpen }),
-  useModalRequestClose: () => {},
-  closeAll: () => {}
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: mocks.modalOpen })
 }))
 
 // `useSessionStore()` calls `useI18n()` internally, which requires an active
@@ -143,7 +141,7 @@ import WelcomeIndex from '@/views/welcome/index.vue'
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
 function mountWelcome({ modalResponse = Promise.resolve(undefined) } = {}) {
-  mocks.modalOpen.mockReturnValue({ response: modalResponse })
+  mocks.modalOpen.mockReturnValue({ result: modalResponse })
 
   return shallowMount(WelcomeIndex, {
     global: {
@@ -202,29 +200,19 @@ describe('WelcomeIndex', () => {
 
   // ── openSignup sfx ────────────────────────────────────────────
 
-  test('clicking signup emits dialog.open sfx', async () => {
+  test('clicking signup opens the overlay with the open/close sfx roles', async () => {
     const wrapper = mountWelcome()
     await wrapper.find('[data-testid="splash__signup"]').trigger('click')
-    expect(mocks.emitSfx).toHaveBeenCalledWith('dialog.open')
+    expect(mocks.modalOpen).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ open_sfx: 'dialog.open', close_sfx: 'dialog.close' })
+    )
   })
 
-  test('clicking signup opens the modal', async () => {
+  test('clicking signup opens the overlay', async () => {
     const wrapper = mountWelcome()
     await wrapper.find('[data-testid="splash__signup"]').trigger('click')
     expect(mocks.modalOpen).toHaveBeenCalled()
-  })
-
-  test('modal response resolution emits dialog.close sfx', async () => {
-    let resolve_response
-    const deferred = new Promise((resolve) => {
-      resolve_response = resolve
-    })
-    const wrapper = mountWelcome({ modalResponse: deferred })
-    await wrapper.find('[data-testid="splash__signup"]').trigger('click')
-    mocks.emitSfx.mockReset()
-    resolve_response(undefined)
-    await flushPromises()
-    expect(mocks.emitSfx).toHaveBeenCalledWith('dialog.close')
   })
 
   // ── scrollToContent / See More ────────────────────────────────
@@ -281,7 +269,7 @@ describe('WelcomeIndex', () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
       primeSessionStore(pinia, useSessionStore)
-      mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+      mocks.modalOpen.mockReturnValue({ result: Promise.resolve(undefined) })
       mocks.routeQuery = { next: '/deck/123' }
 
       const session = useSessionStore(pinia)
@@ -311,7 +299,7 @@ describe('WelcomeIndex', () => {
       const { useSessionStore } = await import('@/stores/session')
       const pinia = createTestingPinia({ createSpy: vi.fn, stubActions: true })
       primeSessionStore(pinia, useSessionStore)
-      mocks.modalOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+      mocks.modalOpen.mockReturnValue({ result: Promise.resolve(undefined) })
       mocks.routeQuery = { next: '/deck/123' }
 
       const session = useSessionStore(pinia)

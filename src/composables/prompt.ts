@@ -1,5 +1,4 @@
-import { useModal } from './modal'
-import { emitSfx } from '@/sfx/bus'
+import { useOverlay } from '@/composables/overlay/use-overlay'
 import prompt from '@/components/ui-kit/prompt.vue'
 import type { SfxRole } from '@/sfx/roles'
 
@@ -12,7 +11,6 @@ type PromptArgs = {
   confirmLabel: string
   cancelLabel?: string
   maxLength?: number
-  backdrop?: boolean
   openAudio?: SfxRole
   cancelAudio?: SfxRole
   confirmAudio?: SfxRole
@@ -27,18 +25,18 @@ type PromptArgs = {
  * is always non-empty.
  */
 export function usePrompt() {
-  const modal = useModal()
+  const { open } = useOverlay()
 
   function ask(args: PromptArgs) {
-    const { backdrop, openAudio = 'notice.error', cancelAudio = 'dialog.dismiss', ...props } = args
+    const { openAudio = 'notice.error', cancelAudio = 'dialog.dismiss', ...props } = args
 
-    emitSfx(openAudio)
-
-    return modal.open<string>(prompt, {
-      mode: 'popup',
-      backdrop: backdrop ?? true,
+    const { result } = open<string>(prompt, {
+      presentation: 'popup',
+      open_sfx: openAudio,
       props: { cancelAudio, ...props }
     })
+
+    return { response: result }
   }
 
   return { ask }

@@ -16,7 +16,8 @@ vi.mock('gsap', () => ({
 }))
 
 import AccountAccessModal from '@/views/settings/account-access/index.vue'
-import DialogCard from '@/components/layout-kit/dialog-card/index.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
@@ -62,13 +63,14 @@ const UiButtonStub = defineComponent({
 
 function makeWrapper() {
   const close = vi.fn()
+  const dismiss = vi.fn()
   const wrapper = mount(AccountAccessModal, {
-    props: { close },
     global: {
-      stubs: { AccountAccessContent: AccountAccessContentStub, UiButton: UiButtonStub }
+      stubs: { AccountAccessContent: AccountAccessContentStub, UiButton: UiButtonStub },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss }) }
     }
   })
-  return { wrapper, close }
+  return { wrapper, close, dismiss }
 }
 
 beforeEach(() => mockEmitSfx.mockClear())
@@ -82,10 +84,10 @@ describe('AccountAccessModal — chrome (close/back)', () => {
     expect(wrapper.find('[data-testid="account-access-modal__back"]').exists()).toBe(false)
   })
 
-  test('pressing close on the menu page calls close()', async () => {
-    const { wrapper, close } = makeWrapper()
+  test('pressing close on the menu page calls dismiss', async () => {
+    const { wrapper, dismiss } = makeWrapper()
     await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
-    expect(close).toHaveBeenCalledOnce()
+    expect(dismiss).toHaveBeenCalledOnce()
   })
 
   test('renders the back button (not close) once navigated to a sub-page', async () => {
@@ -107,17 +109,6 @@ describe('AccountAccessModal — chrome (close/back)', () => {
 
     expect(wrapper.vm.page).toBe('menu')
     expect(close).not.toHaveBeenCalled()
-  })
-
-  test('the dialog-card close event (backdrop/esc dismiss) also calls close()', async () => {
-    // DialogCard's SFC filename is index.vue, so its inferred component name
-    // isn't usable for findComponent({ name }) — resolve it by the imported
-    // component reference instead.
-    const { wrapper, close } = makeWrapper()
-    const dialogCard = wrapper.findComponent(DialogCard)
-    dialogCard.vm.$emit('close')
-    await wrapper.vm.$nextTick()
-    expect(close).toHaveBeenCalledOnce()
   })
 })
 

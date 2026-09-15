@@ -7,14 +7,12 @@ import PaymentStatus from './payment-status.vue'
 import SuccessView from './success-view.vue'
 import CheckoutFooter from './checkout-footer.vue'
 import { useCheckout, type CheckoutResponse } from './use-checkout'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 export type { CheckoutResponse }
 
-const { close } = defineProps<{
-  close: (response?: CheckoutResponse) => void
-}>()
-
 const { t } = useI18n()
+const { close } = useOverlayContext()
 const { status, is_ready, onSubmit } = useCheckout(close)
 </script>
 
@@ -26,7 +24,6 @@ const { status, is_ready, onSubmit } = useCheckout(close)
     :show_header="status !== 'success'"
     :close_label="t('billing.checkout.close-label')"
     :close_disabled="status === 'confirming'"
-    @close="close()"
   >
     <dialog-card-body data-testid="checkout__scroll-area">
       <div

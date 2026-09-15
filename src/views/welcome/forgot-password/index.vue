@@ -7,10 +7,10 @@ import ForgotPasswordSuccess from './success.vue'
 import { useForgotPasswordActions } from '@/composables/auth/use-forgot-password-actions'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
-
-const { close } = defineProps<{ close: () => void }>()
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 
 const { t } = useI18n()
+const { close } = useOverlayContext()
 
 const auth = useForgotPasswordActions()
 
@@ -29,7 +29,6 @@ async function onSubmit() {
     size="sm"
     float_header
     :title="t('forgot-password-modal.heading')"
-    @close="close()"
   >
     <div class="relative w-full h-full">
       <dialog-card-pager>

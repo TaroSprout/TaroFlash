@@ -1,40 +1,42 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { usePrompt } from '@/composables/prompt'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
 // prompt.vue is imported directly by the composable, but tests only assert on
-// what's passed to `modal.open` — the component's identity doesn't matter.
+// what's passed to `overlay.open` — the component's identity doesn't matter.
 const anyComponent = expect.anything()
 
-function makeModalResult() {
-  return { response: Promise.resolve(undefined) }
+function makeOverlayResult() {
+  return { result: Promise.resolve(undefined) }
 }
 
 beforeEach(() => {
-  mockEmitSfx.mockClear()
   mockOpen.mockClear()
-  mockOpen.mockReturnValue(makeModalResult())
+  mockOpen.mockReturnValue(makeOverlayResult())
 })
 
 describe('usePrompt — ask()', () => {
-  test('calls emitSfx with the default open audio when openAudio is omitted', () => {
+  test('opens with the default open_sfx role when openAudio is omitted', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create' })
-    expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+    expect(mockOpen).toHaveBeenCalledWith(
+      anyComponent,
+      expect.objectContaining({ open_sfx: 'notice.error' })
+    )
   })
 
-  test('calls emitSfx with the provided openAudio when supplied', () => {
+  test('opens with the provided openAudio as open_sfx when supplied', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create', openAudio: 'slide_up' })
-    expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+    expect(mockOpen).toHaveBeenCalledWith(
+      anyComponent,
+      expect.objectContaining({ open_sfx: 'slide_up' })
+    )
   })
 
   test('passes default cancelAudio to the prompt component when cancelAudio is omitted', () => {
@@ -59,25 +61,13 @@ describe('usePrompt — ask()', () => {
     )
   })
 
-  test('opens the modal with backdrop: true by default', () => {
+  test('opens with popup presentation', () => {
     const { ask } = usePrompt()
     ask({ title: 'Name it', confirmLabel: 'Create' })
-    expect(mockOpen).toHaveBeenCalledWith(anyComponent, expect.objectContaining({ backdrop: true }))
-  })
-
-  test('respects a custom backdrop: false', () => {
-    const { ask } = usePrompt()
-    ask({ title: 'Name it', confirmLabel: 'Create', backdrop: false })
     expect(mockOpen).toHaveBeenCalledWith(
       anyComponent,
-      expect.objectContaining({ backdrop: false })
+      expect.objectContaining({ presentation: 'popup' })
     )
-  })
-
-  test('opens the modal with mode: popup', () => {
-    const { ask } = usePrompt()
-    ask({ title: 'Name it', confirmLabel: 'Create' })
-    expect(mockOpen).toHaveBeenCalledWith(anyComponent, expect.objectContaining({ mode: 'popup' }))
   })
 
   test('forwards title, message, label, placeholder, initialValue, confirmLabel, cancelLabel, maxLength as props', () => {
@@ -109,16 +99,16 @@ describe('usePrompt — ask()', () => {
     )
   })
 
-  test('resolves .response to the value the modal resolves with', async () => {
-    mockOpen.mockReturnValue({ response: Promise.resolve('Aggressive') })
+  test('resolves .response to the value the overlay resolves with', async () => {
+    mockOpen.mockReturnValue({ result: Promise.resolve('Aggressive') })
     const { ask } = usePrompt()
     await expect(ask({ title: 'Name it', confirmLabel: 'Create' }).response).resolves.toBe(
       'Aggressive'
     )
   })
 
-  test('resolves .response to undefined when the modal is cancelled', async () => {
-    mockOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+  test('resolves .response to undefined when the prompt is cancelled', async () => {
+    mockOpen.mockReturnValue({ result: Promise.resolve(undefined) })
     const { ask } = usePrompt()
     await expect(
       ask({ title: 'Name it', confirmLabel: 'Create' }).response

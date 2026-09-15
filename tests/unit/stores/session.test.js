@@ -78,7 +78,9 @@ vi.mock('@/composables/tracking', () => ({
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key) => key }) }))
 vi.mock('@pinia/colada', () => ({ useQueryCache: () => mockQueryCache }))
-vi.mock('@/composables/modal', () => ({ closeAll: mockCloseAllModals }))
+vi.mock('@/stores/overlay-stack', () => ({
+  useOverlayStore: () => ({ closeAll: mockCloseAllModals })
+}))
 vi.mock('@/stores/taro-phone', () => ({ useTaroPhoneStore: () => ({ reset: mockTaroPhoneReset }) }))
 vi.mock('@/views/study-session/composables/session-persistence', () => ({
   clearPersistedSession: mockClearPersistedSession

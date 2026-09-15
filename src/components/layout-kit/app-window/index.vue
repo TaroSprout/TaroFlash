@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
 // Docked because the viewport ran out of width, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls. Running out of height alone docks it to the bottom and leaves both alone, so a fixed-height window never collapses to its content on a short, wide viewport. →[K:docked-app-window-drops-body-scroll]
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
 import {
@@ -12,6 +12,7 @@ import {
 } from './surface'
 import UiButton from '@/components/ui-kit/button.vue'
 import ScrollRegion from '@/components/layout-kit/scroll-region/index.vue'
+import OverlaySurface from '@/components/overlay/overlay-surface/index.vue'
 
 type WindowPatternConfig = {
   palette?: PaletteName
@@ -30,6 +31,7 @@ export type AppWindowProps = {
   window_px?: string
   /** Makes the body itself the scrolling region, so content runs under the header and is cut at the window's bottom edge. Off by default; a window whose pages manage their own overflow leaves it off. */
   scroll_body?: boolean
+  sheet_at?: string
 }
 
 const {
@@ -40,10 +42,14 @@ const {
   close_icon = 'close',
   header_border = 'wave',
   window_px,
-  scroll_body = false
+  scroll_body = false,
+  sheet_at
 } = defineProps<AppWindowProps>()
 
+defineOptions({ inheritAttrs: false })
+
 const { t } = useI18n()
+const attrs = useAttrs()
 
 const slots = defineSlots<{
   sidebar(): any
@@ -87,98 +93,106 @@ const root_style = computed(() => ({
     ? { '--window-header-depth': WINDOW_HEADER_DEPTH[header_border] }
     : {})
 }))
+
+const surface_attrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  return rest
+})
 </script>
 
 <template>
-  <div
-    data-testid="app-window-root"
-    class="relative w-full shrink-0 mobile-modal:mt-auto mobile-modal-flush:h-auto! mobile-modal-flush:[--scroll-overflow:visible] pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
-    :style="root_style"
-  >
+  <overlay-surface mode="dialog" :sheet_at="sheet_at" v-bind="surface_attrs">
     <div
-      data-testid="app-window__overlay"
-      class="absolute inset-0 pointer-events-none z-(--window-overlay-z,30)"
+      data-testid="app-window-root"
+      class="pointer-events-auto relative w-full shrink-0 overlay-downgrade:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
+      :class="attrs.class"
+      :style="[root_style, attrs.style]"
     >
-      <slot name="overlay"></slot>
-    </div>
+      <div
+        data-testid="app-window__overlay"
+        class="absolute inset-0 pointer-events-none z-(--window-overlay-z,30)"
+      >
+        <slot name="overlay"></slot>
+      </div>
 
-    <div
-      data-testid="app-window-container"
-      data-station="window"
-      class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 mobile-modal:rounded-b-none bevel-lg mobile-modal-flush:bevel-sheet"
-    >
-      <slot name="sidebar"></slot>
+      <div
+        data-testid="app-window-container"
+        data-station="window"
+        class="flex overflow-hidden w-full h-full rounded-t-8 rounded-b-8 overlay-downgrade:rounded-b-none bevel-lg overlay-downgrade:bevel-sheet"
+      >
+        <slot name="sidebar"></slot>
 
-      <div data-testid="app-window" class="relative flex w-full h-full flex-col">
-        <div
-          v-if="show_builtin_close"
-          data-testid="app-window__close-slot"
-          class="absolute top-0 p-4 left-0 z-40"
-        >
-          <ui-button
-            :icon-left="close_icon"
-            icon-only
-            :inverted="showHeader"
-            @press="emit('close')"
-            play-on-tap
+        <div data-testid="app-window" class="relative flex w-full h-full flex-col">
+          <div
+            v-if="show_builtin_close"
+            data-testid="app-window__close-slot"
+            class="absolute top-0 p-4 left-0 z-40"
           >
-            {{ close_label_text }}
-          </ui-button>
-        </div>
-
-        <div v-if="showHeader" data-testid="app-window__header-slot" class="relative">
-          <slot name="header">
-            <div
-              data-testid="app-window__header"
-              :data-header-border="header_border"
-              v-bind="header_bindings"
-              :class="[
-                'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--color-accent) text-(--color-on-accent) relative z-10',
-                header_border_class
-              ]"
+            <ui-button
+              :icon-left="close_icon"
+              icon-only
+              :inverted="showHeader"
+              @press="emit('close')"
+              play-on-tap
             >
-              <slot name="header-content">
-                <h1 class="text-5xl">{{ title }}</h1>
-              </slot>
-            </div>
-          </slot>
+              {{ close_label_text }}
+            </ui-button>
+          </div>
+
+          <div v-if="showHeader" data-testid="app-window__header-slot" class="relative">
+            <slot name="header">
+              <div
+                data-testid="app-window__header"
+                :data-header-border="header_border"
+                v-bind="header_bindings"
+                :class="[
+                  'w-full flex justify-center items-center place-items-center px-(--window-px) pt-11.5 pb-14 gap-6 bg-(--color-accent) text-(--color-on-accent) relative z-10',
+                  header_border_class
+                ]"
+              >
+                <slot name="header-content">
+                  <h1 class="text-5xl">{{ title }}</h1>
+                </slot>
+              </div>
+            </slot>
+
+            <div
+              v-if="header_fill_class && !scroll_body"
+              data-testid="app-window__header-fill"
+              aria-hidden="true"
+              :class="['absolute inset-0 z-20 pointer-events-none bg-surface', header_fill_class]"
+            ></div>
+          </div>
 
           <div
-            v-if="header_fill_class && !scroll_body"
-            data-testid="app-window__header-fill"
-            aria-hidden="true"
-            :class="['absolute inset-0 z-20 pointer-events-none bg-surface', header_fill_class]"
-          ></div>
-        </div>
-
-        <div
-          data-testid="app-window__body"
-          :data-scroll-body="scroll_body || undefined"
-          :data-window-edge="slots.footer ? undefined : 'bottom'"
-          class="scroll-hidden relative min-h-0 flex-1 bg-surface"
-        >
-          <scroll-region
-            v-if="scroll_body"
-            gutter="inside"
-            class="flex h-full flex-col [--scroll-track-inset-start:var(--window-header-depth,0px)]"
-            scroller_class="pt-(--window-header-depth)"
+            data-testid="app-window__body"
+            :data-scroll-body="scroll_body || undefined"
+            :data-window-edge="slots.footer ? undefined : 'bottom'"
+            class="scroll-hidden relative min-h-0 flex-1 bg-surface"
           >
-            <slot></slot>
-          </scroll-region>
+            <scroll-region
+              v-if="scroll_body"
+              gutter="inside"
+              class="flex h-full flex-col [--scroll-track-inset-start:var(--window-header-depth,0px)]"
+              scroller_class="pt-(--window-header-depth)"
+            >
+              <slot></slot>
+            </scroll-region>
 
-          <slot v-else></slot>
-        </div>
+            <slot v-else></slot>
+          </div>
 
-        <div
-          v-if="slots.footer"
-          data-testid="app-window__footer"
-          class="bg-surface relative z-20 shrink-0"
-        >
-          <slot name="footer"></slot>
+          <div
+            v-if="slots.footer"
+            data-testid="app-window__footer"
+            class="bg-surface relative z-20 shrink-0"
+          >
+            <slot name="footer"></slot>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </overlay-surface>
 </template>
 
 <style scoped>

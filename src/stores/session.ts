@@ -40,10 +40,10 @@ import { useQueryCache } from '@pinia/colada'
 import logger from '@/utils/logger'
 import { useNoticeStore } from '@/stores/notice-store'
 import { useTaroPhoneStore } from '@/stores/taro-phone'
-import { closeAll as closeAllModals } from '@/composables/modal'
 import { clearPersistedSession } from '@/views/study-session/composables/session-persistence'
 import { consumeReturnDestination } from '@/composables/auth/return-destination'
 import { useTracking } from '@/composables/tracking'
+import { useOverlayStore } from '@/stores/overlay-stack'
 
 /** Why a session was torn down without the member asking to log out. */
 export type ForceLogoutReason = 'expired' | 'account-deleted'
@@ -63,6 +63,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const queryCache = useQueryCache()
   const taroPhone = useTaroPhoneStore()
   const tracking = useTracking()
+  const overlayStore = useOverlayStore()
 
   const user = ref<User | undefined>(undefined)
   const has_password = ref(false)
@@ -193,7 +194,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
    */
   function onAuthenticated(): void {
     clearResolved()
-    closeAllModals()
+    overlayStore.closeAll()
     // Wherever they were originally headed before being sent to sign in.
     router.push(consumeReturnDestination() ?? { name: 'dashboard' })
   }
@@ -273,7 +274,7 @@ export const useSessionStore = defineStore('sessionStore', () => {
     has_password.value = false
 
     clearResolved()
-    closeAllModals()
+    overlayStore.closeAll()
     clearQueryCache()
     taroPhone.reset()
     clearPersistedSession()

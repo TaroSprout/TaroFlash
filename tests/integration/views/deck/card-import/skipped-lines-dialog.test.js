@@ -4,6 +4,7 @@ import SkippedLinesDialog from '@/views/deck/card-import/skipped-lines-dialog.vu
 import { vSfx } from '@/sfx/directive'
 import { waitForScrollSettle } from '../../../../helpers/scroll-settle'
 import { motionStoreStub } from '@tests/fixtures/motion'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
@@ -15,10 +16,13 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx, emitHoverSfx: mockEmitHoverS
 
 // Real dialog-card: shallowMount stubs its default slot away entirely, and
 // the list of skipped lines is rendered into that slot.
-function mount(lines = [], close = vi.fn(), options = {}) {
+function mount(lines = [], overlayOverrides = {}, options = {}) {
   return vueMount(SkippedLinesDialog, {
-    props: { lines, close },
-    global: { directives: { sfx: vSfx } },
+    props: { lines },
+    global: {
+      directives: { sfx: vSfx },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext(overlayOverrides) }
+    },
     ...options
   })
 }
@@ -39,7 +43,7 @@ const waitForUpdate = waitForScrollSettle
 
 function mountOverflowing(height = 60) {
   const lines = Array.from({ length: 40 }, (_, i) => ({ line: i + 1, text: `bad row ${i + 1}` }))
-  const wrapper = mount(lines, vi.fn(), { attachTo: document.body })
+  const wrapper = mount(lines, {}, { attachTo: document.body })
   _activeWrappers.push(wrapper)
 
   const scroller = wrapper.find('[data-testid="scroll-region__scroller"]').element
@@ -70,11 +74,11 @@ describe('card-import/skipped-lines-dialog', () => {
     expect(wrapper.findAll('[data-testid="skipped-lines-dialog__line"]')).toHaveLength(0)
   })
 
-  test('clicking the dialog-card close button calls the close prop', async () => {
-    const close = vi.fn()
-    const wrapper = mount([], close)
+  test('clicking the dialog-card close button routes through the overlay context dismiss', async () => {
+    const dismiss = vi.fn()
+    const wrapper = mount([], { dismiss })
     await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
-    expect(close).toHaveBeenCalledOnce()
+    expect(dismiss).toHaveBeenCalledOnce()
   })
 
   test('the list renders a scroll-region handle once its lines overflow', async () => {

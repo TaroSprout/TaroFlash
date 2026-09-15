@@ -8,18 +8,14 @@ import UiTextarea from '@/components/ui-kit/textarea.vue'
 import UiButton from '@/components/ui-kit/button.vue'
 import { useSubmitFeedbackMutation } from '@/api/feedback'
 import { useNoticeStore } from '@/stores/notice-store'
+import { useOverlayContext } from '@/composables/overlay/overlay-context'
 import { emitSfx } from '@/sfx/bus'
 
 const TITLE_MAX_CHARS = 80
 const BODY_MAX_CHARS = 500
 
-type FeedbackSubmitDialogProps = {
-  close: (response?: boolean) => void
-}
-
-const { close } = defineProps<FeedbackSubmitDialogProps>()
-
 const { t } = useI18n()
+const { close } = useOverlayContext()
 const notice = useNoticeStore()
 const submitFeedback = useSubmitFeedbackMutation()
 
@@ -47,11 +43,6 @@ async function onSubmit() {
     notice.error(t('toast.error.feedback-submit-failed'))
   }
 }
-
-function onClose() {
-  emitSfx('dialog.close')
-  close(false)
-}
 </script>
 
 <template>
@@ -60,7 +51,6 @@ function onClose() {
     data-palette="green"
     size="lg"
     :title="t('feedback-submit-dialog.title')"
-    @close="onClose"
   >
     <dialog-card-body data-testid="feedback-submit-dialog__body">
       <div class="flex flex-1 flex-col justify-between gap-4">

@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
 import StudySession from '@/views/study-session/index.vue'
-import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
 import { motionStoreStub } from '@tests/fixtures/motion'
 
 vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
@@ -292,14 +292,21 @@ const SessionProgressStub = defineComponent({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const TEST_MODAL_ID = 'study-session-modal'
+let captured_veto
+
+function requestVetoClose() {
+  return captured_veto?.()
+}
 
 function makeWrapper({ close = vi.fn(), deck_ids = [1] } = {}) {
+  captured_veto = undefined
+
   return {
     close,
     deck_ids,
+    requestVetoClose: () => captured_veto?.(),
     wrapper: mount(StudySession, {
-      props: { deck_ids, close },
+      props: { deck_ids },
       global: {
         stubs: {
           SessionStudying: SessionStudyingStub,
@@ -310,7 +317,14 @@ function makeWrapper({ close = vi.fn(), deck_ids = [1] } = {}) {
           SessionProgress: SessionProgressStub
         },
         provide: {
-          [MODAL_ID_KEY]: TEST_MODAL_ID
+          [OVERLAY_CONTEXT_KEY]: {
+            close,
+            dismiss: vi.fn(),
+            onCloseRequest: (fn) => {
+              captured_veto = fn
+            },
+            entered: Promise.resolve()
+          }
         }
       },
       attachTo: document.body
@@ -387,7 +401,7 @@ describe('StudySession (index.vue)', () => {
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
     capturedQueries.length = 0
-    request_close_handlers.clear()
+    captured_veto = undefined
   })
 
   // ── Initial phase: studying ────────────────────────────────────────────────
@@ -747,7 +761,7 @@ describe('StudySession (index.vue)', () => {
       const { close } = makeWrapper()
       await openSettingsPage()
 
-      request_close_handlers.get(TEST_MODAL_ID)()
+      requestVetoClose()
 
       expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
       expect(mockClearPersistedSession).toHaveBeenCalledOnce()
@@ -760,7 +774,7 @@ describe('StudySession (index.vue)', () => {
       const { close } = makeWrapper()
       await openSettingsPage()
 
-      request_close_handlers.get(TEST_MODAL_ID)()
+      requestVetoClose()
 
       expect(mockCloseSettings).toHaveBeenCalledOnce()
       expect(close).not.toHaveBeenCalled()
@@ -771,7 +785,7 @@ describe('StudySession (index.vue)', () => {
       await finishSession([])
       await openCategoryPage()
 
-      request_close_handlers.get(TEST_MODAL_ID)()
+      requestVetoClose()
 
       expect(mockCloseSummaryCategory).toHaveBeenCalledOnce()
       expect(mockRequestClose).not.toHaveBeenCalled()
@@ -785,7 +799,7 @@ describe('StudySession (index.vue)', () => {
       summary_editing_card_ref.value = { id: 1, deck_id: 1 }
       await nextTick()
 
-      request_close_handlers.get(TEST_MODAL_ID)()
+      requestVetoClose()
 
       expect(mockStopSummaryEdit).toHaveBeenCalledOnce()
       expect(mockCloseSummaryCategory).not.toHaveBeenCalled()
@@ -795,7 +809,7 @@ describe('StudySession (index.vue)', () => {
     test('during studying (no settings page), esc/backdrop calls the controller requestClose()', () => {
       const { close } = makeWrapper()
 
-      request_close_handlers.get(TEST_MODAL_ID)()
+      requestVetoClose()
 
       expect(mockRequestClose).toHaveBeenCalledOnce()
       expect(close).not.toHaveBeenCalled()
@@ -805,7 +819,7 @@ describe('StudySession (index.vue)', () => {
       const { close } = makeWrapper()
       await finishSession([])
 
-      request_close_handlers.get(TEST_MODAL_ID)()
+      requestVetoClose()
 
       expect(mockRequestClose).not.toHaveBeenCalled()
       expect(mockEmitSfx).toHaveBeenCalledWith('dialog.close')
@@ -1047,7 +1061,7 @@ describe('StudySession (index.vue)', () => {
     // — set by this view, not by session-progress itself — are observable.
     function mountWithRealProgress() {
       return mount(StudySession, {
-        props: { deck_ids: [1], close: vi.fn() },
+        props: { deck_ids: [1] },
         global: {
           stubs: {
             SessionStudying: SessionStudyingStub,
@@ -1063,7 +1077,14 @@ describe('StudySession (index.vue)', () => {
               }
             })
           },
-          provide: { [MODAL_ID_KEY]: TEST_MODAL_ID }
+          provide: {
+            [OVERLAY_CONTEXT_KEY]: {
+              close: vi.fn(),
+              dismiss: vi.fn(),
+              onCloseRequest: vi.fn(),
+              entered: Promise.resolve()
+            }
+          }
         },
         attachTo: document.body
       })

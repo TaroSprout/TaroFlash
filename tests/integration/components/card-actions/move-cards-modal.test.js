@@ -192,6 +192,8 @@ const ScrollBarStub = defineComponent({
 
 import MoveCardsModal from '@/components/card-actions/move-cards-modal.vue'
 import { useNoticeStore } from '@/stores/notice-store'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 function makeCard(overrides = {}) {
   return card.one({ overrides })
@@ -222,7 +224,7 @@ function mountModal(opts = {}) {
 
   const wrapper = shallowMount(MoveCardsModal, {
     ...(attach ? { attachTo: document.body } : {}),
-    props: { cards, current_deck_id, count, close, move },
+    props: { cards, current_deck_id, count, move },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
       stubs: {
@@ -233,7 +235,8 @@ function mountModal(opts = {}) {
         DialogCardBody: DialogCardBodyStub,
         UiOptionsPanel: UiOptionsPanelStub,
         ScrollBar: ScrollBarStub
-      }
+      },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close }) }
     }
   })
   mounted_wrappers.push(wrapper)
@@ -250,13 +253,7 @@ function mountModal(opts = {}) {
  * to actual computed values here instead of stub markup.
  */
 function mountRealModal(opts = {}) {
-  const {
-    cards = [makeCard()],
-    current_deck_id = 30,
-    close = vi.fn(),
-    move = vi.fn(),
-    real_card = false
-  } = opts
+  const { cards = [makeCard()], current_deck_id = 30, move = vi.fn(), real_card = false } = opts
 
   const host = document.createElement('div')
   host.style.position = 'fixed'
@@ -270,7 +267,7 @@ function mountRealModal(opts = {}) {
 
   const wrapper = mount(MoveCardsModal, {
     attachTo: host,
-    props: { cards, current_deck_id, close, move },
+    props: { cards, current_deck_id, move },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
       stubs: {
@@ -281,6 +278,7 @@ function mountRealModal(opts = {}) {
         DialogCard: false,
         DialogCardHeader: false,
         DialogCardBody: DialogCardBodyStub,
+        OverlaySurface: false,
         Card: real_card ? false : CardStub
       }
     }
@@ -543,7 +541,7 @@ describe('MoveCardsModal', () => {
   test('the deck list is a direct child of dialog-card, landing in the same content-grid column as before', () => {
     const cards = [makeCard()]
     const wrapper = shallowMount(MoveCardsModal, {
-      props: { cards, current_deck_id: 30, close: vi.fn(), move: vi.fn() },
+      props: { cards, current_deck_id: 30, move: vi.fn() },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
         stubs: {
@@ -553,12 +551,13 @@ describe('MoveCardsModal', () => {
           UiOptionsPanel: UiOptionsPanelStub,
           ScrollBar: ScrollBarStub,
           DialogCard: false,
-          DialogCardHeader: false
+          DialogCardHeader: false,
+          OverlaySurface: false
         }
       }
     })
 
-    const dialog_card = wrapper.find('[data-testid="move-cards"]')
+    const dialog_card = wrapper.find('[data-testid="dialog-card"]')
     const deck_list = wrapper.find('[data-testid="move-cards__deck-list"]')
     expect(deck_list.element.parentElement).toBe(dialog_card.element)
   })
@@ -757,20 +756,6 @@ describe('MoveCardsModal', () => {
     await flushPromises()
     expect(close).not.toHaveBeenCalled()
     expect(guardAddCardsMock).not.toHaveBeenCalled()
-  })
-
-  // ── Cancel ──────────────────────────────────────────────────────────────────
-
-  test('dialog-card close calls close with false', async () => {
-    const { wrapper, close } = mountModal({ cards: [makeCard()] })
-    await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
-    expect(close).toHaveBeenCalledWith(false)
-  })
-
-  test('dialog-card close emits pop_up_close', async () => {
-    const { wrapper } = mountModal({ cards: [makeCard()] })
-    await wrapper.find('[data-testid="move-cards__dialog-close"]').trigger('click')
-    expect(emitSfxMock).toHaveBeenCalledWith('dialog.close')
   })
 
   // ── onMove failure handling ──────────────────────────────────────────────────
