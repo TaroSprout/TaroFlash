@@ -37,9 +37,8 @@ what each stage owns, and the two-axis Priority/Target doctrine below.
 | `Target`   | **empty** at cut time — a `/backlog` decision, not a capture one                                                           |
 | `Epic`     | match the Epic Board; if nothing fits, propose a new epic rather than force-fit                                            |
 
-Never write `Ready` — it asserts the ticket is executable, which is never true at capture time. Never
-write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own hands-off marker. Leave
-`Priority` and `Assignee` untouched unless the user explicitly asks for a value.
+- Never write `Ready` — it asserts the ticket is executable, which is never true at capture time.
+- Never write `On Hold` or `Assignee = Me` on a fresh ticket — that's the user's own hands-off marker.
 
 **The classification fields have an owner: `/backlog`.** `Type`, `Epic`, `Target`, and `Priority` are
 the portfolio pass's to set — it sees the whole Backlog at once and distributes them comparatively.
@@ -53,11 +52,8 @@ never a per-ticket call — it's a comparative call across the whole board, whic
 are orthogonal — every quarter spans `P0`→`P3`, so a quarter never collapses into a single priority
 tier.
 
-- `MVP` — launch scope: everything gating first ship. The current quarter's committed set, kept as its
-  own value.
-- `Q3 '26` / `Q4 '26` / `Q1 '27` — rolling quarter buckets (the live set lives in
-  [`task-board-schema.md`](./task-board-schema.md)). `Q3 '26` is current and holds `MVP` plus a few
-  high-value pull-ins.
+What each value means and the live quarter set are owned by
+[`task-board-schema.md`](./task-board-schema.md) — read it, don't restate it here.
 
 A ticket stays in its epic regardless of `Target` — the epic is the resurfacing anchor, not a
 graveyard. `/backlog` fills `Target` **theme-grouped**: an epic's tickets stay together in one home
@@ -110,9 +106,9 @@ Six gates on every AC, on top of [`authoring`](./authoring.md):
   existing — that's Product description as a checkbox. "Never-reviewed cards sort last" can. A
   rejected path counts too, as a negative: "no cross-session outbox is added".
 - **One sentence.** A second sentence means it's two ACs, or padding.
-- **No smuggled design; no implementation.** Undecided behaviour is an `## Open questions` fork, not
-  an AC. And an AC pins the _design_ decision (placement, host, copy, states, behaviour), never the
-  _implementation_ (which composable, how it's wired) — that rides a companion line in
+- **No smuggled design.** Undecided behaviour is an `## Open questions` fork, not an AC.
+- **No implementation.** An AC pins the _design_ decision (placement, host, copy, states, behaviour),
+  never the _implementation_ (which composable, how it's wired) — that rides a companion line in
   `## Tech details`.
 - **A hedge routes, it never writes.** The ticket stays in `Backlog` for `/groom`; the fork never
   lands in the criterion.

@@ -30,18 +30,16 @@ survives all three is a real gap.
 3. **Already enforced by a check?** A lint rule, a type, a hook or CI already fails the diff — prose
    restating a gate that can't be skipped is noise. Say so and stop.
 
-**A rule you already had and didn't follow still heals.** Grep first, but finding the rule is the
-start of the work, not the end of it: a rule that didn't reach you is misplaced, outscoped, or too
-weak to bite, and the fix is to move it, rescope it, or make it mechanically checkable. Never wait
-for a second violation — you cannot see across sessions, so "it only happened once" is something
-only the user could ever tell you.
-
-Never heal on a taste call the user hasn't actually made — one offhand remark is an instance.
-
-**Surviving the ladder doesn't fix the altitude — that's the writer's call, not this one.** The
-correction as given is usually pitched at the symptom; the writer reframes it to the class of mistake
-before landing it, per its own spec. Don't draft that reframe here — same reason routing hands a
-candidate row instead of a file.
+- **A rule you already had and didn't follow still heals.** Grep first, but finding the rule is the
+  start of the work, not the end of it: a rule that didn't reach you is misplaced, outscoped, or too
+  weak to bite, and the fix is to move it, rescope it, or make it mechanically checkable.
+- **Never wait for a second violation.** You cannot see across sessions, so "it only happened once"
+  is something only the user could ever tell you.
+- **Never heal on a taste call the user hasn't actually made** — one offhand remark is an instance.
+- **Surviving the ladder doesn't fix the altitude — that's the writer's call, not this one.** The
+  correction as given is usually pitched at the symptom; the writer reframes it to the class of
+  mistake before landing it, per its own spec. Don't draft that reframe here — same reason routing
+  hands a candidate row instead of a file.
 
 ## Routing — one lesson, one home
 
@@ -55,20 +53,19 @@ candidate row instead of a file.
 | something mechanically checkable                                                           | a hook in `.claude/settings.json`, or a lint rule                                               |
 | domain knowledge that went stale, or a fact newly true of one existing component/subsystem | `corpus/` — `corpus-author` owns it, citing the topic's slug from the source that trips over it |
 
-Bias toward **extending the nearest existing file**; a new one is for a lesson off-topic in every
-existing file. A lesson routed anywhere under `.claude/**` or to CLAUDE.md is written by `harness-author`.
-
-**A same-topic rule file doesn't win by proximity.** A rule file governs how anyone writes _new_ code
-in that area; `corpus/` governs what is true of _one component that already exists_. "Don't nest a
-second height animation inside dock content" isn't a practice for animation authors in general — it's
-a fact about the mobile dock, so it routes to `corpus/`, cited from the dock's own source, not to
-`animations.md` just because the words are about animation.
-
-**Every lesson lands in the repo.** There is no agent-memory store for this project — never a
-`memory/` path, a `MEMORY.md`, or a `feedback_*.md`, even when a harness prompt invites one; that
-store lived outside review and drifted into contradicting the code. `.claude/settings.json` sets
-`autoMemoryEnabled: false`; if a memory file ever appears, restore that setting rather than working
-around it.
+- **Bias toward extending the nearest existing file** — a new one is for a lesson off-topic in every
+  existing file.
+- A lesson routed anywhere under `.claude/**` or to CLAUDE.md is written by `harness-author`.
+- **A same-topic rule file doesn't win by proximity.** A rule file governs how anyone writes _new_
+  code in that area; `corpus/` governs what is true of _one component that already exists_. "Don't
+  nest a second height animation inside dock content" isn't a practice for animation authors in
+  general — it's a fact about the mobile dock, so it routes to `corpus/`, cited from the dock's own
+  source, not to `animations.md` just because the words are about animation.
+- **Every lesson lands in the repo.** There is no agent-memory store for this project — never a
+  `memory/` path, a `MEMORY.md`, or a `feedback_*.md`, even when a harness prompt invites one; that
+  store lived outside review and drifted into contradicting the code. `.claude/settings.json` sets
+  `autoMemoryEnabled: false`; if a memory file ever appears, restore that setting rather than working
+  around it.
 
 ## Dispatch
 

@@ -11,17 +11,17 @@ Always use `vp` — never `pnpm`, `npm`, `vitest`, `oxlint`, `oxfmt` directly.
 
 ## The type-check gate
 
-CI's authoritative type-check is `pnpm type-check` (`vue-tsc --build --force`), and it is **stricter
-than `vp check`** — `vp check` can report zero errors while `vue-tsc` fails (→[K:proxy-pass-not-evidence]).
-Run `pnpm type-check` before any point where a branch leaves your hands — pushing it yourself, or
-handing it back to whatever pushes it next.
+- **Run `pnpm type-check` (`vue-tsc --build --force`) before any point where a branch leaves your
+  hands** — pushing it yourself, or handing it back to whatever pushes it next. It's CI's
+  authoritative type-check and stricter than `vp check`, which can report zero errors while
+  `vue-tsc` fails (→[K:proxy-pass-not-evidence]).
 
 ## Node version
 
-`vp fmt` and `vp check` can fail on `vite.config.ts` with `ERR_UNKNOWN_FILE_EXTENSION`, quoting a
-Node engine minimum your version already satisfies (seen: fails on 22.14, works on 26) — the stated
-minimum is wrong, not the toolchain. Switch to a newer Node rather than debugging the config or the
-error message. `vp test` is unaffected.
+- **Switch to a newer Node rather than debugging the config or the error message** when `vp fmt` or
+  `vp check` fails on `vite.config.ts` with `ERR_UNKNOWN_FILE_EXTENSION`, quoting a Node engine
+  minimum your version already satisfies (seen: fails on 22.14, works on 26) — the stated minimum is
+  wrong, not the toolchain. `vp test` is unaffected.
 
 ## Never `pnpm`
 
