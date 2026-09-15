@@ -228,8 +228,12 @@ the line.
 ### New epics [K:ticket-new-epic-proposal]
 
 Propose first, never create silently. Give a one-line scope, not a full spec. Create it from the
-Epic Board's default template (`template_id` in [`task-board-schema.md`](./task-board-schema.md)) —
-the template carries its own default icon, so never set one manually via a hosted Notion SVG URL.
+Epic Board's default template (`template_id` in [`task-board-schema.md`](./task-board-schema.md)).
+**An icon is not optional and not templated in** — choose one and set it explicitly on creation,
+then read the page back to confirm it landed (→[K:notion-write-verification]); an epic created
+without a confirmed icon is an incomplete create. A Task Board ticket needs none of this: its
+template's `ticket` icon is the default and is applied automatically, with nothing to choose or
+verify.
 
 ## Dependencies [K:ticket-dependencies]
 
