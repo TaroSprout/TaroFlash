@@ -27,9 +27,11 @@ import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button
 // no inner (gutter-facing) padding, so this is the whole separation between the
 // two text columns — not stacked on top of page padding.
 const SPREAD_GAP = 40
-// The bottom margin a page keeps clear when it carries the fixed controls/gloss overlay below its text.
-const RESERVE_SPLIT = 'pb-[calc(var(--paged-controls-h)+var(--paged-split-h))]'
-const RESERVE_CONTROLS = 'pb-(--paged-controls-h)'
+// The bottom space a page keeps clear for the fixed controls/gloss dock below its
+// text — the dock's own height plus the feather, so resting text ends above the
+// fade instead of dissolving into it.
+const RESERVE_SPLIT = 'pb-[calc(var(--paged-controls-h)+var(--paged-split-h)+var(--paged-feather))]'
+const RESERVE_CONTROLS = 'pb-[calc(var(--paged-controls-h)+var(--paged-feather))]'
 // Generous, bookish vertical margins, shared by the pages and the measure frames.
 const PAGE_TOP = 'pt-16 sm:pt-20'
 const PAGE_BOTTOM = 'pb-16 sm:pb-20'
