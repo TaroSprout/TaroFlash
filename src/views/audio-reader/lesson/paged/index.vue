@@ -385,6 +385,7 @@ watch(
   () => active_word.value,
   () => {
     if (active_word.value < 0 || user_active || scroll_pending) return
+    if (!player.is_playing.value) return
 
     const target = spreadOfWord(active_word.value)
     if (settle_target !== null) {
