@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
-import { defineComponent, h, markRaw } from 'vue'
+import { defineComponent, h, markRaw, ref } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/utils/animations/overlay', () => ({
-  playEnter: vi.fn((_el, done) => done()),
-  playLeave: vi.fn((_el, done) => done())
+  playEnter: vi.fn(() => ({ done: Promise.resolve() })),
+  playLeave: vi.fn(() => ({ done: Promise.resolve() }))
 }))
 
 vi.mock('@/composables/ui/scroll-lock', () => ({
@@ -19,6 +19,7 @@ vi.mock('@/composables/shortcuts', () => ({
 import OverlayHost from '@/components/overlay/host.vue'
 import { useOverlayStore } from '@/stores/overlay-stack'
 import { useOverlayContext } from '@/composables/overlay/overlay-context'
+import { playEnter, playLeave } from '@/utils/animations/overlay'
 
 const EntryComponent = defineComponent({
   name: 'EntryComponent',
@@ -29,6 +30,22 @@ const EntryComponent = defineComponent({
         h('button', { 'data-testid': 'entry-dismiss', onClick: dismiss }, 'dismiss'),
         h('button', { 'data-testid': 'entry-close', onClick: () => close('done') }, 'close')
       ])
+  }
+})
+
+const EnteredMarkerComponent = defineComponent({
+  name: 'EnteredMarkerComponent',
+  setup() {
+    const { entered } = useOverlayContext()
+    const is_entered = ref(false)
+    entered.then(() => {
+      is_entered.value = true
+    })
+    return () =>
+      h('div', {
+        'data-testid': 'entry-content',
+        'data-entered': String(is_entered.value)
+      })
   }
 })
 
@@ -130,6 +147,64 @@ describe('OverlayHost', () => {
 
     expect(entry.interceptor).not.toHaveBeenCalled()
     expect(store.entries).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  // ── done threads through the motion driver's handle ────────────
+
+  test("the overlay content's entered promise resolves only once playEnter's motion handle resolves", async () => {
+    const store = useOverlayStore()
+    let resolveDone
+    playEnter.mockReturnValueOnce({
+      done: new Promise((resolve) => {
+        resolveDone = resolve
+      })
+    })
+
+    const wrapper = mount(OverlayHost, {
+      attachTo: document.body,
+      global: { stubs: { transition: false, 'transition-group': false } }
+    })
+    await flushPromises()
+    pushEntry(store, { component: markRaw(EnteredMarkerComponent) })
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="entry-content"]').attributes('data-entered')).toBe('false')
+
+    resolveDone()
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="entry-content"]').attributes('data-entered')).toBe('true')
+    wrapper.unmount()
+  })
+
+  test("the leaving element stays in the DOM until playLeave's motion handle resolves", async () => {
+    const store = useOverlayStore()
+    let resolveDone
+    playLeave.mockReturnValueOnce({
+      done: new Promise((resolve) => {
+        resolveDone = resolve
+      })
+    })
+    pushEntry(store)
+
+    const wrapper = mount(OverlayHost, {
+      attachTo: document.body,
+      global: { stubs: { transition: false, 'transition-group': false } }
+    })
+    await flushPromises()
+
+    store.remove('e1')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="entry-content"]').exists()).toBe(true)
+
+    resolveDone()
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="entry-content"]').exists()).toBe(false)
     wrapper.unmount()
   })
 })
