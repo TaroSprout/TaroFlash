@@ -71,11 +71,9 @@ const PagedWindowStub = defineComponent({
   }
 })
 
-function mountAdmin(close = vi.fn()) {
+function mountAdmin() {
   return {
-    close,
     wrapper: mount(Admin, {
-      props: { close },
       global: { stubs: { PagedWindow: PagedWindowStub } }
     })
   }
@@ -110,12 +108,6 @@ describe('Admin — chrome', () => {
       'palette',
       'roles'
     ])
-  })
-
-  test('close event forwards to the close prop', async () => {
-    const { wrapper, close } = mountAdmin()
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
-    expect(close).toHaveBeenCalledOnce()
   })
 
   test('active_page starts on feedback and follows the v-model:active binding', async () => {

@@ -41,13 +41,13 @@ const AppLauncherStub = defineComponent({
   setup: () => () => h('div', { 'data-testid': 'app-launcher-stub' })
 })
 
-/** Mimics OpenModalResult — a promise the caller controls from outside. */
+/** Mimics OpenOverlayResult — a promise the caller controls from outside. */
 function makeDeferredResult() {
   let resolve
-  const response = new Promise((res) => {
+  const result = new Promise((res) => {
     resolve = res
   })
-  return { response, resolve }
+  return { result, resolve }
 }
 
 function makeWrapper() {

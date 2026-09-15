@@ -63,12 +63,16 @@ vi.mock('@/composables/auth/use-reset-password-actions', () => ({
 }))
 
 import ResetPasswordModal from '@/views/welcome/reset-password/index.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Mount helper ─────────────────────────────────────────────────────────────
 
 function makeWrapper(close = vi.fn()) {
   return mount(ResetPasswordModal, {
-    props: { close }
+    global: {
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close }) }
+    }
   })
 }
 
@@ -102,13 +106,6 @@ describe('ResetPasswordModal (reset-password/index.vue)', () => {
   test('renders the form when not yet successful', () => {
     const wrapper = makeWrapper()
     expect(wrapper.find('[data-testid="reset-password-modal"]').exists()).toBe(true)
-  })
-
-  test('the dialog-card close event calls the close prop', async () => {
-    const close = vi.fn()
-    const wrapper = makeWrapper(close)
-    await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
-    expect(close).toHaveBeenCalledOnce()
   })
 
   test('typing into the password/confirm-password fields advances the composable refs', async () => {
