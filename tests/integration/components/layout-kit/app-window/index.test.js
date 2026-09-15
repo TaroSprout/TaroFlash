@@ -345,11 +345,20 @@ describe('AppWindow', () => {
   // variant, never the width-or-height one.
 
   test('keeps the persistent side shadow and flushes it only on the width-axis variant', () => {
-    const wrapper = mountWindow()
-    const classes = wrapper.find('[data-testid="app-window-container"]').classes()
-    expect(classes).toContain('bevel-lg')
-    expect(classes).toContain('overlay-downgrade-flush:bevel-sheet')
-    expect(classes).not.toContain('overlay-downgrade:bevel-sheet')
+    const height_only = mountWindow({ sheet_at: 'h<2xl' }, {}, {}, { attach: true })
+    const persistent_shadow = getComputedStyle(
+      height_only.find('[data-testid="app-window-container"]').element
+    ).boxShadow
+    expect(persistent_shadow).toContain('6px 6px')
+    height_only.unmount()
+
+    const width_axis = mountWindow({ sheet_at: 'w<2xl' }, {}, {}, { attach: true })
+    const flushed_shadow = getComputedStyle(
+      width_axis.find('[data-testid="app-window-container"]').element
+    ).boxShadow
+    expect(flushed_shadow).not.toContain('6px 6px')
+    expect(flushed_shadow).toContain('1px 0px 0px 0px')
+    width_axis.unmount()
   })
 
   test('root wrapper carries relative position and flips to bottom-aligned once the surface downgrades', () => {
