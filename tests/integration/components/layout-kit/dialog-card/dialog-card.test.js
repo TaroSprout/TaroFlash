@@ -307,10 +307,13 @@ describe('DialogCard', () => {
 
   describe('full_bleed forwarded to the overlay-surface', () => {
     test('the overlay-surface never carries the top-gutter class dialog-card opts out of', () => {
-      const wrapper = mountCard()
-      expect(wrapper.find('[data-testid="overlay-surface"]').classes()).not.toContain(
-        'overlay-downgrade:pt-4'
+      const wrapper = mountCard({ full_bleed_at: 'w<2xl' }, {}, { attach: true })
+      const surface_style = getComputedStyle(
+        wrapper.find('[data-testid="overlay-surface"]').element
       )
+
+      expect(surface_style.paddingTop).toBe('0px')
+      wrapper.unmount()
     })
   })
 
