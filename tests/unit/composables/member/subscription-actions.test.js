@@ -52,8 +52,8 @@ vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => ({ success: noticeSuccessMock, error: noticeErrorMock })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('@/components/billing/checkout-modal/index.vue', () => ({
@@ -101,13 +101,13 @@ beforeEach(() => {
 
 describe('useSubscriptionActions — onUpgrade', () => {
   test('opens the Checkout modal', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve() })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve() })
     const { onUpgrade } = withSetup(() => useSubscriptionActions())
     await onUpgrade()
     expect(modalOpenMock).toHaveBeenCalledOnce()
     expect(modalOpenMock).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Checkout' }),
-      expect.objectContaining({ mode: 'popup', backdrop: true })
+      expect.objectContaining({ presentation: 'popup' })
     )
   })
 })

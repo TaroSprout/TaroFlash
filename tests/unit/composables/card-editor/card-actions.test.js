@@ -28,7 +28,9 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: mockT })
 }))
 vi.mock('@/composables/alert', () => ({ useAlert: () => ({ warn: alertWarnMock }) }))
-vi.mock('@/composables/modal', () => ({ useModal: () => ({ open: modalOpenMock }) }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
+}))
 vi.mock('@/sfx/bus', () => ({ emitSfx: emitSfxMock }))
 vi.mock('@/components/card-actions/move-cards-modal.vue', () => ({ default: {} }))
 vi.mock('@/stores/notice-store', () => ({ useNoticeStore: () => mockNotice }))
@@ -350,7 +352,7 @@ describe('useCardActions', () => {
     })
 
     test('opens the move modal with the resolved cards and the current deck id', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const { actions } = makeActions({
         list: makeList({ persisted }),
@@ -365,7 +367,7 @@ describe('useCardActions', () => {
     })
 
     test('does not fire the move mutation when the modal is dismissed', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const { actions, mutations } = makeActions({
         list: makeList({ persisted }),
@@ -379,7 +381,7 @@ describe('useCardActions', () => {
       // Mirrors what move-cards.vue does: invoke the passed `move` closure with
       // the chosen deck before resolving with the modal response.
       modalOpenMock.mockImplementationOnce((_component, options) => ({
-        response: options.props.move(42).then(() => ({ deck_id: 42 }))
+        result: options.props.move(42).then(() => ({ deck_id: 42 }))
       }))
       const persisted = [makeCard({ id: 7 })]
       const { actions, mutations } = makeActions({
@@ -393,7 +395,7 @@ describe('useCardActions', () => {
     })
 
     test('emits the open move-modal sfx', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const { actions } = makeActions({
         list: makeList({ persisted }),
@@ -404,7 +406,7 @@ describe('useCardActions', () => {
     })
 
     test('runs cleanup after a successful move: exitSelection + refetch (mode unchanged)', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve({ deck_id: 42 }) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve({ deck_id: 42 }) })
       const persisted = [makeCard({ id: 7 })]
       const exitMode = vi.fn()
       const { actions, selection, deck_query } = makeActions({
@@ -420,7 +422,7 @@ describe('useCardActions', () => {
 
     test('select-all mode: the move closure passes { source_deck_id, except_ids } to mutation', async () => {
       modalOpenMock.mockImplementationOnce((_component, options) => ({
-        response: options.props.move(55).then(() => ({ deck_id: 55 }))
+        result: options.props.move(55).then(() => ({ deck_id: 55 }))
       }))
       const { actions, mutations } = makeActions({
         list: makeList(),
@@ -438,7 +440,7 @@ describe('useCardActions', () => {
     // count rather than a server round-trip — the move closure must forward it.
     test('select-all mode: the move closure passes the resolved count to the mutation', async () => {
       modalOpenMock.mockImplementationOnce((_component, options) => ({
-        response: options.props.move(55).then(() => ({ deck_id: 55 }))
+        result: options.props.move(55).then(() => ({ deck_id: 55 }))
       }))
       const { actions, mutations } = makeActions({
         list: makeList(),
@@ -451,7 +453,7 @@ describe('useCardActions', () => {
     })
 
     test('select-all mode passes count to openMoveModal so the title shows total not preview length', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 1 }), makeCard({ id: 2 })]
       const selection = makeSelection({ select_all: true })
       selection.selected_count = { value: 200 }
@@ -470,7 +472,7 @@ describe('useCardActions', () => {
     test('the move closure passed to the modal lets a rejected mutation propagate', async () => {
       // Error handling now lives entirely inside move-cards.vue — this composable's
       // `move` closure must not swallow a rejection with a local try/catch.
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const mutations = makeMutations()
       mutations.moveCards.mockRejectedValueOnce(new Error('boom'))
@@ -486,7 +488,7 @@ describe('useCardActions', () => {
     })
 
     test('does not run cleanup (exitSelection/refetch) when the modal is dismissed', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const persisted = [makeCard({ id: 7 })]
       const { actions, selection, deck_query } = makeActions({
         list: makeList({ persisted }),

@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vite-plus/test'
+import { ref } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useOverlayStore } from '@/stores/overlay-stack'
 
@@ -88,5 +89,30 @@ describe('useOverlayStore', () => {
     const store = useOverlayStore()
     store.closeAll()
     expect(store.entries).toHaveLength(0)
+  })
+
+  // ── push must not deep-reactive-wrap props ─────────────────────
+  // Pinia's `entries` is a `reactive()` array — without `markRaw` on the
+  // pushed props bundle, storing it deep-wraps every nested object,
+  // including a ref-carrying bundle like mobile-editor's `api`. Vue
+  // auto-unwraps a ref the moment it's read as a property of a reactive
+  // proxy, so a consumer reading `entry.props.api.cards.value` would get
+  // `undefined` — the ref has already collapsed into its raw array value at
+  // store-write time, before any consumer even runs.
+
+  test('push keeps a ref nested inside props live — reading it after push resolves through the same ref, not a snapshot', () => {
+    const store = useOverlayStore()
+    const cards = ref(['a', 'b'])
+    const api = { cards }
+    const entry = makeEntry('a', { props: { api } })
+
+    store.push(entry)
+
+    const stored_cards = store.entries[0].props.api.cards
+    expect(stored_cards).toBe(cards)
+    expect(stored_cards.value).toEqual(['a', 'b'])
+
+    cards.value = ['a', 'b', 'c']
+    expect(store.entries[0].props.api.cards.value).toEqual(['a', 'b', 'c'])
   })
 })

@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import UiPrompt from '@/components/ui-kit/prompt.vue'
-import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 import { motionStoreStub } from '@tests/fixtures/motion'
 
 vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
@@ -28,24 +28,25 @@ vi.mock('@/composables/ui/media-query', () => ({
 
 // ── Mount helper ──────────────────────────────────────────────────────────────
 
-// The prompt renders only the box — the modal host owns the backdrop and routes
-// backdrop-click / esc through the handler the prompt registers via
-// useModalRequestClose. Provide a MODAL_ID_KEY so that registration happens.
-function makeWrapper(props = {}, { modalId = 'test-prompt' } = {}) {
+// The prompt renders only the box — overlay-surface (the real component
+// here) owns the backdrop and routes a self-click through the overlay
+// context's dismiss(), separate from the prompt's own close(outcome) on
+// cancel/confirm.
+function makeWrapper(props = {}, overrides = {}) {
   const close = vi.fn()
+  const dismiss = vi.fn()
   const wrapper = mount(UiPrompt, {
     props: {
       title: 'Name it',
       confirmLabel: 'Create',
-      close,
       ...props
     },
     attachTo: document.body,
     global: {
-      provide: { [MODAL_ID_KEY]: modalId }
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss, ...overrides }) }
     }
   })
-  return { wrapper, close, modalId }
+  return { wrapper, close, dismiss }
 }
 
 function input(wrapper) {
@@ -68,7 +69,6 @@ function errorTooltipText() {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
-  request_close_handlers.clear()
   document.body.innerHTML = ''
 })
 
@@ -211,23 +211,24 @@ describe('UiPrompt — cancel', () => {
   })
 })
 
-// ── dismissal via modal machinery ─────────────────────────────────────────────
+// ── dismissal via the overlay-surface backdrop ────────────────────────────────
 
-describe('UiPrompt — request-close dismissal', () => {
-  test('registers a request-close handler (backdrop click / esc) that resolves undefined, like cancel', () => {
-    const { close, modalId } = makeWrapper()
+describe('UiPrompt — backdrop dismissal', () => {
+  test('a click on the overlay-surface routes through the overlay context dismiss, not close', async () => {
+    const { wrapper, close, dismiss } = makeWrapper()
 
-    // The modal host invokes this handler on backdrop click or esc.
-    request_close_handlers.get(modalId)()
+    await wrapper.find('[data-testid="overlay-surface"]').trigger('click')
 
-    expect(close).toHaveBeenCalledWith(undefined)
+    expect(dismiss).toHaveBeenCalledTimes(1)
+    expect(close).not.toHaveBeenCalled()
   })
 
-  test('clicking inside the prompt box does not close it', async () => {
-    const { wrapper, close } = makeWrapper()
+  test('clicking inside the prompt box does not dismiss or close it', async () => {
+    const { wrapper, close, dismiss } = makeWrapper()
 
     await wrapper.find('[data-testid="ui-kit-prompt"]').trigger('click')
 
+    expect(dismiss).not.toHaveBeenCalled()
     expect(close).not.toHaveBeenCalled()
   })
 })

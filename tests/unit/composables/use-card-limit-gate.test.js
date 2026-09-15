@@ -13,8 +13,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: alertWarnMock })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('vue-i18n', () => ({
@@ -141,17 +141,17 @@ describe('guardAddCards', () => {
     expect(await guardAddCards()).toBe(false)
   })
 
-  test('opens the Checkout modal when the alert is confirmed', async () => {
+  test('opens the Checkout overlay when the alert is confirmed', async () => {
     alertWarnMock.mockReturnValue({ response: Promise.resolve(true) })
     const { guardAddCards } = makeFreeGate(200)
     await guardAddCards()
     expect(modalOpenMock).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ mode: 'mobile-sheet' })
+      expect.objectContaining({ presentation: 'dialog' })
     )
   })
 
-  test('does not open the Checkout modal when the alert is dismissed', async () => {
+  test('does not open the Checkout overlay when the alert is dismissed', async () => {
     alertWarnMock.mockReturnValue({ response: Promise.resolve(false) })
     const { guardAddCards } = makeFreeGate(200)
     await guardAddCards()
