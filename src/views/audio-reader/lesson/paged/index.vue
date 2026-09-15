@@ -14,7 +14,7 @@ import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
 import { usePagination } from '@/composables/audio-reader/pagination'
 import { usePagedSelection, type WordRange } from '@/composables/audio-reader/paged-selection'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { resizeBand, setBand, setPageTrack, settlePageTrack } from '@/utils/animations/paged-reader'
+import { resizeBand, setBand } from '@/utils/animations/paged-reader'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import PagedPage from '@/views/audio-reader/lesson/paged/page.vue'
 import PagedSegment from '@/views/audio-reader/lesson/paged/segment.vue'
@@ -27,11 +27,8 @@ const RESERVE_CONTROLS = 'pb-[calc(var(--paged-controls-h)+var(--paged-feather))
 const PAGE_TOP = 'pt-16 sm:pt-20'
 const PAGE_BOTTOM = 'pb-16 sm:pb-20'
 const SPLIT_CAP_RATIO = 0.4
-const TURN_RATIO = 0.22
 const TAP_SLOP = 8
-const DECIDE_SLOP = 10
-const WHEEL_IDLE_MS = 90
-const WHEEL_NOTCH = 50
+const SCROLL_IDLE_MS = 80
 
 const reader = inject(lessonReaderKey)!
 const {
@@ -53,7 +50,7 @@ const {
 const { display_mode } = useReaderPrefs()
 
 const viewport = useTemplateRef<HTMLElement>('viewport')
-const track = useTemplateRef<HTMLElement>('track')
+const scroller = useTemplateRef<HTMLElement>('scroller')
 const measure_host = useTemplateRef<HTMLElement>('measure')
 const frame_reduced = useTemplateRef<HTMLElement>('frame_reduced')
 const frame_full = useTemplateRef<HTMLElement>('frame_full')
@@ -73,17 +70,13 @@ const settings_open = ref(false)
 
 let start_x = 0
 let start_y = 0
-let pointer_down = false
 let pointer_id = -1
-let captured = false
-let dragging = false
-let decided: 'swipe' | 'scroll' | null = null
 let band_primed = false
-let turning = false
-let wheel_accum = 0
-let wheel_peak = 0
-let wheel_active = false
-let wheel_idle_timer: ReturnType<typeof setTimeout> | undefined
+let internal = false
+let no_seek = false
+let user_active = false
+let scroll_pending = false
+let idle_timer: ReturnType<typeof setTimeout> | undefined
 
 let viewport_ro: ResizeObserver | undefined
 let frame_ro: ResizeObserver | undefined
@@ -180,7 +173,6 @@ onMounted(() => {
   measureBands()
   recenter()
 
-  viewport.value?.addEventListener('wheel', onWheel, { passive: false })
   window.addEventListener('keydown', onKeydown)
 })
 
@@ -188,7 +180,6 @@ onBeforeUnmount(() => {
   viewport_ro?.disconnect()
   frame_ro?.disconnect()
   band_ro?.disconnect()
-  viewport.value?.removeEventListener('wheel', onWheel)
   window.removeEventListener('keydown', onKeydown)
 })
 
@@ -196,7 +187,7 @@ function measureViewport() {
   if (!viewport.value) return
   viewport_w.value = viewport.value.clientWidth
   viewport_h.value = viewport.value.clientHeight
-  if (!dragging && !wheel_active) recenter()
+  if (!user_active && !scroll_pending) nextTick(recenter)
 }
 
 function measureFrames() {
@@ -221,8 +212,18 @@ function bandHeightOf(paragraph_index: number): number {
   return band_heights.value.get(paragraph_index) ?? 0
 }
 
+function clampSpread(index: number): number {
+  return Math.min(Math.max(index, 0), spread_count.value - 1)
+}
+
 function recenter() {
-  if (track.value) setPageTrack(track.value, -viewport_w.value)
+  const el = scroller.value
+  if (!el) return
+
+  internal = true
+  el.scrollLeft = viewport_w.value
+  requestAnimationFrame(() => (internal = false))
+  selectionApi.paintActiveWord()
 }
 
 function matchRangeAt(index: number): WordRange | null {
@@ -244,97 +245,57 @@ function pagesForSpread(index: number) {
   ]
 }
 
-async function slideTo(target: number) {
-  const clamped = Math.min(Math.max(target, 0), spread_count.value - 1)
-  if (!track.value) return
+function onScroll() {
+  if (internal) return
+  scroll_pending = true
+  clearTimeout(idle_timer)
+  idle_timer = setTimeout(onScrollIdle, SCROLL_IDLE_MS)
+}
 
-  if (clamped === current_index.value) {
-    settlePageTrack(track.value, -viewport_w.value)
-    return
+function onScrollIdle() {
+  const el = scroller.value
+  const w = viewport_w.value
+  if (!el || w <= 0) return
+
+  const slot = Math.round(el.scrollLeft / w)
+  if (Math.abs(el.scrollLeft - slot * w) > 2) return
+
+  scroll_pending = false
+  const delta = slot - 1
+  if (delta !== 0) commitDelta(delta)
+}
+
+function commitDelta(delta: number) {
+  const target = clampSpread(current_index.value + delta)
+
+  if (target !== current_index.value) {
+    current_index.value = target
+    if (!no_seek) seekToSpread(target)
   }
+  no_seek = false
+
+  nextTick(recenter)
+}
+
+function goTo(target: number, animate: boolean, seek: boolean) {
+  const clamped = clampSpread(target)
+  if (clamped === current_index.value || !scroller.value) return
 
   const adjacent = Math.abs(clamped - current_index.value) === 1
-  if (adjacent) {
-    const to = clamped > current_index.value ? -viewport_w.value * 2 : 0
-    await settlePageTrack(track.value, to)
+  if (animate && adjacent) {
+    no_seek = !seek
+    const slot = clamped > current_index.value ? 2 : 0
+    scroller.value.scrollTo({ left: slot * viewport_w.value, behavior: 'smooth' })
+    return
   }
 
   current_index.value = clamped
-  await nextTick()
-  recenter()
-  selectionApi.paintActiveWord()
+  if (seek) seekToSpread(clamped)
+  nextTick(recenter)
 }
 
-function onControl(target: EventTarget | null): boolean {
-  return !!(target as HTMLElement | null)?.closest('[data-no-swipe]')
-}
-
-function onPointerDown(event: PointerEvent) {
-  if (onControl(event.target)) return
-
-  start_x = event.clientX
-  start_y = event.clientY
-  pointer_down = true
-  pointer_id = event.pointerId
-  captured = false
-  dragging = false
-  decided = null
-}
-
-function onPointerMove(event: PointerEvent) {
-  if (!pointer_down || event.pointerId !== pointer_id) return
-
-  const dx = event.clientX - start_x
-  const dy = event.clientY - start_y
-
-  if (decided === null) {
-    if (Math.abs(dx) > DECIDE_SLOP && Math.abs(dx) >= Math.abs(dy)) decided = 'swipe'
-    else if (Math.abs(dy) > DECIDE_SLOP) decided = 'scroll'
-  }
-
-  if (decided !== 'swipe' || !track.value) return
-
-  if (!captured) {
-    viewport.value?.setPointerCapture?.(event.pointerId)
-    captured = true
-  }
-
-  dragging = true
-  const resisted = resistEdge(dx)
-  setPageTrack(track.value, -viewport_w.value + resisted)
-}
-
-function resistEdge(dx: number): number {
-  const at_start = current_index.value === 0 && dx > 0
-  const at_end = current_index.value === spread_count.value - 1 && dx < 0
-  return at_start || at_end ? dx * 0.35 : dx
-}
-
-function onPointerUp(event: PointerEvent) {
-  if (!pointer_down || event.pointerId !== pointer_id) return
-
-  const dx = event.clientX - start_x
-  const dy = event.clientY - start_y
-
-  if (!dragging) {
-    if (Math.hypot(dx, dy) < TAP_SLOP) selectionApi.selectAtPoint(event.clientX, event.clientY)
-    reset()
-    return
-  }
-
-  const threshold = viewport_w.value * TURN_RATIO
-  if (dx <= -threshold && current_index.value < spread_count.value - 1)
-    turnPage(current_index.value + 1)
-  else if (dx >= threshold && current_index.value > 0) turnPage(current_index.value - 1)
-  else if (track.value) settlePageTrack(track.value, -viewport_w.value)
-
-  reset()
-}
-
-function turnPage(target: number) {
-  turning = true
-  seekToSpread(target)
-  slideTo(target).then(() => (turning = false))
+function pageBy(step: number) {
+  goTo(current_index.value + step, true, true)
 }
 
 function seekToSpread(spread: number) {
@@ -343,48 +304,23 @@ function seekToSpread(spread: number) {
   if (first !== undefined) seekToWord(first)
 }
 
-function pageBy(step: number) {
-  const target = current_index.value + step
-  if (target < 0 || target > spread_count.value - 1) return
-  turnPage(target)
+function onPointerDown(event: PointerEvent) {
+  user_active = true
+  start_x = event.clientX
+  start_y = event.clientY
+  pointer_id = event.pointerId
 }
 
-function onWheel(event: WheelEvent) {
-  const delta = event.deltaX !== 0 ? event.deltaX : event.shiftKey ? event.deltaY : 0
-  if (delta === 0) return
+function onPointerUp(event: PointerEvent) {
+  user_active = false
+  if (event.pointerId !== pointer_id) return
 
-  event.preventDefault()
-  if (turning || !track.value) return
-
-  wheel_active = true
-  wheel_accum += delta
-  wheel_peak = Math.max(wheel_peak, Math.abs(delta))
-
-  const offset = clampOffset(-wheel_accum)
-  setPageTrack(track.value, -viewport_w.value + resistEdge(offset))
-
-  clearTimeout(wheel_idle_timer)
-  wheel_idle_timer = setTimeout(commitWheel, WHEEL_IDLE_MS)
+  const moved = Math.hypot(event.clientX - start_x, event.clientY - start_y)
+  if (moved < TAP_SLOP) selectionApi.selectAtPoint(event.clientX, event.clientY)
 }
 
-function clampOffset(offset: number): number {
-  return Math.max(-viewport_w.value, Math.min(viewport_w.value, offset))
-}
-
-function commitWheel() {
-  wheel_active = false
-
-  const crossed = Math.abs(wheel_accum) >= viewport_w.value * TURN_RATIO
-  const flick = wheel_peak >= WHEEL_NOTCH
-  const step = wheel_accum > 0 ? 1 : -1
-  const target = current_index.value + step
-  const in_range = target >= 0 && target < spread_count.value
-
-  wheel_accum = 0
-  wheel_peak = 0
-
-  if ((crossed || flick) && in_range) turnPage(target)
-  else if (track.value) settlePageTrack(track.value, -viewport_w.value)
+function onPointerCancel() {
+  user_active = false
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -405,20 +341,6 @@ function isTypingTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null
   if (!el) return false
   return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
-}
-
-function onPointerCancel(event: PointerEvent) {
-  if (event.pointerId !== pointer_id) return
-  if (dragging && track.value) settlePageTrack(track.value, -viewport_w.value)
-  reset()
-}
-
-function reset() {
-  pointer_down = false
-  pointer_id = -1
-  captured = false
-  dragging = false
-  decided = null
 }
 
 function onSelectPlayFromHere() {
@@ -457,10 +379,9 @@ watch(
 watch(
   () => active_word.value,
   () => {
-    if (active_word.value < 0 || turning || wheel_active) return
+    if (active_word.value < 0 || user_active || scroll_pending) return
     const target = spreadOfWord(active_word.value)
-
-    if (target !== current_index.value) slideTo(target)
+    if (target !== current_index.value) goTo(target, true, false)
   },
   { flush: 'post' }
 )
@@ -475,11 +396,7 @@ watch(
     <div
       ref="viewport"
       data-testid="paged-reader__viewport"
-      class="relative min-h-0 flex-1 touch-none overflow-hidden"
-      @pointerdown="onPointerDown"
-      @pointermove="onPointerMove"
-      @pointerup="onPointerUp"
-      @pointercancel="onPointerCancel"
+      class="relative min-h-0 flex-1 overflow-hidden"
     >
       <div
         aria-hidden="true"
@@ -539,12 +456,20 @@ watch(
         />
       </div>
 
-      <div ref="track" data-testid="paged-reader__track" class="absolute inset-y-0 left-0 flex">
+      <div
+        ref="scroller"
+        data-testid="paged-reader__scroller"
+        class="paged-scroller absolute inset-0 flex touch-pan-x snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain select-none"
+        @scroll="onScroll"
+        @pointerdown="onPointerDown"
+        @pointerup="onPointerUp"
+        @pointercancel="onPointerCancel"
+      >
         <div
-          v-for="spread in slots"
-          :key="spread"
+          v-for="(spread, pos) in slots"
+          :key="pos"
           data-testid="paged-reader__slot"
-          class="flex h-full shrink-0"
+          class="flex h-full shrink-0 snap-start"
           :style="{ width: `${viewport_w}px`, gap: `${SPREAD_GAP}px` }"
         >
           <paged-page
@@ -558,7 +483,6 @@ watch(
       </div>
 
       <div
-        data-no-swipe
         data-testid="paged-reader__dock"
         class="absolute bottom-0 left-0 z-20 flex flex-col"
         :class="primary_x"
@@ -624,6 +548,13 @@ watch(
 </template>
 
 <style scoped>
+.paged-scroller {
+  scrollbar-width: none;
+}
+.paged-scroller::-webkit-scrollbar {
+  display: none;
+}
+
 .paged-dock-surface {
   -webkit-mask-image:
     linear-gradient(to bottom, transparent, #000 var(--paged-feather)),
