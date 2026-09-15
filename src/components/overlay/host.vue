@@ -12,14 +12,6 @@ const { receded_ids, setOverlayEl, getOverlayEl } = useOverlayRecede()
 
 useOverlayGuards(requestClose, () => getOverlayEl(store.entries.at(-1)?.id))
 
-/** Wraps a transition's `done` so it also clears the `will-change` hint. */
-function clearWillChangeThen(el: HTMLElement, done: () => void) {
-  return () => {
-    el.style.willChange = ''
-    done()
-  }
-}
-
 /**
  * The single close pipeline every origin (backdrop, esc, window close button)
  * funnels through. Runs the entry's veto `interceptor` and, when allowed,
@@ -33,15 +25,13 @@ async function requestClose(entry: OverlayEntryModel) {
 
 function onBeforeEnter(el: Element) {
   const html_el = el as HTMLElement
-  html_el.style.willChange = 'transform, opacity'
-
   const id = html_el.dataset.overlayId
   if (id) setOverlayEl(id, html_el)
 }
 
 function onEnter(el: Element, done: () => void) {
   const html_el = el as HTMLElement
-  playEnter(html_el, clearWillChangeThen(html_el, done))
+  void playEnter(html_el).done.then(done)
 }
 
 function onAfterEnter(el: Element) {
@@ -51,8 +41,7 @@ function onAfterEnter(el: Element) {
 
 function onLeave(el: Element, done: () => void) {
   const html_el = el as HTMLElement
-  html_el.style.willChange = 'transform, opacity'
-  playLeave(html_el, clearWillChangeThen(html_el, done))
+  void playLeave(html_el).done.then(done)
 }
 
 function onAfterLeave(el: Element) {
