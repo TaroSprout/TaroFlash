@@ -26,3 +26,21 @@ export function settlePageTrack(track: HTMLElement, x: number): Promise<void> {
 export function setPageTrack(track: HTMLElement, x: number) {
   gsap.set(track, { x })
 }
+
+const BAND_DURATION = 0.28
+
+export function resizeBand(band: HTMLElement, height: number): Promise<void> {
+  gsap.killTweensOf(band)
+  return new Promise((resolve) => {
+    gsap.to(band, {
+      height,
+      duration: BAND_DURATION,
+      ease: 'power2.out',
+      onComplete: resolve
+    })
+  })
+}
+
+export function setBand(band: HTMLElement, height: number) {
+  gsap.set(band, { height })
+}

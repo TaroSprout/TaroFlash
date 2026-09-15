@@ -2,10 +2,6 @@ import { onBeforeUnmount, onMounted, ref, toValue, watch } from 'vue'
 import type { MaybeRefOrGetter, Ref, ShallowRef } from 'vue'
 import type { DisplayWord, SentenceWords } from '@/utils/transcript'
 
-// One paragraph's worth of words that fell on a single page. A paragraph that
-// spans a page break yields one slice per page it touches; `is_start` marks the
-// slice that opens the paragraph (so spacing/heading render once) and `show_gloss`
-// the slice that closes it (so the interlinear gloss renders once, at the end).
 export type PageSlice = {
   paragraph_index: number
   words: DisplayWord[]
@@ -16,48 +12,43 @@ export type PageSlice = {
 
 export type Page = PageSlice[]
 
-// A word whose gloss overflows the page bottom would render clipped, so the whole
-// paragraph tail (last word + its gloss) is measured as one atom and moved
-// together to the next page. This is the extra height a gloss adds past its last
-// word, read live from the measure layer, so no constant to keep in sync.
-
-/**
- * Split the transcript into static, non-overflowing pages for the paged reader.
- *
- * Measurement, not math: the caller renders the whole transcript once into a
- * hidden `measure_host` sized to the exact page text column, and this composable
- * reads each word's laid-out rect to decide where a page fills. Pages break
- * greedily at whichever word first crosses the available height — mid-paragraph
- * when needed — so every page is packed and none overflows. Re-runs whenever the
- * column width, available height, or the paragraphs themselves change.
- *
- * The measure host must render each word as `[data-word-index]` inside a
- * `[data-paragraph-index]` block, and — in gloss mode — the paragraph's gloss as
- * `[data-gloss]`, so the tail atom's true height is measured.
- *
- * Page heights aren't uniform: the left page of a spread reserves room for the
- * controls and gloss band while the right page runs full height, so the budget is
- * asked per page index rather than given once.
- *
- * @param measure_host - the hidden full-transcript render, sized to page width.
- * @param pageHeight - the text-box height in px for the page at that index (0 until laid out).
- * @param revalidate - a value that changes whenever a height or the layout mode does, to re-run.
- * @param paragraphs - the shaped transcript paragraphs.
- * @param gloss_mode - whether inline glosses render (and so consume page height).
- */
-export function usePagination(
-  measure_host: Readonly<ShallowRef<HTMLElement | null>>,
-  pageHeight: (index: number) => number,
-  revalidate: MaybeRefOrGetter<unknown>,
-  paragraphs: MaybeRefOrGetter<SentenceWords[]>,
+export type PaginationOptions = {
+  measure_host: Readonly<ShallowRef<HTMLElement | null>>
+  paragraphs: MaybeRefOrGetter<SentenceWords[]>
   gloss_mode: MaybeRefOrGetter<boolean>
-): { pages: Ref<Page[]>; pageIndexOfWord: (word_index: number) => number } {
+  split_mode: MaybeRefOrGetter<boolean>
+  two_page: MaybeRefOrGetter<boolean>
+  reduced_height: MaybeRefOrGetter<number>
+  full_height: MaybeRefOrGetter<number>
+  bandHeightOf: (paragraph_index: number) => number
+  split_cap: MaybeRefOrGetter<number>
+  revalidate: MaybeRefOrGetter<unknown>
+}
+
+export type Pagination = {
+  pages: Ref<Page[]>
+  pageIndexOfWord: (word_index: number) => number
+  pageFootprint: Ref<number[]>
+}
+
+export function usePagination(options: PaginationOptions): Pagination {
+  const {
+    measure_host,
+    paragraphs,
+    gloss_mode,
+    split_mode,
+    two_page,
+    reduced_height,
+    full_height,
+    bandHeightOf,
+    split_cap,
+    revalidate
+  } = options
+
   const pages = ref<Page[]>([])
+  const pageFootprint = ref<number[]>([])
 
-  // word index -> page index, rebuilt on every paginate so a seek/resume can jump
-  // straight to the page holding the playing word.
   let word_page = new Map<number, number>()
-
   let resize_observer: ResizeObserver | undefined
 
   onMounted(() => {
@@ -73,9 +64,6 @@ export function usePagination(
     return map
   }
 
-  // The word's bottom for page-fit purposes: normally its own, but the last word
-  // of a paragraph in gloss mode carries its gloss with it, so its atom bottom is
-  // the gloss's bottom — keeping word and gloss on the same page.
   function atomBottom(el: HTMLElement, base: number): number {
     const gloss = el.dataset.lastInParagraph ? glossAfter(el) : null
     const rect = (gloss ?? el).getBoundingClientRect()
@@ -87,29 +75,52 @@ export function usePagination(
     return block?.querySelector<HTMLElement>('[data-gloss]') ?? null
   }
 
-  function computeCuts(word_els: HTMLElement[], base: number): number[] {
+  function computeLayout(
+    word_els: HTMLElement[],
+    base: number
+  ): { cuts: number[]; footprints: number[] } {
+    const split = toValue(split_mode)
+    const two = toValue(two_page)
+    const reduced = toValue(reduced_height)
+    const full = toValue(full_height)
+    const cap = toValue(split_cap)
+
+    const isPrimary = (page: number) => !two || page % 2 === 0
+    const baseBudget = (page: number) => (isPrimary(page) ? reduced : full)
+    const bandFor = (page: number, p: number) =>
+      split && isPrimary(page) ? Math.min(cap, bandHeightOf(p)) : 0
+
     const cuts: number[] = []
+    const footprints: number[] = []
     let page_top = 0
     let page_index = 0
-    let budget = pageHeight(0)
+    let page_band = 0
 
     word_els.forEach((el, i) => {
       const top = el.getBoundingClientRect().top - base
       const bottom = atomBottom(el, base)
+      const p = Number(el.dataset.paragraphIndex)
+
+      const band = bandFor(page_index, p)
+      const prospective = Math.max(page_band, band)
+      const budget = baseBudget(page_index) - prospective
+
       if (i > 0 && bottom - page_top > budget) {
+        footprints[page_index] = page_band
         cuts.push(i)
         page_top = top
         page_index++
-        budget = pageHeight(page_index)
+        page_band = bandFor(page_index, p)
+        return
       }
+
+      page_band = prospective
     })
 
-    return cuts
+    footprints[page_index] = page_band
+    return { cuts, footprints }
   }
 
-  // Group one page's word elements (a contiguous run of the transcript) into
-  // per-paragraph slices, carrying each paragraph's translation and marking which
-  // slice opens it and which closes it.
   function buildPage(
     run: HTMLElement[],
     para_map: Map<number, SentenceWords>,
@@ -150,16 +161,17 @@ export function usePagination(
 
   function paginate() {
     const host = measure_host.value
-    if (!host || pageHeight(0) <= 0) return
+    if (!host || toValue(full_height) <= 0) return
 
     const base = host.getBoundingClientRect().top
     const word_els = [...host.querySelectorAll<HTMLElement>('[data-word-index]')]
     if (word_els.length === 0) {
       pages.value = []
+      pageFootprint.value = []
       return
     }
 
-    const cuts = computeCuts(word_els, base)
+    const { cuts, footprints } = computeLayout(word_els, base)
     const para_map = paragraphMap()
     const gloss = toValue(gloss_mode)
 
@@ -174,6 +186,7 @@ export function usePagination(
     }
 
     pages.value = next_pages
+    pageFootprint.value = footprints
     word_page = next_word_page
   }
 
@@ -181,12 +194,11 @@ export function usePagination(
     return word_page.get(word_index) ?? 0
   }
 
-  // Re-paginate on any layout-shifting input; flush 'post' so the measure host has re-rendered before we read rects.
   watch(
     [() => toValue(revalidate), () => toValue(paragraphs), () => toValue(gloss_mode), measure_host],
     paginate,
     { flush: 'post' }
   )
 
-  return { pages, pageIndexOfWord }
+  return { pages, pageIndexOfWord, pageFootprint }
 }
