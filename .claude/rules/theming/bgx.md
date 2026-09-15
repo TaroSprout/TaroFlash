@@ -12,10 +12,15 @@ paths:
 states the general rule; this is that rule for `bgx-*`'s stacking.
 
 The utility masks a repeating pattern into a `::before` layer stacked, via `isolation: isolate` and
-`z-index: -1`, **above the host's own background but below the host's descendant content.** A host
-that is also the filled box — its own `background-color` painting the fill — gets that fill painted
-over by the pattern; give the fill its own child element instead, and let the pattern host stay a
-plain wrapper.
+`z-index: -1`, above the host's own background but below the host's descendant content.
+
+## Stacking
+
+- **Give the fill its own child element and let the pattern host stay a plain wrapper** — a host that
+  is also the filled box, its own `background-color` painting the fill, gets that fill painted over
+  by the pattern instead.
+
+## Utilities
 
 | Utility               | What it does                                                 |
 | --------------------- | ------------------------------------------------------------ |

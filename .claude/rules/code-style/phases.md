@@ -8,7 +8,8 @@ paths:
 
 **Owns blank-line grouping inside a function body.**
 
-A function should read as setup → core work → wrap-up, not a wall of text. Put a single blank line between phases; keep tight clusters tight.
+- **A function reads as setup → core work → wrap-up, not a wall of text — one blank line between
+  phases, tight clusters stay tight.**
 
 **Insert a blank line:**
 
@@ -24,7 +25,8 @@ A function should read as setup → core work → wrap-up, not a wall of text. P
 - Inside a 2–3 line `if` / `for` body.
 - Between every line.
 
-Rule of thumb: if you can name a chunk in one phrase, it's a group — separate the next phrase. If you can't name it, the chunk is too small or the function is doing too much.
+- **If you can name a chunk in one phrase, it's a group — separate the next phrase.** Can't name it?
+  The chunk is too small or the function is doing too much.
 
 ```ts
 function addCard(left_card_id?: number, right_card_id?: number) {

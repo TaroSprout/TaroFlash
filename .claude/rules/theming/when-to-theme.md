@@ -33,6 +33,5 @@ is a choice about which switch should move the element.
   outside the station system takes that surface's own fixed role instead ([[surface-stations]] names
   the group); borrowing a station role there looks right in one mode and inverts in the other
   →[K:fixed-roles-skip-the-station].
-
-Mixing both in one component is normal — a toggle's label and off-track stay neutral while the
-on-track takes `accent` / `on-accent`.
+- **Mixing both in one component is normal** — a toggle's label and off-track stay neutral while the
+  on-track takes `accent` / `on-accent`.

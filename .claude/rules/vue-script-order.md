@@ -9,7 +9,8 @@ paths:
 **Owns the top-to-bottom order of `<script setup>` declarations.** Reaches you editing any `.vue`
 file's script block.
 
-Declarations live in fixed top-to-bottom order. No mid-file `ref` / `computed` / `function` definitions sprinkled near their first use.
+- **Declarations live in fixed top-to-bottom order below — no mid-file `ref` / `computed` /
+  `function` sprinkled near its first use.**
 
 ```
 1. imports
