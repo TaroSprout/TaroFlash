@@ -73,7 +73,6 @@ let start_y = 0
 let pointer_id = -1
 let band_primed = false
 let internal = false
-let no_seek = false
 let user_active = false
 let scroll_pending = false
 let idle_timer: ReturnType<typeof setTimeout> | undefined
@@ -221,7 +220,10 @@ function recenter() {
   if (!el) return
 
   internal = true
+  el.style.scrollSnapType = 'none'
   el.scrollLeft = viewport_w.value
+  el.getBoundingClientRect()
+  el.style.scrollSnapType = ''
   requestAnimationFrame(() => (internal = false))
   selectionApi.paintActiveWord()
 }
@@ -270,24 +272,15 @@ function commitDelta(delta: number) {
 
   if (target !== current_index.value) {
     current_index.value = target
-    if (!no_seek) seekToSpread(target)
+    seekToSpread(target)
   }
-  no_seek = false
 
   nextTick(recenter)
 }
 
-function goTo(target: number, animate: boolean, seek: boolean) {
+function goTo(target: number, seek: boolean) {
   const clamped = clampSpread(target)
-  if (clamped === current_index.value || !scroller.value) return
-
-  const adjacent = Math.abs(clamped - current_index.value) === 1
-  if (animate && adjacent) {
-    no_seek = !seek
-    const slot = clamped > current_index.value ? 2 : 0
-    scroller.value.scrollTo({ left: slot * viewport_w.value, behavior: 'smooth' })
-    return
-  }
+  if (clamped === current_index.value) return
 
   current_index.value = clamped
   if (seek) seekToSpread(clamped)
@@ -295,7 +288,7 @@ function goTo(target: number, animate: boolean, seek: boolean) {
 }
 
 function pageBy(step: number) {
-  goTo(current_index.value + step, true, true)
+  goTo(current_index.value + step, true)
 }
 
 function seekToSpread(spread: number) {
@@ -381,7 +374,7 @@ watch(
   () => {
     if (active_word.value < 0 || user_active || scroll_pending) return
     const target = spreadOfWord(active_word.value)
-    if (target !== current_index.value) goTo(target, true, false)
+    if (target !== current_index.value) goTo(target, false)
   },
   { flush: 'post' }
 )
