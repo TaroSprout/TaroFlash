@@ -6,6 +6,7 @@ import {
   isPasswordRecoveryUrl,
   isAuthError,
   onSignedOut,
+  refreshSession as supaRefreshSession,
   waitForPasswordRecovery,
   login as supaLogin,
   logout as supaLogout,
@@ -69,6 +70,8 @@ export const useSessionStore = defineStore('sessionStore', () => {
   const has_password = ref(false)
   const loading_count = ref(0)
   let logging_out_intentionally = false
+  // A burst of concurrent auth errors shares this one refresh instead of firing several.
+  let recovering: Promise<void> | undefined
 
   // Every navigation awaits this one answer, so a cold load never resolves identity twice.
   let resolved: Promise<boolean> | undefined
@@ -146,8 +149,32 @@ export const useSessionStore = defineStore('sessionStore', () => {
   }
 
   /** Call when an API response indicates the session is no longer valid server-side. */
-  function handleAuthError(error: unknown): void {
-    if (isAuthError(error)) forceLogout()
+  function handleAuthError(error: unknown): Promise<void> | void {
+    if (!isAuthError(error)) return
+
+    return (recovering ??= recoverSession())
+  }
+
+  /**
+   * Refreshes the token before ever logging the member out — a 401 alone
+   * isn't proof the session is dead, so only a refresh the server actively
+   * rejects ends it; a network hiccup leaves the member signed in for the
+   * next request to retry.
+   */
+  async function recoverSession(): Promise<void> {
+    try {
+      const outcome = await supaRefreshSession()
+
+      if (outcome === 'unreachable') return
+      if (outcome === 'rejected') {
+        forceLogout()
+        return
+      }
+
+      await queryCache.invalidateQueries()
+    } finally {
+      recovering = undefined
+    }
   }
 
   /**
