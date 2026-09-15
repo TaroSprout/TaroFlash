@@ -30,8 +30,8 @@ const SPLIT_CAP_RATIO = 0.4
 const TURN_RATIO = 0.22
 const TAP_SLOP = 8
 const DECIDE_SLOP = 10
-const WHEEL_THRESHOLD = 60
-const WHEEL_IDLE_MS = 140
+const WHEEL_IDLE_MS = 90
+const WHEEL_NOTCH = 50
 
 const reader = inject(lessonReaderKey)!
 const {
@@ -81,7 +81,8 @@ let decided: 'swipe' | 'scroll' | null = null
 let band_primed = false
 let turning = false
 let wheel_accum = 0
-let wheel_locked = false
+let wheel_peak = 0
+let wheel_active = false
 let wheel_idle_timer: ReturnType<typeof setTimeout> | undefined
 
 let viewport_ro: ResizeObserver | undefined
@@ -195,7 +196,7 @@ function measureViewport() {
   if (!viewport.value) return
   viewport_w.value = viewport.value.clientWidth
   viewport_h.value = viewport.value.clientHeight
-  if (!dragging) recenter()
+  if (!dragging && !wheel_active) recenter()
 }
 
 function measureFrames() {
@@ -353,24 +354,37 @@ function onWheel(event: WheelEvent) {
   if (delta === 0) return
 
   event.preventDefault()
-  resetWheelIdle()
-  if (wheel_locked) return
+  if (turning || !track.value) return
 
+  wheel_active = true
   wheel_accum += delta
-  if (Math.abs(wheel_accum) < WHEEL_THRESHOLD) return
+  wheel_peak = Math.max(wheel_peak, Math.abs(delta))
 
-  const step = wheel_accum > 0 ? 1 : -1
-  wheel_accum = 0
-  wheel_locked = true
-  pageBy(step)
+  const offset = clampOffset(-wheel_accum)
+  setPageTrack(track.value, -viewport_w.value + resistEdge(offset))
+
+  clearTimeout(wheel_idle_timer)
+  wheel_idle_timer = setTimeout(commitWheel, WHEEL_IDLE_MS)
 }
 
-function resetWheelIdle() {
-  clearTimeout(wheel_idle_timer)
-  wheel_idle_timer = setTimeout(() => {
-    wheel_accum = 0
-    wheel_locked = false
-  }, WHEEL_IDLE_MS)
+function clampOffset(offset: number): number {
+  return Math.max(-viewport_w.value, Math.min(viewport_w.value, offset))
+}
+
+function commitWheel() {
+  wheel_active = false
+
+  const crossed = Math.abs(wheel_accum) >= viewport_w.value * TURN_RATIO
+  const flick = wheel_peak >= WHEEL_NOTCH
+  const step = wheel_accum > 0 ? 1 : -1
+  const target = current_index.value + step
+  const in_range = target >= 0 && target < spread_count.value
+
+  wheel_accum = 0
+  wheel_peak = 0
+
+  if ((crossed || flick) && in_range) turnPage(target)
+  else if (track.value) settlePageTrack(track.value, -viewport_w.value)
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -443,7 +457,7 @@ watch(
 watch(
   () => active_word.value,
   () => {
-    if (active_word.value < 0 || turning) return
+    if (active_word.value < 0 || turning || wheel_active) return
     const target = spreadOfWord(active_word.value)
 
     if (target !== current_index.value) slideTo(target)
