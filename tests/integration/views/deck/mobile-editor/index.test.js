@@ -1,12 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
-import { defineComponent, h, nextTick, ref } from 'vue'
-import ModalUiKit from '@/components/ui-kit/modal/index.vue'
-import { useModal, request_close_handlers } from '@/composables/modal'
+import { mount, flushPromises } from '@vue/test-utils'
+import { defineComponent, h, ref } from 'vue'
+import { setActivePinia, createPinia } from 'pinia'
+import OverlayHost from '@/components/overlay/host.vue'
 import { useMobileCardEditor } from '@/views/deck/mobile-editor/use-mobile-card-editor'
-import { motionStoreStub } from '@tests/fixtures/motion'
-
-vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -14,27 +11,29 @@ const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-// gsap is imported transitively via modal-mode-config → animations/modal.
-// The mock must call onComplete so transition-group JS hooks finish in browser mode.
-vi.mock('gsap', () => ({
-  gsap: {
-    set: vi.fn(),
-    fromTo: vi.fn((_el, _from, to) => to?.onComplete?.()),
-    to: vi.fn((_el, opts) => opts?.onComplete?.())
-  }
+vi.mock('@/utils/animations/overlay', () => ({
+  playEnter: vi.fn((_el, done) => done()),
+  playLeave: vi.fn((_el, done) => done())
+}))
+
+vi.mock('@/composables/ui/scroll-lock', () => ({
+  useScrollLock: () => ({ lock: vi.fn(), unlock: vi.fn() })
 }))
 
 vi.mock('@/composables/shortcuts', () => ({
   useShortcuts: vi.fn(() => ({ register: vi.fn(), dispose: vi.fn(), clearScope: vi.fn() }))
 }))
 
-// This suite exercises the real modal system end-to-end — mobile-editor/index.vue
-// (and the editor-header/editor-stage/editor-controls it renders) inject
-// mobileCardEditorKey via plain inject(), but the modal hosting them is mounted
-// by the global modal renderer, which sits OUTSIDE the deck view's own
-// provide/inject tree. A shallow inject() mock would hide a regression where the
-// context is dropped or the key mismatches — only mounting through the real
-// modal-slot proves the wiring holds.
+// This suite exercises the real overlay mechanism end-to-end — mobile-editor's
+// api ref bundle is handed to `useOverlay().open()` as `props`, stored on the
+// Pinia overlay stack, then spread onto the mounted component via
+// `v-bind="entry.props"` in overlay-entry.vue. A shallow fake-context mount
+// would hide the regression this guards: without `markRaw` on the stored
+// props, Pinia's `reactive()` deep-wraps the bundle and auto-unwraps its
+// nested refs (`cards`, `index`, …) at store-write time, so the mounted
+// component receives already-unwrapped snapshots instead of live refs and
+// `cards.value` reads back `undefined`. Only mounting through the real
+// overlay-host/overlay-entry pipeline proves the refs survive live.
 
 const FaceEditorStub = defineComponent({
   name: 'FaceEditor',
@@ -81,12 +80,12 @@ function makeController(cards = []) {
   }
 }
 
-// Modal hosts attach real window listeners while open — unmount every mount so
-// they don't leak into later tests.
+// Overlay hosts attach real window listeners while open — unmount every mount
+// so they don't leak into later tests.
 const mounted = []
 
-function mountModal() {
-  const wrapper = mount(ModalUiKit, {
+function mountHost() {
+  const wrapper = mount(OverlayHost, {
     attachTo: document.body,
     global: {
       stubs: { FaceEditor: FaceEditorStub, UiDropdownButton: UiDropdownButtonStub }
@@ -97,9 +96,7 @@ function mountModal() {
 }
 
 beforeEach(() => {
-  const { modal_stack, pop } = useModal()
-  while (modal_stack.value.length > 0) pop()
-  request_close_handlers.clear()
+  setActivePinia(createPinia())
   mockEmitSfx.mockClear()
 })
 
@@ -109,8 +106,8 @@ afterEach(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('mobile-editor/index (real modal stack)', () => {
-  test('open_at opens the editor through the real modal system and the context reaches nested descendants', async () => {
+describe('mobile-editor/index (real overlay mechanism)', () => {
+  test('open_at opens the editor through the real overlay stack, and the api ref bundle reaches nested descendants live', async () => {
     const controller = makeController([
       makeCard({ client_id: 'cid-1' }),
       makeCard({ client_id: 'cid-2' })
@@ -119,15 +116,17 @@ describe('mobile-editor/index (real modal stack)', () => {
 
     editor.open_at('cid-1')
 
-    const wrapper = mountModal()
-    await nextTick()
+    const wrapper = mountHost()
+    await flushPromises()
 
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(true)
-    // dialog-card title comes from index.vue's own inject of `index`/`cards`
+    // dialog-card title comes from index.vue's own destructure of `index`/`cards`
+    // off the api prop — reading `.value` through both refs.
     expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('1 / 2')
     // editor-header (nested descendant) also resolves the same injected context
     expect(wrapper.find('[data-testid="mobile-card-editor__header-end"]').exists()).toBe(true)
-    // editor-stage resolves the current card through the injected context
+    // editor-stage resolves the current card through the injected context —
+    // this specifically reads through `cards.value` to find the current card.
     expect(wrapper.find('[data-testid="face-editor-stub"]').text()).toBe('cid-1')
     // editor-controls resolves has_prev/has_next through the injected context
     expect(
@@ -145,15 +144,15 @@ describe('mobile-editor/index (real modal stack)', () => {
     const editor = useMobileCardEditor(controller)
     editor.open_at('cid-1')
 
-    const wrapper = mountModal()
-    await nextTick()
+    const wrapper = mountHost()
+    await flushPromises()
 
     const toolbar = wrapper.find('[data-testid="dialog-card__toolbar"]')
     expect(toolbar.exists()).toBe(true)
     expect(toolbar.find('[data-testid="mobile-card-editor__prev"]').exists()).toBe(true)
   })
 
-  test('calling open_at again while open updates the existing modal instead of stacking a second one', async () => {
+  test('calling open_at again while open updates the existing overlay instead of stacking a second one', async () => {
     const controller = makeController([
       makeCard({ client_id: 'cid-1' }),
       makeCard({ client_id: 'cid-2' })
@@ -161,69 +160,95 @@ describe('mobile-editor/index (real modal stack)', () => {
     const editor = useMobileCardEditor(controller)
 
     editor.open_at('cid-1')
-    const wrapper = mountModal()
-    await nextTick()
+    const wrapper = mountHost()
+    await flushPromises()
 
     editor.open_at('cid-2')
-    await nextTick()
+    await flushPromises()
 
     expect(wrapper.findAll('[data-testid="mobile-card-editor"]')).toHaveLength(1)
     expect(wrapper.find('[data-testid="face-editor-stub"]').text()).toBe('cid-2')
   })
 
-  test('a full close-then-reopen cycle works: dialog-card close dismisses the modal, and a later open_at reopens it', async () => {
+  test('a full close-then-reopen cycle works: dialog-card close dismisses the overlay, and a later open_at reopens it', async () => {
     const controller = makeController([makeCard({ client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
 
     editor.open_at('cid-1')
-    const wrapper = mountModal()
-    await nextTick()
+    const wrapper = mountHost()
+    await flushPromises()
 
     await wrapper.find('[data-testid="dialog-card__close"]').trigger('click')
-    await nextTick()
+    await flushPromises()
 
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(false)
 
     editor.open_at('cid-1')
-    await nextTick()
+    await flushPromises()
 
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(true)
   })
 
-  test('onClosed fires (resetting internal state) when the modal is dismissed via backdrop, not just via close()', async () => {
+  test('onClosed fires (resetting internal state) when the overlay is dismissed via backdrop, not just via close()', async () => {
     const controller = makeController([makeCard({ client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
 
     editor.open_at('cid-1')
-    const wrapper = mountModal()
-    await nextTick()
+    const wrapper = mountHost()
+    await flushPromises()
 
-    await wrapper.find('[data-testid="ui-kit-modal"]').trigger('click')
-    await nextTick()
+    await wrapper.find('[data-testid="overlay-backdrop"]').trigger('click')
+    await flushPromises()
 
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(false)
 
     editor.open_at('cid-1')
-    await nextTick()
+    await flushPromises()
 
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(true)
   })
 
-  test('reconcileCursor still closes the real modal when deleting the last card empties the deck', async () => {
+  test('reconcileCursor still closes the real overlay when deleting the last card empties the deck', async () => {
     const controller = makeController([makeCard({ id: 1, client_id: 'cid-1' })])
     const editor = useMobileCardEditor(controller)
 
     editor.open_at('cid-1')
-    const wrapper = mountModal()
-    await nextTick()
+    const wrapper = mountHost()
+    await flushPromises()
 
     controller.actions.onDeleteCards.mockImplementationOnce(async () => {
       controller.list.all_cards.value = []
     })
 
     await editor.deleteCard()
-    await nextTick()
+    await flushPromises()
 
     expect(wrapper.find('[data-testid="mobile-card-editor"]').exists()).toBe(false)
+  })
+
+  // ── live-ref survival through the stored overlay props ────────
+  // Regression guard for the `markRaw(entry.props)` fix in the overlay
+  // store's `push` — without it, Pinia's deep `reactive()` unwraps the
+  // `cards` ref nested inside `api` the moment it's stored, so a mutation to
+  // the controller's underlying ref after open would never reach the
+  // mounted component.
+
+  test('a card appended to the controller after open is reflected live, through the ref stored in props', async () => {
+    const controller = makeController([makeCard({ client_id: 'cid-1' })])
+    const editor = useMobileCardEditor(controller)
+
+    editor.open_at('cid-1')
+    const wrapper = mountHost()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('1 / 1')
+
+    controller.list.all_cards.value = [
+      ...controller.list.all_cards.value,
+      makeCard({ client_id: 'cid-2' })
+    ]
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="dialog-card-header__title"]').text()).toBe('1 / 2')
   })
 })

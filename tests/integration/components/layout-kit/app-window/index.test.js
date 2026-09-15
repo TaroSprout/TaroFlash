@@ -120,6 +120,48 @@ describe('AppWindow', () => {
     )
   })
 
+  // ── caller class/style route to the window root, not the surface ─────────
+  // inheritAttrs is off — a size/class override from the caller lands on
+  // app-window-root, and the overlay-surface only receives the mechanism
+  // attrs (data-overlay-id, inert, …), never the caller's class/style.
+
+  test('routes a caller class to app-window-root, not the overlay-surface', () => {
+    const wrapper = mountWindow({}, {}, { class: 'w-248! h-187' })
+
+    const root_classes = wrapper.find('[data-testid="app-window-root"]').classes()
+    expect(root_classes).toContain('w-248!')
+    expect(root_classes).toContain('h-187')
+
+    const surface_classes = wrapper.find('[data-testid="overlay-surface"]').classes()
+    expect(surface_classes).not.toContain('w-248!')
+    expect(surface_classes).not.toContain('h-187')
+  })
+
+  test('routes a caller inline style to app-window-root, not the overlay-surface', () => {
+    const wrapper = mountWindow({}, {}, { style: { maxWidth: '40rem' } })
+
+    expect(wrapper.find('[data-testid="app-window-root"]').attributes('style')).toContain(
+      'max-width: 40rem'
+    )
+    expect(wrapper.find('[data-testid="overlay-surface"]').attributes('style') ?? '').not.toContain(
+      'max-width'
+    )
+  })
+
+  test('the overlay-surface still receives non-class/style attrs and keeps its own full-viewport class', () => {
+    const wrapper = mountWindow(
+      {},
+      {},
+      { 'data-overlay-id': 'e1', inert: '', 'data-received': 'true' }
+    )
+
+    const surface = wrapper.find('[data-testid="overlay-surface"]')
+    expect(surface.attributes('data-overlay-id')).toBe('e1')
+    expect(surface.attributes('inert')).toBe('')
+    expect(surface.attributes('data-received')).toBe('true')
+    expect(surface.classes()).toContain('inset-0')
+  })
+
   // ── showHeader logic ───────────────────────────────────────────────────────
 
   test('shows default header when title prop is provided', () => {

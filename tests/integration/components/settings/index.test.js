@@ -178,9 +178,11 @@ const PagedWindowStub = defineComponent({
   }
 })
 
+import { setActivePinia, createPinia } from 'pinia'
 import SettingsApp from '@/views/settings/index.vue'
-import { useModal } from '@/composables/modal'
+import { useOverlayStore } from '@/stores/overlay-stack'
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 const MemberCardStub = defineComponent({
   name: 'MemberCard',
@@ -199,21 +201,34 @@ const MemberCardStub = defineComponent({
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function makeWrapper(closeFn = vi.fn(), member_card_stub) {
-  return mount(SettingsApp, {
-    props: { close: closeFn },
+function makeWrapper(overrides = {}, member_card_stub) {
+  const close = vi.fn()
+  const dismiss = vi.fn()
+  let interceptor = null
+  const overlay_context = makeOverlayContext({
+    close,
+    dismiss,
+    onCloseRequest: (fn) => {
+      interceptor = fn
+    },
+    ...overrides
+  })
+  const wrapper = mount(SettingsApp, {
     global: {
       stubs: {
         PagedWindow: PagedWindowStub,
         ...(member_card_stub ? { MemberCard: member_card_stub } : {})
-      }
+      },
+      provide: { [OVERLAY_CONTEXT_KEY]: overlay_context }
     }
   })
+  return Object.assign(wrapper, { close, dismiss, getInterceptor: () => interceptor })
 }
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  setActivePinia(createPinia())
   stub_layout_mode.value = 'desktop'
   mockEditor.is_dirty.value = false
   mockEditor.saving.value = false
@@ -341,50 +356,36 @@ describe('settings app — onChromeBack delegates to the active tab first', () =
 
 // ── onClose — unsaved-changes guard ──────────────────────────────────────────
 
-describe('settings app — close with unsaved-changes guard', () => {
-  test('calls close() immediately when editor is not dirty', async () => {
+describe('settings app — close-interceptor unsaved-changes guard', () => {
+  test('the close interceptor resolves true immediately when editor is not dirty', async () => {
     mockEditor.is_dirty.value = false
-    const close = vi.fn()
-    const wrapper = makeWrapper(close)
+    const wrapper = makeWrapper()
 
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
-    await flushPromises()
+    const allowed = await wrapper.getInterceptor()()
 
     expect(mockAlertWarn).not.toHaveBeenCalled()
-    expect(close).toHaveBeenCalledOnce()
+    expect(allowed).toBe(true)
   })
 
-  test('shows alert when editor is dirty on close, and closes only on confirm', async () => {
+  test('shows the alert when editor is dirty, and resolves true only on confirm', async () => {
     mockEditor.is_dirty.value = true
-    let alertResolve
-    mockAlertWarn.mockReturnValue({ response: new Promise((r) => (alertResolve = r)) })
+    mockAlertWarn.mockReturnValue({ response: Promise.resolve(true) })
+    const wrapper = makeWrapper()
 
-    const close = vi.fn()
-    const wrapper = makeWrapper(close)
-
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
+    const allowed = await wrapper.getInterceptor()()
 
     expect(mockAlertWarn).toHaveBeenCalledOnce()
-    expect(close).not.toHaveBeenCalled()
-
-    alertResolve(true)
-    await flushPromises()
-    expect(close).toHaveBeenCalledOnce()
+    expect(allowed).toBe(true)
   })
 
-  test('does NOT call close() when the user cancels the alert', async () => {
+  test('resolves false (blocks the close) when the user cancels the alert', async () => {
     mockEditor.is_dirty.value = true
-    let alertResolve
-    mockAlertWarn.mockReturnValue({ response: new Promise((r) => (alertResolve = r)) })
+    mockAlertWarn.mockReturnValue({ response: Promise.resolve(false) })
+    const wrapper = makeWrapper()
 
-    const close = vi.fn()
-    const wrapper = makeWrapper(close)
+    const allowed = await wrapper.getInterceptor()()
 
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
-    alertResolve(false)
-    await flushPromises()
-
-    expect(close).not.toHaveBeenCalled()
+    expect(allowed).toBe(false)
   })
 })
 
@@ -407,25 +408,23 @@ describe('settings app — open/close sfx', () => {
 // ── member-card avatar edit wiring ────────────────────────────────────────────
 
 describe('settings app — member-card avatar edit wiring', () => {
-  afterEach(() => useModal().pop())
-
   test('passes editable to member-card', async () => {
-    const wrapper = makeWrapper(vi.fn(), MemberCardStub)
+    const wrapper = makeWrapper({}, MemberCardStub)
     await flushPromises()
     expect(wrapper.find('[data-testid="member-card-stub"]').attributes('data-editable')).toBe(
       'true'
     )
   })
 
-  test('emitting edit-avatar on member-card opens the avatar picker modal', async () => {
-    const wrapper = makeWrapper(vi.fn(), MemberCardStub)
+  test('emitting edit-avatar on member-card opens the avatar picker overlay', async () => {
+    const wrapper = makeWrapper({}, MemberCardStub)
     await flushPromises()
 
     await wrapper.find('[data-testid="member-card-stub"]').trigger('click')
 
-    const modal = useModal()
-    expect(modal.modal_stack.value).toHaveLength(1)
-    expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
+    const store = useOverlayStore()
+    expect(store.entries).toHaveLength(1)
+    expect(store.entries[0].component).toBe(AvatarPickerModal)
   })
 })
 

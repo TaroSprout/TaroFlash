@@ -14,8 +14,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockWarn })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: mockModalOpen })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: mockModalOpen })
 }))
 
 vi.mock('@/components/billing/checkout-modal/index.vue', () => ({
@@ -65,7 +65,7 @@ describe('useCardImageGate', () => {
     })
   })
 
-  test('opens the checkout modal when the free member confirms upgrade', async () => {
+  test('opens the checkout overlay when the free member confirms upgrade', async () => {
     canUseCardImages.value = false
     mockWarn.mockReturnValue(makeAlertResponse(Promise.resolve(true)))
 
@@ -74,8 +74,7 @@ describe('useCardImageGate', () => {
 
     expect(result).toBe(false)
     expect(mockModalOpen).toHaveBeenCalledWith(expect.objectContaining({ name: 'Checkout' }), {
-      mode: 'mobile-sheet',
-      backdrop: true
+      presentation: 'dialog'
     })
   })
 

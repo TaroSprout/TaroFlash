@@ -4,8 +4,8 @@ import ForgotPasswordModal from '@/views/welcome/forgot-password/index.vue'
 
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
 describe('useForgotPasswordModal — call shape', () => {
@@ -13,20 +13,19 @@ describe('useForgotPasswordModal — call shape', () => {
     mockOpen.mockReset()
   })
 
-  test('opens the forgot-password modal with mode popup and backdrop true', () => {
-    mockOpen.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+  test('opens the forgot-password modal with popup presentation', () => {
+    mockOpen.mockReturnValueOnce({ result: Promise.resolve(undefined) })
 
     const { open } = useForgotPasswordModal()
     open()
 
     expect(mockOpen).toHaveBeenCalledWith(ForgotPasswordModal, {
-      backdrop: true,
-      mode: 'popup'
+      presentation: 'popup'
     })
   })
 
-  test('returns the result of modal.open unchanged', () => {
-    const result = { response: Promise.resolve(undefined) }
+  test('returns the result of overlay.open unchanged', () => {
+    const result = { result: Promise.resolve(undefined) }
     mockOpen.mockReturnValueOnce(result)
 
     const { open } = useForgotPasswordModal()

@@ -3,8 +3,8 @@ import { reactive } from 'vue'
 
 const { modalOpenMock } = vi.hoisted(() => ({ modalOpenMock: vi.fn() }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('@/components/member/avatar-picker-modal.vue', () => ({
@@ -23,7 +23,7 @@ beforeEach(() => {
 
 describe('useAvatarPicker', () => {
   test('opens the avatar picker modal and awaits its response', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
     const editor = makeEditor(undefined)
     const { onEditAvatar } = useAvatarPicker(editor)
 
@@ -32,7 +32,7 @@ describe('useAvatarPicker', () => {
   })
 
   test('assigns editor.draft.cover_config.avatar when the modal resolves with a truthy avatar', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve('panda') })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve('panda') })
     const editor = makeEditor('owl')
     const { onEditAvatar } = useAvatarPicker(editor)
 
@@ -42,7 +42,7 @@ describe('useAvatarPicker', () => {
   })
 
   test('leaves editor.draft.cover_config.avatar unchanged when the modal resolves with undefined', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
     const editor = makeEditor('owl')
     const { onEditAvatar } = useAvatarPicker(editor)
 
@@ -52,7 +52,7 @@ describe('useAvatarPicker', () => {
   })
 
   test('passes the current editor.draft.cover_config.avatar as the selected prop to the modal', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
     const editor = makeEditor('otter')
     const { onEditAvatar } = useAvatarPicker(editor)
 
@@ -65,7 +65,7 @@ describe('useAvatarPicker', () => {
   })
 
   test('passes "frog" as the selected prop when editor.draft.cover_config.avatar is unset', async () => {
-    modalOpenMock.mockReturnValue({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValue({ result: Promise.resolve(undefined) })
     const editor = makeEditor(undefined)
     const { onEditAvatar } = useAvatarPicker(editor)
 
