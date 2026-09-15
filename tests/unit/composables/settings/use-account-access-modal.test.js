@@ -3,8 +3,8 @@ import { useAccountAccessModal } from '@/composables/settings/use-account-access
 
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
 // AccountAccessModal is imported as a raw .vue component — match on shape since
@@ -16,20 +16,19 @@ describe('useAccountAccessModal — call shape', () => {
     mockOpen.mockReset()
   })
 
-  test('opens the account-access component with mode popup and backdrop true', () => {
-    mockOpen.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+  test('opens the account-access component with popup presentation', () => {
+    mockOpen.mockReturnValueOnce({ result: Promise.resolve(undefined) })
 
     const { open } = useAccountAccessModal()
     open()
 
     expect(mockOpen).toHaveBeenCalledWith(accountAccessComponentMatcher, {
-      backdrop: true,
-      mode: 'popup'
+      presentation: 'popup'
     })
   })
 
-  test('returns the result of modal.open unchanged', () => {
-    const result = { response: Promise.resolve(undefined) }
+  test('returns the result of overlay.open unchanged', () => {
+    const result = { result: Promise.resolve(undefined) }
     mockOpen.mockReturnValueOnce(result)
 
     const { open } = useAccountAccessModal()

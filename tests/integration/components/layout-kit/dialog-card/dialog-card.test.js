@@ -275,6 +275,34 @@ describe('DialogCard', () => {
     })
   })
 
+  // ── caller class routes to the card, not the overlay-surface ──
+  // inheritAttrs is off — a caller class (e.g. the study-session dot-grid
+  // pattern) lands on the dialog-card element itself, never on the
+  // overlay-surface/backdrop it opens over.
+
+  describe('caller class routes to dialog-card, not the overlay-surface', () => {
+    test('a caller class never lands on the overlay-surface', () => {
+      const wrapper = mountCard({ class: 'bgx-dot-grid bgx-size-15' })
+
+      const surface_classes = wrapper.find('[data-testid="overlay-surface"]').classes()
+      expect(surface_classes).not.toContain('bgx-dot-grid')
+      expect(surface_classes).not.toContain('bgx-size-15')
+    })
+  })
+
+  // ── full_bleed is always forwarded to the overlay-surface ─────
+  // dialog-card content should reach the viewport's top edge once downgraded
+  // — unlike app-window, which keeps the top gutter.
+
+  describe('full_bleed forwarded to the overlay-surface', () => {
+    test('the overlay-surface never carries the top-gutter class dialog-card opts out of', () => {
+      const wrapper = mountCard()
+      expect(wrapper.find('[data-testid="overlay-surface"]').classes()).not.toContain(
+        'overlay-downgrade:pt-4'
+      )
+    })
+  })
+
   // ── show_close_button ────────────────────────────────────────────────────────
 
   describe('show_close_button', () => {

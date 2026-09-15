@@ -24,8 +24,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: mockWarn })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: mockModalOpen })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: mockModalOpen })
 }))
 
 vi.mock('@/stores/notice-store', () => ({
@@ -71,15 +71,14 @@ describe('useDeckActions', () => {
       })
     })
 
-    test('opens checkout modal (mobile-sheet, backdrop) when the member confirms upgrade', async () => {
+    test('opens the checkout overlay (dialog presentation) when the member confirms upgrade', async () => {
       mockWarn.mockReturnValue(makeAlertResponse(Promise.resolve(true)))
 
       const { guardCreateDeck } = useDeckActions()
       await guardCreateDeck()
 
       expect(mockModalOpen).toHaveBeenCalledWith(expect.objectContaining({ name: 'Checkout' }), {
-        mode: 'mobile-sheet',
-        backdrop: true
+        presentation: 'dialog'
       })
     })
 

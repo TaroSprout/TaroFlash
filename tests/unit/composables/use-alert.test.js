@@ -1,41 +1,43 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { useAlert } from '@/composables/alert'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
-// alert.vue is defineAsyncComponent-wrapped in some contexts, but here the
-// composable imports it directly. Match by shape so the identity doesn't matter.
+// alert.vue is imported directly by the composable, so match by shape rather
+// than identity.
 const anyComponent = expect.anything()
 
-function makeModalResult() {
-  return { response: Promise.resolve(undefined) }
+function makeOverlayResult() {
+  return { result: Promise.resolve(undefined), close: vi.fn() }
 }
 
 describe('useAlert', () => {
   beforeEach(() => {
-    mockEmitSfx.mockClear()
     mockOpen.mockClear()
-    mockOpen.mockReturnValue(makeModalResult())
+    mockOpen.mockReturnValue(makeOverlayResult())
   })
 
   describe('warn()', () => {
-    test('calls emitSfx with the default open audio when openAudio is omitted', () => {
+    test('opens with the default open_sfx role when openAudio is omitted', () => {
       const { warn } = useAlert()
       warn({ title: 'Are you sure?' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+      expect(mockOpen).toHaveBeenCalledWith(
+        anyComponent,
+        expect.objectContaining({ open_sfx: 'notice.error' })
+      )
     })
 
-    test('calls emitSfx with the provided openAudio when supplied', () => {
+    test('opens with the provided openAudio as open_sfx when supplied', () => {
       const { warn } = useAlert()
       warn({ title: 'x', openAudio: 'slide_up' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('slide_up')
+      expect(mockOpen).toHaveBeenCalledWith(
+        anyComponent,
+        expect.objectContaining({ open_sfx: 'slide_up' })
+      )
     })
 
     test('passes default cancelAudio to the alert component when cancelAudio is omitted', () => {
@@ -60,25 +62,16 @@ describe('useAlert', () => {
       )
     })
 
-    test('opens the modal with backdrop: true by default', () => {
+    test('opens with popup presentation', () => {
       const { warn } = useAlert()
       warn()
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
-        expect.objectContaining({ backdrop: true })
+        expect.objectContaining({ presentation: 'popup' })
       )
     })
 
-    test('opens the modal with mode: popup', () => {
-      const { warn } = useAlert()
-      warn()
-      expect(mockOpen).toHaveBeenCalledWith(
-        anyComponent,
-        expect.objectContaining({ mode: 'popup' })
-      )
-    })
-
-    test('opens the modal with type: warn', () => {
+    test('opens with type: warn', () => {
       const { warn } = useAlert()
       warn({ title: 't' })
       expect(mockOpen).toHaveBeenCalledWith(
@@ -101,21 +94,31 @@ describe('useAlert', () => {
     test('works with no args (all defaults)', () => {
       const { warn } = useAlert()
       warn()
-      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
         expect.objectContaining({
+          open_sfx: 'notice.error',
           props: expect.objectContaining({ cancelAudio: 'dialog.dismiss' })
         })
       )
     })
+
+    test('returns the resolved result and the overlay close function', () => {
+      const { warn } = useAlert()
+      const { response, close } = warn({ title: 't' })
+      expect(response).toBeInstanceOf(Promise)
+      expect(typeof close).toBe('function')
+    })
   })
 
   describe('info()', () => {
-    test('calls emitSfx with the default open audio when openAudio is omitted', () => {
+    test('opens with the default open_sfx role when openAudio is omitted', () => {
       const { info } = useAlert()
       info({ title: 'FYI' })
-      expect(mockEmitSfx).toHaveBeenCalledWith('notice.error')
+      expect(mockOpen).toHaveBeenCalledWith(
+        anyComponent,
+        expect.objectContaining({ open_sfx: 'notice.error' })
+      )
     })
 
     test('passes default cancelAudio to the alert component when cancelAudio is omitted', () => {
@@ -129,7 +132,7 @@ describe('useAlert', () => {
       )
     })
 
-    test('opens the modal with type: info', () => {
+    test('opens with type: info', () => {
       const { info } = useAlert()
       info()
       expect(mockOpen).toHaveBeenCalledWith(
@@ -138,21 +141,12 @@ describe('useAlert', () => {
       )
     })
 
-    test('opens the modal with mode: popup', () => {
+    test('opens with popup presentation', () => {
       const { info } = useAlert()
       info()
       expect(mockOpen).toHaveBeenCalledWith(
         anyComponent,
-        expect.objectContaining({ mode: 'popup' })
-      )
-    })
-
-    test('respects a custom backdrop: false', () => {
-      const { info } = useAlert()
-      info({ backdrop: false })
-      expect(mockOpen).toHaveBeenCalledWith(
-        anyComponent,
-        expect.objectContaining({ backdrop: false })
+        expect.objectContaining({ presentation: 'popup' })
       )
     })
   })

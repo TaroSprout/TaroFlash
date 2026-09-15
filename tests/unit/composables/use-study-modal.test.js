@@ -4,41 +4,27 @@ import StudySession from '@/views/study-session/index.vue'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({
-  emitSfx: mockEmitSfx,
-  emitStudySfx: vi.fn(),
-  emitHoverSfx: vi.fn()
-}))
-
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('useStudyModal', () => {
   beforeEach(() => {
-    mockEmitSfx.mockClear()
     mockOpen.mockReset()
-    mockOpen.mockReturnValue({ response: Promise.resolve(undefined) })
+    mockOpen.mockReturnValue({ result: Promise.resolve(undefined) })
   })
 
-  test('plays notice.info sfx synchronously when starting', () => {
-    const { start } = useStudyModal()
-    start([1])
-    expect(mockEmitSfx).toHaveBeenCalledWith('notice.info')
-  })
-
-  test('opens a StudySession popup modal with deck_ids', () => {
+  test('opens a StudySession popup overlay with deck_ids and the notice.info open sfx role', () => {
     const { start } = useStudyModal()
     start([1])
 
     expect(mockOpen).toHaveBeenCalledWith(StudySession, {
-      backdrop: true,
-      mode: 'popup',
+      presentation: 'popup',
+      open_sfx: 'notice.info',
       props: { deck_ids: [1] }
     })
   })
@@ -53,14 +39,14 @@ describe('useStudyModal', () => {
     )
   })
 
-  test('returns the modal response promise', async () => {
-    mockOpen.mockReturnValue({ response: Promise.resolve('some-response') })
+  test('returns the overlay result promise', async () => {
+    mockOpen.mockReturnValue({ result: Promise.resolve('some-response') })
     const { start } = useStudyModal()
 
     await expect(start([1])).resolves.toBe('some-response')
   })
 
-  test('does not open a second modal by itself — start is a single call, no recursion', async () => {
+  test('does not open a second overlay by itself — start is a single call, no recursion', async () => {
     const { start } = useStudyModal()
     await start([1])
 

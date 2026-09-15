@@ -1,64 +1,38 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
-import { flushPromises } from '@vue/test-utils'
 import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
 import CollectionEdit from '@/views/audio-reader/collection-edit-modal.vue'
 
-const { mockEmitSfx } = vi.hoisted(() => ({ mockEmitSfx: vi.fn() }))
 const { mockOpen } = vi.hoisted(() => ({ mockOpen: vi.fn() }))
 
-vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
-
-vi.mock('@/composables/modal', () => ({
-  useModal: vi.fn(() => ({ open: mockOpen }))
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: vi.fn(() => ({ open: mockOpen }))
 }))
 
-function makeModalResult(value) {
-  return { response: Promise.resolve(value) }
+function makeOverlayResult(value) {
+  return { result: Promise.resolve(value) }
 }
 
 describe('useCollectionEditModal', () => {
   beforeEach(() => {
-    mockEmitSfx.mockClear()
     mockOpen.mockReset()
   })
 
-  test('plays dialog.open sfx when opening', () => {
-    mockOpen.mockReturnValueOnce(makeModalResult(undefined))
-
-    const { open } = useCollectionEditModal()
-    open(1)
-
-    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.open')
-  })
-
-  test('opens the modal with the collection_id prop, backdrop, and mobile-sheet mode', () => {
-    mockOpen.mockReturnValueOnce(makeModalResult(undefined))
+  test('opens with the collection_id prop, dialog presentation, and the open/close sfx roles', () => {
+    mockOpen.mockReturnValueOnce(makeOverlayResult(undefined))
 
     const { open } = useCollectionEditModal()
     open(42)
 
     expect(mockOpen).toHaveBeenCalledWith(CollectionEdit, {
       props: { collection_id: 42 },
-      backdrop: true,
-      mode: 'mobile-sheet'
+      presentation: 'dialog',
+      open_sfx: 'dialog.open',
+      close_sfx: 'dialog.close'
     })
   })
 
-  test('plays dialog.close sfx once the modal response resolves', async () => {
-    mockOpen.mockReturnValueOnce(makeModalResult(undefined))
-
-    const { open } = useCollectionEditModal()
-    open(1)
-    const openSfxCount = mockEmitSfx.mock.calls.length
-
-    await flushPromises()
-
-    expect(mockEmitSfx.mock.calls.length).toBeGreaterThan(openSfxCount)
-    expect(mockEmitSfx).toHaveBeenLastCalledWith('dialog.close')
-  })
-
-  test('returns the result of modal.open unchanged', () => {
-    const result = makeModalResult(undefined)
+  test('returns the result of overlay.open unchanged', () => {
+    const result = makeOverlayResult(undefined)
     mockOpen.mockReturnValueOnce(result)
 
     const { open } = useCollectionEditModal()

@@ -14,11 +14,12 @@ vi.mock('@/stores/notice-store', () => ({
   useNoticeStore: () => ({ error: vi.fn(), success: vi.fn(), warn: vi.fn() })
 }))
 
+import { setActivePinia, createPinia } from 'pinia'
 import { resetResponsive } from '../../../helpers/responsive-mock'
 import TabProfile from '@/views/settings/tab-profile/index.vue'
 import { memberEditorKey } from '@/composables/member/editor'
 import { windowLayoutKey } from '@/components/layout-kit/paged-window/layout'
-import { useModal } from '@/composables/modal'
+import { useOverlayStore } from '@/stores/overlay-stack'
 import AvatarPickerModal from '@/components/member/avatar-picker-modal.vue'
 import { computed } from 'vue'
 
@@ -132,7 +133,10 @@ function makeTab(editor = makeEditor(), layout = 'tablet', member_badge_stub = M
 }
 
 describe('TabProfile', () => {
-  beforeEach(() => resetResponsive())
+  beforeEach(() => {
+    resetResponsive()
+    setActivePinia(createPinia())
+  })
 
   test('renders the profile container with theme + pattern design section', () => {
     const { wrapper } = makeTab()
@@ -209,8 +213,6 @@ describe('TabProfile', () => {
   })
 
   describe('member-badge avatar edit wiring', () => {
-    afterEach(() => useModal().pop())
-
     test('passes editable to member-badge', () => {
       const { wrapper } = makeTab(makeEditor(), 'phone', EditableMemberBadgeStub)
       expect(wrapper.find('[data-testid="member-badge-stub"]').attributes('data-editable')).toBe(
@@ -218,14 +220,14 @@ describe('TabProfile', () => {
       )
     })
 
-    test('emitting edit-avatar opens the avatar picker modal', async () => {
+    test('emitting edit-avatar opens the avatar picker overlay', async () => {
       const { wrapper } = makeTab(makeEditor(), 'phone', EditableMemberBadgeStub)
 
       await wrapper.find('[data-testid="member-badge-stub"]').trigger('click')
 
-      const modal = useModal()
-      expect(modal.modal_stack.value).toHaveLength(1)
-      expect(modal.modal_stack.value[0].component).toBe(AvatarPickerModal)
+      const store = useOverlayStore()
+      expect(store.entries).toHaveLength(1)
+      expect(store.entries[0].component).toBe(AvatarPickerModal)
     })
   })
 })
