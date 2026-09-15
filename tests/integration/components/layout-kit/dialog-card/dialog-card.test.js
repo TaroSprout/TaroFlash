@@ -1,3 +1,5 @@
+import '@/styles/main.css'
+
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount, shallowMount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
@@ -50,10 +52,11 @@ import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountCard(props = {}, slots = {}, { dismiss } = {}) {
+function mountCard(props = {}, slots = {}, { dismiss, attach = false } = {}) {
   return shallowMount(DialogCard, {
     props,
     slots,
+    ...(attach ? { attachTo: document.body } : {}),
     global: {
       stubs: { UiButton: UiButtonStub, DialogCardHeader: false, OverlaySurface: false },
       provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext(dismiss ? { dismiss } : {}) }
@@ -282,11 +285,19 @@ describe('DialogCard', () => {
 
   describe('caller class routes to dialog-card, not the overlay-surface', () => {
     test('a caller class never lands on the overlay-surface', () => {
-      const wrapper = mountCard({ class: 'bgx-dot-grid bgx-size-15' })
+      const wrapper = mountCard({ class: 'bgx-dot-grid bgx-size-15' }, {}, { attach: true })
 
-      const surface_classes = wrapper.find('[data-testid="overlay-surface"]').classes()
-      expect(surface_classes).not.toContain('bgx-dot-grid')
-      expect(surface_classes).not.toContain('bgx-size-15')
+      const card_style = getComputedStyle(wrapper.find('[data-testid="dialog-card"]').element)
+      expect(card_style.getPropertyValue('--bgx-image')).not.toBe('')
+      expect(card_style.getPropertyValue('--bgx-size')).not.toBe('')
+
+      const surface_style = getComputedStyle(
+        wrapper.find('[data-testid="overlay-surface"]').element
+      )
+      expect(surface_style.getPropertyValue('--bgx-image')).toBe('')
+      expect(surface_style.getPropertyValue('--bgx-size')).toBe('')
+
+      wrapper.unmount()
     })
   })
 
@@ -296,10 +307,13 @@ describe('DialogCard', () => {
 
   describe('full_bleed forwarded to the overlay-surface', () => {
     test('the overlay-surface never carries the top-gutter class dialog-card opts out of', () => {
-      const wrapper = mountCard()
-      expect(wrapper.find('[data-testid="overlay-surface"]').classes()).not.toContain(
-        'overlay-downgrade:pt-4'
+      const wrapper = mountCard({ full_bleed_at: 'w<2xl' }, {}, { attach: true })
+      const surface_style = getComputedStyle(
+        wrapper.find('[data-testid="overlay-surface"]').element
       )
+
+      expect(surface_style.paddingTop).toBe('0px')
+      wrapper.unmount()
     })
   })
 
