@@ -117,18 +117,20 @@ const SignupFormStub = defineComponent({
 // ── Import ─────────────────────────────────────────────────────────────────────
 
 import SignupDialog from '@/views/welcome/signup/index.vue'
+import { OVERLAY_CONTEXT_KEY } from '@/composables/overlay/overlay-context'
+import { makeOverlayContext } from '@tests/fixtures/overlay'
 
 // ── Mount helper ───────────────────────────────────────────────────────────────
 
-function mountSignupDialog({ close = vi.fn() } = {}) {
+function mountSignupDialog({ dismiss = vi.fn() } = {}) {
   return shallowMount(SignupDialog, {
-    props: { close },
     global: {
       stubs: {
         AppWindow: AppWindowStub,
         UiButton: UiButtonStub,
         SignupForm: SignupFormStub
-      }
+      },
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ dismiss }) }
     }
   })
 }
@@ -286,23 +288,23 @@ describe('SignupDialog (signup/index.vue)', () => {
 
   // ── Cancel button ──────────────────────────────────────────────────────────
 
-  test('cancel button calls close() with no argument', async () => {
-    const close = vi.fn()
-    const wrapper = mountSignupDialog({ close })
+  test('cancel button calls dismiss', async () => {
+    const dismiss = vi.fn()
+    const wrapper = mountSignupDialog({ dismiss })
 
     const buttons = wrapper.findAllComponents({ name: 'UiButton' })
     const cancelBtn = buttons[0]
     await cancelBtn.trigger('click')
 
-    expect(close).toHaveBeenCalledWith()
+    expect(dismiss).toHaveBeenCalled()
   })
 
-  test('app-window close event calls close() with no argument', async () => {
-    const close = vi.fn()
-    const wrapper = mountSignupDialog({ close })
+  test('app-window close event calls dismiss', async () => {
+    const dismiss = vi.fn()
+    const wrapper = mountSignupDialog({ dismiss })
 
     await wrapper.find('[data-testid="app-window__close"]').trigger('click')
 
-    expect(close).toHaveBeenCalledWith()
+    expect(dismiss).toHaveBeenCalled()
   })
 })
