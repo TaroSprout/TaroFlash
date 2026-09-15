@@ -14,7 +14,15 @@ import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
 import { usePagination } from '@/composables/audio-reader/pagination'
 import { usePagedSelection, type WordRange } from '@/composables/audio-reader/paged-selection'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { resizeBand, setBand, slidePage } from '@/utils/animations/paged-reader'
+import {
+  frostMotionSafe,
+  primeFrost,
+  resizeBand,
+  scaleFrost,
+  setBand,
+  settleFrost,
+  slidePage
+} from '@/utils/animations/paged-reader'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import PagedPage from '@/views/audio-reader/lesson/paged/page.vue'
 import PagedSegment from '@/views/audio-reader/lesson/paged/segment.vue'
@@ -29,6 +37,7 @@ const PAGE_BOTTOM = 'pb-16 sm:pb-20'
 const SPLIT_CAP_RATIO = 0.4
 const TAP_SLOP = 8
 const SCROLL_IDLE_MS = 80
+const RESIZE_SETTLE_MS = 160
 
 const reader = inject(lessonReaderKey)!
 const {
@@ -56,6 +65,8 @@ const frame_reduced = useTemplateRef<HTMLElement>('frame_reduced')
 const frame_full = useTemplateRef<HTMLElement>('frame_full')
 const band_measure = useTemplateRef<HTMLElement>('band_measure')
 const band_el = useTemplateRef<HTMLElement>('band_el')
+const frost = useTemplateRef<HTMLElement>('frost')
+const frost_scale = useTemplateRef<HTMLElement>('frost_scale')
 
 const viewport_w = ref(0)
 const viewport_h = ref(0)
@@ -79,6 +90,8 @@ let sliding = false
 let settle_timer: ReturnType<typeof setTimeout> | undefined
 let scroll_pending = false
 let idle_timer: ReturnType<typeof setTimeout> | undefined
+let resizing = false
+let resize_timer: ReturnType<typeof setTimeout> | undefined
 
 let viewport_ro: ResizeObserver | undefined
 let frame_ro: ResizeObserver | undefined
@@ -162,14 +175,14 @@ const active_overflows = computed(() => {
 })
 
 onMounted(() => {
-  viewport_ro = new ResizeObserver(measureViewport)
+  viewport_ro = new ResizeObserver(onViewportResize)
   if (viewport.value) viewport_ro.observe(viewport.value)
 
-  frame_ro = new ResizeObserver(measureFrames)
+  frame_ro = new ResizeObserver(() => measureFrames())
   if (frame_reduced.value) frame_ro.observe(frame_reduced.value)
   if (frame_full.value) frame_ro.observe(frame_full.value)
 
-  band_ro = new ResizeObserver(measureBands)
+  band_ro = new ResizeObserver(() => measureBands())
   if (band_measure.value) band_ro.observe(band_measure.value)
 
   measureBands()
@@ -179,27 +192,87 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  clearTimeout(resize_timer)
   viewport_ro?.disconnect()
   frame_ro?.disconnect()
   band_ro?.disconnect()
   window.removeEventListener('keydown', onKeydown)
 })
 
-function measureViewport() {
-  if (!viewport.value) return
-  viewport_w.value = viewport.value.clientWidth
-  viewport_h.value = viewport.value.clientHeight
-  if (!user_active && !scroll_pending) nextTick(recenter)
+function onViewportResize() {
+  const el = viewport.value
+  if (!el) return
+
+  const w = el.clientWidth
+  const h = el.clientHeight
+
+  if (viewport_w.value === 0) {
+    commitSize(w, h)
+    nextTick(recenter)
+    return
+  }
+
+  if (w === viewport_w.value && h === viewport_h.value) return
+
+  if (!frostMotionSafe()) {
+    commitSize(w, h)
+    nextTick(recenter)
+    return
+  }
+
+  if (!resizing) beginFrostBurst()
+  if (frost_scale.value) scaleFrost(frost_scale.value, w / viewport_w.value, h / viewport_h.value)
+
+  clearTimeout(resize_timer)
+  resize_timer = setTimeout(() => settleResize(w, h), RESIZE_SETTLE_MS)
 }
 
-function measureFrames() {
+function beginFrostBurst() {
+  const scroller_el = scroller.value
+  const frost_el = frost.value
+  const layer_el = frost_scale.value
+  if (!scroller_el || !frost_el || !layer_el) return
+
+  resizing = true
+
+  const current_slot = scroller_el.children[1] as HTMLElement | undefined
+  layer_el.replaceChildren()
+  if (current_slot) layer_el.appendChild(current_slot.cloneNode(true))
+
+  primeFrost(frost_el, layer_el, scroller_el)
+}
+
+async function settleResize(w: number, h: number) {
+  commitSize(w, h)
+  await nextTick()
+
+  recenter()
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+
+  const frost_el = frost.value
+  const scroller_el = scroller.value
+  if (frost_el && scroller_el) await settleFrost(frost_el, scroller_el)
+
+  resizing = false
+}
+
+function commitSize(w: number, h: number) {
+  viewport_w.value = w
+  viewport_h.value = h
+  measureFrames(true)
+  measureBands(true)
+}
+
+function measureFrames(force = false) {
+  if (resizing && !force) return
   if (frame_reduced.value) reduced_height.value = frame_reduced.value.clientHeight
   if (!frame_full.value) return
   full_height.value = frame_full.value.clientHeight
   measure_width.value = frame_full.value.clientWidth
 }
 
-function measureBands() {
+function measureBands(force = false) {
+  if (resizing && !force) return
   const host = band_measure.value
   if (!host) return
   const next = new Map<number, number>()
@@ -378,7 +451,7 @@ watch(spread_count, (count) => {
 
 watch(
   () => paragraphs.value,
-  () => nextTick(measureBands),
+  () => nextTick(() => measureBands()),
   { flush: 'post' }
 )
 
@@ -514,6 +587,16 @@ watch(
       </div>
 
       <div
+        ref="frost"
+        aria-hidden="true"
+        data-testid="paged-reader__frost"
+        class="pointer-events-none absolute inset-0 z-10 hidden overflow-hidden"
+      >
+        <div ref="frost_scale" class="absolute top-0 left-0 origin-top-left"></div>
+        <div class="paged-frost-veil absolute inset-0 bg-surface"></div>
+      </div>
+
+      <div
         data-testid="paged-reader__dock"
         class="absolute bottom-0 left-0 z-20 flex flex-col"
         :class="primary_x"
@@ -584,6 +667,10 @@ watch(
 }
 .paged-scroller::-webkit-scrollbar {
   display: none;
+}
+
+.paged-frost-veil {
+  opacity: 0.4;
 }
 
 .paged-dock-surface {
