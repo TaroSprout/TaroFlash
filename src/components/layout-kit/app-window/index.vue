@@ -104,7 +104,7 @@ const surface_attrs = computed(() => {
   <overlay-surface mode="dialog" :sheet_at="sheet_at" v-bind="surface_attrs">
     <div
       data-testid="app-window-root"
-      class="pointer-events-auto relative w-full shrink-0 overlay-downgrade:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
+      class="pointer-events-auto relative w-full shrink-0 overlay-downgrade:mt-auto overlay-downgrade:h-auto! pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
       :class="attrs.class"
       :style="[root_style, attrs.style]"
     >
