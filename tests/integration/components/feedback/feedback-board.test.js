@@ -4,6 +4,7 @@ import { shallowMount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, ref, nextTick } from 'vue'
 import FeedbackBoard from '@/components/feedback/feedback-board.vue'
 import FeedbackSubmitDialog from '@/components/feedback/feedback-submit-dialog.vue'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 import { motionStoreStub } from '@tests/fixtures/motion'
 
 vi.mock('@/stores/motion', () => ({ useMotionStore: () => motionStoreStub() }))
@@ -26,8 +27,8 @@ vi.mock('@/api/feedback', () => ({
   useSubmitFeedbackMutation: () => ({ mutateAsync: vi.fn(), isLoading: { value: false } })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
@@ -53,11 +54,10 @@ const FeedbackSkeletonStub = defineComponent({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function mountBoard(close = vi.fn()) {
+function mountBoard(dismiss = vi.fn()) {
   return {
-    close,
+    dismiss,
     wrapper: shallowMount(FeedbackBoard, {
-      props: { close },
       global: {
         renderStubDefaultSlot: true,
         stubs: {
@@ -65,7 +65,8 @@ function mountBoard(close = vi.fn()) {
           UiButton: false,
           FeedbackCard: FeedbackCardStub,
           FeedbackSkeleton: FeedbackSkeletonStub
-        }
+        },
+        provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ dismiss }) }
       }
     })
   }
@@ -176,8 +177,7 @@ describe('FeedbackBoard — loading state', () => {
     await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
 
     expect(modalOpenMock).toHaveBeenCalledWith(FeedbackSubmitDialog, {
-      backdrop: true,
-      mode: 'popup'
+      presentation: 'popup'
     })
   })
 })
@@ -191,7 +191,7 @@ describe('FeedbackBoard — loading state', () => {
 
 describe('FeedbackBoard — fixed size', () => {
   function rootClasses(wrapper) {
-    return wrapper.find('[data-testid="feedback-board"]').classes()
+    return wrapper.find('[data-testid="app-window-root"]').classes()
   }
 
   test('gates every fixed width and height on the same breakpoint', () => {
@@ -220,10 +220,10 @@ describe('FeedbackBoard — fixed size', () => {
 // ── Close wiring ──────────────────────────────────────────────────────────────
 
 describe('FeedbackBoard — close wiring', () => {
-  test('app-window close event calls close', async () => {
-    const { wrapper, close } = mountBoard()
+  test('app-window close event routes through the overlay context dismiss', async () => {
+    const { wrapper, dismiss } = mountBoard()
     await wrapper.findComponent(AppWindow).vm.$emit('close')
-    expect(close).toHaveBeenCalledOnce()
+    expect(dismiss).toHaveBeenCalledOnce()
   })
 })
 
@@ -235,12 +235,11 @@ describe('FeedbackBoard — submit dialog wiring', () => {
     mockEmitSfx.mockClear()
   })
 
-  test('pressing the submit button opens FeedbackSubmitDialog as a stacked modal via useModal().open', async () => {
+  test('pressing the submit button opens FeedbackSubmitDialog as a stacked overlay via useOverlay().open', async () => {
     const { wrapper } = mountBoard()
     await wrapper.find('[data-testid="feedback-board__submit-button"]').trigger('click')
     expect(modalOpenMock).toHaveBeenCalledWith(FeedbackSubmitDialog, {
-      backdrop: true,
-      mode: 'popup'
+      presentation: 'popup'
     })
   })
 

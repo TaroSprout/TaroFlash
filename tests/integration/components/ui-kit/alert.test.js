@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import UiAlert from '@/components/ui-kit/alert.vue'
-import { MODAL_ID_KEY, request_close_handlers } from '@/composables/modal'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -11,22 +11,20 @@ vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
 // ── Mount helper ──────────────────────────────────────────────────────────────
 
-// The alert renders only the box — the modal host owns the backdrop and routes
-// backdrop-click / esc through the handler the alert registers via
-// useModalRequestClose. Provide a MODAL_ID_KEY so that registration happens.
-function makeWrapper(props = {}, { modalId = 'test-alert' } = {}) {
+// The alert renders only the box — overlay-surface (the real component here)
+// owns the backdrop and routes a self-click through the overlay context's
+// dismiss(), separate from the alert's own close(outcome) on cancel/confirm.
+function makeWrapper(props = {}, overrides = {}) {
   const close = vi.fn()
+  const dismiss = vi.fn()
   const wrapper = mount(UiAlert, {
-    props: {
-      close,
-      ...props
-    },
+    props,
     attachTo: document.body,
     global: {
-      provide: { [MODAL_ID_KEY]: modalId }
+      provide: { [OVERLAY_CONTEXT_KEY]: makeOverlayContext({ close, dismiss, ...overrides }) }
     }
   })
-  return { wrapper, close, modalId }
+  return { wrapper, close, dismiss }
 }
 
 function cancelButton(wrapper) {
@@ -39,14 +37,13 @@ function confirmButton(wrapper) {
 
 beforeEach(() => {
   mockEmitSfx.mockClear()
-  request_close_handlers.clear()
   document.body.innerHTML = ''
 })
 
 // ── cancel ────────────────────────────────────────────────────────────────────
 
 describe('UiAlert — cancel', () => {
-  test('cancel resolves false', async () => {
+  test('cancel resolves false via the overlay context close', async () => {
     const { wrapper, close } = makeWrapper()
 
     await cancelButton(wrapper).trigger('click')
@@ -58,7 +55,7 @@ describe('UiAlert — cancel', () => {
 // ── confirm ───────────────────────────────────────────────────────────────────
 
 describe('UiAlert — confirm', () => {
-  test('confirm resolves true', async () => {
+  test('confirm resolves true via the overlay context close', async () => {
     const { wrapper, close } = makeWrapper({ confirmLabel: 'Delete it' })
 
     await confirmButton(wrapper).trigger('click')
@@ -67,23 +64,24 @@ describe('UiAlert — confirm', () => {
   })
 })
 
-// ── dismissal via modal machinery ─────────────────────────────────────────────
+// ── dismissal via the overlay-surface backdrop ────────────────────────────────
 
-describe('UiAlert — request-close dismissal', () => {
-  test('registers a request-close handler (backdrop click / esc) that resolves false, like cancel — never confirm', () => {
-    const { close, modalId } = makeWrapper({ confirmLabel: 'Delete it' })
+describe('UiAlert — backdrop dismissal', () => {
+  test('a click on the overlay-surface routes through the overlay context dismiss, not close', async () => {
+    const { wrapper, close, dismiss } = makeWrapper({ confirmLabel: 'Delete it' })
 
-    // The modal host invokes this handler on backdrop click or esc.
-    request_close_handlers.get(modalId)()
+    await wrapper.find('[data-testid="overlay-surface"]').trigger('click')
 
-    expect(close).toHaveBeenCalledWith(false)
+    expect(dismiss).toHaveBeenCalledTimes(1)
+    expect(close).not.toHaveBeenCalled()
   })
 
-  test('clicking inside the alert box does not close it', async () => {
-    const { wrapper, close } = makeWrapper({ confirmLabel: 'Delete it' })
+  test('clicking inside the alert box does not dismiss or close it', async () => {
+    const { wrapper, close, dismiss } = makeWrapper({ confirmLabel: 'Delete it' })
 
     await wrapper.find('[data-testid="ui-kit-alert"]').trigger('click')
 
+    expect(dismiss).not.toHaveBeenCalled()
     expect(close).not.toHaveBeenCalled()
   })
 })
@@ -165,5 +163,27 @@ describe('UiAlert — confirm palette', () => {
   test('uses the info palette for info alerts', () => {
     const { wrapper } = makeWrapper({ confirmLabel: 'Got it', type: 'info' })
     expect(confirmButton(wrapper).attributes('data-palette')).toBe('info')
+  })
+})
+
+// ── audio ──────────────────────────────────────────────────────────────────────
+
+describe('UiAlert — audio', () => {
+  test('plays cancelAudio when cancelled, when provided', async () => {
+    const { wrapper } = makeWrapper({ cancelAudio: 'dialog.dismiss' })
+    await cancelButton(wrapper).trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('dialog.dismiss')
+  })
+
+  test('plays confirmAudio when confirmed, when provided', async () => {
+    const { wrapper } = makeWrapper({ confirmLabel: 'Delete it', confirmAudio: 'card.delete' })
+    await confirmButton(wrapper).trigger('click')
+    expect(mockEmitSfx).toHaveBeenCalledWith('card.delete')
+  })
+
+  test('plays no sfx on cancel when cancelAudio is omitted', async () => {
+    const { wrapper } = makeWrapper()
+    await cancelButton(wrapper).trigger('click')
+    expect(mockEmitSfx).not.toHaveBeenCalled()
   })
 })

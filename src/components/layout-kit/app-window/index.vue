@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Trap: the root renders full-width — every caller sets its own width cap on non-mobile screens →[K:app-window-fills-full-width]
 // Docked because the viewport ran out of width, this window drops whatever height its caller set and its body stops scrolling — the sheet around it is then the only thing that scrolls. Running out of height alone docks it to the bottom and leaves both alone, so a fixed-height window never collapses to its content on a short, wide viewport. →[K:docked-app-window-drops-body-scroll]
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { coverBindings } from '@/utils/cover'
 import {
@@ -46,7 +46,10 @@ const {
   sheet_at
 } = defineProps<AppWindowProps>()
 
+defineOptions({ inheritAttrs: false })
+
 const { t } = useI18n()
+const attrs = useAttrs()
 
 const slots = defineSlots<{
   sidebar(): any
@@ -90,14 +93,20 @@ const root_style = computed(() => ({
     ? { '--window-header-depth': WINDOW_HEADER_DEPTH[header_border] }
     : {})
 }))
+
+const surface_attrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  return rest
+})
 </script>
 
 <template>
-  <overlay-surface mode="dialog" :sheet_at="sheet_at">
+  <overlay-surface mode="dialog" :sheet_at="sheet_at" v-bind="surface_attrs">
     <div
       data-testid="app-window-root"
       class="pointer-events-auto relative w-full shrink-0 overlay-downgrade:mt-auto pointer-coarse:pt-px [--window-px:4.5rem] lg:[--window-px:2rem]"
-      :style="root_style"
+      :class="attrs.class"
+      :style="[root_style, attrs.style]"
     >
       <div
         data-testid="app-window__overlay"

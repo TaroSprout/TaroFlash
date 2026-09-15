@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useAttrs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DialogCardHeader from './dialog-card-header.vue'
 import { provideDialogCardViewport, type DialogCardViewport } from './dialog-card-viewport.ts'
@@ -79,9 +79,13 @@ const slots = defineSlots<{
   toolbar?(): any
 }>()
 
+defineOptions({ inheritAttrs: false })
+
 const { t } = useI18n()
 
 const { dismiss } = useOverlayContext()
+
+const attrs = useAttrs()
 
 const resolved_full_bleed_at = full_bleed_at ?? SIZE_FULL_BLEED_AT[size]
 const viewport = provideDialogCardViewport(resolved_full_bleed_at)
@@ -112,11 +116,21 @@ const card_style = computed(() => ({
     content_breakout_max_width ?? SIZE_CONTENT_BREAKOUT_MAX_WIDTH[size]
 }))
 
+const surface_attrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  return rest
+})
+
 defineExpose({ viewport })
 </script>
 
 <template>
-  <overlay-surface mode="dialog" :sheet_at="resolved_full_bleed_at">
+  <overlay-surface
+    mode="dialog"
+    :sheet_at="resolved_full_bleed_at"
+    full_bleed
+    v-bind="surface_attrs"
+  >
     <div
       data-testid="dialog-card"
       data-station="window"
@@ -125,9 +139,10 @@ defineExpose({ viewport })
         SIZE_CLASSES[size],
         bg_class,
         gridRowsClass(),
-        viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg'
+        viewport === 'mobile' ? 'h-full! w-full! rounded-none!' : 'rounded-8 bevel-lg',
+        attrs.class
       ]"
-      :style="[card_style, bodyPaddingStyle()]"
+      :style="[card_style, bodyPaddingStyle(), attrs.style]"
     >
       <slot name="header">
         <dialog-card-header

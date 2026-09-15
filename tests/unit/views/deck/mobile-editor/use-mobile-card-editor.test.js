@@ -11,16 +11,13 @@ const { mockEmitSfx, mockOpen, mockClose } = vi.hoisted(() => ({
 
 vi.mock('@/sfx/bus', () => ({ emitSfx: mockEmitSfx }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: mockOpen })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: mockOpen })
 }))
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import {
-  useMobileCardEditor,
-  mobileCardEditorKey
-} from '@/views/deck/mobile-editor/use-mobile-card-editor'
+import { useMobileCardEditor } from '@/views/deck/mobile-editor/use-mobile-card-editor'
 import MobileEditor from '@/views/deck/mobile-editor/index.vue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -68,7 +65,7 @@ beforeEach(() => {
   mockEmitSfx.mockClear()
   mockOpen.mockClear()
   mockClose.mockClear()
-  mockOpen.mockReturnValue({ response: Promise.resolve(), close: mockClose })
+  mockOpen.mockReturnValue({ result: Promise.resolve(), close: mockClose })
 })
 
 describe('useMobileCardEditor — initial state', () => {
@@ -84,15 +81,14 @@ describe('useMobileCardEditor — initial state', () => {
 })
 
 describe('useMobileCardEditor — open_at', () => {
-  test('open_at opens the editor via useModal().open with MobileEditor, mode popup, and the editor context', () => {
+  test('open_at opens the editor via useOverlay().open with MobileEditor, popup presentation, and the api bundle as props', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
 
     expect(mockOpen).toHaveBeenCalledWith(MobileEditor, {
-      mode: 'popup',
-      backdrop: true,
-      context: { key: mobileCardEditorKey, value: editor }
+      presentation: 'popup',
+      props: { api: editor }
     })
   })
 
@@ -181,12 +177,12 @@ describe('useMobileCardEditor — openNewCard', () => {
 })
 
 describe('useMobileCardEditor — close', () => {
-  test('close invokes the close function returned by modal.open', () => {
+  test('close invokes the close function returned by overlay.open, with an undefined outcome', () => {
     const card = makeCard({ client_id: 'cid-1' })
     const { editor } = makeEditor([card])
     editor.open_at('cid-1')
     editor.close()
-    expect(mockClose).toHaveBeenCalled()
+    expect(mockClose).toHaveBeenCalledWith(undefined)
   })
 
   test('close is a no-op (does not throw) when the editor was never opened', () => {
@@ -470,7 +466,7 @@ describe('useMobileCardEditor — reconcileCursor after delete', () => {
     expect(editor.current.value?.client_id).toBe('cid-1')
   })
 
-  test('closes (via modal close) when the deck becomes empty after delete', async () => {
+  test('closes (via overlay close) when the deck becomes empty after delete', async () => {
     const card = makeCard({ id: 1, client_id: 'cid-1' })
     const { editor, controller } = makeEditor([card])
     editor.open_at('cid-1')
@@ -497,7 +493,7 @@ describe('useMobileCardEditor — reconcileCursor after delete', () => {
     await editor.deleteCard()
     await nextTick()
 
-    // Card is still in the list, cursor stays on it, and the modal was not closed
+    // Card is still in the list, cursor stays on it, and the overlay was not closed
     expect(editor.current.value?.client_id).toBe('cid-1')
     expect(mockClose).not.toHaveBeenCalled()
   })

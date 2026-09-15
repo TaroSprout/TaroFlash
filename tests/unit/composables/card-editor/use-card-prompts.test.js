@@ -17,8 +17,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: alertWarnMock })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('@/sfx/bus', () => ({
@@ -103,7 +103,7 @@ describe('useCardPrompts — confirmDelete', () => {
 describe('useCardPrompts — openMoveModal', () => {
   test('opens the modal with the provided cards, count, and current_deck_id', async () => {
     const cards = [makeCard({ id: 1 }), makeCard({ id: 2 })]
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
     await openMoveModal(cards, 2, 10)
@@ -117,7 +117,7 @@ describe('useCardPrompts — openMoveModal', () => {
   })
 
   test('forwards the move callback into the modal props', async () => {
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
     const move = async () => {}
 
@@ -127,20 +127,20 @@ describe('useCardPrompts — openMoveModal', () => {
     expect(options.props.move).toBe(move)
   })
 
-  test('opens the modal with mode: popup', async () => {
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+  test('opens the modal with popup presentation', async () => {
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
     await openMoveModal([makeCard()], 1, 10)
 
     expect(modalOpenMock).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ mode: 'popup' })
+      expect.objectContaining({ presentation: 'popup' })
     )
   })
 
   test('emits dialog.open before the modal opens', async () => {
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
     await openMoveModal([makeCard()], 1, 10)
@@ -149,7 +149,7 @@ describe('useCardPrompts — openMoveModal', () => {
   })
 
   test('does not emit any sfx when the returned response promise resolves', async () => {
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
     const response = openMoveModal([makeCard()], 1, 10)
@@ -163,7 +163,7 @@ describe('useCardPrompts — openMoveModal', () => {
 
   test('resolves to the chosen deck when user confirms', async () => {
     const target = { deck_id: 99 }
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(target) })
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(target) })
     const { openMoveModal } = useCardPrompts()
 
     const result = await openMoveModal([makeCard()], 1, 10)
@@ -172,7 +172,7 @@ describe('useCardPrompts — openMoveModal', () => {
   })
 
   test('resolves to undefined when modal is dismissed', async () => {
-    modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+    modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
     const { openMoveModal } = useCardPrompts()
 
     const result = await openMoveModal([makeCard()], 1, 10)

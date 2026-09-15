@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, computed, ref, nextTick } from 'vue'
 import DeckSettings from '@/views/deck/deck-settings/index.vue'
 import { deck as deckFixture } from '../../../../fixtures/deck'
+import { makeOverlayContext, OVERLAY_CONTEXT_KEY } from '@tests/fixtures/overlay'
 
 // Shared reactive layout mode the PagedWindowStub reads from — driven directly
 // (not via wrapper.setProps, since VTU only allows setProps on the root
@@ -78,14 +79,6 @@ vi.mock('@/views/deck/deck-settings/window-chrome', () => ({
     restore: mockChromeRestore,
     snap: mockChromeSnap
   })
-}))
-
-vi.mock('@/composables/modal', () => ({
-  useModalAfterEnter: () =>
-    new Promise((resolve) => {
-      afterEnterControls._setResolve(resolve)
-    }),
-  useModalRequestClose: () => {}
 }))
 
 vi.mock('@/composables/deck/editor', async () => {
@@ -250,11 +243,27 @@ const PagedWindowStub = defineComponent({
 
 function makeWrapper(extraProps = {}) {
   const close = vi.fn()
-  const wrapper = mount(DeckSettings, {
-    props: { deck: deckFixture.one({ overrides: { id: 1 } }), close, ...extraProps },
-    global: { stubs: { PagedWindow: PagedWindowStub } }
+  const dismiss = vi.fn()
+  let interceptor = null
+  const entered = new Promise((resolve) => {
+    afterEnterControls._setResolve(resolve)
   })
-  return { wrapper, close }
+  const overlay_context = makeOverlayContext({
+    close,
+    dismiss,
+    entered,
+    onCloseRequest: (fn) => {
+      interceptor = fn
+    }
+  })
+  const wrapper = mount(DeckSettings, {
+    props: { deck: deckFixture.one({ overrides: { id: 1 } }), ...extraProps },
+    global: {
+      stubs: { PagedWindow: PagedWindowStub },
+      provide: { [OVERLAY_CONTEXT_KEY]: overlay_context }
+    }
+  })
+  return { wrapper, close, dismiss, getInterceptor: () => interceptor }
 }
 
 async function setLayout(mode) {
@@ -384,35 +393,35 @@ describe('DeckSettings — active_side resets to cover when active_page becomes 
 
 // ── onClose unsaved-changes guard ──────────────────────────────────────────────
 
-describe('DeckSettings — onClose unsaved-changes guard', () => {
-  test('close while not dirty calls close(false) immediately with no alert', async () => {
-    const { wrapper, close } = makeWrapper()
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
+describe('DeckSettings — onCloseRequest unsaved-changes guard', () => {
+  test('the close interceptor allows the close (resolves true) when not dirty, without showing the alert', async () => {
+    const { getInterceptor } = makeWrapper()
+
+    const allowed = await getInterceptor()()
+
     expect(mockAlertWarn).not.toHaveBeenCalled()
-    expect(close).toHaveBeenCalledWith(false)
+    expect(allowed).toBe(true)
   })
 
-  test('close while dirty shows the unsaved-changes alert and only closes on confirm', async () => {
+  test('the close interceptor shows the unsaved-changes alert and resolves true only on confirm', async () => {
     mockEditor.editor.is_dirty.value = true
     mockAlertWarn.mockReturnValue({ response: Promise.resolve(true) })
-    const { wrapper, close } = makeWrapper()
+    const { getInterceptor } = makeWrapper()
 
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
-    await flushPromises()
+    const allowed = await getInterceptor()()
 
     expect(mockAlertWarn).toHaveBeenCalledTimes(1)
-    expect(close).toHaveBeenCalledWith(false)
+    expect(allowed).toBe(true)
   })
 
-  test('close while dirty and alert cancelled does not close', async () => {
+  test('the close interceptor resolves false (blocks the close) when the alert is cancelled', async () => {
     mockEditor.editor.is_dirty.value = true
     mockAlertWarn.mockReturnValue({ response: Promise.resolve(false) })
-    const { wrapper, close } = makeWrapper()
+    const { getInterceptor } = makeWrapper()
 
-    await wrapper.find('[data-testid="pw__close"]').trigger('click')
-    await flushPromises()
+    const allowed = await getInterceptor()()
 
-    expect(close).not.toHaveBeenCalled()
+    expect(allowed).toBe(false)
   })
 })
 

@@ -72,8 +72,8 @@ vi.mock('@/composables/alert', () => ({
   useAlert: () => ({ warn: alertWarnMock })
 }))
 
-vi.mock('@/composables/modal', () => ({
-  useModal: () => ({ open: modalOpenMock })
+vi.mock('@/composables/overlay/use-overlay', () => ({
+  useOverlay: () => ({ open: modalOpenMock })
 }))
 
 vi.mock('@/composables/card/limit-gate', () => ({
@@ -1396,7 +1396,7 @@ describe('useCardListController', () => {
       // succeeds), so the mock must call the `move` prop it was given rather
       // than resolving the response directly.
       modalOpenMock.mockImplementationOnce((_component, { props }) => ({
-        response: props.move(42).then(() => ({ deck_id: 42 }))
+        result: props.move(42).then(() => ({ deck_id: 42 }))
       }))
       const ctrl = makeController([makeCard({ id: 7 })], [7])
       await ctrl.onMoveCards(7)
@@ -1410,14 +1410,14 @@ describe('useCardListController', () => {
     })
 
     test('onMoveCards does not fire the move mutation when the modal is dismissed', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const ctrl = makeController([makeCard({ id: 7 })], [7])
       await ctrl.onMoveCards(7)
       expect(moveCardsMock).not.toHaveBeenCalled()
     })
 
     test('onMoveCards does not mutate selection state', async () => {
-      modalOpenMock.mockReturnValueOnce({ response: Promise.resolve(undefined) })
+      modalOpenMock.mockReturnValueOnce({ result: Promise.resolve(undefined) })
       const ctrl = makeController([makeCard({ id: 7 })], [7])
       await ctrl.onMoveCards(7)
       expect(ctrl.isCardSelected(7)).toBe(false)
