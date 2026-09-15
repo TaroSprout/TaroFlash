@@ -21,7 +21,6 @@ import PagedSegment from '@/views/audio-reader/lesson/paged/segment.vue'
 import PagedControls from '@/views/audio-reader/lesson/paged/controls.vue'
 import PagedTermSheet from '@/views/audio-reader/lesson/paged/term-sheet.vue'
 import ReaderSettings from '@/views/audio-reader/lesson/reader-settings.vue'
-import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button.vue'
 
 const SPREAD_GAP = 40
 const RESERVE_CONTROLS = 'pb-[calc(var(--paged-controls-h)+var(--paged-feather))]'
@@ -68,7 +67,6 @@ const band_heights = ref<Map<number, number>>(new Map())
 const band_version = ref(0)
 
 const current_index = ref(0)
-const following = ref(true)
 const settings_open = ref(false)
 
 let start_x = 0
@@ -161,10 +159,6 @@ const active_overflows = computed(() => {
   if (!split_mode.value || !active_paragraph.value) return false
   return bandHeightOf(active_paragraph.value.index) > current_footprint.value
 })
-
-const resume_direction = computed<'up' | 'down'>(() =>
-  spreadOfWord(active_word.value) < current_index.value ? 'up' : 'down'
-)
 
 onMounted(() => {
   viewport_ro = new ResizeObserver(measureViewport)
@@ -352,11 +346,6 @@ function reset() {
   decided = null
 }
 
-function resumeFollow() {
-  following.value = true
-  slideTo(spreadOfWord(active_word.value))
-}
-
 function onSelectPlayFromHere() {
   playFromHere()
 }
@@ -395,11 +384,6 @@ watch(
   () => {
     if (active_word.value < 0 || turning) return
     const target = spreadOfWord(active_word.value)
-
-    if (!following.value) {
-      if (target === current_index.value) following.value = true
-      return
-    }
 
     if (target !== current_index.value) slideTo(target)
   },
@@ -535,16 +519,6 @@ watch(
         </div>
       </div>
     </div>
-
-    <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
-      <div
-        v-if="!following"
-        data-testid="paged-reader__resume"
-        class="absolute right-6 bottom-24 z-30"
-      >
-        <resume-follow-button :direction="resume_direction" @resume="resumeFollow" />
-      </div>
-    </transition>
 
     <paged-term-sheet
       :selection="selection"
