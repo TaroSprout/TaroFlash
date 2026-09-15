@@ -14,7 +14,7 @@ import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
 import { usePagination } from '@/composables/audio-reader/pagination'
 import { usePagedSelection, type WordRange } from '@/composables/audio-reader/paged-selection'
 import { useMatchMedia } from '@/composables/ui/media-query'
-import { resizeBand, setBand } from '@/utils/animations/paged-reader'
+import { resizeBand, setBand, slidePage } from '@/utils/animations/paged-reader'
 import { fadeEnter, fadeLeave } from '@/utils/animations/fade'
 import PagedPage from '@/views/audio-reader/lesson/paged/page.vue'
 import PagedSegment from '@/views/audio-reader/lesson/paged/segment.vue'
@@ -75,6 +75,7 @@ let band_primed = false
 let internal = false
 let user_active = false
 let settle_target: number | null = null
+let sliding = false
 let settle_timer: ReturnType<typeof setTimeout> | undefined
 let scroll_pending = false
 let idle_timer: ReturnType<typeof setTimeout> | undefined
@@ -289,12 +290,30 @@ function commitDelta(delta: number) {
 
 function goTo(target: number, seek: boolean) {
   const clamped = clampSpread(target)
-  if (clamped === current_index.value) return
+  const el = scroller.value
+  if (clamped === current_index.value || !el) return
 
-  current_index.value = clamped
+  if (Math.abs(clamped - current_index.value) !== 1) {
+    landOn(clamped, seek)
+    return
+  }
+
+  if (sliding) return
+  sliding = true
+  internal = true
+  el.style.scrollSnapType = 'none'
+  const to = clamped > current_index.value ? viewport_w.value * 2 : 0
+  slidePage(el, to, () => {
+    sliding = false
+    landOn(clamped, seek)
+  })
+}
+
+function landOn(spread: number, seek: boolean) {
+  current_index.value = spread
   if (seek) {
-    seekToSpread(clamped)
-    beginSettle(clamped)
+    seekToSpread(spread)
+    beginSettle(spread)
   }
   nextTick(recenter)
 }
