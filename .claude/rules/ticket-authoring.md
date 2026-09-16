@@ -139,6 +139,8 @@ product language and skimmable. Omit the section when there's nothing technical 
 
 - **Prior art** as a "built from X" clause, a bug's confirmed **root cause**, **negative facts**
   ("does not reuse Y").
+- **A reference implementation not yet on `master` names its branch, not just its file** — the
+  "grep finds it" assumption below holds only once the reference is merged.
 - Money / auth / boundary claims: `CONFIRMED (verified against <source>)`, else `ASSUMED`.
 - A filepath only when it's the _answer_ (a new file's home, a confirmed root-cause location), never
   a line number.
@@ -188,6 +190,13 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
 
 An epic is the resurfacing anchor for an effort, and the only place effort-level state lives. These
 sections live in the epic's Notion **page body**.
+
+**Any create or update of an epic's page body appends below the template's default content, never
+replacing it.** The Epic Board template seeds its own default body on every page it's applied to; a
+`notion-create-pages` or `notion-update-page` write — `replace_content` included — that lands the
+sections below in place of that seed wipes it off the page. Read the page back and confirm the
+template's content is still present alongside the authored sections
+(→[K:notion-write-verification]).
 
 ```markdown
 <one-line scope>
