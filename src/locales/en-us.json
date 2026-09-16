@@ -46,6 +46,8 @@
   "admin.page.capabilities": "Capabilities",
   "admin.capabilities.audio_reader.name": "Audio reader",
   "admin.capabilities.audio_reader.description": "Lesson playback, transcription, and term lookups.",
+  "admin.capabilities.session_rewards.name": "Session rewards",
+  "admin.capabilities.session_rewards.description": "Paperclip payouts for completing study sessions.",
   "admin.capabilities.state.off": "Disabled",
   "admin.capabilities.state.on": "All users",
   "admin.capabilities.state.targeted": "Selected users",
