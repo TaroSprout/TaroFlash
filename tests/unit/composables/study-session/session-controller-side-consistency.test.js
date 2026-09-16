@@ -105,7 +105,16 @@ const { mockFlushDeckReviews, mockSaveReview } = vi.hoisted(() => ({
 
 vi.mock('@/api/reviews', () => ({
   useFlushDeckReviews: () => mockFlushDeckReviews,
-  useSaveReviewMutation: () => ({ mutate: vi.fn(), mutateAsync: mockSaveReview })
+  useSaveReviewMutation: () => ({ mutate: vi.fn(), mutateAsync: mockSaveReview }),
+  useCloseStudySessionMutation: () => ({ mutate: vi.fn(), data: ref(undefined) })
+}))
+
+vi.mock('@/api/rewards', () => ({
+  useSessionEarningsQuery: () => ({ data: ref(undefined) })
+}))
+
+vi.mock('@/api/capabilities', () => ({
+  useCapabilities: () => ({ isLive: () => false })
 }))
 
 vi.mock('@/stores/notice-store', () => ({

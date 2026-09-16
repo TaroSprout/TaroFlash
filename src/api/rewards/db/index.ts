@@ -1,0 +1,21 @@
+import { supabase } from '@/supabase-client'
+import logger from '@/utils/logger'
+
+export type SessionEarnings = {
+  earned: number
+  balance: number
+}
+
+/** The paperclips a session's own completion bonus paid, plus the member's resulting balance. Reads a member's own rows only. */
+export async function fetchSessionEarnings(session_id: string): Promise<SessionEarnings> {
+  const { data, error } = await supabase
+    .rpc('get_session_earnings', { p_session_id: session_id })
+    .single()
+
+  if (error) {
+    logger.error(error.message)
+    throw new Error(error.message)
+  }
+
+  return data as SessionEarnings
+}

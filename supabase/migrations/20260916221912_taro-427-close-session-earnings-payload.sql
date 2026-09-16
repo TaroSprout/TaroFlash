@@ -1,8 +1,14 @@
-SET check_function_bodies = false;
+-- knowledge: close_study_session — unrecorded
 
-CREATE FUNCTION public.close_study_session(p_session_id uuid) RETURNS TABLE(earned bigint, balance bigint)
-    LANGUAGE plpgsql SECURITY DEFINER
-    AS $$
+drop function if exists "public"."close_study_session"(p_session_id uuid);
+
+set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.close_study_session(p_session_id uuid)
+ RETURNS TABLE(earned bigint, balance bigint)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
 DECLARE
   v_uid uuid := public.active_member_id();
   v_correct bigint;
@@ -57,13 +63,13 @@ BEGIN
        WHERE pb.member_id = v_uid
     ), 0)::bigint AS balance;
 END;
-$$;
-
+$function$
+;
 
 ALTER FUNCTION public.close_study_session(p_session_id uuid) OWNER TO postgres;
-
 
 REVOKE ALL ON FUNCTION public.close_study_session(p_session_id uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.close_study_session(p_session_id uuid) FROM anon;
 GRANT ALL ON FUNCTION public.close_study_session(p_session_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.close_study_session(p_session_id uuid) TO service_role;
+

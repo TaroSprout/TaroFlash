@@ -225,10 +225,38 @@ vi.mock('@/views/study-session/composables/rating-times', () => ({
   useRatingTimes: () => mockRatingTimes
 }))
 
-const { mockFlushDeckReviews } = vi.hoisted(() => ({ mockFlushDeckReviews: vi.fn() }))
+const { mockFlushDeckReviews, mockCloseSessionMutate, closeSessionData } = await vi.hoisted(
+  async () => {
+    const { ref } = await import('vue')
+    return {
+      mockFlushDeckReviews: vi.fn(),
+      mockCloseSessionMutate: vi.fn(),
+      closeSessionData: ref(undefined)
+    }
+  }
+)
 
 vi.mock('@/api/reviews', () => ({
-  useFlushDeckReviews: () => mockFlushDeckReviews
+  useFlushDeckReviews: () => mockFlushDeckReviews,
+  useCloseStudySessionMutation: () => ({
+    mutate: mockCloseSessionMutate,
+    data: closeSessionData
+  })
+}))
+
+const { restoredEarningsData } = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return { restoredEarningsData: ref(undefined) }
+})
+
+vi.mock('@/api/rewards', () => ({
+  useSessionEarningsQuery: () => ({ data: restoredEarningsData })
+}))
+
+const { mockIsLive } = vi.hoisted(() => ({ mockIsLive: vi.fn(() => true) }))
+
+vi.mock('@/api/capabilities', () => ({
+  useCapabilities: () => ({ isLive: mockIsLive })
 }))
 
 // ── Host components so provide/inject has a component context ─────────────────
@@ -279,6 +307,11 @@ describe('session-controller', () => {
     mockSetCards.mockClear()
     mockStartingSideForCard.mockClear()
     mockFlushDeckReviews.mockClear()
+    mockCloseSessionMutate.mockClear()
+    closeSessionData.value = undefined
+    restoredEarningsData.value = undefined
+    mockIsLive.mockClear()
+    mockIsLive.mockReturnValue(true)
     mockToggleRatings.mockClear()
     mockResetToDefaults.mockClear()
     mockShowAllRatings.value = false
@@ -403,6 +436,113 @@ describe('session-controller', () => {
       await Promise.resolve()
 
       expect(mockFlushDeckReviews).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── close-session fire, and the restored-into-summary guard ────────────────
+
+  describe('closeSession firing', () => {
+    test('fires closeSession.mutate exactly once with the session id on the studying → summary transition', async () => {
+      makeController()
+
+      capturedSessionCardsOptions.current.restore(['raw-card'], {
+        session_id: 'sess-transition',
+        deck_ids: [1, 2],
+        card_ids: [1],
+        results: [],
+        completed: false
+      })
+
+      state.value = 'summary'
+      await nextTick()
+
+      expect(mockCloseSessionMutate).toHaveBeenCalledTimes(1)
+      expect(mockCloseSessionMutate).toHaveBeenCalledWith('sess-transition')
+    })
+
+    test('fires closeSession.mutate on an early close (not is_cover, reviewed_count > 0)', async () => {
+      is_cover.value = false
+      reviewed_count.value = 2
+      const { controller } = makeController()
+
+      capturedSessionCardsOptions.current.restore(['raw-card'], {
+        session_id: 'sess-early-close',
+        deck_ids: [1, 2],
+        card_ids: [1],
+        results: [],
+        completed: false
+      })
+
+      controller.requestClose()
+      await nextTick()
+
+      expect(state.value).toBe('summary')
+      expect(mockCloseSessionMutate).toHaveBeenCalledTimes(1)
+      expect(mockCloseSessionMutate).toHaveBeenCalledWith('sess-early-close')
+    })
+
+    test('does not fire closeSession.mutate on a restore that lands straight in a finished summary', async () => {
+      state.value = 'summary'
+      makeController()
+
+      capturedSessionCardsOptions.current.restore(['raw-card'], {
+        session_id: 'sess-restored',
+        deck_ids: [1, 2],
+        card_ids: [1],
+        results: [],
+        completed: true
+      })
+      await nextTick()
+
+      expect(mockCloseSessionMutate).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── session_earnings resolution ─────────────────────────────────────────────
+
+  describe('session_earnings', () => {
+    test('resolves from closeSession.data on a fresh finish (not restored into summary)', async () => {
+      const { controller } = makeController()
+
+      capturedSessionCardsOptions.current.restore(['raw-card'], {
+        session_id: 'sess-fresh',
+        deck_ids: [1, 2],
+        card_ids: [1],
+        results: [],
+        completed: false
+      })
+
+      state.value = 'summary'
+      await nextTick()
+
+      closeSessionData.value = { earned: 3, balance: 10 }
+      await nextTick()
+
+      expect(controller.session_earnings.value).toEqual({ earned: 3, balance: 10 })
+    })
+
+    test('resolves from the restored-earnings query when restored into an already-finished summary', async () => {
+      state.value = 'summary'
+      const { controller } = makeController()
+
+      capturedSessionCardsOptions.current.restore(['raw-card'], {
+        session_id: 'sess-restored-earnings',
+        deck_ids: [1, 2],
+        card_ids: [1],
+        results: [],
+        completed: true
+      })
+
+      restoredEarningsData.value = { earned: 5, balance: 20 }
+      await nextTick()
+
+      expect(controller.session_earnings.value).toEqual({ earned: 5, balance: 20 })
+    })
+
+    test('is null when neither closeSession.data nor the restored-earnings query has resolved', () => {
+      const { controller } = makeController()
+
+      expect(controller.session_earnings.value).toBeNull()
     })
   })
 
