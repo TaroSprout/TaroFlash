@@ -82,6 +82,8 @@ BEGIN
     state          = EXCLUDED.state,
     learning_steps = EXCLUDED.learning_steps;
 
+  -- This is the only place a study_sessions row gets created — don't add a
+  -- separate "start session" RPC.
   IF p_session_id IS NOT NULL THEN
     INSERT INTO public.study_sessions (id, member_id)
     VALUES (p_session_id, v_uid)
