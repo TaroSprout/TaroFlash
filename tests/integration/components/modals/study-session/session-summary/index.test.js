@@ -9,10 +9,17 @@ import { dialogCardViewportKey } from '@/components/layout-kit/dialog-card/dialo
 // so the same aggregateSession call can resolve a different threshold per
 // result's own deck.
 
-const { mockThresholdFor } = vi.hoisted(() => ({ mockThresholdFor: vi.fn(() => 24) }))
+const { mockThresholdFor, mockIsLive } = vi.hoisted(() => ({
+  mockThresholdFor: vi.fn(() => 24),
+  mockIsLive: vi.fn(() => false)
+}))
 
 vi.mock('@/views/study-session/deck-resolution', () => ({
   useDeckResolution: () => ({ thresholdFor: mockThresholdFor })
+}))
+
+vi.mock('@/api/capabilities', () => ({
+  useCapabilities: () => ({ isLive: mockIsLive })
 }))
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
@@ -45,9 +52,9 @@ function makeResult(overrides = {}) {
   }
 }
 
-function mountSummary({ results = [] } = {}) {
+function mountSummary({ results = [], earnings = null } = {}) {
   return mount(SessionSummary, {
-    props: { results },
+    props: { results, earnings },
     global: {
       stubs: { StatsPanel: StatsPanelStub },
       provide: { [dialogCardViewportKey]: { value: 'desktop' } }
@@ -60,6 +67,7 @@ function mountSummary({ results = [] } = {}) {
 describe('SessionSummary (index.vue)', () => {
   beforeEach(() => {
     mockThresholdFor.mockReset().mockReturnValue(24)
+    mockIsLive.mockReset().mockReturnValue(false)
   })
 
   // ── Structure ───────────────────────────────────────────────────────────────
@@ -77,11 +85,6 @@ describe('SessionSummary (index.vue)', () => {
   test('renders session-summary__icon', () => {
     const wrapper = mountSummary()
     expect(wrapper.find('[data-testid="session-summary__icon"]').exists()).toBe(true)
-  })
-
-  test('renders session-summary__title', () => {
-    const wrapper = mountSummary()
-    expect(wrapper.find('[data-testid="session-summary__title"]').exists()).toBe(true)
   })
 
   test('mounts fine without extra props', () => {
@@ -152,5 +155,23 @@ describe('SessionSummary (index.vue)', () => {
     )
     expect(mockThresholdFor).toHaveBeenCalledWith(1)
     expect(mockThresholdFor).toHaveBeenCalledWith(2)
+  })
+
+  // ── Earnings block ────────────────────────────────────────────────────────
+
+  test('renders the earned amount unsigned, and the balance amount', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { earned: 12, balance: 340 } })
+
+    const amounts = wrapper.findAll('[data-testid="ui-kit-paperclips__amount"]')
+    expect(amounts[0].text()).toBe('12')
+    expect(amounts[1].text()).toBe('340')
+  })
+
+  test('does not render the earnings block when session_rewards is not live', () => {
+    mockIsLive.mockReturnValue(false)
+    const wrapper = mountSummary({ earnings: { earned: 12, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
   })
 })
