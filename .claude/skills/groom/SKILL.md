@@ -336,7 +336,7 @@ it without guessing. Test it by asking:
 - Does any clause survive the delete-test — rationale, plumbing, or a restatement of another AC? Cut it.
 - Is `## Open questions` gone, and every fork it held now a concrete AC?
 - Is a rejected path recorded as a negative AC, so no one re-proposes it?
-- Is the prior art a `## Tech details` clause ("built from X"), and is every factual claim in the body `CONFIRMED`, not `ASSUMED`?
+- Does the prior art say what to reuse and what to replace, not just "built from X" — and is every factual claim in the body `CONFIRMED`, not `ASSUMED`?
 - If this was a split: is **every** sibling independently verifiable — a concrete standalone check
   named in its ACs — and can `/work` tell which must land first without reading all of them?
 - For every UI element: are placement, host/slot, trigger, label/icon, states, and sound decided —
