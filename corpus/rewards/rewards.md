@@ -41,6 +41,22 @@ earn it: a record is stamped, and whatever the milestone promises gets paid out
 > every time someone rereads the record — but it means the milestone catalogue
 > is never a reliable log of reward history.
 
+> [!HAZARD] [K:occasion-reward-pays-once] **An occasion-scoped reward isn't
+> gated by a metric crossing a threshold — it's gated by a unique key, and a
+> repeat trigger for the same occasion is a silent no-op.**
+> Some rewards aren't "first time this tally passes N" — they're "this
+> member, this rule, this specific occasion" (say, a particular streak
+> milestone or event), keyed by an `occasion_ref` the caller supplies. The
+> ledger has a unique constraint on `(member, reward rule, occasion_ref)`, so
+> firing the same occasion twice — a retry, a duplicate event, whatever —
+> inserts nothing the second time and pays nothing the second time. Nobody
+> checks "was this already paid" first; the constraint is the only thing
+> enforcing it. And like every other payout (→[K:reward-payout-is-resolved-not-spec]),
+> the amount is resolved from the rule's curve at the moment it pays and
+> stored on the ledger row — retuning the curve's parameters afterward never
+> touches an occasion that already paid out, only ones that haven't happened
+> yet.
+
 ## Counting, crossing, and paying happen as one step
 
 A source reports progress (a member did X, count it Y). That single call:

@@ -3,7 +3,8 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
--- [K:gap: occasion-scoped rewards pay once per (member, reward rule, occasion-ref) — a repeat trigger for the same occasion writes no second ledger entry; the amount is resolved from the rule's curve at payout and stored, so retuning the rule's params never alters an already-paid occasion]
+-- the unique ledger constraint, not this function, is what makes a repeat
+-- call for the same occasion a no-op →[K:occasion-reward-pays-once]
 CREATE FUNCTION public.credit_occasion_reward(p_member uuid, p_rule_key text, p_occasion_ref text, p_count bigint) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
