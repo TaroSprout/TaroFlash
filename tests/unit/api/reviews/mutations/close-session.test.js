@@ -47,6 +47,7 @@ beforeEach(() => {
 describe('useCloseStudySessionMutation', () => {
   test('closes the session and returns null without reading earnings when the reward capability is not live', async () => {
     isLiveMock.mockReturnValue(false)
+    closeStudySessionMock.mockResolvedValue({ earned: 3, balance: 10 })
     const { app, mutation } = mountHost()
 
     const result = await mutation.mutateAsync('session-1')
@@ -58,15 +59,15 @@ describe('useCloseStudySessionMutation', () => {
     app.unmount()
   })
 
-  test('closes the session and returns the fetched earnings when the reward capability is live', async () => {
+  test('closes the session and returns the payload from the close RPC when the reward capability is live', async () => {
     isLiveMock.mockReturnValue(true)
-    fetchSessionEarningsMock.mockResolvedValue({ earned: 3, balance: 10 })
+    closeStudySessionMock.mockResolvedValue({ earned: 3, balance: 10 })
     const { app, mutation } = mountHost()
 
     const result = await mutation.mutateAsync('session-2')
 
     expect(closeStudySessionMock).toHaveBeenCalledWith('session-2')
-    expect(fetchSessionEarningsMock).toHaveBeenCalledWith('session-2')
+    expect(fetchSessionEarningsMock).not.toHaveBeenCalled()
     expect(result).toEqual({ earned: 3, balance: 10 })
     app.unmount()
   })
