@@ -50,6 +50,10 @@ BEGIN
     state          = EXCLUDED.state,
     learning_steps = EXCLUDED.learning_steps;
 
+  -- This is the only place a study_sessions row gets created — don't add a
+  -- separate "start session" RPC. Its identity comes from the first review
+  -- that carries the id; every later review in the same session just reuses
+  -- it via the conflict guard.
   IF p_session_id IS NOT NULL THEN
     INSERT INTO public.study_sessions (id, member_id)
     VALUES (p_session_id, v_uid)
