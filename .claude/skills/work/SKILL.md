@@ -1,6 +1,6 @@
 ---
 name: work
-description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, dispatches the test pass, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A pre-PR review pipeline (`swarm-reviewer` running `review-work`, one agent per concern, each on the model its roster row names) then reviews the integration branch — rule-family lenses (code-style, test-authoring) and the semantic `test-integrity` lens run first, then the placement lens (`comment-placement`) briefs a `comment-author` sweep, then `comment-authoring` reviews that sweep's own commits — before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges. It sets `Done` only at Full
+description: The main entrypoint for writing code — a Task Board ticket, a whole epic, or a freeform instruction, executed autonomously and in parallel. `/work <ID> …` claims and works named tickets. `/work` (no args) pulls the top unblocked `Ready` tickets by priority (`--count N`, default 1). `/work --epic <name|url>` works an entire epic in topological waves over `Blocked By`. `/work "<instruction>"` runs one freeform build with no board interaction at all. This session is the orchestrator: it runs from wherever it was spawned, delegates every Notion read/write to the `board-agent`, fans out one worktree-isolated `ticket-builder` per unit of work pinned to its `Assignee` model, then checkpoints with you for a live review round on the branch it just built before any PR opens, dispatching your fixes the same way — never edited inline by the orchestrator — until you close the round. A pre-PR review pipeline (`swarm-reviewer` running `review-work`, one agent per concern, each on the model its roster row names) then reviews the integration branch — rule-family lenses (code-style, test-authoring) and the semantic `test-integrity` lens run first, then the placement lens (`comment-placement`) briefs a `comment-author` sweep, then `comment-authoring` reviews that sweep's own commits — before any PR opens. PRs open after that, and a lighter PR-feedback round follows the same way. It never opens a source file, never reads Notion JSON, never merges. It sets `Done` only at Full
 cleanup (§ Full cleanup), gated on every PR the run produced already being merged — everywhere else
 in the run, closing the loop is yours. Trigger on `/work`, "work the board", "work this epic", "work
 several tickets".
@@ -35,8 +35,9 @@ everything that would cost it context:
   criteria to a payload file and hands the orchestrator a path, never the body itself.
 - **The build** is [`ticket-builder`](../../agents/ticket-builder.md)'s, one per ticket/instruction, in
   its own worktree, pinned to the `Assignee` model (`sonnet` for freeform, which has no `Assignee`).
-- **The test pass, PR prep, and every review fix** are each their own dispatch (§ Procedure, § 4d,
-  § PR feedback loop) — the orchestrator receives a verdict, never a diff.
+- **PR prep and every review fix** — including the tests a branch turns out to need, decided by
+  § 4e's review pipeline rather than a dedicated pass — are each their own dispatch (§ Procedure,
+  § 4d, § PR feedback loop) — the orchestrator receives a verdict, never a diff.
 
 The orchestrator runs from the **home tree** — wherever it was spawned. It never enters, creates, or removes
 a worktree of its own — the one exception is an explicit user cleanup request once the run is fully merged
@@ -70,7 +71,8 @@ two things is already true, and neither is overridden by `Status` alone:
 - **The blocker's PR is merged**, while its ticket still reads `Review` — a ticket's `Status` only
   reaches `Done` at its own run's Full cleanup (§ Full cleanup), so the board lags every merge by
   design. Judge on whether the blocker's PR is actually merged, not its `Status` field (a stronger
-  bar than "landed" in § 4's wave-gating sense, which only requires the test pass to have committed).
+  bar than "landed" in § 4's wave-gating sense, which only requires the branch to have merged
+  forward, § 4a).
 - **The dependent branch is stacked on the blocker's branch** (§ Fan out) — the blocker's code is
   already underneath it.
 
@@ -168,69 +170,41 @@ copy in play that drifts from the role.
   ticket knows, so name it in the payload.
 
 **Epic mode fans out in waves**, not all at once. Wave 1 is every selected ticket with no in-epic blocker,
-branching off `master`. Wave N is the tickets whose blockers each **finished their test pass** in wave N-1 —
-§ 4b has committed for that blocker, not merely that its build **landed** (§ 4a) into the integration
-branch. Cutting a wave-N worktree off a blocker branch that has landed but not yet finished § 4b bases it on
-a tip missing its own parent's test coverage, which a later merge-forward can't retroactively fix without a
-real conflict. **A ticket's `Blocked By` can name more than one in-epic blocker** — a wave-N builder's
-worktree merges every one of that ticket's in-epic blocker branches into its base, never just the first or
-just `master`, before the builder starts; how its PR reaches `master` is § 5c's call, not automatic
-stacking. **Cap a wave at ~4 concurrent builders** — split a larger wave into batches. The test pass (§ 4b)
-stays sequential across every wave, and gates the next wave's fan-out the same way it gates § 5's PR step.
+branching off `master`. Wave N is the tickets whose blockers each **landed** in wave N-1 (§ 4a) — there is no
+dedicated test dispatch to wait on; which tests a branch needs is decided during the review pipeline (§ 4e),
+after the live-review round, the same as any other finding. **A ticket's `Blocked By` can name more than one
+in-epic blocker** — a wave-N builder's worktree merges every one of that ticket's in-epic blocker branches
+into its base, never just the first or just `master`, before the builder starts; how its PR reaches `master`
+is § 5c's call, not automatic stacking. **Cap a wave at ~4 concurrent builders** — split a larger wave into
+batches.
 
 ### 4a. LAND — the home tree updates the moment a builder reports back
 
 **A finished branch reaches the tree the user is looking at before anything else happens to it** — before
-the test pass, before PR prep, before CI runs at all. The instant a `ticket-builder` reports its branch
+PR prep, before CI runs at all, before any review. The instant a `ticket-builder` reports its branch
 done, merge it forward into the integration branch on the home tree (single-ticket or freeform run: `git
 checkout <branch>` directly, once the branch exists) — the merge-forward half of § 4d's
-dispatch-and-merge-forward mechanic, just starting here instead of at teardown. Never wait for the test pass
-to finish, CI to go green, or the PR to open before doing this.
+dispatch-and-merge-forward mechanic, just starting here instead of at teardown. Never wait for CI to go
+green or the PR to open before doing this.
 
-### 4b. TEST PASS — one dispatch per branch, sequential
-
-Builders never touch tests, and the orchestrator never mines a conversation it wasn't part of. `isolation:
-worktree` sandboxes a dispatch to a worktree **of its own** — it cannot `cd`, `git`, or commit inside a
-worktree handed to it by path, including the builder's, so `update-tests` can't run "inside the builder's
-worktree"; free the branch instead and let the dispatch claim it in its own sandbox.
-
-**Only a wave-gating branch dispatches its test pass immediately.** A wave-N+1 builder needs wave-N's
-blocker branch tested before basing its worktree on it, so that branch's test pass still fires the moment
-its build lands (§ 4a). A branch that gates nothing later — the single branch of a non-epic run, or any
-branch in an epic's final wave — holds its test pass instead: go straight to § 4c's checkpoint once its
-build lands, and run this dispatch only once the live-review round (§ 4d) closes.
-
-1. Once a branch's test pass is due — immediately for a wave-gating branch, otherwise once the
-   live-review round closes (§ 4d) — remove the builder's worktree right here, per § 5f's removal
-   check (→[K:worktree-removal-survives-failure]), freeing the branch ref for checkout elsewhere.
-   This preempts § 5f's teardown for this ticket; § 5f skips a worktree that's already gone.
-2. Dispatch a `general-purpose` agent, `isolation: worktree`
-   ([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation]), instructed
-   to `git checkout <branch>` inside its own fresh worktree (now free to take it), then run the
-   [`update-tests` skill](../../skills/update-tests/SKILL.md) there, passing the builder's own "what a
-   test should cover" lines as `$ARGUMENTS` — `update-tests` already treats that argument as mandatory
-   obligations and needs no conversation to mine. The dispatched agent owns `update-tests`'s own
-   review-and-commit step end to end on that checkout and reports back pass/fail.
-3. On report-back, merge that branch forward into the integration branch on the home tree again —
-   the same merge-forward half of the dispatch-and-merge-forward mechanic § 4a and § 4d use.
-
-**Sequential, not parallel** — several coverage runs at once swamp the machine. A wave-N builder basing its
-own worktree on a blocker branch (§ 4) is unaffected by freeing the blocker's worktree after its test pass —
-the wave-N worktree already merged the blocker's commits into its own base before the blocker's worktree was
-ever removed.
-
-The full `vp test` suite is never run locally; **CI is the gate**, watched in step 5.
+### 4b. KNOWLEDGE GAPS — dispatched the moment a branch lands
 
 **The orchestrator dispatches `corpus-author` for every `[K:gap: …]` tag a builder left**, one background
-`Agent` call per gap per [`self-heal`](../../rules/self-heal.md), before step 5. The tag fails the knowledge
-check until the topic lands and the site cites it. A `COPY-TBD` a builder left is **not** dispatched — no
-agent can settle wording — but it does not hold the ticket either (§ Copy never blocks the build).
+`Agent` call per gap per [`self-heal`](../../rules/self-heal.md), the moment that branch lands (§ 4a) —
+before step 5. The tag fails the knowledge check until the topic lands and the site cites it. A `COPY-TBD`
+a builder left is **not** dispatched — no agent can settle wording — but it does not hold the ticket either
+(§ Copy never blocks the build).
+
+**There is no dedicated test-writing dispatch, per-wave or consolidated.** Builders never touch tests
+(golden rule); which tests a branch needs is decided during the review pipeline (§ 4e) by its
+`test-authoring` and `test-integrity` lenses, the same as every other review finding, and routed to the
+owning branch through § 4d's dispatch-and-merge-forward mechanic. The full `vp test` suite is never run
+locally; **CI is the gate**, watched in step 5.
 
 ### 4c. ALL-WORK-DONE CHECKPOINT — the second interactive pause
 
-Once every branch's build is in (§ 4a) — every wave-gating branch's test pass too, since that already ran
-per § 4b, but a non-gating branch's test pass hasn't started yet, and that's expected — stop. Report
-progress: the integration branch's state, or the single home-tree branch's state for a
+Once every branch's build is in (§ 4a), stop. Report progress: the integration branch's state, or the
+single home-tree branch's state for a
 single-ticket/freeform run — which tickets/instructions are through, and any `[K:gap: …]`/`COPY-TBD` markers
 still open. No PR exists yet. The user reviews the live branch through their own dev server and gives
 feedback from actually using it. The run does not proceed to § 5 until the user says the round is closed.
@@ -242,7 +216,7 @@ works it in a throwaway worktree ([`git-workflow`](../../rules/git-workflow.md),
 →[K:worktree-write-target]), commits, and reports back — except a running-only symptom (visual, animation,
 CSS-timing, layout), which CLAUDE.md's golden rule requires observing live before fixing; `ticket-builder`
 carries no browser tool, so that fix dispatches to `general-purpose` instead (the same browser-capable
-target § 4b and § 5d already use), worktree-isolated the same way, and it captures the real running behavior
+target § 5d already uses), worktree-isolated the same way, and it captures the real running behavior
 before it fixes and commits. The orchestrator merges that branch forward into the integration branch on the
 home tree (single-ticket or freeform run: the one branch already checked out there). **This is the
 dispatch-and-merge-forward mechanic** — dispatch the fix to a `ticket-builder` (or `general-purpose` per
@@ -252,12 +226,11 @@ branch of its own, distinct from the ticket's branch it checked out or merged; o
 merged forward, both are dead weight. Remove the worktree per § 5f's removal check
 (→[K:worktree-removal-survives-failure]), then delete the harness branch (`git branch -d`) so it
 doesn't outlive the dispatch that made it. This is in addition to, never instead of, the
-ticket-builder's own original worktree/branch (§ 4b step 1, § 5f, § Full cleanup) — reused verbatim
-by § 4e, § PR feedback loop, and § 4a's initial merge. Tests stay untouched for the whole round — no per-fix `update-tests`, no mid-round
-ask. Repeat fixes until the user says the round is done; **that close, not an ask mid-round, is what fires
-the test pass** — run § 4b's held dispatch now, one consolidated `update-tests` pass per branch that
-deferred it, covering the original build plus everything the round changed. Dispatch self-heal for this
-round (§ Self-heal) before continuing; only once that pass reports back does § 4e start.
+ticket-builder's own original worktree/branch (§ 5f, § Full cleanup) — reused verbatim by § 4e,
+§ PR feedback loop, and § 4a's initial merge. Tests stay untouched for the whole round — no per-fix
+test dispatch, no mid-round ask; which tests each branch ends up needing is § 4e's call, decided once
+against the round's final state, never chased mid-round. Repeat fixes until the user says the round is
+done, then dispatch self-heal for this round (§ Self-heal) and start § 4e.
 
 ### 4e. REVIEW PIPELINE — the pre-PR review pass
 
@@ -275,6 +248,9 @@ closes with `comment-authoring` reviewing that sweep.
 that concern's roster row** (opus for `comment-placement` and `test-integrity`, sonnet for the others) —
 each runs `review-work --concern <name>` over that diff. **The count is the roster's, not the branch
 count**: a nine-branch run is still one `swarm-reviewer` per concern. They are **read-only** and never edit.
+**Deciding what tests a branch needs happens here, not before it** — `test-authoring` and
+`test-integrity` name a missing test the same way they'd name a conformance violation; there is no
+earlier dispatch that writes tests speculatively.
 
 A **rule-family finding** (`code-style`, `test-authoring`) and a **`test-integrity` finding** route the same
 way: the run ledger's _files touched_ column (§ Run ledger) maps the file to its branch (`git blame` the
@@ -338,11 +314,10 @@ e. **HANDOFF**, dispatched — for each opened, green PR, `board-agent` with `HA
 sets the ticket to `Review`, appends the PR URL into the ticket body.
 f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), remove
 the builder's worktree per [`git-workflow`](../../rules/git-workflow.md)'s removal check
-(→[K:worktree-removal-survives-failure]) — every other teardown site in this file (§ 4b step 1, §
-4d, § Full cleanup) cites this one rather than restating it — then `git worktree remove <path>`
+(→[K:worktree-removal-survives-failure]) — every other teardown site in this file (§ 4d,
+§ Full cleanup) cites this one rather than restating it — then `git worktree remove <path>`
 from the home tree, once you've confirmed via `pwd`/`git worktree list` you're not removing the one
-you're standing in. **Skip this for a ticket whose builder worktree § 4b already removed** to free
-the branch for the test-pass dispatch — there's nothing left here to reclaim. The branch lives on
+you're standing in. The branch lives on
 origin and its local ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its
 worktree (§ Stuck / blocked); teardown never gates what the user sees, since the home tree updated at § 4a
 already. **This isn't gated on handoff succeeding** (→[K:worktree-removal-survives-failure]) — removal is an
@@ -403,8 +378,11 @@ round is lighter and the target is a PR rather than a checkpoint. Fixes to diffe
    index; genuinely ambiguous feedback asks — safe here because this is all post-handoff, past both gates.
 2. **Leave tests alone until the user asks.** Default to **not touching tests** during the feedback
    loop — the golden "no tests" rule is back in force. Do **not** run `update-tests` per fix. When the
-   user says they're ready for tests, run **one** consolidated `update-tests` pass, dispatched the
-   same way as § 4b, over everything the review changed.
+   user says they're ready for tests, dispatch a `general-purpose` agent, `isolation: worktree`
+   ([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation]), to `git
+checkout <branch>` in its own fresh worktree and run the
+   [`update-tests` skill](../../skills/update-tests/SKILL.md) there — **one** consolidated pass over
+   everything the review changed, merged forward on report-back.
 3. **Batch the gate and the push per PR — don't run either per item.** Apply and commit each piece of
    feedback as it comes; hold `vp check` and the push until the user signals the round is done, then
    run it once and push once for that PR's batch. CI green again is what closes the round — no local
