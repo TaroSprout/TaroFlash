@@ -26,9 +26,7 @@ const { isLive } = useCapabilities()
 
 const summary = computed(() => aggregateSession(results, thresholdFor))
 
-const show_earnings = computed(
-  () => isLive('session_rewards', false) && !!earnings && earnings.earned > 0
-)
+const show_earnings = computed(() => isLive('session_rewards', false) && !!earnings)
 </script>
 
 <template>
@@ -52,7 +50,12 @@ const show_earnings = computed(
         >
           {{ t('session-summary.earnings.heading') }}
         </span>
-        <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.earned" />
+        <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.base" />
+
+        <span data-testid="session-summary__earnings-bonus" class="text-base text-ink-muted">
+          {{ t('session-summary.earnings.bonus-label') }}
+        </span>
+        <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.bonus" />
 
         <span data-testid="session-summary__earnings-balance" class="text-base text-ink-muted">
           {{ t('session-summary.earnings.balance-label') }}
