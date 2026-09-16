@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { computed, onBeforeUnmount, provide, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { emitSfx } from '@/sfx/bus'
 import { useLessonsByCollectionQuery } from '@/api/lessons'
-import { useLessonReader } from '@/composables/audio-reader/lesson-reader'
+import { useLessonReader, lessonReaderKey } from '@/composables/audio-reader/lesson-reader'
 import { useReaderProgress } from '@/composables/audio-reader/reader-progress'
 import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
 import { useCollectionEditModal } from '@/composables/audio-reader/collection-edit-modal'
@@ -24,15 +24,20 @@ import ResumeFollowButton from '@/views/audio-reader/lesson/resume-follow-button
 import TranslationZone from '@/views/audio-reader/lesson/translation-zone.vue'
 import TranscriptView from '@/views/audio-reader/transcript/index.vue'
 import TermCard from '@/views/audio-reader/term-popover/term-card.vue'
+import PagedReader from '@/views/audio-reader/lesson/paged/index.vue'
 
 const { collectionId, lessonId } = defineProps<{ collectionId: string; lessonId: string }>()
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const edit_modal = useCollectionEditModal()
 
 const collection_id = computed(() => Number(collectionId))
 const lesson_id = computed(() => Number(lessonId))
+
+const reader = useLessonReader(lesson_id)
+provide(lessonReaderKey, reader)
 
 const {
   lesson,
@@ -49,13 +54,22 @@ const {
   playFromHere,
   playClip,
   player
-} = useLessonReader(lesson_id)
+} = reader
 
 const { restored } = useReaderProgress(collection_id, lesson_id, player)
 
 const { data: lessons_data } = useLessonsByCollectionQuery(collection_id)
 
-const { display_mode, translation_source } = useReaderPrefs()
+const { display_mode, translation_source, paged } = useReaderPrefs()
+
+// The paged layout is opt-in: `?paged=1` / `?paged=0` overrides the stored flag,
+// otherwise the flag decides. A no-chrome prototype switch.
+const use_paged = computed(() => {
+  const q = route.query.paged
+  if (q === '1' || q === 'true') return true
+  if (q === '0' || q === 'false') return false
+  return paged.value
+})
 
 const { el: dock_el, claimHeight } = useMobileDock()
 const is_desktop = useMatchMedia('w>=xl')
@@ -245,7 +259,11 @@ onBeforeUnmount(() => {
 <template>
   <section
     data-testid="lesson-view"
-    class="flex min-h-[calc(100dvh-var(--nav-height)-var(--mobile-dock-height,0px))] flex-col gap-6 xl:flex-row px-(--page-px) pt-(--page-pt)"
+    :class="
+      use_paged
+        ? 'relative'
+        : 'flex min-h-[calc(100dvh-var(--nav-height)-var(--mobile-dock-height,0px))] flex-col gap-6 xl:flex-row px-(--page-px) pt-(--page-pt)'
+    "
   >
     <transition :css="false" @leave="fadeLeave">
       <div
@@ -257,159 +275,44 @@ onBeforeUnmount(() => {
       </div>
     </transition>
 
-    <aside
-      data-testid="lesson-view__sidebar"
-      class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:h-[calc(100dvh-var(--nav-height))] xl:w-80 xl:self-start"
-    >
-      <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
-        <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
-          <h1 class="text-3xl text-ink">{{ lesson?.title }}</h1>
+    <paged-reader v-if="use_paged" data-testid="lesson-view__paged" />
 
-          <span
-            v-if="chapter_of.total > 0"
-            data-testid="lesson-view__chapter-of"
-            class="text-base text-ink-muted"
-          >
-            {{ t('lesson-view.chapter-of', chapter_of) }}
-          </span>
-        </div>
-
-        <ui-button
-          neutral
-          data-testid="lesson-view__edit"
-          icon-left="settings"
-          icon-only
-          size="lg"
-          @press="onEdit"
-        >
-          {{ t('lesson-view.edit-button') }}
-        </ui-button>
-      </header>
-
-      <transition :css="false" mode="out-in" @enter="fadeEnter" @leave="fadeLeave">
-        <div
-          v-if="show_term_in_sidebar && selection"
-          key="term"
-          data-testid="lesson-view__sidebar-term"
-          class="flex-1 overflow-y-auto"
-        >
-          <term-card
-            :term="selection.term"
-            :sentence="selection.sentence"
-            :target_lang="target_lang"
-            :existing_decks="selected_term_decks"
-            show_back
-            @back="closeTerm"
-            @close="closeTerm"
-            @play-from-here="onPlayFromHere"
-            @play-word="playClip"
-          />
-        </div>
-
-        <chapter-list
-          v-else-if="has_lesson_chapters"
-          key="lesson-chapters"
-          data-testid="lesson-view__lesson-chapters"
-          class="flex-1"
-          :chapters="lesson_chapters"
-          :current-time="player.current_time"
-          @seek="seekToChapter"
-        />
-
-        <nav
-          v-else
-          key="chapters"
-          data-testid="lesson-view__chapters"
-          class="flex flex-1 gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
-        >
-          <button
-            v-for="chapter in chapters"
-            :key="chapter.id"
-            data-testid="lesson-view__chapter"
-            :data-active="chapter.id === lesson_id"
-            type="button"
-            class="shrink-0 cursor-pointer rounded-7 bg-raised px-4 py-2 text-left text-base text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) xl:shrink"
-            @click="goToChapter(chapter.id)"
-          >
-            <span class="line-clamp-1">{{ chapter.title }}</span>
-          </button>
-        </nav>
-      </transition>
-
-      <audio-toolbar
-        data-testid="lesson-view__sidebar-toolbar"
-        :player="player"
-        :chapters="chapters"
-        :lesson-chapters="lesson_chapters"
-        :current-lesson-id="lesson_id"
-        @select-chapter="goToChapter"
-        @seek="seekToChapter"
-      />
-    </aside>
-
-    <div data-testid="lesson-view__reader" class="relative flex flex-1 flex-col xl:min-w-0">
-      <header
-        data-testid="lesson-view__title"
-        class="flex flex-col items-center px-4 pb-6 text-center xl:hidden"
+    <template v-if="!use_paged">
+      <aside
+        data-testid="lesson-view__sidebar"
+        class="hidden shrink-0 flex-col gap-4 xl:flex xl:sticky xl:top-(--nav-height) xl:h-[calc(100dvh-var(--nav-height))] xl:w-80 xl:self-start"
       >
-        <h1 data-testid="lesson-view__title-text" class="text-3xl text-ink">
-          {{ lesson?.title }}
-        </h1>
-      </header>
+        <header data-testid="lesson-view__header" class="flex items-center justify-between gap-4">
+          <div data-testid="lesson-view__heading" class="flex flex-col gap-1">
+            <h1 class="text-3xl text-ink">{{ lesson?.title }}</h1>
 
-      <div
-        data-testid="lesson-view__transcript"
-        class="px-0 pt-6 pb-2 contain-[layout_style] sm:px-6"
-      >
-        <transcript-view
-          ref="transcript"
-          :paragraphs="paragraphs"
-          :chapters="lesson_chapters"
-          :matches="matches"
-          :active_word="active_word"
-          :popover_open="popover_open"
-          :hide_inline_translation="use_fixed_layout"
-          @select="openTerm"
-          @dismiss="dismissTerm"
-        />
-      </div>
-
-      <mobile-dock breakpoint="xl">
-        <template #above>
-          <div data-testid="lesson-view__above" class="flex w-full flex-col items-end gap-3">
-            <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
-              <resume-follow-button
-                v-if="show_follow_button"
-                data-testid="lesson-view__resume-follow"
-                :direction="follow_direction"
-                class="pointer-events-auto"
-                @resume="resumeFollow"
-              />
-            </transition>
-
-            <div
-              v-if="use_fixed_layout"
-              data-testid="lesson-view__translation-band"
-              data-station="float"
-              class="w-full overflow-hidden rounded-6 bg-surface shadow-sm ring-1 ring-line"
+            <span
+              v-if="chapter_of.total > 0"
+              data-testid="lesson-view__chapter-of"
+              class="text-base text-ink-muted"
             >
-              <translation-zone :translation="pinned_translation" />
-            </div>
+              {{ t('lesson-view.chapter-of', chapter_of) }}
+            </span>
           </div>
-        </template>
 
-        <crossfade-resize
-          ref="footer_swap"
-          data-testid="lesson-view__dock-swap"
-          @swap-start="onSwapStart"
-          @swap-end="onSwapEnd"
-        >
+          <ui-button
+            neutral
+            data-testid="lesson-view__edit"
+            icon-left="settings"
+            icon-only
+            size="lg"
+            @press="onEdit"
+          >
+            {{ t('lesson-view.edit-button') }}
+          </ui-button>
+        </header>
+
+        <transition :css="false" mode="out-in" @enter="fadeEnter" @leave="fadeLeave">
           <div
-            v-if="show_term_in_dock_deferred && selection"
+            v-if="show_term_in_sidebar && selection"
             key="term"
-            ref="footer_term"
-            data-testid="lesson-view__dock-term"
-            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+            data-testid="lesson-view__sidebar-term"
+            class="flex-1 overflow-y-auto"
           >
             <term-card
               :term="selection.term"
@@ -424,53 +327,172 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <div
-            v-else-if="show_settings_in_dock"
-            key="settings"
-            ref="footer_settings"
-            data-testid="lesson-view__dock-settings"
-            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
-          >
-            <reader-settings :player="player" @close="closeReaderSettings" />
-          </div>
+          <chapter-list
+            v-else-if="has_lesson_chapters"
+            key="lesson-chapters"
+            data-testid="lesson-view__lesson-chapters"
+            class="flex-1"
+            :chapters="lesson_chapters"
+            :current-time="player.current_time"
+            @seek="seekToChapter"
+          />
 
-          <div
+          <nav
             v-else
-            key="toolbar"
-            ref="footer_toolbar"
-            data-testid="lesson-view__dock-toolbar"
-            class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+            key="chapters"
+            data-testid="lesson-view__chapters"
+            class="flex flex-1 gap-2 overflow-x-auto pb-2 xl:flex-col xl:overflow-x-visible xl:overflow-y-auto xl:pb-0"
           >
-            <audio-toolbar
-              :player="player"
-              :chapters="chapters"
-              :lesson-chapters="lesson_chapters"
-              :current-lesson-id="lesson_id"
-              :show-speed="false"
-              @select-chapter="goToChapter"
-              @seek="seekToChapter"
-              @open-settings="openReaderSettings"
-            />
-          </div>
-        </crossfade-resize>
-      </mobile-dock>
+            <button
+              v-for="chapter in chapters"
+              :key="chapter.id"
+              data-testid="lesson-view__chapter"
+              :data-active="chapter.id === lesson_id"
+              type="button"
+              class="shrink-0 cursor-pointer rounded-7 bg-raised px-4 py-2 text-left text-base text-ink data-[active=true]:bg-(--color-accent) data-[active=true]:text-(--color-on-accent) xl:shrink"
+              @click="goToChapter(chapter.id)"
+            >
+              <span class="line-clamp-1">{{ chapter.title }}</span>
+            </button>
+          </nav>
+        </transition>
 
-      <audio
-        ref="audio"
-        data-testid="lesson-view__audio"
-        :src="audio_url ?? undefined"
-        class="hidden"
-      />
-
-      <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
-        <resume-follow-button
-          v-if="show_follow_button"
-          data-testid="lesson-view__resume-follow-desktop"
-          :direction="follow_direction"
-          class="fixed right-16 bottom-6 z-30 hidden xl:block"
-          @resume="resumeFollow"
+        <audio-toolbar
+          data-testid="lesson-view__sidebar-toolbar"
+          :player="player"
+          :chapters="chapters"
+          :lesson-chapters="lesson_chapters"
+          :current-lesson-id="lesson_id"
+          @select-chapter="goToChapter"
+          @seek="seekToChapter"
         />
-      </transition>
-    </div>
+      </aside>
+
+      <div data-testid="lesson-view__reader" class="relative flex flex-1 flex-col xl:min-w-0">
+        <header
+          data-testid="lesson-view__title"
+          class="flex flex-col items-center px-4 pb-6 text-center xl:hidden"
+        >
+          <h1 data-testid="lesson-view__title-text" class="text-3xl text-ink">
+            {{ lesson?.title }}
+          </h1>
+        </header>
+
+        <div
+          data-testid="lesson-view__transcript"
+          class="px-0 pt-6 pb-2 contain-[layout_style] sm:px-6"
+        >
+          <transcript-view
+            ref="transcript"
+            :paragraphs="paragraphs"
+            :chapters="lesson_chapters"
+            :matches="matches"
+            :active_word="active_word"
+            :popover_open="popover_open"
+            :hide_inline_translation="use_fixed_layout"
+            @select="openTerm"
+            @dismiss="dismissTerm"
+          />
+        </div>
+
+        <mobile-dock breakpoint="xl">
+          <template #above>
+            <div data-testid="lesson-view__above" class="flex w-full flex-col items-end gap-3">
+              <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+                <resume-follow-button
+                  v-if="show_follow_button"
+                  data-testid="lesson-view__resume-follow"
+                  :direction="follow_direction"
+                  class="pointer-events-auto"
+                  @resume="resumeFollow"
+                />
+              </transition>
+
+              <div
+                v-if="use_fixed_layout"
+                data-testid="lesson-view__translation-band"
+                data-station="float"
+                class="w-full overflow-hidden rounded-6 bg-surface shadow-sm ring-1 ring-line"
+              >
+                <translation-zone :translation="pinned_translation" />
+              </div>
+            </div>
+          </template>
+
+          <crossfade-resize
+            ref="footer_swap"
+            data-testid="lesson-view__dock-swap"
+            @swap-start="onSwapStart"
+            @swap-end="onSwapEnd"
+          >
+            <div
+              v-if="show_term_in_dock_deferred && selection"
+              key="term"
+              ref="footer_term"
+              data-testid="lesson-view__dock-term"
+              class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+            >
+              <term-card
+                :term="selection.term"
+                :sentence="selection.sentence"
+                :target_lang="target_lang"
+                :existing_decks="selected_term_decks"
+                show_back
+                @back="closeTerm"
+                @close="closeTerm"
+                @play-from-here="onPlayFromHere"
+                @play-word="playClip"
+              />
+            </div>
+
+            <div
+              v-else-if="show_settings_in_dock"
+              key="settings"
+              ref="footer_settings"
+              data-testid="lesson-view__dock-settings"
+              class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+            >
+              <reader-settings :player="player" @close="closeReaderSettings" />
+            </div>
+
+            <div
+              v-else
+              key="toolbar"
+              ref="footer_toolbar"
+              data-testid="lesson-view__dock-toolbar"
+              class="px-(--dock-px) pt-(--dock-pt) pb-(--dock-pb)"
+            >
+              <audio-toolbar
+                :player="player"
+                :chapters="chapters"
+                :lesson-chapters="lesson_chapters"
+                :current-lesson-id="lesson_id"
+                :show-speed="false"
+                @select-chapter="goToChapter"
+                @seek="seekToChapter"
+                @open-settings="openReaderSettings"
+              />
+            </div>
+          </crossfade-resize>
+        </mobile-dock>
+
+        <transition :css="false" @enter="fadeEnter" @leave="fadeLeave">
+          <resume-follow-button
+            v-if="show_follow_button"
+            data-testid="lesson-view__resume-follow-desktop"
+            :direction="follow_direction"
+            class="fixed right-16 bottom-6 z-30 hidden xl:block"
+            @resume="resumeFollow"
+          />
+        </transition>
+      </div>
+    </template>
+
+    <audio
+      ref="audio"
+      data-testid="lesson-view__audio"
+      :src="audio_url ?? undefined"
+      class="hidden"
+    />
   </section>
 </template>

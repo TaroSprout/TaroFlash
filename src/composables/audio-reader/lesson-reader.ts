@@ -1,5 +1,5 @@
 import { computed, ref, shallowRef, toValue, useTemplateRef, watch } from 'vue'
-import type { MaybeRefOrGetter } from 'vue'
+import type { InjectionKey, MaybeRefOrGetter } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emitSfx } from '@/sfx/bus'
 import { useNoticeStore } from '@/stores/notice-store'
@@ -193,6 +193,20 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     closeTerm()
   }
 
+  function seekToWord(word_index: number) {
+    const start = firstStartFrom(word_index)
+    if (start === undefined) return
+    player.seek(start)
+  }
+
+  function firstStartFrom(word_index: number): number | undefined {
+    for (let i = word_index; i < words.value.length; i++) {
+      const start = words.value[i]?.start
+      if (start !== undefined) return start
+    }
+    return undefined
+  }
+
   // Play only the selected phrase — its first word's start to its last word's end
   // — then stop. Leaves the term surface open so its translation stays readable.
   function playWordRange(first_index: number, last_index: number) {
@@ -218,6 +232,14 @@ export function useLessonReader(id: MaybeRefOrGetter<number>) {
     closeTerm,
     playFromHere,
     playClip,
+    seekToWord,
     player
   }
 }
+
+export type LessonReader = ReturnType<typeof useLessonReader>
+
+// The lesson view calls useLessonReader once and provides the bundle so the paged
+// layout and its deep children (page, controls, term sheet) read one source of
+// truth instead of drilling a dozen props.
+export const lessonReaderKey = Symbol('lessonReader') as InjectionKey<LessonReader>

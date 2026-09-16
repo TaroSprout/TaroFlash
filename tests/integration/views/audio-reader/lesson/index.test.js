@@ -64,14 +64,18 @@ const popoverOpenRef = ref(false)
 const displayModeRef = ref('inline')
 const translationSourceRef = ref('playback')
 
+const pagedRef = ref(false)
+
 vi.mock('@/composables/audio-reader/reader-prefs', () => ({
   useReaderPrefs: () => ({
     display_mode: displayModeRef,
-    translation_source: translationSourceRef
+    translation_source: translationSourceRef,
+    paged: pagedRef
   })
 }))
 
 vi.mock('@/composables/audio-reader/lesson-reader', () => ({
+  lessonReaderKey: Symbol('lessonReader'),
   useLessonReader: () => ({
     lesson: lessonRef,
     paragraphs: paragraphsRef,
@@ -129,7 +133,8 @@ vi.mock('@/composables/audio-reader/collection-edit-modal', () => ({
 }))
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: routerPushMock })
+  useRouter: () => ({ push: routerPushMock }),
+  useRoute: () => ({ query: {} })
 }))
 
 vi.mock('@/sfx/bus', () => ({
