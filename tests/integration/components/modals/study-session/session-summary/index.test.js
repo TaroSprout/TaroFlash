@@ -174,4 +174,25 @@ describe('SessionSummary (index.vue)', () => {
 
     expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
   })
+
+  test('does not render the earnings block when earnings is null, even when live', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: null })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
+  })
+
+  test('does not render the earnings block when earned is 0, even when live with non-null earnings', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { earned: 0, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
+  })
+
+  test('renders the earnings block when live, non-null earnings, and earned > 0', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { earned: 12, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(true)
+  })
 })
