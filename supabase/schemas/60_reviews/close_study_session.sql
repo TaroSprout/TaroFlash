@@ -32,7 +32,7 @@ BEGIN
          AND rl.member_id = v_uid
        ORDER BY rl.card_id, rl.review DESC, rl.id DESC -- keep each card's final rating, so a card re-studied within the session counts once, by its last outcome
     ) final_logs
-   WHERE final_logs.rating <> 1; -- 1 is ts-fsrs Rating.Again (a fail); this count feeds credit_occasion_reward's p_count bonus curve
+   WHERE final_logs.rating <> 1; -- 1 is ts-fsrs Rating.Again (a fail)
 
   IF v_correct = 0 THEN
     RETURN;
