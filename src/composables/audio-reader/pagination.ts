@@ -65,13 +65,13 @@ export function usePagination(options: PaginationOptions): Pagination {
   }
 
   function atomBottom(el: HTMLElement, base: number): number {
-    const gloss = el.dataset.lastInParagraph ? glossAfter(el) : null
+    const gloss = el.hasAttribute('data-last-in-paragraph') ? glossAfter(el) : null
     const rect = (gloss ?? el).getBoundingClientRect()
     return rect.bottom - base
   }
 
   function glossAfter(word_el: HTMLElement): HTMLElement | null {
-    const block = word_el.closest('[data-paragraph-index]')
+    const block = word_el.parentElement?.closest('[data-paragraph-index]')
     return block?.querySelector<HTMLElement>('[data-gloss]') ?? null
   }
 
