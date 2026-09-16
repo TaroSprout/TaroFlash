@@ -189,6 +189,13 @@ untouched` line is the "do not touch tests" rule in costume — delete it.
 An epic is the resurfacing anchor for an effort, and the only place effort-level state lives. These
 sections live in the epic's Notion **page body**.
 
+**Any create or update of an epic's page body appends below the template's default content, never
+replacing it.** The Epic Board template seeds its own default body on every page it's applied to; a
+`notion-create-pages` or `notion-update-page` write — `replace_content` included — that lands the
+sections below in place of that seed wipes it off the page. Read the page back and confirm the
+template's content is still present alongside the authored sections
+(→[K:notion-write-verification]).
+
 ```markdown
 <one-line scope>
 
