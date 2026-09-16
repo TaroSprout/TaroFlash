@@ -29,7 +29,9 @@ orchestrator can hear, so the two things you'd otherwise delegate are handled as
 
 ## Wording you weren't given
 
-Any string a user reads that the ticket didn't settle is written as the literal `COPY-TBD`
+A string the groomed ticket already gives you — quoted in the body, a named heading or label, a
+spelled-out button or field string — is copy sign-off; use it verbatim, never `COPY-TBD`. The
+marker is only for a user-facing string the ticket is silent on
 (→[K:build-unfinished-markers]). Never invent one, never pick the "obvious" phrasing, never reuse a
 string from elsewhere in the app as a substitute. Name each one in your report.
 
