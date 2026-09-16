@@ -570,6 +570,7 @@ export type Database = {
           rating: number
           review: string
           scheduled_days: number | null
+          session_id: string | null
           stability: number | null
           state: number
         }
@@ -583,6 +584,7 @@ export type Database = {
           rating: number
           review: string
           scheduled_days?: number | null
+          session_id?: string | null
           stability?: number | null
           state: number
         }
@@ -596,6 +598,7 @@ export type Database = {
           rating?: number
           review?: string
           scheduled_days?: number | null
+          session_id?: string | null
           stability?: number | null
           state?: number
         }
@@ -619,6 +622,13 @@ export type Database = {
             columns: ['member_id']
             isOneToOne: false
             referencedRelation: 'members'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'review_logs_session_id_fkey'
+            columns: ['session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
             referencedColumns: ['id']
           }
         ]
@@ -775,6 +785,35 @@ export type Database = {
           price?: number | null
         }
         Relationships: []
+      }
+      study_sessions: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          id: string
+          member_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'study_sessions_member_id_fkey'
+            columns: ['member_id']
+            isOneToOne: false
+            referencedRelation: 'members'
+            referencedColumns: ['id']
+          }
+        ]
       }
     }
     Views: {
@@ -1111,6 +1150,7 @@ export type Database = {
           p_card: Database['public']['CompositeTypes']['review_card_state']
           p_card_id: number
           p_log: Database['public']['CompositeTypes']['review_log_entry']
+          p_session_id?: string
         }
         Returns: undefined
       }

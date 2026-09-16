@@ -58,14 +58,16 @@ SELECT has_function(
   'get_session_decks_and_cards has the (p_deck_ids, p_today_start) signature the FE sends [obligation]'
 );
 
--- Test 3: save_review exists with the exact 3-arg composite signature the FE
--- calls (src/api/reviews/db/index.ts) — p_card_id plus the review_card_state
--- and review_log_entry payload types the flat args were folded into.
+-- Test 3 [obligation]: save_review exists with the exact 4-arg signature the
+-- FE calls (src/api/reviews/db/index.ts) — p_card_id, the review_card_state
+-- and review_log_entry payload types, plus p_session_id (taro-424). The old
+-- 3-arg signature is explicitly DROPped in 20260916193029, so only this one
+-- overload should exist — test 1 above already fails if both do.
 SELECT has_function(
   'public',
   'save_review',
-  ARRAY['bigint', 'review_card_state', 'review_log_entry'],
-  'save_review has the (p_card_id, review_card_state, review_log_entry) signature the FE sends'
+  ARRAY['bigint', 'review_card_state', 'review_log_entry', 'uuid'],
+  'save_review has the (p_card_id, review_card_state, review_log_entry, p_session_id) signature the FE sends [obligation]'
 );
 
 SELECT * FROM finish();
