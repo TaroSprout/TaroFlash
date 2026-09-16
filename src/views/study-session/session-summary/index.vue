@@ -39,29 +39,25 @@ const show_earnings = computed(
     >
       <section data-testid="session-summary__hero" class="flex flex-col items-center gap-4">
         <ui-icon data-testid="session-summary__icon" src="award" class="size-20 text-ink" />
-
-        <h2 data-testid="session-summary__title" class="text-center text-3xl font-bold text-ink">
-          {{ t('session-summary.title') }}
-        </h2>
       </section>
 
       <section
         v-if="show_earnings && earnings"
         data-testid="session-summary__earnings"
-        class="flex w-full max-w-95 flex-col items-center gap-2"
+        class="grid grid-cols-[auto_auto] items-center gap-x-6 gap-y-2"
       >
-        <h3 data-testid="session-summary__earnings-heading" class="text-lg font-semibold text-ink">
+        <span
+          data-testid="session-summary__earnings-heading"
+          class="text-lg font-semibold text-ink"
+        >
           {{ t('session-summary.earnings.heading') }}
-        </h3>
+        </span>
+        <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.earned" />
 
-        <ui-paperclips class="text-2xl font-bold" :amount="earnings.earned" signed />
-
-        <div data-testid="session-summary__earnings-balance" class="flex items-center gap-2">
-          <span class="text-base text-ink-muted">
-            {{ t('session-summary.earnings.balance-label') }}
-          </span>
-          <ui-paperclips :amount="earnings.balance" />
-        </div>
+        <span data-testid="session-summary__earnings-balance" class="text-base text-ink-muted">
+          {{ t('session-summary.earnings.balance-label') }}
+        </span>
+        <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.balance" />
       </section>
 
       <stats-panel
