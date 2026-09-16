@@ -144,14 +144,23 @@ make them ask for data you already have.
 questions until the all-work-done checkpoint (§ 4c), the second and last pause. Everything that used to
 pause in between becomes a decision plus a ledger line (§ Run ledger) instead.
 
-### 3. CLAIM ALL
+### 3. CLAIM — the wave about to be dispatched
 
-Dispatch `board-agent` with `CLAIM`, the user-approved id list, and `override_blockers` for any id whose
-blocker doctrine (§ Blockers) already cleared it under the merged-PR or stacked-branch exception despite
-`Status` — that judgment is the orchestrator's to make and hand down, never `board-agent`'s to re-derive. It
-re-checks each non-overridden id is still `Ready` and unblocked, writes `Status = In Progress`, and reports
-which were dropped (another run already grabbed it). Claim before dispatching so parallel runs don't
-collide. Freeform work has nothing to claim.
+`Ready` moves to `In Progress` only for the unit about to be dispatched, never for the whole run's
+approved plan upfront — an epic ticket several waves out sits in `Ready` while an earlier wave is
+still off in `Review`, and claiming it early only to leave it untouched for waves misreports what's
+actually being worked. Named ids and auto-pull are a single wave, so this step covers all of it;
+freeform has nothing to claim.
+
+Dispatch `board-agent` with `CLAIM`, the ids due now, and `override_blockers` for any id whose blocker
+doctrine (§ Blockers) already cleared it under the merged-PR or stacked-branch exception despite
+`Status` — that judgment is the orchestrator's to make and hand down, never `board-agent`'s to
+re-derive. It re-checks each non-overridden id is still `Ready` and unblocked, writes
+`Status = In Progress`, and reports which were dropped (another run already grabbed it). Claim before
+dispatching so parallel runs don't collide.
+
+**For `--epic`, this step claims only wave 1** — the tickets with no in-epic blocker, which need no
+`override_blockers`. Every later wave claims itself at its own fan-out point instead (§ 4).
 
 ### 4. FAN OUT — one `ticket-builder` per unit of work
 
@@ -177,6 +186,12 @@ in-epic blocker** — a wave-N builder's worktree merges every one of that ticke
 into its base, never just the first or just `master`, before the builder starts; how its PR reaches `master`
 is § 5c's call, not automatic stacking. **Cap a wave at ~4 concurrent builders** — split a larger wave into
 batches.
+
+**Wave N ≥ 2 claims itself right here, before its builders dispatch** — § 3 only claimed wave 1. Dispatch
+`board-agent` with `CLAIM` and this wave's ids, `override_blockers` on every one of them: each blocker's
+`Status` still reads `Review`, not `Done`, at this point, and it's the epic-mode doctrine (§ Blockers,
+"never re-gates a later wave on a merge") that already cleared it, the same override § 3 hands down for
+wave 1's exceptions.
 
 ### 4a. LAND — the home tree updates the moment a builder reports back
 
