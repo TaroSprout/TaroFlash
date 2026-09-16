@@ -84,6 +84,7 @@ const {
   current_index_ref,
   cards_ref,
   prefs_are_default_ref,
+  session_earnings_ref,
   mockRequestClose,
   mockStartSession,
   mockStartEdit,
@@ -123,6 +124,7 @@ const {
   const current_index_ref = ref(0)
   const cards_ref = ref([])
   const prefs_are_default_ref = ref(true)
+  const session_earnings_ref = ref(null)
   const mockRequestClose = vi.fn()
   const mockStartSession = vi.fn()
   const mockStartEdit = vi.fn()
@@ -153,6 +155,7 @@ const {
     saving: saving_ref,
     current_index: current_index_ref,
     cards: cards_ref,
+    session_earnings: session_earnings_ref,
     active_page: active_page_ref,
     summary_category: summary_category_ref,
     summary_editing_card: summary_editing_card_ref,
@@ -200,6 +203,7 @@ const {
     current_index_ref,
     cards_ref,
     prefs_are_default_ref,
+    session_earnings_ref,
     mockRequestClose,
     mockStartSession,
     mockStartEdit,
@@ -243,16 +247,23 @@ const SessionStudyingStub = defineComponent({
 
 const SessionSummaryStub = defineComponent({
   name: 'SessionSummary',
-  props: ['results'],
+  props: ['results', 'earnings'],
   emits: ['open-category'],
-  setup(_props, { emit }) {
+  setup(props, { emit }) {
     return () =>
-      h('div', { 'data-testid': 'session-summary-stub' }, [
-        h('button', {
-          'data-testid': 'summary-open-category-btn',
-          onClick: () => emit('open-category', 'stuck')
-        })
-      ])
+      h(
+        'div',
+        {
+          'data-testid': 'session-summary-stub',
+          'data-earnings': JSON.stringify(props.earnings)
+        },
+        [
+          h('button', {
+            'data-testid': 'summary-open-category-btn',
+            onClick: () => emit('open-category', 'stuck')
+          })
+        ]
+      )
   }
 })
 
@@ -398,6 +409,7 @@ describe('StudySession (index.vue)', () => {
     current_index_ref.value = 0
     cards_ref.value = []
     prefs_are_default_ref.value = true
+    session_earnings_ref.value = null
     capturedControllerOptions.current = null
     mediaState.is_mobile.value = false
     capturedQueries.length = 0
@@ -881,6 +893,19 @@ describe('StudySession (index.vue)', () => {
     await finishSession(results)
 
     expect(wrapper.findComponent({ name: 'SessionSummary' }).props('results')).toEqual(results)
+  })
+
+  test('controller session_earnings is forwarded to session-summary as its earnings prop', async () => {
+    const { wrapper } = makeWrapper()
+    const earnings = { earned: 12, balance: 340 }
+    session_earnings_ref.value = earnings
+
+    await finishSession([])
+
+    expect(wrapper.findComponent({ name: 'SessionSummary' }).props('earnings')).toEqual(earnings)
+    expect(wrapper.find('[data-testid="session-summary-stub"]').attributes('data-earnings')).toBe(
+      JSON.stringify(earnings)
+    )
   })
 
   test('controller results and the opened category are forwarded to session-summary-category', async () => {

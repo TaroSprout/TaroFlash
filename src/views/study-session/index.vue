@@ -33,6 +33,7 @@ const {
   can_edit,
   editing,
   sessionDecks,
+  session_earnings,
   active_page,
   summary_category,
   summary_selection,
@@ -286,6 +287,7 @@ function onToggleSummarySelecting() {
             key="summary"
             class="absolute inset-0 z-10"
             :results="results"
+            :earnings="session_earnings"
             @open-category="openSummaryCategory"
           />
         </dialog-card-pager>
