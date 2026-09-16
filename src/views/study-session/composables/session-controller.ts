@@ -10,7 +10,9 @@ import { useRatingTimes } from './rating-times'
 import { useSummarySelection } from './summary-selection'
 import { usePersistedSession } from './session-persistence'
 import { buildDeckResolution, provideDeckResolution } from '../deck-resolution'
-import { useFlushDeckReviews } from '@/api/reviews'
+import { useFlushDeckReviews, useCloseStudySessionMutation } from '@/api/reviews'
+import { useSessionEarningsQuery, type SessionEarnings } from '@/api/rewards'
+import { useCapabilities } from '@/api/capabilities'
 import type { PersistedSession } from './session-persistence'
 import type { SummaryCategory } from '../session-summary/aggregate'
 
@@ -58,9 +60,24 @@ export function useInjectedStudySessionController(): StudySessionController {
 function useStudySessionController({ deck_ids, onClosed }: UseStudySessionControllerOptions) {
   const persisted_session = usePersistedSession()
   const flushDeckReviews = useFlushDeckReviews()
+  const closeSession = useCloseStudySessionMutation()
+  const { isLive } = useCapabilities()
 
   /** This sitting's identity: minted fresh on seed, reused from the snapshot on restore. */
   const session_id = ref('')
+
+  /** Set on a refresh-restore that lands straight in an already-finished summary — guards close from re-firing there. */
+  const restored_into_summary = ref(false)
+
+  const restored_earnings = useSessionEarningsQuery(() =>
+    restored_into_summary.value && isLive('session_rewards', false) ? session_id.value : undefined
+  )
+
+  /** The session's completion-bonus payout: from the close call's own response on a fresh finish, or re-read on a restore into an already-finished summary. Null until read, or when the reward capability isn't live for this member. */
+  const session_earnings = computed<SessionEarnings | null>(() => {
+    if (restored_into_summary.value) return restored_earnings.data.value ?? null
+    return closeSession.data.value ?? null
+  })
 
   const resolution = buildDeckResolution(
     () => sessionDecks.value,
@@ -201,6 +218,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   /** A refresh-restore drops the user straight back into the card they were on. */
   function onRestore(raw: Card[], persisted: PersistedSession) {
     session_id.value = persisted.session_id
+    restored_into_summary.value = persisted.completed
     engine.restoreCards(raw, {
       card_ids: persisted.card_ids,
       results: persisted.results,
@@ -248,11 +266,13 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     summary_editor_handle.value?.flip()
   }
 
-  // The session ends once `state` reaches `summary` — flush every deck's queued reviews.
+  // The session ends once `state` reaches `summary` — flush queued reviews and close, once, unless restoring into an already-finished summary.
   watch(
     () => engine.state.value,
     (state) => {
-      if (state === 'summary') flushDeckReviews(deck_ids)
+      if (state !== 'summary') return
+      flushDeckReviews(deck_ids)
+      if (!restored_into_summary.value) closeSession.mutate(session_id.value)
     }
   )
 
@@ -273,6 +293,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     is_cover: engine.is_cover,
     loading,
     sessionDecks,
+    session_earnings,
     show_all_ratings,
     show_rating_buttons,
     show_button_preview,
