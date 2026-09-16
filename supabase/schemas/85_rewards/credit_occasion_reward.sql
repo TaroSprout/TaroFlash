@@ -45,7 +45,7 @@ BEGIN
 
   PERFORM public.apply_reward(
     p_member,
-    jsonb_build_array(jsonb_build_object('kind', 'paperclips', 'amount', v_amount)),
+    jsonb_build_array(jsonb_build_object('kind', 'paperclips', 'amount', v_amount * 1000, 'source', 'session_bonus')),
     v_grant
   );
 END;

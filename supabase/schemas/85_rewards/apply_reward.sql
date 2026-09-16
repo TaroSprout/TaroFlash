@@ -22,8 +22,8 @@ BEGIN
     IF v_kind = 'paperclips' THEN
       -- The ledger is the only place a balance lives; this insert is the sole
       -- writer. The resolved amount is what gets stored, never the spec.
-      INSERT INTO public.paperclip_ledger (member_id, amount, member_reward_id)
-      VALUES (p_member, (v_reward ->> 'amount')::bigint, p_member_reward);
+      INSERT INTO public.paperclip_ledger (member_id, amount, source, member_reward_id)
+      VALUES (p_member, (v_reward ->> 'amount')::bigint, v_reward ->> 'source', p_member_reward);
     ELSE
       RAISE EXCEPTION 'Unknown reward kind: %', v_kind;
     END IF;
