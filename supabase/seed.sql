@@ -54,16 +54,16 @@ insert into public.reward_metrics (key) values
 on conflict (key) do nothing;
 
 insert into public.reward_milestones (metric, threshold, rewards, name_key) values
-  ('study.cards_reviewed',    100,  '[{"kind":"paperclips","amount":50}]'::jsonb,   'rewards.milestone.cards-reviewed-100'),
-  ('study.cards_reviewed',    500,  '[{"kind":"paperclips","amount":150}]'::jsonb,  'rewards.milestone.cards-reviewed-500'),
-  ('study.cards_reviewed',    1000, '[{"kind":"paperclips","amount":300}]'::jsonb,  'rewards.milestone.cards-reviewed-1000'),
-  ('study.cards_reviewed',    5000, '[{"kind":"paperclips","amount":1000}]'::jsonb, 'rewards.milestone.cards-reviewed-5000'),
-  ('study.correct_answers',   50,   '[{"kind":"paperclips","amount":40}]'::jsonb,   'rewards.milestone.correct-answers-50'),
-  ('study.correct_answers',   250,  '[{"kind":"paperclips","amount":120}]'::jsonb,  'rewards.milestone.correct-answers-250'),
-  ('study.correct_answers',   1000, '[{"kind":"paperclips","amount":400}]'::jsonb,  'rewards.milestone.correct-answers-1000'),
-  ('study.sessions_completed', 5,   '[{"kind":"paperclips","amount":30}]'::jsonb,   'rewards.milestone.sessions-completed-5'),
-  ('study.sessions_completed', 25,  '[{"kind":"paperclips","amount":100}]'::jsonb,  'rewards.milestone.sessions-completed-25'),
-  ('study.sessions_completed', 100, '[{"kind":"paperclips","amount":400}]'::jsonb,  'rewards.milestone.sessions-completed-100')
+  ('study.cards_reviewed',    100,  '[{"kind":"paperclips","amount":50000,"source":"milestone"}]'::jsonb,    'rewards.milestone.cards-reviewed-100'),
+  ('study.cards_reviewed',    500,  '[{"kind":"paperclips","amount":150000,"source":"milestone"}]'::jsonb,   'rewards.milestone.cards-reviewed-500'),
+  ('study.cards_reviewed',    1000, '[{"kind":"paperclips","amount":300000,"source":"milestone"}]'::jsonb,   'rewards.milestone.cards-reviewed-1000'),
+  ('study.cards_reviewed',    5000, '[{"kind":"paperclips","amount":1000000,"source":"milestone"}]'::jsonb,  'rewards.milestone.cards-reviewed-5000'),
+  ('study.correct_answers',   50,   '[{"kind":"paperclips","amount":40000,"source":"milestone"}]'::jsonb,    'rewards.milestone.correct-answers-50'),
+  ('study.correct_answers',   250,  '[{"kind":"paperclips","amount":120000,"source":"milestone"}]'::jsonb,   'rewards.milestone.correct-answers-250'),
+  ('study.correct_answers',   1000, '[{"kind":"paperclips","amount":400000,"source":"milestone"}]'::jsonb,   'rewards.milestone.correct-answers-1000'),
+  ('study.sessions_completed', 5,   '[{"kind":"paperclips","amount":30000,"source":"milestone"}]'::jsonb,    'rewards.milestone.sessions-completed-5'),
+  ('study.sessions_completed', 25,  '[{"kind":"paperclips","amount":100000,"source":"milestone"}]'::jsonb,   'rewards.milestone.sessions-completed-25'),
+  ('study.sessions_completed', 100, '[{"kind":"paperclips","amount":400000,"source":"milestone"}]'::jsonb,   'rewards.milestone.sessions-completed-100')
 on conflict (metric, threshold) do nothing;
 
 -- -----------------------------------------------------------------------------

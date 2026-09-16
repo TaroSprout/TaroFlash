@@ -43,7 +43,7 @@ BEGIN
   RETURN QUERY
   SELECT
     COALESCE((
-      SELECT pl.amount
+      SELECT floor(pl.amount / 1000.0)
         FROM public.paperclip_ledger pl
         JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
         JOIN public.reward_rules rr ON rr.id = mr.reward_rule_id
