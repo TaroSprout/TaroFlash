@@ -1,6 +1,6 @@
 ---
 name: board-agent
-description: The only Notion I/O layer for `/work` — selects candidates (by ID, auto-pull, or epic), resolves `Blocked By`, claims, and writes handoff/block/done status. Spawn once per operation from `/work`; never holds state across calls. Never writes code, never opens a PR.
+description: The only Notion I/O layer for `/work` — selects candidates (by ID, auto-pull, or epic), resolves `Blocked By`, claims, and writes land/handoff/block/done status. Spawn once per operation from `/work`; never holds state across calls. Never writes code, never opens a PR.
 tools: Read, Write, Bash, mcp__notion__notion-query-data-sources, mcp__notion__notion-fetch, mcp__notion__notion-update-page
 model: sonnet
 ---
@@ -56,6 +56,11 @@ blocker check, state can have moved since SELECT). For an id **in** `override_bl
 it; a raw blocker `Status` outside the `complete` group is not grounds to drop it. Write
 `Status = In Progress` for everything that passes. Drop any that changed out from under you and report
 which. Claim before the orchestrator dispatches, so two runs can't grab the same ticket.
+
+### `LAND`
+
+`id`. Write `Status = Review`. No body edit — a status-only move made the moment a branch lands, before
+a test pass or a PR exist. Unlike `HANDOFF`, never appends a PR-link line.
 
 ### `HANDOFF`
 

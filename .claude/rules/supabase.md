@@ -81,6 +81,10 @@ ON CONFLICT (id) DO UPDATE SET
 - Apply order is `schema_paths` in `config.toml` — new files must be added there.
 - `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored
   `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/`.
+- **A function's `--`/`/* */` comments are part of its stored source, so editing one after its
+  migration already generated is step 1 of this loop, not a no-op** — rerun `db diff` (or hand-sync
+  the body into the migration) before merging, or `test-db`'s schema-sync check drift-fails on the
+  comment alone.
 
 ### `db diff` returning empty is necessary, not sufficient (→[K:proxy-pass-not-evidence])
 

@@ -137,10 +137,17 @@ term can't carry — the seam, slot, composable, mechanism, reuse pointer, or th
 the answer. Same delete-test. This is where implementation encoding lives, so the ACs stay pure
 product language and skimmable. Omit the section when there's nothing technical to record.
 
-- **Prior art** as a "built from X" clause, a bug's confirmed **root cause**, **negative facts**
-  ("does not reuse Y").
-- **A reference implementation not yet on `master` names its branch, not just its file** — the
-  "grep finds it" assumption below holds only once the reference is merged.
+- **A prior-art pointer states what to carry over and what to leave behind — never a bare "built
+  from X."** Naming a reference is read as endorsing it whole, so any part of it that's stale, wrong,
+  or the anti-pattern this ticket exists to replace has to be named as such in the same clause, not
+  left to a separate "negative facts" bullet nobody's obligated to reach for. The same incompleteness
+  shows up as a bug's unqualified **root cause** (confirmed for this failure, not for every path
+  through the code) and as citing a reference implementation without its branch when it isn't yet on
+  `master` — the implementer can't grep for what isn't merged.
+  - Bad: `Built from src/components/AudioReaderPrototype.vue.`
+  - Good: `Built from src/components/AudioReaderPrototype.vue (branch <name>) — reuse its pagination
+arithmetic; do not carry over its per-word component measurement, the pattern this rebuild
+replaces.`
 - Money / auth / boundary claims: `CONFIRMED (verified against <source>)`, else `ASSUMED`.
 - A filepath only when it's the _answer_ (a new file's home, a confirmed root-cause location), never
   a line number.

@@ -29,7 +29,9 @@ orchestrator can hear, so the two things you'd otherwise delegate are handled as
 
 ## Wording you weren't given
 
-Any string a user reads that the ticket didn't settle is written as the literal `COPY-TBD`
+A string the groomed ticket already gives you — quoted in the body, a named heading or label, a
+spelled-out button or field string — is copy sign-off; use it verbatim, never `COPY-TBD`. The
+marker is only for a user-facing string the ticket is silent on
 (→[K:build-unfinished-markers]). Never invent one, never pick the "obvious" phrasing, never reuse a
 string from elsewhere in the app as a substitute. Name each one in your report.
 
@@ -40,6 +42,11 @@ path is built from that worktree root** — a bare path outside it is the shared
 be editing live. [`git-workflow`](../rules/git-workflow.md) owns verifying you're actually there
 before you write (→[K:worktree-write-target]).
 
+- **Before your first commit, confirm the worktree's HEAD is actually the base you were told to
+  build from** — `git log --oneline -5`, or `git merge-base --is-ancestor <named-base> HEAD` — not
+  just that `pwd` puts you in the right directory. The path can be correct while the tip underneath
+  it carries commits nobody named; nothing else surfaces that until it rides forward in your first
+  commit. If it doesn't match, rebase onto the named base yourself before doing anything else.
 - **A fresh ticket or freeform build renames** the worktree's existing branch to a conventional name
   (`git branch -m feat/…`). Never `git checkout -b`, which orphans the placeholder branch as junk. **A
   fix is already on its target branch** — commit onto it as-is, no rename.
