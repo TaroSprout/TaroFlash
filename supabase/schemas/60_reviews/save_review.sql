@@ -3,7 +3,7 @@
 -- produce the migration.
 SET check_function_bodies = false;
 
-CREATE FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) RETURNS void
+CREATE FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry, p_session_id uuid DEFAULT NULL) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
@@ -50,20 +50,28 @@ BEGIN
     state          = EXCLUDED.state,
     learning_steps = EXCLUDED.learning_steps;
 
+  IF p_session_id IS NOT NULL THEN
+    INSERT INTO public.study_sessions (id, member_id)
+    VALUES (p_session_id, v_uid)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
+
   -- Append the review event to history
   INSERT INTO public.review_logs (
     card_id, member_id,
     rating, state, due,
     stability, difficulty,
     scheduled_days,
-    review
+    review,
+    session_id
   )
   VALUES (
     p_card_id, v_uid,
     (p_log).rating, (p_log).state, (p_log).due,
     (p_log).stability, (p_log).difficulty,
     (p_log).scheduled_days,
-    (p_log).review
+    (p_log).review,
+    p_session_id
   )
   -- Idempotent replay: a retried save (offline recovery) re-runs the exact same
   -- review event, so swallow the duplicate rather than growing history. The
@@ -73,9 +81,9 @@ END;
 $$;
 
 
-ALTER FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) OWNER TO postgres;
+ALTER FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry, p_session_id uuid) OWNER TO postgres;
 
 
-GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO anon;
-GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO authenticated;
-GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry) TO service_role;
+GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry, p_session_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry, p_session_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.save_review(p_card_id bigint, p_card public.review_card_state, p_log public.review_log_entry, p_session_id uuid) TO service_role;
