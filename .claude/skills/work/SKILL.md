@@ -202,6 +202,12 @@ checkout <branch>` directly, once the branch exists) — the merge-forward half 
 dispatch-and-merge-forward mechanic, just starting here instead of at teardown. Never wait for CI to go
 green or the PR to open before doing this.
 
+**Ticket-based work also gets a status-only board move here** — dispatch `board-agent` with `LAND`
+(`id`), `run_in_background`, so the board tracks build status as it happens rather than only once a PR
+opens. This is decoupled from § 5e's `HANDOFF`, which still carries the PR URL once one exists; don't
+wait on this dispatch's result, it gates nothing in this run. Freeform work has no ticket, so nothing to
+dispatch.
+
 ### 4b. KNOWLEDGE GAPS — dispatched the moment a branch lands
 
 **The orchestrator dispatches `corpus-author` for every `[K:gap: …]` tag a builder left**, one background
