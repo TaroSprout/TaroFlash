@@ -201,10 +201,9 @@ branch in an epic's final wave — holds its test pass instead: go straight to �
 build lands, and run this dispatch only once the live-review round (§ 4d) closes.
 
 1. Once a branch's test pass is due — immediately for a wave-gating branch, otherwise once the
-   live-review round closes (§ 4d) — remove the builder's worktree right here —
-   `git status --short` inside it first, per [`git-workflow`](../../rules/git-workflow.md)
-   (→[K:worktree-removal-survives-failure]) — which frees the branch ref for checkout elsewhere. This
-   preempts § 5f's teardown for this ticket; § 5f skips a worktree that's already gone.
+   live-review round closes (§ 4d) — remove the builder's worktree right here, per § 5f's removal
+   check (→[K:worktree-removal-survives-failure]), freeing the branch ref for checkout elsewhere.
+   This preempts § 5f's teardown for this ticket; § 5f skips a worktree that's already gone.
 2. Dispatch a `general-purpose` agent, `isolation: worktree`
    ([`git-workflow`](../../rules/git-workflow.md), →[K:agent-dispatch-worktree-isolation]), instructed
    to `git checkout <branch>` inside its own fresh worktree (now free to take it), then run the
@@ -250,12 +249,11 @@ dispatch-and-merge-forward mechanic** — dispatch the fix to a `ticket-builder`
 above), merge its branch forward on report-back, **then tear down that dispatch's own worktree and the
 branch it ran on** — `isolation: worktree` hands each dispatch a fresh worktree on a harness-created
 branch of its own, distinct from the ticket's branch it checked out or merged; once its commits are
-merged forward, both are dead weight. Remove the worktree (`git status --short` inside it first, per
-[`git-workflow`](../../rules/git-workflow.md), →[K:worktree-removal-survives-failure]), then delete the
-harness branch (`git branch -d`) so it doesn't outlive the dispatch that made it. This is in addition to,
-never instead of, the ticket-builder's own original worktree/branch, which § 4b step 1, § 5f, and § Full
-cleanup already account for — reused verbatim by § 4e, § PR feedback loop, and the initial merge at § 4a.
-Tests stay untouched for the whole round — no per-fix `update-tests`, no mid-round
+merged forward, both are dead weight. Remove the worktree per § 5f's removal check
+(→[K:worktree-removal-survives-failure]), then delete the harness branch (`git branch -d`) so it
+doesn't outlive the dispatch that made it. This is in addition to, never instead of, the
+ticket-builder's own original worktree/branch (§ 4b step 1, § 5f, § Full cleanup) — reused verbatim
+by § 4e, § PR feedback loop, and § 4a's initial merge. Tests stay untouched for the whole round — no per-fix `update-tests`, no mid-round
 ask. Repeat fixes until the user says the round is done; **that close, not an ask mid-round, is what fires
 the test pass** — run § 4b's held dispatch now, one consolidated `update-tests` pass per branch that
 deferred it, covering the original build plus everything the round changed. Dispatch self-heal for this
@@ -338,12 +336,13 @@ the diff and writes the PR body; the orchestrator receives only the PR URL and g
 checks a branch out, so PR prep can't move a tree out from under the user.
 e. **HANDOFF**, dispatched — for each opened, green PR, `board-agent` with `HANDOFF` (`id`, `pr_url`):
 sets the ticket to `Review`, appends the PR URL into the ticket body.
-f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), check the
-builder's worktree first (`git status --short` inside it, per [`git-workflow`](../../rules/git-workflow.md);
-anything uncommitted stops the removal and gets reported, never forced away with `--force`), then `git
-worktree remove <path>` from the home tree, once you've confirmed via `pwd`/`git worktree list` you're not
-removing the one you're standing in. **Skip this for a ticket whose builder worktree § 4b already removed**
-to free the branch for the test-pass dispatch — there's nothing left here to reclaim. The branch lives on
+f. **TEAR DOWN** — once a ticket is handed off (PR open + green, branch pushed to origin), remove
+the builder's worktree per [`git-workflow`](../../rules/git-workflow.md)'s removal check
+(→[K:worktree-removal-survives-failure]) — every other teardown site in this file (§ 4b step 1, §
+4d, § Full cleanup) cites this one rather than restating it — then `git worktree remove <path>`
+from the home tree, once you've confirmed via `pwd`/`git worktree list` you're not removing the one
+you're standing in. **Skip this for a ticket whose builder worktree § 4b already removed** to free
+the branch for the test-pass dispatch — there's nothing left here to reclaim. The branch lives on
 origin and its local ref survives removal. Only tear down **successful** tickets here; a stuck one keeps its
 worktree (§ Stuck / blocked); teardown never gates what the user sees, since the home tree updated at § 4a
 already. **This isn't gated on handoff succeeding** (→[K:worktree-removal-survives-failure]) — removal is an
@@ -426,9 +425,9 @@ worktrees § 5f already reclaims — do this only once every PR this run produce
 with `DONE` (`id`) for each; freeform work carries no ticket, so nothing to set. A ticket the run parked
 `Blocked` stays `Blocked`; only a ticket whose PR actually merged reaches `Done`.
 
-A worktree can't remove itself: run it from another checkout — `git status --short` inside the home tree
-first (anything uncommitted stops it and gets reported, same as § 5f), then `git worktree remove` it and
-delete its now-merged branch (local, and `origin` if it was pushed).
+A worktree can't remove itself: run it from another checkout, per § 5f's removal check
+(→[K:worktree-removal-survives-failure]), then `git worktree remove` it and delete its now-merged
+branch (local, and `origin` if it was pushed).
 
 ## Self-heal
 
