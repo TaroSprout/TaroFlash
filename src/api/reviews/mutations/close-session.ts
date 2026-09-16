@@ -1,6 +1,6 @@
 import { useMutation } from '@pinia/colada'
 import { useCapabilities } from '@/api/capabilities'
-import { fetchSessionEarnings, type SessionEarnings } from '@/api/rewards/db'
+import type { SessionEarnings } from '@/api/rewards/db'
 import { closeStudySession } from '../db'
 
 /**
@@ -14,10 +14,10 @@ export function useCloseStudySessionMutation() {
 
   return useMutation({
     mutation: async (session_id: string): Promise<SessionEarnings | null> => {
-      await closeStudySession(session_id)
+      const earnings = await closeStudySession(session_id)
       if (!isLive('session_rewards', false)) return null
 
-      return fetchSessionEarnings(session_id)
+      return earnings
     }
   })
 }

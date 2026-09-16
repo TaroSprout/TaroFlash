@@ -1,6 +1,7 @@
 import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 import type { ReviewLog } from 'ts-fsrs'
+import type { SessionEarnings } from '@/api/rewards/db'
 
 export async function saveReview(
   card_id: number,
@@ -45,13 +46,17 @@ export async function saveReview(
 }
 
 /** Marks a study session closed; safe to call more than once for the same session_id — the server's own once-per-session guard pays out at most once. */
-export async function closeStudySession(session_id: string): Promise<void> {
-  const { error } = await supabase.rpc('close_study_session', { p_session_id: session_id })
+export async function closeStudySession(session_id: string): Promise<SessionEarnings> {
+  const { data, error } = await supabase
+    .rpc('close_study_session', { p_session_id: session_id })
+    .single()
 
   if (error) {
     logger.error(error.message)
     throw new Error(error.message)
   }
+
+  return data as SessionEarnings
 }
 
 export async function resetDeckReviews(deck_id: number): Promise<void> {
