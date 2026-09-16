@@ -42,6 +42,11 @@ path is built from that worktree root** — a bare path outside it is the shared
 be editing live. [`git-workflow`](../rules/git-workflow.md) owns verifying you're actually there
 before you write (→[K:worktree-write-target]).
 
+- **Before your first commit, confirm the worktree's HEAD is actually the base you were told to
+  build from** — `git log --oneline -5`, or `git merge-base --is-ancestor <named-base> HEAD` — not
+  just that `pwd` puts you in the right directory. The path can be correct while the tip underneath
+  it carries commits nobody named; nothing else surfaces that until it rides forward in your first
+  commit. If it doesn't match, rebase onto the named base yourself before doing anything else.
 - **A fresh ticket or freeform build renames** the worktree's existing branch to a conventional name
   (`git branch -m feat/…`). Never `git checkout -b`, which orphans the placeholder branch as junk. **A
   fix is already on its target branch** — commit onto it as-is, no rename.
