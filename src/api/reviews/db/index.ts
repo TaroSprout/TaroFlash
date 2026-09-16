@@ -2,9 +2,15 @@ import { supabase } from '@/supabase-client'
 import logger from '@/utils/logger'
 import type { ReviewLog } from 'ts-fsrs'
 
-export async function saveReview(card_id: number, card: Review, log: ReviewLog): Promise<void> {
+export async function saveReview(
+  card_id: number,
+  card: Review,
+  log: ReviewLog,
+  session_id: string
+): Promise<void> {
   const { error } = await supabase.rpc('save_review', {
     p_card_id: card_id,
+    p_session_id: session_id,
 
     // Current FSRS card state → reviews
     p_card: {

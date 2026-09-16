@@ -45,6 +45,8 @@ type SessionEngineDeps = {
   startingSideFor: (deck_id?: number) => CardStartingSide
   /** Orders the raw merged cards into the study queue (per-deck + session ordering). */
   orderCards: (cards: Card[]) => Card[]
+  /** The current sitting's identity, minted or restored by the owner. */
+  sessionId: () => string
   /** Called after every state-changing mutation, so the owner can persist. */
   onChange: () => void
 }
@@ -64,6 +66,7 @@ export function useSessionEngine({
   schedulerFor,
   startingSideFor,
   orderCards,
+  sessionId,
   onChange
 }: SessionEngineDeps) {
   const { t } = useI18n()
@@ -323,7 +326,8 @@ export function useSessionEngine({
         card_id: card.id,
         deck_id: card.deck_id,
         card: item.card,
-        log: item.log
+        log: item.log,
+        session_id: sessionId()
       })
     }
 
