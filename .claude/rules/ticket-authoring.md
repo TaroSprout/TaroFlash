@@ -139,6 +139,8 @@ product language and skimmable. Omit the section when there's nothing technical 
 
 - **Prior art** as a "built from X" clause, a bug's confirmed **root cause**, **negative facts**
   ("does not reuse Y").
+- **A reference implementation not yet on `master` names its branch, not just its file** — the
+  "grep finds it" assumption below holds only once the reference is merged.
 - Money / auth / boundary claims: `CONFIRMED (verified against <source>)`, else `ASSUMED`.
 - A filepath only when it's the _answer_ (a new file's home, a confirmed root-cause location), never
   a line number.
