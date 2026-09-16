@@ -40,6 +40,8 @@ function makeCard(overrides = {}) {
   }
 }
 
+const SESSION_ID = 'a1b2c3d4-0000-4000-8000-000000000000'
+
 function makeLog(overrides = {}) {
   return {
     rating: 3,
@@ -61,12 +63,13 @@ describe('saveReview', () => {
     const card = makeCard()
     const log = makeLog()
 
-    await saveReview(42, card, log)
+    await saveReview(42, card, log, SESSION_ID)
 
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
       expect.objectContaining({
         p_card_id: 42,
+        p_session_id: SESSION_ID,
         p_card: expect.objectContaining({
           due: card.due,
           stability: card.stability,
@@ -88,7 +91,7 @@ describe('saveReview', () => {
     const card = makeCard({ learning_steps: 2 })
     const log = makeLog()
 
-    await saveReview(42, card, log)
+    await saveReview(42, card, log, SESSION_ID)
 
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
@@ -101,7 +104,7 @@ describe('saveReview', () => {
     const card = makeCard({ last_review: undefined })
     const log = makeLog()
 
-    await saveReview(42, card, log)
+    await saveReview(42, card, log, SESSION_ID)
 
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
@@ -114,7 +117,7 @@ describe('saveReview', () => {
     const card = makeCard()
     const log = makeLog({ rating: 4, state: 2 })
 
-    await saveReview(42, card, log)
+    await saveReview(42, card, log, SESSION_ID)
 
     expect(mocks.rpcMock).toHaveBeenCalledWith(
       'save_review',
@@ -134,12 +137,12 @@ describe('saveReview', () => {
 
   test('resolves without throwing when the RPC succeeds', async () => {
     mocks.rpcMock.mockResolvedValue({ error: null })
-    await expect(saveReview(1, makeCard(), makeLog())).resolves.toBeUndefined()
+    await expect(saveReview(1, makeCard(), makeLog(), SESSION_ID)).resolves.toBeUndefined()
   })
 
   test('logs and throws when the RPC returns an error', async () => {
     mocks.rpcMock.mockResolvedValue({ error: { message: 'boom' } })
-    await expect(saveReview(1, makeCard(), makeLog())).rejects.toThrow('boom')
+    await expect(saveReview(1, makeCard(), makeLog(), SESSION_ID)).rejects.toThrow('boom')
   })
 })
 

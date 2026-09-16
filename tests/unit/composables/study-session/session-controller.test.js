@@ -627,7 +627,7 @@ describe('session-controller', () => {
     expect(capturedResolution.current._orderingGetter()).toBe('even_spread')
   })
 
-  test('useSessionCards seed is wired straight to engine.setCards', () => {
+  test('useSessionCards seed calls through to engine.setCards with the given cards', () => {
     makeController()
 
     const cards_arg = [{ id: 1 }]
@@ -636,13 +636,66 @@ describe('session-controller', () => {
     expect(mockSetCards).toHaveBeenCalledWith(cards_arg)
   })
 
+  // ── session identity: minted fresh on seed, reused on restore ────────────────
+
+  describe('session_id', () => {
+    test('a fresh seed mints a new UUID via crypto.randomUUID before seeding the engine', () => {
+      const uuid_spy = vi
+        .spyOn(crypto, 'randomUUID')
+        .mockReturnValue('11111111-0000-4000-8000-000000000000')
+      makeController()
+
+      capturedSessionCardsOptions.current.seed([{ id: 1 }])
+
+      expect(uuid_spy).toHaveBeenCalledOnce()
+      expect(capturedEngineDeps.current.sessionId()).toBe('11111111-0000-4000-8000-000000000000')
+      uuid_spy.mockRestore()
+    })
+
+    test('persist() writes the freshly-minted session_id after a seed', async () => {
+      const uuid_spy = vi
+        .spyOn(crypto, 'randomUUID')
+        .mockReturnValue('22222222-0000-4000-8000-000000000000')
+      makeController({ deck_ids: [1] })
+      capturedSessionCardsOptions.current.seed([{ id: 1 }])
+
+      capturedEngineDeps.current.onChange()
+      await nextTick()
+
+      const persisted = JSON.parse(sessionStorage.getItem('study-session'))
+      expect(persisted.session_id).toBe('22222222-0000-4000-8000-000000000000')
+      uuid_spy.mockRestore()
+    })
+
+    test('onRestore reuses the persisted session_id rather than minting a new one', () => {
+      const uuid_spy = vi.spyOn(crypto, 'randomUUID')
+      makeController()
+
+      capturedSessionCardsOptions.current.restore(['raw-card'], {
+        session_id: '33333333-0000-4000-8000-000000000000',
+        card_ids: [1],
+        results: [],
+        completed: false
+      })
+
+      expect(uuid_spy).not.toHaveBeenCalled()
+      expect(capturedEngineDeps.current.sessionId()).toBe('33333333-0000-4000-8000-000000000000')
+      uuid_spy.mockRestore()
+    })
+  })
+
   // ── onRestore: refresh-restore drops the user back into the card, not the cover ─
 
   test('onRestore calls restoreCards and, when not landing on summary, resumes silently', () => {
     state.value = 'studying'
     makeController()
 
-    const persisted = { card_ids: [1], results: [], completed: false }
+    const persisted = {
+      session_id: '44444444-0000-4000-8000-000000000000',
+      card_ids: [1],
+      results: [],
+      completed: false
+    }
     capturedSessionCardsOptions.current.restore(['raw-card'], persisted)
 
     expect(mockRestoreCards).toHaveBeenCalledWith(['raw-card'], {
@@ -658,6 +711,7 @@ describe('session-controller', () => {
     makeController()
 
     capturedSessionCardsOptions.current.restore(['raw-card'], {
+      session_id: '55555555-0000-4000-8000-000000000000',
       card_ids: [1],
       results: [],
       completed: true
@@ -682,6 +736,7 @@ describe('session-controller', () => {
     // the write landed in sessionStorage under the shared storage key.
     const persisted = JSON.parse(sessionStorage.getItem('study-session'))
     expect(persisted).toEqual({
+      session_id: '',
       deck_ids: [7, 8],
       card_ids: [1, 2],
       results: [{ card_id: 1, passed: true }],

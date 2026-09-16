@@ -57,12 +57,15 @@ const FSRS_BY_DECK = {
 // tests. Tests that need a 'random' deck pass their own startingSideFor override.
 const STARTING_SIDE_BY_DECK = { 1: 'front', 2: 'back' }
 
+const SESSION_ID = 'a1b2c3d4-0000-4000-8000-000000000000'
+
 function makeEngine(overrides = {}) {
   const onChange = vi.fn()
   const engine = useSessionEngine({
     schedulerFor: (deck_id) => FSRS_BY_DECK[deck_id] ?? FSRS_BY_DECK[1],
     startingSideFor: (deck_id) => STARTING_SIDE_BY_DECK[deck_id] ?? 'front',
     orderCards: (cards) => cards,
+    sessionId: () => SESSION_ID,
     onChange,
     ...overrides
   })
@@ -613,7 +616,7 @@ describe('review-save failure surface', () => {
     expect(engine.durableResults().map((r) => r.card_id)).toContain(531)
   })
 
-  test('the save payload carries card_id, deck_id, card, and log', () => {
+  test('the save payload carries card_id, deck_id, card, log, and session_id', () => {
     const { engine } = makeEngine()
     engine.setCards([makeCard({ id: 502, deck_id: 2 })])
     engine.startSession()
@@ -624,8 +627,23 @@ describe('review-save failure surface', () => {
       card_id: 502,
       deck_id: 2,
       card: expect.any(Object),
-      log: expect.any(Object)
+      log: expect.any(Object),
+      session_id: SESSION_ID
     })
+  })
+
+  test('the save payload session_id reflects a session_id() dep change between reviews', () => {
+    let current_session_id = SESSION_ID
+    const { engine } = makeEngine({ sessionId: () => current_session_id })
+    engine.setCards([makeCard({ id: 503, deck_id: 2 })])
+    engine.startSession()
+
+    current_session_id = 'b2c3d4e5-0000-4000-8000-000000000000'
+    engine.reviewCard(Rating.Good)
+
+    expect(saveMock).toHaveBeenCalledWith(
+      expect.objectContaining({ session_id: 'b2c3d4e5-0000-4000-8000-000000000000' })
+    )
   })
 
   test('does not call save when the card has no id', () => {

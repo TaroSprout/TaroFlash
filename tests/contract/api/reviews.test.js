@@ -5,6 +5,8 @@ import { saveReview, resetDeckReviews } from '@/api/reviews/db'
 
 let session
 
+const SESSION_ID = 'a1b2c3d4-0000-4000-8000-000000000000'
+
 beforeEach(async () => {
   session = await signInAsTestUser()
 })
@@ -41,7 +43,7 @@ describe('saveReview (contract)', () => {
       review: now.toISOString()
     }
 
-    await saveReview(card.id, card_state, log)
+    await saveReview(card.id, card_state, log, SESSION_ID)
 
     const { data: review } = await session.client
       .from('reviews')
@@ -61,6 +63,7 @@ describe('saveReview (contract)', () => {
       .eq('card_id', card.id)
     expect(logs).toHaveLength(1)
     expect(logs[0].rating).toBe(3)
+    expect(logs[0].session_id).toBe(SESSION_ID)
   })
 
   test('replaying an identical review writes no duplicate review_logs row', async () => {
@@ -90,8 +93,8 @@ describe('saveReview (contract)', () => {
     }
 
     // Same (member, card, review-instant) twice — a retried save.
-    await saveReview(card.id, card_state, log)
-    await saveReview(card.id, card_state, log)
+    await saveReview(card.id, card_state, log, SESSION_ID)
+    await saveReview(card.id, card_state, log, SESSION_ID)
 
     const { data: logs } = await session.client
       .from('review_logs')
@@ -128,7 +131,8 @@ describe('resetDeckReviews (contract)', () => {
         difficulty: 5,
         scheduled_days: 1,
         review: now.toISOString()
-      }
+      },
+      SESSION_ID
     )
 
     await resetDeckReviews(deck.id)

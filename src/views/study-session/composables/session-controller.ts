@@ -59,6 +59,9 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
   const persisted_session = usePersistedSession()
   const flushDeckReviews = useFlushDeckReviews()
 
+  /** This sitting's identity: minted fresh on seed, reused from the snapshot on restore. */
+  const session_id = ref('')
+
   const resolution = buildDeckResolution(
     () => sessionDecks.value,
     () => multi_deck_ordering.value
@@ -69,6 +72,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
     schedulerFor: resolution.schedulerFor,
     startingSideFor: resolution.startingSideFor,
     orderCards: resolution.orderCards,
+    sessionId: () => session_id.value,
     onChange: persist
   })
 
@@ -91,7 +95,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
 
   const { loading, sessionDecks } = useSessionCards({
     deckIds: () => deck_ids,
-    seed: engine.setCards,
+    seed: onSeed,
     restore: onRestore,
     onMissingDeck: onClosed
   })
@@ -169,12 +173,19 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
    */
   function persist() {
     persisted_session.value = {
+      session_id: session_id.value,
       deck_ids,
       card_ids: engine.cards.value.map((c) => c.id),
       // Only durably-saved reviews persist — an unconfirmed save is re-served as unreviewed on resume.
       results: engine.durableResults(),
       completed: engine.state.value === 'summary'
     }
+  }
+
+  /** A fresh sitting: mint a new identity before the engine seeds its queue. */
+  function onSeed(cards: Card[]) {
+    session_id.value = crypto.randomUUID()
+    engine.setCards(cards)
   }
 
   /** Shell close button + modal backdrop / esc handler. */
@@ -189,6 +200,7 @@ function useStudySessionController({ deck_ids, onClosed }: UseStudySessionContro
 
   /** A refresh-restore drops the user straight back into the card they were on. */
   function onRestore(raw: Card[], persisted: PersistedSession) {
+    session_id.value = persisted.session_id
     engine.restoreCards(raw, {
       card_ids: persisted.card_ids,
       results: persisted.results,

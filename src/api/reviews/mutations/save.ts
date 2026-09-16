@@ -7,12 +7,14 @@ export type SaveReviewVars = {
   deck_id: number
   card: Review
   log: ReviewLog
+  session_id: string
 }
 
 // A missed invalidation fails silently — nothing errors, the data just goes stale. →[K:silent-stale-cache]
 export function useSaveReviewMutation() {
   return useMutation({
-    mutation: (vars: SaveReviewVars) => saveReview(vars.card_id, vars.card, vars.log)
+    mutation: (vars: SaveReviewVars) =>
+      saveReview(vars.card_id, vars.card, vars.log, vars.session_id)
   })
 }
 

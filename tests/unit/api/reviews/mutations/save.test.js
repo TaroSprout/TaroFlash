@@ -32,18 +32,19 @@ function configFrom(hook) {
 }
 
 describe('useSaveReviewMutation', () => {
-  test('mutation delegates to saveReview with card_id, card, log (deck_id is not persisted)', async () => {
+  test('mutation delegates to saveReview with card_id, card, log, session_id (deck_id is not persisted)', async () => {
     const { mutation } = configFrom(useSaveReviewMutation)
 
     const vars = {
       card_id: 42,
       deck_id: 7,
       card: { due: 'x', stability: 1 },
-      log: { rating: 3 }
+      log: { rating: 3 },
+      session_id: 'a1b2c3d4-0000-4000-8000-000000000000'
     }
     await mutation(vars)
 
-    expect(saveReviewMock).toHaveBeenCalledWith(42, vars.card, vars.log)
+    expect(saveReviewMock).toHaveBeenCalledWith(42, vars.card, vars.log, vars.session_id)
     expect(saveReviewMock).toHaveBeenCalledTimes(1)
   })
 

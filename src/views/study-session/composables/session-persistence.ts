@@ -4,6 +4,7 @@ import type { CardReviewResult } from './session-engine'
 const STORAGE_KEY = 'study-session'
 
 export type PersistedSession = {
+  session_id: string
   deck_ids: number[]
   card_ids: number[]
   results: CardReviewResult[]
@@ -25,6 +26,7 @@ function isValidSnapshot(value: unknown): value is PersistedSession {
   if (!value || typeof value !== 'object') return false
   const snapshot = value as Record<string, unknown>
   return (
+    typeof snapshot.session_id === 'string' &&
     Array.isArray(snapshot.deck_ids) &&
     Array.isArray(snapshot.card_ids) &&
     Array.isArray(snapshot.results) &&

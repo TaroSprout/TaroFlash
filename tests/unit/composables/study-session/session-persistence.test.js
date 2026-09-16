@@ -14,6 +14,7 @@ beforeEach(() => {
 
 function makeSnapshot(overrides = {}) {
   return {
+    session_id: 'a1b2c3d4-0000-4000-8000-000000000000',
     deck_ids: [1],
     card_ids: [10, 11],
     results: [],
@@ -89,7 +90,22 @@ describe('readPersistedSession', () => {
   test('rejects a snapshot missing deck_ids entirely', () => {
     sessionStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ card_ids: [10], results: [], completed: false })
+      JSON.stringify({
+        session_id: 'a1b2c3d4-0000-4000-8000-000000000000',
+        card_ids: [10],
+        results: [],
+        completed: false
+      })
+    )
+
+    expect(readPersistedSession()).toBeUndefined()
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
+
+  test('rejects a snapshot missing session_id (stale pre-identity shape)', () => {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ deck_ids: [1], card_ids: [10], results: [], completed: false })
     )
 
     expect(readPersistedSession()).toBeUndefined()
