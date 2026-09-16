@@ -4,8 +4,9 @@ import type { SessionEarnings } from '@/api/rewards/db'
 import { closeStudySession } from '../db'
 
 /**
- * Fires the server close for every session, then — only when the reward
- * capability is live for this member — reads back what that close paid out.
+ * Fires the server close for the session and returns what that same close
+ * call paid out — no separate earnings read on this path; the standalone
+ * earnings query stays only for resuming into an already-closed session.
  * Safe to call more than once for the same session id; the server's
  * once-per-session guard means a stray retry never double-pays.
  */
