@@ -454,7 +454,7 @@ describe('session-controller', () => {
       })
 
       state.value = 'summary'
-      await Promise.resolve()
+      await nextTick()
 
       expect(mockCloseSessionMutate).toHaveBeenCalledTimes(1)
       expect(mockCloseSessionMutate).toHaveBeenCalledWith('sess-transition')
@@ -474,7 +474,7 @@ describe('session-controller', () => {
       })
 
       controller.requestClose()
-      await Promise.resolve()
+      await nextTick()
 
       expect(state.value).toBe('summary')
       expect(mockCloseSessionMutate).toHaveBeenCalledTimes(1)
@@ -492,7 +492,7 @@ describe('session-controller', () => {
         results: [],
         completed: true
       })
-      await Promise.resolve()
+      await nextTick()
 
       expect(mockCloseSessionMutate).not.toHaveBeenCalled()
     })
@@ -513,7 +513,7 @@ describe('session-controller', () => {
       })
 
       state.value = 'summary'
-      await Promise.resolve()
+      await nextTick()
 
       closeSessionData.value = { earned: 3, balance: 10 }
       await nextTick()
