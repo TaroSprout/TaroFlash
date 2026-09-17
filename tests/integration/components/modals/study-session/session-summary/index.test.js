@@ -159,18 +159,19 @@ describe('SessionSummary (index.vue)', () => {
 
   // ── Earnings block ────────────────────────────────────────────────────────
 
-  test('renders the earned amount unsigned, and the balance amount', () => {
+  test('renders the base, bonus, and balance amounts as the backend integers, unrounded', () => {
     mockIsLive.mockReturnValue(true)
-    const wrapper = mountSummary({ earnings: { earned: 12, balance: 340 } })
+    const wrapper = mountSummary({ earnings: { base: 2, bonus: 1, balance: 340 } })
 
     const amounts = wrapper.findAll('[data-testid="ui-kit-paperclips__amount"]')
-    expect(amounts[0].text()).toBe('12')
-    expect(amounts[1].text()).toBe('340')
+    expect(amounts[0].text()).toBe('2')
+    expect(amounts[1].text()).toBe('1')
+    expect(amounts[2].text()).toBe('340')
   })
 
   test('does not render the earnings block when session_rewards is not live', () => {
     mockIsLive.mockReturnValue(false)
-    const wrapper = mountSummary({ earnings: { earned: 12, balance: 340 } })
+    const wrapper = mountSummary({ earnings: { base: 2, bonus: 1, balance: 340 } })
 
     expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
   })
@@ -182,17 +183,54 @@ describe('SessionSummary (index.vue)', () => {
     expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
   })
 
-  test('does not render the earnings block when earned is 0, even when live with non-null earnings', () => {
+  test('does not render the earnings block when both base and bonus are 0, even when live with non-null earnings', () => {
     mockIsLive.mockReturnValue(true)
-    const wrapper = mountSummary({ earnings: { earned: 0, balance: 340 } })
+    const wrapper = mountSummary({ earnings: { base: 0, bonus: 0, balance: 340 } })
 
     expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(false)
   })
 
-  test('renders the earnings block when live, non-null earnings, and earned > 0', () => {
+  test('renders the earnings block when live, non-null earnings, and base > 0', () => {
     mockIsLive.mockReturnValue(true)
-    const wrapper = mountSummary({ earnings: { earned: 12, balance: 340 } })
+    const wrapper = mountSummary({ earnings: { base: 2, bonus: 0, balance: 340 } })
 
     expect(wrapper.find('[data-testid="session-summary__earnings"]').exists()).toBe(true)
+  })
+
+  test('hides the base line when base is 0 but bonus is not', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { base: 0, bonus: 1, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings-heading"]').exists()).toBe(false)
+  })
+
+  test('shows the base line when base is at least 1', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { base: 1, bonus: 0, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings-heading"]').exists()).toBe(true)
+  })
+
+  test('hides the difficulty bonus line when bonus is 0 but base is not', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { base: 1, bonus: 0, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings-bonus"]').exists()).toBe(false)
+  })
+
+  test('shows the difficulty bonus line when bonus is at least 1', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { base: 0, bonus: 1, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings-bonus"]').exists()).toBe(true)
+  })
+
+  test('shows all three earnings lines when both base and bonus are at least 1', () => {
+    mockIsLive.mockReturnValue(true)
+    const wrapper = mountSummary({ earnings: { base: 2, bonus: 1, balance: 340 } })
+
+    expect(wrapper.find('[data-testid="session-summary__earnings-heading"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary__earnings-bonus"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="session-summary__earnings-balance"]').exists()).toBe(true)
   })
 })
