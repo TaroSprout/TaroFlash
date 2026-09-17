@@ -74,6 +74,22 @@ earn it: a record is stamped, and whatever the milestone promises gets paid out
 > do. Add a second per-card reward component expecting it to behave like the
 > base, and it will quietly cap out losing most of its value every session.
 
+> [!HAZARD] [K:session-base-credited-on-boundary-cross] **A session's displayed
+> whole-clip base earning isn't what that session earned — it's whichever
+> session's fraction happened to tip the member's running total over the next
+> whole paperclip.**
+> Base pays in exact thousandths and just accumulates
+> (→[K:session-bonus-remainder-discarded] covers the bonus counterpart). The
+> whole-clip base amount shown for a given session is the increase that
+> session caused in the member's floored cumulative base total, not a share of
+> that session's own fraction. So a session that only earns, say, 0.1 of a
+> paperclip in base can still display "+1" if earlier sessions had already
+> banked 0.9 — the session that happens to cross the boundary gets full credit
+> for a clip that four other sessions mostly paid for. This is deliberate and
+> the mirror image of the bonus's discarded remainder: base fractions carry
+> and are eventually paid in full, just not necessarily to the session that
+> earned most of them.
+
 ## Paperclips are minted in thousandths; only whole clips are ever spent
 
 A paperclip amount in the ledger is stored as **thousandths of a paperclip**
