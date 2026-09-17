@@ -1,3 +1,5 @@
+-- knowledge: close_study_session, credit_occasion_reward, get_session_earnings — corpus/rewards/rewards.md
+
 drop function if exists "public"."credit_occasion_reward"(p_member uuid, p_rule_key text, p_occasion_ref text, p_count bigint);
 
 drop function if exists "public"."close_study_session"(p_session_id uuid);

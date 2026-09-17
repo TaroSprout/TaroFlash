@@ -1,3 +1,5 @@
+-- knowledge: apply_reward — corpus/rewards/rewards.md
+
 set check_function_bodies = off;
 
 CREATE OR REPLACE FUNCTION public.apply_reward(p_member uuid, p_rewards jsonb, p_member_reward bigint)

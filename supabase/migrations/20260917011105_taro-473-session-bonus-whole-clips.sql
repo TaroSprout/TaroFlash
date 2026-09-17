@@ -1,3 +1,5 @@
+-- knowledge: close_study_session, credit_occasion_reward, get_session_earnings — corpus/rewards/rewards.md
+
 set check_function_bodies = off;
 
 CREATE OR REPLACE FUNCTION public.close_study_session(p_session_id uuid)

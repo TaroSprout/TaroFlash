@@ -1,3 +1,5 @@
+-- knowledge: close_study_session, get_session_earnings, paperclip_balance — corpus/rewards/rewards.md
+
 drop function if exists "public"."close_study_session"(p_session_id uuid);
 
 drop function if exists "public"."get_session_earnings"(p_session_id uuid);

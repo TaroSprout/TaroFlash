@@ -1,5 +1,5 @@
 -- knowledge: paperclip_ledger, paperclip_balance, apply_reward, credit_occasion_reward, get_session_earnings — corpus/rewards/rewards.md
--- knowledge: close_study_session — unrecorded
+-- knowledge: close_study_session — corpus/rewards/rewards.md
 
 drop view if exists "public"."paperclip_balance";
 
