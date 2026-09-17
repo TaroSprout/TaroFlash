@@ -25,7 +25,7 @@ BEGIN
 
   IF v_rule.resolver = 'per_card' THEN
     v_base  := round((v_rule.params ->> 'base')::numeric * 1000 * p_correct_count)::bigint;
-    v_bonus := round((v_rule.params ->> 'bonus')::numeric * 1000 * p_difficulty_factor)::bigint;
+    v_bonus := floor((v_rule.params ->> 'bonus')::numeric * p_difficulty_factor)::bigint * 1000;
   ELSE
     RAISE EXCEPTION 'Unknown resolver kind: %', v_rule.resolver;
   END IF;

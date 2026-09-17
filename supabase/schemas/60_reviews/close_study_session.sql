@@ -45,31 +45,45 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    floor(COALESCE((
-      SELECT sum(pl.amount)
-        FROM public.paperclip_ledger pl
-        JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
-        JOIN public.reward_rules rr ON rr.id = mr.reward_rule_id
-       WHERE mr.member_id = v_uid
-         AND rr.key = 'study.session_completion_bonus'
-         AND mr.occasion_ref = p_session_id::text
-         AND pl.source = 'session_base'
-    ), 0) / 1000.0)::bigint AS base,
-    floor(COALESCE((
-      SELECT sum(pl.amount)
-        FROM public.paperclip_ledger pl
-        JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
-        JOIN public.reward_rules rr ON rr.id = mr.reward_rule_id
-       WHERE mr.member_id = v_uid
-         AND rr.key = 'study.session_completion_bonus'
-         AND mr.occasion_ref = p_session_id::text
-         AND pl.source = 'session_bonus'
-    ), 0) / 1000.0)::bigint AS bonus,
+    (floor(t.base_cumulative / 1000.0) - floor((t.base_cumulative - t.base_this) / 1000.0))::bigint AS base,
+    floor(t.bonus_this / 1000.0)::bigint AS bonus,
     COALESCE((
       SELECT pb.balance
         FROM public.paperclip_balance pb
        WHERE pb.member_id = v_uid
-    ), 0)::bigint AS balance;
+    ), 0)::bigint AS balance
+  FROM (
+    SELECT
+      COALESCE((
+        SELECT sum(pl.amount)
+          FROM public.paperclip_ledger pl
+          JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
+          JOIN public.reward_rules rr ON rr.id = mr.reward_rule_id
+         WHERE mr.member_id = v_uid
+           AND rr.key = 'study.session_completion_bonus'
+           AND pl.source = 'session_base'
+      ), 0) AS base_cumulative,
+      COALESCE((
+        SELECT sum(pl.amount)
+          FROM public.paperclip_ledger pl
+          JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
+          JOIN public.reward_rules rr ON rr.id = mr.reward_rule_id
+         WHERE mr.member_id = v_uid
+           AND rr.key = 'study.session_completion_bonus'
+           AND mr.occasion_ref = p_session_id::text
+           AND pl.source = 'session_base'
+      ), 0) AS base_this,
+      COALESCE((
+        SELECT sum(pl.amount)
+          FROM public.paperclip_ledger pl
+          JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
+          JOIN public.reward_rules rr ON rr.id = mr.reward_rule_id
+         WHERE mr.member_id = v_uid
+           AND rr.key = 'study.session_completion_bonus'
+           AND mr.occasion_ref = p_session_id::text
+           AND pl.source = 'session_bonus'
+      ), 0) AS bonus_this
+  ) t;
 END;
 $$;
 
