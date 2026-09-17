@@ -78,6 +78,10 @@ ON CONFLICT (id) DO UPDATE SET
 2. `supabase db diff -f <migration-name>` — generates the migration by diffing declared state against migration history.
 3. Review the generated file, then `supabase migration up --local`.
 
+- **Add a new column at the end of its table's `CREATE TABLE` block**, matching the append position
+  `ALTER TABLE ... ADD COLUMN` produces — declaring it anywhere else makes `db diff` see a
+  column-order mismatch and cascade a spurious drop/recreate of every view depending on that table,
+  which then falls into the reloptions blind spot below and silently strips `security_invoker`.
 - Apply order is `schema_paths` in `config.toml` — new files must be added there.
 - `scripts/dump-schemas` writes a raw type-bucketed snapshot of the local DB to git-ignored
   `supabase/.schema-snapshot/` for drift comparison; it never touches `supabase/schemas/`.
