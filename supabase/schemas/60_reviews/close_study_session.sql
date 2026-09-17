@@ -22,6 +22,9 @@ BEGIN
     RETURN;
   END IF;
 
+  -- ts-fsrs card difficulty runs 1–10; (difficulty−1)/9 normalizes each
+  -- correct card to 0–1 (easiest 0, hardest 1) — the per-card sum is the
+  -- session's difficulty factor passed to credit_occasion_reward.
   SELECT count(*), COALESCE(sum((greatest(COALESCE(final_logs.difficulty, 1), 1) - 1) / 9.0), 0)
     INTO v_correct, v_difficulty_factor
     FROM (
@@ -45,6 +48,9 @@ BEGIN
 
   RETURN QUERY
   SELECT
+    -- This session's base is the jump it caused in the member's floored
+    -- cumulative total, so a fraction that only tips a cumulative clip over
+    -- thanks to earlier sessions is credited to the session that completed it.
     (floor(t.base_cumulative / 1000.0) - floor((t.base_cumulative - t.base_this) / 1000.0))::bigint AS base,
     floor(t.bonus_this / 1000.0)::bigint AS bonus,
     COALESCE((

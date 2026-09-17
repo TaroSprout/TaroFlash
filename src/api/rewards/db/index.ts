@@ -7,7 +7,7 @@ export type SessionEarnings = {
   balance: number
 }
 
-/** The base and difficulty-bonus paperclips a session paid, each as an exact fraction, plus the member's resulting balance. Reads a member's own rows only. */
+/** The base and difficulty-bonus paperclips the session paid, each already the whole floored paperclips (never a fraction), plus the member's resulting whole-clip balance. Reads the member's own rows only. */
 export async function fetchSessionEarnings(session_id: string): Promise<SessionEarnings> {
   const { data, error } = await supabase
     .rpc('get_session_earnings', { p_session_id: session_id })

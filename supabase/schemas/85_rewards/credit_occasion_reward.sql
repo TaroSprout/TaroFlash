@@ -24,7 +24,13 @@ BEGIN
   END IF;
 
   IF v_rule.resolver = 'per_card' THEN
+    -- Scaled into thousandths (×1000) and rounded rather than floored, so the
+    -- fraction is stored exactly and accumulates across sessions — the
+    -- deliberate asymmetry with the floored bonus below.
     v_base  := round((v_rule.params ->> 'base')::numeric * 1000 * p_correct_count)::bigint;
+    -- floor() runs before the ×1000 scale, so the bonus's fractional remainder
+    -- is discarded here — never recorded, never carried into a future
+    -- session, unlike v_base's fraction above →[K:session-bonus-remainder-discarded]
     v_bonus := floor((v_rule.params ->> 'bonus')::numeric * p_difficulty_factor)::bigint * 1000;
   ELSE
     RAISE EXCEPTION 'Unknown resolver kind: %', v_rule.resolver;
