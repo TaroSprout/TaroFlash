@@ -159,7 +159,7 @@ describe('SessionSummary (index.vue)', () => {
 
   // ── Earnings block ────────────────────────────────────────────────────────
 
-  test('renders the base, bonus, and balance amounts as the backend integers, unrounded', () => {
+  test('renders the base, bonus, and balance amounts verbatim in their respective slots', () => {
     mockIsLive.mockReturnValue(true)
     const wrapper = mountSummary({ earnings: { base: 2, bonus: 1, balance: 340 } })
 
