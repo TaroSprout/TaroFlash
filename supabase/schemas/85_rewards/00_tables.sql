@@ -116,7 +116,10 @@ CREATE TABLE public.paperclip_ledger (
     member_id uuid NOT NULL,
     amount bigint NOT NULL,
     member_reward_id bigint,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    -- tags the component that paid this row (session_base, session_bonus,
+    -- milestone) — get_session_earnings reads it to split base from bonus.
+    source text NOT NULL
 );
 
 
@@ -260,10 +263,11 @@ CREATE INDEX member_inventory_member_id_idx ON public.member_inventory USING btr
 -- Balance is the running sum of a member's ledger entries. security_invoker so
 -- the paperclip_ledger SELECT policy runs per-caller — the view owner is
 -- postgres, and without this it would read every member's rows.
-CREATE VIEW public.paperclip_balance
-    WITH (security_invoker = true) AS
+CREATE VIEW public.paperclip_balance WITH (security_invoker='true') AS
     SELECT member_id,
-           COALESCE(sum(amount), 0)::bigint AS balance
+           -- ledger amounts are stored in thousandths; this is the one place
+           -- a fractional stored amount becomes the whole paperclip a member is shown.
+           COALESCE(floor(sum(amount) / 1000.0), 0)::bigint AS balance
       FROM public.paperclip_ledger
      GROUP BY member_id;
 

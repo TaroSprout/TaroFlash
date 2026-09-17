@@ -22,8 +22,10 @@ BEGIN
     IF v_kind = 'paperclips' THEN
       -- The ledger is the only place a balance lives; this insert is the sole
       -- writer. The resolved amount is what gets stored, never the spec.
-      INSERT INTO public.paperclip_ledger (member_id, amount, member_reward_id)
-      VALUES (p_member, (v_reward ->> 'amount')::bigint, p_member_reward);
+      -- A payload omitting source is a milestone payout; session rewards set
+      -- session_base/session_bonus explicitly, so no row is left unattributed.
+      INSERT INTO public.paperclip_ledger (member_id, amount, source, member_reward_id)
+      VALUES (p_member, (v_reward ->> 'amount')::bigint, COALESCE(v_reward ->> 'source', 'milestone'), p_member_reward);
     ELSE
       RAISE EXCEPTION 'Unknown reward kind: %', v_kind;
     END IF;

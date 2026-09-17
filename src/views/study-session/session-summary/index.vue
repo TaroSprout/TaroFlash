@@ -26,9 +26,10 @@ const { isLive } = useCapabilities()
 
 const summary = computed(() => aggregateSession(results, thresholdFor))
 
-const show_earnings = computed(
-  () => isLive('session_rewards', false) && !!earnings && earnings.earned > 0
-)
+const show_earnings = computed(() => isLive('session_rewards', false) && !!earnings)
+const show_base = computed(() => show_earnings.value && !!earnings && earnings.base > 0)
+const show_bonus = computed(() => show_earnings.value && !!earnings && earnings.bonus > 0)
+const show_total = computed(() => show_base.value || show_bonus.value)
 </script>
 
 <template>
@@ -42,17 +43,26 @@ const show_earnings = computed(
       </section>
 
       <section
-        v-if="show_earnings && earnings"
+        v-if="show_total && earnings"
         data-testid="session-summary__earnings"
         class="grid grid-cols-[auto_auto] items-center gap-x-6 gap-y-2"
       >
-        <span
-          data-testid="session-summary__earnings-heading"
-          class="text-lg font-semibold text-ink"
-        >
-          {{ t('session-summary.earnings.heading') }}
-        </span>
-        <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.earned" />
+        <template v-if="show_base">
+          <span
+            data-testid="session-summary__earnings-heading"
+            class="text-lg font-semibold text-ink"
+          >
+            {{ t('session-summary.earnings.heading') }}
+          </span>
+          <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.base" />
+        </template>
+
+        <template v-if="show_bonus">
+          <span data-testid="session-summary__earnings-bonus" class="text-base text-ink-muted">
+            {{ t('session-summary.earnings.bonus-label') }}
+          </span>
+          <ui-paperclips class="justify-self-end text-2xl font-bold" :amount="earnings.bonus" />
+        </template>
 
         <span data-testid="session-summary__earnings-balance" class="text-base text-ink-muted">
           {{ t('session-summary.earnings.balance-label') }}

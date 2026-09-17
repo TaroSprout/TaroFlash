@@ -24,7 +24,7 @@ beforeEach(() => {
 
 describe('fetchSessionEarnings', () => {
   test('forwards the session id to the get_session_earnings RPC as p_session_id', async () => {
-    mocks.single.mockResolvedValueOnce({ data: { earned: 3, balance: 10 }, error: null })
+    mocks.single.mockResolvedValueOnce({ data: { base: 2, bonus: 1, balance: 10 }, error: null })
 
     await fetchSessionEarnings('session-1')
 
@@ -32,9 +32,13 @@ describe('fetchSessionEarnings', () => {
   })
 
   test('resolves with the row the RPC returns', async () => {
-    mocks.single.mockResolvedValueOnce({ data: { earned: 3, balance: 10 }, error: null })
+    mocks.single.mockResolvedValueOnce({ data: { base: 2, bonus: 1, balance: 10 }, error: null })
 
-    await expect(fetchSessionEarnings('session-1')).resolves.toEqual({ earned: 3, balance: 10 })
+    await expect(fetchSessionEarnings('session-1')).resolves.toEqual({
+      base: 2,
+      bonus: 1,
+      balance: 10
+    })
   })
 
   test('logs and throws when the RPC errors', async () => {
