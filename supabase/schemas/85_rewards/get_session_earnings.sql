@@ -10,9 +10,7 @@ CREATE FUNCTION public.get_session_earnings(p_session_id uuid) RETURNS TABLE(bas
     LANGUAGE sql STABLE
     AS $$
   SELECT
-    -- This session's base is the jump it caused in the member's floored
-    -- cumulative total, so a fraction that only tips a cumulative clip over
-    -- thanks to earlier sessions is credited to the session that completed it.
+    -- Base credits the boundary-crossing session, not the sessions that filled the clip →[K:session-base-credited-on-boundary-cross]
     (floor(t.base_cumulative / 1000.0) - floor((t.base_cumulative - t.base_this) / 1000.0))::bigint AS base,
     floor(t.bonus_this / 1000.0)::bigint AS bonus,
     COALESCE((
