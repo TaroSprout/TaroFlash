@@ -6,11 +6,11 @@ SET check_function_bodies = false;
 -- No SECURITY DEFINER — runs as the caller, so the existing per-member SELECT
 -- policies on paperclip_ledger, member_rewards and paperclip_balance are what
 -- scope this to the caller's own rows, same as any other client read.
-CREATE FUNCTION public.get_session_earnings(p_session_id uuid) RETURNS TABLE(base numeric, bonus numeric, balance numeric)
+CREATE FUNCTION public.get_session_earnings(p_session_id uuid) RETURNS TABLE(base bigint, bonus bigint, balance bigint)
     LANGUAGE sql STABLE
     AS $$
   SELECT
-    round(COALESCE((
+    floor(COALESCE((
       SELECT sum(pl.amount)
         FROM public.paperclip_ledger pl
         JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
@@ -19,8 +19,8 @@ CREATE FUNCTION public.get_session_earnings(p_session_id uuid) RETURNS TABLE(bas
          AND rr.key = 'study.session_completion_bonus'
          AND mr.occasion_ref = p_session_id::text
          AND pl.source = 'session_base'
-    ), 0) / 1000.0, 3) AS base,
-    round(COALESCE((
+    ), 0) / 1000.0)::bigint AS base,
+    floor(COALESCE((
       SELECT sum(pl.amount)
         FROM public.paperclip_ledger pl
         JOIN public.member_rewards mr ON mr.id = pl.member_reward_id
@@ -29,12 +29,12 @@ CREATE FUNCTION public.get_session_earnings(p_session_id uuid) RETURNS TABLE(bas
          AND rr.key = 'study.session_completion_bonus'
          AND mr.occasion_ref = p_session_id::text
          AND pl.source = 'session_bonus'
-    ), 0) / 1000.0, 3) AS bonus,
-    round(COALESCE((
-      SELECT sum(pl.amount)
-        FROM public.paperclip_ledger pl
-       WHERE pl.member_id = public.active_member_id()
-    ), 0) / 1000.0, 3) AS balance;
+    ), 0) / 1000.0)::bigint AS bonus,
+    COALESCE((
+      SELECT pb.balance
+        FROM public.paperclip_balance pb
+       WHERE pb.member_id = public.active_member_id()
+    ), 0)::bigint AS balance;
 $$;
 
 

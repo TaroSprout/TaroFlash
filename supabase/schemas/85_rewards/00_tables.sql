@@ -263,7 +263,7 @@ CREATE INDEX member_inventory_member_id_idx ON public.member_inventory USING btr
 -- postgres, and without this it would read every member's rows.
 CREATE VIEW public.paperclip_balance WITH (security_invoker='true') AS
     SELECT member_id,
-           COALESCE(sum(amount) / 1000, 0)::bigint AS balance
+           COALESCE(floor(sum(amount) / 1000.0), 0)::bigint AS balance
       FROM public.paperclip_ledger
      GROUP BY member_id;
 
