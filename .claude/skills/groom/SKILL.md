@@ -47,6 +47,12 @@ should look. Those are resolved _with the user, here_, not deferred into impleme
 The sole exception is a decision blocked on an **external fact** nobody in the session has (§4) —
 recorded under `## Blocked on`, never left as an unmarked menu.
 
+**Never offer "the implementer's call" as a legitimate outcome, in the conversation or the ticket —
+however it's framed.** Calling it a mechanism, an engineering detail, or plumbing doesn't exempt it:
+if the answer changes what ships or how it behaves, present it as a question and resolve it, same as
+any other decision. The AC / `## Tech details` split (§5) encodes an already-resolved decision's
+product surface versus its seam — it is never a loophole for leaving one of them open.
+
 ### Resolve to buildable, not to gist
 
 A decision is resolved only when an implementer can build it **without one design or taste choice of
