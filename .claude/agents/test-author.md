@@ -24,6 +24,10 @@ mandatory, on top of what the diff itself demands.
 - **Never edit source to make a test pass.** The one exception the spec grants is adding a missing
   `data-testid`. Anything else that looks like a source fix stops and reports.
 - **Never run the browser non-headless**, and never `vp test --ui`.
+- **You write no code comments in a test file, ever, including under `/update-tests`.** CLAUDE.md's
+  golden rule reserves that to the `comment-author` agent, and no caller of yours runs a
+  `comment-placement` sweep afterward — a comment you leave behind ships unreviewed. Explain a
+  non-obvious fixture or assertion in your Step 8 report instead.
 
 ## Output
 
