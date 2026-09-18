@@ -12,7 +12,7 @@ import {
 import { lessonReaderKey } from '@/composables/audio-reader/lesson-reader'
 import { useReaderPrefs } from '@/composables/audio-reader/reader-prefs'
 import { usePagination } from '@/composables/audio-reader/pagination'
-import { usePagedSelection, type WordRange } from '@/composables/audio-reader/paged-selection'
+import { useWordSelection, type WordRange } from '@/composables/audio-reader/word-selection'
 import { useMatchMedia } from '@/composables/ui/media-query'
 import {
   frostMotionSafe,
@@ -35,7 +35,6 @@ const RESERVE_CONTROLS = 'pb-[calc(var(--paged-controls-h)+var(--paged-feather))
 const PAGE_TOP = 'pt-16 sm:pt-20'
 const PAGE_BOTTOM = 'pb-16 sm:pb-20'
 const SPLIT_CAP_RATIO = 0.4
-const TAP_SLOP = 8
 const SCROLL_IDLE_MS = 80
 const RESIZE_SETTLE_MS = 160
 
@@ -79,9 +78,6 @@ const band_version = ref(0)
 const current_index = ref(0)
 const settings_open = ref(false)
 
-let start_x = 0
-let start_y = 0
-let pointer_id = -1
 let band_primed = false
 let internal = false
 let user_active = false
@@ -136,15 +132,15 @@ const { pages, pageIndexOfWord, pageFootprint } = usePagination({
   ]
 })
 
-const selectionApi = usePagedSelection(
-  viewport,
-  () => active_word.value,
-  () => paragraphs.value,
-  matchRangeAt,
-  openTerm,
-  closeTerm,
-  () => popover_open.value
-)
+const selectionApi = useWordSelection({
+  content: viewport,
+  active_word: () => active_word.value,
+  paragraphs: () => paragraphs.value,
+  onSelect: openTerm,
+  popover_open: () => popover_open.value,
+  onDismiss: closeTerm,
+  matchRangeAt
+})
 
 const spread_count = computed(() =>
   Math.max(1, Math.ceil(pages.value.length / pages_per_spread.value))
@@ -403,21 +399,25 @@ function seekToSpread(spread: number) {
 
 function onPointerDown(event: PointerEvent) {
   user_active = true
-  start_x = event.clientX
-  start_y = event.clientY
-  pointer_id = event.pointerId
+  selectionApi.onPointerDown(event)
+}
+
+function onPointerMove(event: PointerEvent) {
+  selectionApi.onPointerMove(event)
 }
 
 function onPointerUp(event: PointerEvent) {
   user_active = false
-  if (event.pointerId !== pointer_id) return
+  selectionApi.onPointerUp(event)
+}
 
-  const moved = Math.hypot(event.clientX - start_x, event.clientY - start_y)
-  if (moved < TAP_SLOP) selectionApi.selectAtPoint(event.clientX, event.clientY)
+function onPointerLeave() {
+  selectionApi.onPointerLeave()
 }
 
 function onPointerCancel() {
   user_active = false
+  selectionApi.onPointerCancel()
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -566,7 +566,9 @@ watch(
         class="paged-scroller absolute inset-0 flex touch-pan-x snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain select-none"
         @scroll="onScroll"
         @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
         @pointerup="onPointerUp"
+        @pointerleave="onPointerLeave"
         @pointercancel="onPointerCancel"
       >
         <div
