@@ -72,6 +72,11 @@ See [corpus-authoring](../.claude/rules/corpus-authoring.md) for how the corpus 
 - [[draft-pattern]] — `useDraft` is the shared shape behind every editor that stages changes before deciding whether to save them
 - [[responsive]] — how the app asks "is this a small screen?"; the short vocabulary every screen shares
 
+## reader
+
+- [[reader-layout]] — pages are laid out by measuring an invisible, unmounted copy first; a resize freeze gates the reflow, not the frames' live height ⚠️
+- [[reader-selection]] — one gesture engine drives hover, drag, and long-press word selection; its trailing-click swallower is viewport-wide, not scoped to words ⚠️
+
 ## ui
 
 - [[mobile-dock]] — the floating bar owns its own height tween; a second one nested inside fights it ⚠️
