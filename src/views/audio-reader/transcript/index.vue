@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useWindowVirtualizer } from '@tanstack/vue-virtual'
 import type { SentenceWords } from '@/utils/transcript'
-import { markTermInSentence } from '@/utils/transcript'
 import type { CardMatch } from '@/utils/transcript-match'
-import { useReaderHighlights, type WordRange } from '@/composables/audio-reader/reader-highlights'
+import { useWordSelection, type WordRange } from '@/composables/audio-reader/word-selection'
+import { useReaderFollow } from '@/composables/audio-reader/reader-follow'
 import TranscriptSegment from './segment.vue'
 import SelectionPreview from './selection-preview.vue'
 
@@ -113,29 +113,37 @@ const centered_translation = computed(() => {
   return item ? (rows.value[item.index]?.paragraph.translation ?? null) : null
 })
 
-const {
+const content = useTemplateRef<HTMLElement>('content')
+
+const { following, follow_direction, resumeFollow, disableFollow } = useReaderFollow(
   content,
+  () => active_word,
+  virtualizer,
+  rowIndexOfWord
+)
+
+const {
   hover_lines,
   setHoverEl,
   tap_active,
   selection_preview,
-  following,
-  follow_direction,
-  resumeFollow,
   onPointerDown,
   onPointerMove,
   onPointerUp,
   onPointerLeave,
   onPointerCancel
-} = useReaderHighlights(
-  () => active_word,
-  commitSelection,
-  () => popover_open,
-  () => emit('dismiss'),
+} = useWordSelection({
+  content,
+  active_word: () => active_word,
+  paragraphs: () => paragraphs,
+  onSelect: (selection) => emit('select', selection),
+  popover_open: () => popover_open,
+  onDismiss: () => emit('dismiss'),
   matchRangeAt,
   virtualizer,
-  rowIndexOfWord
-)
+  rowIndexOfWord,
+  onManualScroll: disableFollow
+})
 
 // The follow state + resume action surface to the lesson view, which renders the
 // "jump to current line" control in the mobile dock above the transcript; the
@@ -241,36 +249,6 @@ function paintMatchedWords(m: Map<number, CardMatch>) {
 function matchRangeAt(index: number): WordRange | null {
   const match = matches.get(index)
   return match ? { lo: match.lo, hi: match.hi } : null
-}
-
-function paragraphIndexOf(node: Element): number | null {
-  const segment = node.closest('[data-testid="transcript-segment"]')
-  const index = segment?.getAttribute('data-index')
-  return index === null || index === undefined ? null : Number(index)
-}
-
-// A committed word-range carries its own term + rect + first/last word indices;
-// the surrounding text (translator context) is the whole paragraph the anchor
-// word sits in.
-function commitSelection({
-  term,
-  rect,
-  anchor,
-  index: word_index,
-  end_index: word_end_index
-}: {
-  term: string
-  rect: DOMRect
-  anchor: Element
-  index: number
-  end_index: number
-}) {
-  const index = paragraphIndexOf(anchor)
-  const paragraph = index !== null ? paragraphs.find((p) => p.index === index) : undefined
-  const raw_sentence = paragraph?.sentence || term
-  const words = paragraph?.words ?? []
-  const sentence = markTermInSentence(raw_sentence, words, word_index, term)
-  emit('select', { term, sentence, rect, word_index, word_end_index })
 }
 
 watch(() => matches, paintMatchedWords, { immediate: true, flush: 'post' })
