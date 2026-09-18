@@ -14,7 +14,7 @@ function isOnScreen(rect: DOMRect): boolean {
 }
 
 export function scanPerf(root: ParentNode = document.body): PerfScanSnapshot {
-  const elements = root.querySelectorAll('*')
+  const elements = root.querySelectorAll('*:not([data-perf-ignore]):not([data-perf-ignore] *)')
   let onScreenElementCount = 0
 
   for (const el of elements) {
