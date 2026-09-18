@@ -209,6 +209,12 @@ opens. This is decoupled from § 5e's `HANDOFF`, which still carries the PR URL 
 wait on this dispatch's result, it gates nothing in this run. Freeform work has no ticket, so nothing to
 dispatch.
 
+**Epic mode also checks for a cutover the moment a wave lands.** When this wave's files-touched set (§
+Run ledger) removes or replaces what an already-landed earlier wave edited, that earlier wave's code is
+transitionally red, not merely conflicted — surface it at the next checkpoint (§ 4c) and offer the user a
+choice: collapse the cutover tail into one ticket, or accept the earlier wave as transitionally red until
+the later wave lands. Never let this surface for the first time at CI.
+
 ### 4b. KNOWLEDGE GAPS — dispatched the moment a branch lands
 
 **The orchestrator dispatches `corpus-author` for every `[K:gap: …]` tag a builder left**, one background
@@ -326,7 +332,12 @@ direction the relation already states. **A branch whose worktree base merged mor
 (§4) never opens as a stack once those blockers' own PRs have already merged to `master`** — a PR still
 carrying a merged sibling's commits conflicts across every shared file, so rebuild it first as only its own
 commits, cherry-picked onto current `origin/master`, force-pushed, then run the conflict check against that.
-A conflict needing **genuine human judgment** (semantic overlap, incompatible approaches) is not guessed at:
+**That rebuild verifies every intermediate branch in the stack, not just the tip** — `vp check`/`pnpm
+type-check` each cherry-picked commit before any of it reaches a PR; a broken interior link with no CI run
+of its own is exactly what turns into a CI-only failure later. **No PR opens on this stack until its
+rebuild finishes** — step (d)'s OPEN dispatches never run concurrently with a rebuild still mutating the
+same branches, since `prepare-pr` itself force-pushes/rebases the branch it's handed and would race the
+rebuild on the same commits. A conflict needing **genuine human judgment** (semantic overlap, incompatible approaches) is not guessed at:
 **raise it** in the final report and park that ticket `Blocked`.
 d. **OPEN**, dispatched — for each non-blocked branch, a `general-purpose` agent runs the
 **`prepare-pr`** skill with `--branch <branch> --base <master|peer-branch> --ticket <ID> --ticket-url <url>
