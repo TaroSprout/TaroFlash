@@ -41,13 +41,3 @@ export function stitchMeasuredWords(book: BookGeometry): MeasuredWord[] {
 
   return words
 }
-
-export function bandHeights(book: BookGeometry): Map<number, number> {
-  const heights = new Map<number, number>()
-
-  for (const paragraph of book.paragraphs) {
-    heights.set(paragraph.paragraph_index, paragraph.band_height)
-  }
-
-  return heights
-}
