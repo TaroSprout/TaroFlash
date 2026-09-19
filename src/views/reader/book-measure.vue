@@ -6,21 +6,23 @@ import { useBookMeasure } from './composables/book-measure'
 type BookMeasureProps = {
   paragraphs: SentenceWords[]
   width: number
+  anchorParagraph: number
 }
 
-const { paragraphs, width } = defineProps<BookMeasureProps>()
+const { paragraphs, width, anchorParagraph } = defineProps<BookMeasureProps>()
 
 const measure_host = useTemplateRef<HTMLElement>('measure')
 const band_host = useTemplateRef<HTMLElement>('band')
 
-const { words, render_paragraphs, bandHeightOf } = useBookMeasure({
+const { words, render_paragraphs, fully_measured, bandHeightOf } = useBookMeasure({
   measure_host,
   band_host,
   paragraphs: () => paragraphs,
-  width: () => width
+  width: () => width,
+  anchor_paragraph: () => anchorParagraph
 })
 
-defineExpose({ words, bandHeightOf })
+defineExpose({ words, fully_measured, bandHeightOf })
 </script>
 
 <template>
