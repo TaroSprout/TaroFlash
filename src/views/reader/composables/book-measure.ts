@@ -1,9 +1,9 @@
-import { computed, onBeforeUnmount, ref, toValue, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, shallowRef, toValue, watch } from 'vue'
 import type { ComputedRef, MaybeRefOrGetter, Ref, ShallowRef } from 'vue'
 import type { SentenceWords } from '@/utils/transcript'
 import type { MeasuredWord } from '@/utils/reader/pagination'
-
-const WORDS_PER_FRAME = 200
+import type { BookGeometry, ParagraphGeometry, WordGeometry } from '@/utils/reader/measure'
+import { bandHeights, stitchMeasuredWords } from '@/utils/reader/measure'
 
 export type BookMeasureOptions = {
   measure_host: Readonly<ShallowRef<HTMLElement | null>>
@@ -13,118 +13,140 @@ export type BookMeasureOptions = {
 }
 
 export type BookMeasure = {
-  words: Ref<MeasuredWord[]>
-  band_heights: Ref<Map<number, number>>
-  rendered_count: Ref<number>
-  rendered_paragraphs: ComputedRef<SentenceWords[]>
+  words: ComputedRef<MeasuredWord[]>
+  render_paragraphs: ComputedRef<SentenceWords[]>
+  measuring: Ref<boolean>
   bandHeightOf: (paragraph_index: number) => number
 }
 
 export function useBookMeasure(options: BookMeasureOptions): BookMeasure {
   const { measure_host, band_host, paragraphs, width } = options
 
-  const words = ref<MeasuredWord[]>([])
-  const band_heights = ref<Map<number, number>>(new Map())
-  const rendered_count = ref(0)
+  const cache = new Map<number, BookGeometry>()
+  const geometry = shallowRef<BookGeometry | null>(null)
+  const measuring = ref(false)
 
-  const rendered_paragraphs = computed(() => toValue(paragraphs).slice(0, rendered_count.value))
+  let pass_token = 0
+  let alive = true
 
-  let raf = 0
-  let accumulated: MeasuredWord[] = []
-  let measured_through = 0
+  const words = computed(() => (geometry.value ? stitchMeasuredWords(geometry.value) : []))
+  const band_map = computed(() =>
+    geometry.value ? bandHeights(geometry.value) : new Map<number, number>()
+  )
+  const render_paragraphs = computed(() => (measuring.value ? toValue(paragraphs) : []))
 
-  onBeforeUnmount(() => cancelAnimationFrame(raf))
+  onBeforeUnmount(() => (alive = false))
 
-  function restart() {
-    cancelAnimationFrame(raf)
-    accumulated = []
-    measured_through = 0
-    rendered_count.value = 0
-    raf = requestAnimationFrame(tick)
-  }
+  function sync() {
+    const w = toValue(width)
+    const paras = toValue(paragraphs)
+    pass_token += 1
 
-  function tick() {
-    const all = toValue(paragraphs)
-    const total = all.length
-
-    if (total === 0 || toValue(width) <= 0) {
-      accumulated = []
-      words.value = []
-      band_heights.value = new Map()
+    if (w <= 0 || paras.length === 0) {
+      measuring.value = false
+      geometry.value = null
       return
     }
 
-    const chunk_end = chunkEnd(all, measured_through)
-    const measure_to = Math.min(chunk_end, rendered_count.value, total)
-    if (measure_to > measured_through) {
-      measureRange(all, measured_through, measure_to)
-      measured_through = measure_to
+    const cached = cache.get(w)
+    if (cached) {
+      measuring.value = false
+      geometry.value = cached
+      return
     }
 
-    if (measured_through >= total) return finalize()
-
-    if (rendered_count.value < total) {
-      rendered_count.value = chunkEnd(all, rendered_count.value)
-    }
-    raf = requestAnimationFrame(tick)
+    startMeasure(w)
   }
 
-  function chunkEnd(all: SentenceWords[], from: number): number {
-    let end = from
-    let budget = 0
+  function startMeasure(w: number) {
+    measuring.value = true
 
-    while (end < all.length && budget < WORDS_PER_FRAME) {
-      budget += all[end].words.length
-      end++
-    }
-
-    return end
+    const token = pass_token
+    nextTick(() => {
+      if (!alive || token !== pass_token) return
+      measurePass(w)
+    })
   }
 
-  function measureRange(all: SentenceWords[], from: number, to: number) {
+  function measurePass(w: number) {
     const host = measure_host.value
     if (!host) return
 
-    const base = host.getBoundingClientRect().top
-
-    for (let p = from; p < to; p++) {
-      const selector = `[data-paragraph="${all[p].index}"] [data-word-index]`
-      for (const el of host.querySelectorAll<HTMLElement>(selector)) {
-        const rect = el.getBoundingClientRect()
-        accumulated.push({
-          index: Number(el.dataset.wordIndex),
-          paragraph_index: Number(el.dataset.paragraphIndex),
-          top: rect.top - base,
-          bottom: rect.bottom - base
-        })
-      }
-    }
+    const book = readGeometry(host, band_host.value, toValue(paragraphs))
+    cache.set(w, book)
+    geometry.value = book
+    measuring.value = false
   }
 
-  function measureBands(): Map<number, number> {
-    const host = band_host.value
-    if (!host) return new Map()
-
-    const next = new Map<number, number>()
-    for (const el of host.querySelectorAll<HTMLElement>('[data-band-index]')) {
-      next.set(Number(el.dataset.bandIndex), el.offsetHeight)
-    }
-    return next
-  }
-
-  function finalize() {
-    band_heights.value = measureBands()
-    words.value = accumulated
-    rendered_count.value = 0
+  function reset() {
+    cache.clear()
+    sync()
   }
 
   function bandHeightOf(paragraph_index: number): number {
-    return band_heights.value.get(paragraph_index) ?? 0
+    return band_map.value.get(paragraph_index) ?? 0
   }
 
-  watch([() => toValue(paragraphs), () => toValue(width), measure_host, band_host], restart, {
-    immediate: true
-  })
+  watch(() => toValue(paragraphs), reset)
+  watch(() => toValue(width), sync)
+  watch([measure_host, band_host], sync, { immediate: true })
 
-  return { words, band_heights, rendered_count, rendered_paragraphs, bandHeightOf }
+  return { words, render_paragraphs, measuring, bandHeightOf }
+}
+
+function readGeometry(
+  host: HTMLElement,
+  band_host: HTMLElement | null,
+  paragraphs: SentenceWords[]
+): BookGeometry {
+  const band_heights = readBandHeights(band_host)
+
+  const geometries: ParagraphGeometry[] = []
+  let gap = 0
+  let last_bottom: number | null = null
+
+  for (const paragraph of paragraphs) {
+    const p_el = host.querySelector<HTMLElement>(`[data-paragraph="${paragraph.index}"]`)
+    if (!p_el) continue
+
+    const p_rect = p_el.getBoundingClientRect()
+    if (last_bottom !== null && gap === 0) gap = Math.max(0, p_rect.top - last_bottom)
+    last_bottom = p_rect.bottom
+
+    geometries.push({
+      paragraph_index: paragraph.index,
+      height: p_rect.height,
+      band_height: band_heights.get(paragraph.index) ?? 0,
+      words: readWords(p_el, p_rect.top)
+    })
+  }
+
+  return { paragraphs: geometries, gap }
+}
+
+function readWords(paragraph_el: HTMLElement, paragraph_top: number): WordGeometry[] {
+  const words: WordGeometry[] = []
+
+  for (const el of paragraph_el.querySelectorAll<HTMLElement>('[data-word-index]')) {
+    const rect = el.getBoundingClientRect()
+    words.push({
+      index: Number(el.dataset.wordIndex),
+      paragraph_index: Number(el.dataset.paragraphIndex),
+      top: rect.top - paragraph_top,
+      bottom: rect.bottom - paragraph_top
+    })
+  }
+
+  return words
+}
+
+function readBandHeights(band_host: HTMLElement | null): Map<number, number> {
+  const heights = new Map<number, number>()
+  if (!band_host) return heights
+
+  for (const el of band_host.querySelectorAll<HTMLElement>('[data-band-index]')) {
+    heights.set(Number(el.dataset.bandIndex), el.offsetHeight)
+  }
+
+  return heights
 }
