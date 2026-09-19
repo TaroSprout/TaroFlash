@@ -1,3 +1,13 @@
+---
+lastUpdated: 2026-09-18T00:00:00Z
+# This sequence only matters to a healing persona actively shipping a heal — every reader that
+# needs it (harness-author, corpus-author, harness-maintainer) names it explicitly and reads it by
+# name; a glob on their paths would not fire, since invoking an agent never reads its file. Scoped
+# narrower than the self-heal hub's always-on load per rule-authoring → Spokes.
+paths:
+  - '.claude/rules/self-heal/shipping.md'
+---
+
 # Shipping a heal [K:heal-shipping-sequence]
 
 How every healing persona lands its change. `harness-author` always follows this; `corpus-author`

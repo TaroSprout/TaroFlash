@@ -61,6 +61,9 @@ in the directory it bites, so it reaches you when you're standing on it.
 | →[K:mid-gesture-mutation-kills-momentum-scroll] | [[scroll-region]]      | `src/components/layout-kit/scroll-region/index.vue`, `src/components/layout-kit/app-window/index.vue`                    |
 | →[K:page-boxes-are-height-pinned]               | [[scroll-region]]      | `src/components/layout-kit/scroll-region/use-scroll-metrics.ts`                                                          |
 | →[K:scroll-lock-teleport-opt-in]                | [[scroll-lock]]        | `src/composables/ui/scroll-lock.ts`, `src/views/admin/color-page/shade-editor.vue`                                       |
+| →[K:book-measure-chunks-and-unmounts]           | [[reader-layout]]      | `src/views/reader/composables/book-measure.ts`, `src/views/reader/book-measure.vue`                                      |
+| →[K:resize-freeze-gates-frame-height]           | [[reader-layout]]      | `src/views/reader/composables/resize-freeze.ts`, `src/views/reader/index.vue`                                            |
+| →[K:selection-click-swallower-is-viewport-wide] | [[reader-selection]]   | `src/composables/audio-reader/word-selection.ts`, `src/views/reader/controls.vue`                                        |
 
 A trap with no directory to echo it into is listed in `CLAUDE.md` instead, so it
 is paid for in every session. There are none today.
