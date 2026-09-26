@@ -187,15 +187,20 @@ describe('usePageStrip', () => {
 
   describe('compensatePrepend', () => {
     test('shifts displayed_spread and the scroll offset by the prepended delta when idle', async () => {
+      const desired = ref(0)
       const anchor = ref(0)
       const el = makeScroller(300)
       const { displayed_spread, scroller } = withPageStrip({
         scroller_el: el,
         spread_count: 5,
         item_size: 300,
+        desired_spread: desired,
         anchor_spread: anchor
       })
-      displayed_spread.value = 1
+
+      desired.value = 1
+      await nextTick()
+      expect(displayed_spread.value).toBe(1)
 
       anchor.value = 2
       await nextTick()
