@@ -13,7 +13,7 @@ const TermsOfServiceView = () => import('@/views/terms-of-service.vue')
 const AuthCallbackView = () => import('@/views/auth/callback.vue')
 const Dashboard = () => import('@/views/dashboard/index.vue')
 const DeckView = () => import('@/views/deck/deck-view.vue')
-const LessonView = () => import('@/views/audio-reader/lesson/index.vue')
+const LessonView = () => import('@/views/reader/index.vue')
 
 declare module 'vue-router' {
   /**
