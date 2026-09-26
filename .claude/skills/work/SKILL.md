@@ -195,6 +195,13 @@ forward into the integration branch on the home tree (single-ticket or freeform 
 directly, once the branch exists) — the merge-forward half of § 4d's dispatch-and-merge-forward mechanic, just
 starting here instead of at teardown.
 
+**Verify the branch's base before merging it forward, never on the builder's report alone.** `git merge-base
+<branch> <intended-base>` must equal `<intended-base>`'s current tip (`master`, the epic wave's base, or the
+release branch chosen at § THE GATE). A worktree-isolated builder can silently drift onto the wrong base — a
+stale branch instead of the one it was actually handed — and everything it commits then rides in on top of that
+base's own unrelated history. A mismatch means the branch isn't what it claims to be: stop, report it, and do
+not merge forward until the builder rebuilds on the correct base.
+
 **Ticket-based work also gets a status-only board move here** — dispatch `board-agent` with `LAND` (`id`),
 `run_in_background`, so the board tracks build status as it happens rather than only once a PR opens. This is
 decoupled from § 5e's `HANDOFF`, which still carries the PR URL once one exists; don't wait on this dispatch's
@@ -308,7 +315,11 @@ stacking entirely and open one PR straight from the integration branch (§ Integ
 chosen release-branch base:
 
 a. **READINESS CHECK** — if a builder reported it couldn't satisfy acceptance, or left `vp check` red it
-couldn't fix, don't open its PR; treat the ticket as stuck (§ Stuck / blocked).
+couldn't fix, don't open its PR; treat the ticket as stuck (§ Stuck / blocked). **Also diff the integration
+branch against its base** (`git diff --name-only <base>...HEAD`) **and confirm every file belongs to a ticket
+the run ledger's file index names** — a landed branch is never merged forward on trust alone (§ 4a's base
+check is the first guard, not the only one); a file outside the ledger means something unrelated rode in, and
+that stops here, before any PR opens, not after.
 b. **CONFLICT CHECK**, exit codes only — never dump merge output into this session. For each finished branch,
 verify it merges cleanly into current `master` (`git merge-tree` / dry-run merge), then test-merge **every
 pair** of finished branches against each other (`--name-only` for which files collide, never their content)
