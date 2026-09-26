@@ -347,7 +347,7 @@ describe('ReaderView', () => {
       resize: { viewport_width, viewport_height, frozen: ref(false) }
     })
 
-    const frame_full_el = wrapper.find('[data-testid="reader__frame-full"] div').element
+    const frame_full_el = wrapper.find('[data-testid="reader__frame-full-inner"]').element
     Object.defineProperty(frame_full_el, 'clientWidth', { value: 321, configurable: true })
 
     viewport_width.value = 1100
