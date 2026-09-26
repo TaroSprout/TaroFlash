@@ -62,6 +62,7 @@ export function usePageAudioSync(options: PageAudioSyncOptions): PageAudioSync {
     const target = spreadOfWord(word)
 
     if (!engaged) {
+      // Before the first play or turn, sync freely — settle/at-rest gating below only applies once playback has actually started.
       desired_spread.value = target
       return
     }
@@ -69,6 +70,7 @@ export function usePageAudioSync(options: PageAudioSyncOptions): PageAudioSync {
     if (!toValue(is_playing) || !toValue(at_rest)) return
 
     if (settle_target !== null) {
+      // A manual turn already seeked audio here; hold every other spread's follow-updates until the active word actually arrives, so the page can't bounce back to where audio still is (SETTLE_TIMEOUT_MS releases the hold if it never does).
       if (target !== settle_target) return
       settle_target = null
     }
