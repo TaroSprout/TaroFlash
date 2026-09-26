@@ -226,5 +226,5 @@ export function computePagination(input: PaginationInput): PaginationResult {
 }
 
 export function pageIndexOfWord(word_page: Map<number, number>, word_index: number): number {
-  return word_page.get(word_index) ?? 0
+  return word_page.get(word_index) ?? -1
 }

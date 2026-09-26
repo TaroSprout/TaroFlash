@@ -34,6 +34,8 @@ export function usePageStrip(options: PageStripOptions): PageStrip {
 
   let internal = false
   let sliding = false
+  let slide_target: number | null = null
+  let cancel_slide: (() => void) | undefined
   let idle_timer: ReturnType<typeof setTimeout> | undefined
   let prev_anchor = toValue(anchor_spread)
 
@@ -112,6 +114,13 @@ export function usePageStrip(options: PageStripOptions): PageStrip {
     const el = scroller.value
     if (!el) return
 
+    if (sliding && slide_target !== null) {
+      slide_target = clampSpread(slide_target + delta)
+      el.scrollLeft += delta * toValue(item_size)
+      runSlide(el, slide_target * toValue(item_size))
+      return
+    }
+
     internal = true
     el.scrollLeft += delta * toValue(item_size)
     requestAnimationFrame(() => (internal = false))
@@ -121,12 +130,21 @@ export function usePageStrip(options: PageStripOptions): PageStrip {
     if (sliding) return
 
     sliding = true
+    slide_target = spread
     internal = true
     el.style.scrollSnapType = 'none'
 
-    slideScroller(el, to, () => {
+    runSlide(el, to)
+  }
+
+  function runSlide(el: HTMLElement, to: number) {
+    cancel_slide?.()
+
+    cancel_slide = slideScroller(el, to, () => {
+      cancel_slide = undefined
       el.style.scrollSnapType = ''
-      displayed_spread.value = spread
+      if (slide_target !== null) displayed_spread.value = slide_target
+      slide_target = null
       sliding = false
       requestAnimationFrame(() => (internal = false))
     })

@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, toValue, watch } from 'vue'
+import { onBeforeUnmount, ref, toValue, watch, watchEffect } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
 
 const SETTLE_TIMEOUT_MS = 1000
@@ -21,6 +21,7 @@ export function usePageAudioSync(options: PageAudioSyncOptions): PageAudioSync {
   const { is_playing, active_word, at_rest, spreadOfWord, firstWordOfSpread, seekToWord } = options
 
   const desired_spread = ref(0)
+  const pending_turn = ref<number | null>(null)
 
   let engaged = false
   let settle_target: number | null = null
@@ -37,9 +38,19 @@ export function usePageAudioSync(options: PageAudioSyncOptions): PageAudioSync {
   function onTurn(spread: number) {
     engaged = true
     desired_spread.value = spread
+    pending_turn.value = spread
+
+    resolvePendingTurn()
+  }
+
+  function resolvePendingTurn() {
+    const spread = pending_turn.value
+    if (spread === null) return
 
     const word = firstWordOfSpread(spread)
     if (word === undefined) return
+
+    pending_turn.value = null
 
     beginSettle(spread)
     seekToWord(word)
@@ -71,6 +82,8 @@ export function usePageAudioSync(options: PageAudioSyncOptions): PageAudioSync {
   )
 
   watch(() => toValue(active_word), follow, { immediate: true, flush: 'post' })
+
+  watchEffect(resolvePendingTurn)
 
   return { desired_spread, onTurn }
 }

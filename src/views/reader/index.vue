@@ -207,7 +207,10 @@ function measureFrames() {
 
 function spreadOfWord(word_index: number): number {
   if (word_index < 0) return desired_spread.value
+
   const page_index = pageIndexOfWord(word_index)
+  if (page_index < 0) return desired_spread.value
+
   return spreadOfPage(page_index, two_page.value)
 }
 
