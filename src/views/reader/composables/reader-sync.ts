@@ -62,7 +62,6 @@ export function usePageAudioSync(options: PageAudioSyncOptions): PageAudioSync {
     const target = spreadOfWord(word)
 
     if (!engaged) {
-      // Before the first play or turn, sync freely — settle/at-rest gating below only applies once playback has actually started.
       desired_spread.value = target
       return
     }
