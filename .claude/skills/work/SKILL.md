@@ -132,6 +132,12 @@ a prose `## Blocked on` section. The user decides once, here, whether to work a 
 Every echoed row — worked or not — carries its title alongside the id, since the SELECT table already returned
 one; an id-plus-reason row makes the user ask for data you already have.
 
+**When the home tree's base (§ 0) isn't `master` — a shared release branch the run is landing onto — ask here
+whether the run's output is the default one-PR-per-ticket (§ 5) or a single PR for the whole run against that
+base** (§ Integration branch's single-PR mode). The per-ticket default assumes `master` as the landing target;
+a release branch is usually the thing being assembled, not merely built on top of, so the choice doesn't default
+silently either way.
+
 **After the user's OK, the run is uninterrupted until every branch is landed and tested** — no mid-run questions
 until the all-work-done checkpoint (§ 4c), the second and last pause. Everything that used to pause in between
 becomes a decision plus a ledger line (§ Run ledger) instead.
@@ -188,6 +194,13 @@ prep, before CI runs at all, before any review. The instant a `ticket-builder` r
 forward into the integration branch on the home tree (single-ticket or freeform run: `git checkout <branch>`
 directly, once the branch exists) — the merge-forward half of § 4d's dispatch-and-merge-forward mechanic, just
 starting here instead of at teardown.
+
+**Verify the branch's base before merging it forward, never on the builder's report alone.** `git merge-base
+<branch> <intended-base>` must equal `<intended-base>`'s current tip (`master`, the epic wave's base, or the
+release branch chosen at § THE GATE). A worktree-isolated builder can silently drift onto the wrong base — a
+stale branch instead of the one it was actually handed — and everything it commits then rides in on top of that
+base's own unrelated history. A mismatch means the branch isn't what it claims to be: stop, report it, and do
+not merge forward until the builder rebuilds on the correct base.
 
 **Ticket-based work also gets a status-only board move here** — dispatch `board-agent` with `LAND` (`id`),
 `run_in_background`, so the board tracks build status as it happens rather than only once a PR opens. This is
@@ -296,10 +309,17 @@ attribution is trivial (one branch owns every finding). The swarm and routing ar
 
 ### 5. ORCHESTRATE PRs
 
-Once § 4e comes back clean on every concern, turn every landed branch into a PR. One PR per ticket/instruction:
+Once § 4e comes back clean on every concern, turn every landed branch into a PR. One PR per ticket/instruction —
+unless the run chose single-PR mode at § THE GATE, in which case skip 5b/5c's per-branch conflict-check and
+stacking entirely and open one PR straight from the integration branch (§ Integration branch) against the
+chosen release-branch base:
 
 a. **READINESS CHECK** — if a builder reported it couldn't satisfy acceptance, or left `vp check` red it
-couldn't fix, don't open its PR; treat the ticket as stuck (§ Stuck / blocked).
+couldn't fix, don't open its PR; treat the ticket as stuck (§ Stuck / blocked). **Also diff the integration
+branch against its base** (`git diff --name-only <base>...HEAD`) **and confirm every file belongs to a ticket
+the run ledger's file index names** — a landed branch is never merged forward on trust alone (§ 4a's base
+check is the first guard, not the only one); a file outside the ledger means something unrelated rode in, and
+that stops here, before any PR opens, not after.
 b. **CONFLICT CHECK**, exit codes only — never dump merge output into this session. For each finished branch,
 verify it merges cleanly into current `master` (`git merge-tree` / dry-run merge), then test-merge **every
 pair** of finished branches against each other (`--name-only` for which files collide, never their content)
@@ -365,13 +385,19 @@ Nothing already in flight is disturbed.
 
 ## Integration branch
 
-**A run producing more than one PR builds `integration/<epic-or-run-slug>`**: `master` plus a merge of every
-live ticket branch. The home tree checks it out at step 0 and **stays on it for the rest of the run** — that is
-the tree the user's dev server points at, showing every wave at once. It is local only, never a PR, and
-re-derivable at any moment (re-merge `master` plus the live branches), so a merged PR or a new wave just
-rebuilds it. A merge that conflicts is a real cross-PR conflict, handled exactly as § 5b/c already handles one.
-A single-ticket or freeform run has no integration branch — the home tree tracks that one branch instead,
-checked out the moment the builder reports (§ 4a).
+**A run producing more than one PR builds `integration/<epic-or-run-slug>`**: its base — `master`, or the
+release branch chosen at § THE GATE — plus a merge of every live ticket branch. The home tree checks it out at
+step 0 and **stays on it for the rest of the run** — that is the tree the user's dev server points at, showing
+every wave at once. It is local only, never a PR, and re-derivable at any moment (re-merge the base plus the
+live branches), so a merged PR or a new wave just rebuilds it. A merge that conflicts is a real cross-PR
+conflict, handled exactly as § 5b/c already handles one. A single-ticket or freeform run has no integration
+branch — the home tree tracks that one branch instead, checked out the moment the builder reports (§ 4a).
+
+**Single-PR mode** (chosen at § THE GATE, for a run based on a release branch): the integration branch itself
+is the PR, opened once against that base once § 4e is clean, rather than one `prepare-pr` dispatch per ticket.
+Every ticket still gets its own build, review, and ledger row — only the PR count and § 5's per-branch
+conflict-check/stacking (§ 5b/c) collapse into the one already-merged integration branch. § 5e's `HANDOFF`
+still fires per ticket, all pointing at the same PR URL.
 
 ## PR feedback loop (post-PR)
 
