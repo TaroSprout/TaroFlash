@@ -155,7 +155,8 @@ export function useBookMeasure(options: BookMeasureOptions): BookMeasure {
   function clampParagraph(index: number): number {
     const total = paragraph_count.value
     if (total === 0) return 0
-    return Math.min(Math.max(index, 0), total - 1)
+    const safe_index = Number.isFinite(index) ? index : 0
+    return Math.min(Math.max(safe_index, 0), total - 1)
   }
 
   function restart() {
