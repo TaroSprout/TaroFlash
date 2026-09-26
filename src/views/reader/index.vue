@@ -368,6 +368,11 @@ watch([viewport_width, viewport_height], reflowFrames)
 </template>
 
 <style scoped>
+/**
+ * Feathers into an L-shaped fade by intersecting two gradient masks — WebKit has no
+ * `mask-composite: intersect`, so `-webkit-mask-composite: source-in` is its spelling of the same
+ * operation. Keep both properties; collapsing to one keyword breaks the feather on Safari.
+ */
 .reader-dock-surface {
   -webkit-mask-image:
     linear-gradient(to bottom, transparent, #000 var(--reader-feather)),
