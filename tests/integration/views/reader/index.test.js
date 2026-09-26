@@ -1,13 +1,24 @@
 import { describe, test, expect, vi, beforeEach } from 'vite-plus/test'
 import { shallowMount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import ReaderView from '@/views/reader/index.vue'
 import ReaderControls from '@/views/reader/controls.vue'
 import ReaderSettings from '@/views/reader/reader-settings.vue'
 import PageStrip from '@/views/reader/page-strip.vue'
 import BookMeasure from '@/views/reader/book-measure.vue'
 import ReaderSkeleton from '@/views/reader/skeleton.vue'
+import ReaderPage from '@/views/reader/page.vue'
 import TermSheet from '@/views/reader/term-popover/term-sheet.vue'
+
+const PageStripSlotStub = defineComponent({
+  setup(_props, { slots }) {
+    return () =>
+      h('div', {}, [
+        slots.default?.({ pageIndex: 0, primary: true }),
+        slots.default?.({ pageIndex: 1, primary: false })
+      ])
+  }
+})
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -16,13 +27,15 @@ const {
   mockUseReaderProgress,
   mockUsePagination,
   mockUsePageAudioSync,
-  mockUseWordSelection
+  mockUseWordSelection,
+  mockUseResizeFreeze
 } = vi.hoisted(() => ({
   mockUseLessonReader: vi.fn(),
   mockUseReaderProgress: vi.fn(),
   mockUsePagination: vi.fn(),
   mockUsePageAudioSync: vi.fn(),
-  mockUseWordSelection: vi.fn()
+  mockUseWordSelection: vi.fn(),
+  mockUseResizeFreeze: vi.fn()
 }))
 
 vi.mock('@/views/reader/composables/lesson-reader', () => ({
@@ -43,11 +56,7 @@ vi.mock('@/views/reader/composables/reader-sync', () => ({
 }))
 
 vi.mock('@/views/reader/composables/resize-freeze', () => ({
-  useResizeFreeze: () => ({
-    viewport_width: ref(1000),
-    viewport_height: ref(800),
-    frozen: ref(false)
-  })
+  useResizeFreeze: mockUseResizeFreeze
 }))
 
 vi.mock('@/composables/audio-reader/word-selection', () => ({
@@ -101,26 +110,36 @@ function mountReader({
   page_count = 3,
   pages = [],
   pageIndexOfWord = () => 0,
-  onTurn = vi.fn()
+  onTurn = vi.fn(),
+  stubs = {},
+  resize = { viewport_width: ref(1000), viewport_height: ref(800), frozen: ref(false) },
+  wordSelection
 } = {}) {
   mockUseLessonReader.mockReturnValue(reader)
   mockUseReaderProgress.mockReturnValue({ restored: ref(restored) })
+  mockUseResizeFreeze.mockReturnValue(resize)
   mockUsePagination.mockReturnValue({
     pages: ref(pages),
     page_count: ref(page_count),
+    anchor_page: ref(0),
     pageFootprints: ref([]),
     pageIndexOfWord
   })
   mockUsePageAudioSync.mockReturnValue({ desired_spread: ref(0), onTurn })
-  mockUseWordSelection.mockReturnValue({
-    onPointerDown: vi.fn(),
-    onPointerMove: vi.fn(),
-    onPointerUp: vi.fn(),
-    onPointerLeave: vi.fn(),
-    onPointerCancel: vi.fn()
-  })
+  mockUseWordSelection.mockReturnValue(
+    wordSelection ?? {
+      onPointerDown: vi.fn(),
+      onPointerMove: vi.fn(),
+      onPointerUp: vi.fn(),
+      onPointerLeave: vi.fn(),
+      onPointerCancel: vi.fn()
+    }
+  )
 
-  return shallowMount(ReaderView, { props: { collectionId: '1', lessonId: '2' } })
+  return shallowMount(ReaderView, {
+    props: { collectionId: '1', lessonId: '2' },
+    global: { stubs }
+  })
 }
 
 beforeEach(() => {
@@ -154,7 +173,11 @@ describe('ReaderView', () => {
   })
 
   test('hides the skeleton once the lesson is loaded, restored, and paginated', () => {
-    const wrapper = mountReader({ restored: true, page_count: 3 })
+    const wrapper = mountReader({
+      restored: true,
+      page_count: 3,
+      pages: [{ word_start_index: 0, word_end_index: 5, footprint: 0, empty: false }]
+    })
 
     expect(wrapper.findComponent(ReaderSkeleton).exists()).toBe(false)
   })
@@ -239,6 +262,13 @@ describe('ReaderView', () => {
     expect(spreadOfWord(5)).toBe(1)
   })
 
+  test('spreadOfWord returns the current desired_spread when the word maps to -1 (a miss)', () => {
+    mountReader({ pageIndexOfWord: () => -1 })
+
+    const { spreadOfWord } = mockUsePageAudioSync.mock.calls.at(-1)[0]
+    expect(spreadOfWord(5)).toBe(0)
+  })
+
   test("firstWordOfSpread reads the spread's primary page word_start_index — two pages per spread at this viewport", () => {
     mountReader({
       pages: [{ word_start_index: 0 }, { word_start_index: 6 }, { word_start_index: 12 }]
@@ -253,6 +283,113 @@ describe('ReaderView', () => {
 
     const { firstWordOfSpread } = mockUsePageAudioSync.mock.calls.at(-1)[0]
     expect(firstWordOfSpread(5)).toBeUndefined()
+  })
+
+  test('firstWordOfSpread skips an empty primary page and reads the secondary', () => {
+    mountReader({
+      pages: [
+        { word_start_index: 0, empty: true },
+        { word_start_index: 8, empty: false }
+      ]
+    })
+
+    const { firstWordOfSpread } = mockUsePageAudioSync.mock.calls.at(-1)[0]
+    expect(firstWordOfSpread(0)).toBe(8)
+  })
+
+  test('firstWordOfSpread is undefined when both the primary and secondary page are empty', () => {
+    mountReader({
+      pages: [
+        { word_start_index: 0, empty: true },
+        { word_start_index: 8, empty: true }
+      ]
+    })
+
+    const { firstWordOfSpread } = mockUsePageAudioSync.mock.calls.at(-1)[0]
+    expect(firstWordOfSpread(0)).toBeUndefined()
+  })
+
+  test('forwards viewport pointer events to the word-selection handlers', async () => {
+    const onPointerDown = vi.fn()
+    const onPointerMove = vi.fn()
+    const onPointerUp = vi.fn()
+    const onPointerLeave = vi.fn()
+    const onPointerCancel = vi.fn()
+
+    const wrapper = mountReader({
+      wordSelection: {
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
+        onPointerLeave,
+        onPointerCancel
+      }
+    })
+    const viewport = wrapper.find('[data-testid="reader__viewport"]')
+
+    await viewport.trigger('pointerdown')
+    await viewport.trigger('pointermove')
+    await viewport.trigger('pointerup')
+    await viewport.trigger('pointerleave')
+    await viewport.trigger('pointercancel')
+
+    expect(onPointerDown).toHaveBeenCalledOnce()
+    expect(onPointerMove).toHaveBeenCalledOnce()
+    expect(onPointerUp).toHaveBeenCalledOnce()
+    expect(onPointerLeave).toHaveBeenCalledOnce()
+    expect(onPointerCancel).toHaveBeenCalledOnce()
+  })
+
+  test('reflows the frame measurements once the viewport size settles', async () => {
+    const viewport_width = ref(1000)
+    const viewport_height = ref(800)
+    const wrapper = mountReader({
+      resize: { viewport_width, viewport_height, frozen: ref(false) }
+    })
+
+    const frame_full_el = wrapper.find('[data-testid="reader__frame-full-inner"]').element
+    Object.defineProperty(frame_full_el, 'clientWidth', { value: 321, configurable: true })
+
+    viewport_width.value = 1100
+    await flushPromises()
+
+    expect(wrapper.findComponent(BookMeasure).props('width')).toBe(321)
+  })
+
+  test('slicesForPage returns no slices for an empty page', () => {
+    const paragraphs = ref([
+      { index: 0, sentence: 's', start: 0, end: 1, words: [{ display: 'hi', start: 0, index: 3 }] }
+    ])
+    const wrapper = mountReader({
+      reader: makeReader({ paragraphs }),
+      pages: [
+        { word_start_index: 0, word_end_index: -1, footprint: 0, empty: true },
+        { word_start_index: 3, word_end_index: 3, footprint: 0, empty: false }
+      ],
+      stubs: { PageStrip: PageStripSlotStub }
+    })
+
+    const pages = wrapper.findAllComponents(ReaderPage)
+    expect(pages[0].props('slices')).toEqual([])
+  })
+
+  test('slicesForPage returns the real slice for a populated page', () => {
+    const paragraphs = ref([
+      { index: 0, sentence: 's', start: 0, end: 1, words: [{ display: 'hi', start: 0, index: 3 }] }
+    ])
+    const wrapper = mountReader({
+      reader: makeReader({ paragraphs }),
+      pages: [
+        { word_start_index: 0, word_end_index: -1, footprint: 0, empty: true },
+        { word_start_index: 3, word_end_index: 3, footprint: 0, empty: false }
+      ],
+      stubs: { PageStrip: PageStripSlotStub }
+    })
+
+    const pages = wrapper.findAllComponents(ReaderPage)
+    expect(pages[1].props('slices')).toEqual([
+      { paragraph_index: 0, translation: undefined, words: [{ display: 'hi', start: 0, index: 3 }] }
+    ])
   })
 
   test('matchRangeAt returns the matched span for a word carrying one', () => {

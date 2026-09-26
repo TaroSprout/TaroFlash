@@ -12,6 +12,7 @@ export type PageStripOptions = {
   spread_count: MaybeRefOrGetter<number>
   item_size: MaybeRefOrGetter<number>
   desired_spread: MaybeRefOrGetter<number>
+  anchor_spread: MaybeRefOrGetter<number>
   onTurn: (spread: number) => void
 }
 
@@ -22,7 +23,7 @@ export type PageStrip = {
 }
 
 export function usePageStrip(options: PageStripOptions): PageStrip {
-  const { scroller, spread_count, item_size, desired_spread, onTurn } = options
+  const { scroller, spread_count, item_size, desired_spread, anchor_spread, onTurn } = options
 
   const motion = useMotionStore()
 
@@ -33,7 +34,10 @@ export function usePageStrip(options: PageStripOptions): PageStrip {
 
   let internal = false
   let sliding = false
+  let slide_target: number | null = null
+  let cancel_slide: (() => void) | undefined
   let idle_timer: ReturnType<typeof setTimeout> | undefined
+  let prev_anchor = toValue(anchor_spread)
 
   const virtualizer = useVirtualizer<HTMLElement, HTMLElement>(
     computed(() => ({
@@ -96,16 +100,51 @@ export function usePageStrip(options: PageStripOptions): PageStrip {
     requestAnimationFrame(() => (internal = false))
   }
 
+  // Earlier spreads measured behind the reading position push every existing
+  // spread's index up by the same amount. Shift the scroll offset and the
+  // displayed index by that delta so the page under the reader stays put — the
+  // desired-spread watcher then sees a value it's already at and never moves.
+  function compensatePrepend(next: number) {
+    const delta = next - prev_anchor
+    prev_anchor = next
+    if (delta === 0) return
+
+    displayed_spread.value = clampSpread(displayed_spread.value + delta)
+
+    const el = scroller.value
+    if (!el) return
+
+    if (sliding && slide_target !== null) {
+      slide_target = clampSpread(slide_target + delta)
+      el.scrollLeft += delta * toValue(item_size)
+      runSlide(el, slide_target * toValue(item_size))
+      return
+    }
+
+    internal = true
+    el.scrollLeft += delta * toValue(item_size)
+    requestAnimationFrame(() => (internal = false))
+  }
+
   function slide(el: HTMLElement, spread: number, to: number) {
     if (sliding) return
 
     sliding = true
+    slide_target = spread
     internal = true
     el.style.scrollSnapType = 'none'
 
-    slideScroller(el, to, () => {
+    runSlide(el, to)
+  }
+
+  function runSlide(el: HTMLElement, to: number) {
+    cancel_slide?.()
+
+    cancel_slide = slideScroller(el, to, () => {
+      cancel_slide = undefined
       el.style.scrollSnapType = ''
-      displayed_spread.value = spread
+      if (slide_target !== null) displayed_spread.value = slide_target
+      slide_target = null
       sliding = false
       requestAnimationFrame(() => (internal = false))
     })
@@ -138,6 +177,8 @@ export function usePageStrip(options: PageStripOptions): PageStrip {
     displayed_spread.value = clamped
     onTurn(clamped)
   }
+
+  watch(() => toValue(anchor_spread), compensatePrepend)
 
   watch(() => toValue(desired_spread), goTo)
 

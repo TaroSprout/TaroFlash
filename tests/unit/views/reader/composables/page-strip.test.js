@@ -46,11 +46,13 @@ function withPageStrip({
   spread_count = 3,
   item_size = 300,
   desired_spread,
+  anchor_spread,
   onTurn = vi.fn()
 } = {}) {
   let result
   const scroller = shallowRef(scroller_el ?? makeScroller())
   const desired = desired_spread ?? ref(0)
+  const anchor = anchor_spread ?? ref(0)
 
   const host = createApp({
     setup() {
@@ -59,6 +61,7 @@ function withPageStrip({
         spread_count: () => spread_count,
         item_size: () => item_size,
         desired_spread: () => desired.value,
+        anchor_spread: () => anchor.value,
         onTurn
       })
       return () => null
@@ -70,7 +73,7 @@ function withPageStrip({
 
   vi.advanceTimersByTime(20)
 
-  return { ...result, scroller, desired, onTurn }
+  return { ...result, scroller, desired, anchor, onTurn }
 }
 
 describe('usePageStrip', () => {
@@ -179,6 +182,63 @@ describe('usePageStrip', () => {
 
       expect(mockSlideScroller).toHaveBeenCalledOnce()
       expect(displayed_spread.value).toBe(1)
+    })
+  })
+
+  describe('compensatePrepend', () => {
+    test('shifts displayed_spread and the scroll offset by the prepended delta when idle', async () => {
+      const desired = ref(0)
+      const anchor = ref(0)
+      const el = makeScroller(300)
+      const { displayed_spread, scroller } = withPageStrip({
+        scroller_el: el,
+        spread_count: 5,
+        item_size: 300,
+        desired_spread: desired,
+        anchor_spread: anchor
+      })
+
+      desired.value = 1
+      await nextTick()
+      expect(displayed_spread.value).toBe(1)
+
+      anchor.value = 2
+      await nextTick()
+
+      expect(displayed_spread.value).toBe(3)
+      expect(scroller.value.scrollLeft).toBe(2 * 300)
+    })
+
+    test('re-aims the in-flight slide target when a spread is prepended mid-slide', async () => {
+      let capturedOnDone
+      mockSlideScroller.mockImplementation((_el, _to, onDone) => {
+        capturedOnDone = onDone
+        return vi.fn()
+      })
+
+      const desired = ref(0)
+      const anchor = ref(0)
+      const el = makeScroller(0)
+      withPageStrip({
+        scroller_el: el,
+        spread_count: 5,
+        item_size: 300,
+        desired_spread: desired,
+        anchor_spread: anchor
+      })
+
+      desired.value = 1
+      await nextTick()
+      expect(mockSlideScroller).toHaveBeenCalledOnce()
+
+      anchor.value = 1
+      await nextTick()
+
+      expect(mockSlideScroller).toHaveBeenCalledTimes(2)
+      const [, to] = mockSlideScroller.mock.calls[1]
+      expect(to).toBe(2 * 300)
+
+      capturedOnDone()
     })
   })
 })

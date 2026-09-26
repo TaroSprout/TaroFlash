@@ -54,7 +54,7 @@ describe('usePageAudioSync', () => {
       expect(seekToWord).toHaveBeenCalledWith(20)
     })
 
-    test('does not seek when the spread has no first word', () => {
+    test('defers the seek when the spread has no first word yet', () => {
       let result
       const seekToWord = vi.fn()
       const host = createApp({
@@ -75,6 +75,36 @@ describe('usePageAudioSync', () => {
       result.onTurn(5)
 
       expect(seekToWord).not.toHaveBeenCalled()
+      host.unmount()
+    })
+
+    test('resolves the deferred turn once the fold measures the spread and its first word appears', async () => {
+      let result
+      const seekToWord = vi.fn()
+      const known_words = ref({})
+      const host = createApp({
+        setup() {
+          result = usePageAudioSync({
+            is_playing: () => false,
+            active_word: () => -1,
+            at_rest: () => true,
+            spreadOfWord,
+            firstWordOfSpread: (spread) => known_words.value[spread],
+            seekToWord
+          })
+          return () => null
+        }
+      })
+      host.mount(document.createElement('div'))
+
+      result.onTurn(5)
+      expect(seekToWord).not.toHaveBeenCalled()
+
+      known_words.value = { ...known_words.value, 5: 50 }
+      await nextTick()
+
+      expect(seekToWord).toHaveBeenCalledWith(50)
+      expect(result.desired_spread.value).toBe(5)
       host.unmount()
     })
   })

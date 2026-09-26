@@ -6,21 +6,23 @@ import { useBookMeasure } from './composables/book-measure'
 type BookMeasureProps = {
   paragraphs: SentenceWords[]
   width: number
+  anchorParagraph: number
 }
 
-const { paragraphs, width } = defineProps<BookMeasureProps>()
+const { paragraphs, width, anchorParagraph } = defineProps<BookMeasureProps>()
 
 const measure_host = useTemplateRef<HTMLElement>('measure')
 const band_host = useTemplateRef<HTMLElement>('band')
 
-const { words, band_heights, rendered_paragraphs, bandHeightOf } = useBookMeasure({
+const { words, render_paragraphs, fully_measured, bandHeightOf } = useBookMeasure({
   measure_host,
   band_host,
   paragraphs: () => paragraphs,
-  width: () => width
+  width: () => width,
+  anchor_paragraph: () => anchorParagraph
 })
 
-defineExpose({ words, band_heights, bandHeightOf })
+defineExpose({ words, fully_measured, bandHeightOf })
 </script>
 
 <template>
@@ -37,7 +39,7 @@ defineExpose({ words, band_heights, bandHeightOf })
       :style="{ width: `${width}px` }"
     >
       <div
-        v-for="paragraph in rendered_paragraphs"
+        v-for="paragraph in render_paragraphs"
         :key="paragraph.index"
         v-memo="[paragraph.index]"
         :data-paragraph="paragraph.index"
@@ -62,7 +64,7 @@ defineExpose({ words, band_heights, bandHeightOf })
       class="fixed top-0 left-0 -z-10"
       :style="{ width: `${width}px` }"
     >
-      <template v-for="paragraph in rendered_paragraphs" :key="paragraph.index">
+      <template v-for="paragraph in render_paragraphs" :key="paragraph.index">
         <div
           v-if="paragraph.translation"
           v-memo="[paragraph.index]"

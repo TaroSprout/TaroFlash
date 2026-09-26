@@ -87,6 +87,16 @@ const two_page = computed(() => isTwoPage(viewport_width.value))
 const page_width = computed(() => pageWidth(viewport_width.value, two_page.value))
 const split_cap = computed(() => Math.round(viewport_height.value * SPLIT_CAP_RATIO))
 
+// The reading position drives both what gets measured first and where pages
+// assemble from: the resume/active word, and its paragraph's slot in the list.
+const anchor_word = computed(() => (active_word.value >= 0 ? active_word.value : 0))
+const anchor_paragraph = computed(() => {
+  const position = paragraphs.value.findIndex((p) =>
+    p.words.some((w) => w.index === anchor_word.value)
+  )
+  return position < 0 ? 0 : position
+})
+
 // Two-page primary keeps only its outer margin (the gutter runs to the spine); a
 // single page is symmetric. Frames measure at the primary column so the wrap
 // width matches what the rendered page lays words out in.
@@ -97,8 +107,9 @@ const primary_page_class = computed(() => `${PAGE_TOP} ${primary_x.value}`)
 const frame_reduced_class = computed(() => `${PAGE_TOP} ${RESERVE_CONTROLS} ${primary_x.value}`)
 const frame_full_class = computed(() => `${PAGE_TOP} ${primary_x.value}`)
 
-const { pages, page_count, pageFootprints, pageIndexOfWord } = usePagination({
+const { pages, page_count, anchor_page, pageFootprints, pageIndexOfWord } = usePagination({
   words: () => measure.value?.words ?? [],
+  anchor_word: () => anchor_word.value,
   bandHeightOf: (paragraph_index) => measure.value?.bandHeightOf(paragraph_index) ?? 0,
   split_mode: true,
   two_page: () => two_page.value,
@@ -128,6 +139,10 @@ const selectionApi = useWordSelection({
 
 const spread_count = computed(() => spreadCount(page_count.value, two_page.value))
 
+// Where the resume spread sits in the strip. It starts at 0 and climbs as earlier
+// pages measure in behind it; the strip compensates its scroll by the same climb.
+const anchor_spread = computed(() => spreadOfPage(anchor_page.value, two_page.value))
+
 const primary_page_index = computed(() =>
   two_page.value ? desired_spread.value * 2 : desired_spread.value
 )
@@ -149,9 +164,20 @@ const active_overflowing = computed(() => {
   return (measure.value?.bandHeightOf(paragraph.index) ?? 0) > current_footprint.value
 })
 
-// Veil the reader until the lesson is in, its resume point applied, and the first
-// pages have been laid out — so the reveal shows a finished page, not a reflow.
-const show_skeleton = computed(() => !lesson.value || !restored.value || page_count.value === 0)
+// The resume page is ready the instant the fold places the reading word on a
+// laid-out page — no wait for the rest of the book, wherever the resume falls.
+const resume_ready = computed(() =>
+  pages.value.some(
+    (page) =>
+      !page.empty &&
+      anchor_word.value >= page.word_start_index &&
+      anchor_word.value <= page.word_end_index
+  )
+)
+
+// Veil the reader until the lesson is in, its resume point applied, and the resume
+// page laid out — so the reveal shows a finished page, not a reflow.
+const show_skeleton = computed(() => !lesson.value || !restored.value || !resume_ready.value)
 
 onMounted(() => {
   frame_ro = new ResizeObserver(onFrameResize)
@@ -181,18 +207,26 @@ function measureFrames() {
 
 function spreadOfWord(word_index: number): number {
   if (word_index < 0) return desired_spread.value
+
   const page_index = pageIndexOfWord(word_index)
+  if (page_index < 0) return desired_spread.value
+
   return spreadOfPage(page_index, two_page.value)
 }
 
 function firstWordOfSpread(spread: number): number | undefined {
   const page_index = two_page.value ? spread * 2 : spread
-  return pages.value[page_index]?.word_start_index
+
+  const primary = pages.value[page_index]
+  if (primary && !primary.empty) return primary.word_start_index
+
+  const secondary = pages.value[page_index + 1]
+  return secondary && !secondary.empty ? secondary.word_start_index : undefined
 }
 
 function slicesForPage(page_index: number) {
   const page = pages.value[page_index]
-  if (!page) return []
+  if (!page || page.empty) return []
   return pageSlices(paragraphs.value, page.word_start_index, page.word_end_index)
 }
 
@@ -237,10 +271,15 @@ watch([viewport_width, viewport_height], reflowFrames)
         :class="frame_full_class"
         :style="{ width: `${page_width}px` }"
       >
-        <div ref="frame_full" class="min-h-0 flex-1"></div>
+        <div ref="frame_full" data-testid="reader__frame-full-inner" class="min-h-0 flex-1"></div>
       </div>
 
-      <book-measure ref="measure" :paragraphs="paragraphs" :width="measure_width" />
+      <book-measure
+        ref="measure"
+        :paragraphs="paragraphs"
+        :width="measure_width"
+        :anchor-paragraph="anchor_paragraph"
+      />
 
       <div ref="surface" data-testid="reader__surface" class="absolute inset-0">
         <page-strip
@@ -249,6 +288,7 @@ watch([viewport_width, viewport_height], reflowFrames)
           :two-page="two_page"
           :viewport-width="viewport_width"
           :spread="desired_spread"
+          :anchor-spread="anchor_spread"
           @turn="onTurn"
         >
           <template #default="{ pageIndex, primary }">
@@ -328,6 +368,11 @@ watch([viewport_width, viewport_height], reflowFrames)
 </template>
 
 <style scoped>
+/**
+ * Feathers into an L-shaped fade by intersecting two gradient masks — WebKit has no
+ * `mask-composite: intersect`, so `-webkit-mask-composite: source-in` is its spelling of the same
+ * operation. Keep both properties; collapsing to one keyword breaks the feather on Safari.
+ */
 .reader-dock-surface {
   -webkit-mask-image:
     linear-gradient(to bottom, transparent, #000 var(--reader-feather)),

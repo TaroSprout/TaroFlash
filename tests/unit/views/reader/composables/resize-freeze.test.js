@@ -109,16 +109,57 @@ describe('useResizeFreeze', () => {
     expect(mockPrimeFreeze).not.toHaveBeenCalled()
   })
 
-  describe('frozen span', () => {
-    test('flips true on the first real change and false only after settle completes', async () => {
+  test('a height change commits live immediately, never freezing', () => {
+    const viewport_el = makeEl(500, 800)
+    const { viewport_width, viewport_height, frozen } = withResizeFreeze({ viewport_el })
+    const observer = FakeResizeObserver.instances.at(-1)
+
+    observer.cb()
+
+    Object.defineProperty(viewport_el, 'clientHeight', { value: 900, configurable: true })
+    observer.cb()
+
+    expect(viewport_width.value).toBe(500)
+    expect(viewport_height.value).toBe(900)
+    expect(frozen.value).toBe(false)
+    expect(mockPrimeFreeze).not.toHaveBeenCalled()
+  })
+
+  describe('a single width-only event', () => {
+    test('commits live after the drag window, without freezing', () => {
       const viewport_el = makeEl(500, 800)
-      const { frozen } = withResizeFreeze({ viewport_el })
+      const { viewport_width, frozen } = withResizeFreeze({ viewport_el })
       const observer = FakeResizeObserver.instances.at(-1)
 
       observer.cb()
-      expect(frozen.value).toBe(false)
 
       Object.defineProperty(viewport_el, 'clientWidth', { value: 600, configurable: true })
+      observer.cb()
+
+      expect(frozen.value).toBe(false)
+      expect(viewport_width.value).toBe(500)
+
+      vi.advanceTimersByTime(150)
+
+      expect(frozen.value).toBe(false)
+      expect(viewport_width.value).toBe(600)
+      expect(mockPrimeFreeze).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('two or more successive width-only events', () => {
+    test('freezes on the second event within the drag window, then settles', async () => {
+      const viewport_el = makeEl(500, 800)
+      const { viewport_width, frozen } = withResizeFreeze({ viewport_el })
+      const observer = FakeResizeObserver.instances.at(-1)
+
+      observer.cb()
+
+      Object.defineProperty(viewport_el, 'clientWidth', { value: 600, configurable: true })
+      observer.cb()
+      expect(frozen.value).toBe(false)
+
+      Object.defineProperty(viewport_el, 'clientWidth', { value: 650, configurable: true })
       observer.cb()
 
       expect(frozen.value).toBe(true)
@@ -128,34 +169,55 @@ describe('useResizeFreeze', () => {
       await flushPromises()
 
       expect(frozen.value).toBe(false)
+      expect(viewport_width.value).toBe(650)
       expect(mockSettleFreeze).toHaveBeenCalledOnce()
     })
-  })
 
-  describe('coalescing rapid resizes', () => {
-    test('several callbacks inside the settle window collapse into one settle', async () => {
+    test('a further width-only event while frozen holds the frame and re-settles', async () => {
       const viewport_el = makeEl(500, 800)
       const { viewport_width } = withResizeFreeze({ viewport_el })
       const observer = FakeResizeObserver.instances.at(-1)
 
       observer.cb()
-
-      Object.defineProperty(viewport_el, 'clientWidth', { value: 550, configurable: true })
-      observer.cb()
-      vi.advanceTimersByTime(150)
-
       Object.defineProperty(viewport_el, 'clientWidth', { value: 600, configurable: true })
       observer.cb()
-      vi.advanceTimersByTime(150)
-
       Object.defineProperty(viewport_el, 'clientWidth', { value: 650, configurable: true })
+      observer.cb()
+
+      Object.defineProperty(viewport_el, 'clientWidth', { value: 700, configurable: true })
       observer.cb()
 
       vi.advanceTimersByTime(300)
       await flushPromises()
 
-      expect(viewport_width.value).toBe(650)
+      expect(viewport_width.value).toBe(700)
       expect(mockSettleFreeze).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('reduced motion', () => {
+    test('a width-drag still toggles frozen, but calls no blur helpers', async () => {
+      mockFreezeMotionSafe.mockReturnValue(false)
+
+      const viewport_el = makeEl(500, 800)
+      const { frozen } = withResizeFreeze({ viewport_el })
+      const observer = FakeResizeObserver.instances.at(-1)
+
+      observer.cb()
+      Object.defineProperty(viewport_el, 'clientWidth', { value: 600, configurable: true })
+      observer.cb()
+      Object.defineProperty(viewport_el, 'clientWidth', { value: 650, configurable: true })
+      observer.cb()
+
+      expect(frozen.value).toBe(true)
+      expect(mockPrimeFreeze).not.toHaveBeenCalled()
+      expect(mockScaleFreeze).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(300)
+      await flushPromises()
+
+      expect(frozen.value).toBe(false)
+      expect(mockSettleFreeze).not.toHaveBeenCalled()
     })
   })
 
@@ -166,6 +228,8 @@ describe('useResizeFreeze', () => {
 
     observer.cb()
     Object.defineProperty(viewport_el, 'clientWidth', { value: 600, configurable: true })
+    observer.cb()
+    Object.defineProperty(viewport_el, 'clientWidth', { value: 650, configurable: true })
     observer.cb()
 
     app.unmount()

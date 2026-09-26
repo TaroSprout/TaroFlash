@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vite-plus/test'
+import { describe, test, expect, vi } from 'vite-plus/test'
 import { shallowMount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import BookMeasure from '@/views/reader/book-measure.vue'
@@ -30,7 +30,7 @@ async function tick() {
 describe('BookMeasure', () => {
   test('renders a hidden, non-interactive measurement scratchpad', () => {
     const wrapper = shallowMount(BookMeasure, {
-      props: { paragraphs: [paragraph(0)], width: 400 }
+      props: { paragraphs: [paragraph(0)], width: 400, anchorParagraph: 0 }
     })
 
     const root = wrapper.find('[data-testid="book-measure"]')
@@ -41,7 +41,7 @@ describe('BookMeasure', () => {
 
   test('the words host is sized to the width prop', () => {
     const wrapper = shallowMount(BookMeasure, {
-      props: { paragraphs: [paragraph(0)], width: 400 }
+      props: { paragraphs: [paragraph(0)], width: 400, anchorParagraph: 0 }
     })
 
     expect(wrapper.find('[data-testid="book-measure__words"]').attributes('style')).toContain(
@@ -51,15 +51,18 @@ describe('BookMeasure', () => {
 
   test('progressively renders paragraph words while measuring, then clears the scratchpad once settled', async () => {
     const wrapper = shallowMount(BookMeasure, {
-      props: { paragraphs: [paragraph(0)], width: 400 }
+      props: { paragraphs: [paragraph(0)], width: 400, anchorParagraph: 0 }
     })
 
-    await nextTick()
-    await tick()
-    expect(wrapper.findAll('[data-word-index]').length).toBeGreaterThan(0)
+    await vi.waitFor(async () => {
+      await tick()
+      expect(wrapper.findAll('[data-word-index]').length).toBeGreaterThan(0)
+    })
 
-    await tick()
-    expect(wrapper.findAll('[data-word-index]')).toHaveLength(0)
+    await vi.waitFor(async () => {
+      await tick()
+      expect(wrapper.findAll('[data-word-index]')).toHaveLength(0)
+    })
   })
 
   test('renders a translation band only for a paragraph carrying one', async () => {
@@ -69,12 +72,12 @@ describe('BookMeasure', () => {
           paragraph(0, { translation: 'hello' }),
           paragraph(1, { translation: undefined })
         ],
-        width: 400
+        width: 400,
+        anchorParagraph: 0
       }
     })
 
     await nextTick()
-    await tick()
 
     const bands = wrapper.findAll('[data-band-index]')
     expect(bands.map((b) => b.attributes('data-band-index'))).toEqual(['0'])
@@ -92,12 +95,12 @@ describe('BookMeasure', () => {
             ]
           })
         ],
-        width: 400
+        width: 400,
+        anchorParagraph: 0
       }
     })
 
     await nextTick()
-    await tick()
 
     const words = wrapper.findAll('[data-word-index]')
     expect(words[0].find('rt').exists()).toBe(true)
@@ -106,7 +109,9 @@ describe('BookMeasure', () => {
   })
 
   test('an empty paragraph list renders no words and no bands', async () => {
-    const wrapper = shallowMount(BookMeasure, { props: { paragraphs: [], width: 400 } })
+    const wrapper = shallowMount(BookMeasure, {
+      props: { paragraphs: [], width: 400, anchorParagraph: 0 }
+    })
 
     await frame()
     await frame()

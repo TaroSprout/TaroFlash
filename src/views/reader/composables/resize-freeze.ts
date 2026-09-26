@@ -8,6 +8,7 @@ import {
 } from '@/utils/animations/reader-freeze'
 
 const SETTLE_MS = 300
+const DRAG_WINDOW_MS = 150
 
 export type ResizeFreezeOptions = {
   viewport: Readonly<ShallowRef<HTMLElement | null>>
@@ -28,6 +29,10 @@ export function useResizeFreeze(options: ResizeFreezeOptions): ResizeFreeze {
   const frozen = ref(false)
 
   let settle_timer: ReturnType<typeof setTimeout> | undefined
+  let drag_timer: ReturnType<typeof setTimeout> | undefined
+  let width_pending = false
+  let pending_width = 0
+  let pending_height = 0
   let observer: ResizeObserver | undefined
 
   onMounted(() => {
@@ -37,6 +42,7 @@ export function useResizeFreeze(options: ResizeFreezeOptions): ResizeFreeze {
 
   onBeforeUnmount(() => {
     clearTimeout(settle_timer)
+    clearTimeout(drag_timer)
     observer?.disconnect()
   })
 
@@ -50,7 +56,32 @@ export function useResizeFreeze(options: ResizeFreezeOptions): ResizeFreeze {
     if (viewport_width.value === 0) return commit(w, h)
     if (w === viewport_width.value && h === viewport_height.value) return
 
-    if (!frozen.value) beginFreeze()
+    if (frozen.value) return holdFrame(w, h)
+    if (h !== viewport_height.value) return commit(w, h)
+
+    onWidthOnly(w, h)
+  }
+
+  function onWidthOnly(w: number, h: number) {
+    if (width_pending) {
+      clearTimeout(drag_timer)
+      width_pending = false
+
+      beginFreeze()
+      return holdFrame(w, h)
+    }
+
+    width_pending = true
+    pending_width = w
+    pending_height = h
+
+    drag_timer = setTimeout(() => {
+      width_pending = false
+      commit(pending_width, pending_height)
+    }, DRAG_WINDOW_MS)
+  }
+
+  function holdFrame(w: number, h: number) {
     scaleFrame(w, h)
 
     clearTimeout(settle_timer)

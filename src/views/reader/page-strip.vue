@@ -8,13 +8,14 @@ type PageStripProps = {
   twoPage: boolean
   viewportWidth: number
   spread: number
+  anchorSpread: number
 }
 
 type PageStripEmits = {
   turn: [spread: number]
 }
 
-const { pageCount, twoPage, viewportWidth, spread } = defineProps<PageStripProps>()
+const { pageCount, twoPage, viewportWidth, spread, anchorSpread } = defineProps<PageStripProps>()
 
 const emit = defineEmits<PageStripEmits>()
 
@@ -32,6 +33,7 @@ const { virtualizer, at_rest } = usePageStrip({
   spread_count: () => spread_count.value,
   item_size: () => viewportWidth,
   desired_spread: () => spread,
+  anchor_spread: () => anchorSpread,
   onTurn: (target) => emit('turn', target)
 })
 

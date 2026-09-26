@@ -1,39 +1,16 @@
 import { describe, test, expect, afterEach, vi } from 'vite-plus/test'
 import { createApp, nextTick, ref, shallowRef } from 'vue'
 import { useBookMeasure } from '@/views/reader/composables/book-measure'
+import { computePagination } from '@/utils/reader/pagination'
 
-let raf_queue = []
-let raf_id = 0
-
-vi.stubGlobal(
-  'requestAnimationFrame',
-  vi.fn((cb) => {
-    raf_id += 1
-    raf_queue.push({ id: raf_id, cb })
-    return raf_id
-  })
-)
-vi.stubGlobal(
-  'cancelAnimationFrame',
-  vi.fn((id) => {
-    raf_queue = raf_queue.filter((entry) => entry.id !== id)
-  })
-)
-
-function flushRaf() {
-  const entry = raf_queue.shift()
-  if (!entry) throw new Error('no pending rAF tick to flush')
-  entry.cb()
-}
+vi.useFakeTimers()
 
 let app = null
 
 afterEach(() => {
   app?.unmount()
   app = null
-  raf_queue = []
-  raf_id = 0
-  vi.clearAllMocks()
+  vi.clearAllTimers()
 })
 
 function paragraph(index, word_count) {
@@ -51,16 +28,17 @@ function buildMeasureHost(paragraphs) {
   for (const p of paragraphs) {
     const p_el = document.createElement('div')
     p_el.setAttribute('data-paragraph', String(p.index))
+    p_el.getBoundingClientRect = () => new DOMRect(0, p.index * 200, 0, p.words.length * 10)
     for (const w of p.words) {
       const w_el = document.createElement('span')
       w_el.dataset.wordIndex = String(w.index)
       w_el.dataset.paragraphIndex = String(p.index)
-      w_el.getBoundingClientRect = () => new DOMRect(0, w.index * 10, 10, 10)
+      w_el.getBoundingClientRect = () =>
+        new DOMRect(0, p.index * 200 + w.index * 10, 10, 10 + (w.index * 10 + 10))
       p_el.appendChild(w_el)
     }
     host.appendChild(p_el)
   }
-  host.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0)
   return host
 }
 
@@ -75,16 +53,21 @@ function buildBandHost(bands) {
   return host
 }
 
-function withBookMeasure({ paragraphs, width = 300, measure_host, band_host }) {
+function withBookMeasure({ paragraphs, width, measure_host, band_host, anchor_paragraph }) {
   let result
+
+  const paragraphs_ref = paragraphs
+  const width_ref = width
+  const anchor_ref = anchor_paragraph ?? ref(0)
 
   const host = createApp({
     setup() {
       result = useBookMeasure({
         measure_host: measure_host ?? shallowRef(null),
         band_host: band_host ?? shallowRef(null),
-        paragraphs: () => paragraphs.value,
-        width: () => width
+        paragraphs: () => paragraphs_ref.value,
+        width: () => width_ref.value,
+        anchor_paragraph: () => anchor_ref.value
       })
       return () => null
     }
@@ -93,129 +76,339 @@ function withBookMeasure({ paragraphs, width = 300, measure_host, band_host }) {
   host.mount(document.createElement('div'))
   app = host
 
-  return result
+  return { ...result, paragraphs: paragraphs_ref, width: width_ref, anchor_paragraph: anchor_ref }
+}
+
+/** Fully drain the idle-tick queue — one paragraph measures per fallback tick. */
+async function drain(steps = 10) {
+  for (let i = 0; i < steps; i++) {
+    vi.advanceTimersByTime(16)
+    await nextTick()
+  }
 }
 
 describe('useBookMeasure', () => {
-  test('chunks the measure across rAF ticks by word budget, not all at once', () => {
-    const paragraphs = ref([paragraph(0, 150), paragraph(1, 100), paragraph(2, 100)])
-    const measure_dom = buildMeasureHost(paragraphs.value)
-    const measure_host = shallowRef(measure_dom)
+  test('words is empty before anything has measured', () => {
+    const paragraphs = ref([paragraph(0, 3)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
 
-    const { rendered_count, words } = withBookMeasure({ paragraphs, measure_host })
+    const { words } = withBookMeasure({ paragraphs, width, measure_host })
 
-    expect(rendered_count.value).toBe(0)
-
-    flushRaf()
-    expect(rendered_count.value).toBe(2)
     expect(words.value).toEqual([])
-
-    flushRaf()
-    expect(rendered_count.value).toBe(3)
-
-    flushRaf()
-    expect(words.value.length).toBe(350)
   })
 
-  test('rendered_paragraphs tracks the slice up to rendered_count', () => {
-    const paragraphs = ref([paragraph(0, 150), paragraph(1, 100), paragraph(2, 100)])
+  test('render_paragraphs exposes every paragraph while measurement is incomplete', () => {
+    const paragraphs = ref([paragraph(0, 3), paragraph(1, 2)])
+    const width = ref(300)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
 
-    const { rendered_paragraphs } = withBookMeasure({ paragraphs, measure_host })
+    const { render_paragraphs } = withBookMeasure({ paragraphs, width, measure_host })
 
-    expect(rendered_paragraphs.value).toEqual([])
-
-    flushRaf()
-    expect(rendered_paragraphs.value.map((p) => p.index)).toEqual([0, 1])
+    expect(render_paragraphs.value.map((p) => p.index)).toEqual([0, 1])
   })
 
-  test('finalize resets rendered_count to 0 once every paragraph is measured', () => {
-    const paragraphs = ref([paragraph(0, 10), paragraph(1, 10)])
+  test('render_paragraphs empties once every paragraph is measured', async () => {
+    const paragraphs = ref([paragraph(0, 2), paragraph(1, 2)])
+    const width = ref(300)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
 
-    const { rendered_count } = withBookMeasure({ paragraphs, measure_host })
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host
+    })
 
-    flushRaf()
-    expect(rendered_count.value).toBe(2)
+    await drain()
 
-    flushRaf()
-    expect(rendered_count.value).toBe(0)
+    expect(fully_measured.value).toBe(true)
+    expect(render_paragraphs.value).toEqual([])
   })
 
-  test('bandHeightOf reads the measured band heights after finalize', () => {
-    const paragraphs = ref([paragraph(0, 5)])
+  test('fully_measured stays false while paragraphs remain unmeasured', async () => {
+    const paragraphs = ref([paragraph(0, 2), paragraph(1, 2)])
+    const width = ref(300)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
-    const band_host = shallowRef(
-      buildBandHost([
-        [0, 42],
-        [1, 18]
-      ])
-    )
 
-    const { bandHeightOf } = withBookMeasure({ paragraphs, measure_host, band_host })
+    const { fully_measured } = withBookMeasure({ paragraphs, width, measure_host })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(fully_measured.value).toBe(false)
+  })
+
+  test('words stitches the measured paragraphs once fully measured', async () => {
+    const paragraphs = ref([paragraph(0, 2), paragraph(1, 2)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+
+    const { words } = withBookMeasure({ paragraphs, width, measure_host })
+
+    await drain()
+
+    expect(words.value).toHaveLength(4)
+    expect(words.value.map((w) => w.index)).toEqual([0, 1, 0, 1])
+  })
+
+  test('bandHeightOf reads the measured band heights after finalize', async () => {
+    const paragraphs = ref([paragraph(0, 2)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const band_host = shallowRef(buildBandHost([[0, 42]]))
+
+    const { bandHeightOf } = withBookMeasure({ paragraphs, width, measure_host, band_host })
 
     expect(bandHeightOf(0)).toBe(0)
 
-    flushRaf()
-    flushRaf()
+    await drain()
 
     expect(bandHeightOf(0)).toBe(42)
-    expect(bandHeightOf(1)).toBe(18)
   })
 
-  test('bandHeightOf falls back to 0 for a paragraph with no measured band', () => {
-    const paragraphs = ref([paragraph(0, 5)])
+  test('bandHeightOf falls back to 0 for a paragraph with no measured band', async () => {
+    const paragraphs = ref([paragraph(0, 2)])
+    const width = ref(300)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
 
-    const { bandHeightOf } = withBookMeasure({ paragraphs, measure_host })
+    const { bandHeightOf } = withBookMeasure({ paragraphs, width, measure_host })
 
-    flushRaf()
-    flushRaf()
+    await drain()
 
     expect(bandHeightOf(99)).toBe(0)
   })
 
-  test('is empty and stops immediately when width is not positive', () => {
-    const paragraphs = ref([paragraph(0, 10)])
+  test('is empty and schedules nothing when width is not positive', async () => {
+    const paragraphs = ref([paragraph(0, 2)])
+    const width = ref(0)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
 
-    const { words, band_heights } = withBookMeasure({ paragraphs, measure_host, width: 0 })
+    const { words, fully_measured } = withBookMeasure({ paragraphs, width, measure_host })
 
-    flushRaf()
+    await drain(2)
 
     expect(words.value).toEqual([])
-    expect(band_heights.value.size).toBe(0)
-    expect(raf_queue.length).toBe(0)
+    expect(fully_measured.value).toBe(false)
   })
 
-  test('restarts the measure when paragraphs change', async () => {
-    const paragraphs = ref([paragraph(0, 10)])
+  test('ripples measurement outward from the anchor paragraph first', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(2)
 
-    const { rendered_count } = withBookMeasure({ paragraphs, measure_host })
+    const { render_paragraphs } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
 
-    flushRaf()
-    flushRaf()
-    expect(rendered_count.value).toBe(0)
-
-    const next_paragraphs = [paragraph(0, 10), paragraph(1, 10)]
-    measure_host.value = buildMeasureHost(next_paragraphs)
-    paragraphs.value = next_paragraphs
+    vi.advanceTimersByTime(16)
     await nextTick()
 
-    expect(rendered_count.value).toBe(0)
-    expect(raf_queue.length).toBeGreaterThan(0)
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(2)
   })
 
-  test('onBeforeUnmount cancels the pending rAF tick', () => {
-    const paragraphs = ref([paragraph(0, 10)])
+  test('coalesces a NaN anchor paragraph to 0 and still completes measurement', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(NaN)
+
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(0)
+
+    await drain()
+
+    expect(fully_measured.value).toBe(true)
+  })
+
+  test('coalesces an undefined anchor paragraph to 0 and still completes measurement', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(undefined)
+
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(0)
+
+    await drain()
+
+    expect(fully_measured.value).toBe(true)
+  })
+
+  test('a valid numeric anchor paragraph still completes measurement, unchanged by the NaN guard', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(2)
+
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(2)
+
+    await drain()
+
+    expect(fully_measured.value).toBe(true)
+  })
+
+  test('stitches from the nearest already-measured paragraph when the anchor moves past it', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(0)
+
+    const { words } = withBookMeasure({ paragraphs, width, measure_host, anchor_paragraph })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    anchor_paragraph.value = 2
+    await nextTick()
+
+    expect(words.value.map((w) => w.paragraph_index)).toEqual([0])
+  })
+
+  test('onBeforeUnmount cancels the pending idle tick', async () => {
+    const paragraphs = ref([paragraph(0, 2)])
+    const width = ref(300)
     const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
 
-    withBookMeasure({ paragraphs, measure_host })
-    expect(raf_queue.length).toBe(1)
+    withBookMeasure({ paragraphs, width, measure_host })
+
+    const cleared = vi.getTimerCount()
+    expect(cleared).toBeGreaterThan(0)
 
     app.unmount()
+    app = null
 
-    expect(raf_queue.length).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  describe('cache behaviour', () => {
+    test('a repeat at the same column width measures nothing — restores from cache', async () => {
+      const paragraphs = ref([paragraph(0, 2), paragraph(1, 2)])
+      const width = ref(300)
+      const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+
+      const { fully_measured, words } = withBookMeasure({ paragraphs, width, measure_host })
+      await drain()
+      expect(fully_measured.value).toBe(true)
+      const first_pass_words = words.value
+
+      width.value = 400
+      await nextTick()
+      await drain()
+      expect(fully_measured.value).toBe(true)
+
+      width.value = 300
+      await nextTick()
+
+      expect(fully_measured.value).toBe(true)
+      expect(vi.getTimerCount()).toBe(0)
+      expect(words.value).toEqual(first_pass_words)
+    })
+
+    test('a change unrelated to column width reuses the cache — no re-measure is scheduled', async () => {
+      const paragraphs = ref([paragraph(0, 2), paragraph(1, 2)])
+      const width = ref(300)
+      const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+      const anchor_paragraph = ref(0)
+
+      const { fully_measured } = withBookMeasure({
+        paragraphs,
+        width,
+        measure_host,
+        anchor_paragraph
+      })
+      await drain()
+      expect(fully_measured.value).toBe(true)
+
+      anchor_paragraph.value = 1
+      await nextTick()
+
+      expect(fully_measured.value).toBe(true)
+      expect(vi.getTimerCount()).toBe(0)
+    })
+
+    test('a paragraphs change (density or lesson switch) clears the cache and re-measures', async () => {
+      const paragraphs = ref([paragraph(0, 2), paragraph(1, 2)])
+      const width = ref(300)
+      const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+
+      const { fully_measured } = withBookMeasure({ paragraphs, width, measure_host })
+      await drain()
+      expect(fully_measured.value).toBe(true)
+
+      const next_paragraphs = [paragraph(0, 3), paragraph(1, 3)]
+      measure_host.value = buildMeasureHost(next_paragraphs)
+      paragraphs.value = next_paragraphs
+      await nextTick()
+
+      expect(fully_measured.value).toBe(false)
+      expect(vi.getTimerCount()).toBeGreaterThan(0)
+    })
+  })
+
+  describe('parity with the flat-measure baseline', () => {
+    test('words fed through computePagination matches computePagination fed the same stitched geometry directly', async () => {
+      const paragraphs = ref([paragraph(0, 3), paragraph(1, 3)])
+      const width = ref(300)
+      const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+
+      const { words } = withBookMeasure({ paragraphs, width, measure_host })
+      await drain()
+
+      const adapter_result = computePagination({
+        words: words.value,
+        split_mode: false,
+        two_page: false,
+        reduced_height: 999,
+        full_height: 999,
+        bandHeightOf: () => 0,
+        split_cap: 0
+      })
+
+      const flat_words = words.value.map((w) => ({ ...w }))
+      const flat_result = computePagination({
+        words: flat_words,
+        split_mode: false,
+        two_page: false,
+        reduced_height: 999,
+        full_height: 999,
+        bandHeightOf: () => 0,
+        split_cap: 0
+      })
+
+      expect(adapter_result.cuts).toEqual(flat_result.cuts)
+      expect(adapter_result.footprints).toEqual(flat_result.footprints)
+    })
   })
 })
