@@ -210,6 +210,75 @@ describe('useBookMeasure', () => {
     expect(render_paragraphs.value.map((p) => p.index)).toContain(2)
   })
 
+  test('coalesces a NaN anchor paragraph to 0 and still completes measurement', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(NaN)
+
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(0)
+
+    await drain()
+
+    expect(fully_measured.value).toBe(true)
+  })
+
+  test('coalesces an undefined anchor paragraph to 0 and still completes measurement', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(undefined)
+
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(0)
+
+    await drain()
+
+    expect(fully_measured.value).toBe(true)
+  })
+
+  test('a valid numeric anchor paragraph still completes measurement, unchanged by the NaN guard', async () => {
+    const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
+    const width = ref(300)
+    const measure_host = shallowRef(buildMeasureHost(paragraphs.value))
+    const anchor_paragraph = ref(2)
+
+    const { render_paragraphs, fully_measured } = withBookMeasure({
+      paragraphs,
+      width,
+      measure_host,
+      anchor_paragraph
+    })
+
+    vi.advanceTimersByTime(16)
+    await nextTick()
+
+    expect(render_paragraphs.value.map((p) => p.index)).toContain(2)
+
+    await drain()
+
+    expect(fully_measured.value).toBe(true)
+  })
+
   test('stitches from the nearest already-measured paragraph when the anchor moves past it', async () => {
     const paragraphs = ref([paragraph(0, 1), paragraph(1, 1), paragraph(2, 1)])
     const width = ref(300)
