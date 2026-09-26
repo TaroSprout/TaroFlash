@@ -13,24 +13,21 @@ afterEach(() => {
 })
 
 describe('useReaderPrefs', () => {
-  test('defaults display_mode to inline, playback_rate to 1, paragraph_density to medium', async () => {
+  test('defaults playback_rate to 1, paragraph_density to medium', async () => {
     const { useReaderPrefs } = await import('@/views/reader/composables/reader-prefs')
-    const { display_mode, playback_rate, paragraph_density } = useReaderPrefs()
+    const { playback_rate, paragraph_density } = useReaderPrefs()
 
-    expect(display_mode.value).toBe('inline')
     expect(playback_rate.value).toBe(1)
     expect(paragraph_density.value).toBe('medium')
   })
 
   test('rehydrates each key from its own localStorage slot', async () => {
-    localStorage.setItem('audio-reader.displayMode', JSON.stringify('fixed'))
     localStorage.setItem('audio-reader.playbackRate', JSON.stringify(1.5))
     localStorage.setItem('audio-reader.paragraphDensity', JSON.stringify('short'))
 
     const { useReaderPrefs } = await import('@/views/reader/composables/reader-prefs')
-    const { display_mode, playback_rate, paragraph_density } = useReaderPrefs()
+    const { playback_rate, paragraph_density } = useReaderPrefs()
 
-    expect(display_mode.value).toBe('fixed')
     expect(playback_rate.value).toBe(1.5)
     expect(paragraph_density.value).toBe('short')
   })
@@ -43,7 +40,7 @@ describe('useReaderPrefs', () => {
     await nextTick()
 
     expect(localStorage.getItem('audio-reader.paragraphDensity')).toBe(JSON.stringify('long'))
-    expect(localStorage.getItem('audio-reader.displayMode')).toBe(null)
+    expect(localStorage.getItem('audio-reader.playbackRate')).toBe(null)
   })
 
   test('every call returns the same singleton refs', async () => {
@@ -51,21 +48,10 @@ describe('useReaderPrefs', () => {
     const first = useReaderPrefs()
     const second = useReaderPrefs()
 
-    first.display_mode.value = 'fixed'
+    first.paragraph_density.value = 'long'
 
-    expect(second.display_mode.value).toBe('fixed')
-    expect(first.display_mode).toBe(second.display_mode)
-  })
-
-  test('writing display_mode persists it under its own key without touching the others', async () => {
-    const { useReaderPrefs } = await import('@/views/reader/composables/reader-prefs')
-    const { display_mode } = useReaderPrefs()
-
-    display_mode.value = 'fixed'
-    await nextTick()
-
-    expect(localStorage.getItem('audio-reader.displayMode')).toBe(JSON.stringify('fixed'))
-    expect(localStorage.getItem('audio-reader.playbackRate')).toBe(null)
+    expect(second.paragraph_density.value).toBe('long')
+    expect(first.paragraph_density).toBe(second.paragraph_density)
   })
 
   test('writing playback_rate persists it under its own key', async () => {

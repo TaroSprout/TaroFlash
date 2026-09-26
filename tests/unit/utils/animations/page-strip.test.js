@@ -67,4 +67,15 @@ describe('slideScroller', () => {
     const [, config] = mockTo.mock.calls[0]
     expect(config.onComplete).toBe(onComplete)
   })
+
+  test('the returned canceller kills the in-flight tween', () => {
+    const el = makeScroller()
+    const tween = { kill: vi.fn() }
+    mockTo.mockReturnValue(tween)
+
+    const cancel = slideScroller(el, 400, vi.fn())
+    cancel()
+
+    expect(tween.kill).toHaveBeenCalledOnce()
+  })
 })
