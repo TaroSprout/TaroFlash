@@ -271,7 +271,7 @@ watch([viewport_width, viewport_height], reflowFrames)
         :class="frame_full_class"
         :style="{ width: `${page_width}px` }"
       >
-        <div ref="frame_full" class="min-h-0 flex-1"></div>
+        <div ref="frame_full" data-testid="reader__frame-full-inner" class="min-h-0 flex-1"></div>
       </div>
 
       <book-measure
